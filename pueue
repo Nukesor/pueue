@@ -1,0 +1,61 @@
+#!/bin/python3
+import sys,os
+import time
+import socket
+import getpass
+import argparse
+from daemonize import Daemonize
+
+
+# Specifying commands
+parser = argparse.ArgumentParser(description='Pueue client/daemon')
+parser.add_argument('--daemon', action="store_true", help="Starts the actual pueue daemon")
+parser.add_argument('--add', type=str, help="Call this to add a command to the queue")
+parser.add_argument('--remove', help="Shows the current queue and gives you the possibility to delete a command", type=int)
+args = parser.parse_args()
+
+pid = "/home/nuke/pueue.pid"
+try:
+    userName = getpass.getuser()
+except:
+    print("Couldn't get userName, aborting")
+socketPath = "/tmp/pueueSocket@"+userName
+
+def daemonMain():
+    # Creating Socket
+    if os.path.exists(socketPath):
+        os.remove(socketPath)
+    daemon = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+    daemon.bind(socketPath)
+
+    while True:
+        message = daemon.recv(1024)
+        print(message)
+        if message == 'EXIT':
+            daemon.exit()
+            break
+        time.sleep(1)
+
+    daemon.close()
+    os.remove(socketPath)
+
+if args.daemon:
+    daemon = Daemonize(app="pueue",pid=pid, action=daemonMain)
+    daemonMain()
+    try:
+        daemon.start();
+    except:
+        print("Daemon didn't start. Unkown error")
+        sys.exit(1)
+    else:
+        print("Daemon started")
+else:
+    try:
+        client = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        client.connect(socketPath)
+    except:
+        print("No socket found. Make sure the daemon is running")
+    if args.add:
+        client.send(bytes(args.add, 'UTF-8'))
+    time.sleep(1)
+
