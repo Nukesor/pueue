@@ -1,7 +1,7 @@
 #import sys, os, time, socket, getpass, argparse
-import os, socket, time
+import os, socket, time, pickle
 
-from helper import getSocketName
+from helper import getSocketName, readQueue, writeQueue
 
 def daemonMain():
     # Creating Socket
@@ -18,13 +18,21 @@ def daemonMain():
         print("Daemon got socket")
 
     while True:
-        message = daemon.recv(1024)
-        print(message)
-        if message == 'EXIT':
-            daemon.exit()
+        data = daemon.recv(1024)
+        command = pickle.loads(data)
+        if command['mode'] == 'add':
+            queue = readQueue()
+            print(queue)
+            if len(queue) != 0:
+                nextKey = max(queue.keys()) + 1
+            else:
+                nextKey = 0
+            queue[nextKey] = command
+            writeQueue(queue)
+        elif command['mode'] == 'EXIT':
+            print('Exiting')
             break
         time.sleep(1)
 
-    daemon.close()
     os.remove(socketPath)
 

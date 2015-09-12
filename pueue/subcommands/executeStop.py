@@ -1,8 +1,8 @@
-import sys, os, socket, time, pickle
+import sys, socket, time, pickle
 
 from helper import getSocketName
 
-def executeAdd(args):
+def executeStop(args):
     try:
         client = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
         client.connect(getSocketName())
@@ -10,8 +10,8 @@ def executeAdd(args):
         print("Error connecting to socket. Make sure the daemon is running")
         sys.exit(1)
 
-    if args.command:
-        addCommand = {'mode': 'add', 'command': args.command, 'path': os.getcwd()}
-        data_string = pickle.dumps(addCommand, -1)
-        client.send(data_string)
+    # Sending stop signal to daemon
+    stopCommand = {'mode': 'EXIT'}
+    data_string = pickle.dumps(stopCommand, -1)
+    client.send(data_string)
 

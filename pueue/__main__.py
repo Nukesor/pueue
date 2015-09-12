@@ -1,5 +1,5 @@
 #!/bin/python3
-import argparse
+import argparse, os
 from daemonize import Daemonize
 
 from daemon import *
@@ -7,7 +7,8 @@ from subcommands import *
 
 # Specifying commands
 parser = argparse.ArgumentParser(description='Pueue client/daemon')
-parser.add_argument('--daemon', action="store_true", help="Starts the actual pueue daemon")
+parser.add_argument('--daemon', action="store_true", help="Starts the pueue daemon")
+parser.add_argument('--stop', action="store_true", help="Stops the pueue daemon")
 subparsers = parser.add_subparsers(title='Subcommands',description='Various subcommands')
 
 # Add
@@ -23,11 +24,11 @@ remove_Subcommand.add_argument('removeIndex', help="The index of the command to 
 show_Subcommand = subparsers.add_parser('show', help='Lists all commands in the queue')
 show_Subcommand.add_argument('--index', help='Shows the status of the command with the specified index')
 
-
-
 args = parser.parse_args()
 
-if args.daemon:
+if args.stop:
+    executeStop(args)
+elif args.daemon:
     #daemon = Daemonize(app="pueue",pid='/tmp/pueue.pid', action=daemonMain)
     #daemon.start()
     daemonMain()
