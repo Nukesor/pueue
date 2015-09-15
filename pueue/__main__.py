@@ -1,6 +1,5 @@
 #!/bin/python3
 import argparse, os
-from daemonize import Daemonize
 
 from daemon import *
 from subcommands import *
@@ -18,7 +17,7 @@ add_Subcommand.set_defaults(func=executeAdd)
 
 # Remove
 remove_Subcommand = subparsers.add_parser('remove', help='Removes a spcific command from the queue')
-remove_Subcommand.add_argument('removeIndex', help="The index of the command to be deleted", type=int)
+remove_Subcommand.add_argument('key', help="The index of the command to be deleted", type=int)
 
 # Show
 show_Subcommand = subparsers.add_parser('show', help='Lists all commands in the queue')

@@ -1,4 +1,4 @@
-import sys, getpass
+import sys, getpass, os
 
 def getSocketName():
     # Generating pid and socket path from username
@@ -8,6 +8,8 @@ def getSocketName():
         print("Couldn't get username from getpass.getuser(), aborting")
         sys.exit(1)
     else:
-        socketPath = "/tmp/pueueSocket@"+userName
+        home = os.path.expanduser('~')
+        queueFolder = home+'/.pueue'
+        socketPath = queueFolder+"/pueueSocket@"+userName+".sock"
         return socketPath
 
