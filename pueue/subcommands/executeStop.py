@@ -1,4 +1,7 @@
-import sys, socket, time, pickle
+import sys
+import socket
+import time
+import pickle
 
 from helper import getSocketName
 

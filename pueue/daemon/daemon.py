@@ -1,5 +1,10 @@
-#import sys, os, time, socket, getpass, argparse
-import os, sys, socket, time, pickle, stat, select
+import os
+import sys
+import socket
+import time
+import pickle
+import stat
+import select
 
 from helper import getSocketName, readQueue, writeQueue, createDir
 
@@ -9,23 +14,22 @@ def daemonMain():
     if os.path.exists(socketPath):
         os.remove(socketPath)
     createDir()
-#    try:
-    daemon = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-    daemon.bind(socketPath)
-    daemon.listen(5)
-    #os.chmod(socketPath, stat.S_IRWXU)
-    daemon.setblocking(0)
-    print('test')
-#    except:
-#        print("Daemon couldn't bind to socket. Aborting")
-#        sys.exit(1)
-#    else:
-#        print("Daemon got socket")
+    try:
+        daemon = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        daemon.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        daemon.bind(socketPath)
+        daemon.listen(0)
+        os.chmod(socketPath, stat.S_IRWXU)
+        daemon.setblocking(0)
+    except:
+        print("Daemon couldn't bind to socket. Aborting")
+        sys.exit(1)
+    else:
+        print("Daemon got socket")
 
     read_list = [daemon]
-    readable, writable, errored = select.select(read_list, [], [])
     while True:
-        print('test2')
+        readable, writable, errored = select.select(read_list, [], [], 1)
         for s in readable:
             if s is daemon:
                 try:
@@ -34,7 +38,7 @@ def daemonMain():
                 except BlockingIOError:
                     instruction = False
 
-        if instruction:
+        if 'instruction' in locals():
             command = pickle.loads(instruction)
             if command['mode'] == 'add':
                 queue = readQueue()
@@ -62,8 +66,6 @@ def daemonMain():
                 print('Shutting down pueue daemon')
                 break
 
-
-        time.sleep(0.5)
 
     os.remove(socketPath)
 

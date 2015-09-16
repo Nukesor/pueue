@@ -1,4 +1,5 @@
-import os, pickle
+import os
+import pickle
 
 def writeQueue(queue):
     queueFile = open(queuePath,'wb+')

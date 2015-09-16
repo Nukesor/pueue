@@ -1,4 +1,6 @@
-import sys, getpass, os
+import sys
+import getpass
+import os
 
 def getSocketName():
     # Generating pid and socket path from username

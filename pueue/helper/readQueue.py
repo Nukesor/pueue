@@ -1,4 +1,5 @@
-import os, pickle
+import os
+import pickle
 
 def readQueue():
     home = os.path.expanduser('~')

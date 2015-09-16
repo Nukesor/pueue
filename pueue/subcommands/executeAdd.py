@@ -1,10 +1,14 @@
-import sys, os, socket, time, pickle
+import sys
+import os
+import socket
+import time
+import pickle
 
 from helper import getSocketName
 
 def executeAdd(args):
     try:
-        client = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         socketPath = getSocketName()
         client.connect(socketPath)
     except:

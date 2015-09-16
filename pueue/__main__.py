@@ -1,5 +1,6 @@
 #!/bin/python3
-import argparse, os
+import argparse
+import os
 
 from daemon import *
 from subcommands import *
