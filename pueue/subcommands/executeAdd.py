@@ -19,7 +19,7 @@ def executeAdd(args):
         addCommand = {'mode': 'add', 'command': args.command, 'path': os.getcwd()}
         data_string = pickle.dumps(addCommand, -1)
         client.send(data_string)
-        answer = client.recv(1024)
+        answer = client.recv(8192)
         print(pickle.loads(answer))
         client.close()
 

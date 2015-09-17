@@ -2,6 +2,9 @@ import os
 import pickle
 
 def writeQueue(queue):
+    home = os.path.expanduser('~')
+    queueFolder = home+'/.pueue'
+    queuePath = home+'/.pueue/queue'
     queueFile = open(queuePath,'wb+')
     try:
         pickle.dump(queue, queueFile, -1)
