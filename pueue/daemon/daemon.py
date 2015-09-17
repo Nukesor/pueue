@@ -3,29 +3,15 @@ import sys
 import socket
 import time
 import pickle
-import stat
 import select
 
-from helper import getSocketName, readQueue, writeQueue, createDir
+from helper import readQueue, writeQueue
+from helper import getSocketName, createDir
+from helper import getDaemonSocket
 
 def daemonMain():
-    # Creating Socket
-    socketPath= getSocketName()
-    if os.path.exists(socketPath):
-        os.remove(socketPath)
     createDir()
-    try:
-        daemon = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        daemon.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        daemon.bind(socketPath)
-        daemon.setblocking(0)
-        daemon.listen(0)
-        os.chmod(socketPath, stat.S_IRWXU)
-    except:
-        print("Daemon couldn't bind to socket. Aborting")
-        sys.exit(1)
-    else:
-        print("Daemon got socket")
+    daemon = getDaemonSocket()
 
     address = None
     clientSocket = None
@@ -45,29 +31,54 @@ def daemonMain():
                     command = pickle.loads(instruction)
                     print(command)
                     if command['mode'] == 'add':
+                        # Get current Queue
                         queue = readQueue()
+
+                        # Calculate next index for queue
                         if len(queue) != 0:
                             nextKey = max(queue.keys()) + 1
                         else:
                             nextKey = 0
+
+                        # Add command to queue and save it
                         queue[nextKey] = command
                         writeQueue(queue)
-                        print(queue)
+
+                        # Respond client
                         response = pickle.dumps('Command added', -1)
                         clientSocket.send(response)
+
+                        # Socket cleanup
                         read_list.remove(clientSocket)
                         clientSocket.close()
+
                     elif command['mode'] == 'remove':
+                        # Get current Queue
                         queue = readQueue()
+                        print(queue)
                         key = command['key']
-                        if not queue[key]:
-                            response = pickle.dumps('No command with key #'+key, -1)
-                            daemon.sendto(response, address)
+                        if not key in queue:
+                        # Send error message to client in case there exists no such key
+                            response = pickle.dumps('No command with key #' + str(key), -1)
+                            clientSocket.send(response)
                         else:
+                        # Delete command from queue, save the queue and send response to client
                             del queue[key];
                             writeQueue(queue)
-                            response = pickle.dumps('Command #'+key+' removed', -1)
+                            response = pickle.dumps('Command #'+str(key)+' removed', -1)
                             clientSocket.send(response)
+                        # Socket cleanup
+                        read_list.remove(clientSocket)
+                        clientSocket.close()
+
+                    elif command['mode'] == 'show':
+                        # Get current Queue and send it to client
+                        queue = readQueue()
+                        response = pickle.dumps(queue, -1)
+                        clientSocket.send(response)
+                        # Socket cleanup
+                        read_list.remove(clientSocket)
+                        clientSocket.close()
 
                     elif command['mode'] == 'EXIT':
                         print('Shutting down pueue daemon')
