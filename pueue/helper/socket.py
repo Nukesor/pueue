@@ -26,12 +26,17 @@ def getClientSocket():
         sys.exit(1)
     return client
 
-def getDaemonSocket():
-    # Creating Socket
+def removeSocket():
+    # Check for old socket and delete it
     socketPath= getSocketName()
     if os.path.exists(socketPath):
         os.remove(socketPath)
 
+
+def getDaemonSocket():
+    removeSocket()
+    socketPath= getSocketName()
+    # Creating Socket
     try:
         daemon = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         daemon.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)

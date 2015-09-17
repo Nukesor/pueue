@@ -1,9 +1,11 @@
 #!/bin/python3
 
-import argparse
 import os
+import sys
+import argparse
 
 from daemon import *
+from helper import removeSocket
 from subcommands import *
 
 # Specifying commands
@@ -50,7 +52,16 @@ if args.stop:
 elif args.daemon:
     #daemon = Daemonize(app="pueue",pid='/tmp/pueue.pid', action=daemonMain)
     #daemon.start()
-    daemonMain()
+    try:
+        daemonMain()
+    except KeyboardInterrupt:
+        print('Keyboard interrupt. Shutting down')
+        removeSocket()
+        sys.exit(0)
+    except SystemExit:
+        print('SystemExit. Shutting down')
+        removeSocket()
+        sys.exit(0)
 elif hasattr(args, 'func'):
     args.func(args)
 else:

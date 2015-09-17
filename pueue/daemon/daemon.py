@@ -1,19 +1,28 @@
 import os
 import sys
-import socket
 import time
+import socket
 import pickle
 import select
+import subprocess
 
 from helper import readQueue, writeQueue
 from helper import getSocketName, createDir
 from helper import getDaemonSocket
 
 def daemonMain():
+    # Create config dir, if not existing
     createDir()
+    # Create daemon socket
     daemon = getDaemonSocket()
+    # Get current Queue
+    queue = readQueue()
+
+    # Daemon states
+    paused = False
 
     address = None
+    process = None
     clientSocket = None
     read_list = [daemon]
     while True:
@@ -29,10 +38,7 @@ def daemonMain():
                 instruction, address = clientSocket.recvfrom(8192)
                 if instruction is not -1:
                     command = pickle.loads(instruction)
-                    print(command)
                     if command['mode'] == 'add':
-                        # Get current Queue
-                        queue = readQueue()
 
                         # Calculate next index for queue
                         if len(queue) != 0:
@@ -53,9 +59,6 @@ def daemonMain():
                         clientSocket.close()
 
                     elif command['mode'] == 'remove':
-                        # Get current Queue
-                        queue = readQueue()
-                        print(queue)
                         key = command['key']
                         if not key in queue:
                         # Send error message to client in case there exists no such key
@@ -72,18 +75,28 @@ def daemonMain():
                         clientSocket.close()
 
                     elif command['mode'] == 'show':
-                        # Get current Queue and send it to client
-                        queue = readQueue()
                         response = pickle.dumps(queue, -1)
                         clientSocket.send(response)
                         # Socket cleanup
                         read_list.remove(clientSocket)
                         clientSocket.close()
-
                     elif command['mode'] == 'EXIT':
                         print('Shutting down pueue daemon')
                         break
 
+        if process is not None:
+            process.poll()
+            if process.returncode is not None:
+                if process.returncode is not 0:
+                    print(process.returncode)
+                    print('We need an error log')
+                queue.pop(min(queue.keys()), None)
+                process = None
+
+        elif not paused:
+            if (len(queue) > 0):
+                nextItem = queue[min(queue.keys())]
+                process = subprocess.Popen(nextItem['command'], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, cwd=nextItem['path'])
 
     os.remove(socketPath)
 
