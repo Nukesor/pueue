@@ -26,8 +26,6 @@ def executeShow(args):
             print(line)
     elif isinstance(data, dict):
         for key, entry in data.items():
-            print('#'+str(key))
-            print('    Command:')
-            print('        '+entry['command'])
-            print('    Path:')
-            print('        '+entry['path'])
+            print('Command  #'+str(key)+':')
+            print('    '+entry['command'])
+            print('Path: '+entry['path'] + '\n')

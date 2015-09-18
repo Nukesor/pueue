@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+import fcntl
 import socket
 import pickle
 import select
@@ -132,6 +133,10 @@ def daemonMain():
             if (len(queue) > 0):
                 nextItem = queue[min(queue.keys())]
                 process = subprocess.Popen(nextItem['command'], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, cwd=nextItem['path'])
+                fd = process.stdout.fileno()
+                fl = fcntl.fcntl(fd, fcntl.F_GETFL)
+                fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
+
 
     os.remove(socketPath)
 
