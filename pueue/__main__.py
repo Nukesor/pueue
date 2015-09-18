@@ -1,4 +1,4 @@
-#!/bin/python3
+#!/usr/bin/env python3
 
 import os
 import sys
@@ -26,7 +26,7 @@ remove_Subcommand.set_defaults(func=executeRemove)
 
 # Show
 show_Subcommand = subparsers.add_parser('show', help='Lists all commands in the queue')
-show_Subcommand.add_argument('--index', help='Shows the status of the command with the specified index')
+show_Subcommand.add_argument('--index', help='Shows the status of the command with the specified index, "Current" shows the current process')
 show_Subcommand.set_defaults(func=executeShow)
 
 # Pause
@@ -44,6 +44,11 @@ start_Subcommand.set_defaults(func=executeStart)
 # Exit
 exit_Subcommand = subparsers.add_parser('exit', help='Shuts the daemon down.')
 exit_Subcommand.set_defaults(func=executeExit)
+
+# Kills the current running process and starts the next
+kill_Subcommand = subparsers.add_parser('kill', help='Kills the current running process and starts the next one')
+kill_Subcommand.set_defaults(func=executeKill)
+
 
 args = parser.parse_args()
 
@@ -66,4 +71,3 @@ elif hasattr(args, 'func'):
     args.func(args)
 else:
     print('Invalid Command. Something strange happened, please check the help again')
-

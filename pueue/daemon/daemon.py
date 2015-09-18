@@ -35,7 +35,7 @@ def daemonMain():
                 except:
                     print('Daemon rejected client')
             else:
-                instruction, address = clientSocket.recvfrom(8192)
+                instruction = clientSocket.recv(8192)
                 if instruction is not -1:
                     command = pickle.loads(instruction)
                     if command['mode'] == 'add':
@@ -75,14 +75,48 @@ def daemonMain():
                         clientSocket.close()
 
                     elif command['mode'] == 'show':
-                        response = pickle.dumps(queue, -1)
+                        output = []
+                        if command['index'] == 'all':
+                            if len(queue) > 0:
+                                output = queue
+                            else:
+                                output = 'Queue is empty'
+                        elif command['index'] == 'current':
+                            if process is not None:
+                                while True:
+                                    line = process.stdout.readline()
+                                    if not line:
+                                        break
+                                    else:
+                                        output.append(line)
+                            else:
+                                output = 'No process running right now'
+
+                        response = pickle.dumps(output, -1)
                         clientSocket.send(response)
                         # Socket cleanup
                         read_list.remove(clientSocket)
                         clientSocket.close()
+
                     elif command['mode'] == 'EXIT':
                         print('Shutting down pueue daemon')
                         break
+
+                    elif command['mode'] == 'KILL':
+                        if (process is not None):
+                            process.poll()
+                            if process.returncode is None:
+                                process.terminate()
+                                answer = 'Send terminate to process'
+                            else:
+                                answer = "Process just terminated on it's own"
+                        else:
+                            answer = 'No process running'
+                        response = pickle.dumps(answer, -1)
+                        clientSocket.send(response)
+                        read_list.remove(clientSocket)
+                        clientSocket.close()
+
 
         if process is not None:
             process.poll()
@@ -91,6 +125,7 @@ def daemonMain():
                     print(process.returncode)
                     print('We need an error log')
                 queue.pop(min(queue.keys()), None)
+                writeQueue(queue)
                 process = None
 
         elif not paused:

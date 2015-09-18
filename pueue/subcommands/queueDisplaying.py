@@ -5,13 +5,29 @@ from helper import getClientSocket
 
 def executeShow(args):
     client = getClientSocket()
-    if args.command:
-        # Send new instruction to daemon
-        addCommand = {'mode': 'add', 'command': args.command, 'path': os.getcwd()}
-        data_string = pickle.dumps(addCommand, -1)
-        client.send(data_string)
-        # Receive Answer from daemon and print it
-        answer = client.recv(8192)
-        print(pickle.loads(answer))
-        client.close()
+    if hasattr(args, 'index') and args.index is not None:
+        instruction = {'mode': 'show', 'index': args.index}
+    else:
+        instruction = {'mode': 'show', 'index': 'all'}
 
+    # Send new instruction to daemon
+    data_string = pickle.dumps(instruction, -1)
+    client.send(data_string)
+
+    # Receive Answer from daemon and print it
+    response = client.recv(8192)
+    data = pickle.loads(response)
+    client.close()
+    if isinstance(data, str):
+        print(data)
+    if isinstance(data, list):
+        print('Output of command in line: '+str(args.index))
+        for line in data:
+            print(line)
+    elif isinstance(data, dict):
+        for key, entry in data.items():
+            print('#'+str(key))
+            print('    Command:')
+            print('        '+entry['command'])
+            print('    Path:')
+            print('        '+entry['path'])
