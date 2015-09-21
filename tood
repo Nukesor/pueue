@@ -1,6 +1,12 @@
 Todos:
+    High:
+        - Proper Daemonization
+        - Output has to work! -> Watch functionality
+        - Store last output/ error output of processes after they finished
+
+    Medium:
+        - Kill/terminate the current process.
+
+    Low:
     - Two clients send at the same time
         - Prevent the second client from connecting?
-    - Kill/terminate a process by id and the current process.
-    - Watch functionality
-    - Store last output/ error output of processes after they finished
