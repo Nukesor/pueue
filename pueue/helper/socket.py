@@ -4,6 +4,7 @@ import stat
 import socket
 import getpass
 
+
 def getSocketName():
     # Generating pid and socket path from username
     try:
@@ -17,6 +18,7 @@ def getSocketName():
         socketPath = queueFolder+"/pueueSocket@"+userName+".sock"
         return socketPath
 
+
 def getClientSocket():
     try:
         client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -26,16 +28,17 @@ def getClientSocket():
         sys.exit(1)
     return client
 
+
 def removeSocket():
     # Check for old socket and delete it
-    socketPath= getSocketName()
+    socketPath = getSocketName()
     if os.path.exists(socketPath):
         os.remove(socketPath)
 
 
 def getDaemonSocket():
     removeSocket()
-    socketPath= getSocketName()
+    socketPath = getSocketName()
     # Creating Socket
     try:
         daemon = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -50,4 +53,3 @@ def getDaemonSocket():
     else:
         print("Daemon got socket")
     return daemon
-

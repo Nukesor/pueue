@@ -2,7 +2,8 @@ import pickle
 
 from helper import getClientSocket
 
-def executeStart (args):
+
+def executeStart(args):
     client = getClientSocket()
     instruction = {'mode': 'START'}
     data_string = pickle.dumps(instruction, -1)
@@ -12,7 +13,7 @@ def executeStart (args):
     client.close()
 
 
-def executePause (args):
+def executePause(args):
     client = getClientSocket()
     instruction = {'mode': 'PAUSE'}
     data_string = pickle.dumps(instruction, -1)
@@ -22,7 +23,7 @@ def executePause (args):
     client.close()
 
 
-def executeStop (args):
+def executeStop(args):
     client = getClientSocket()
     instruction = {'mode': 'STOP'}
     data_string = pickle.dumps(instruction, -1)
@@ -31,7 +32,8 @@ def executeStop (args):
     print(pickle.loads(answer))
     client.close()
 
-def executeExit (args):
+
+def executeExit(args):
     client = getClientSocket()
     instruction = {'mode': 'EXIT'}
     data_string = pickle.dumps(instruction, -1)
@@ -41,7 +43,7 @@ def executeExit (args):
     client.close()
 
 
-def executeKill (args):
+def executeKill(args):
     client = getClientSocket()
     instruction = {'mode': 'KILL'}
     data_string = pickle.dumps(instruction, -1)
@@ -49,5 +51,3 @@ def executeKill (args):
     answer = client.recv(8192)
     print(pickle.loads(answer))
     client.close()
-
-

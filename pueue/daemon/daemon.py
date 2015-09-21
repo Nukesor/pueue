@@ -1,8 +1,5 @@
 import os
-import sys
-import time
 import fcntl
-import socket
 import pickle
 import select
 import subprocess
@@ -10,6 +7,7 @@ import subprocess
 from helper import readQueue, writeQueue
 from helper import getSocketName, createDir
 from helper import getDaemonSocket
+
 
 def daemonMain():
     # Create config dir, if not existing
@@ -61,13 +59,13 @@ def daemonMain():
 
                     elif command['mode'] == 'remove':
                         key = command['key']
-                        if not key in queue:
-                        # Send error message to client in case there exists no such key
+                        if key not in queue:
+                            # Send error message to client in case there exists no such key
                             response = pickle.dumps('No command with key #' + str(key), -1)
                             clientSocket.send(response)
                         else:
-                        # Delete command from queue, save the queue and send response to client
-                            del queue[key];
+                            # Delete command from queue, save the queue and send response to client
+                            del queue[key]
                             writeQueue(queue)
                             response = pickle.dumps('Command #'+str(key)+' removed', -1)
                             clientSocket.send(response)
@@ -118,7 +116,6 @@ def daemonMain():
                         read_list.remove(clientSocket)
                         clientSocket.close()
 
-
         if process is not None:
             process.poll()
             if process.returncode is not None:
@@ -132,11 +129,15 @@ def daemonMain():
         elif not paused:
             if (len(queue) > 0):
                 nextItem = queue[min(queue.keys())]
-                process = subprocess.Popen(nextItem['command'], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, cwd=nextItem['path'])
+                process = subprocess.Popen(
+                        nextItem['command'],
+                        shell=True,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        universal_newlines=True,
+                        cwd=nextItem['path'])
                 fd = process.stdout.fileno()
                 fl = fcntl.fcntl(fd, fcntl.F_GETFL)
                 fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
 
-
-    os.remove(socketPath)
-
+    os.remove(getSocketName())

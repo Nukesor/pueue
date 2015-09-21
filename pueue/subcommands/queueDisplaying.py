@@ -1,7 +1,7 @@
-import os
 import pickle
 
 from helper import getClientSocket
+
 
 def executeShow(args):
     client = getClientSocket()

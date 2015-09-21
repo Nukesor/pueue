@@ -3,6 +3,7 @@ import pickle
 
 from helper import getClientSocket
 
+
 def executeAdd(args):
     client = getClientSocket()
 
@@ -16,6 +17,7 @@ def executeAdd(args):
     print(pickle.loads(answer))
     client.close()
 
+
 def executeRemove(args):
     client = getClientSocket()
 
@@ -28,4 +30,3 @@ def executeRemove(args):
     answer = client.recv(8192)
     print(pickle.loads(answer))
     client.close()
-
