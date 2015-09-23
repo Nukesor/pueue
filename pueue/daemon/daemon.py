@@ -1,7 +1,7 @@
 import os
-import fcntl
 import pickle
 import select
+import tempfile
 import subprocess
 
 from helper import readQueue, writeQueue
@@ -82,12 +82,11 @@ def daemonMain():
                                 output = 'Queue is empty'
                         elif command['index'] == 'current':
                             if process is not None:
-                                while True:
-                                    line = process.stdout.readline()
-                                    if not line:
-                                        break
-                                    else:
-                                        output.append(line)
+                                line = openedFile.readlines()
+                                # output = process.stdout.readlines()
+                                print(line)
+                                if len(line) == 0:
+                                    print('lol!')
                             else:
                                 output = 'No process running right now'
 
@@ -129,15 +128,14 @@ def daemonMain():
         elif not paused:
             if (len(queue) > 0):
                 nextItem = queue[min(queue.keys())]
+                openedFile = tempfile.NamedTemporaryFile()
+                print(openedFile)
                 process = subprocess.Popen(
                         nextItem['command'],
                         shell=True,
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE,
+                        stdout=openedFile,
+                        stderr=subprocess.STDOUT,
                         universal_newlines=True,
                         cwd=nextItem['path'])
-                fd = process.stdout.fileno()
-                fl = fcntl.fcntl(fd, fcntl.F_GETFL)
-                fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
 
     os.remove(getSocketName())
