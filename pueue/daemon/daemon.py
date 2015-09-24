@@ -4,9 +4,9 @@ import select
 import tempfile
 import subprocess
 
-from helper import readQueue, writeQueue
-from helper import getSocketName, createDir
-from helper import getDaemonSocket
+from pueue.helper.queue import readQueue, writeQueue
+from pueue.helper.paths import createDir
+from pueue.helper.socket import getSocketName, getDaemonSocket
 
 
 def daemonMain():

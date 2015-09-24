@@ -1,6 +1,6 @@
 import pickle
 
-from helper import getClientSocket
+from pueue.helper.socket import getClientSocket
 
 
 def executeShow(args):

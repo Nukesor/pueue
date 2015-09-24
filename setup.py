@@ -15,8 +15,7 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Environment :: Console'
     ],
-    packages=find_packages('pueue'),
-    package_dir={'': 'pueue'},
+    packages=find_packages(),
     entry_points={
             'console_scripts': [
                 'pueue=pueue:main'

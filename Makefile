@@ -1,6 +1,6 @@
-.PHONY: default, build
+.PHONY: default, uninstall, build
 
-default: global-install
+default: dev-install
 
-global-install:
-	sudo python setup.py install
+dev-install:
+	sudo python setup.py develop

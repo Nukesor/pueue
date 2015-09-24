@@ -3,9 +3,11 @@
 import sys
 import argparse
 
-from daemon import *
-from helper import removeSocket
-from subcommands import *
+from pueue.daemon.daemon import daemonMain
+from pueue.helper.socket import removeSocket
+from pueue.subcommands.daemonStates import daemonState
+from pueue.subcommands.queueDisplaying import executeShow
+from pueue.subcommands.queueManipulation import executeAdd, executeRemove
 
 
 def main():
@@ -32,29 +34,27 @@ def main():
 
     # Pause
     pause_Subcommand = subparsers.add_parser('pause', help='Daemon will finishes the current command and pauses afterwards.')
-    pause_Subcommand.set_defaults(func=executePause)
+    pause_Subcommand.set_defaults(func=daemonState('PAUSE'))
 
     # Stop
     stop_Subcommand = subparsers.add_parser('stop', help='Daemon will stop the current command and pauses afterwards.')
-    stop_Subcommand.set_defaults(func=executeStop)
+    stop_Subcommand.set_defaults(func=daemonState('STOP'))
 
     # Start
     start_Subcommand = subparsers.add_parser('start', help='Daemon will stop the current command and pauses afterwards.')
-    start_Subcommand.set_defaults(func=executeStart)
+    start_Subcommand.set_defaults(func=daemonState('START'))
 
     # Exit
     exit_Subcommand = subparsers.add_parser('exit', help='Shuts the daemon down.')
-    exit_Subcommand.set_defaults(func=executeExit)
+    exit_Subcommand.set_defaults(func=daemonState('EXIT'))
 
     # Kills the current running process and starts the next
     kill_Subcommand = subparsers.add_parser('kill', help='Kills the current running process and starts the next one')
-    kill_Subcommand.set_defaults(func=executeKill)
+    kill_Subcommand.set_defaults(func=daemonState('KILL'))
 
     args = parser.parse_args()
 
-    if args.stop:
-        executeStop(args)
-    elif args.daemon:
+    if args.daemon:
         # daemon = Daemonize(app="pueue",pid='/tmp/pueue.pid', action=daemonMain)
         # daemon.start()
         try:

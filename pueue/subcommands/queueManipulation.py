@@ -1,7 +1,7 @@
 import os
 import pickle
 
-from helper import getClientSocket
+from pueue.helper.socket import getClientSocket
 
 
 def executeAdd(args):
