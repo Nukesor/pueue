@@ -76,9 +76,21 @@ class Daemon():
                                     answer = 'Queue is empty'
                             self.respondClient(answer)
 
-                        elif command['mode'] == 'EXIT':
-                            self.respondClient('Pueue daemon shutting down')
-                            break
+                        elif command['mode'] == 'START':
+                            if self.paused:
+                                self.paused = False
+                                answer = 'Daemon unpaused'
+                            else:
+                                answer = 'Daemon alrady unpaused'
+                            self.respondClient(answer)
+
+                        elif command['mode'] == 'PAUSE':
+                            if not self.paused:
+                                self.paused = True
+                                answer = 'Daemon paused'
+                            else:
+                                answer = 'Daemon already paused'
+                            self.respondClient(answer)
 
                         elif command['mode'] == 'STOP':
                             if (self.process is not None):
@@ -103,6 +115,10 @@ class Daemon():
                             else:
                                 answer = 'No process running'
                             self.respondClient(answer)
+
+                        elif command['mode'] == 'EXIT':
+                            self.respondClient('Pueue daemon shutting down')
+                            break
 
             if self.process is not None:
                 self.process.poll()
