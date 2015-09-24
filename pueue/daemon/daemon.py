@@ -1,4 +1,5 @@
 import os
+import sys
 import pickle
 import select
 import tempfile
@@ -73,31 +74,34 @@ def daemonMain():
                         read_list.remove(clientSocket)
                         clientSocket.close()
 
-                    elif command['mode'] == 'show':
-                        output = []
-                        if command['index'] == 'all':
-                            if len(queue) > 0:
-                                output = queue
-                            else:
-                                output = 'Queue is empty'
-                        elif command['index'] == 'current':
-                            if process is not None:
-                                line = openedFile.readlines()
-                                # output = process.stdout.readlines()
-                                print(line)
-                                if len(line) == 0:
-                                    print('lol!')
-                            else:
-                                output = 'No process running right now'
-
-                        response = pickle.dumps(output, -1)
-                        clientSocket.send(response)
-                        # Socket cleanup
-                        read_list.remove(clientSocket)
-                        clientSocket.close()
-
+#                    elif command['mode'] == 'show':
+#                        output = []
+#                        if command['index'] == 'all':
+#                            if len(queue) > 0:
+#                                output = queue
+#                            else:
+#                                output = 'Queue is empty'
+#                        elif command['index'] == 'current':
+#                            if process is not None:
+#                                # output = process.stdout.readlines()
+#                                print(line)
+#                                if len(line) == 0:
+#                                    print('lol!')
+#                            else:
+#                                output = 'No process running right now'
+#
+#                        response = pickle.dumps(output, -1)
+#                        clientSocket.send(response)
+#                        # Socket cleanup
+#                        read_list.remove(clientSocket)
+#                        clientSocket.close()
+#
                     elif command['mode'] == 'EXIT':
-                        print('Shutting down pueue daemon')
+                        answer = 'Pueue daemon shutting down'
+                        response = pickle.dumps(answer, -1)
+                        clientSocket.send(response)
+                        clientSocket.close()
+                        sys.exit(0)
                         break
 
                     elif command['mode'] == 'KILL':

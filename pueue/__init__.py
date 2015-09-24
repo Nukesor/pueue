@@ -70,4 +70,4 @@ def main():
     elif hasattr(args, 'func'):
         args.func(args)
     else:
-        print('Invalid Command. Something strange happened, please check the help again')
+        print('Invalid Command. Please check -h')
