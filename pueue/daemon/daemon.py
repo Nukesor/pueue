@@ -34,12 +34,17 @@ class Daemon():
             for s in readable:
                 if s is self.socket:
                     try:
-                        self.clientSocket, address = self.socket.accept()
+                        self.clientSocket, self.clientAddress = self.socket.accept()
                         self.read_list.append(self.clientSocket)
                     except:
                         print('Daemon rejected client')
                 else:
-                    instruction = self.clientSocket.recv(8192)
+                    try:
+                        instruction = self.clientSocket.recv(8192)
+                    except EOFError:
+                        print('Client died while sending message, dropping received data.')
+                        instruction = -1
+
                     if instruction is not -1:
                         command = pickle.loads(instruction)
                         if command['mode'] == 'add':
@@ -68,20 +73,35 @@ class Daemon():
                                 self.respondClient(answer)
 
                         elif command['mode'] == 'show':
-                            answer = []
+                            answer = {}
+                            data = []
+                            # Process status
+#                            if (self.process is not None):
+#                                self.process.poll()
+#                                if self.process.returncode is None:
+#                                    answer['status'] = 'running'
+#                                else:
+#                                    answer['status'] = 'Exited with'+str(self.process.returncode)
+#                            else:
+#                                answer['status'] = 'no process'
+
+                            # Queue status
                             if command['index'] == 'all':
                                 if len(self.queue) > 0:
-                                    answer = self.queue
+                                    data = self.queue
                                 else:
-                                    answer = 'Queue is empty'
+                                    data = 'Queue is empty'
+                            answer['data'] = data
+
+                            # Respond client
                             self.respondClient(answer)
 
                         elif command['mode'] == 'START':
                             if self.paused:
                                 self.paused = False
-                                answer = 'Daemon unpaused'
+                                answer = 'Daemon started'
                             else:
-                                answer = 'Daemon alrady unpaused'
+                                answer = 'Daemon alrady started'
                             self.respondClient(answer)
 
                         elif command['mode'] == 'PAUSE':
@@ -97,7 +117,7 @@ class Daemon():
                                 self.process.poll()
                                 if self.process.returncode is None:
                                     self.process.terminate()
-                                    answer = 'Pueue daemon terminats current process and pauses'
+                                    answer = 'Terminating current process and pausing'
                                 else:
                                     answer = "No process running, pausing daemon"
                             else:
@@ -108,8 +128,9 @@ class Daemon():
                             if (self.process is not None):
                                 self.process.poll()
                                 if self.process.returncode is None:
+                                    self.paused = True
                                     self.process.kill()
-                                    answer = 'Send kill to process'
+                                    answer = 'Sent kill to process'
                                 else:
                                     answer = "Process just terminated on it's own"
                             else:
@@ -124,7 +145,7 @@ class Daemon():
                 self.process.poll()
                 if self.process.returncode is not None:
                     if self.process.returncode is not 0:
-                        print(self.process.returncode)
+                        output, error_output = self.process.communicate()
                         print('We need an error log')
                     self.queue.pop(min(self.queue.keys()), None)
                     writeQueue(self.queue)
@@ -132,14 +153,14 @@ class Daemon():
 
             elif not self.paused:
                 if (len(self.queue) > 0):
-                    nextItem = self.queue[min(self.queue.keys())]
+                    next_item = self.queue[min(self.queue.keys())]
                     self.process = subprocess.Popen(
-                            nextItem['command'],
+                            next_item['command'],
                             shell=True,
                             stdout=subprocess.PIPE,
-                            stderr=subprocess.STDOUT,
+                            stderr=subprocess.PIPE,
                             universal_newlines=True,
-                            cwd=nextItem['path'])
+                            cwd=next_item['path'])
 
         self.socket.close()
         os.remove(getSocketName())

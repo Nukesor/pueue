@@ -16,7 +16,8 @@ def executeShow(args):
 
     # Receive Answer from daemon and print it
     response = client.recv(8192)
-    data = pickle.loads(response)
+    answer = pickle.loads(response)
+    data = answer['data']
     client.close()
     if isinstance(data, str):
         print(data)

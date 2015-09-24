@@ -3,6 +3,12 @@ Todos:
         - Proper Daemonization
         - Output has to work! -> Watch functionality
         - Store last output/ error output of processes after they finished
+        - Second queue, with all finished commands and their returncode/stderr
+            - Needs to be written to log file
+        - reset command
+            - Resets queue index and logs/Rotate logs?
+        - log command
+            - Displays current logfile
 
     Medium:
         - Kill/terminate the current process.
