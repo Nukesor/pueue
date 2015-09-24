@@ -74,13 +74,14 @@ def daemonMain():
                         read_list.remove(clientSocket)
                         clientSocket.close()
 
-#                    elif command['mode'] == 'show':
-#                        output = []
-#                        if command['index'] == 'all':
-#                            if len(queue) > 0:
-#                                output = queue
-#                            else:
-#                                output = 'Queue is empty'
+                    elif command['mode'] == 'show':
+                        output = []
+                        if command['index'] == 'all':
+                            if len(queue) > 0:
+                                output = queue
+                            else:
+                                output = 'Queue is empty'
+# TODO
 #                        elif command['index'] == 'current':
 #                            if process is not None:
 #                                # output = process.stdout.readlines()
@@ -89,13 +90,13 @@ def daemonMain():
 #                                    print('lol!')
 #                            else:
 #                                output = 'No process running right now'
-#
-#                        response = pickle.dumps(output, -1)
-#                        clientSocket.send(response)
-#                        # Socket cleanup
-#                        read_list.remove(clientSocket)
-#                        clientSocket.close()
-#
+
+                        response = pickle.dumps(output, -1)
+                        clientSocket.send(response)
+                        # Socket cleanup
+                        read_list.remove(clientSocket)
+                        clientSocket.close()
+
                     elif command['mode'] == 'EXIT':
                         answer = 'Pueue daemon shutting down'
                         response = pickle.dumps(answer, -1)
@@ -132,12 +133,10 @@ def daemonMain():
         elif not paused:
             if (len(queue) > 0):
                 nextItem = queue[min(queue.keys())]
-                openedFile = tempfile.NamedTemporaryFile()
-                print(openedFile)
                 process = subprocess.Popen(
                         nextItem['command'],
                         shell=True,
-                        stdout=openedFile,
+                        stdout=subprocess.PIPE,
                         stderr=subprocess.STDOUT,
                         universal_newlines=True,
                         cwd=nextItem['path'])

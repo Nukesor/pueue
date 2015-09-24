@@ -5,10 +5,10 @@ from pueue.helper.socket import getClientSocket
 
 def executeShow(args):
     client = getClientSocket()
-    if hasattr(args, 'index') and args.index is not None:
-        instruction = {'mode': 'show', 'index': args.index}
-    else:
-        instruction = {'mode': 'show', 'index': 'all'}
+#    if hasattr(args, 'index') and args.index is not None:
+#        instruction = {'mode': 'show', 'index': args.index}
+#    else:
+    instruction = {'mode': 'show', 'index': 'all'}
 
     # Send new instruction to daemon
     data_string = pickle.dumps(instruction, -1)
