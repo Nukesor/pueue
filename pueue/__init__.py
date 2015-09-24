@@ -3,7 +3,7 @@
 import sys
 import argparse
 
-from pueue.daemon.daemon import daemonMain
+from pueue.daemon.daemon import Daemon
 from pueue.helper.socket import removeSocket
 from pueue.subcommands.daemonStates import daemonState
 from pueue.subcommands.queueDisplaying import executeShow
@@ -58,7 +58,8 @@ def main():
         # daemon = Daemonize(app="pueue",pid='/tmp/pueue.pid', action=daemonMain)
         # daemon.start()
         try:
-            daemonMain()
+            daemon = Daemon()
+            daemon.main()
         except KeyboardInterrupt:
             print('Keyboard interrupt. Shutting down')
             removeSocket()
