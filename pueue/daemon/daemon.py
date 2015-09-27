@@ -1,9 +1,9 @@
 import os
+import time
 import pickle
 import select
 import subprocess
 
-from pueue.helper.queue import readQueue, writeQueue
 from pueue.helper.paths import createDir
 from pueue.helper.socket import getSocketName, getDaemonSocket
 
@@ -11,8 +11,10 @@ from pueue.helper.socket import getSocketName, getDaemonSocket
 class Daemon():
     def __init__(self):
         # Create config dir, if not existing
-        createDir()
-        self.queue = readQueue()
+        self.queueFolder = createDir()
+
+        self.readQueue()
+        self.readLog()
         self.socket = getDaemonSocket()
 
         # Daemon states
@@ -57,7 +59,7 @@ class Daemon():
 
                             # Add command to queue and save it
                             self.queue[nextKey] = command
-                            writeQueue(self.queue)
+                            self.writeQueue()
                             self.respondClient('Command added')
 
                         elif command['mode'] == 'remove':
@@ -68,7 +70,7 @@ class Daemon():
                             else:
                                 # Delete command from queue, save the queue and send response to client
                                 del self.queue[key]
-                                writeQueue(self.queue)
+                                self.writeQueue()
                                 answer = 'Command #'+str(key)+' removed'
                                 self.respondClient(answer)
 
@@ -147,8 +149,9 @@ class Daemon():
                     if self.process.returncode is not 0:
                         output, error_output = self.process.communicate()
                         print('We need an error log')
+                    self.log[min(self.queue.keys())] = self.queue[min(self.queue.keys())]
                     self.queue.pop(min(self.queue.keys()), None)
-                    writeQueue(self.queue)
+                    self.writeQueue()
                     self.process = None
 
             elif not self.paused:
@@ -164,3 +167,57 @@ class Daemon():
 
         self.socket.close()
         os.remove(getSocketName())
+
+    def readQueue(self):
+        queuePath = self.queueFolder+'/queue'
+        if os.path.exists(queuePath):
+            queueFile = open(queuePath, 'rb')
+            try:
+                self.queue = pickle.load(queueFile)
+            except:
+                print("Queue file corrupted, deleting old queue")
+                os.remove(queuePath)
+                self.queue = {}
+            queueFile.close()
+        else:
+            self.queue = {}
+
+    def writeQueue(self):
+        home = os.path.expanduser('~')
+        queuePath = home+'/.pueue/queue'
+        queueFile = open(queuePath, 'wb+')
+        try:
+            pickle.dump(self.queue, queueFile, -1)
+        except:
+            print("Error while writing to queue file. Wrong file permissions?")
+        queueFile.close()
+
+    def readLog(self, rotate=False):
+        logPath = self.queueFolder + '/queue.log'
+        if os.path.exists(logPath):
+            logFile = open(logPath, 'rb')
+            try:
+                self.log = pickle.load(logFile)
+            except:
+                print("Log file corrupted, deleting old log")
+                os.remove(logPath)
+                self.log = {}
+            logFile.close()
+            # Log rotate
+            if rotate:
+                timestamp = time.strftime("%Y%m%d-%H%M")
+                logRotatePath = self.queueFolder + '/queue-' + timestamp + '.log'
+                logRotateFile = open(logRotatePath, 'wb+')
+                pickle.dump(self.log, logRotateFile, -1)
+                self.log = {}
+        else:
+            self.log = {}
+
+    def writeLog(self):
+        logPath = self.queueFolder + '/queue.log'
+        logFile = open(logPath, 'wb+')
+        try:
+            pickle.dump(self.log, logFile, -1)
+        except:
+            print("Error while writing to queue file. Maybe wrong file permissions?")
+        logFile.close()

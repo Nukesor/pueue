@@ -6,3 +6,4 @@ def createDir():
     queueFolder = home+'/.pueue'
     if not os.path.exists(queueFolder):
         os.makedirs(queueFolder)
+    return queueFolder
