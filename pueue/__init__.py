@@ -6,7 +6,7 @@ import argparse
 from pueue.daemon.daemon import Daemon
 from pueue.helper.socket import removeSocket
 from pueue.subcommands.daemonStates import daemonState
-from pueue.subcommands.queueDisplaying import executeShow
+from pueue.subcommands.queueDisplaying import executeShow, executeLog
 from pueue.subcommands.queueManipulation import executeAdd, executeRemove
 
 
@@ -32,6 +32,11 @@ def main():
     show_Subcommand.add_argument('--index', help='Shows the status of the command with the specified index, "Current" shows the current process')
     show_Subcommand.set_defaults(func=executeShow)
 
+    # Logs
+    logs_Subcommand = subparsers.add_parser('log', help='Prints the current log file to the command line')
+    logs_Subcommand.set_defaults(func=executeLog)
+
+    # Reset
     reset_Subcommand = subparsers.add_parser('reset', help='Daemon will kill the current command, reset queue and logs.')
     reset_Subcommand.set_defaults(func=daemonState('reset'))
 

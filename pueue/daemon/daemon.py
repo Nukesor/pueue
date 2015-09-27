@@ -168,13 +168,12 @@ class Daemon():
                 self.process.poll()
                 if self.process.returncode is not None:
                     output, error_output = self.process.communicate()
-                    if hasattr(self.queue, self.currentKey):
-                        self.log[min(self.queue.keys())] = self.queue[min(self.queue.keys())]
-                        self.log[min(self.queue.keys())]['stderr'] = error_output
-                        self.log[min(self.queue.keys())]['stdout'] = output
-                        self.queue.pop(min(self.queue.keys()), None)
-                        self.writeQueue()
-                        self.writeLog()
+                    self.log[min(self.queue.keys())] = self.queue[min(self.queue.keys())]
+                    self.log[min(self.queue.keys())]['stderr'] = error_output
+                    self.log[min(self.queue.keys())]['stdout'] = output
+                    self.queue.pop(min(self.queue.keys()), None)
+                    self.writeQueue()
+                    self.writeLog()
                     self.process = None
 
             elif not self.paused:
@@ -234,6 +233,7 @@ class Daemon():
             self.writeLog(True)
             os.remove(logPath)
             self.log = {}
+            self.writeLog()
 
     def writeLog(self, rotate=False):
         if rotate:
@@ -244,6 +244,8 @@ class Daemon():
 
         picklelogPath = self.queueFolder + '/queue.picklelog'
         picklelogFile = open(picklelogPath, 'wb+')
+        if os.path.exists(logPath):
+            os.remove(logPath)
         logFile = open(logPath, 'w')
         logFile.write('Pueue log for executed Commands: \n \n \n')
         for key in self.log:

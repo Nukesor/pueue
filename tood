@@ -4,8 +4,9 @@ Todos:
         - Output has to work! -> Watch functionality
         - pueue show
             - Show daemon status information
-        - log command
-            - Displays current logfile
+        - Possible Bug:
+            - Current process get's removed from queue
+            - Prevent?
 
     Medium:
 

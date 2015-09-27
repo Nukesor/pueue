@@ -1,5 +1,6 @@
 import pickle
 
+from pueue.helper.paths import createDir
 from pueue.helper.socket import getClientSocket
 
 
@@ -30,3 +31,9 @@ def executeShow(args):
             print('Command  #'+str(key)+':')
             print('    '+entry['command'])
             print('Path: '+entry['path'] + '\n')
+
+
+def executeLog(args):
+    logPath = createDir() + '/queue.log'
+    logFile = open(logPath, 'r')
+    print(logFile.read())
