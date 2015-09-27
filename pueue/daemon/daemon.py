@@ -14,8 +14,13 @@ class Daemon():
         self.queueFolder = createDir()
 
         self.readQueue()
-        self.readLog()
         self.socket = getDaemonSocket()
+        if len(self.queue) != 0:
+            self.nextKey = max(self.queue.keys()) + 1
+            self.readLog(False)
+        else:
+            self.nextKey = 0
+            self.readLog(True)
 
         # Daemon states
         self.paused = False
@@ -48,17 +53,18 @@ class Daemon():
                         instruction = -1
 
                     if instruction is not -1:
-                        command = pickle.loads(instruction)
+                        try:
+                            command = pickle.loads(instruction)
+                        except EOFError:
+                            print('Received message is incomplete, dropping received data.')
+                            command = {}
+                            command['mode'] = ''
+
                         if command['mode'] == 'add':
 
-                            # Calculate next index for queue
-                            if len(self.queue) != 0:
-                                nextKey = max(self.queue.keys()) + 1
-                            else:
-                                nextKey = 0
-
                             # Add command to queue and save it
-                            self.queue[nextKey] = command
+                            self.queue[self.nextKey] = command
+                            self.nextKey += 1
                             self.writeQueue()
                             self.respondClient('Command added')
 
@@ -146,12 +152,13 @@ class Daemon():
             if self.process is not None:
                 self.process.poll()
                 if self.process.returncode is not None:
-                    if self.process.returncode is not 0:
-                        output, error_output = self.process.communicate()
-                        print('We need an error log')
+                    output, error_output = self.process.communicate()
                     self.log[min(self.queue.keys())] = self.queue[min(self.queue.keys())]
+                    self.log[min(self.queue.keys())]['stderr'] = error_output
+                    self.log[min(self.queue.keys())]['stdout'] = output
                     self.queue.pop(min(self.queue.keys()), None)
                     self.writeQueue()
+                    self.writeLog()
                     self.process = None
 
             elif not self.paused:
@@ -193,7 +200,7 @@ class Daemon():
         queueFile.close()
 
     def readLog(self, rotate=False):
-        logPath = self.queueFolder + '/queue.log'
+        logPath = self.queueFolder + '/queue.picklelog'
         if os.path.exists(logPath):
             logFile = open(logPath, 'rb')
             try:
@@ -203,21 +210,41 @@ class Daemon():
                 os.remove(logPath)
                 self.log = {}
             logFile.close()
-            # Log rotate
-            if rotate:
-                timestamp = time.strftime("%Y%m%d-%H%M")
-                logRotatePath = self.queueFolder + '/queue-' + timestamp + '.log'
-                logRotateFile = open(logRotatePath, 'wb+')
-                pickle.dump(self.log, logRotateFile, -1)
-                self.log = {}
         else:
             self.log = {}
 
-    def writeLog(self):
-        logPath = self.queueFolder + '/queue.log'
-        logFile = open(logPath, 'wb+')
+        if rotate:
+            self.writeLog(True)
+            os.remove(logPath)
+            self.log = {}
+
+    def writeLog(self, rotate=False):
+        if rotate:
+            timestamp = time.strftime("%Y%m%d-%H%M")
+            logPath = self.queueFolder + '/queue-' + timestamp + '.log'
+        else:
+            logPath = self.queueFolder + '/queue.log'
+
+        picklelogPath = self.queueFolder + '/queue.picklelog'
+        picklelogFile = open(picklelogPath, 'wb+')
+        logFile = open(logPath, 'w')
+        logFile.write('Pueue log for executed Commands: \n \n \n')
+        for key in self.log:
+            try:
+                logFile.write('Command #{}: \n    '.format(key))
+                logFile.write(self.log[key]['command'] + '\n')
+                logFile.write('Path: \n    ')
+                logFile.write(self.log[key]['path'] + '\n')
+                if self.log[key]['stderr']:
+                    logFile.write('Stderr output: \n')
+                    logFile.write(self.log[key]['stderr'] + '\n')
+                logFile.write('Stdout output: \n')
+                logFile.write(self.log[key]['stdout'] + '\n')
+                logFile.write('\n \n')
+            except:
+                print("Error while writing to log file. Wrong file permissions?")
         try:
-            pickle.dump(self.log, logFile, -1)
+            pickle.dump(self.log, picklelogFile, -1)
         except:
-            print("Error while writing to queue file. Maybe wrong file permissions?")
+            print("Error while writing to picklelog file. Wrong file permissions?")
         logFile.close()
