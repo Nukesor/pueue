@@ -21,7 +21,7 @@ class Daemon():
         else:
             self.nextKey = 0
             self.readLog(True)
-        self.currentKey = 0
+        self.currentKey = None
 
         # Daemon states
         self.paused = False
@@ -85,14 +85,23 @@ class Daemon():
                             answer = {}
                             data = []
                             # Process status
-#                            if (self.process is not None):
-#                                self.process.poll()
-#                                if self.process.returncode is None:
-#                                    answer['status'] = 'running'
-#                                else:
-#                                    answer['status'] = 'Exited with'+str(self.process.returncode)
-#                            else:
-#                                answer['status'] = 'no process'
+                            if (self.process is not None):
+                                self.process.poll()
+                                if self.process.returncode is None:
+                                    answer['process'] = 'running'
+                            elif self.currentKey in self.log.keys():
+                                answer['process'] = 'finished'.format(self.log[self.currentKey]['returncode'])
+                            else:
+                                answer['process'] = 'no process'
+
+                            if self.paused:
+                                answer['status'] = 'paused'
+                            else:
+                                answer['status'] = 'running'
+                            if self.currentKey in self.log.keys():
+                                answer['current'] = self.log[self.currentKey]['returncode']
+                            else:
+                                answer['current'] = 'No exitcode'
 
                             # Queue status
                             if command['index'] == 'all':
@@ -171,6 +180,7 @@ class Daemon():
                     self.log[min(self.queue.keys())] = self.queue[min(self.queue.keys())]
                     self.log[min(self.queue.keys())]['stderr'] = error_output
                     self.log[min(self.queue.keys())]['stdout'] = output
+                    self.log[min(self.queue.keys())]['returncode'] = self.process.returncode
                     self.queue.pop(min(self.queue.keys()), None)
                     self.writeQueue()
                     self.writeLog()
@@ -250,7 +260,7 @@ class Daemon():
         logFile.write('Pueue log for executed Commands: \n \n \n')
         for key in self.log:
             try:
-                logFile.write('Command #{}: \n    '.format(key))
+                logFile.write('Command #{} exited with returncode {}: \n    '.format(key, self.log[key]['returncode']))
                 logFile.write(self.log[key]['command'] + '\n')
                 logFile.write('Path: \n    ')
                 logFile.write(self.log[key]['path'] + '\n')
