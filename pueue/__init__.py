@@ -32,6 +32,9 @@ def main():
     show_Subcommand.add_argument('--index', help='Shows the status of the command with the specified index, "Current" shows the current process')
     show_Subcommand.set_defaults(func=executeShow)
 
+    reset_Subcommand = subparsers.add_parser('reset', help='Daemon will kill the current command, reset queue and logs.')
+    reset_Subcommand.set_defaults(func=daemonState('reset'))
+
     # Pause
     pause_Subcommand = subparsers.add_parser('pause', help='Daemon will finishes the current command and pauses afterwards.')
     pause_Subcommand.set_defaults(func=daemonState('PAUSE'))

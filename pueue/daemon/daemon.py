@@ -21,6 +21,7 @@ class Daemon():
         else:
             self.nextKey = 0
             self.readLog(True)
+        self.currentKey = 0
 
         # Daemon states
         self.paused = False
@@ -104,6 +105,19 @@ class Daemon():
                             # Respond client
                             self.respondClient(answer)
 
+                        elif command['mode'] == 'reset':
+                            # Reset  queue
+                            self.queue = {}
+                            self.writeQueue()
+                            # Terminate current process
+                            if self.process is not None:
+                                self.process.terminate()
+                            # Rotate and reset Log
+                            self.readLog(True)
+                            self.writeLog()
+                            answer = 'Reseting current queue'
+                            self.respondClient(answer)
+
                         elif command['mode'] == 'START':
                             if self.paused:
                                 self.paused = False
@@ -124,6 +138,7 @@ class Daemon():
                             if (self.process is not None):
                                 self.process.poll()
                                 if self.process.returncode is None:
+                                    self.paused = True
                                     self.process.terminate()
                                     answer = 'Terminating current process and pausing'
                                 else:
@@ -138,11 +153,11 @@ class Daemon():
                                 if self.process.returncode is None:
                                     self.paused = True
                                     self.process.kill()
-                                    answer = 'Sent kill to process'
+                                    answer = 'Sent kill to process and paused daemon'
                                 else:
                                     answer = "Process just terminated on it's own"
                             else:
-                                answer = 'No process running'
+                                answer = 'No process running, pausing daemon'
                             self.respondClient(answer)
 
                         elif command['mode'] == 'EXIT':
@@ -153,17 +168,19 @@ class Daemon():
                 self.process.poll()
                 if self.process.returncode is not None:
                     output, error_output = self.process.communicate()
-                    self.log[min(self.queue.keys())] = self.queue[min(self.queue.keys())]
-                    self.log[min(self.queue.keys())]['stderr'] = error_output
-                    self.log[min(self.queue.keys())]['stdout'] = output
-                    self.queue.pop(min(self.queue.keys()), None)
-                    self.writeQueue()
-                    self.writeLog()
+                    if hasattr(self.queue, self.currentKey):
+                        self.log[min(self.queue.keys())] = self.queue[min(self.queue.keys())]
+                        self.log[min(self.queue.keys())]['stderr'] = error_output
+                        self.log[min(self.queue.keys())]['stdout'] = output
+                        self.queue.pop(min(self.queue.keys()), None)
+                        self.writeQueue()
+                        self.writeLog()
                     self.process = None
 
             elif not self.paused:
                 if (len(self.queue) > 0):
-                    next_item = self.queue[min(self.queue.keys())]
+                    self.currentKey = min(self.queue.keys())
+                    next_item = self.queue[self.currentKey]
                     self.process = subprocess.Popen(
                             next_item['command'],
                             shell=True,
