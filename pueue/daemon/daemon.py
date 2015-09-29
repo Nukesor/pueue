@@ -4,7 +4,7 @@ import pickle
 import select
 import subprocess
 
-from pueue.helper.paths import createDir
+from pueue.helper.paths import createDir, createLogDir
 from pueue.helper.socket import getSocketName, getDaemonSocket
 
 
@@ -12,6 +12,7 @@ class Daemon():
     def __init__(self):
         # Create config dir, if not existing
         self.queueFolder = createDir()
+        self.logDir = createLogDir()
 
         self.readQueue()
         self.socket = getDaemonSocket()
@@ -248,11 +249,12 @@ class Daemon():
             self.writeLog()
 
     def writeLog(self, rotate=False):
+
         if rotate:
             timestamp = time.strftime("%Y%m%d-%H%M")
-            logPath = self.queueFolder + '/queue-' + timestamp + '.log'
+            logPath = self.logDir + '/queue-' + timestamp + '.log'
         else:
-            logPath = self.queueFolder + '/queue.log'
+            logPath = self.logDir + '/queue.log'
 
         picklelogPath = self.queueFolder + '/queue.picklelog'
         picklelogFile = open(picklelogPath, 'wb+')
