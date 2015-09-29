@@ -9,6 +9,9 @@ setup(
     keywords='bash queue command',
     url='http://github.com/nukesor/pueue',
     license='MIT',
+    install_requires=[
+        'terminaltables>=1.0.2'
+    ],
     classifiers=[
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3.4',

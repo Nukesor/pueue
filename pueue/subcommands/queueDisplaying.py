@@ -1,4 +1,6 @@
 import pickle
+from textwrap import wrap
+from terminaltables import AsciiTable
 
 from pueue.helper.paths import createDir
 from pueue.helper.socket import getClientSocket
@@ -23,15 +25,26 @@ def executeShow(args):
     client.close()
     if isinstance(data, str):
         print(data)
-    if isinstance(data, list):
-        print('Output of command in line: {}'.format(args.index))
-        for line in data:
-            print(line)
     elif isinstance(data, dict):
+        # Format incomming data to be compatible with Terminaltables
+        formatted_data = []
+        formatted_data.append(['Index', 'Command', 'Path'])
         for key, entry in data.items():
-            print('Command  #{}:'.format(key))
-            print('    {}'.format(entry['command']))
-            print('Path: {}\n'.format(entry['path']))
+            formatted_data.append(['#{}'.format(key), entry['command'], entry['path']])
+
+        # Create AsciiTable instance and define style
+        table = AsciiTable(formatted_data)
+        table.outer_border = False
+        table.inner_column_border = False
+
+        # Format long strings to match the console width
+        max_width = table.column_max_width(1)
+        for i, entry in enumerate(table.table_data):
+            for j, string in enumerate(entry):
+                wrapped_string = '\n'.join(wrap(string, max_width))
+                table.table_data[i][j] = wrapped_string
+
+        print(table.table)
 
 
 def executeLog(args):
