@@ -124,6 +124,8 @@ class Daemon():
                             # Rotate and reset Log
                             self.readLog(True)
                             self.writeLog()
+                            self.currentKey = None
+                            self.nextKey = 0
                             answer = 'Reseting current queue'
                             self.respondClient(answer)
 
