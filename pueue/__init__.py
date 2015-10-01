@@ -23,7 +23,7 @@ def main():
     add_Subcommand.set_defaults(func=executeAdd)
 
     # Remove
-    remove_Subcommand = subparsers.add_parser('remove', help='Removes a spcific command from the queue')
+    remove_Subcommand = subparsers.add_parser('remove', help='Removes a specific command from the queue')
     remove_Subcommand.add_argument('key', help="The index of the command to be deleted", type=int)
     remove_Subcommand.set_defaults(func=executeRemove)
 

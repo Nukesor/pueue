@@ -45,6 +45,7 @@ def executeShow(args):
                 table.table_data[i][j] = wrapped_string
 
         print(table.table)
+    print('')
 
 
 def executeLog(args):
