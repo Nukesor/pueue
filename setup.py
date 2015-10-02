@@ -5,7 +5,7 @@ setup(
     author='Arne Beer',
     author_mail='arne@twobeer.de',
     version='0.0.1',
-    description='A bash command queue written in python',
+    description='Pueue is a fancy queue for bash commands',
     keywords='bash queue command',
     url='http://github.com/nukesor/pueue',
     license='MIT',
