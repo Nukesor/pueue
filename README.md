@@ -4,7 +4,7 @@ Pueue is a queue for bash commands.
 
 ![Pueue](https://raw.githubusercontent.com/Nukesor/images/master/pueue.png)
 
-## Why should i use it?
+## Why should I use it?
 
 Everybody who lives on the commandline had this situation, when he needed to transfer huge amounts of data in different directories at the same time.
 
