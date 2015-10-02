@@ -19,13 +19,14 @@ class Daemon():
         if len(self.queue) != 0:
             self.nextKey = max(self.queue.keys()) + 1
             self.readLog(False)
+            self.paused = True
         else:
             self.nextKey = 0
+            self.paused = False
             self.readLog(True)
         self.currentKey = None
 
         # Daemon states
-        self.paused = False
         self.clientAddress = None
         self.clientSocket = None
         self.process = None

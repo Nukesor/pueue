@@ -14,7 +14,6 @@ def main():
     # Specifying commands
     parser = argparse.ArgumentParser(description='Pueue client/daemon')
     parser.add_argument('--daemon', action="store_true", help="Starts the pueue daemon")
-    parser.add_argument('--stop', action="store_true", help="Stops the pueue daemon")
     subparsers = parser.add_subparsers(title='Subcommands', description='Various subcommands')
 
     # Add
@@ -37,7 +36,7 @@ def main():
     logs_Subcommand.set_defaults(func=executeLog)
 
     # Reset
-    reset_Subcommand = subparsers.add_parser('reset', help='Daemon will kill the current command, reset queue and logs.')
+    reset_Subcommand = subparsers.add_parser('reset', help='Daemon will kill the current command, reset queue and rotate logs.')
     reset_Subcommand.set_defaults(func=daemonState('reset'))
 
     # Pause
