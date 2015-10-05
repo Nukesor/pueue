@@ -88,7 +88,7 @@ class Daemon():
                                     del self.queue[key]
                                     self.writeQueue()
                                     answer = 'Command #'+str(key)+' removed'
-                                self.respondClient(answer)
+                            self.respondClient(answer)
 
                         elif command['mode'] == 'show':
                             answer = {}
