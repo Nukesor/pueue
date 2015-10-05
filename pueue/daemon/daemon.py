@@ -25,6 +25,7 @@ class Daemon():
             self.paused = False
             self.readLog(True)
         self.currentKey = None
+        self.current = None
 
         # Daemon states
         self.clientAddress = None
@@ -60,6 +61,9 @@ class Daemon():
                             command = pickle.loads(instruction)
                         except EOFError:
                             print('Received message is incomplete, dropping received data.')
+                            self.read_list.remove(self.clientSocket)
+                            self.clientSocket.close()
+
                             command = {}
                             command['mode'] = ''
 
@@ -78,9 +82,12 @@ class Daemon():
                                 answer = 'No command with key #' + str(key)
                             else:
                                 # Delete command from queue, save the queue and send response to client
-                                del self.queue[key]
-                                self.writeQueue()
-                                answer = 'Command #'+str(key)+' removed'
+                                if not self.paused and key == self.currentKey:
+                                    answer = "Can't remove currently running process, please stop the process before removing it."
+                                else:
+                                    del self.queue[key]
+                                    self.writeQueue()
+                                    answer = 'Command #'+str(key)+' removed'
                                 self.respondClient(answer)
 
                         elif command['mode'] == 'show':
