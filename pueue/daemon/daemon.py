@@ -26,6 +26,7 @@ class Daemon():
             self.readLog(True)
         self.currentKey = None
         self.current = None
+        self.active = True
 
         # Daemon states
         self.clientAddress = None
@@ -40,7 +41,7 @@ class Daemon():
         self.clientSocket.close()
 
     def main(self):
-        while True:
+        while self.active:
             readable, writable, errored = select.select(self.read_list, [], [], 1)
             for s in readable:
                 if s is self.socket:
@@ -162,9 +163,9 @@ class Daemon():
                                     self.process.terminate()
                                     answer = 'Terminating current process and pausing'
                                 else:
-                                    answer = "No process running, pausing daemon"
+                                    answer = 'No process running, pausing daemon'
                             else:
-                                answer = "No process running, pausing daemon"
+                                answer = 'No process running, pausing daemon'
                             self.respondClient(answer)
 
                         elif command['mode'] == 'KILL':
@@ -180,8 +181,9 @@ class Daemon():
                                 answer = 'No process running, pausing daemon'
                             self.respondClient(answer)
 
-                        elif command['mode'] == 'EXIT':
+                        elif command['mode'] == 'STOPDAEMON':
                             self.respondClient('Pueue daemon shutting down')
+                            self.active = False
                             break
 
             if self.process is not None:
@@ -211,6 +213,7 @@ class Daemon():
 
         self.socket.close()
         os.remove(getSocketName())
+        sys.exit(0)
 
     def readQueue(self):
         queuePath = self.queueFolder+'/queue'
@@ -219,7 +222,7 @@ class Daemon():
             try:
                 self.queue = pickle.load(queueFile)
             except:
-                print("Queue file corrupted, deleting old queue")
+                print('Queue file corrupted, deleting old queue')
                 os.remove(queuePath)
                 self.queue = {}
             queueFile.close()
@@ -233,7 +236,7 @@ class Daemon():
         try:
             pickle.dump(self.queue, queueFile, -1)
         except:
-            print("Error while writing to queue file. Wrong file permissions?")
+            print('Error while writing to queue file. Wrong file permissions?')
         queueFile.close()
 
     def readLog(self, rotate=False):
@@ -243,7 +246,7 @@ class Daemon():
             try:
                 self.log = pickle.load(logFile)
             except:
-                print("Log file corrupted, deleting old log")
+                print('Log file corrupted, deleting old log')
                 os.remove(logPath)
                 self.log = {}
             logFile.close()
@@ -259,7 +262,7 @@ class Daemon():
     def writeLog(self, rotate=False):
 
         if rotate:
-            timestamp = time.strftime("%Y%m%d-%H%M")
+            timestamp = time.strftime('%Y%m%d-%H%M')
             logPath = self.logDir + '/queue-' + timestamp + '.log'
         else:
             logPath = self.logDir + '/queue.log'
@@ -283,9 +286,9 @@ class Daemon():
                 logFile.write(self.log[key]['stdout'] + '\n')
                 logFile.write('\n \n')
             except:
-                print("Error while writing to log file. Wrong file permissions?")
+                print('Error while writing to log file. Wrong file permissions?')
         try:
             pickle.dump(self.log, picklelogFile, -1)
         except:
-            print("Error while writing to picklelog file. Wrong file permissions?")
+            print('Error while writing to picklelog file. Wrong file permissions?')
         logFile.close()

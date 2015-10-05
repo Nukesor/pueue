@@ -33,7 +33,8 @@ There is a help option (-h) for all commands, but I'll list it here anyway.
 
 `pueue --daemon` Starts the daemon. The daemonization doesn't work on it's own yet, but there are alternatives e.g. systemd.  
 If the daemon finds a queue from the previous session it'll start in paused state!!  
-`pueue exit` Shuts the daemon down.  
+`pueue --no-daemon` Starts the daemon in the current terminal.  
+`pueue --stop-daemon` Daemon will shut down instantly. All running processes die.  
 
 `pueue start` Daemon will start to process the queue.  
 `pueue pause` Daemon will pause after the current command terminated by it's own.  

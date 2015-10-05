@@ -10,7 +10,8 @@ setup(
     url='http://github.com/nukesor/pueue',
     license='MIT',
     install_requires=[
-        'terminaltables>=1.0.2'
+        'terminaltables>=1.0.2',
+        'daemonize>=2.3.1'
     ],
     classifiers=[
         'License :: OSI Approved :: MIT License',
