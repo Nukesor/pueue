@@ -88,7 +88,28 @@ class Daemon():
                                 else:
                                     del self.queue[key]
                                     self.writeQueue()
-                                    answer = 'Command #'+str(key)+' removed'
+                                    answer = 'Command #{} removed'.format(key)
+                            self.respondClient(answer)
+
+                        elif command['mode'] == 'switch':
+                            first = command['first']
+                            second = command['second']
+                            # Send error answer to client in case there exists no such key
+                            if first not in self.queue:
+                            # Send error answer to client in case there exists no such key
+                                answer = 'No command with key #' + str(first)
+                            elif second not in self.queue:
+                            # Send error answer to client in case there exists no such key
+                                answer = 'No command with key #' + str(second)
+                            else:
+                                # Delete command from queue, save the queue and send response to client
+                                if not self.paused and (first == self.currentKey or second == self.currentKey):
+                                    answer = "Can't switch currently running process, please stop the process before switching it."
+                                else:
+                                    tmp = self.queue[second].copy()
+                                    self.queue[second] = self.queue[first].copy()
+                                    self.queue[first] = tmp
+                                    answer = 'Command #{} and #{} switched'.format(first, second)
                             self.respondClient(answer)
 
                         elif command['mode'] == 'show':

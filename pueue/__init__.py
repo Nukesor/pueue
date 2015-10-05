@@ -7,7 +7,7 @@ from pueue.daemon.daemon import Daemon
 from pueue.helper.socket import removeSocket
 from pueue.subcommands.daemonStates import daemonState
 from pueue.subcommands.queueDisplaying import executeShow, executeLog
-from pueue.subcommands.queueManipulation import executeAdd, executeRemove
+from pueue.subcommands.queueManipulation import executeAdd, executeRemove, executeSwitch
 
 
 def main():
@@ -29,6 +29,13 @@ def main():
     remove_Subcommand = subparsers.add_parser('remove', help='Removes a specific command from the queue')
     remove_Subcommand.add_argument('key', help='The index of the command to be deleted', type=int)
     remove_Subcommand.set_defaults(func=executeRemove)
+
+    # Switch
+    switch_Subcommand = subparsers.add_parser('switch', help='Switches two command in the queue')
+    switch_Subcommand.add_argument('first', help='The first command', type=int)
+    switch_Subcommand.add_argument('second', help='The second command', type=int)
+    switch_Subcommand.set_defaults(func=executeSwitch)
+
 
     # Show
     show_Subcommand = subparsers.add_parser('show', help='Lists all commands in the queue')
