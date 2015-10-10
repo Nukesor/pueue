@@ -19,6 +19,7 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Environment :: Console'
     ],
+    use_2to3=True,
     packages=find_packages(),
     entry_points={
             'console_scripts': [

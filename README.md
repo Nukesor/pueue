@@ -1,5 +1,7 @@
 # Pueue
 
+[![Build Status](https://travis-ci.org/Nukesor/Pueue.svg?branch=master)](https://travis-ci.org/nukesor/pueue)
+
 Pueue is a queue for bash commands.
 
 ![Pueue](https://raw.githubusercontent.com/Nukesor/images/master/pueue.png)
