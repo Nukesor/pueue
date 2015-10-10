@@ -55,15 +55,15 @@ def main():
 
     # Stop
     stop_Subcommand = subparsers.add_parser('stop', help='Daemon will stop the current command and pauses afterwards.')
-    stop_Subcommand.set_defaults(func=daemonState('STOP'))
+    stop_Subcommand.set_defaults(func=daemonState('stop'))
 
     # Start
     start_Subcommand = subparsers.add_parser('start', help='Daemon will stop the current command and pauses afterwards.')
-    start_Subcommand.set_defaults(func=daemonState('START'))
+    start_Subcommand.set_defaults(func=daemonState('start'))
 
     # Kills the current running process and starts the next
     kill_Subcommand = subparsers.add_parser('kill', help='Kills the current running process and starts the next one')
-    kill_Subcommand.set_defaults(func=daemonState('KILL'))
+    kill_Subcommand.set_defaults(func=daemonState('kill'))
 
     args = parser.parse_args()
 

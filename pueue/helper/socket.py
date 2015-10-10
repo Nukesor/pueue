@@ -50,6 +50,4 @@ def getDaemonSocket():
     except:
         print("Daemon couldn't bind to socket. Aborting")
         sys.exit(1)
-    else:
-        print("Daemon got socket")
     return daemon

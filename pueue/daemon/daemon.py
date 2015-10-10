@@ -69,138 +69,31 @@ class Daemon():
                             command['mode'] = ''
 
                         if command['mode'] == 'add':
-
-                            # Add command to queue and save it
-                            self.queue[self.nextKey] = command
-                            self.nextKey += 1
-                            self.writeQueue()
-                            self.respondClient('Command added')
+                            executeAdd(command)
 
                         elif command['mode'] == 'remove':
-                            key = command['key']
-                            if key not in self.queue:
-                                # Send error answer to client in case there exists no such key
-                                answer = 'No command with key #' + str(key)
-                            else:
-                                # Delete command from queue, save the queue and send response to client
-                                if not self.paused and key == self.currentKey:
-                                    answer = "Can't remove currently running process, please stop the process before removing it."
-                                else:
-                                    del self.queue[key]
-                                    self.writeQueue()
-                                    answer = 'Command #{} removed'.format(key)
-                            self.respondClient(answer)
+                            self.respondClient(executeRemove(command))
 
                         elif command['mode'] == 'switch':
-                            first = command['first']
-                            second = command['second']
-                            # Send error answer to client in case there exists no such key
-                            if first not in self.queue:
-                            # Send error answer to client in case there exists no such key
-                                answer = 'No command with key #' + str(first)
-                            elif second not in self.queue:
-                            # Send error answer to client in case there exists no such key
-                                answer = 'No command with key #' + str(second)
-                            else:
-                                # Delete command from queue, save the queue and send response to client
-                                if not self.paused and (first == self.currentKey or second == self.currentKey):
-                                    answer = "Can't switch currently running process, please stop the process before switching it."
-                                else:
-                                    tmp = self.queue[second].copy()
-                                    self.queue[second] = self.queue[first].copy()
-                                    self.queue[first] = tmp
-                                    answer = 'Command #{} and #{} switched'.format(first, second)
-                            self.respondClient(answer)
+                            self.respondClient(executeSwitch(command))
 
                         elif command['mode'] == 'show':
-                            answer = {}
-                            data = []
-                            # Process status
-                            if (self.process is not None):
-                                self.process.poll()
-                                if self.process.returncode is None:
-                                    answer['process'] = 'running'
-                            elif self.currentKey in self.log.keys():
-                                answer['process'] = 'finished'.format(self.log[self.currentKey]['returncode'])
-                            else:
-                                answer['process'] = 'no process'
-
-                            if self.paused:
-                                answer['status'] = 'paused'
-                            else:
-                                answer['status'] = 'running'
-                            if self.currentKey in self.log.keys():
-                                answer['current'] = self.log[self.currentKey]['returncode']
-                            else:
-                                answer['current'] = 'No exitcode'
-
-                            # Queue status
-                            if command['index'] == 'all':
-                                if len(self.queue) > 0:
-                                    data = self.queue
-                                else:
-                                    data = 'Queue is empty'
-                            answer['data'] = data
-
-                            # Respond client
-                            self.respondClient(answer)
+                            self.respondClient(executeShow)
 
                         elif command['mode'] == 'reset':
-                            # Reset  queue
-                            self.queue = {}
-                            self.writeQueue()
-                            # Terminate current process
-                            if self.process is not None:
-                                self.process.terminate()
-                            # Rotate and reset Log
-                            self.readLog(True)
-                            self.writeLog()
-                            self.currentKey = None
-                            self.nextKey = 0
-                            answer = 'Reseting current queue'
-                            self.respondClient(answer)
+                            self.respondClient(executeReset())
 
-                        elif command['mode'] == 'START':
-                            if self.paused:
-                                self.paused = False
-                                answer = 'Daemon started'
-                            else:
-                                answer = 'Daemon alrady started'
-                            self.respondClient(answer)
+                        elif command['mode'] == 'start':
+                            self.respondClient(executeStart())
 
-                        elif command['mode'] == 'PAUSE':
-                            if not self.paused:
-                                self.paused = True
-                                answer = 'Daemon paused'
-                            else:
-                                answer = 'Daemon already paused'
-                            self.respondClient(answer)
+                        elif command['mode'] == 'pause':
+                            self.respondClient(executePause())
 
-                        elif command['mode'] == 'STOP':
-                            if (self.process is not None):
-                                self.process.poll()
-                                if self.process.returncode is None:
-                                    self.paused = True
-                                    self.process.terminate()
-                                    answer = 'Terminating current process and pausing'
-                                else:
-                                    answer = 'No process running, pausing daemon'
-                            else:
-                                answer = 'No process running, pausing daemon'
-                            self.respondClient(answer)
+                        elif command['mode'] == 'stop':
+                            self.respondClient(executeStop())
 
-                        elif command['mode'] == 'KILL':
-                            if (self.process is not None):
-                                self.process.poll()
-                                if self.process.returncode is None:
-                                    self.paused = True
-                                    self.process.kill()
-                                    answer = 'Sent kill to process and paused daemon'
-                                else:
-                                    answer = "Process just terminated on it's own"
-                            else:
-                                answer = 'No process running, pausing daemon'
-                            self.respondClient(answer)
+                        elif command['mode'] == 'kill':
+                            self.respondClient(self.executeKill())
 
                         elif command['mode'] == 'STOPDAEMON':
                             self.respondClient('Pueue daemon shutting down')
@@ -313,3 +206,138 @@ class Daemon():
         except:
             print('Error while writing to picklelog file. Wrong file permissions?')
         logFile.close()
+        picklelogFile.close()
+
+    def executeAdd(self, command):
+        # Add command to queue and save it
+        self.queue[self.nextKey] = command
+        self.nextKey += 1
+        self.writeQueue()
+        return 'Command added'
+
+    def executeRemove(self, command):
+        key = command['key']
+        if key not in self.queue:
+            # Send error answer to client in case there exists no such key
+            answer = 'No command with key #' + str(key)
+        else:
+            # Delete command from queue, save the queue and send response to client
+            if not self.paused and key == self.currentKey:
+                answer = "Can't remove currently running process, please stop the process before removing it."
+            else:
+                del self.queue[key]
+                self.writeQueue()
+                answer = 'Command #{} removed'.format(key)
+        return answer
+
+    def executeSwitch(self, command):
+        first = command['first']
+        second = command['second']
+        # Send error answer to client in case there exists no such key
+        if first not in self.queue:
+        # Send error answer to client in case there exists no such key
+            answer = 'No command with key #' + str(first)
+        elif second not in self.queue:
+        # Send error answer to client in case there exists no such key
+            answer = 'No command with key #' + str(second)
+        else:
+            # Delete command from queue, save the queue and send response to client
+            if not self.paused and (first == self.currentKey or second == self.currentKey):
+                answer = "Can't switch currently running process, please stop the process before switching it."
+            else:
+                tmp = self.queue[second].copy()
+                self.queue[second] = self.queue[first].copy()
+                self.queue[first] = tmp
+                answer = 'Command #{} and #{} switched'.format(first, second)
+        return answer
+
+    def executeShow(self):
+        answer = {}
+        data = []
+        # Process status
+        if (self.process is not None):
+            self.process.poll()
+            if self.process.returncode is None:
+                answer['process'] = 'running'
+        elif self.currentKey in self.log.keys():
+            answer['process'] = 'finished'.format(self.log[self.currentKey]['returncode'])
+        else:
+            answer['process'] = 'no process'
+
+        if self.paused:
+            answer['status'] = 'paused'
+        else:
+            answer['status'] = 'running'
+        if self.currentKey in self.log.keys():
+            answer['current'] = self.log[self.currentKey]['returncode']
+        else:
+            answer['current'] = 'No exitcode'
+
+        # Queue status
+        if command['index'] == 'all':
+            if len(self.queue) > 0:
+                data = self.queue
+            else:
+                data = 'Queue is empty'
+        answer['data'] = data
+
+        # Respond client
+        return answer
+
+    def executeReset(self):
+        # Reset  queue
+        self.queue = {}
+        self.writeQueue()
+        # Terminate current process
+        if self.process is not None:
+            self.process.terminate()
+        # Rotate and reset Log
+        self.readLog(True)
+        self.writeLog()
+        self.currentKey = None
+        self.nextKey = 0
+        answer = 'Reseting current queue'
+        return answer
+
+    def executeStart(self):
+        if self.paused:
+            self.paused = False
+            answer = 'Daemon started'
+        else:
+            answer = 'Daemon alrady started'
+        return answer
+
+    def executePause(self):
+        if not self.paused:
+            self.paused = True
+            answer = 'Daemon paused'
+        else:
+            answer = 'Daemon already paused'
+        return answer
+
+    def executeStop(self):
+        if (self.process is not None):
+            self.process.poll()
+            if self.process.returncode is None:
+                self.paused = True
+                self.process.terminate()
+                answer = 'Terminating current process and pausing'
+            else:
+                answer = 'No process running, pausing daemon'
+        else:
+            answer = 'No process running, pausing daemon'
+        return answer
+
+    def executeKill(self):
+        if (self.process is not None):
+            self.process.poll()
+            if self.process.returncode is None:
+                self.paused = True
+                self.process.kill()
+                answer = 'Sent kill to process and paused daemon'
+            else:
+                answer = "Process just terminated on it's own"
+        else:
+            answer = 'No process running, pausing daemon'
+        return answer
+
