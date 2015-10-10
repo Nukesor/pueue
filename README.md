@@ -47,7 +47,7 @@ If the daemon finds a queue from the previous session it'll start in paused stat
 
 `pueue add 'command'` Adds a command to the queue.  
 `pueue remove index` Removes the command at #index.  
-`pueue remove index1 index2` Switches the commands at #index1 and #index2.  
+`pueue switch index1 index2` Switches the commands at #index1 and #index2.  
 
 `pueue show` Shows the current queue, process and daemon state.  
 `pueue log` Prints the log of all executed commands.  
