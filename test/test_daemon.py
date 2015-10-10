@@ -30,6 +30,11 @@ class DaemonTesting(unittest.TestCase):
         self.daemon.executeRemove(remove_command)
         self.assertEqual(self.daemon.queue, {})
 
+    def test_remove_key_missing(self):
+        remove_command = {'mode': 'remove', 'key': 0}
+        answer = self.daemon.executeRemove(remove_command)
+        self.assertEqual('No command with key #0', answer)
+
     def test_switch(self):
         first_command= {'mode': 'add', 'command': 'ls', 'path': '/usr/lib'}
         second_command= {'mode': 'add', 'command': 'cd ./', 'path': '/usr'}
@@ -42,8 +47,10 @@ class DaemonTesting(unittest.TestCase):
         self.assertEqual(self.daemon.queue[0], second_command)
         self.assertEqual(self.daemon.queue[1], first_command)
 
-    def test_show(self):
-        command = {'mode': 'show', 'command': 'ls', 'path': '/usl/lib'}
+    def test_switch_key_missing(self):
+        switch_command = {'mode': 'switch', 'first': 0, 'second': 1}
+        answer = self.daemon.executeSwitch(switch_command)
+        self.assertEqual(answer, 'No command with key #0')
 
     def test_reset(self):
         add_command = {'mode': 'add', 'command': 'ls', 'path': '/usr/lib'}

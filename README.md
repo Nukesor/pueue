@@ -18,16 +18,17 @@ Pueue is supposed to exactly do that. And this is just one possible application.
 Pueue is under heavy development, but it already supports all basic functions as well as logging of all executed commands.  
 And there will be even more stuff, like multi user usage or fancy real time stdout displaying of the current process.
 
-If I got your attention, clone it and give it a try!  
+If I got your attention, give it a try!  
 If you think this is awesome, help me, join the development and create some PR's.
+
+## Installation:
+
+Pueue can be installed by using `pip install pueue` or by cloning the repository and executing `python setup.py install`.
 
 ## Big TODO's:
 
-- Proper Daemonization
-- Testing!!! Includes refactoring for easier unit testing
 - Realtime stdout/stderr watching
 - Multi user usage of a single daemon?
-
 
 ## How to use it:
 
