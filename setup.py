@@ -4,7 +4,7 @@ setup(
     name='pueue',
     author='Arne Beer',
     author_email='arne@twobeer.de',
-    version='0.3.0',
+    version='0.3.1',
     description='Pueue is a fancy queue for bash commands',
     keywords='bash queue command',
     url='http://github.com/nukesor/pueue',
@@ -15,11 +15,11 @@ setup(
     ],
     classifiers=[
         'License :: OSI Approved :: MIT License',
+        'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Environment :: Console'
     ],
-    use_2to3=True,
     packages=find_packages(),
     entry_points={
             'console_scripts': [

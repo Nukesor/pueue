@@ -4,7 +4,7 @@ import pickle
 import select
 import subprocess
 
-from pueue.helper.paths import createDir, createLogDir
+from pueue.helper.files import createDir, createLogDir, getStdoutDescriptor
 from pueue.helper.socket import getSocketName, getDaemonSocket
 
 
@@ -24,15 +24,21 @@ class Daemon():
             self.nextKey = 0
             self.paused = False
             self.readLog(True)
-        self.currentKey = None
-        self.current = None
+
         self.active = True
+        self.stopped = False
+
+        self.current = None
+        self.currentKey = None
 
         # Daemon states
         self.clientAddress = None
         self.clientSocket = None
         self.process = None
         self.read_list = [self.socket]
+
+        #Stdout/Stderr management
+        self.stdout = getStdoutDescriptor()
 
     def respondClient(self, answer):
         response = pickle.dumps(answer, -1)
@@ -69,28 +75,28 @@ class Daemon():
                             command['mode'] = ''
 
                         if command['mode'] == 'add':
-                            executeAdd(command)
+                            self.respondClient(self.executeAdd(command))
 
                         elif command['mode'] == 'remove':
-                            self.respondClient(executeRemove(command))
+                            self.respondClient(self.executeRemove(command))
 
                         elif command['mode'] == 'switch':
-                            self.respondClient(executeSwitch(command))
+                            self.respondClient(self.executeSwitch(command))
 
                         elif command['mode'] == 'show':
-                            self.respondClient(executeShow)
+                            self.respondClient(self.executeShow(command))
 
                         elif command['mode'] == 'reset':
-                            self.respondClient(executeReset())
+                            self.respondClient(self.executeReset())
 
                         elif command['mode'] == 'start':
-                            self.respondClient(executeStart())
+                            self.respondClient(self.executeStart())
 
                         elif command['mode'] == 'pause':
-                            self.respondClient(executePause())
+                            self.respondClient(self.executePause())
 
                         elif command['mode'] == 'stop':
-                            self.respondClient(executeStop())
+                            self.respondClient(self.executeStop())
 
                         elif command['mode'] == 'kill':
                             self.respondClient(self.executeKill())
@@ -100,19 +106,23 @@ class Daemon():
                             self.active = False
                             break
 
+            # Check if current process terminated
             if self.process is not None:
                 self.process.poll()
                 if self.process.returncode is not None:
-                    output, error_output = self.process.communicate()
-                    self.log[min(self.queue.keys())] = self.queue[min(self.queue.keys())]
-                    self.log[min(self.queue.keys())]['stderr'] = error_output
-                    self.log[min(self.queue.keys())]['stdout'] = output
-                    self.log[min(self.queue.keys())]['returncode'] = self.process.returncode
-                    self.queue.pop(min(self.queue.keys()), None)
-                    self.writeQueue()
-                    self.writeLog()
+                    if not self.stopped:
+                        output, error_output = self.process.communicate()
+                        output = self.stdout.read()
+                        self.log[min(self.queue.keys())] = self.queue[min(self.queue.keys())]
+                        self.log[min(self.queue.keys())]['stderr'] = error_output
+                        self.log[min(self.queue.keys())]['stdout'] = output
+                        self.log[min(self.queue.keys())]['returncode'] = self.process.returncode
+                        self.queue.pop(min(self.queue.keys()), None)
+                        self.writeQueue()
+                        self.writeLog()
                     self.process = None
 
+            # Start next Process
             elif not self.paused:
                 if (len(self.queue) > 0):
                     self.currentKey = min(self.queue.keys())
@@ -120,7 +130,7 @@ class Daemon():
                     self.process = subprocess.Popen(
                             next_item['command'],
                             shell=True,
-                            stdout=subprocess.PIPE,
+                            stdout=self.stdout,
                             stderr=subprocess.PIPE,
                             universal_newlines=True,
                             cwd=next_item['path'])
@@ -186,7 +196,7 @@ class Daemon():
         if os.path.exists(logPath):
             os.remove(logPath)
         logFile = open(logPath, 'w')
-        logFile.write('Pueue log for executed Commands: \n \n \n')
+        logFile.write('Pueue log for executed Commands: \n \n')
         for key in self.log:
             try:
                 logFile.write('Command #{} exited with returncode {}: \n    '.format(key, self.log[key]['returncode']))
@@ -197,8 +207,7 @@ class Daemon():
                     logFile.write('Stderr output: \n')
                     logFile.write(self.log[key]['stderr'] + '\n')
                 logFile.write('Stdout output: \n')
-                logFile.write(self.log[key]['stdout'] + '\n')
-                logFile.write('\n \n')
+                logFile.write(self.log[key]['stdout'])
             except:
                 print('Error while writing to log file. Wrong file permissions?')
         try:
@@ -251,7 +260,7 @@ class Daemon():
                 answer = 'Command #{} and #{} switched'.format(first, second)
         return answer
 
-    def executeShow(self):
+    def executeShow(self, command):
         answer = {}
         data = []
         # Process status
@@ -321,11 +330,14 @@ class Daemon():
             if self.process.returncode is None:
                 self.paused = True
                 self.process.terminate()
+                self.stopped = True
                 answer = 'Terminating current process and pausing'
             else:
                 answer = 'No process running, pausing daemon'
+                self.paused = True
         else:
             answer = 'No process running, pausing daemon'
+            self.paused = True
         return answer
 
     def executeKill(self):
@@ -334,6 +346,7 @@ class Daemon():
             if self.process.returncode is None:
                 self.paused = True
                 self.process.kill()
+                self.stopped = True
                 answer = 'Sent kill to process and paused daemon'
             else:
                 answer = "Process just terminated on it's own"

@@ -51,7 +51,7 @@ def main():
 
     # Pause
     pause_Subcommand = subparsers.add_parser('pause', help='Daemon will finishes the current command and pauses afterwards.')
-    pause_Subcommand.set_defaults(func=daemonState('PAUSE'))
+    pause_Subcommand.set_defaults(func=daemonState('pause'))
 
     # Stop
     stop_Subcommand = subparsers.add_parser('stop', help='Daemon will stop the current command and pauses afterwards.')

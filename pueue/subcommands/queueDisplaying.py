@@ -2,7 +2,7 @@ import pickle
 from textwrap import wrap
 from terminaltables import AsciiTable
 
-from pueue.helper.paths import createDir
+from pueue.helper.files import createDir
 from pueue.helper.socket import getClientSocket
 
 
@@ -49,6 +49,6 @@ def executeShow(args):
 
 
 def executeLog(args):
-    logPath = createDir() + '/queue.log'
+    logPath = createDir() + '/log/queue.log'
     logFile = open(logPath, 'r')
     print(logFile.read())
