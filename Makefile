@@ -13,5 +13,5 @@ clean:
 dist:
 	sudo python setup.py sdist --formats=gztar,zip
 
-upload: dist
+upload: clean dist
 	twine upload dist/*

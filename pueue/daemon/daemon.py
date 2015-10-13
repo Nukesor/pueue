@@ -112,7 +112,8 @@ class Daemon():
                 if self.process.returncode is not None:
                     if not self.stopped:
                         output, error_output = self.process.communicate()
-                        output = self.stdout.read()
+                        self.stdout.seek(0)
+                        output = self.stdout.read().replace('\n','\n    ')
                         self.log[min(self.queue.keys())] = self.queue[min(self.queue.keys())]
                         self.log[min(self.queue.keys())]['stderr'] = error_output
                         self.log[min(self.queue.keys())]['stdout'] = output
@@ -127,6 +128,8 @@ class Daemon():
                 if (len(self.queue) > 0):
                     self.currentKey = min(self.queue.keys())
                     next_item = self.queue[self.currentKey]
+                    self.stdout.seek(0)
+                    self.stdout.truncate()
                     self.process = subprocess.Popen(
                             next_item['command'],
                             shell=True,
@@ -199,15 +202,13 @@ class Daemon():
         logFile.write('Pueue log for executed Commands: \n \n')
         for key in self.log:
             try:
-                logFile.write('Command #{} exited with returncode {}: \n    '.format(key, self.log[key]['returncode']))
-                logFile.write(self.log[key]['command'] + '\n')
-                logFile.write('Path: \n    ')
-                logFile.write(self.log[key]['path'] + '\n')
+                logFile.write('Command #{} exited with returncode {}:  "{}" \n'.format(key, self.log[key]['returncode'], self.log[key]['command']))
+                logFile.write('Path: {} \n'.format(self.log[key]['path']))
                 if self.log[key]['stderr']:
-                    logFile.write('Stderr output: \n')
-                    logFile.write(self.log[key]['stderr'] + '\n')
-                logFile.write('Stdout output: \n')
-                logFile.write(self.log[key]['stdout'])
+                    logFile.write('Stderr output: \n    {}\n'.format(self.log[key]['stderr']))
+                    logFile.write()
+                logFile.write('Stdout output: \n    {}'.format(self.log[key]['stdout']))
+                logFile.write('\n')
             except:
                 print('Error while writing to log file. Wrong file permissions?')
         try:
