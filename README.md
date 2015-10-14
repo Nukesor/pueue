@@ -13,10 +13,8 @@ Everybody who lives on the commandline had this situation, when he needed to tra
 This normaly ends with about 10 open terminals/tmux sessions and an overchallenged hard drive.
 
 But what if you could just queue those commands and they would be executed consecutively in their respective directory? Well that would be awesome!  
-Pueue is supposed to exactly do that. And this is just one possible application.
-
-Pueue is under heavy development, but it already supports all basic functions as well as logging of all executed commands.  
-And there will be even more stuff, like multi user usage or fancy real time stdout displaying of the current process.
+And this is just one possible application.  
+Pueue is designed to execute long running tasks in the background not beeing bound to any terminal.
 
 If I got your attention, give it a try!  
 If you think this is awesome, help me, join the development and create some PR's.
@@ -24,11 +22,6 @@ If you think this is awesome, help me, join the development and create some PR's
 ## Installation:
 
 Pueue can be installed by using `pip install pueue` or by cloning the repository and executing `python setup.py install`.
-
-## Big TODO's:
-
-- Realtime stdout/stderr watching
-- Multi user usage of a single daemon?
 
 ## How to use it:
 
@@ -49,6 +42,7 @@ If the daemon finds a queue from the previous session it'll start in paused stat
 `pueue remove index` Removes the command at #index.  
 `pueue switch index1 index2` Switches the commands at #index1 and #index2.  
 
-`pueue show` Shows the current queue, process and daemon state.  
+`pueue status` Shows the current queue, process and daemon state.  
+`pueue show` Shows the output of the currently running process.  
 `pueue log` Prints the log of all executed commands.  
 

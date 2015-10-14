@@ -6,7 +6,7 @@ import argparse
 from pueue.daemon.daemon import Daemon
 from pueue.helper.socket import removeSocket
 from pueue.subcommands.daemonStates import daemonState
-from pueue.subcommands.queueDisplaying import executeShow, executeLog
+from pueue.subcommands.queueDisplaying import executeStatus, executeLog, executeShow
 from pueue.subcommands.queueManipulation import executeAdd, executeRemove, executeSwitch
 
 
@@ -37,8 +37,13 @@ def main():
     switch_Subcommand.set_defaults(func=executeSwitch)
 
 
+    # Status
+    status_Subcommand = subparsers.add_parser('status', help='Lists all commands in the queue')
+    status_Subcommand.set_defaults(func=executeStatus)
+
     # Show
-    show_Subcommand = subparsers.add_parser('show', help='Lists all commands in the queue')
+    show_Subcommand = subparsers.add_parser('show', help='Shows the output of the currently running process')
+    show_Subcommand.add_argument('--watch', action='store_true', help='Starts the pueue daemon in the current terminal')
     show_Subcommand.set_defaults(func=executeShow)
 
     # Logs

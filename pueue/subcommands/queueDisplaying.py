@@ -1,4 +1,8 @@
+import sys
+import time
 import pickle
+import curses
+import getpass
 from textwrap import wrap
 from terminaltables import AsciiTable
 
@@ -6,12 +10,9 @@ from pueue.helper.files import createDir
 from pueue.helper.socket import getClientSocket
 
 
-def executeShow(args):
+def executeStatus(args):
     client = getClientSocket()
-#    if hasattr(args, 'index') and args.index is not None:
-#        instruction = {'mode': 'show', 'index': args.index}
-#    else:
-    instruction = {'mode': 'show', 'index': 'all'}
+    instruction = {'mode': 'status'}
 
     # Send new instruction to daemon
     data_string = pickle.dumps(instruction, -1)
@@ -52,3 +53,21 @@ def executeLog(args):
     logPath = createDir() + '/log/queue.log'
     logFile = open(logPath, 'r')
     print(logFile.read())
+
+def executeShow(args):
+    userName = getpass.getuser()
+    stdoutFile = '/tmp/pueueStdout{}'.format(userName)
+    descriptor = open(stdoutFile, 'r')
+    running = True
+    if args.watch:
+        stdscr = curses.initscr()
+        while running:
+            stdscr.clear()
+            descriptor.seek(0)
+            message = descriptor.read()
+            stdscr.addstr(0, 0, message)
+            stdscr.refresh()
+            time.sleep(2)
+    else:
+        descriptor.seek(0)
+        print(descriptor.read())

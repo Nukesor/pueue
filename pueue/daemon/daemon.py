@@ -83,8 +83,8 @@ class Daemon():
                         elif command['mode'] == 'switch':
                             self.respondClient(self.executeSwitch(command))
 
-                        elif command['mode'] == 'show':
-                            self.respondClient(self.executeShow(command))
+                        elif command['mode'] == 'status':
+                            self.respondClient(self.executeStatus(command))
 
                         elif command['mode'] == 'reset':
                             self.respondClient(self.executeReset())
@@ -261,7 +261,7 @@ class Daemon():
                 answer = 'Command #{} and #{} switched'.format(first, second)
         return answer
 
-    def executeShow(self, command):
+    def executeStatus(self, command):
         answer = {}
         data = []
         # Process status
@@ -284,11 +284,10 @@ class Daemon():
             answer['current'] = 'No exitcode'
 
         # Queue status
-        if command['index'] == 'all':
-            if len(self.queue) > 0:
-                data = self.queue
-            else:
-                data = 'Queue is empty'
+        if len(self.queue) > 0:
+            data = self.queue
+        else:
+            data = 'Queue is empty'
         answer['data'] = data
 
         # Respond client
