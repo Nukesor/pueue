@@ -1,71 +1,51 @@
 import os
+import pickle
 import shutil
 import unittest
+import subprocess
+
+from daemonize import Daemonize
+
 from pueue.daemon.daemon import Daemon
+from pueue.helper.socket import getClientSocket
+
+from pueue.subcommands.daemonStates import daemonState
+from pueue.subcommands.queueDisplaying import executeStatus
+from pueue.subcommands.queueManipulation import executeAdd, executeRemove, executeSwitch
+
 
 class DaemonTesting(unittest.TestCase):
     def setUp(self):
-        home = os.path.expanduser('~')
-        queueFolder = home+'/.pueue'
-        if os.path.exists(queueFolder):
-            shutil.rmtree(queueFolder)
-        self.daemon = Daemon()
+        process = subprocess.Popen(
+                'pueue --daemon',
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+        )
+        output, error = process.communicate()
 
     def tearDown(self):
-        self.daemon.socket.close()
+        args = {}
+        daemonState('STOPDAEMON')(args)
 
+    def sendCommand(self, command):
+        client =  getClientSocket()
+        client.send(pickle.dumps(command, -1))
+        answer = client.recv(8192)
+        response = pickle.loads(answer)
+        client.close()
+        return response
 
     def test_add(self):
-        add_command = {'mode': 'add', 'command': 'ls', 'path': '/usr/lib'}
-        self.assertEqual(self.daemon.queue, {})
-        self.daemon.executeAdd(add_command)
-        self.assertEqual(self.daemon.queue[0], add_command)
+        response = self.sendCommand({'mode':'add', 'command': 'ls', 'path': '/tmp'})
+        self.assertEqual(response['status'],'success')
 
     def test_remove(self):
-        add_command = {'mode': 'add', 'command': 'ls', 'path': '/usr/lib'}
-        self.daemon.executeAdd(add_command)
-        self.assertEqual(self.daemon.queue[0], add_command)
-
-        remove_command = {'mode': 'remove', 'key': 0}
-        self.daemon.executeRemove(remove_command)
-        self.assertEqual(self.daemon.queue, {})
-
-    def test_remove_key_missing(self):
-        remove_command = {'mode': 'remove', 'key': 0}
-        answer = self.daemon.executeRemove(remove_command)
-        self.assertEqual('No command with key #0', answer)
-
-    def test_switch(self):
-        first_command= {'mode': 'add', 'command': 'ls', 'path': '/usr/lib'}
-        second_command= {'mode': 'add', 'command': 'cd ./', 'path': '/usr'}
-        self.daemon.executeAdd(first_command)
-        self.daemon.executeAdd(second_command)
-        self.assertEqual(self.daemon.queue[0], first_command)
-        self.assertEqual(self.daemon.queue[1], second_command)
-        switch_command = {'mode': 'switch', 'first': 0, 'second': 1}
-        self.daemon.executeSwitch(switch_command)
-        self.assertEqual(self.daemon.queue[0], second_command)
-        self.assertEqual(self.daemon.queue[1], first_command)
-
-    def test_switch_key_missing(self):
-        switch_command = {'mode': 'switch', 'first': 0, 'second': 1}
-        answer = self.daemon.executeSwitch(switch_command)
-        self.assertEqual(answer, 'No command with key #0')
-
-    def test_reset(self):
-        add_command = {'mode': 'add', 'command': 'ls', 'path': '/usr/lib'}
-        self.daemon.executeAdd(add_command)
-        self.daemon.executeReset()
-        self.assertEqual(self.daemon.queue, {})
-        self.assertEqual(self.daemon.log, {})
-        self.assertFalse(self.daemon.paused)
-
-
-    def test_start(self):
-        self.daemon.executePause()
-        self.daemon.executeStart()
-        self.assertFalse(self.daemon.paused)
-
-    def test_pause(self):
-        self.daemon.executePause()
-        self.assertTrue(self.daemon.paused)
+        executeAdd({'command': 'ls'})
+        client =  getClientSocket()
+        command = {'mode':'remove', 'index': '0'}
+        client.send(pickle.dumps(command, -1))
+        answer = client.recv(8192)
+        response = pickle.loads(answer)
+        self.assertEqual(response['status'],'success')
+        client.close()

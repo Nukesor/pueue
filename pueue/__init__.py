@@ -1,7 +1,7 @@
-from daemonize import Daemonize
-
 import sys
 import argparse
+
+from daemonize import Daemonize
 
 from pueue.daemon.daemon import Daemon
 from pueue.helper.socket import removeSocket
@@ -89,6 +89,6 @@ def main():
         daemon = Daemonize(app='pueue',pid='/tmp/pueue.pid', action=startDaemon)
         daemon.start()
     elif hasattr(args, 'func'):
-        args.func(args)
+        args.func(vars(args))
     else:
         print('Invalid Command. Please check -h')

@@ -59,7 +59,7 @@ def executeShow(args):
     stdoutFile = '/tmp/pueueStdout{}'.format(userName)
     descriptor = open(stdoutFile, 'r')
     running = True
-    if args.watch:
+    if args['watch']:
         stdscr = curses.initscr()
         while running:
             stdscr.clear()
