@@ -1,8 +1,6 @@
 # Pueue
 
-[![Build Status](https://travis-ci.org/Nukesor/Pueue.svg?branch=master)](https://travis-ci.org/nukesor/pueue)
-
-Pueue is a queue for bash commands.
+A queue for bash commands.
 
 ![Pueue](https://raw.githubusercontent.com/Nukesor/images/master/pueue.png)
 
@@ -14,7 +12,7 @@ This normaly ends with about 10 open terminals/tmux sessions and an overchalleng
 
 But what if you could just queue those commands and they would be executed consecutively in their respective directory? Well that would be awesome!  
 And this is just one possible application.  
-Pueue is designed to execute long running tasks in the background, while not beeing bound to any terminal.
+Pueue is designed to execute long running tasks in the background, while not beeing bound to any terminal.  
 
 If I got your attention, give it a try!  
 If you think this is awesome, help me, join the development and create some PR's or suggest some improvements.
@@ -31,6 +29,10 @@ There is a help option (-h) for all commands, but I'll list it here anyway.
 `pueue --no-daemon` Starts the daemon in the current terminal.  
 `pueue --stop-daemon` Daemon will shut down instantly. All running processes die.  
 
+`pueue status` Shows the current queue, process and daemon state.  
+`pueue show (--watch)` Shows the output of the currently running process.  
+`pueue log` Prints the log of all executed commands.  
+
 `pueue start` Daemon will start to process the queue.  
 `pueue pause` Daemon will pause after the current command terminated by it's own.  
 `pueue stop` Daemon will terminate the current process and pause.  
@@ -40,8 +42,3 @@ There is a help option (-h) for all commands, but I'll list it here anyway.
 `pueue add 'command'` Adds a command to the queue.  
 `pueue remove index` Removes the command at #index.  
 `pueue switch index1 index2` Switches the commands at #index1 and #index2.  
-
-`pueue status` Shows the current queue, process and daemon state.  
-`pueue show` Shows the output of the currently running process.  
-`pueue log` Prints the log of all executed commands.  
-
