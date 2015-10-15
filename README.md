@@ -14,10 +14,10 @@ This normaly ends with about 10 open terminals/tmux sessions and an overchalleng
 
 But what if you could just queue those commands and they would be executed consecutively in their respective directory? Well that would be awesome!  
 And this is just one possible application.  
-Pueue is designed to execute long running tasks in the background not beeing bound to any terminal.
+Pueue is designed to execute long running tasks in the background, while not beeing bound to any terminal.
 
 If I got your attention, give it a try!  
-If you think this is awesome, help me, join the development and create some PR's.
+If you think this is awesome, help me, join the development and create some PR's or suggest some improvements.
 
 ## Installation:
 
@@ -27,15 +27,14 @@ Pueue can be installed by using `pip install pueue` or by cloning the repository
 
 There is a help option (-h) for all commands, but I'll list it here anyway.
 
-`pueue --daemon` Starts the daemon. The daemonization doesn't work on it's own yet, but there are alternatives e.g. systemd.  
-If the daemon finds a queue from the previous session it'll start in paused state!!  
+`pueue --daemon` Starts the daemon. If the daemon finds a queue from a previous session it'll start in paused state!!  
 `pueue --no-daemon` Starts the daemon in the current terminal.  
 `pueue --stop-daemon` Daemon will shut down instantly. All running processes die.  
 
 `pueue start` Daemon will start to process the queue.  
 `pueue pause` Daemon will pause after the current command terminated by it's own.  
 `pueue stop` Daemon will terminate the current process and pause.  
-`pueue kill` KILLs the current command (kill -9) and pauses the daemon.  
+`pueue kill` KILLs the current process (kill -9) and pauses the daemon.  
 `pueue reset` Removes all commands from the queue, kills the current process and resets the queue index to 0.  
 
 `pueue add 'command'` Adds a command to the queue.  
