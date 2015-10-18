@@ -38,7 +38,7 @@ def main():
 
 
     # Status
-    status_Subcommand = subparsers.add_parser('status', help='Lists all commands in the queue')
+    status_Subcommand = subparsers.add_parser('status', help='Lists all commands in the queue, daemon state and state/returncode of the current/last process')
     status_Subcommand.set_defaults(func=executeStatus)
 
     # Show
