@@ -30,7 +30,7 @@ There is a help option (-h) for all commands, but I'll list it here anyway.
 `pueue --stop-daemon` Daemon will shut down instantly. All running processes die.  
 
 `pueue status` Shows the current queue, process and daemon state.  
-If the queue is empty or the daemon is paused, the returcode of the last will be shown.
+If the queue is empty or the daemon is paused, the returcode of the last will be shown.  
 `pueue show (--watch)` Shows the output of the currently running process.  
 `pueue log` Prints the log of all executed commands.  
 
@@ -43,3 +43,11 @@ If the queue is empty or the daemon is paused, the returcode of the last will be
 `pueue add 'command'` Adds a command to the queue.  
 `pueue remove index` Removes the command at #index.  
 `pueue switch index1 index2` Switches the commands at #index1 and #index2.  
+
+## Utils
+
+### Systemd
+If you're using systemd, place `pueue.service` in `/etc/systemd/user/`.  
+Afterwards every user can start/enable it's own session with:  
+        systemctl --user start pueue.service
+        systemctl --user enable pueue.service
