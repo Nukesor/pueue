@@ -19,11 +19,15 @@ If you think this is awesome, help me, join the development and create some PR's
 
 ## Installation:
 
-Pueue can be installed by using `pip install pueue` or by cloning the repository and executing `python setup.py install`.
+There are three different ways to install pueue.
+
+1. Use the yaourt package manager: `yaourt -S pueue-git` . This will deploy the service file automatically.
+2. Install by using pip: `pip install pueue`. The service files won't be deployed.
+3. Clone the repository and execute `python setup.py install`. The service files won't be deployed.
 
 ## How to use it:
 
-There is a help option (-h) for all commands, but I'll list it here anyway.
+There is a help option (-h) for all commands, but I'll list them here anyway.
 
 `pueue --daemon` Starts the daemon. If the daemon finds a queue from a previous session it'll start in paused state!!  
 `pueue --no-daemon` Starts the daemon in the current terminal.  
@@ -47,7 +51,11 @@ If the queue is empty or the daemon is paused, the returcode of the last will be
 ## Utils
 
 ### Systemd
-If you're using systemd, place `pueue.service` in `/etc/systemd/user/`.  
+If you use systemd and don't install pueue with yaourt, place `pueue.service` in `/etc/systemd/user/`.  
 Afterwards every user can start/enable it's own session with:  
         systemctl --user start pueue.service
         systemctl --user enable pueue.service
+
+### ZSH Completion
+
+If you use zsh, place `_pueue` in a folder, that is contained in your `FPATH` environment variable. This script will be propably added to zsh-users/zsh-completions, when it is finished.
