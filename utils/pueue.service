@@ -9,3 +9,6 @@ Description=Pueue Daemon
 Restart=no
 ExecStart=/usr/bin/pueue --no-daemon
 ExecReload=/usr/bin/pueue --stop-daemon
+
+[Install]
+WantedBy=default.target
