@@ -21,7 +21,7 @@ If you think this is awesome, help me, join the development and create some PR's
 
 There are three different ways to install pueue.
 
-1. Use the yaourt package manager: `yaourt -S pueue-git` . This will deploy the service file automatically.
+1. Use an Arch Linux AUR package manager i.e Yaourt: `yaourt -S pueue-git` . This will deploy the service file automatically.
 2. Install by using pip: `pip install pueue`.
 3. Clone the repository and execute `python setup.py install`.
 
