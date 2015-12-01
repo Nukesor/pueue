@@ -2,6 +2,7 @@ import os
 import sys
 import stat
 import socket
+import pickle
 import getpass
 
 
@@ -18,7 +19,9 @@ def getSocketName():
         socketPath = queueFolder+"/pueueSocket@"+userName+".sock"
         return socketPath
 
+
 def printResponse(socket):
+    # Receive message from daemon, print it and exit with 1 if operation wasn't successful
     answer = socket.recv(8192)
     response = pickle.loads(answer)
     print(response['message'])
@@ -28,6 +31,7 @@ def printResponse(socket):
 
 
 def getClientSocket():
+    # Create Socket and exit with 1, if socket can't be created
     try:
         client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         client.connect(getSocketName())
@@ -47,7 +51,7 @@ def removeSocket():
 def getDaemonSocket():
     removeSocket()
     socketPath = getSocketName()
-    # Creating Socket
+    # Create Socket and exit with 1, if socket can't be created
     try:
         daemon = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         daemon.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)

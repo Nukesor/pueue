@@ -1,7 +1,7 @@
-import sys
 import pickle
 
 from pueue.helper.socket import getClientSocket, printResponse
+
 
 # Factory function for simple command sending functions
 def daemonState(state):

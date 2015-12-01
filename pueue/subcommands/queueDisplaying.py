@@ -1,4 +1,3 @@
-import sys
 import time
 import pickle
 import curses
@@ -56,6 +55,7 @@ def executeLog(args):
     logPath = createDir() + '/log/queue.log'
     logFile = open(logPath, 'r')
     print(logFile.read())
+
 
 def executeShow(args):
     # Get current pueueSTDout file from tmp

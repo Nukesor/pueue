@@ -1,5 +1,4 @@
 import os
-import sys
 import pickle
 
 from pueue.helper.socket import getClientSocket, printResponse
@@ -10,40 +9,42 @@ def executeAdd(args):
 
     # Send new instruction to daemon
     instruction = {
-            'mode': 'add',
-            'command': args['command'],
-            'path': os.getcwd(),
-            'finished': False
-            }
+        'mode': 'add',
+        'command': args['command'],
+        'path': os.getcwd(),
+        'finished': False
+    }
     data_string = pickle.dumps(instruction, -1)
     client.send(data_string)
 
     # Receive Answer from daemon and print it
     printResponse(client)
+
 
 def executeRemove(args):
     client = getClientSocket()
 
     # Send new instruction to daemon
     instruction = {
-            'mode': 'remove',
-            'key': args['key']
-            }
+        'mode': 'remove',
+        'key': args['key']
+    }
     data_string = pickle.dumps(instruction, -1)
     client.send(data_string)
 
     # Receive Answer from daemon and print it
     printResponse(client)
 
+
 def executeSwitch(args):
     client = getClientSocket()
 
     # Send new instruction to daemon
     instruction = {
-            'mode': 'switch',
-            'first': args['first'],
-            'second': args['second']
-            }
+        'mode': 'switch',
+        'first': args['first'],
+        'second': args['second']
+    }
     data_string = pickle.dumps(instruction, -1)
     client.send(data_string)
 
