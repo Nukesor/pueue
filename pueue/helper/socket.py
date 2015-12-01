@@ -18,6 +18,14 @@ def getSocketName():
         socketPath = queueFolder+"/pueueSocket@"+userName+".sock"
         return socketPath
 
+def printResponse(socket):
+    answer = socket.recv(8192)
+    response = pickle.loads(answer)
+    print(response['message'])
+    socket.close()
+    if response['status'] != 'success':
+        sys.exit(1)
+
 
 def getClientSocket():
     try:

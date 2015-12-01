@@ -21,9 +21,12 @@ def executeStatus(args):
     # Receive Answer from daemon and print it
     response = client.recv(8192)
     answer = pickle.loads(response)
-    print('Daemon: {}, Process status: {}, Returncode: {} \n'.format(answer['status'], answer['process'], answer['current']))
-    data = answer['data']
     client.close()
+    # First row, showing daemon status
+    print('Daemon: {}, Process status: {}, Returncode: {} \n'.format(answer['status'], answer['process'], answer['current']))
+
+    # Handle queue data
+    data = answer['data']
     if isinstance(data, str):
         print(data)
     elif isinstance(data, dict):
@@ -55,10 +58,12 @@ def executeLog(args):
     print(logFile.read())
 
 def executeShow(args):
+    # Get current pueueSTDout file from tmp
     userName = getpass.getuser()
     stdoutFile = '/tmp/pueueStdout{}'.format(userName)
     descriptor = open(stdoutFile, 'r')
     running = True
+    # Continually print output with curses or just print once
     if args['watch']:
         stdscr = curses.initscr()
         while running:
