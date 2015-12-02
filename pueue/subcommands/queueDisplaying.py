@@ -31,9 +31,9 @@ def executeStatus(args):
     elif isinstance(data, dict):
         # Format incomming data to be compatible with Terminaltables
         formatted_data = []
-        formatted_data.append(['Index', 'Command', 'Path'])
+        formatted_data.append(['Index', 'Status', 'Command', 'Path'])
         for key, entry in data.items():
-            formatted_data.append(['#{}'.format(key), entry['command'], entry['path']])
+            formatted_data.append(['#{}'.format(key), entry['status'], entry['command'], entry['path']])
 
         # Create AsciiTable instance and define style
         table = AsciiTable(formatted_data)

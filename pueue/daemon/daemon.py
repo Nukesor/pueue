@@ -30,7 +30,6 @@ class Daemon():
         self.stopped = False
 
         self.current = None
-        self.currentKey = None
 
         # Daemon states
         self.clientAddress = None
@@ -38,8 +37,16 @@ class Daemon():
         self.process = None
         self.read_list = [self.socket]
 
-        #Stdout/Stderr management
+        # Stdout/Stderr management
         self.stdout = getStdoutDescriptor()
+
+    def getCurrentKey(self):
+        smallest = None
+        for key in self.queue.keys():
+            if self.queue[key]['status'] is not 'done':
+                if smallest is None or key < smallest:
+                    smallest = key
+        return smallest
 
     def respondClient(self, answer):
         response = pickle.dumps(answer, -1)
@@ -112,14 +119,17 @@ class Daemon():
                 self.process.poll()
                 if self.process.returncode is not None:
                     if not self.stopped:
+                        # Get std_out and err_out
                         output, error_output = self.process.communicate()
                         self.stdout.seek(0)
-                        output = self.stdout.read().replace('\n','\n    ')
+                        output = self.stdout.read().replace('\n', '\n    ')
+                        # Write log
                         self.log[min(self.queue.keys())] = self.queue[min(self.queue.keys())]
                         self.log[min(self.queue.keys())]['stderr'] = error_output
                         self.log[min(self.queue.keys())]['stdout'] = output
                         self.log[min(self.queue.keys())]['returncode'] = self.process.returncode
-                        self.queue.pop(min(self.queue.keys()), None)
+                        # Pop from queue
+                        self.queue[self.getCurrentKey()]['status'] = 'done'
                         self.writeQueue()
                         self.writeLog()
                     self.process = None
@@ -127,17 +137,19 @@ class Daemon():
             # Start next Process
             elif not self.paused:
                 if (len(self.queue) > 0):
-                    self.currentKey = min(self.queue.keys())
-                    next_item = self.queue[self.currentKey]
-                    self.stdout.seek(0)
-                    self.stdout.truncate()
-                    self.process = subprocess.Popen(
+                    current = self.getCurrentKey()
+                    if current is not None:
+                        next_item = self.queue[self.getCurrentKey()]
+                        self.stdout.seek(0)
+                        self.stdout.truncate()
+                        self.process = subprocess.Popen(
                             next_item['command'],
                             shell=True,
                             stdout=self.stdout,
                             stderr=subprocess.PIPE,
                             universal_newlines=True,
-                            cwd=next_item['path'])
+                            cwd=next_item['path']
+                        )
 
         self.socket.close()
         os.remove(getSocketName())
@@ -224,21 +236,21 @@ class Daemon():
         self.queue[self.nextKey] = command
         self.nextKey += 1
         self.writeQueue()
-        return {'message': 'Command added', 'status':'success'}
+        return {'message': 'Command added', 'status': 'success'}
 
     def executeRemove(self, command):
         key = command['key']
         if key not in self.queue:
             # Send error answer to client in case there exists no such key
-            answer = {'message': 'No command with key #{}'.format(str(key)), 'status':'error'}
+            answer = {'message': 'No command with key #{}'.format(str(key)), 'status': 'error'}
         else:
             # Delete command from queue, save the queue and send response to client
-            if not self.paused and key == self.currentKey:
-                answer = {'message': "Can't remove currently running process, please stop the process before removing it.", 'status':'error'}
+            if not self.paused and key == self.getCurrentKey():
+                answer = {'message': "Can't remove currently running process, please stop the process before removing it.", 'status': 'error'}
             else:
                 del self.queue[key]
                 self.writeQueue()
-                answer = {'message': 'Command #{} removed'.format(key), 'status':'success'}
+                answer = {'message': 'Command #{} removed'.format(key), 'status': 'success'}
         return answer
 
     def executeSwitch(self, command):
@@ -246,20 +258,20 @@ class Daemon():
         second = command['second']
         # Send error answer to client in case there exists no such key
         if first not in self.queue:
-        # Send error answer to client in case there exists no such key
-            answer = {'message': 'No command with key #{}'.format(str(first)), 'status':'error'}
+            # Send error answer to client in case there exists no such key
+            answer = {'message': 'No command with key #{}'.format(str(first)), 'status': 'error'}
         elif second not in self.queue:
-        # Send error answer to client in case there exists no such key
-            answer = {'message': 'No command with key #{}'.format(str(second)), 'status':'error'}
+            # Send error answer to client in case there exists no such key
+            answer = {'message': 'No command with key #{}'.format(str(second)), 'status': 'error'}
         else:
             # Delete command from queue, save the queue and send response to client
-            if not self.paused and (first == self.currentKey or second == self.currentKey):
-                answer = {'message': "Can't switch currently running process, please stop the process before switching it.", 'status':'error'}
+            if not self.paused and (first == self.getCurrentKey() or second == self.getCurrentKey()):
+                answer = {'message': "Can't switch currently running process, please stop the process before switching it.", 'status': 'error'}
             else:
                 tmp = self.queue[second].copy()
                 self.queue[second] = self.queue[first].copy()
                 self.queue[first] = tmp
-                answer = {'message': 'Command #{} and #{} switched'.format(first, second), 'status':'success'}
+                answer = {'message': 'Command #{} and #{} switched'.format(first, second), 'status': 'success'}
         return answer
 
     def executeStatus(self, command):
@@ -270,8 +282,10 @@ class Daemon():
             self.process.poll()
             if self.process.returncode is None:
                 answer['process'] = 'running'
-        elif self.currentKey in self.log.keys():
-            answer['process'] = 'finished'
+            elif self.getCurrentKey() in self.log.keys():
+                answer['process'] = 'finished'
+            else:
+                answer['process'] = 'No process'
         else:
             answer['process'] = 'No process'
 
@@ -279,8 +293,8 @@ class Daemon():
             answer['status'] = 'paused'
         else:
             answer['status'] = 'running'
-        if self.currentKey in self.log.keys():
-            answer['current'] = self.log[self.currentKey]['returncode']
+        if self.getCurrentKey() in self.log.keys():
+            answer['current'] = self.log[self.getCurrentKey()]['returncode']
         else:
             answer['current'] = 'No exitcode'
 
@@ -304,25 +318,24 @@ class Daemon():
         # Rotate and reset Log
         self.readLog(True)
         self.writeLog()
-        self.currentKey = None
         self.nextKey = 0
-        answer = {'message': 'Reseting current queue', 'status':'success'}
+        answer = {'message': 'Reseting current queue', 'status': 'success'}
         return answer
 
     def executeStart(self):
         if self.paused:
             self.paused = False
-            answer = {'message': 'Daemon started', 'status':'success'}
+            answer = {'message': 'Daemon started', 'status': 'success'}
         else:
-            answer = {'message': 'Daemon alrady started', 'status':'omit'}
+            answer = {'message': 'Daemon alrady started', 'status': 'omit'}
         return answer
 
     def executePause(self):
         if not self.paused:
             self.paused = True
-            answer = {'message': 'Daemon paused', 'status':'success'}
+            answer = {'message': 'Daemon paused', 'status': 'success'}
         else:
-            answer = {'message': 'Daemon already paused', 'status':'omit'}
+            answer = {'message': 'Daemon already paused', 'status': 'omit'}
         return answer
 
     def executeStop(self):
@@ -332,12 +345,12 @@ class Daemon():
                 self.paused = True
                 self.process.terminate()
                 self.stopped = True
-                answer = {'message': 'Terminating current process and pausing', 'status':'success'}
+                answer = {'message': 'Terminating current process and pausing', 'status': 'success'}
             else:
-                answer = {'message': 'Process just finished, pausing daemon', 'status':'omit'}
+                answer = {'message': 'Process just finished, pausing daemon', 'status': 'omit'}
                 self.paused = True
         else:
-            answer = {'message': 'No process running, pausing daemon', 'status':'omit'}
+            answer = {'message': 'No process running, pausing daemon', 'status': 'omit'}
             self.paused = True
         return answer
 
@@ -348,10 +361,9 @@ class Daemon():
                 self.paused = True
                 self.process.kill()
                 self.stopped = True
-                answer = {'message': 'Sent kill to process and paused daemon', 'status':'success'}
+                answer = {'message': 'Sent kill to process and paused daemon', 'status': 'success'}
             else:
-                answer = {'message': "Process just terminated on it's own", 'status':'omit'}
+                answer = {'message': "Process just terminated on it's own", 'status': 'omit'}
         else:
-            answer = {'message': 'No process running, pausing daemon', 'status':'omit'}
+            answer = {'message': 'No process running, pausing daemon', 'status': 'omit'}
         return answer
-

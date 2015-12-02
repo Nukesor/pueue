@@ -22,10 +22,10 @@ class DaemonTesting(unittest.TestCase):
             stderr=subprocess.PIPE
         )
         output, error = process.communicate()
+        daemonState('reset')({})
 
     def tearDown(self):
-        args = {}
-        daemonState('STOPDAEMON')(args)
+        daemonState('STOPDAEMON')({})
 
     def sendCommand(self, command):
         client = getClientSocket()
@@ -37,6 +37,8 @@ class DaemonTesting(unittest.TestCase):
 
     def executeAdd(self, command):
         command['mode'] = 'add'
+        command['status'] = 'queued'
+        command['path'] = '/tmp'
         self.sendCommand(command)
 
     def executeSwitch(self, command):
@@ -62,7 +64,12 @@ class DaemonTesting(unittest.TestCase):
 
     def test_add(self):
         daemonState('pause')({})
-        response = self.sendCommand({'mode': 'add', 'command': 'ls', 'path': '/tmp'})
+        response = self.sendCommand({
+            'mode': 'add',
+            'command': 'ls',
+            'path': '/tmp',
+            'status': 'queued'
+        })
         self.assertEqual(response['status'], 'success')
         status = self.getStatus()
         self.assertEqual(status['data'][0]['command'], 'ls')
@@ -84,7 +91,6 @@ class DaemonTesting(unittest.TestCase):
         self.executeAdd({'command': 'ls'})
 
         response = self.sendCommand({'mode': 'remove', 'key': 0})
-        print(response['message'])
         self.assertEqual(response['status'], 'success')
         status = self.getStatus()
         self.assertFalse('0' in status['data'])
@@ -105,7 +111,11 @@ class DaemonTesting(unittest.TestCase):
     def test_switch_running(self):
         self.executeAdd({'command': 'sleep 60'})
         self.executeAdd({'command': 'ls -l'})
-        response = self.sendCommand({'mode': 'switch', 'first': 0, 'second': 1})
+        response = self.sendCommand({
+            'mode': 'switch',
+            'first': 0,
+            'second': 1
+        })
         self.assertEqual(response['status'], 'error')
 
     def test_kill(self):
