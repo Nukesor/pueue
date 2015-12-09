@@ -124,11 +124,12 @@ class Daemon():
                         self.stdout.seek(0)
                         output = self.stdout.read().replace('\n', '\n    ')
                         # Write log
-                        self.log[min(self.queue.keys())] = self.queue[min(self.queue.keys())]
-                        self.log[min(self.queue.keys())]['stderr'] = error_output
-                        self.log[min(self.queue.keys())]['stdout'] = output
-                        self.log[min(self.queue.keys())]['returncode'] = self.process.returncode
-                        # Pop from queue
+                        self.log[self.getCurrentKey()] = self.queue[self.getCurrentKey()]
+                        self.log[self.getCurrentKey()]['stderr'] = error_output
+                        self.log[self.getCurrentKey()]['stdout'] = output
+                        self.log[self.getCurrentKey()]['returncode'] = self.process.returncode
+                        # Mark queue entry as finished
+                        self.queue[self.getCurrentKey()]['returncode'] = self.process.returncode
                         self.queue[self.getCurrentKey()]['status'] = 'done'
                         self.writeQueue()
                         self.writeLog()
@@ -150,6 +151,7 @@ class Daemon():
                             universal_newlines=True,
                             cwd=next_item['path']
                         )
+                        self.queue[self.getCurrentKey()]['status'] = 'running'
 
         self.socket.close()
         os.remove(getSocketName())
@@ -170,8 +172,7 @@ class Daemon():
             self.queue = {}
 
     def writeQueue(self):
-        home = os.path.expanduser('~')
-        queuePath = home+'/.pueue/queue'
+        queuePath = self.queueFolder + '/queue'
         queueFile = open(queuePath, 'wb+')
         try:
             pickle.dump(self.queue, queueFile, -1)
@@ -200,7 +201,6 @@ class Daemon():
             self.writeLog()
 
     def writeLog(self, rotate=False):
-
         if rotate:
             timestamp = time.strftime('%Y%m%d-%H%M')
             logPath = self.logDir + '/queue-' + timestamp + '.log'
@@ -291,6 +291,8 @@ class Daemon():
 
         if self.paused:
             answer['status'] = 'paused'
+            if self.getCurrentKey() in self.queue.keys():
+                self.queue[self.getCurrentKey()]['status'] = 'queued'
         else:
             answer['status'] = 'running'
         if self.getCurrentKey() in self.log.keys():

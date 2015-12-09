@@ -38,6 +38,7 @@ class DaemonTesting(unittest.TestCase):
     def executeAdd(self, command):
         command['mode'] = 'add'
         command['status'] = 'queued'
+        command['returncode'] = ''
         command['path'] = '/tmp'
         self.sendCommand(command)
 
@@ -68,7 +69,8 @@ class DaemonTesting(unittest.TestCase):
             'mode': 'add',
             'command': 'ls',
             'path': '/tmp',
-            'status': 'queued'
+            'status': 'queued',
+            'returncode': ''
         })
         self.assertEqual(response['status'], 'success')
         status = self.getStatus()

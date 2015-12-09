@@ -12,7 +12,8 @@ def executeAdd(args):
         'mode': 'add',
         'command': args['command'],
         'path': os.getcwd(),
-        'status': 'queued'
+        'status': 'queued',
+        'returncode': ''
     }
     data_string = pickle.dumps(instruction, -1)
     client.send(data_string)
