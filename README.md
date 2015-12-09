@@ -48,9 +48,16 @@ If the queue is empty or the daemon is paused, the returcode of the last will be
 `pueue remove index` Removes the command at #index.  
 `pueue switch index1 index2` Switches the commands at #index1 and #index2.  
 
-## Logs
+## Configs and Logs
 
-The logs of all your commands can be found in `~/.pueue/log/`. Old logs won't be deleted automatically.
+The config file of pueue is located in `~/.config/pueue/pueue.ini`.
+
+#### options
+
+`stopAtError: True` Define if the demon should enter paused state, if a process in the queue fails.
+`resumeAfterStart: False` If you want pueue to instantly resume a queue from the last session, set this value to `True`.
+
+The logs of all your commands can be found in `~/.shared/pueue/*.log`. Old logs won't be deleted automatically yet.
 
 ## Utils
 

@@ -5,7 +5,7 @@ import getpass
 from textwrap import wrap
 from terminaltables import AsciiTable
 
-from pueue.helper.files import createDir
+from pueue.helper.files import createLogDir
 from pueue.helper.socket import getClientSocket
 
 
@@ -60,7 +60,7 @@ def executeStatus(args):
 
 
 def executeLog(args):
-    logPath = createDir() + '/log/queue.log'
+    logPath = createLogDir() + '/queue.log'
     logFile = open(logPath, 'r')
     print(logFile.read())
 

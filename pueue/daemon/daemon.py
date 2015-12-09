@@ -7,6 +7,7 @@ import subprocess
 
 from pueue.helper.files import createDir, createLogDir, getStdoutDescriptor
 from pueue.helper.socket import getSocketName, getDaemonSocket
+from pueue.helper.config import getConfig
 
 
 class Daemon():
@@ -14,16 +15,26 @@ class Daemon():
         # Create config dir, if not existing
         self.queueFolder = createDir()
         self.logDir = createLogDir()
+        self.config = getConfig()
 
         self.readQueue()
+        # Reset queue if all jobs from last session are finished
+        if self.getCurrentKey() is None:
+            self.queue = {}
+            self.writeQueue()
         self.socket = getDaemonSocket()
+
+        # Load previous queue, delete it if all jobs are empty
+        # If there are still jobs in the queue the daemon might pause
+        # if this behaviour is defined in the config file.
+        self.paused = False
         if len(self.queue) != 0:
             self.nextKey = max(self.queue.keys()) + 1
             self.readLog(False)
-            self.paused = True
+            if not self.config['default']['resumeAfterStart']:
+                self.paused = True
         else:
             self.nextKey = 0
-            self.paused = False
             self.readLog(True)
 
         self.active = True
@@ -43,7 +54,7 @@ class Daemon():
     def getCurrentKey(self):
         smallest = None
         for key in self.queue.keys():
-            if self.queue[key]['status'] is not 'done':
+            if self.queue[key]['status'] != 'done':
                 if smallest is None or key < smallest:
                     smallest = key
         return smallest
@@ -71,7 +82,7 @@ class Daemon():
                         print('Client died while sending message, dropping received data.')
                         instruction = -1
 
-                    if instruction is not -1:
+                    if instruction != -1:
                         try:
                             command = pickle.loads(instruction)
                         except EOFError:
@@ -123,14 +134,22 @@ class Daemon():
                         output, error_output = self.process.communicate()
                         self.stdout.seek(0)
                         output = self.stdout.read().replace('\n', '\n    ')
+                        currentKey = self.getCurrentKey()
+                        print(currentKey)
                         # Write log
-                        self.log[self.getCurrentKey()] = self.queue[self.getCurrentKey()]
-                        self.log[self.getCurrentKey()]['stderr'] = error_output
-                        self.log[self.getCurrentKey()]['stdout'] = output
-                        self.log[self.getCurrentKey()]['returncode'] = self.process.returncode
+                        self.log[currentKey] = self.queue[currentKey]
+                        self.log[currentKey]['stderr'] = error_output
+                        self.log[currentKey]['stdout'] = output
+                        self.log[currentKey]['returncode'] = self.process.returncode
+
+                        # Pause Daemon, if it is configured to stop
+                        if self.config['default']['stopAtError'] is True:
+                            if self.process.returncode == 0:
+                                self.paused = True
+
                         # Mark queue entry as finished
-                        self.queue[self.getCurrentKey()]['returncode'] = self.process.returncode
-                        self.queue[self.getCurrentKey()]['status'] = 'done'
+                        self.queue[currentKey]['returncode'] = self.process.returncode
+                        self.queue[currentKey]['status'] = 'done'
                         self.writeQueue()
                         self.writeLog()
                     self.process = None
@@ -138,9 +157,9 @@ class Daemon():
             # Start next Process
             elif not self.paused:
                 if (len(self.queue) > 0):
-                    current = self.getCurrentKey()
-                    if current is not None:
-                        next_item = self.queue[self.getCurrentKey()]
+                    currentKey = self.getCurrentKey()
+                    if currentKey is not None:
+                        next_item = self.queue[currentKey]
                         self.stdout.seek(0)
                         self.stdout.truncate()
                         self.process = subprocess.Popen(
@@ -151,7 +170,7 @@ class Daemon():
                             universal_newlines=True,
                             cwd=next_item['path']
                         )
-                        self.queue[self.getCurrentKey()]['status'] = 'running'
+                        self.queue[currentKey]['status'] = 'running'
 
         self.socket.close()
         os.remove(getSocketName())
@@ -265,7 +284,8 @@ class Daemon():
             answer = {'message': 'No command with key #{}'.format(str(second)), 'status': 'error'}
         else:
             # Delete command from queue, save the queue and send response to client
-            if not self.paused and (first == self.getCurrentKey() or second == self.getCurrentKey()):
+            currentKey = self.getCurrentKey()
+            if not self.paused and (first == currentKey or second == currentKey):
                 answer = {'message': "Can't switch currently running process, please stop the process before switching it.", 'status': 'error'}
             else:
                 tmp = self.queue[second].copy()
@@ -277,12 +297,13 @@ class Daemon():
     def executeStatus(self, command):
         answer = {}
         data = []
+        currentKey = self.getCurrentKey()
         # Process status
         if (self.process is not None):
             self.process.poll()
             if self.process.returncode is None:
                 answer['process'] = 'running'
-            elif self.getCurrentKey() in self.log.keys():
+            elif currentKey in self.log.keys():
                 answer['process'] = 'finished'
             else:
                 answer['process'] = 'No process'
@@ -291,12 +312,12 @@ class Daemon():
 
         if self.paused:
             answer['status'] = 'paused'
-            if self.getCurrentKey() in self.queue.keys():
-                self.queue[self.getCurrentKey()]['status'] = 'queued'
+            if currentKey in self.queue.keys():
+                self.queue[currentKey]['status'] = 'queued'
         else:
             answer['status'] = 'running'
-        if self.getCurrentKey() in self.log.keys():
-            answer['current'] = self.log[self.getCurrentKey()]['returncode']
+        if currentKey in self.log.keys():
+            answer['current'] = self.log[currentKey]['returncode']
         else:
             answer['current'] = 'No exitcode'
 
