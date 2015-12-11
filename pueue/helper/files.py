@@ -12,7 +12,7 @@ def createDir():
 
 def createLogDir():
     home = os.path.expanduser('~')
-    logFolder = home+'/.local/shared/pueue'
+    logFolder = home+'/.local/share/pueue'
     if not os.path.exists(logFolder):
         os.makedirs(logFolder)
     return logFolder

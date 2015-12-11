@@ -6,6 +6,8 @@ import getpass
 
 from textwrap import wrap
 from functools import reduce
+# from termcolor import colored
+from colorclass import Color
 
 from pueue.helper.files import createLogDir
 from pueue.helper.socket import getClientSocket
@@ -74,6 +76,19 @@ def executeStatus(args):
             for j, string in enumerate(entry):
                 max_width = customWidth[j]
                 wrapped_string = '\n'.join(wrap(string, max_width))
+                if j == 1:
+                    if wrapped_string == 'done':
+                        wrapped_string = Color('{autogreen}' + '{}'.format(wrapped_string) + '{/autogreen}')
+                    elif wrapped_string == 'queued':
+                        wrapped_string = Color('{autoyellow}' + '{}'.format(wrapped_string) + '{/autoyellow}')
+                    elif wrapped_string == 'errored':
+                        wrapped_string = Color('{autored}' + '{}'.format(wrapped_string) + '{/autored}')
+                elif j == 2:
+                    if wrapped_string == '0' and wrapped_string != 'Code':
+                        wrapped_string = Color('{autogreen}' + '{}'.format(wrapped_string) + '{/autogreen}')
+                    elif wrapped_string != '0' and wrapped_string != 'Code':
+                        wrapped_string = Color('{autored}' + '{}'.format(wrapped_string) + '{/autored}')
+
                 table.table_data[i][j] = wrapped_string
 
         print(table.table)

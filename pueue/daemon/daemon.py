@@ -54,7 +54,7 @@ class Daemon():
     def getCurrentKey(self):
         smallest = None
         for key in self.queue.keys():
-            if self.queue[key]['status'] != 'done':
+            if self.queue[key]['status'] != 'done' and self.queue[key]['status'] != 'errored':
                 if smallest is None or key < smallest:
                     smallest = key
         return smallest
@@ -135,7 +135,7 @@ class Daemon():
                         self.stdout.seek(0)
                         output = self.stdout.read().replace('\n', '\n    ')
                         currentKey = self.getCurrentKey()
-                        print(currentKey)
+
                         # Write log
                         self.log[currentKey] = self.queue[currentKey]
                         self.log[currentKey]['stderr'] = error_output
@@ -149,7 +149,11 @@ class Daemon():
 
                         # Mark queue entry as finished
                         self.queue[currentKey]['returncode'] = self.process.returncode
-                        self.queue[currentKey]['status'] = 'done'
+                        if self.process.returncode != 0:
+                            self.queue[currentKey]['status'] = 'errored'
+                        else:
+                            self.queue[currentKey]['status'] = 'done'
+
                         self.writeQueue()
                         self.writeLog()
                     self.process = None
@@ -196,7 +200,7 @@ class Daemon():
         try:
             pickle.dump(self.queue, queueFile, -1)
         except:
-            print('Error while writing to queue file. Wrong file permissions?')
+            print('Errored while writing to queue file. Wrong file permissions?')
         queueFile.close()
 
     def readLog(self, rotate=False):
@@ -238,15 +242,14 @@ class Daemon():
                 logFile.write('Path: {} \n'.format(self.log[key]['path']))
                 if self.log[key]['stderr']:
                     logFile.write('Stderr output: \n    {}\n'.format(self.log[key]['stderr']))
-                    logFile.write()
                 logFile.write('Stdout output: \n    {}'.format(self.log[key]['stdout']))
                 logFile.write('\n')
             except:
-                print('Error while writing to log file. Wrong file permissions?')
+                print('Errored while writing to log file. Wrong file permissions?')
         try:
             pickle.dump(self.log, picklelogFile, -1)
         except:
-            print('Error while writing to picklelog file. Wrong file permissions?')
+            print('Errored while writing to picklelog file. Wrong file permissions?')
         logFile.close()
         picklelogFile.close()
 
