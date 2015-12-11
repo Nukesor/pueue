@@ -6,7 +6,6 @@ import getpass
 
 from textwrap import wrap
 from functools import reduce
-# from termcolor import colored
 from colorclass import Color
 
 from pueue.helper.files import createLogDir
