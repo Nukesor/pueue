@@ -1,12 +1,17 @@
 import time
+import math
 import pickle
 import curses
 import getpass
+
 from textwrap import wrap
-from terminaltables import AsciiTable
+from functools import reduce
 
 from pueue.helper.files import createLogDir
 from pueue.helper.socket import getClientSocket
+
+from terminaltables.tables import AsciiTable
+from terminaltables.terminal_io import terminal_size
 
 
 def executeStatus(args):
@@ -48,10 +53,20 @@ def executeStatus(args):
         table.outer_border = False
         table.inner_column_border = False
 
+        terminal_width = terminal_size()
+        customWidth = table.column_widths
+        # If the text is wider than the actual terminal size, we
+        # compute a new size for the Command and Path column.
+        if reduce(lambda a, b: a+b, table.column_widths) > terminal_width[0]:
+            # We have to subtract 10 because of table paddings
+            left_space = terminal_width[0] - customWidth[0] - customWidth[1] - customWidth[2] - 10
+            customWidth[3] = math.floor(left_space/2)
+            customWidth[4] = math.floor(left_space/2)
+
         # Format long strings to match the console width
-        max_width = table.column_max_width(1)
         for i, entry in enumerate(table.table_data):
             for j, string in enumerate(entry):
+                max_width = customWidth[j]
                 wrapped_string = '\n'.join(wrap(string, max_width))
                 table.table_data[i][j] = wrapped_string
 
