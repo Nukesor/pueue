@@ -11,7 +11,7 @@ setup(
     license='MIT',
     install_requires=[
         'terminaltables==2.1.0',
-        'daemonize==2.3.1',
+        'daemonize==2.4.1',
         'colorclass==1.2.0'
     ],
     classifiers=[
