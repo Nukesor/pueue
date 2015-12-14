@@ -125,14 +125,14 @@ class DaemonTesting(unittest.TestCase):
         daemonState('kill')({})
         status = self.getStatus()
         self.assertEqual(status['status'], 'paused')
-        self.assertEqual(status['process'], 'No process')
+        self.assertEqual(status['process'], 'No running process')
 
     def test_stop(self):
         self.executeAdd({'command': 'sleep 60'})
         daemonState('stop')({})
         status = self.getStatus()
         self.assertEqual(status['status'], 'paused')
-        self.assertEqual(status['process'], 'No process')
+        self.assertEqual(status['process'], 'No running process')
 
     def test_process(self):
         self.executeAdd({'command': 'sleep 60'})
