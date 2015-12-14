@@ -4,14 +4,15 @@ setup(
     name='pueue',
     author='Arne Beer',
     author_email='arne@twobeer.de',
-    version='0.4.0',
+    version='0.4.1',
     description='Pueue is a fancy queue for bash commands',
     keywords='bash queue command',
     url='http://github.com/nukesor/pueue',
     license='MIT',
     install_requires=[
-        'terminaltables>=1.0.2',
-        'daemonize>=2.3.1'
+        'terminaltables==2.1.0',
+        'daemonize==2.3.1',
+        'colorclass==1.2.0'
     ],
     classifiers=[
         'License :: OSI Approved :: MIT License',

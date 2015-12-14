@@ -28,7 +28,15 @@ def executeStatus(args):
     answer = pickle.loads(response)
     client.close()
     # First row, showing daemon status
-    print('Daemon: {}, Process status: {}, Returncode: {} \n'.format(answer['status'], answer['process'], answer['current']))
+    if answer['status'] == 'running':
+        answer['status'] = Color('{autogreen}' + '{}'.format(answer['status'] ) + '{/autogreen}')
+    elif answer['status'] == 'paused':
+        answer['status'] = Color('{autoyellow}' + '{}'.format(answer['status'] ) + '{/autoyellow}')
+
+    if answer['process'] == 'running':
+        answer['process'] = Color('{autogreen}' + '{}'.format(answer['process'] ) + '{/autogreen}')
+
+    print('Daemon: {}\nProcess status: {} \n'.format(answer['status'], answer['process']))
 
     # Handle queue data
     data = answer['data']
@@ -76,7 +84,7 @@ def executeStatus(args):
                 max_width = customWidth[j]
                 wrapped_string = '\n'.join(wrap(string, max_width))
                 if j == 1:
-                    if wrapped_string == 'done':
+                    if wrapped_string == 'done' or wrapped_string == 'running':
                         wrapped_string = Color('{autogreen}' + '{}'.format(wrapped_string) + '{/autogreen}')
                     elif wrapped_string == 'queued':
                         wrapped_string = Color('{autoyellow}' + '{}'.format(wrapped_string) + '{/autoyellow}')

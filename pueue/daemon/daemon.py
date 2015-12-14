@@ -309,9 +309,9 @@ class Daemon():
             elif currentKey in self.log.keys():
                 answer['process'] = 'finished'
             else:
-                answer['process'] = 'No process'
+                answer['process'] = 'No running process'
         else:
-            answer['process'] = 'No process'
+            answer['process'] = 'No running process'
 
         if self.paused:
             answer['status'] = 'paused'
