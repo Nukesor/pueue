@@ -31,7 +31,7 @@ There is a help option (-h) for all commands, but I'll list them here anyway.
 
 `pueue --daemon` Starts the daemon. If the daemon finds a queue from a previous session it'll start in paused state!!  
 `pueue --no-daemon` Starts the daemon in the current terminal.  
-`pueue --stop-daemon` Daemon will shut down instantly. All running processes die.  
+`pueue --stop-daemon` Daemon shuts down instantly. All running processes die.  
 
 `pueue status` Shows the current queue, process and daemon state.  
 If the queue is empty or the daemon is paused, the returcode of the last will be shown.  

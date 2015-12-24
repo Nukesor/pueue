@@ -27,14 +27,14 @@ def executeStatus(args):
     response = client.recv(8192)
     answer = pickle.loads(response)
     client.close()
-    # First row, showing daemon status
+    # First rows, showing daemon status
     if answer['status'] == 'running':
-        answer['status'] = Color('{autogreen}' + '{}'.format(answer['status'] ) + '{/autogreen}')
+        answer['status'] = Color('{autogreen}' + '{}'.format(answer['status']) + '{/autogreen}')
     elif answer['status'] == 'paused':
-        answer['status'] = Color('{autoyellow}' + '{}'.format(answer['status'] ) + '{/autoyellow}')
+        answer['status'] = Color('{autoyellow}' + '{}'.format(answer['status']) + '{/autoyellow}')
 
     if answer['process'] == 'running':
-        answer['process'] = Color('{autogreen}' + '{}'.format(answer['process'] ) + '{/autogreen}')
+        answer['process'] = Color('{autogreen}' + '{}'.format(answer['process']) + '{/autogreen}')
 
     print('Daemon: {}\nProcess status: {} \n'.format(answer['status'], answer['process']))
 

@@ -1,13 +1,13 @@
 import os
 import sys
-import time
 import pickle
 import select
 import subprocess
 
-from pueue.helper.files import createDir, createLogDir, getStdoutDescriptor
-from pueue.helper.socket import getSocketName, getDaemonSocket
+from pueue.helper.logs import writeLog
 from pueue.helper.config import getConfig
+from pueue.helper.socket import getSocketName, getDaemonSocket
+from pueue.helper.files import createDir, createLogDir, getStdoutDescriptor
 
 
 class Daemon():
@@ -18,17 +18,18 @@ class Daemon():
         self.config = getConfig()
 
         self.readQueue()
+        # Load previous queue
         # Reset queue if all jobs from last session are finished
         if self.getCurrentKey() is None:
             self.queue = {}
             self.writeQueue()
         self.socket = getDaemonSocket()
 
-        # Load previous queue, delete it if all jobs are empty
-        # If there are still jobs in the queue the daemon might pause
+        # If there are still jobs in the queue the daemon might pause,
         # if this behaviour is defined in the config file.
+        # The old logfile is beeing loaded as well.
         self.paused = False
-        if len(self.queue) != 0:
+        if len(self.queue) > 0:
             self.nextKey = max(self.queue.keys()) + 1
             self.readLog(False)
             if not self.config['default']['resumeAfterStart']:
@@ -40,9 +41,7 @@ class Daemon():
         self.active = True
         self.stopped = False
 
-        self.current = None
-
-        # Daemon states
+        # Variables for handling sockets and child process
         self.clientAddress = None
         self.clientSocket = None
         self.process = None
@@ -52,6 +51,8 @@ class Daemon():
         self.stdout = getStdoutDescriptor()
 
     def getCurrentKey(self):
+        # Get the current key of the queue.
+        # Returns None if no key is found.
         smallest = None
         for key in self.queue.keys():
             if self.queue[key]['status'] != 'done' and self.queue[key]['status'] != 'errored':
@@ -60,6 +61,7 @@ class Daemon():
         return smallest
 
     def respondClient(self, answer):
+        # Generic function to send an answer to the client
         response = pickle.dumps(answer, -1)
         self.clientSocket.send(response)
         self.read_list.remove(self.clientSocket)
@@ -68,21 +70,27 @@ class Daemon():
     def main(self):
         while self.active:
             readable, writable, errored = select.select(self.read_list, [], [], 1)
-            for s in readable:
-                if s is self.socket:
+            for socket in readable:
+                if socket is self.socket:
+                    # Listening for clients to connect.
+                    # Client sockets are added to readlist to be processed.
                     try:
                         self.clientSocket, self.clientAddress = self.socket.accept()
                         self.read_list.append(self.clientSocket)
                     except:
                         print('Daemon rejected client')
                 else:
+                    # Trying to receive instruction from client socket
                     try:
                         instruction = self.clientSocket.recv(8192)
                     except EOFError:
                         print('Client died while sending message, dropping received data.')
                         instruction = -1
 
+                    # Check for valid instruction
                     if instruction != -1:
+                        # Check if received data can be unpickled.
+                        # Instruction will be ignored if it can't be unpickled
                         try:
                             command = pickle.loads(instruction)
                         except EOFError:
@@ -93,6 +101,7 @@ class Daemon():
                             command = {}
                             command['mode'] = ''
 
+                        # Executing respective function depending on command mode
                         if command['mode'] == 'add':
                             self.respondClient(self.executeAdd(command))
 
@@ -122,11 +131,15 @@ class Daemon():
 
                         elif command['mode'] == 'STOPDAEMON':
                             self.respondClient({'message': 'Pueue daemon shutting down', 'status': 'success'})
+                            # Kill current process and set active
+                            # to False to stop while loop
                             self.active = False
+                            self.executeKill()
                             break
 
-            # Check if current process terminated
+            # Check if there is a running process
             if self.process is not None:
+                # Poll process and check to check for termination
                 self.process.poll()
                 if self.process.returncode is not None:
                     if not self.stopped:
@@ -136,36 +149,37 @@ class Daemon():
                         output = self.stdout.read().replace('\n', '\n    ')
                         currentKey = self.getCurrentKey()
 
-                        # Write log
-                        self.log[currentKey] = self.queue[currentKey]
-                        self.log[currentKey]['stderr'] = error_output
-                        self.log[currentKey]['stdout'] = output
-                        self.log[currentKey]['returncode'] = self.process.returncode
-
-                        # Pause Daemon, if it is configured to stop
-                        if self.config['default']['stopAtError'] is True:
-                            if self.process.returncode == 0:
-                                self.paused = True
-
-                        # Mark queue entry as finished
+                        # Mark queue entry as finished and save returncode
                         self.queue[currentKey]['returncode'] = self.process.returncode
                         if self.process.returncode != 0:
                             self.queue[currentKey]['status'] = 'errored'
                         else:
                             self.queue[currentKey]['status'] = 'done'
 
+                        # Add outputs to log
+                        self.logs[currentKey] = self.queue[currentKey]
+                        self.logs[currentKey]['stderr'] = error_output
+                        self.logs[currentKey]['stdout'] = output
+
+                        # Pause Daemon, if it is configured to stop
+                        if self.config['default']['stopAtError'] is True:
+                            if self.process.returncode == 0:
+                                self.paused = True
+
                         self.writeQueue()
-                        self.writeLog()
+                        self.log()
                     self.process = None
 
             # Start next Process
             elif not self.paused:
-                if (len(self.queue) > 0):
+                if len(self.queue) > 0:
                     currentKey = self.getCurrentKey()
                     if currentKey is not None:
+                        # Get instruction for next process
                         next_item = self.queue[currentKey]
                         self.stdout.seek(0)
                         self.stdout.truncate()
+                        # Spawn subprocess
                         self.process = subprocess.Popen(
                             next_item['command'],
                             shell=True,
@@ -204,54 +218,44 @@ class Daemon():
         queueFile.close()
 
     def readLog(self, rotate=False):
+        # Read log of the previous session
         logPath = self.queueFolder + '/queue.picklelog'
         if os.path.exists(logPath):
             logFile = open(logPath, 'rb')
             try:
-                self.log = pickle.load(logFile)
+                self.logs = pickle.load(logFile)
             except:
                 print('Log file corrupted, deleting old log')
                 os.remove(logPath)
-                self.log = {}
+                self.logs = {}
             logFile.close()
         else:
-            self.log = {}
+            self.logs = {}
 
+        # If rotate is True the logs will be rotated with a timestamp
+        # and the logs will be resetted
         if rotate:
-            self.writeLog(True)
-            os.remove(logPath)
-            self.log = {}
-            self.writeLog()
+            self.log(True)
+            self.logs = {}
+            self.log()
 
-    def writeLog(self, rotate=False):
-        if rotate:
-            timestamp = time.strftime('%Y%m%d-%H%M')
-            logPath = self.logDir + '/queue-' + timestamp + '.log'
-        else:
-            logPath = self.logDir + '/queue.log'
-
-        picklelogPath = self.queueFolder + '/queue.picklelog'
-        picklelogFile = open(picklelogPath, 'wb+')
-        if os.path.exists(logPath):
-            os.remove(logPath)
-        logFile = open(logPath, 'w')
-        logFile.write('Pueue log for executed Commands: \n \n')
-        for key in self.log:
-            try:
-                logFile.write('Command #{} exited with returncode {}:  "{}" \n'.format(key, self.log[key]['returncode'], self.log[key]['command']))
-                logFile.write('Path: {} \n'.format(self.log[key]['path']))
-                if self.log[key]['stderr']:
-                    logFile.write('Stderr output: \n    {}\n'.format(self.log[key]['stderr']))
-                logFile.write('Stdout output: \n    {}'.format(self.log[key]['stdout']))
-                logFile.write('\n')
-            except:
-                print('Errored while writing to log file. Wrong file permissions?')
+    def log(self, rotate=False):
+        # Log current log to a pickled file
+        # We need this to preserve the log for reuse in a following session
+        pickleLogPath = self.queueFolder + '/queue.picklelog'
+        pickleLogFile = open(pickleLogPath, 'wb+')
         try:
-            pickle.dump(self.log, picklelogFile, -1)
+            pickle.dump(self.logs, pickleLogFile, -1)
         except:
-            print('Errored while writing to picklelog file. Wrong file permissions?')
-        logFile.close()
-        picklelogFile.close()
+            print('Errored while writing to pickle log file. Wrong file permissions?')
+        pickleLogFile.close()
+
+        # If there is a finished process a
+        # human readable log will be written
+        if len(self.logs) > 0:
+            writeLog(self.logDir, self.log, rotate)
+
+        return
 
     def executeAdd(self, command):
         # Add command to queue and save it
@@ -301,37 +305,27 @@ class Daemon():
         answer = {}
         data = []
         currentKey = self.getCurrentKey()
-        # Process status
-        if (self.process is not None):
-            self.process.poll()
-            if self.process.returncode is None:
-                answer['process'] = 'running'
-            elif currentKey in self.log.keys():
-                answer['process'] = 'finished'
-            else:
-                answer['process'] = 'No running process'
-        else:
-            answer['process'] = 'No running process'
-
+        # Get daemon status
         if self.paused:
             answer['status'] = 'paused'
             if currentKey in self.queue.keys():
                 self.queue[currentKey]['status'] = 'queued'
         else:
             answer['status'] = 'running'
-        if currentKey in self.log.keys():
-            answer['current'] = self.log[currentKey]['returncode']
-        else:
-            answer['current'] = 'No exitcode'
 
-        # Queue status
+        # Get process status
+        if self.process is not None:
+            answer['process'] = 'running'
+        else:
+            answer['process'] = 'No running process'
+
+        # Add current queue or a message, that queue is empty
         if len(self.queue) > 0:
             data = self.queue
         else:
             data = 'Queue is empty'
         answer['data'] = data
 
-        # Respond client
         return answer
 
     def executeReset(self):
@@ -343,20 +337,22 @@ class Daemon():
             self.process.terminate()
         # Rotate and reset Log
         self.readLog(True)
-        self.writeLog()
+        self.log()
         self.nextKey = 0
         answer = {'message': 'Reseting current queue', 'status': 'success'}
         return answer
 
     def executeStart(self):
+        # Start the daemon if in paused state
         if self.paused:
             self.paused = False
             answer = {'message': 'Daemon started', 'status': 'success'}
         else:
-            answer = {'message': 'Daemon alrady started', 'status': 'omit'}
+            answer = {'message': 'Daemon alrady running', 'status': 'omit'}
         return answer
 
     def executePause(self):
+        # Pause the daemon running
         if not self.paused:
             self.paused = True
             answer = {'message': 'Daemon paused', 'status': 'success'}
@@ -366,24 +362,29 @@ class Daemon():
 
     def executeStop(self):
         if (self.process is not None):
+            # Check if process just exited at this moment
             self.process.poll()
             if self.process.returncode is None:
+                # Pause daemon and terminate process
                 self.paused = True
                 self.process.terminate()
                 self.stopped = True
-                answer = {'message': 'Terminating current process and pausing', 'status': 'success'}
+                answer = {'message': 'Terminated current process and paused daemon', 'status': 'success'}
             else:
                 answer = {'message': 'Process just finished, pausing daemon', 'status': 'omit'}
                 self.paused = True
         else:
+            # Only pausing daemon if no process is running
             answer = {'message': 'No process running, pausing daemon', 'status': 'omit'}
             self.paused = True
         return answer
 
     def executeKill(self):
         if (self.process is not None):
+            # Check if process just exited at this moment
             self.process.poll()
             if self.process.returncode is None:
+                # Pause daemon and kill process
                 self.paused = True
                 self.process.kill()
                 self.stopped = True
@@ -391,5 +392,7 @@ class Daemon():
             else:
                 answer = {'message': "Process just terminated on it's own", 'status': 'omit'}
         else:
+            # Only pausing daemon if no process is running
             answer = {'message': 'No process running, pausing daemon', 'status': 'omit'}
+            self.paused = True
         return answer

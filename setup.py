@@ -4,7 +4,7 @@ setup(
     name='pueue',
     author='Arne Beer',
     author_email='arne@twobeer.de',
-    version='0.4.1',
+    version='0.4.2',
     description='Pueue is a fancy queue for bash commands',
     keywords='bash queue command',
     url='http://github.com/nukesor/pueue',
@@ -23,7 +23,7 @@ setup(
     ],
     packages=find_packages(),
     entry_points={
-            'console_scripts': [
-                'pueue=pueue:main'
-            ]
+        'console_scripts': [
+            'pueue=pueue:main'
+        ]
     })
