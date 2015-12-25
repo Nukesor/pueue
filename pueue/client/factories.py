@@ -4,7 +4,7 @@ from pueue.helper.socket import getClientSocket, printResponse
 
 
 # Factory function for simple command sending functions
-def daemonState(state):
+def commandFactory(state):
     def changeState(args):
         # Initialize socket, message and send it
         client = getClientSocket()

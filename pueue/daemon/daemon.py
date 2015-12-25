@@ -4,7 +4,7 @@ import pickle
 import select
 import subprocess
 
-from pueue.helper.logs import writeLog
+from pueue.daemon.logs import writeLog
 from pueue.helper.config import getConfig
 from pueue.helper.socket import getSocketName, getDaemonSocket
 from pueue.helper.files import createDir, createLogDir, getStdoutDescriptor
@@ -253,7 +253,7 @@ class Daemon():
         # If there is a finished process a
         # human readable log will be written
         if len(self.logs) > 0:
-            writeLog(self.logDir, self.log, rotate)
+            writeLog(self.logDir, self.logs, rotate)
 
         return
 

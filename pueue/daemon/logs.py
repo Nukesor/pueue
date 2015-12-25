@@ -16,6 +16,8 @@ def writeLog(logDir, log, rotate):
 
     logFile = open(logPath, 'w')
     logFile.write('Pueue log for executed Commands: \n \n')
+
+    # Format and print Output
     for key in log:
         try:
             logFile.write('Command #{} exited with returncode {}:  "{}" \n'.format(key, log[key]['returncode'], log[key]['command']))

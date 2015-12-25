@@ -5,9 +5,9 @@ from daemonize import Daemonize
 
 from pueue.daemon.daemon import Daemon
 from pueue.helper.socket import removeSocket
-from pueue.subcommands.daemonStates import daemonState
-from pueue.subcommands.queueDisplaying import executeStatus, executeLog, executeShow
-from pueue.subcommands.queueManipulation import executeAdd, executeRemove, executeSwitch
+from pueue.client.factories import commandFactory
+from pueue.client.displaying import executeStatus, executeLog, executeShow
+from pueue.client.manipulation import executeAdd, executeRemove, executeSwitch
 
 
 def main():
@@ -18,7 +18,7 @@ def main():
     parser.add_argument('--stop-daemon', action='store_true', help='Daemon will shut down instantly. All running processes die', dest='stopdaemon')
 
     # Initialze supbparser
-    subparsers = parser.add_subparsers(title='Subcommands', description='Various subcommands')
+    subparsers = parser.add_subparsers(title='Subcommands', description='Various client')
 
     # Add
     add_Subcommand = subparsers.add_parser('add', help='Adds a command to the queue')
@@ -52,23 +52,23 @@ def main():
 
     # Reset
     reset_Subcommand = subparsers.add_parser('reset', help='Daemon will kill the current command, reset queue and rotate logs.')
-    reset_Subcommand.set_defaults(func=daemonState('reset'))
+    reset_Subcommand.set_defaults(func=commandFactory('reset'))
 
     # Pause
     pause_Subcommand = subparsers.add_parser('pause', help='Daemon will finishes the current command and pauses afterwards.')
-    pause_Subcommand.set_defaults(func=daemonState('pause'))
+    pause_Subcommand.set_defaults(func=commandFactory('pause'))
 
     # Stop
     stop_Subcommand = subparsers.add_parser('stop', help='Daemon will stop the current command and pauses afterwards.')
-    stop_Subcommand.set_defaults(func=daemonState('stop'))
+    stop_Subcommand.set_defaults(func=commandFactory('stop'))
 
     # Start
     start_Subcommand = subparsers.add_parser('start', help='Daemon will stop the current command and pauses afterwards.')
-    start_Subcommand.set_defaults(func=daemonState('start'))
+    start_Subcommand.set_defaults(func=commandFactory('start'))
 
     # Kills the current running process and starts the next
     kill_Subcommand = subparsers.add_parser('kill', help='Kills the current running process and starts the next one')
-    kill_Subcommand.set_defaults(func=daemonState('kill'))
+    kill_Subcommand.set_defaults(func=commandFactory('kill'))
 
     args = parser.parse_args()
 
@@ -82,7 +82,7 @@ def main():
             sys.exit(0)
 
     if args.stopdaemon:
-        daemonState('STOPDAEMON')(args)
+        commandFactory('STOPDAEMON')(args)
     elif args.nodaemon:
         startDaemon()
     elif args.daemon:
