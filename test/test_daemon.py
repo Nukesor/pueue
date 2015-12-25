@@ -134,14 +134,23 @@ class DaemonTesting(unittest.TestCase):
         self.assertEqual(status['status'], 'paused')
         self.assertEqual(status['process'], 'No running process')
 
-    def test_process(self):
+    def test_status(self):
         self.executeAdd({'command': 'sleep 60'})
         status = self.getStatus()
         self.assertEqual(status['status'], 'running')
         self.assertEqual(status['process'], 'running')
 
-    def test_process2(self):
+    def test_reset_paused(self):
         daemonState('pause')({})
+        self.executeAdd({'command': 'sleep 60'})
+        self.executeAdd({'command': 'sleep 60'})
+        daemonState('reset')({})
+        status = self.getStatus()
+        self.assertEqual(status['status'], 'paused')
+        self.assertEqual(status['data'], 'Queue is empty')
+
+    def test_reset_running(self):
+        daemonState('start')({})
         self.executeAdd({'command': 'sleep 60'})
         self.executeAdd({'command': 'sleep 60'})
         daemonState('reset')({})
