@@ -36,7 +36,6 @@ def main():
     switch_Subcommand.add_argument('second', help='The second command', type=int)
     switch_Subcommand.set_defaults(func=executeSwitch)
 
-
     # Status
     status_Subcommand = subparsers.add_parser('status', help='Lists all commands in the queue, daemon state and state/returncode of the current/last process')
     status_Subcommand.set_defaults(func=executeStatus)
@@ -55,7 +54,8 @@ def main():
     reset_Subcommand.set_defaults(func=commandFactory('reset'))
 
     # Pause
-    pause_Subcommand = subparsers.add_parser('pause', help='Daemon will finishes the current command and pauses afterwards.')
+    pause_Subcommand = subparsers.add_parser('pause', help='Daemon will pause the current process and stops processing the queue.')
+    pause_Subcommand.add_argument('--wait', action='store_false', help='Waits for the current process to terminate on its own and pause the daemon afterwards.')
     pause_Subcommand.set_defaults(func=commandFactory('pause'))
 
     # Stop
@@ -63,7 +63,7 @@ def main():
     stop_Subcommand.set_defaults(func=commandFactory('stop'))
 
     # Start
-    start_Subcommand = subparsers.add_parser('start', help='Daemon will stop the current command and pauses afterwards.')
+    start_Subcommand = subparsers.add_parser('start', help='Daemon will start a paused process and continue processing the queue.')
     start_Subcommand.set_defaults(func=commandFactory('start'))
 
     # Kills the current running process and starts the next

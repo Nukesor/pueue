@@ -2,6 +2,7 @@ import os
 import sys
 import pickle
 import select
+import signal
 import subprocess
 
 from pueue.daemon.logs import writeLog
@@ -40,6 +41,7 @@ class Daemon():
 
         self.active = True
         self.stopped = False
+        self.reset = False
 
         # Variables for handling sockets and child process
         self.clientAddress = None
@@ -69,6 +71,70 @@ class Daemon():
 
     def main(self):
         while self.active:
+            # Check if there is a running process
+            if self.process is not None:
+                # Poll process and check to check for termination
+                self.process.poll()
+                if self.process.returncode is not None:
+                    if not self.stopped:
+                        # Get std_out and err_out
+                        output, error_output = self.process.communicate()
+                        self.stdout.seek(0)
+                        output = self.stdout.read().replace('\n', '\n    ')
+                        currentKey = self.getCurrentKey()
+
+                        # Mark queue entry as finished and save returncode
+                        self.queue[currentKey]['returncode'] = self.process.returncode
+                        if self.process.returncode != 0:
+                            self.queue[currentKey]['status'] = 'errored'
+                        else:
+                            self.queue[currentKey]['status'] = 'done'
+
+                        # Add outputs to log
+                        self.logs[currentKey] = self.queue[currentKey]
+                        self.logs[currentKey]['stderr'] = error_output
+                        self.logs[currentKey]['stdout'] = output
+
+                        # Pause Daemon, if it is configured to stop
+                        if self.config['default']['stopAtError'] is True and not self.reset:
+                            if self.process.returncode == 0:
+                                self.paused = True
+
+                        self.writeQueue()
+                        self.log()
+                    self.process = None
+
+            if self.reset:
+                # Reset  queue
+                self.queue = {}
+                self.writeQueue()
+
+                # Rotate and reset Log
+                self.readLog(True)
+                self.log()
+                self.nextKey = 0
+                self.reset = False
+
+            # Start next Process
+            if not self.paused and len(self.queue) > 0:
+                currentKey = self.getCurrentKey()
+                if currentKey is not None:
+                    # Get instruction for next process
+                    next_item = self.queue[currentKey]
+                    self.stdout.seek(0)
+                    self.stdout.truncate()
+                    # Spawn subprocess
+                    self.process = subprocess.Popen(
+                        next_item['command'],
+                        shell=True,
+                        stdout=self.stdout,
+                        stderr=subprocess.PIPE,
+                        universal_newlines=True,
+                        cwd=next_item['path']
+                    )
+                    self.queue[currentKey]['status'] = 'running'
+
+            # Create list for waitable objects
             readable, writable, errored = select.select(self.read_list, [], [], 1)
             for socket in readable:
                 if socket is self.socket:
@@ -121,7 +187,7 @@ class Daemon():
                             self.respondClient(self.executeStart())
 
                         elif command['mode'] == 'pause':
-                            self.respondClient(self.executePause())
+                            self.respondClient(self.executePause(command))
 
                         elif command['mode'] == 'stop':
                             self.respondClient(self.executeStop())
@@ -136,59 +202,6 @@ class Daemon():
                             self.active = False
                             self.executeKill()
                             break
-
-            # Check if there is a running process
-            if self.process is not None:
-                # Poll process and check to check for termination
-                self.process.poll()
-                if self.process.returncode is not None:
-                    if not self.stopped:
-                        # Get std_out and err_out
-                        output, error_output = self.process.communicate()
-                        self.stdout.seek(0)
-                        output = self.stdout.read().replace('\n', '\n    ')
-                        currentKey = self.getCurrentKey()
-
-                        # Mark queue entry as finished and save returncode
-                        self.queue[currentKey]['returncode'] = self.process.returncode
-                        if self.process.returncode != 0:
-                            self.queue[currentKey]['status'] = 'errored'
-                        else:
-                            self.queue[currentKey]['status'] = 'done'
-
-                        # Add outputs to log
-                        self.logs[currentKey] = self.queue[currentKey]
-                        self.logs[currentKey]['stderr'] = error_output
-                        self.logs[currentKey]['stdout'] = output
-
-                        # Pause Daemon, if it is configured to stop
-                        if self.config['default']['stopAtError'] is True:
-                            if self.process.returncode == 0:
-                                self.paused = True
-
-                        self.writeQueue()
-                        self.log()
-                    self.process = None
-
-            # Start next Process
-            elif not self.paused:
-                if len(self.queue) > 0:
-                    currentKey = self.getCurrentKey()
-                    if currentKey is not None:
-                        # Get instruction for next process
-                        next_item = self.queue[currentKey]
-                        self.stdout.seek(0)
-                        self.stdout.truncate()
-                        # Spawn subprocess
-                        self.process = subprocess.Popen(
-                            next_item['command'],
-                            shell=True,
-                            stdout=self.stdout,
-                            stderr=subprocess.PIPE,
-                            universal_newlines=True,
-                            cwd=next_item['path']
-                        )
-                        self.queue[currentKey]['status'] = 'running'
 
         self.socket.close()
         os.remove(getSocketName())
@@ -329,35 +342,42 @@ class Daemon():
         return answer
 
     def executeReset(self):
-        # Reset  queue
-        self.queue = {}
-        self.writeQueue()
         # Terminate current process
+
         if self.process is not None:
-            self.process.terminate()
-        # Rotate and reset Log
-        self.readLog(True)
-        self.log()
-        self.nextKey = 0
+            try:
+                self.process.terminate(timout=10)
+            except:
+                self.process.kill()
+            self.process.wait()
+
+        self.reset = True
+
         answer = {'message': 'Reseting current queue', 'status': 'success'}
         return answer
 
     def executeStart(self):
+        # Start the process if it is paused
+        if self.process is not None and not self.paused:
+            os.kill(self.process.pid, signal.SIGCONT)
         # Start the daemon if in paused state
         if self.paused:
             self.paused = False
             answer = {'message': 'Daemon started', 'status': 'success'}
         else:
-            answer = {'message': 'Daemon alrady running', 'status': 'omit'}
+            answer = {'message': 'Daemon alrady running', 'status': 'success'}
         return answer
 
-    def executePause(self):
-        # Pause the daemon running
+    def executePause(self, command):
+        # Pause the currently running process
+        if self.process is not None and command['wait']:
+            os.kill(self.process.pid, signal.SIGSTOP)
+        # Pause the daemon
         if not self.paused:
             self.paused = True
             answer = {'message': 'Daemon paused', 'status': 'success'}
         else:
-            answer = {'message': 'Daemon already paused', 'status': 'omit'}
+            answer = {'message': 'Daemon already paused', 'status': 'success'}
         return answer
 
     def executeStop(self):
@@ -371,11 +391,11 @@ class Daemon():
                 self.stopped = True
                 answer = {'message': 'Terminated current process and paused daemon', 'status': 'success'}
             else:
-                answer = {'message': 'Process just finished, pausing daemon', 'status': 'omit'}
+                answer = {'message': 'Process just finished, pausing daemon', 'status': 'success'}
                 self.paused = True
         else:
             # Only pausing daemon if no process is running
-            answer = {'message': 'No process running, pausing daemon', 'status': 'omit'}
+            answer = {'message': 'No process running, pausing daemon', 'status': 'success'}
             self.paused = True
         return answer
 
@@ -390,9 +410,9 @@ class Daemon():
                 self.stopped = True
                 answer = {'message': 'Sent kill to process and paused daemon', 'status': 'success'}
             else:
-                answer = {'message': "Process just terminated on it's own", 'status': 'omit'}
+                answer = {'message': "Process just terminated on it's own", 'status': 'success'}
         else:
             # Only pausing daemon if no process is running
-            answer = {'message': 'No process running, pausing daemon', 'status': 'omit'}
+            answer = {'message': 'No process running, pausing daemon', 'status': 'success'}
             self.paused = True
         return answer

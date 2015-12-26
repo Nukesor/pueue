@@ -6,8 +6,6 @@ import subprocess
 from pueue.helper.socket import getClientSocket
 from pueue.helper.files import createDir
 
-from pueue.client.factories import commandFactory
-
 
 class DaemonTesting(unittest.TestCase):
     def setUp(self):
@@ -22,10 +20,14 @@ class DaemonTesting(unittest.TestCase):
             stderr=subprocess.PIPE
         )
         output, error = process.communicate()
-        commandFactory('reset')({})
+        self.commandFactory('reset')
 
     def tearDown(self):
-        commandFactory('STOPDAEMON')({})
+        self.commandFactory('STOPDAEMON')
+
+    def commandFactory(self, state):
+        instruction = {'mode': state}
+        return self.sendCommand(instruction)
 
     def sendCommand(self, command):
         client = getClientSocket()
@@ -53,18 +55,18 @@ class DaemonTesting(unittest.TestCase):
     def test_pause(self):
         status = self.getStatus()
         self.assertEqual(status['status'], 'running')
-        commandFactory('pause')({})
+        self.commandFactory('pause')
         status = self.getStatus()
         self.assertEqual(status['status'], 'paused')
 
     def test_start(self):
-        commandFactory('pause')({})
-        commandFactory('start')({})
+        self.commandFactory('pause')
+        self.commandFactory('start')
         status = self.getStatus()
         self.assertEqual(status['status'], 'running')
 
     def test_add(self):
-        commandFactory('pause')({})
+        self.commandFactory('pause')
         response = self.sendCommand({
             'mode': 'add',
             'command': 'ls',
@@ -87,7 +89,7 @@ class DaemonTesting(unittest.TestCase):
         self.assertEqual(response['status'], 'error')
 
     def test_remove(self):
-        commandFactory('pause')({})
+        self.commandFactory('pause')
         status = self.getStatus()
         self.assertEqual(status['status'], 'paused')
         self.executeAdd({'command': 'ls'})
@@ -98,7 +100,7 @@ class DaemonTesting(unittest.TestCase):
         self.assertFalse('0' in status['data'])
 
     def test_switch(self):
-        commandFactory('pause')({})
+        self.commandFactory('pause')
         self.executeAdd({'command': 'ls'})
         self.executeAdd({'command': 'ls -l'})
         self.executeSwitch({'first': 0, 'second': 1})
@@ -122,14 +124,14 @@ class DaemonTesting(unittest.TestCase):
 
     def test_kill(self):
         self.executeAdd({'command': 'sleep 60'})
-        commandFactory('kill')({})
+        self.commandFactory('kill')
         status = self.getStatus()
         self.assertEqual(status['status'], 'paused')
         self.assertEqual(status['process'], 'No running process')
 
     def test_stop(self):
         self.executeAdd({'command': 'sleep 60'})
-        commandFactory('stop')({})
+        self.commandFactory('stop')
         status = self.getStatus()
         self.assertEqual(status['status'], 'paused')
         self.assertEqual(status['process'], 'No running process')
@@ -141,19 +143,19 @@ class DaemonTesting(unittest.TestCase):
         self.assertEqual(status['process'], 'running')
 
     def test_reset_paused(self):
-        commandFactory('pause')({})
+        self.commandFactory('pause')
         self.executeAdd({'command': 'sleep 60'})
         self.executeAdd({'command': 'sleep 60'})
-        commandFactory('reset')({})
+        self.commandFactory('reset')
         status = self.getStatus()
         self.assertEqual(status['status'], 'paused')
         self.assertEqual(status['data'], 'Queue is empty')
 
     def test_reset_running(self):
-        commandFactory('start')({})
+        self.commandFactory('start')
         self.executeAdd({'command': 'sleep 60'})
         self.executeAdd({'command': 'sleep 60'})
-        commandFactory('reset')({})
+        self.commandFactory('reset')
         status = self.getStatus()
-        self.assertEqual(status['status'], 'paused')
+        self.assertEqual(status['status'], 'running')
         self.assertEqual(status['data'], 'Queue is empty')
