@@ -72,7 +72,7 @@ def main():
 
     args = parser.parse_args()
 
-    def startDaemon ():
+    def startDaemon():
         try:
             daemon = Daemon()
             daemon.main()
@@ -86,7 +86,7 @@ def main():
     elif args.nodaemon:
         startDaemon()
     elif args.daemon:
-        daemon = Daemonize(app='pueue',pid='/tmp/pueue.pid', action=startDaemon)
+        daemon = Daemonize(app='pueue', pid='/tmp/pueue.pid', action=startDaemon)
         daemon.start()
     elif hasattr(args, 'func'):
         args.func(vars(args))

@@ -33,7 +33,7 @@ def executeStatus(args):
     elif answer['status'] == 'paused':
         answer['status'] = Color('{autoyellow}' + '{}'.format(answer['status']) + '{/autoyellow}')
 
-    if answer['process'] == 'running':
+    if answer['process'] == 'running' or answer['process'] == 'paused':
         answer['process'] = Color('{autogreen}' + '{}'.format(answer['process']) + '{/autogreen}')
 
     print('Daemon: {}\nProcess status: {} \n'.format(answer['status'], answer['process']))
@@ -84,7 +84,7 @@ def executeStatus(args):
                 max_width = customWidth[j]
                 wrapped_string = '\n'.join(wrap(string, max_width))
                 if j == 1:
-                    if wrapped_string == 'done' or wrapped_string == 'running':
+                    if wrapped_string == 'done' or wrapped_string == 'running' or wrapped_string == 'paused':
                         wrapped_string = Color('{autogreen}' + '{}'.format(wrapped_string) + '{/autogreen}')
                     elif wrapped_string == 'queued':
                         wrapped_string = Color('{autoyellow}' + '{}'.format(wrapped_string) + '{/autoyellow}')

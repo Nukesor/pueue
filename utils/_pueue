@@ -23,6 +23,9 @@ _pueue_subcommand () {
     (show)
       _arguments '--watch[watch the output of the current process]:'
       ;;
+    (pause)
+      _arguments '--wait[Waits for the current process to terminate on its own and pause the daemon afterwards.]:'
+      ;;
     (add)
       _alternative 'command:commands:{_command_names}'
       ;;
@@ -56,10 +59,3 @@ _pueue () {
 
 _pueue "$@"
 
-# Local Variables:
-# mode: Shell-Script
-# sh-indentation: 2
-# indent-tabs-mode: nil
-# sh-basic-offset: 2
-# End:
-# vim: ft=zsh sw=2 ts=2 et

@@ -43,6 +43,9 @@ class Daemon():
         self.stopped = False
         self.reset = False
 
+        # Variables to get the current state of a process
+        self.processStatus = 'No running process'
+
         # Variables for handling sockets and child process
         self.clientAddress = None
         self.clientSocket = None
@@ -103,6 +106,7 @@ class Daemon():
                         self.writeQueue()
                         self.log()
                     self.process = None
+                    self.processStatus = 'No running process'
 
             if self.reset:
                 # Reset  queue
@@ -133,6 +137,7 @@ class Daemon():
                         cwd=next_item['path']
                     )
                     self.queue[currentKey]['status'] = 'running'
+                    self.processStatus = 'running'
 
             # Create list for waitable objects
             readable, writable, errored = select.select(self.read_list, [], [], 1)
@@ -317,20 +322,14 @@ class Daemon():
     def executeStatus(self, command):
         answer = {}
         data = []
-        currentKey = self.getCurrentKey()
         # Get daemon status
         if self.paused:
             answer['status'] = 'paused'
-            if currentKey in self.queue.keys():
-                self.queue[currentKey]['status'] = 'queued'
         else:
             answer['status'] = 'running'
 
         # Get process status
-        if self.process is not None:
-            answer['process'] = 'running'
-        else:
-            answer['process'] = 'No running process'
+        answer['process'] = self.processStatus
 
         # Add current queue or a message, that queue is empty
         if len(self.queue) > 0:
@@ -358,8 +357,13 @@ class Daemon():
 
     def executeStart(self):
         # Start the process if it is paused
-        if self.process is not None and not self.paused:
+        if self.process is not None and self.paused:
+            print(self.process.pid)
             os.kill(self.process.pid, signal.SIGCONT)
+            currentKey = self.getCurrentKey()
+            self.queue[currentKey]['status'] = 'running'
+            self.processStatus = 'running'
+
         # Start the daemon if in paused state
         if self.paused:
             self.paused = False
@@ -372,6 +376,10 @@ class Daemon():
         # Pause the currently running process
         if self.process is not None and command['wait']:
             os.kill(self.process.pid, signal.SIGSTOP)
+            currentKey = self.getCurrentKey()
+            self.queue[currentKey]['status'] = 'paused'
+            self.processStatus = 'paused'
+
         # Pause the daemon
         if not self.paused:
             self.paused = True
