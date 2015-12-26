@@ -19,7 +19,7 @@ def writeLog(logDir, log, rotate):
     logFile = open(logPath, 'w')
     logFile.write('Pueue log for executed Commands: \n \n')
 
-    # Format and print Output
+    # Format, color and write log
     for key in log:
         try:
             # Get returncode color:
@@ -29,34 +29,23 @@ def writeLog(logDir, log, rotate):
             else:
                 returncode = Color('{autored}' + '{}'.format(returncode) + '{/autored}')
 
-            # Command Id with returncode
+            # Command Id with returncode and actual command
             logFile.write(
-                Color(
-                    '{autoyellow}' +
-                    'Command #{} '.format(key) +
-                    '{/autoyellow}'
-                ) +
+                Color('{autoyellow}' + 'Command #{} '.format(key) + '{/autoyellow}') +
                 'exited with returncode {}: '.format(returncode) +
                 '"{}" \n'.format(log[key]['command'])
             )
+            # Print Path
             logFile.write('Path: {} \n'.format(log[key]['path']))
+
+            # Print STDERR
             if log[key]['stderr']:
-                logFile.write(
-                    Color(
-                        '{autored}' +
-                        'Stderr output: ' +
-                        '{/autored}'
-                    ) +
-                    ' \n    {}\n'.format(log[key]['stderr'])
-                )
+                logFile.write(Color('{autored}Stderr output: {/autored}\n    ') + log[key]['stderr'])
+
+            # Print STDOUT
             if len(log[key]['stdout']) > 0:
-                logFile.write(
-                    Color(
-                        '{autogreen}' +
-                        'Stdout output: ' +
-                        '{/autogreen}'
-                    ) +
-                    '\n    {}'.format(log[key]['stdout']))
+                logFile.write(Color('{autogreen}Stdout output: {/autogreen}\n    ') + log[key]['stdout'])
+
             logFile.write('\n')
         except:
             print('Errored while writing to log file. Wrong file permissions?')
