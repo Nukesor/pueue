@@ -82,7 +82,7 @@ def main():
             sys.exit(0)
 
     if args.stopdaemon:
-        commandFactory('STOPDAEMON')(args)
+        commandFactory('STOPDAEMON')(vars(args))
     elif args.nodaemon:
         startDaemon()
     elif args.daemon:
