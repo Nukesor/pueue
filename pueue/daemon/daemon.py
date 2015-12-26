@@ -120,7 +120,7 @@ class Daemon():
                 self.reset = False
 
             # Start next Process
-            if not self.paused and len(self.queue) > 0:
+            if not self.paused and len(self.queue) > 0 and self.process is None:
                 currentKey = self.getCurrentKey()
                 if currentKey is not None:
                     # Get instruction for next process
@@ -358,7 +358,6 @@ class Daemon():
     def executeStart(self):
         # Start the process if it is paused
         if self.process is not None and self.paused:
-            print(self.process.pid)
             os.kill(self.process.pid, signal.SIGCONT)
             currentKey = self.getCurrentKey()
             self.queue[currentKey]['status'] = 'running'
