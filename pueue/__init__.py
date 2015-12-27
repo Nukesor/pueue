@@ -4,7 +4,7 @@ import argparse
 from daemonize import Daemonize
 
 from pueue.daemon.daemon import Daemon
-from pueue.helper.socket import removeSocket
+from pueue.helper.socket import removeDaemonSocket
 from pueue.client.factories import commandFactory
 from pueue.client.displaying import executeStatus, executeLog, executeShow
 from pueue.client.manipulation import executeAdd, executeRemove, executeSwitch
@@ -78,7 +78,7 @@ def main():
             daemon.main()
         except KeyboardInterrupt:
             print('Keyboard interrupt. Shutting down')
-            removeSocket()
+            removeDaemonSocket()
             sys.exit(0)
 
     if args.stopdaemon:

@@ -3,52 +3,39 @@ import sys
 import stat
 import socket
 import pickle
-import getpass
+
+from pueue.helper.files import getSocketPath
 
 
-def getSocketName():
-    # Generating pid and socket path from username
-    try:
-        userName = getpass.getuser()
-    except:
-        print("Couldn't get username from getpass.getuser(), aborting")
-        sys.exit(1)
-    else:
-        socketPath = "/tmp/pueueSocket@"+userName+".sock"
-        return socketPath
-
-
-def printResponse(socket):
-    # Receive message from daemon, print it and exit with 1 if operation wasn't successful
+def receiveData(socket):
+    # Receive message from daemon
     answer = socket.recv(8192)
     response = pickle.loads(answer)
-    print(response['message'])
     socket.close()
+    return response
+
+
+def processResponse(response):
+    # Print it and exit with 1 if operation wasn't successful
+    print(response['message'])
     if response['status'] != 'success':
         sys.exit(1)
 
 
-def getClientSocket():
+def connectClientSocket():
     # Create Socket and exit with 1, if socket can't be created
     try:
         client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        client.connect(getSocketName())
+        client.connect(getSocketPath())
     except:
         print("Error connecting to socket. Make sure the daemon is running")
         sys.exit(1)
     return client
 
 
-def removeSocket():
-    # Check for old socket and delete it
-    socketPath = getSocketName()
-    if os.path.exists(socketPath):
-        os.remove(socketPath)
-
-
-def getDaemonSocket():
-    removeSocket()
-    socketPath = getSocketName()
+def createDaemonSocket():
+    removeDaemonSocket()
+    socketPath = getSocketPath()
     # Create Socket and exit with 1, if socket can't be created
     try:
         daemon = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -56,8 +43,16 @@ def getDaemonSocket():
         daemon.bind(socketPath)
         daemon.setblocking(0)
         daemon.listen(0)
+        # Set file permissions
         os.chmod(socketPath, stat.S_IRWXU)
     except:
         print("Daemon couldn't bind to socket. Aborting")
         sys.exit(1)
     return daemon
+
+
+def removeDaemonSocket():
+    # Check for old socket and delete it
+    socketPath = getSocketPath()
+    if os.path.exists(socketPath):
+        os.remove(socketPath)

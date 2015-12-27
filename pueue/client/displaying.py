@@ -9,14 +9,14 @@ from functools import reduce
 from colorclass import Color
 
 from pueue.helper.files import createLogDir
-from pueue.helper.socket import getClientSocket
+from pueue.helper.socket import connectClientSocket
 
 from terminaltables.tables import AsciiTable
 from terminaltables.terminal_io import terminal_size
 
 
 def executeStatus(args):
-    client = getClientSocket()
+    client = connectClientSocket()
     instruction = {'mode': 'status'}
 
     # Send new instruction to daemon

@@ -3,13 +3,13 @@ import pickle
 import unittest
 import subprocess
 
-from pueue.helper.socket import getClientSocket
-from pueue.helper.files import createDir
+from pueue.helper.socket import connectClientSocket
+from pueue.helper.files import createConfigDir
 
 
 class DaemonTesting(unittest.TestCase):
     def setUp(self):
-        queue = createDir()+'/queue'
+        queue = createConfigDir()+'/queue'
         if os.path.exists(queue):
             os.remove(queue)
 
@@ -30,7 +30,7 @@ class DaemonTesting(unittest.TestCase):
         return self.sendCommand(instruction)
 
     def sendCommand(self, command):
-        client = getClientSocket()
+        client = connectClientSocket()
         client.send(pickle.dumps(command, -1))
         answer = client.recv(8192)
         response = pickle.loads(answer)

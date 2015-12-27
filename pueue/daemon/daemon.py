@@ -7,14 +7,14 @@ import subprocess
 
 from pueue.daemon.logs import writeLog
 from pueue.helper.config import getConfig
-from pueue.helper.socket import getSocketName, getDaemonSocket
-from pueue.helper.files import createDir, createLogDir, getStdoutDescriptor
+from pueue.helper.socket import getSocketPath, createDaemonSocket
+from pueue.helper.files import createConfigDir, createLogDir, getStdoutDescriptor
 
 
 class Daemon():
     def __init__(self):
         # Create config dir, if not existing
-        self.queueFolder = createDir()
+        self.queueFolder = createConfigDir()
         self.logDir = createLogDir()
         self.config = getConfig()
 
@@ -24,7 +24,7 @@ class Daemon():
         if self.getCurrentKey() is None:
             self.queue = {}
             self.writeQueue()
-        self.socket = getDaemonSocket()
+        self.socket = createDaemonSocket()
 
         # If there are still jobs in the queue the daemon might pause,
         # if this behaviour is defined in the config file.
@@ -209,7 +209,7 @@ class Daemon():
                             break
 
         self.socket.close()
-        os.remove(getSocketName())
+        os.remove(getSocketPath())
         sys.exit(0)
 
     def readQueue(self):

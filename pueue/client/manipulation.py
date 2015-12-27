@@ -1,11 +1,11 @@
 import os
 import pickle
 
-from pueue.helper.socket import getClientSocket, printResponse
+from pueue.helper.socket import connectClientSocket, receiveData, processResponse
 
 
 def executeAdd(args):
-    client = getClientSocket()
+    client = connectClientSocket()
 
     # Send new instruction to daemon
     instruction = {
@@ -19,11 +19,12 @@ def executeAdd(args):
     client.send(data_string)
 
     # Receive Answer from daemon and print it
-    printResponse(client)
+    response = receiveData(client)
+    processResponse(response)
 
 
 def executeRemove(args):
-    client = getClientSocket()
+    client = connectClientSocket()
 
     # Send new instruction to daemon
     instruction = {
@@ -34,11 +35,12 @@ def executeRemove(args):
     client.send(data_string)
 
     # Receive Answer from daemon and print it
-    printResponse(client)
+    response = receiveData(client)
+    processResponse(response)
 
 
 def executeSwitch(args):
-    client = getClientSocket()
+    client = connectClientSocket()
 
     # Send new instruction to daemon
     instruction = {
@@ -50,4 +52,5 @@ def executeSwitch(args):
     client.send(data_string)
 
     # Receive Answer from daemon and print it
-    printResponse(client)
+    response = receiveData(client)
+    processResponse(response)

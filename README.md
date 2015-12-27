@@ -39,7 +39,8 @@ If the queue is empty or the daemon is paused, the returcode of the last will be
 `pueue log` Prints the log of all executed commands.  
 
 `pueue start` Daemon will start to process the queue.  
-`pueue pause` Daemon will pause after the current command terminated by it's own.  
+`pueue pause` Daemon will pause the current process and stops processing the queue.  
+`pueue pause --wait` Waits for the current process to terminate on its own and pause the daemon afterwards.  
 `pueue stop` Daemon will terminate the current process and pause.  
 `pueue kill` KILLs the current process (kill -9) and pauses the daemon.  
 `pueue reset` Removes all commands from the queue, kills the current process and resets the queue index to 0.  
