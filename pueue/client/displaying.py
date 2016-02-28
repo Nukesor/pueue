@@ -116,7 +116,15 @@ def executeShow(args):
     running = True
     # Continually print output with curses or just print once
     if args['watch']:
+        # Initialize curses
         stdscr = curses.initscr()
+        curses.noecho()
+        curses.cbreak()
+        curses.curs_set(2)
+        stdscr.keypad(True)
+        stdscr.refresh()
+
+        # Update output every two seconds
         while running:
             stdscr.clear()
             descriptor.seek(0)
@@ -124,6 +132,12 @@ def executeShow(args):
             stdscr.addstr(0, 0, message)
             stdscr.refresh()
             time.sleep(2)
+
+        # Curses cleanup
+        curses.nocbreak()
+        stdscr.keypad(False)
+        curses.echo()
+        curses.endwin()
     else:
         descriptor.seek(0)
         print(descriptor.read())
