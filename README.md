@@ -78,3 +78,7 @@ If you use zsh, place `_pueue` in a folder, that is contained in your `FPATH` en
 Regards to Robpol86 for providing the awesome `terminaltables` and `colorclass` libraries.
 And thanks to thesharp for the extremly usefull `daemonize` library.
 
+## Progress:
+Pueue already works, but it needs debugging and propert testing. This is all in progress and will be done soon.
+
+Copyright &copy; 2016 Arne Beer ([@Nukesor](https://github.com/Nukesor))
