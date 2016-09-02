@@ -11,7 +11,7 @@ from colorclass import Color
 from pueue.helper.files import createLogDir
 from pueue.helper.socket import connectClientSocket
 
-from terminaltables.tables import AsciiTable
+from terminaltables import AsciiTable
 from terminaltables.terminal_io import terminal_size
 
 
