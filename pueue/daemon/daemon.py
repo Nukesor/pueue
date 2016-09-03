@@ -79,6 +79,8 @@ class Daemon():
                 # Poll process and check to check for termination
                 self.process.poll()
                 if self.process.returncode is not None:
+                    # If a process is terminated by `stop` or `kill`
+                    # we want to queue it again instead closing it as failed.
                     if not self.stopped:
                         # Get std_out and err_out
                         output, error_output = self.process.communicate()
@@ -334,6 +336,14 @@ class Daemon():
         # Add current queue or a message, that queue is empty
         if len(self.queue) > 0:
             data = self.queue
+            # Remove stderr and stdout output for transfer
+            # Some outputs are way to big for the socket buffer
+            # and this is not needed by the client
+            for key, item in data.items():
+                if 'stderr' in item:
+                    del item['stderr']
+                if 'stdout' in item:
+                    del item['stdout']
         else:
             data = 'Queue is empty'
         answer['data'] = data
@@ -368,7 +378,7 @@ class Daemon():
             self.paused = False
             answer = {'message': 'Daemon started', 'status': 'success'}
         else:
-            answer = {'message': 'Daemon alrady running', 'status': 'success'}
+            answer = {'message': 'Daemon already running', 'status': 'success'}
         return answer
 
     def executePause(self, command):
@@ -392,18 +402,26 @@ class Daemon():
             # Check if process just exited at this moment
             self.process.poll()
             if self.process.returncode is None:
-                # Pause daemon and terminate process
-                self.paused = True
+                # Terminate process
                 self.process.terminate()
+
+                # Pause and stop daemon
+                self.paused = True
                 self.stopped = True
+
+                # Set status of current process in queue back to `queued`
+                currentKey = self.getCurrentKey()
+                self.queue[currentKey]['status'] = 'queued'
+
                 answer = {'message': 'Terminated current process and paused daemon', 'status': 'success'}
             else:
-                answer = {'message': 'Process just finished, pausing daemon', 'status': 'success'}
+                # Only pausing daemon if the process just finished right now.
                 self.paused = True
+                answer = {'message': 'Process just finished, pausing daemon', 'status': 'success'}
         else:
             # Only pausing daemon if no process is running
-            answer = {'message': 'No process running, pausing daemon', 'status': 'success'}
             self.paused = True
+            answer = {'message': 'No process running, pausing daemon', 'status': 'success'}
         return answer
 
     def executeKill(self):
@@ -411,15 +429,24 @@ class Daemon():
             # Check if process just exited at this moment
             self.process.poll()
             if self.process.returncode is None:
-                # Pause daemon and kill process
-                self.paused = True
+                # Kill process
                 self.process.kill()
+
+                # Pause and stop daemon
+                self.paused = True
                 self.stopped = True
+
+                # Set status of current process in queue back to `queued`
+                currentKey = self.getCurrentKey()
+                self.queue[currentKey]['status'] = 'queued'
+
                 answer = {'message': 'Sent kill to process and paused daemon', 'status': 'success'}
             else:
+                # Only pausing daemon if the process just finished right now.
+                self.paused = True
                 answer = {'message': "Process just terminated on it's own", 'status': 'success'}
         else:
             # Only pausing daemon if no process is running
-            answer = {'message': 'No process running, pausing daemon', 'status': 'success'}
             self.paused = True
+            answer = {'message': 'No process running, pausing daemon', 'status': 'success'}
         return answer

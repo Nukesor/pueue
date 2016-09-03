@@ -24,7 +24,8 @@ def executeStatus(args):
     client.send(data_string)
 
     # Receive Answer from daemon and print it
-    response = client.recv(8192)
+    # About 1 MB buffersize for large queues with large paths
+    response = client.recv(1048576)
     answer = pickle.loads(response)
     client.close()
     # First rows, showing daemon status
