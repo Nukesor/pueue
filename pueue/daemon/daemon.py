@@ -22,7 +22,11 @@ class Daemon():
         # Load previous queue
         # Reset queue if all jobs from last session are finished
         if self.getCurrentKey() is None:
+            # Rotate old log
+            self.log(rotate=True)
             self.queue = {}
+            # Remove old log file
+            self.log()
             self.writeQueue()
         self.socket = createDaemonSocket()
 
@@ -32,12 +36,10 @@ class Daemon():
         self.paused = False
         if len(self.queue) > 0:
             self.nextKey = max(self.queue.keys()) + 1
-            self.readLog(False)
             if not self.config['default']['resumeAfterStart']:
                 self.paused = True
         else:
             self.nextKey = 0
-            self.readLog(True)
 
         self.active = True
         self.stopped = False
@@ -96,9 +98,8 @@ class Daemon():
                             self.queue[currentKey]['status'] = 'done'
 
                         # Add outputs to log
-                        self.logs[currentKey] = self.queue[currentKey]
-                        self.logs[currentKey]['stderr'] = error_output
-                        self.logs[currentKey]['stdout'] = output
+                        self.queue[currentKey]['stderr'] = error_output
+                        self.queue[currentKey]['stdout'] = output
 
                         # Pause Daemon, if it is configured to stop
                         if self.config['default']['stopAtError'] is True and not self.reset:
@@ -116,7 +117,7 @@ class Daemon():
                 self.writeQueue()
 
                 # Rotate and reset Log
-                self.readLog(True)
+                self.log(rotate=True)
                 self.log()
                 self.nextKey = 0
                 self.reset = False
@@ -203,7 +204,8 @@ class Daemon():
                             self.respondClient(self.executeKill())
 
                         elif command['mode'] == 'STOPDAEMON':
-                            self.respondClient({'message': 'Pueue daemon shutting down', 'status': 'success'})
+                            self.respondClient({'message': 'Pueue daemon shutting down',
+                                                'status': 'success'})
                             # Kill current process and set active
                             # to False to stop while loop
                             self.active = False
@@ -234,48 +236,13 @@ class Daemon():
         try:
             pickle.dump(self.queue, queueFile, -1)
         except:
-            print('Errored while writing to queue file. Wrong file permissions?')
+            print('Error while writing to queue file. Wrong file permissions?')
         queueFile.close()
 
-    def readLog(self, rotate=False):
-        # Read log of the previous session
-        logPath = self.queueFolder + '/queue.picklelog'
-        if os.path.exists(logPath):
-            logFile = open(logPath, 'rb')
-            try:
-                self.logs = pickle.load(logFile)
-            except:
-                print('Log file corrupted, deleting old log')
-                os.remove(logPath)
-                self.logs = {}
-            logFile.close()
-        else:
-            self.logs = {}
-
-        # If rotate is True the logs will be rotated with a timestamp
-        # and the logs will be resetted
-        if rotate:
-            self.log(True)
-            self.logs = {}
-            self.log()
-
     def log(self, rotate=False):
-        # Log current log to a pickled file
-        # We need this to preserve the log for reuse in a following session
-        pickleLogPath = self.queueFolder + '/queue.picklelog'
-        pickleLogFile = open(pickleLogPath, 'wb+')
-        try:
-            pickle.dump(self.logs, pickleLogFile, -1)
-        except:
-            print('Errored while writing to pickle log file. Wrong file permissions?')
-        pickleLogFile.close()
-
         # If there is a finished process a
         # human readable log will be written
-        if len(self.logs) > 0:
-            writeLog(self.logDir, self.logs, rotate)
-
-        return
+        writeLog(self.logDir, self.queue, rotate)
 
     def executeAdd(self, command):
         # Add command to queue and save it
@@ -292,7 +259,10 @@ class Daemon():
         else:
             # Delete command from queue, save the queue and send response to client
             if not self.paused and key == self.getCurrentKey():
-                answer = {'message': "Can't remove currently running process, please stop the process before removing it.", 'status': 'error'}
+                answer = {
+                    'message': "Can't remove currently running process, please stop the process before removing it.",
+                    'status': 'error'
+                }
             else:
                 del self.queue[key]
                 self.writeQueue()
@@ -313,12 +283,18 @@ class Daemon():
             # Delete command from queue, save the queue and send response to client
             currentKey = self.getCurrentKey()
             if not self.paused and (first == currentKey or second == currentKey):
-                answer = {'message': "Can't switch currently running process, please stop the process before switching it.", 'status': 'error'}
+                answer = {
+                    'message': "Can't switch currently running process, please stop the process before switching it.",
+                    'status': 'error'
+                }
             else:
                 tmp = self.queue[second].copy()
                 self.queue[second] = self.queue[first].copy()
                 self.queue[first] = tmp
-                answer = {'message': 'Command #{} and #{} switched'.format(first, second), 'status': 'success'}
+                answer = {
+                    'message': 'Command #{} and #{} switched'.format(first, second),
+                    'status': 'success'
+                }
         return answer
 
     def executeStatus(self, command):
@@ -361,6 +337,7 @@ class Daemon():
             self.process.wait()
 
         self.reset = True
+        self.log(reset=True)
 
         answer = {'message': 'Reseting current queue', 'status': 'success'}
         return answer
@@ -413,7 +390,8 @@ class Daemon():
                 currentKey = self.getCurrentKey()
                 self.queue[currentKey]['status'] = 'queued'
 
-                answer = {'message': 'Terminated current process and paused daemon', 'status': 'success'}
+                answer = {'message': 'Terminated current process and paused daemon',
+                          'status': 'success'}
             else:
                 # Only pausing daemon if the process just finished right now.
                 self.paused = True
