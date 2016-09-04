@@ -32,6 +32,18 @@ def getStdoutDescriptor():
     return descriptor
 
 
+def getStderrDescriptor():
+    userName = getpass.getuser()
+    stdoutFile = '/tmp/pueueStderr' + userName
+    if os.path.exists(stdoutFile):
+        os.remove(stdoutFile)
+    descriptor = open(stdoutFile, 'w+')
+
+    # Set File permissionis for stdoutFile
+    os.chmod(stdoutFile, stat.S_IRWXU)
+    return descriptor
+
+
 def getSocketPath():
     # Generating pid and socket path from username
     try:

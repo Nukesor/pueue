@@ -8,7 +8,7 @@ import subprocess
 from pueue.daemon.logs import write_log, remove_old_logs
 from pueue.helper.config import getConfig
 from pueue.helper.socket import getSocketPath, createDaemonSocket
-from pueue.helper.files import createConfigDir, createLogDir, getStdoutDescriptor
+from pueue.helper.files import createConfigDir, createLogDir, getStdoutDescriptor, getStderrDescriptor
 
 
 class Daemon():
@@ -57,6 +57,7 @@ class Daemon():
 
         # Stdout/Stderr management
         self.stdout = getStdoutDescriptor()
+        self.stderr = getStderrDescriptor()
 
     def getCurrentKey(self):
         # Get the current key of the queue.
@@ -89,6 +90,9 @@ class Daemon():
                         output, error_output = self.process.communicate()
                         self.stdout.seek(0)
                         output = self.stdout.read().replace('\n', '\n    ')
+
+                        self.stderr.seek(0)
+                        error_output = self.stderr.read().replace('\n', '\n    ')
                         currentKey = self.getCurrentKey()
 
                         # Mark queue entry as finished and save returncode
@@ -129,14 +133,17 @@ class Daemon():
                 if currentKey is not None:
                     # Get instruction for next process
                     next_item = self.queue[currentKey]
+                    #
                     self.stdout.seek(0)
                     self.stdout.truncate()
+                    self.stderr.seek(0)
+                    self.stderr.truncate()
                     # Spawn subprocess
                     self.process = subprocess.Popen(
                         next_item['command'],
                         shell=True,
                         stdout=self.stdout,
-                        stderr=subprocess.PIPE,
+                        stderr=self.stderr,
                         universal_newlines=True,
                         cwd=next_item['path']
                     )

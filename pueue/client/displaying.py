@@ -113,7 +113,9 @@ def executeShow(args):
     # Get current pueueSTDout file from tmp
     userName = getpass.getuser()
     stdoutFile = '/tmp/pueueStdout{}'.format(userName)
-    descriptor = open(stdoutFile, 'r')
+    stderrFile = '/tmp/pueueStderr{}'.format(userName)
+    stdoutDescriptor = open(stdoutFile, 'r')
+    stderrDescriptor = open(stderrFile, 'r')
     running = True
     # Continually print output with curses or just print once
     if args['watch']:
@@ -128,8 +130,8 @@ def executeShow(args):
         # Update output every two seconds
         while running:
             stdscr.clear()
-            descriptor.seek(0)
-            message = descriptor.read()
+            stdoutDescriptor.seek(0)
+            message = stdoutDescriptor.read()
             stdscr.addstr(0, 0, message)
             stdscr.refresh()
             time.sleep(2)
@@ -140,5 +142,9 @@ def executeShow(args):
         curses.echo()
         curses.endwin()
     else:
-        descriptor.seek(0)
-        print(descriptor.read())
+        print('Stdout output:\n')
+        stdoutDescriptor.seek(0)
+        print(stdoutDescriptor.read())
+        print('\n\nStderr output:\n')
+        stderrDescriptor.seek(0)
+        print(stderrDescriptor.read())
