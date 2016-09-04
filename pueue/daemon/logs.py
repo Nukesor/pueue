@@ -1,10 +1,11 @@
 import os
 import time
+from datetime import datetime
 
 from colorclass import Color
 
 
-def writeLog(logDir, log, rotate):
+def write_log(logDir, log, rotate):
     # Get path for logfile
     if rotate:
         timestamp = time.strftime('%Y%m%d-%H%M')
@@ -52,3 +53,26 @@ def writeLog(logDir, log, rotate):
                 print('Errored while writing to log file. Wrong file permissions?')
 
     logFile.close()
+
+
+def remove_old_logs(logTime, logDir):
+    files = os.listdir(logDir)
+
+    for logFile in files:
+        if logFile != 'queue.log':
+            # Get time stamp from filename
+            name = os.path.splitext(logFile)[0]
+            timestamp = name.split('-', maxsplit=1)[1]
+
+            # Get datetime from time stamp
+            time = datetime.strptime(timestamp, '%Y%m%d-%H%M')
+            now = datetime.now()
+
+            # Get total delta in seconds
+            delta = now - time
+            seconds = delta.total_seconds()
+
+            # Delete log file, if the timestamp is older than the specified log time
+            if seconds > int(logTime):
+                logFilePath = os.path.join(logDir, logFile)
+                os.remove(logFilePath)

@@ -53,12 +53,19 @@ If the queue is empty or the daemon is paused, the returcode of the last will be
 
 The config file of pueue is located in `~/.config/pueue/pueue.ini`.
 
+        [default]
+        resumeafterstart = False
+        stopaterror = True
+
+        [log]
+        logtime = 1209600
+
 #### options
 
 `stopAtError: True` Define if the demon should enter paused state, if a process in the queue fails.
 `resumeAfterStart: False` If you want pueue to instantly resume a queue from the last session, set this value to `True`.
 
-The logs of all your commands can be found in `~/.shared/pueue/*.log`. Old logs won't be deleted automatically yet.
+The logs of all your commands can be found in `~/.shared/pueue/*.log`. Old logs will be deleted after the time specified in your config.
 
 ## Utils
 

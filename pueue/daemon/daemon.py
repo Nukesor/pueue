@@ -5,7 +5,7 @@ import select
 import signal
 import subprocess
 
-from pueue.daemon.logs import writeLog
+from pueue.daemon.logs import write_log, remove_old_logs
 from pueue.helper.config import getConfig
 from pueue.helper.socket import getSocketPath, createDaemonSocket
 from pueue.helper.files import createConfigDir, createLogDir, getStdoutDescriptor
@@ -18,6 +18,7 @@ class Daemon():
         self.logDir = createLogDir()
         self.config = getConfig()
 
+        remove_old_logs(self.config['log']['logTime'], self.logDir)
         self.readQueue()
         # Load previous queue
         # Reset queue if all jobs from last session are finished
@@ -242,7 +243,7 @@ class Daemon():
     def log(self, rotate=False):
         # If there is a finished process a
         # human readable log will be written
-        writeLog(self.logDir, self.queue, rotate)
+        write_log(self.logDir, self.queue, rotate)
 
     def executeAdd(self, command):
         # Add command to queue and save it
