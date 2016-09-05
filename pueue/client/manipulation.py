@@ -54,3 +54,19 @@ def executeSwitch(args):
     # Receive Answer from daemon and print it
     response = receiveData(client)
     processResponse(response)
+
+
+def executeSend(args):
+    client = connectClientSocket()
+
+    # Send new instruction to daemon
+    instruction = {
+        'mode': 'send',
+        'input': args['input'],
+    }
+    data_string = pickle.dumps(instruction, -1)
+    client.send(data_string)
+
+    # Receive Answer from daemon and print it
+    response = receiveData(client)
+    processResponse(response)

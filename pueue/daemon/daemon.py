@@ -93,8 +93,8 @@ class Daemon():
 
                         self.stderr.seek(0)
                         error_output = self.stderr.read().replace('\n', '\n    ')
-                        currentKey = self.getCurrentKey()
 
+                        currentKey = self.getCurrentKey()
                         # Mark queue entry as finished and save returncode
                         self.queue[currentKey]['returncode'] = self.process.returncode
                         if self.process.returncode != 0:
@@ -103,8 +103,8 @@ class Daemon():
                             self.queue[currentKey]['status'] = 'done'
 
                         # Add outputs to log
-                        self.queue[currentKey]['stderr'] = error_output
                         self.queue[currentKey]['stdout'] = output
+                        self.queue[currentKey]['stderr'] = error_output
 
                         # Pause Daemon, if it is configured to stop
                         if self.config['default']['stopAtError'] is True and not self.reset:
@@ -144,6 +144,7 @@ class Daemon():
                         shell=True,
                         stdout=self.stdout,
                         stderr=self.stderr,
+                        stdin=subprocess.PIPE,
                         universal_newlines=True,
                         cwd=next_item['path']
                     )
@@ -192,6 +193,9 @@ class Daemon():
 
                         elif command['mode'] == 'switch':
                             self.respondClient(self.executeSwitch(command))
+
+                        elif command['mode'] == 'send':
+                            self.respondClient(self.executeSend(command))
 
                         elif command['mode'] == 'status':
                             self.respondClient(self.executeStatus(command))
@@ -304,6 +308,15 @@ class Daemon():
                     'status': 'success'
                 }
         return answer
+
+    def executeSend(self, command):
+        processInput = command['input']
+        self.process.stdin.write(processInput)
+        self.process.stdin.close()
+        return {
+            'message': 'Message sent',
+            'status': 'success'
+        }
 
     def executeStatus(self, command):
         answer = {}

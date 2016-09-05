@@ -8,7 +8,7 @@ from pueue.daemon.daemon import Daemon
 from pueue.helper.socket import removeDaemonSocket
 from pueue.client.factories import commandFactory
 from pueue.client.displaying import executeStatus, executeLog, executeShow
-from pueue.client.manipulation import executeAdd, executeRemove, executeSwitch
+from pueue.client.manipulation import executeAdd, executeRemove, executeSwitch, executeSend
 
 
 def main():
@@ -36,6 +36,11 @@ def main():
     switch_Subcommand.add_argument('first', help='The first command', type=int)
     switch_Subcommand.add_argument('second', help='The second command', type=int)
     switch_Subcommand.set_defaults(func=executeSwitch)
+
+    # Send
+    switch_Subcommand = subparsers.add_parser('send', help='Send any input to the current running process.')
+    switch_Subcommand.add_argument('input', help='The input string', type=str)
+    switch_Subcommand.set_defaults(func=executeSend)
 
     # Status
     status_Subcommand = subparsers.add_parser('status', help='Lists all commands in the queue, daemon state and state/returncode of the current/last process')

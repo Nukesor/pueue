@@ -49,6 +49,9 @@ If the queue is empty or the daemon is paused, the returcode of the last will be
 `pueue remove index` Removes the command at #index.  
 `pueue switch index1 index2` Switches the commands at #index1 and #index2.  
 
+`pueue send 'input'` Sends a string to the subprocess's stdin. In case a process prompts for user input, you can use this to interact with the subprocess.
+A `\n` may need to be attached to simulate an `Enter`. The stdin pipe is closed after every `send` command.
+
 ## Configs and Logs
 
 The config file of pueue is located in `~/.config/pueue/pueue.ini`.
