@@ -311,12 +311,18 @@ class Daemon():
 
     def executeSend(self, command):
         processInput = command['input']
-        self.process.stdin.write(processInput)
-        self.process.stdin.close()
-        return {
-            'message': 'Message sent',
-            'status': 'success'
-        }
+        if self.process:
+            self.process.stdin.write(processInput)
+            self.process.stdin.flush()
+            return {
+                'message': 'Message sent',
+                'status': 'success'
+            }
+        else:
+            return {
+                'message': 'No process running.',
+                'status': 'failed'
+            }
 
     def executeStatus(self, command):
         answer = {}
