@@ -6,16 +6,16 @@ A queue for bash commands.
 
 ## Why should I use it?
 
-Everybody who lives on the commandline had this situation, when one needed to transfer huge amounts of data in different directories at the same time.
+Everybody who lives on the command line had this situation, when one needed to transfer huge amounts of data in different directories.
 
-This normaly ends with about 10 open terminals/tmux sessions and an overchallenged hard drive.
+This normally ends with about 10 open terminals/tmux sessions and an overchallenged hard drive.
 
 But what if you could just queue those commands and they would be executed consecutively in their respective directory? Well that would be awesome!  
 And this is just one possible application.  
-Pueue is designed to execute long running tasks in the background, while not beeing bound to any terminal.  
+Pueue is designed to execute long running tasks in the background, while not being bound to any terminal.  
 
 If I got your attention, give it a try!  
-If you think this is awesome, help me, join the development and create some PR's or suggest some improvements.
+If you think this is awesome, help me, join the development and create some PRs or suggest some improvements.
 
 ## Installation:
 
@@ -34,7 +34,7 @@ There is a help option (-h) for all commands, but I'll list them here anyway.
 `pueue --stop-daemon` Daemon shuts down instantly. All running processes die.  
 
 `pueue status` Shows the current queue, process and daemon state.  
-If the queue is empty or the daemon is paused, the returcode of the last will be shown.  
+If the queue is empty or the daemon is paused, the return code of the last will be shown.  
 `pueue show (--watch)` Shows the output of the currently running process.  
 `pueue log` Prints the log of all executed commands.  
 
@@ -57,7 +57,7 @@ The stdin pipe is flushed after every `send` command. To simulate a `\n` you nee
 
 ## Configs and Logs
 
-The config file of pueue is located in `~/.config/pueue/pueue.ini`.
+The configuration file of pueue is located in `~/.config/pueue/pueue.ini`.
 
         [default]
         resumeafterstart = False
@@ -84,14 +84,14 @@ Afterwards every user can start/enable it's own session with:
 
 ### ZSH Completion
 
-If you use zsh, place `_pueue` in a folder, that is contained in your `FPATH` environment variable. This script will be propably added to zsh-users/zsh-completions, when it is finished.
+If you use zsh, place `_pueue` in a folder, that is contained in your `FPATH` environment variable. This script will be probably added to zsh-users/zsh-completions, when it is finished.
 
 ## Libraries used
 
 Regards to Robpol86 for providing the awesome `terminaltables` and `colorclass` libraries.
-And thanks to thesharp for the extremly usefull `daemonize` library.
+And thanks to thesharp for the extremely useful `daemonize` library.
 
 ## Progress:
-Pueue already works, but it needs debugging and propert testing. This is all in progress and will be done soon.
+Pueue already works, but it needs debugging and proper testing. This is all in progress and will be done soon.
 
 Copyright &copy; 2016 Arne Beer ([@Nukesor](https://github.com/Nukesor))
