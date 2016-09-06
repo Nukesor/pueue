@@ -6,7 +6,7 @@ A queue for bash commands.
 
 ## Why should I use it?
 
-Everybody who lives on the command line had this situation, when one needed to transfer huge amounts of data in different directories.
+Everybody who lives on the command line had this situation, when one needed to unzip or transfer huge amounts of data in different directories.
 
 This normally ends with about 10 open terminals/tmux sessions and an overchallenged hard drive.
 
@@ -35,21 +35,22 @@ There is a help option (-h) for all commands, but I'll list them here anyway.
 
 `pueue status` Shows the current queue, process and daemon state.  
 If the queue is empty or the daemon is paused, the return code of the last will be shown.  
-`pueue show (--watch)` Shows the output of the currently running process.  
-`pueue log` Prints the log of all executed commands.  
+`pueue show (--watch)` Shows the output of the currently running process. `show --watch` will only show the stdout output of the subprocess.
+`show` on it's own will also print the stderr, which can be useful, if the subprocess prompts for user input (This is often piped to stderr).  
+`pueue log` Prints the output and statuses of all executed commands.  
 
 `pueue start` Daemon will start to process the queue.  
 `pueue pause` Daemon will pause the current process and stops processing the queue.  
-`pueue pause --wait` Waits for the current process to terminate on its own and pause the daemon afterwards.  
+`pueue pause --wait` Wait for the current process to terminate on its own and pause the daemon afterwards.  
 `pueue stop` Daemon will terminate the current process and pause.  
-`pueue kill` KILLs the current process (kill -9) and pauses the daemon.  
-`pueue reset` Removes all commands from the queue, kills the current process and resets the queue index to 0.  
+`pueue kill` KILL the current process (kill -9) and pause the daemon.  
+`pueue reset` Remove all commands from the queue, kill the current process and reset the queue index to 0.  
 
-`pueue add 'command'` Adds a command to the queue.  
-`pueue remove index` Removes the command at #index.  
-`pueue switch index1 index2` Switches the commands at #index1 and #index2.  
+`pueue add 'command'` Add a command to the queue.  
+`pueue remove index` Remove the command at #index.  
+`pueue switch index1 index2` Switch the commands at position #index1 and #index2.  
 
-`pueue send 'input'` Sends a string to the subprocess's stdin. In case a process prompts for user input, you can use this to interact with the subprocess.
+`pueue send 'input'` Send a string to the subprocess's stdin. In case a process prompts for user input, you can use this to interact with the subprocess.
 The stdin pipe is flushed after every `send` command. To simulate a `\n` you need to add a newline in your string:
 
         pueue send 'y
@@ -68,10 +69,10 @@ The configuration file of pueue is located in `~/.config/pueue/pueue.ini`.
 
 #### options
 
-`stopAtError: True` Define if the demon should enter paused state, if a process in the queue fails.
-`resumeAfterStart: False` If you want pueue to instantly resume a queue from the last session, set this value to `True`.
+`stopAtError = True` Define if the demon should enter paused state, if a process in the queue fails.
+`resumeAfterStart = False` If you want pueue to instantly resume a queue from the last session, set this value to `True`.
 
-The logs of all your commands can be found in `~/.shared/pueue/*.log`. Old logs will be deleted after the time specified in your config.
+`logtime = 1209600` The logs of all your commands can be found in `~/.shared/pueue/*.log`. Old logs will be deleted after the time specified in your config.
 
 ## Utils
 
