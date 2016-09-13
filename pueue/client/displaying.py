@@ -3,6 +3,7 @@ import math
 import pickle
 import curses
 import getpass
+import operator
 
 from textwrap import wrap
 from functools import reduce
@@ -47,7 +48,7 @@ def executeStatus(args):
         # Format incomming data to be compatible with Terminaltables
         formatted_data = []
         formatted_data.append(['Index', 'Status', 'Code', 'Command', 'Path'])
-        for key, entry in data.items():
+        for key, entry in sorted(data.items(), key=operator.itemgetter(0)):
             formatted_data.append(
                 [
                     '#{}'.format(key),
