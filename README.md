@@ -33,8 +33,7 @@ There is a help option (-h) for all commands, but I'll list them here anyway.
 `pueue --no-daemon` Starts the daemon in the current terminal.  
 `pueue --stop-daemon` Daemon shuts down instantly. All running processes die.  
 
-`pueue status` Shows the current queue, process and daemon state.  
-If the queue is empty or the daemon is paused, the return code of the last will be shown.  
+`pueue status` Shows the current state of the process and daemon as well as the processing state of the queue.
 `pueue show (--watch)` Shows the output of the currently running process. `show --watch` will only show the stdout output of the subprocess.
 `show` on it's own will also print the stderr, which can be useful, if the subprocess prompts for user input (This is often piped to stderr).  
 `pueue log` Prints the output and statuses of all executed commands.  
