@@ -38,11 +38,10 @@ There is a help option (-h) for all commands, but I'll list them here anyway.
 `show` on it's own will also print the stderr, which can be useful, if the subprocess prompts for user input (This is often piped to stderr).  
 `pueue log` Prints the output and statuses of all executed commands.  
 
-`pueue start` Daemon will start to process the queue.  
-`pueue pause` Daemon will pause the current process and stops processing the queue.  
-`pueue pause --wait` Wait for the current process to terminate on its own and pause the daemon afterwards.  
-`pueue stop` Daemon will terminate the current process and pause.  
-`pueue kill` KILL the current process (kill -9) and pause the daemon.  
+`pueue start` Daemon will start to process the queue. This starts any paused processes as well (`SIGCONT`).  
+`pueue pause ` Stop processing the queue and pause the underlying process by sending a `SIGSTOP`.  
+`pueue stop` Terminate the current process (`kill`) and pause the daemon afterwards.  
+`pueue kill` KILL the current process (`kill -9`) and pause the daemon afterwards.  
 `pueue reset` Remove all commands from the queue, kill the current process and reset the queue index to 0.  
 
 `pueue add 'command'` Add a command to the queue.  

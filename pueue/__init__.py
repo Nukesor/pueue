@@ -61,7 +61,6 @@ def main():
 
     # Pause
     pause_Subcommand = subparsers.add_parser('pause', help='Daemon will pause the current process and stops processing the queue.')
-    pause_Subcommand.add_argument('--wait', action='store_false', help='Waits for the current process to terminate on its own and pause the daemon afterwards.')
     pause_Subcommand.set_defaults(func=commandFactory('pause'))
 
     # Stop
