@@ -22,7 +22,7 @@ class Daemon():
         self.read_queue()
         # Load previous queue
         # Reset queue if all jobs from last session are finished
-        if self.get_current_key() is None:
+        if self.get_next_item() is None:
             # Rotate old log
             self.log(rotate=True)
             self.queue = {}
@@ -60,12 +60,12 @@ class Daemon():
         self.stdout = get_stdout_descriptor()
         self.stderr = get_stderr_descriptor()
 
-    def get_current_key(self):
-        # Get the current key of the queue.
+    def get_next_item(self):
+        # Get the next processable item of the queue.
         # Returns None if no key is found.
         smallest = None
         for key in self.queue.keys():
-            if self.queue[key]['status'] != 'done' and self.queue[key]['status'] != 'errored':
+            if self.queue[key]['status'] == 'queued':
                 if smallest is None or key < smallest:
                     smallest = key
         return smallest
@@ -95,17 +95,16 @@ class Daemon():
                         self.stderr.seek(0)
                         error_output = self.stderr.read().replace('\n', '\n    ')
 
-                        currentKey = self.get_current_key()
                         # Mark queue entry as finished and save returncode
-                        self.queue[currentKey]['returncode'] = self.process.returncode
+                        self.queue[self.current_key]['returncode'] = self.process.returncode
                         if self.process.returncode != 0:
-                            self.queue[currentKey]['status'] = 'errored'
+                            self.queue[self.current_key]['status'] = 'errored'
                         else:
-                            self.queue[currentKey]['status'] = 'done'
+                            self.queue[self.current_key]['status'] = 'done'
 
                         # Add outputs to log
-                        self.queue[currentKey]['stdout'] = output
-                        self.queue[currentKey]['stderr'] = error_output
+                        self.queue[self.current_key]['stdout'] = output
+                        self.queue[self.current_key]['stderr'] = error_output
 
                         # Pause Daemon, if it is configured to stop
                         if self.config['default']['stopAtError'] is True and not self.reset:
@@ -119,10 +118,11 @@ class Daemon():
                         # Now we can set the status to paused.
                         self.paused = True
                         if self.remove_current is True:
-                            del self.queue[currentKey]
+                            del self.queue[self.current_key]
                         else:
-                            self.queue[currentKey]['status'] = 'queued'
+                            self.queue[self.current_key]['status'] = 'queued'
                     self.process = None
+                    self.current_key = None
                     self.processStatus = 'No running process'
 
             if self.reset:
@@ -138,10 +138,10 @@ class Daemon():
 
             # Start next Process
             if not self.paused and len(self.queue) > 0 and self.process is None:
-                currentKey = self.get_current_key()
-                if currentKey is not None:
+                self.current_key = self.get_next_item()
+                if self.current_key is not None:
                     # Get instruction for next process
-                    next_item = self.queue[currentKey]
+                    next_item = self.queue[self.current_key]
                     #
                     self.stdout.seek(0)
                     self.stdout.truncate()
@@ -157,7 +157,7 @@ class Daemon():
                         universal_newlines=True,
                         cwd=next_item['path']
                     )
-                    self.queue[currentKey]['status'] = 'running'
+                    self.queue[self.current_key]['status'] = 'running'
                     self.processStatus = 'running'
 
             # Create list for waitable objects
@@ -282,7 +282,7 @@ class Daemon():
             answer = {'message': 'No command with key #{}'.format(str(key)), 'status': 'error'}
         else:
             # Delete command from queue, save the queue and send response to client
-            if not self.paused and key == self.get_current_key():
+            if not self.paused and key == self.current_key:
                 answer = {
                     'message': "Can't remove currently running process, "
                     "please stop the process before removing it.",
@@ -331,8 +331,7 @@ class Daemon():
             answer = {'message': 'No command with key #{}'.format(str(second)), 'status': 'error'}
         else:
             # Delete command from queue, save the queue and send response to client
-            currentKey = self.get_current_key()
-            if not self.paused and (first == currentKey or second == currentKey):
+            if not self.paused and (first == self.current_key or second == self.current_key):
                 answer = {
                     'message': "Can't switch currently running process, "
                     "please stop the process before switching it.",
@@ -412,8 +411,7 @@ class Daemon():
         # Start the process if it is paused
         if self.process is not None and self.paused:
             os.kill(self.process.pid, signal.SIGCONT)
-            currentKey = self.get_current_key()
-            self.queue[currentKey]['status'] = 'running'
+            self.queue[self.current_key]['status'] = 'running'
             self.processStatus = 'running'
 
         # Start the daemon if in paused state
@@ -428,8 +426,7 @@ class Daemon():
         # Pause the currently running process
         if self.process is not None and not self.paused:
             os.kill(self.process.pid, signal.SIGSTOP)
-            currentKey = self.get_current_key()
-            self.queue[currentKey]['status'] = 'paused'
+            self.queue[self.current_key]['status'] = 'paused'
             self.processStatus = 'paused'
 
         # Pause the daemon
@@ -454,8 +451,7 @@ class Daemon():
                     self.remove_current = True
 
                 # Set status of current process in queue back to `queued`
-                currentKey = self.get_current_key()
-                self.queue[currentKey]['status'] = 'stopping'
+                self.queue[self.current_key]['status'] = 'stopping'
 
                 answer = {'message': 'Terminating current process and paused daemon',
                           'status': 'success'}
@@ -483,8 +479,7 @@ class Daemon():
                     self.remove_current = True
 
                 # Set status of current process in queue back to `queued`
-                currentKey = self.get_current_key()
-                self.queue[currentKey]['status'] = 'killing'
+                self.queue[self.current_key]['status'] = 'killing'
 
                 answer = {'message': 'Sent kill to process and paused daemon', 'status': 'success'}
             else:
