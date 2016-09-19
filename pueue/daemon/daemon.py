@@ -113,6 +113,8 @@ class Daemon():
 
                         self.writeQueue()
                         self.log()
+                    else:
+                        self.queue[currentKey]['status'] = 'queued'
                     self.process = None
                     self.processStatus = 'No running process'
 
@@ -272,7 +274,8 @@ class Daemon():
             # Delete command from queue, save the queue and send response to client
             if not self.paused and key == self.getCurrentKey():
                 answer = {
-                    'message': "Can't remove currently running process, please stop the process before removing it.",
+                    'message': "Can't remove currently running process, "
+                    "please stop the process before removing it.",
                     'status': 'error'
                 }
             else:
@@ -415,9 +418,9 @@ class Daemon():
 
                 # Set status of current process in queue back to `queued`
                 currentKey = self.getCurrentKey()
-                self.queue[currentKey]['status'] = 'queued'
+                self.queue[currentKey]['status'] = 'stopping'
 
-                answer = {'message': 'Terminated current process and paused daemon',
+                answer = {'message': 'Terminating current process and paused daemon',
                           'status': 'success'}
             else:
                 # Only pausing daemon if the process just finished right now.
@@ -443,7 +446,7 @@ class Daemon():
 
                 # Set status of current process in queue back to `queued`
                 currentKey = self.getCurrentKey()
-                self.queue[currentKey]['status'] = 'queued'
+                self.queue[currentKey]['status'] = 'killing'
 
                 answer = {'message': 'Sent kill to process and paused daemon', 'status': 'success'}
             else:
