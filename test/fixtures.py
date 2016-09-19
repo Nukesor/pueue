@@ -2,13 +2,13 @@ import os
 import pytest
 import subprocess
 
-from test.helper import commandFactory
-from pueue.helper.files import createConfigDir
+from test.helper import command_factory
+from pueue.helper.files import create_config_dir
 
 
 @pytest.fixture
 def daemon_setup(request):
-    queue = createConfigDir()+'/queue'
+    queue = create_config_dir()+'/queue'
     if os.path.exists(queue):
         os.remove(queue)
 
@@ -19,9 +19,9 @@ def daemon_setup(request):
         stderr=subprocess.PIPE
     )
     output, error = process.communicate()
-    commandFactory('reset')
+    command_factory('reset')
 
     def daemon_teardown():
-        commandFactory('reset')
-        commandFactory('STOPDAEMON')
+        command_factory('reset')
+        command_factory('STOPDAEMON')
     request.addfinalizer(daemon_teardown)

@@ -1,11 +1,11 @@
 import os
 import pickle
 
-from pueue.helper.socket import connectClientSocket, receiveData, processResponse
+from pueue.helper.socket import connect_client_socket, receive_data, process_response
 
 
-def executeAdd(args):
-    client = connectClientSocket()
+def execute_add(args):
+    client = connect_client_socket()
 
     # Send new instruction to daemon
     instruction = {
@@ -19,12 +19,12 @@ def executeAdd(args):
     client.send(data_string)
 
     # Receive Answer from daemon and print it
-    response = receiveData(client)
-    processResponse(response)
+    response = receive_data(client)
+    process_response(response)
 
 
-def executeRemove(args):
-    client = connectClientSocket()
+def execute_remove(args):
+    client = connect_client_socket()
 
     # Send new instruction to daemon
     instruction = {
@@ -35,12 +35,12 @@ def executeRemove(args):
     client.send(data_string)
 
     # Receive Answer from daemon and print it
-    response = receiveData(client)
-    processResponse(response)
+    response = receive_data(client)
+    process_response(response)
 
 
-def executeRestart(args):
-    client = connectClientSocket()
+def execute_restart(args):
+    client = connect_client_socket()
 
     # Send new instruction to daemon
     instruction = {
@@ -51,12 +51,12 @@ def executeRestart(args):
     client.send(data_string)
 
     # Receive Answer from daemon and print it
-    response = receiveData(client)
-    processResponse(response)
+    response = receive_data(client)
+    process_response(response)
 
 
-def executeStop(args):
-    client = connectClientSocket()
+def execute_stop(args):
+    client = connect_client_socket()
 
     # Send new instruction to daemon
     instruction = {
@@ -67,12 +67,12 @@ def executeStop(args):
     client.send(data_string)
 
     # Receive Answer from daemon and print it
-    response = receiveData(client)
-    processResponse(response)
+    response = receive_data(client)
+    process_response(response)
 
 
-def executeKill(args):
-    client = connectClientSocket()
+def execute_kill(args):
+    client = connect_client_socket()
 
     # Send new instruction to daemon
     instruction = {
@@ -83,12 +83,12 @@ def executeKill(args):
     client.send(data_string)
 
     # Receive Answer from daemon and print it
-    response = receiveData(client)
-    processResponse(response)
+    response = receive_data(client)
+    process_response(response)
 
 
-def executeSwitch(args):
-    client = connectClientSocket()
+def execute_switch(args):
+    client = connect_client_socket()
 
     # Send new instruction to daemon
     instruction = {
@@ -100,12 +100,12 @@ def executeSwitch(args):
     client.send(data_string)
 
     # Receive Answer from daemon and print it
-    response = receiveData(client)
-    processResponse(response)
+    response = receive_data(client)
+    process_response(response)
 
 
-def executeSend(args):
-    client = connectClientSocket()
+def execute_send(args):
+    client = connect_client_socket()
 
     # Send new instruction to daemon
     instruction = {
@@ -116,5 +116,5 @@ def executeSend(args):
     client.send(data_string)
 
     # Receive Answer from daemon and print it
-    response = receiveData(client)
-    processResponse(response)
+    response = receive_data(client)
+    process_response(response)

@@ -4,7 +4,7 @@ import stat
 import getpass
 
 
-def createConfigDir():
+def create_config_dir():
     home = os.path.expanduser('~')
     queueFolder = home+'/.config/pueue'
     if not os.path.exists(queueFolder):
@@ -12,7 +12,7 @@ def createConfigDir():
     return queueFolder
 
 
-def createLogDir():
+def create_log_dir():
     home = os.path.expanduser('~')
     logFolder = home+'/.local/share/pueue'
     if not os.path.exists(logFolder):
@@ -20,7 +20,7 @@ def createLogDir():
     return logFolder
 
 
-def getStdoutDescriptor():
+def get_stdout_descriptor():
     userName = getpass.getuser()
     stdoutFile = '/tmp/pueueStdout' + userName
     if os.path.exists(stdoutFile):
@@ -32,7 +32,7 @@ def getStdoutDescriptor():
     return descriptor
 
 
-def getStderrDescriptor():
+def get_stderr_descriptor():
     userName = getpass.getuser()
     stdoutFile = '/tmp/pueueStderr' + userName
     if os.path.exists(stdoutFile):
@@ -44,7 +44,7 @@ def getStderrDescriptor():
     return descriptor
 
 
-def getSocketPath():
+def get_socket_path():
     # Generating pid and socket path from username
     try:
         userName = getpass.getuser()

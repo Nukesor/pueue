@@ -9,15 +9,15 @@ from textwrap import wrap
 from functools import reduce
 from colorclass import Color
 
-from pueue.helper.files import createLogDir
-from pueue.helper.socket import connectClientSocket
+from pueue.helper.files import create_log_dir
+from pueue.helper.socket import connect_client_socket
 
 from terminaltables import AsciiTable
 from terminaltables.terminal_io import terminal_size
 
 
-def executeStatus(args):
-    client = connectClientSocket()
+def execute_status(args):
+    client = connect_client_socket()
     instruction = {'mode': 'status'}
 
     # Send new instruction to daemon
@@ -104,13 +104,13 @@ def executeStatus(args):
     print('')
 
 
-def executeLog(args):
-    logPath = createLogDir() + '/queue.log'
+def execute_log(args):
+    logPath = create_log_dir() + '/queue.log'
     logFile = open(logPath, 'r')
     print(logFile.read())
 
 
-def executeShow(args):
+def execute_show(args):
     # Get current pueueSTDout file from tmp
     userName = getpass.getuser()
     stdoutFile = '/tmp/pueueStdout{}'.format(userName)

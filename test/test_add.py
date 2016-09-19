@@ -3,8 +3,8 @@ from test.fixtures import *
 
 
 def test_add(daemon_setup):
-    commandFactory('pause')
-    response = sendCommand({
+    command_factory('pause')
+    response = send_command({
         'mode': 'add',
         'command': 'ls',
         'path': '/tmp',
@@ -12,6 +12,6 @@ def test_add(daemon_setup):
         'returncode': ''
     })
     assert response['status'] == 'success'
-    status = getStatus()
+    status = get_status()
     assert status['data'][0]['command'] == 'ls'
     assert status['data'][0]['path'] == '/tmp'

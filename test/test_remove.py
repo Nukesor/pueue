@@ -3,23 +3,23 @@ from test.fixtures import *
 
 
 def test_remove_fails(daemon_setup):
-    response = sendCommand({'mode': 'remove', 'key': 0})
+    response = send_command({'mode': 'remove', 'key': 0})
     assert response['status'] == 'error'
 
 
 def test_remove_running(daemon_setup):
-    executeAdd({'command': 'sleep 60'})
-    response = sendCommand({'mode': 'remove', 'key': 0})
+    execute_add({'command': 'sleep 60'})
+    response = send_command({'mode': 'remove', 'key': 0})
     assert response['status'] == 'error'
 
 
 def test_remove(daemon_setup):
-    commandFactory('pause')
-    status = getStatus()
+    command_factory('pause')
+    status = get_status()
     assert status['status'] == 'paused'
-    executeAdd({'command': 'ls'})
+    execute_add({'command': 'ls'})
 
-    response = sendCommand({'mode': 'remove', 'key': 0})
+    response = send_command({'mode': 'remove', 'key': 0})
     assert response['status'] == 'success'
-    status = getStatus()
+    status = get_status()
     assert '0' not in status['data']
