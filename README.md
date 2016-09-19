@@ -91,6 +91,6 @@ Regards to Robpol86 for providing the awesome `terminaltables` and `colorclass` 
 And thanks to thesharp for the extremely useful `daemonize` library.
 
 ## Progress:
-Pueue already works, but it needs debugging and proper testing. This is all in progress and will be done soon.
+Pueue already works and is frequently used. There might be some small bugs, but I didn't encounter something serious in quite a while.
 
 Copyright &copy; 2016 Arne Beer ([@Nukesor](https://github.com/Nukesor))
