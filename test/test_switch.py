@@ -1,12 +1,16 @@
-from test.helper import *
-from test.fixtures import *
+from test.helper import (
+    command_factory,
+    execute_add,
+    get_status,
+    send_command,
+)
 
 
 def test_switch(daemon_setup):
     command_factory('pause')
     execute_add({'command': 'ls'})
     execute_add({'command': 'ls -l'})
-    execute_switch({'first': 0, 'second': 1})
+    command_factory('switch', {'first': 0, 'second': 1})
     status = get_status()
     assert status['data'][0]['command'] == 'ls -l'
     assert status['data'][1]['command'] == 'ls'

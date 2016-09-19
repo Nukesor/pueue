@@ -108,7 +108,7 @@ class Daemon():
 
                         # Pause Daemon, if it is configured to stop
                         if self.config['default']['stopAtError'] is True and not self.reset:
-                            if self.process.returncode == 0:
+                            if self.process.returncode != 0:
                                 self.paused = True
 
                         self.write_queue()
@@ -121,6 +121,7 @@ class Daemon():
                             del self.queue[self.current_key]
                         else:
                             self.queue[self.current_key]['status'] = 'queued'
+
                     self.process = None
                     self.current_key = None
                     self.processStatus = 'No running process'
@@ -424,7 +425,7 @@ class Daemon():
 
     def execute_pause(self, command):
         # Pause the currently running process
-        if self.process is not None and not self.paused:
+        if self.process is not None and not self.paused and not command['wait']:
             os.kill(self.process.pid, signal.SIGSTOP)
             self.queue[self.current_key]['status'] = 'paused'
             self.processStatus = 'paused'

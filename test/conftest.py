@@ -6,7 +6,7 @@ from test.helper import command_factory
 from pueue.helper.files import create_config_dir
 
 
-@pytest.fixture
+@pytest.fixture(scope='function')
 def daemon_setup(request):
     queue = create_config_dir()+'/queue'
     if os.path.exists(queue):

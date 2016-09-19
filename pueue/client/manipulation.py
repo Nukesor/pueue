@@ -71,6 +71,22 @@ def execute_stop(args):
     process_response(response)
 
 
+def execute_pause(args):
+    client = connect_client_socket()
+
+    # Send new instruction to daemon
+    instruction = {
+        'mode': 'stop',
+        'wait': args['wait']
+    }
+    data_string = pickle.dumps(instruction, -1)
+    client.send(data_string)
+
+    # Receive Answer from daemon and print it
+    response = receive_data(client)
+    process_response(response)
+
+
 def execute_kill(args):
     client = connect_client_socket()
 

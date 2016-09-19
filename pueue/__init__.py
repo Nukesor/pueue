@@ -16,6 +16,7 @@ from pueue.client.manipulation import (
     execute_add,
     execute_remove,
     execute_restart,
+    execute_pause,
     execute_stop,
     execute_kill,
     execute_switch,
@@ -94,7 +95,11 @@ def main():
     # Pause
     pause_Subcommand = subparsers.add_parser(
         'pause', help='Daemon will pause the current process and stops processing the queue.')
-    pause_Subcommand.set_defaults(func=command_factory('pause'))
+    pause_Subcommand.add_argument(
+        '-w', '--wait', action='store_true',
+        help='Stops the daemon, but waits for the current process to finish.'
+    )
+    pause_Subcommand.set_defaults(func=execute_pause)
 
     # Start
     start_Subcommand = subparsers.add_parser(

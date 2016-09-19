@@ -1,4 +1,5 @@
 import pickle
+from time import sleep
 
 from pueue.helper.socket import connect_client_socket
 
@@ -27,16 +28,13 @@ def execute_add(command):
     send_command(command)
 
 
-def execute_switch(command):
-    command['mode'] = 'switch'
-    send_command(command)
-
-
 def get_status():
     status = send_command({'mode': 'status'})
     return status
 
 
-def get_(command):
-    command['mode'] = 'switch'
-    send_command(command)
+def wait_for_process(key):
+    status = get_status()
+    while (key not in status['data']) or (status['data'][key]['status'] != 'done'):
+        sleep(1)
+        status = get_status()
