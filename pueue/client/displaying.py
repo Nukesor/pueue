@@ -90,7 +90,7 @@ def executeStatus(args):
                         wrapped_string = Color('{autogreen}' + '{}'.format(wrapped_string) + '{/autogreen}')
                     elif wrapped_string == 'queued':
                         wrapped_string = Color('{autoyellow}' + '{}'.format(wrapped_string) + '{/autoyellow}')
-                    elif wrapped_string == 'errored':
+                    elif wrapped_string in ['errored', 'stopping', 'killing']:
                         wrapped_string = Color('{autored}' + '{}'.format(wrapped_string) + '{/autored}')
                 elif j == 2:
                     if wrapped_string == '0' and wrapped_string != 'Code':
