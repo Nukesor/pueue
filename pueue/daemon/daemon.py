@@ -364,7 +364,7 @@ class Daemon():
             self.process.wait()
 
         self.reset = True
-        self.log(reset=True)
+        self.log(rotate=True)
 
         answer = {'message': 'Reseting current queue', 'status': 'success'}
         return answer

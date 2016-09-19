@@ -11,7 +11,7 @@ def commandFactory(state):
 def sendCommand(command):
     client = connectClientSocket()
     client.send(pickle.dumps(command, -1))
-    answer = client.recv(8192)
+    answer = client.recv(1048576)
     response = pickle.loads(answer)
     client.close()
     return response
