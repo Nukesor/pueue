@@ -19,18 +19,36 @@ def test_start(daemon_setup):
 
 def test_kill(daemon_setup):
     executeAdd({'command': 'sleep 60'})
-    commandFactory('kill')
+    commandFactory('kill', {'remove': False})
     status = getStatus()
     assert status['status'] == 'paused'
     assert status['process'] == 'No running process'
+
+
+def test_kill_remove(daemon_setup):
+    executeAdd({'command': 'sleep 60'})
+    commandFactory('kill', {'remove': True})
+    status = getStatus()
+    assert status['status'] == 'paused'
+    assert status['process'] == 'No running process'
+    assert status['data'] == 'Queue is empty'
 
 
 def test_stop(daemon_setup):
     executeAdd({'command': 'sleep 60'})
-    commandFactory('stop')
+    commandFactory('stop', {'remove': False})
     status = getStatus()
     assert status['status'] == 'paused'
     assert status['process'] == 'No running process'
+
+
+def test_stop_remove(daemon_setup):
+    executeAdd({'command': 'sleep 60'})
+    commandFactory('stop', {'remove': True})
+    status = getStatus()
+    assert status['status'] == 'paused'
+    assert status['process'] == 'No running process'
+    assert status['data'] == 'Queue is empty'
 
 
 def test_status(daemon_setup):

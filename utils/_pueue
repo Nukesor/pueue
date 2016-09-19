@@ -23,6 +23,12 @@ _pueue_subcommand () {
     (show)
       _arguments '--watch[watch the output of the current process]:'
       ;;
+    (kill)
+      _arguments '--remove[The current entry will be removed from the queue.]:'
+      ;;
+    (stop)
+      _arguments '--remove[The current entry will be removed from the queue.]:'
+      ;;
     (add)
       _alternative 'command:commands:{_command_names}'
       ;;

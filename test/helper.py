@@ -3,8 +3,10 @@ import pickle
 from pueue.helper.socket import connectClientSocket
 
 
-def commandFactory(state):
+def commandFactory(state, params={}):
     instruction = {'mode': state}
+    for key, value in params.items():
+        instruction[key] = value
     return sendCommand(instruction)
 
 

@@ -39,6 +39,54 @@ def executeRemove(args):
     processResponse(response)
 
 
+def executeRestart(args):
+    client = connectClientSocket()
+
+    # Send new instruction to daemon
+    instruction = {
+        'mode': 'restart',
+        'key': args['key']
+    }
+    data_string = pickle.dumps(instruction, -1)
+    client.send(data_string)
+
+    # Receive Answer from daemon and print it
+    response = receiveData(client)
+    processResponse(response)
+
+
+def executeStop(args):
+    client = connectClientSocket()
+
+    # Send new instruction to daemon
+    instruction = {
+        'mode': 'stop',
+        'remove': args['remove']
+    }
+    data_string = pickle.dumps(instruction, -1)
+    client.send(data_string)
+
+    # Receive Answer from daemon and print it
+    response = receiveData(client)
+    processResponse(response)
+
+
+def executeKill(args):
+    client = connectClientSocket()
+
+    # Send new instruction to daemon
+    instruction = {
+        'mode': 'kill',
+        'remove': args['remove']
+    }
+    data_string = pickle.dumps(instruction, -1)
+    client.send(data_string)
+
+    # Receive Answer from daemon and print it
+    response = receiveData(client)
+    processResponse(response)
+
+
 def executeSwitch(args):
     client = connectClientSocket()
 

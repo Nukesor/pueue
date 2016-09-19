@@ -40,8 +40,9 @@ There is a help option (-h) for all commands, but I'll list them here anyway.
 
 `pueue start` Daemon will start to process the queue. This starts any paused processes as well (`SIGCONT`).  
 `pueue pause ` Stop processing the queue and pause the underlying process by sending a `SIGSTOP`.  
-`pueue stop` Terminate the current process (`kill`) and pause the daemon afterwards.  
-`pueue kill` KILL the current process (`kill -9`) and pause the daemon afterwards.  
+`pueue restart` Enqueue a finished process.  
+`pueue stop (-r)` Terminate the current process (`kill`) and pause the daemon afterwards. If `-r` is provided the current running process will be removed from the queue.  
+`pueue kill (-r)` KILL the current process (`kill -9`) and pause the daemon afterwards. If `-r` is provided the current running process will be removed from the queue.  
 `pueue reset` Remove all commands from the queue, kill the current process and reset the queue index to 0.  
 
 `pueue add 'command'` Add a command to the queue.  
