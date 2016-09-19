@@ -14,7 +14,7 @@
 
 _pueue_commands () {
   declare -a subcommands
-  subcommands=(add remove switch status show log reset pause stop start kill)
+  subcommands=(add remove switch send status show log reset pause stop start kill)
   _describe -t pueue-commands "pueue subcommands" subcommands
 }
 
@@ -22,9 +22,6 @@ _pueue_subcommand () {
   case "$words[1]" in
     (show)
       _arguments '--watch[watch the output of the current process]:'
-      ;;
-    (pause)
-      _arguments '--wait[Waits for the current process to terminate on its own and pause the daemon afterwards.]:'
       ;;
     (add)
       _alternative 'command:commands:{_command_names}'
