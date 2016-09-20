@@ -11,9 +11,7 @@ def execute_add(args):
     instruction = {
         'mode': 'add',
         'command': args['command'],
-        'path': os.getcwd(),
-        'status': 'queued',
-        'returncode': ''
+        'path': os.getcwd()
     }
     data_string = pickle.dumps(instruction, -1)
     client.send(data_string)

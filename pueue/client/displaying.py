@@ -47,7 +47,7 @@ def execute_status(args):
     elif isinstance(data, dict):
         # Format incomming data to be compatible with Terminaltables
         formatted_data = []
-        formatted_data.append(['Index', 'Status', 'Code', 'Command', 'Path'])
+        formatted_data.append(['Index', 'Status', 'Code', 'Command', 'Path', 'Start', 'End'])
         for key, entry in sorted(data.items(), key=operator.itemgetter(0)):
             formatted_data.append(
                 [
@@ -55,7 +55,9 @@ def execute_status(args):
                     entry['status'],
                     '{}'.format(entry['returncode']),
                     entry['command'],
-                    entry['path']
+                    entry['path'],
+                    entry['start'],
+                    entry['end']
                 ]
             )
 
@@ -69,8 +71,8 @@ def execute_status(args):
         # If the text is wider than the actual terminal size, we
         # compute a new size for the Command and Path column.
         if (reduce(lambda a, b: a+b, table.column_widths) + 10) > terminal_width[0]:
-            # We have to subtract 10 because of table paddings
-            left_space = math.floor((terminal_width[0] - customWidth[0] - customWidth[1] - customWidth[2] - 12)/2)
+            # We have to subtract 12 because of table paddings
+            left_space = math.floor((terminal_width[0] - customWidth[0] - customWidth[1] - customWidth[2] - customWidth[5] - customWidth[6] - 12)/2)
 
             if customWidth[3] < left_space:
                 customWidth[4] = 2*left_space - customWidth[3]

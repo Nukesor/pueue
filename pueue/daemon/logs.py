@@ -31,26 +31,30 @@ def write_log(logDir, log, rotate):
                 else:
                     returncode = Color('{autored}' + '{}'.format(returncode) + '{/autored}')
 
-                # Command Id with returncode and actual command
+                # Write command id with returncode and actual command
                 logFile.write(
                     Color('{autoyellow}' + 'Command #{} '.format(key) + '{/autoyellow}') +
                     'exited with returncode {}: '.format(returncode) +
                     '"{}" \n'.format(logentry['command'])
                 )
-                # Print Path
+                # Write path
                 logFile.write('Path: {} \n'.format(logentry['path']))
+                # Write times
+                logFile.write('Start: {}, End: {} \n'
+                              .format(logentry['start'], logentry['end']))
 
-                # Print STDERR
+                # Write STDERR
                 if logentry['stderr']:
                     logFile.write(Color('{autored}Stderr output: {/autored}\n    ') + logentry['stderr'])
 
-                # Print STDOUT
+                # Write STDOUT
                 if len(logentry['stdout']) > 0:
                     logFile.write(Color('{autogreen}Stdout output: {/autogreen}\n    ') + logentry['stdout'])
 
                 logFile.write('\n')
-            except:
+            except Exception as a:
                 print('Errored while writing to log file. Wrong file permissions?')
+                print(a.message)
 
     logFile.close()
 

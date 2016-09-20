@@ -4,6 +4,7 @@ import pickle
 import select
 import signal
 import subprocess
+from datetime import datetime
 
 from pueue.daemon.logs import write_log, remove_old_logs
 from pueue.helper.config import get_config
@@ -105,6 +106,7 @@ class Daemon():
                         # Add outputs to log
                         self.queue[self.current_key]['stdout'] = output
                         self.queue[self.current_key]['stderr'] = error_output
+                        self.queue[self.current_key]['end'] = str(datetime.now().strftime("%H:%M"))
 
                         # Pause Daemon, if it is configured to stop
                         if self.config['default']['stopAtError'] is True and not self.reset:
@@ -159,6 +161,7 @@ class Daemon():
                         cwd=next_item['path']
                     )
                     self.queue[self.current_key]['status'] = 'running'
+                    self.queue[self.current_key]['start'] = str(datetime.now().strftime("%H:%M"))
                     self.processStatus = 'running'
 
             # Create list for waitable objects
@@ -272,6 +275,10 @@ class Daemon():
     def execute_add(self, command):
         # Add command to queue and save it
         self.queue[self.nextKey] = command
+        self.queue[self.nextKey]['status'] = 'queued'
+        self.queue[self.nextKey]['returncode'] = ''
+        self.queue[self.nextKey]['start'] = ''
+        self.queue[self.nextKey]['end'] = ''
         self.nextKey += 1
         self.write_queue()
         return {'message': 'Command added', 'status': 'success'}
