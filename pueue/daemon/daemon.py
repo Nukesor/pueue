@@ -4,6 +4,7 @@ import pickle
 import select
 import signal
 import subprocess
+from copy import deepcopy
 from datetime import datetime
 
 from pueue.daemon.logs import write_log, remove_old_logs
@@ -129,12 +130,14 @@ class Daemon():
                     self.processStatus = 'No running process'
 
             if self.reset:
+                # Rotate log
+                self.log(rotate=True)
+
                 # Reset  queue
                 self.queue = {}
                 self.write_queue()
 
-                # Rotate and reset Log
-                self.log(rotate=True)
+                # Reset Log
                 self.log()
                 self.nextKey = 0
                 self.reset = False
@@ -384,7 +387,7 @@ class Daemon():
 
         # Add current queue or a message, that queue is empty
         if len(self.queue) > 0:
-            data = self.queue
+            data = deepcopy(self.queue)
             # Remove stderr and stdout output for transfer
             # Some outputs are way to big for the socket buffer
             # and this is not needed by the client

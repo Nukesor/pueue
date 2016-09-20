@@ -54,7 +54,7 @@ def write_log(logDir, log, rotate):
                 logFile.write('\n')
             except Exception as a:
                 print('Errored while writing to log file. Wrong file permissions?')
-                print(a.message)
+                print('Exception: {}'.format(str(a)))
 
     logFile.close()
 
