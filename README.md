@@ -6,13 +6,17 @@ A queue for bash commands.
 
 ## Why should I use it?
 
-Everybody who lives on the command line had this situation, when one needed to unzip or transfer huge amounts of data in different directories.
+Pretty much everybody who lives on the command line had this situation, when one needed to unzip or transfer huge amounts of data in different directories.
 
 This normally ends with about 10 open terminals/tmux sessions and an overchallenged hard drive.
 
-But what if you could just queue those commands and they would be executed consecutively in their respective directory? Well that would be awesome!  
-And this is just one possible application.  
-Pueue is designed to execute long running tasks in the background, while not being bound to any terminal.  
+Pueue is exactly designed for situations like this. It executes long running tasks in their respective directories, while not being bound to any terminal.  
+
+Just a few possible applications:
+
+- Long running compression tasks
+- Movie encoding
+- Copying stuff
 
 If I got your attention, give it a try!  
 If you think this is awesome, help me, join the development and create some PRs or suggest some improvements.
