@@ -1,8 +1,14 @@
 # Pueue
 
-A queue for bash commands.
-
 ![Pueue](https://raw.githubusercontent.com/Nukesor/images/master/pueue.png)
+
+Pueue is a daemon designed for sequential execution of long running heavy load tasks. Not being bound to any terminal you can check on your processes from everywhere and the queue will be processed, even if you exit your ssh session.
+
+It provides functionality for:
+- Easy output inspection.
+- Interaction with the running process
+- Manipulation of the scheduled task order
+
 
 ## Why should I use it?
 
