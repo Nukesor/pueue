@@ -74,7 +74,7 @@ def execute_pause(args):
 
     # Send new instruction to daemon
     instruction = {
-        'mode': 'stop',
+        'mode': 'pause',
         'wait': args['wait']
     }
     data_string = pickle.dumps(instruction, -1)
