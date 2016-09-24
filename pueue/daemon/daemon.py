@@ -120,7 +120,9 @@ class Daemon():
                         # Process finally finished.
                         # Now we can set the status to paused.
                         self.paused = True
+                        self.stopping = False
                         if self.remove_current is True:
+                            self.remove_current = False
                             del self.queue[self.current_key]
                         else:
                             self.queue[self.current_key]['status'] = 'queued'
