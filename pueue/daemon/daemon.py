@@ -183,7 +183,7 @@ class Daemon():
                 else:
                     # Trying to receive instruction from client socket
                     try:
-                        instruction = self.clientSocket.recv(8192)
+                        instruction = self.clientSocket.recv(1048576)
                     except EOFError:
                         print('Client died while sending message, dropping received data.')
                         instruction = -1
