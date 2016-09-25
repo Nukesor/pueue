@@ -38,4 +38,5 @@ def wait_for_process(key):
     while (key not in status['data']) or (status['data'][key]['status'] != 'done'):
         sleep(1)
         status = get_status()
+        print(status)
     return status

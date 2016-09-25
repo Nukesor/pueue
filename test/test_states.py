@@ -2,26 +2,7 @@ from test.helper import (
     command_factory,
     execute_add,
     get_status,
-    wait_for_process,
 )
-
-
-def test_pause(daemon_setup):
-    status = get_status()
-    assert status['status'] == 'running'
-    command_factory('pause')
-    status = get_status()
-    assert status['status'] == 'paused'
-
-
-def test_waiting_pause(daemon_setup):
-    execute_add({'command': 'sleep 2'})
-    status = get_status()
-    assert status['status'] == 'running'
-    command_factory('pause', {'wait': True})
-    status = wait_for_process(0)
-    assert status['status'] == 'paused'
-    assert status['data'][0]['status'] == 'done'
 
 
 def test_start(daemon_setup):
@@ -29,40 +10,6 @@ def test_start(daemon_setup):
     command_factory('start')
     status = get_status()
     assert status['status'] == 'running'
-
-
-def test_kill(daemon_setup):
-    execute_add({'command': 'sleep 60'})
-    command_factory('kill', {'remove': False})
-    status = get_status()
-    assert status['status'] == 'paused'
-    assert status['process'] == 'No running process'
-
-
-def test_kill_remove(daemon_setup):
-    execute_add({'command': 'sleep 60'})
-    command_factory('kill', {'remove': True})
-    status = get_status()
-    assert status['status'] == 'paused'
-    assert status['process'] == 'No running process'
-    assert status['data'] == 'Queue is empty'
-
-
-def test_stop(daemon_setup):
-    execute_add({'command': 'sleep 60'})
-    command_factory('stop', {'remove': False})
-    status = get_status()
-    assert status['status'] == 'paused'
-    assert status['process'] == 'No running process'
-
-
-def test_stop_remove(daemon_setup):
-    execute_add({'command': 'sleep 60'})
-    command_factory('stop', {'remove': True})
-    status = get_status()
-    assert status['status'] == 'paused'
-    assert status['process'] == 'No running process'
-    assert status['data'] == 'Queue is empty'
 
 
 def test_status(daemon_setup):
