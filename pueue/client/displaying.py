@@ -10,44 +10,34 @@ from functools import reduce
 from colorclass import Color
 
 from pueue.helper.files import create_log_dir
-from pueue.helper.socket import connect_client_socket
+from pueue.helper.socket import connect_client_socket, receive_data
 
 from terminaltables import AsciiTable
 from terminaltables.terminal_io import terminal_size
 
 
 def execute_status(args):
-    client = connect_client_socket()
-    instruction = {'mode': 'status'}
-
-    # Send new instruction to daemon
-    data_string = pickle.dumps(instruction, -1)
-    client.send(data_string)
-
-    # Receive Answer from daemon and print it
-    # About 1 MB buffersize for large queues with large paths
-    response = client.recv(1048576)
-    answer = pickle.loads(response)
-    client.close()
+    status = get_status()
     # First rows, showing daemon status
-    if answer['status'] == 'running':
-        answer['status'] = Color('{autogreen}' + '{}'.format(answer['status']) + '{/autogreen}')
-    elif answer['status'] == 'paused':
-        answer['status'] = Color('{autoyellow}' + '{}'.format(answer['status']) + '{/autoyellow}')
+    if status['status'] == 'running':
+        status['status'] = Color('{autogreen}' + '{}'.format(status['status']) + '{/autogreen}')
+    elif status['status'] == 'paused':
+        status['status'] = Color('{autoyellow}' + '{}'.format(status['status']) + '{/autoyellow}')
 
-    if answer['process'] == 'running' or answer['process'] == 'paused':
-        answer['process'] = Color('{autogreen}' + '{}'.format(answer['process']) + '{/autogreen}')
+    if status['process'] == 'running' or status['process'] == 'paused':
+        status['process'] = Color('{autogreen}' + '{}'.format(status['process']) + '{/autogreen}')
 
-    print('Daemon: {}\nProcess status: {} \n'.format(answer['status'], answer['process']))
+    print('Daemon: {}\nProcess status: {} \n'.format(status['status'], status['process']))
 
     # Handle queue data
-    data = answer['data']
+    data = status['data']
     if isinstance(data, str):
         print(data)
     elif isinstance(data, dict):
         # Format incomming data to be compatible with Terminaltables
         formatted_data = []
-        formatted_data.append(['Index', 'Status', 'Code', 'Command', 'Path', 'Start', 'End'])
+        formatted_data.append(['Index', 'Status', 'Code',
+                               'Command', 'Path', 'Start', 'End'])
         for key, entry in sorted(data.items(), key=operator.itemgetter(0)):
             formatted_data.append(
                 [
@@ -151,3 +141,14 @@ def execute_show(args):
         print('\n\nStderr output:\n')
         stderrDescriptor.seek(0)
         print(stderrDescriptor.read())
+
+
+def get_status():
+    # Initialize socket, message and send it
+    client = connect_client_socket()
+    instruction = {'mode': 'status'}
+    data_string = pickle.dumps(instruction, -1)
+    client.send(data_string)
+
+    response = receive_data(client)
+    return response

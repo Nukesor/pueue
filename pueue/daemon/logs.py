@@ -8,10 +8,10 @@ from colorclass import Color
 def write_log(logDir, log, rotate):
     # Get path for logfile
     if rotate:
-        timestamp = time.strftime('%Y%m%d-%H%M')
-        logPath = logDir + '/queue-' + timestamp + '.log'
+        timestamp = time.strftime('-%Y%m%d-%H%M')
+        logPath = os.path.join(logDir, 'queue{}.log'.format(timestamp))
     else:
-        logPath = logDir + '/queue.log'
+        logPath = os.path.join(logDir, 'queue.log')
 
     # Remove existing Log
     if os.path.exists(logPath):
