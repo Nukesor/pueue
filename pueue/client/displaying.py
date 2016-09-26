@@ -61,7 +61,7 @@ def execute_status(args):
         # If the text is wider than the actual terminal size, we
         # compute a new size for the Command and Path column.
         if (reduce(lambda a, b: a+b, table.column_widths) + 10) > terminal_width[0]:
-            # We have to subtract 12 because of table paddings
+            # We have to subtract 14 because of table paddings
             left_space = math.floor((terminal_width[0] - customWidth[0] - customWidth[1] - customWidth[2] - customWidth[5] - customWidth[6] - 14)/2)
 
             if customWidth[3] < left_space:
