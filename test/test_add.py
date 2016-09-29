@@ -6,6 +6,7 @@ from test.helper import (
 
 
 def test_add(daemon_setup):
+    """The daemon adds a  new task to its queue."""
     command_factory('pause')
     response = send_command({
         'mode': 'add',

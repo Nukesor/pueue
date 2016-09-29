@@ -6,20 +6,15 @@ from test.helper import (
 
 
 def test_start(daemon_setup):
+    """Start daemon after it has been paused."""
     command_factory('pause')
     command_factory('start')
     status = get_status()
     assert status['status'] == 'running'
 
 
-def test_status(daemon_setup):
-    execute_add({'command': 'sleep 60'})
-    status = get_status()
-    assert status['status'] == 'running'
-    assert status['process'] == 'running'
-
-
 def test_reset_paused(daemon_setup):
+    """Reset the daemon."""
     command_factory('pause')
     execute_add({'command': 'sleep 60'})
     execute_add({'command': 'sleep 60'})
@@ -30,6 +25,7 @@ def test_reset_paused(daemon_setup):
 
 
 def test_reset_running(daemon_setup):
+    """Reset a daemon with running subprocesses."""
     command_factory('start')
     execute_add({'command': 'sleep 60'})
     execute_add({'command': 'sleep 60'})
