@@ -242,7 +242,7 @@ class Daemon():
                             # Kill current process and set active
                             # to False to stop while loop
                             self.active = False
-                            self.execute_kill()
+                            self.execute_kill({'remove': False})
                             break
 
         self.socket.close()
