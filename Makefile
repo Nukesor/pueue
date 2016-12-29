@@ -15,3 +15,8 @@ dist:
 
 upload: clean dist
 	twine upload dist/*
+
+setup:
+	virtualenv -p python3 venv
+	venv/bin/pip install --upgrade pip
+	venv/bin/pip install -r requirements.txt
