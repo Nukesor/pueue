@@ -150,24 +150,33 @@ class Daemon():
                 if self.current_key is not None:
                     # Get instruction for next process
                     next_item = self.queue[self.current_key]
-                    #
-                    self.stdout.seek(0)
-                    self.stdout.truncate()
-                    self.stderr.seek(0)
-                    self.stderr.truncate()
-                    # Spawn subprocess
-                    self.process = subprocess.Popen(
-                        next_item['command'],
-                        shell=True,
-                        stdout=self.stdout,
-                        stderr=self.stderr,
-                        stdin=subprocess.PIPE,
-                        universal_newlines=True,
-                        cwd=next_item['path']
-                    )
-                    self.queue[self.current_key]['status'] = 'running'
-                    self.queue[self.current_key]['start'] = str(datetime.now().strftime("%H:%M"))
-                    self.processStatus = 'running'
+
+                    if not os.path.exists(next_item['path']):
+                        self.queue[self.current_key]['status'] = 'errored'
+                        error_msg = "The directory for this command doesn't exist any longer"
+                        print(error_msg)
+                        self.queue[self.current_key]['stdout'] = ''
+                        self.queue[self.current_key]['stderr'] = error_msg
+
+                    else:
+                        # Remove the output from all stdout and stderr files
+                        self.stdout.seek(0)
+                        self.stdout.truncate()
+                        self.stderr.seek(0)
+                        self.stderr.truncate()
+                        # Spawn subprocess
+                        self.process = subprocess.Popen(
+                            next_item['command'],
+                            shell=True,
+                            stdout=self.stdout,
+                            stderr=self.stderr,
+                            stdin=subprocess.PIPE,
+                            universal_newlines=True,
+                            cwd=next_item['path']
+                        )
+                        self.queue[self.current_key]['status'] = 'running'
+                        self.queue[self.current_key]['start'] = str(datetime.now().strftime("%H:%M"))
+                        self.processStatus = 'running'
 
             # Create list for waitable objects
             readable, writable, errored = select.select(self.read_list, [], [], 1)
@@ -326,6 +335,8 @@ class Daemon():
                 self.queue[self.nextKey]['path'] = self.queue[key]['path']
                 self.queue[self.nextKey]['status'] = 'queued'
                 self.queue[self.nextKey]['returncode'] = ''
+                self.queue[self.nextKey]['start'] = ''
+                self.queue[self.nextKey]['end'] = ''
                 self.nextKey += 1
                 self.write_queue()
                 answer = {'message': 'Command #{} queued again'
