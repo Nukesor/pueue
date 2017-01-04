@@ -4,22 +4,6 @@ import stat
 import getpass
 
 
-def create_config_dir():
-    home = os.path.expanduser('~')
-    queueFolder = home+'/.config/pueue'
-    if not os.path.exists(queueFolder):
-        os.makedirs(queueFolder)
-    return queueFolder
-
-
-def create_log_dir():
-    home = os.path.expanduser('~')
-    logFolder = home+'/.local/share/pueue'
-    if not os.path.exists(logFolder):
-        os.makedirs(logFolder)
-    return logFolder
-
-
 def get_stdout_descriptor():
     userName = getpass.getuser()
     stdoutFile = '/tmp/pueueStdout' + userName

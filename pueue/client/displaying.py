@@ -9,15 +9,15 @@ from textwrap import wrap
 from functools import reduce
 from colorclass import Color
 
-from pueue.helper.files import create_log_dir
 from pueue.helper.socket import connect_client_socket, receive_data
+from pueue.client.factories import command_factory
 
 from terminaltables import AsciiTable
 from terminaltables.terminal_io import terminal_size
 
 
 def execute_status(args):
-    status = get_status()
+    status = command_factory('status')({})
     # First rows, showing daemon status
     if status['status'] == 'running':
         status['status'] = Color('{autogreen}' + '{}'.format(status['status']) + '{/autogreen}')
@@ -97,12 +97,20 @@ def execute_status(args):
 
 
 def execute_log(args):
-    logPath = create_log_dir() + '/queue.log'
+    """Get the log directory from the daemon and print the current log file."""
+    response = command_factory('get_log_dir')
+
+    logPath = response['log_dir'] + '/queue.log'
     logFile = open(logPath, 'r')
     print(logFile.read())
 
 
 def execute_show(args):
+    """Print stderr and stdout of the current running process.
+
+    If the parameter `--watch` is provided, we open a curses session
+    and tail the output live in the console.
+    """
     # Get current pueueSTDout file from tmp
     userName = getpass.getuser()
     stdoutFile = '/tmp/pueueStdout{}'.format(userName)
@@ -141,14 +149,3 @@ def execute_show(args):
         print('\n\nStderr output:\n')
         stderrDescriptor.seek(0)
         print(stderrDescriptor.read())
-
-
-def get_status():
-    # Initialize socket, message and send it
-    client = connect_client_socket()
-    instruction = {'mode': 'status'}
-    data_string = pickle.dumps(instruction, -1)
-    client.send(data_string)
-
-    response = receive_data(client)
-    return response

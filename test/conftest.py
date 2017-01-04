@@ -3,17 +3,15 @@ import pytest
 import subprocess
 
 from test.helper import command_factory
-from pueue.helper.files import create_config_dir
 
 
 @pytest.fixture(scope='function')
 def daemon_setup(request):
-    queue = create_config_dir()+'/queue'
-    if os.path.exists(queue):
-        os.remove(queue)
+    current = os.getcwd()
+    test_dir = os.path.join(current, 'temptest')
 
     process = subprocess.Popen(
-        'pueue --daemon',
+        'pueue --daemon --root {}'.format(test_dir),
         shell=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE
@@ -22,6 +20,5 @@ def daemon_setup(request):
     command_factory('reset')
 
     def daemon_teardown():
-        command_factory('reset')
         command_factory('STOPDAEMON')
     request.addfinalizer(daemon_teardown)

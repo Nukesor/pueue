@@ -1,11 +1,9 @@
 import os
 import configparser
 
-from pueue.helper.files import create_config_dir
 
-
-def get_config():
-    configFile = create_config_dir() + '/pueue.ini'
+def get_config(config_dir):
+    configFile = config_dir + '/pueue.ini'
     config = configparser.ConfigParser()
     # Try to get config, if this doesn't work a new default config will be created
     if os.path.exists(configFile):

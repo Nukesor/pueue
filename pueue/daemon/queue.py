@@ -4,6 +4,7 @@ import pickle
 
 class Queue():
     def __init__(self, daemon):
+        self.daemon = daemon
         self.read()
         if len(self.queue) > 0:
             self.nextKey = max(self.queue.keys()) + 1
@@ -25,6 +26,9 @@ class Queue():
     def __delitem__(self, key):
         del self.queue[key]
 
+    def items(self):
+        return self.queue.items()
+
     def reset(self):
         self.queue = {}
         self.write()
@@ -39,10 +43,11 @@ class Queue():
                 if smallest is None or key < smallest:
                     smallest = key
                     self.current = self.queue[smallest]
+                    self.current_key = smallest
         return smallest
 
     def read(self):
-        queuePath = self.daemon.queueFolder+'/queue'
+        queuePath = self.daemon.config_dir+'/queue'
         if os.path.exists(queuePath):
             queueFile = open(queuePath, 'rb')
             try:
@@ -56,7 +61,7 @@ class Queue():
             self.queue = {}
 
     def write(self):
-        queuePath = self.daemon.queueFolder + '/queue'
+        queuePath = self.daemon.config_dir + '/queue'
         queueFile = open(queuePath, 'wb+')
         try:
             pickle.dump(self.queue, queueFile, -1)
@@ -84,7 +89,7 @@ class Queue():
             answer = {'message': 'No command with key #{}'.format(str(key)), 'status': 'error'}
         else:
             # Delete command from queue, save the queue and send response to client
-            if not self.paused and key == self.current_key:
+            if not self.daemon.paused and key == self.current_key:
                 answer = {
                     'message': "Can't remove currently running process, "
                     "please stop the process before removing it.",
@@ -92,7 +97,7 @@ class Queue():
                 }
             else:
                 del self.queue[key]
-                self.write_queue()
+                self.write()
                 answer = {'message': 'Command #{} removed'.format(key), 'status': 'success'}
         return answer
 
@@ -118,7 +123,7 @@ class Queue():
                 self.queue[self.nextKey]['start'] = ''
                 self.queue[self.nextKey]['end'] = ''
                 self.nextKey += 1
-                self.write_queue()
+                self.write()
                 answer = {'message': 'Command #{} queued again'
                           .format(key), 'status': 'success'}
         return answer
@@ -135,7 +140,7 @@ class Queue():
             answer = {'message': 'No command with key #{}'.format(str(second)), 'status': 'error'}
         else:
             # Delete command from queue, save the queue and send response to client
-            if not self.paused and (first == self.current_key or second == self.current_key):
+            if not self.daemon.paused and (first == self.current_key or second == self.current_key):
                 answer = {
                     'message': "Can't switch currently running process, "
                     "please stop the process before switching it.",

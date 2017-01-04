@@ -6,7 +6,7 @@ from daemonize import Daemonize
 
 from pueue.daemon.daemon import Daemon
 from pueue.helper.socket import remove_daemon_socket
-from pueue.client.factories import command_factory
+from pueue.client.factories import print_command_factory
 from pueue.client.displaying import (
     execute_status,
     execute_log,
@@ -35,6 +35,10 @@ def main():
     parser.add_argument(
         '--stop-daemon', action='store_true',
         help='Daemon will shut down instantly. All running processes die', dest='stopdaemon')
+
+    parser.add_argument(
+        '--root', type=str,
+        help='The root directory for configs and logs. Used for testing', dest='stopdaemon')
 
     # Initialze supbparser
     subparsers = parser.add_subparsers(
@@ -90,7 +94,7 @@ def main():
     # Reset
     reset_Subcommand = subparsers.add_parser(
         'reset', help='Daemon will kill the current command, reset queue and rotate logs.')
-    reset_Subcommand.set_defaults(func=command_factory('reset'))
+    reset_Subcommand.set_defaults(func=print_command_factory('reset'))
 
     # Pause
     pause_Subcommand = subparsers.add_parser(
@@ -104,7 +108,7 @@ def main():
     # Start
     start_Subcommand = subparsers.add_parser(
         'start', help='Daemon will start a paused process and continue processing the queue.')
-    start_Subcommand.set_defaults(func=command_factory('start'))
+    start_Subcommand.set_defaults(func=print_command_factory('start'))
 
     # Restart
     restart_Subcommand = subparsers.add_parser(
@@ -134,8 +138,11 @@ def main():
     args = parser.parse_args()
 
     def startDaemon():
+        path = None
+        if 'root' in args:
+            path = args['root']
         try:
-            daemon = Daemon()
+            daemon = Daemon(root_dir=path)
             daemon.main()
         except KeyboardInterrupt:
             print('Keyboard interrupt. Shutting down')
@@ -143,13 +150,16 @@ def main():
             sys.exit(0)
 
     if args.stopdaemon:
-        command_factory('STOPDAEMON')(vars(args))
+        print_command_factory('STOPDAEMON')(vars(args))
     elif args.nodaemon:
         startDaemon()
     elif args.daemon:
         daemon = Daemonize(app='pueue', pid='/tmp/pueue.pid', action=startDaemon)
         daemon.start()
     elif hasattr(args, 'func'):
-        args.func(vars(args))
+        try:
+            args.func(vars(args))
+        except EOFError:
+            print('Apparently the daemon just died. Sorry for that :/.')
     else:
         print('Invalid Command. Please check -h')

@@ -5,20 +5,20 @@ from datetime import datetime
 from colorclass import Color
 
 
-def write_log(logDir, log, rotate):
+def write_log(log_dir, log, rotate):
     # Get path for logfile
     if rotate:
         timestamp = time.strftime('-%Y%m%d-%H%M')
-        logPath = os.path.join(logDir, 'queue{}.log'.format(timestamp))
+        logPath = os.path.join(log_dir, 'queue{}.log'.format(timestamp))
     else:
-        logPath = os.path.join(logDir, 'queue.log')
+        logPath = os.path.join(log_dir, 'queue.log')
 
     # Remove existing Log
     if os.path.exists(logPath):
         os.remove(logPath)
 
-    logFile = open(logPath, 'w')
-    logFile.write('Pueue log for executed Commands: \n \n')
+    log_file = open(logPath, 'w')
+    log_file.write('Pueue log for executed Commands: \n \n')
 
     # Format, color and write log
     for key, logentry in log.items():
@@ -32,40 +32,40 @@ def write_log(logDir, log, rotate):
                     returncode = Color('{autored}' + '{}'.format(returncode) + '{/autored}')
 
                 # Write command id with returncode and actual command
-                logFile.write(
+                log_file.write(
                     Color('{autoyellow}' + 'Command #{} '.format(key) + '{/autoyellow}') +
                     'exited with returncode {}: '.format(returncode) +
                     '"{}" \n'.format(logentry['command'])
                 )
                 # Write path
-                logFile.write('Path: {} \n'.format(logentry['path']))
+                log_file.write('Path: {} \n'.format(logentry['path']))
                 # Write times
-                logFile.write('Start: {}, End: {} \n'
-                              .format(logentry['start'], logentry['end']))
+                log_file.write('Start: {}, End: {} \n'
+                               .format(logentry['start'], logentry['end']))
 
                 # Write STDERR
                 if logentry['stderr']:
-                    logFile.write(Color('{autored}Stderr output: {/autored}\n    ') + logentry['stderr'])
+                    log_file.write(Color('{autored}Stderr output: {/autored}\n    ') + logentry['stderr'])
 
                 # Write STDOUT
                 if len(logentry['stdout']) > 0:
-                    logFile.write(Color('{autogreen}Stdout output: {/autogreen}\n    ') + logentry['stdout'])
+                    log_file.write(Color('{autogreen}Stdout output: {/autogreen}\n    ') + logentry['stdout'])
 
-                logFile.write('\n')
+                log_file.write('\n')
             except Exception as a:
                 print('Errored while writing to log file. Wrong file permissions?')
                 print('Exception: {}'.format(str(a)))
 
-    logFile.close()
+    log_file.close()
 
 
-def remove_old_logs(logTime, logDir):
-    files = os.listdir(logDir)
+def remove_old_logs(log_time, log_dir):
+    files = os.listdir(log_dir)
 
-    for logFile in files:
-        if logFile != 'queue.log':
+    for log_file in files:
+        if log_file != 'queue.log':
             # Get time stamp from filename
-            name = os.path.splitext(logFile)[0]
+            name = os.path.splitext(log_file)[0]
             timestamp = name.split('-', maxsplit=1)[1]
 
             # Get datetime from time stamp
@@ -77,6 +77,6 @@ def remove_old_logs(logTime, logDir):
             seconds = delta.total_seconds()
 
             # Delete log file, if the timestamp is older than the specified log time
-            if seconds > int(logTime):
-                logFilePath = os.path.join(logDir, logFile)
-                os.remove(logFilePath)
+            if seconds > int(log_time):
+                log_filePath = os.path.join(log_dir, log_file)
+                os.remove(log_filePath)
