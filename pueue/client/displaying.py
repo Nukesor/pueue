@@ -98,7 +98,7 @@ def execute_status(args):
 
 def execute_log(args):
     """Get the log directory from the daemon and print the current log file."""
-    response = command_factory('get_log_dir')
+    response = command_factory('get_log_dir')()
 
     logPath = response['log_dir'] + '/queue.log'
     logFile = open(logPath, 'r')

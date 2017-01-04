@@ -38,7 +38,7 @@ def main():
 
     parser.add_argument(
         '--root', type=str,
-        help='The root directory for configs and logs. Used for testing', dest='stopdaemon')
+        help='The root directory for configs and logs. Used for testing')
 
     # Initialze supbparser
     subparsers = parser.add_subparsers(
@@ -138,9 +138,10 @@ def main():
     args = parser.parse_args()
 
     def startDaemon():
+        args_dict = vars(args)
         path = None
         if 'root' in args:
-            path = args['root']
+            path = args_dict['root']
         try:
             daemon = Daemon(root_dir=path)
             daemon.main()

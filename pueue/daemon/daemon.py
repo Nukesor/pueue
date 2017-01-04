@@ -63,14 +63,16 @@ class Daemon():
 
     def initialize_directories(self, root_dir):
         """Create all directories needed for logs and configs."""
-        root_dir = os.path.expanduser('~')
+        if not root_dir:
+            root_dir = os.path.expanduser('~')
 
-        # Create config dir, if not existing
-        self.config_dir = root_dir + '/.config/pueue'
+        # Create config directory, if it doesn't exist
+        self.config_dir = os.path.join(root_dir, '/.config/pueue')
         if not os.path.exists(self.config_dir):
             os.makedirs(self.config_dir)
 
-        self.log_dir = root_dir + '/.local/share/pueue'
+        # Create log directory, if it doesn't exist
+        self.log_dir = os.path.join(root_dir, '/.local/share/pueue')
         if not os.path.exists(self.log_dir):
             os.makedirs(self.log_dir)
 
