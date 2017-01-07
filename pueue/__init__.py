@@ -4,8 +4,8 @@ import argparse
 
 from daemonize import Daemonize
 
+from pueue.helper.files import cleanup
 from pueue.daemon.daemon import Daemon
-from pueue.helper.socket import remove_daemon_socket
 from pueue.client.factories import print_command_factory
 from pueue.client.displaying import (
     execute_status,
@@ -137,25 +137,35 @@ def main():
 
     args = parser.parse_args()
 
-    def startDaemon():
+    # Create a closure to get the proper arguments
+    def daemon_factory(args):
         args_dict = vars(args)
         path = None
         if 'root' in args:
             path = args_dict['root']
-        try:
+
+        def start_daemon():
+            print(path)
             daemon = Daemon(root_dir=path)
-            daemon.main()
-        except KeyboardInterrupt:
-            print('Keyboard interrupt. Shutting down')
-            remove_daemon_socket()
-            sys.exit(0)
+            try:
+                daemon.main()
+            except KeyboardInterrupt:
+                print('Keyboard interrupt. Shutting down')
+                cleanup(daemon.config_dir)
+                sys.exit(0)
+                return daemon
+            except:
+                if not path:
+                    path = os.path.expanduser('~')
+                cleanup(path)
+        return start_daemon
 
     if args.stopdaemon:
         print_command_factory('STOPDAEMON')(vars(args))
     elif args.nodaemon:
-        startDaemon()
+        daemon_factory(args)()
     elif args.daemon:
-        daemon = Daemonize(app='pueue', pid='/tmp/pueue.pid', action=startDaemon)
+        daemon = Daemonize(app='pueue', pid='/tmp/pueue.pid', action=daemon_factory(args))
         daemon.start()
     elif hasattr(args, 'func'):
         try:

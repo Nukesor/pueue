@@ -4,7 +4,6 @@ import stat
 import socket
 import pickle
 
-from pueue.helper.files import get_socket_path
 
 
 def receive_data(socket):
@@ -22,20 +21,20 @@ def process_response(response):
         sys.exit(1)
 
 
-def connect_client_socket():
+def connect_client_socket(config_path):
     # Create Socket and exit with 1, if socket can't be created
     try:
         client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        client.connect(get_socket_path())
+        socketPath = os.path.join(config_path, 'pueue.sock')
+        client.connect(socketPath)
     except:
         print("Error connecting to socket. Make sure the daemon is running")
         sys.exit(1)
     return client
 
 
-def create_daemon_socket():
-    remove_daemon_socket()
-    socketPath = get_socket_path()
+def create_daemon_socket(config_path):
+    socketPath = os.path.join(config_path, 'pueue.sock')
     # Create Socket and exit with 1, if socket can't be created
     try:
         daemon = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -49,10 +48,3 @@ def create_daemon_socket():
         print("Daemon couldn't bind to socket. Aborting")
         sys.exit(1)
     return daemon
-
-
-def remove_daemon_socket():
-    # Check for old socket and delete it
-    socketPath = get_socket_path()
-    if os.path.exists(socketPath):
-        os.remove(socketPath)

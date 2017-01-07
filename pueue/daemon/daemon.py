@@ -9,8 +9,8 @@ from datetime import datetime
 
 from pueue.daemon.logs import write_log, remove_old_logs
 from pueue.helper.config import get_config
-from pueue.helper.socket import get_socket_path, create_daemon_socket
-from pueue.helper.files import get_stdout_descriptor, get_stderr_descriptor
+from pueue.helper.socket import create_daemon_socket
+from pueue.helper.files import get_file_descriptor, cleanup
 from pueue.daemon.queue import Queue
 
 
@@ -34,7 +34,7 @@ class Daemon():
             # Remove old log file
             self.log()
             self.queue.write()
-        self.socket = create_daemon_socket()
+        self.socket = create_daemon_socket(self.config_dir)
 
         # If there are still jobs in the queue the daemon might pause,
         # if this behaviour is defined in the config file.
@@ -58,8 +58,7 @@ class Daemon():
         self.read_list = [self.socket]
 
         # Stdout/Stderr management
-        self.stdout = get_stdout_descriptor()
-        self.stderr = get_stderr_descriptor()
+        self.stdout, self.stderr = get_file_descriptor(self.config_dir)
 
     def initialize_directories(self, root_dir):
         """Create all directories needed for logs and configs."""
@@ -67,12 +66,12 @@ class Daemon():
             root_dir = os.path.expanduser('~')
 
         # Create config directory, if it doesn't exist
-        self.config_dir = os.path.join(root_dir, '/.config/pueue')
+        self.config_dir = os.path.join(root_dir, '.config/pueue')
         if not os.path.exists(self.config_dir):
             os.makedirs(self.config_dir)
 
         # Create log directory, if it doesn't exist
-        self.log_dir = os.path.join(root_dir, '/.local/share/pueue')
+        self.log_dir = os.path.join(root_dir, '.local/share/pueue')
         if not os.path.exists(self.log_dir):
             os.makedirs(self.log_dir)
 
@@ -240,16 +239,17 @@ class Daemon():
                                                 'status': 'error'})
 
         self.socket.close()
-        os.remove(get_socket_path())
+        cleanup()
         sys.exit(0)
 
     def stop_daemon(self, payload=None):
-        self.respond_client({'message': 'Pueue daemon shutting down',
-                            'status': 'success'})
         # Kill current process and set active
         # to False to stop while loop
         self.running = False
         self.kill_process({'remove': False})
+
+        return {'message': 'Pueue daemon shutting down',
+                'status': 'success'}
 
     def pipe_to_process(self, payload):
         processInput = payload['input']

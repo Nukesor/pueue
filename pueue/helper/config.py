@@ -3,9 +3,10 @@ import configparser
 
 
 def get_config(config_dir):
-    configFile = config_dir + '/pueue.ini'
+    configFile = os.path.join(config_dir, 'pueue.ini')
     config = configparser.ConfigParser()
-    # Try to get config, if this doesn't work a new default config will be created
+    # Try to get configuration file and return it
+    # If this doesn't work, a new default config file will be created
     if os.path.exists(configFile):
         try:
             config.read(configFile)

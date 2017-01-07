@@ -1,4 +1,5 @@
 import os
+import time
 import pytest
 import subprocess
 
@@ -17,8 +18,9 @@ def daemon_setup(request):
         stderr=subprocess.PIPE
     )
     output, error = process.communicate()
-    command_factory('reset')
+    command_factory('reset')()
 
     def daemon_teardown():
-        command_factory('STOPDAEMON')
+        command_factory('reset')()
+        command_factory('STOPDAEMON')()
     request.addfinalizer(daemon_teardown)
