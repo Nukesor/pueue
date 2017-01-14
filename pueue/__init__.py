@@ -1,4 +1,5 @@
 #!/bin/env python3
+import os
 import sys
 import argparse
 
@@ -140,6 +141,7 @@ def daemon_factory(path):
     def start_daemon():
         root_dir = path
         daemon = Daemon(root_dir=root_dir)
+
         try:
             daemon.main()
         except KeyboardInterrupt:
@@ -158,19 +160,21 @@ def main():
     args = parser.parse_args()
     args_dict = vars(args)
     root_dir = args_dict['root'] if 'root' in args else None
+    if root_dir:
+        root_dir = os.path.abspath(root_dir)
+    if not os.path.exists(root_dir):
+        print("The specified directory doesn't exist!")
+        sys.exit(1)
 
     if args.stopdaemon:
         print_command_factory('STOPDAEMON')(vars(args))
     elif args.nodaemon:
         daemon_factory(root_dir)()
     elif args.daemon:
+        chdir = root_dir if root_dir else '/'
         daemon = Daemonize(app='pueue', pid='/tmp/pueue.pid',
-                           action=daemon_factory(root_dir))
-        try:
-            daemon.start()
-        except Exception as e:
-            with open('wtf', 'w') as log_file:
-                log_file.write(e)
+                           action=daemon_factory(root_dir), chdir=chdir)
+        daemon.start()
     elif hasattr(args, 'func'):
         try:
             args.func(args_dict, root_dir)
