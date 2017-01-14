@@ -1,4 +1,4 @@
-from pueue.client.factories import command_factory
+from test.helper import command_factory
 
 
 def test_add(daemon_setup):

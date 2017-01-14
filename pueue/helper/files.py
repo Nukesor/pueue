@@ -34,6 +34,6 @@ def cleanup(config_dir):
     if os._exists(stderr_path):
         os.remove(stderr_path)
 
-    socketPath = os.path.join(config_path, 'pueue.sock')
+    socketPath = os.path.join(config_dir, 'pueue.sock')
     if os.path.exists(socketPath):
         os.remove(socketPath)

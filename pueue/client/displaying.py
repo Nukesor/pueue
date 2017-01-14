@@ -16,8 +16,8 @@ from terminaltables import AsciiTable
 from terminaltables.terminal_io import terminal_size
 
 
-def execute_status(args):
-    status = command_factory('status')({})
+def execute_status(args, root_dir=None):
+    status = command_factory('status')({}, root_dir=root_dir)
     # First rows, showing daemon status
     if status['status'] == 'running':
         status['status'] = Color('{autogreen}' + '{}'.format(status['status']) + '{/autogreen}')
@@ -96,9 +96,9 @@ def execute_status(args):
     print('')
 
 
-def execute_log(args):
+def execute_log(args, root_dir=None):
     """Get the log directory from the daemon and print the current log file."""
-    response = command_factory('get_log_dir')()
+    response = command_factory('get_log_dir')(root_dir=root_dir)
 
     logPath = response['log_dir'] + '/queue.log'
     logFile = open(logPath, 'r')

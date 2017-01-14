@@ -1,3 +1,4 @@
+import os
 import pickle
 
 from pueue.helper.socket import connect_client_socket, receive_data, process_response
@@ -5,9 +6,9 @@ from pueue.helper.socket import connect_client_socket, receive_data, process_res
 
 # Factory function for simple command sending functions
 def command_factory(command):
-    def communicate(body={}):
+    def communicate(body={}, root_dir=None):
         # Initialize socket, message and send it
-        client = connect_client_socket()
+        client = connect_client_socket(root_dir)
         body['mode'] = command
         if 'func' in body:
             del body['func']
@@ -22,9 +23,9 @@ def command_factory(command):
 
 # Factory function for simple command sending functions
 def print_command_factory(command):
-    def communicate(body={}):
+    def communicate(body={}, root_dir=None):
         # Initialize socket, message and send it
-        client = connect_client_socket()
+        client = connect_client_socket(root_dir)
         body['mode'] = command
         body['func'] = None
         data_string = pickle.dumps(body, -1)

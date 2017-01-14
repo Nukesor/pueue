@@ -8,8 +8,8 @@ from pueue.helper.socket import (
 )
 
 
-def execute_add(args):
-    client = connect_client_socket()
+def execute_add(args, root_dir=None):
+    client = connect_client_socket(root_dir)
 
     # Send new instruction to daemon
     instruction = {
@@ -25,8 +25,8 @@ def execute_add(args):
     process_response(response)
 
 
-def execute_remove(args):
-    client = connect_client_socket()
+def execute_remove(args, root_dir=None):
+    client = connect_client_socket(root_dir)
 
     # Send new instruction to daemon
     instruction = {
@@ -41,8 +41,8 @@ def execute_remove(args):
     process_response(response)
 
 
-def execute_restart(args):
-    client = connect_client_socket()
+def execute_restart(args, root_dir=None):
+    client = connect_client_socket(root_dir)
 
     # Send new instruction to daemon
     instruction = {
@@ -57,8 +57,8 @@ def execute_restart(args):
     process_response(response)
 
 
-def execute_stop(args):
-    client = connect_client_socket()
+def execute_stop(args, root_dir=None):
+    client = connect_client_socket(root_dir)
 
     # Send new instruction to daemon
     instruction = {
@@ -73,8 +73,8 @@ def execute_stop(args):
     process_response(response)
 
 
-def execute_pause(args):
-    client = connect_client_socket()
+def execute_pause(args, root_dir=None):
+    client = connect_client_socket(root_dir)
 
     # Send new instruction to daemon
     instruction = {
@@ -89,8 +89,8 @@ def execute_pause(args):
     process_response(response)
 
 
-def execute_kill(args):
-    client = connect_client_socket()
+def execute_kill(args, root_dir=None):
+    client = connect_client_socket(root_dir)
 
     # Send new instruction to daemon
     instruction = {
@@ -105,8 +105,8 @@ def execute_kill(args):
     process_response(response)
 
 
-def execute_switch(args):
-    client = connect_client_socket()
+def execute_switch(args, root_dir=None):
+    client = connect_client_socket(root_dir)
 
     # Send new instruction to daemon
     instruction = {
@@ -122,8 +122,8 @@ def execute_switch(args):
     process_response(response)
 
 
-def execute_send(args):
-    client = connect_client_socket()
+def execute_send(args, root_dir=None):
+    client = connect_client_socket(root_dir)
 
     # Send new instruction to daemon
     instruction = {
