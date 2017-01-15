@@ -228,7 +228,6 @@ class Daemon():
                             'kill': self.kill_process,
                             'reset': self.reset_everything,
                             'STOPDAEMON': self.stop_daemon,
-                            'get_log_dir': self.send_log_dir,
                         }
 
                         if payload['mode'] in functions.keys():
@@ -265,10 +264,6 @@ class Daemon():
                 'message': 'No process running.',
                 'status': 'failed'
             }
-
-    def send_log_dir(self, payload):
-        answer = {'log_dir': self.log_dir}
-        return answer
 
     def send_status(self, payload):
         answer = {}

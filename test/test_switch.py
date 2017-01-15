@@ -1,7 +1,7 @@
 from test.helper import (
     execute_add,
+    command_factory,
 )
-from pueue.client.factories import command_factory
 
 
 def test_switch(daemon_setup):

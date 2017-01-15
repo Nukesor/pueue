@@ -1,5 +1,7 @@
-from test.helper import execute_add
-from pueue.client.factories import command_factory
+from test.helper import (
+    execute_add,
+    command_factory,
+)
 
 
 def test_start(daemon_setup):

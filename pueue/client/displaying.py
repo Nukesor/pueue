@@ -1,3 +1,4 @@
+import os
 import time
 import math
 import pickle
@@ -97,24 +98,23 @@ def execute_status(args, root_dir=None):
 
 
 def execute_log(args, root_dir=None):
-    """Get the log directory from the daemon and print the current log file."""
-    response = command_factory('get_log_dir')(root_dir=root_dir)
-
-    logPath = response['log_dir'] + '/queue.log'
-    logFile = open(logPath, 'r')
-    print(logFile.read())
+    """Print the current log file."""
+    log_path = os.path.join(root_dir, '.local/share/pueue/queue.log')
+    log_file = open(log_path, 'r')
+    print(log_file.read())
 
 
-def execute_show(args):
+def execute_show(args, root_dir):
     """Print stderr and stdout of the current running process.
 
     If the parameter `--watch` is provided, we open a curses session
     and tail the output live in the console.
     """
+    config_dir = os.path.join(root_dir, '.config/pueue')
     # Get current pueueSTDout file from tmp
     userName = getpass.getuser()
-    stdoutFile = '/tmp/pueueStdout{}'.format(userName)
-    stderrFile = '/tmp/pueueStderr{}'.format(userName)
+    stdoutFile = os.path.join(config_dir, 'pueue.stdout')
+    stderrFile = os.path.join(config_dir, 'pueue.stderr')
     stdoutDescriptor = open(stdoutFile, 'r')
     stderrDescriptor = open(stderrFile, 'r')
     running = True

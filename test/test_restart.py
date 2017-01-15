@@ -1,8 +1,8 @@
 from test.helper import (
     execute_add,
     wait_for_process,
+    command_factory,
 )
-from pueue.client.factories import command_factory
 
 
 def test_restart_fails(daemon_setup):

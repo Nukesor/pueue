@@ -27,6 +27,7 @@ def get_file_descriptor(config_dir):
 
 def cleanup(config_dir):
     """Removes temporary stderr and stdout files as well as the daemon socket."""
+
     stdout_path = os.path.join(config_dir, 'pueue.stdout')
     stderr_path = os.path.join(config_dir, 'pueue.stderr')
     if os._exists(stdout_path):

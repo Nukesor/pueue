@@ -6,11 +6,11 @@ from pueue.client.factories import command_factory as original_command_factory
 
 def command_factory(command):
     function = original_command_factory(command)
-    def new_closure(args=None):
+    def test_communicate(body={}):
         current = os.getcwd()
-        path = os.path.join(current, 'temptest/.config/pueue')
-        function(args, path)
-    return new_closure
+        path = os.path.join(current, 'temptest')
+        return function(body, path)
+    return test_communicate
 
 
 def execute_add(command):

@@ -136,13 +136,13 @@ stop_Subcommand.add_argument(
 stop_Subcommand.set_defaults(func=execute_stop)
 
 
-# Create a closure to get the proper arguments
+# Create a closure to pass the proper path to daemonize
 def daemon_factory(path):
     def start_daemon():
         root_dir = path
-        daemon = Daemon(root_dir=root_dir)
-
+        config_dir = os.path.join(root_dir, '.config/pueue')
         try:
+            daemon = Daemon(root_dir=root_dir)
             daemon.main()
         except KeyboardInterrupt:
             print('Keyboard interrupt. Shutting down')
@@ -150,9 +150,7 @@ def daemon_factory(path):
             sys.exit(0)
             return daemon
         except:
-            if not root_dir:
-                root_dir = os.path.expanduser('~')
-            cleanup(root_dir)
+            cleanup(config_dir)
     return start_daemon
 
 
@@ -160,20 +158,27 @@ def main():
     args = parser.parse_args()
     args_dict = vars(args)
     root_dir = args_dict['root'] if 'root' in args else None
+
+    # If a root directory is specified, get the absolute path and
+    # check if it exists. Abort if it doesn't exist!
     if root_dir:
         root_dir = os.path.abspath(root_dir)
-    if not os.path.exists(root_dir):
-        print("The specified directory doesn't exist!")
-        sys.exit(1)
+        if not os.path.exists(root_dir):
+            print("The specified directory doesn't exist!")
+            sys.exit(1)
+    # Default to home directory if no root is specified
+    else:
+        root_dir = os.path.expanduser('~')
 
     if args.stopdaemon:
-        print_command_factory('STOPDAEMON')(vars(args))
+        print_command_factory('STOPDAEMON')(vars(args), root_dir)
     elif args.nodaemon:
         daemon_factory(root_dir)()
     elif args.daemon:
-        chdir = root_dir if root_dir else '/'
-        daemon = Daemonize(app='pueue', pid='/tmp/pueue.pid',
-                           action=daemon_factory(root_dir), chdir=chdir)
+        config_dir = os.path.join(root_dir, '.config/pueue')
+        os.makedirs(config_dir, exist_ok=True)
+        daemon = Daemonize(app='pueue', pid=os.path.join(config_dir, 'pueue.pid'),
+                           action=daemon_factory(root_dir), chdir=root_dir)
         daemon.start()
     elif hasattr(args, 'func'):
         try:
