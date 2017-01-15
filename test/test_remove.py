@@ -12,7 +12,7 @@ def test_remove_fails(daemon_setup):
 
 def test_remove_running(daemon_setup):
     """Can't remove a running process."""
-    execute_add({'command': 'sleep 60'})
+    execute_add('sleep 60')
     response = command_factory('remove')({'key': 0})
     assert response['status'] == 'error'
 
@@ -22,7 +22,7 @@ def test_remove(daemon_setup):
     command_factory('pause')()
     status = command_factory('status')()
     assert status['status'] == 'paused'
-    execute_add({'command': 'ls'})
+    execute_add('ls')
 
     response = command_factory('remove')({'key': 0})
     assert response['status'] == 'success'

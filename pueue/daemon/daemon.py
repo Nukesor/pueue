@@ -131,7 +131,7 @@ class Daemon():
                         self.stopping = False
                         if self.remove_current:
                             self.remove_current = False
-                            del self.queue.current
+                            del self.queue[self.queue.current_key]
                         else:
                             self.queue.current['status'] = 'queued'
 

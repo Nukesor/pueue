@@ -7,8 +7,8 @@ from test.helper import (
 def test_switch(daemon_setup):
     """Switch the position of two commands in the queue."""
     command_factory('pause')()
-    execute_add({'command': 'ls'})
-    execute_add({'command': 'ls -l'})
+    execute_add('ls')
+    execute_add('ls -l')
     command_factory('switch')({'first': 0, 'second': 1})
     status = command_factory('status')()
     assert status['data'][0]['command'] == 'ls -l'
@@ -23,7 +23,7 @@ def test_switch_fails(daemon_setup):
 
 def test_switch_running(daemon_setup):
     """Switching the position of running command fails."""
-    execute_add({'command': 'sleep 60'})
-    execute_add({'command': 'ls -l'})
+    execute_add('sleep 60')
+    execute_add('ls -l')
     response = command_factory('switch')({'first': 0, 'second': 1})
     assert response['status'] == 'error'

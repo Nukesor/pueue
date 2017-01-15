@@ -13,7 +13,7 @@ def test_restart_fails(daemon_setup):
 
 def test_restart(daemon_setup):
     """Restart a command."""
-    execute_add({'command': 'ls'})
+    execute_add('ls')
     wait_for_process(0)
     response = command_factory('restart')({'key': 0})
     assert response['status'] == 'success'
@@ -25,6 +25,6 @@ def test_restart(daemon_setup):
 
 def test_restart_running(daemon_setup):
     """Restart a running command fails."""
-    execute_add({'command': 'sleep 5'})
+    execute_add('sleep 5')
     response = command_factory('restart')({'key': 0})
     assert response['status'] == 'error'
