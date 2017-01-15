@@ -22,7 +22,7 @@ def receive_data(socket):
 
 
 def process_response(response):
-    """Print a response message and exit with 1, if the response wasn't an success."""
+    """Print a response message and exit with 1, if the response wasn't a success."""
     # Print it and exit with 1 if operation wasn't successful
     print(response['message'])
     if response['status'] != 'success':
@@ -53,7 +53,14 @@ def connect_client_socket(root_dir):
 
 
 def create_daemon_socket(config_dir):
-    """Create a socket for the daemon, depending on the directory location."""
+    """Create a socket for the daemon, depending on the directory location.
+
+    Args:
+        config_dir (str): The absolute path to the config directory used by the daemon.
+
+    Returns:
+        socket.socket: The daemon socket. Clients connect to this socket.
+    """
 
     socket_path = os.path.join(config_dir, 'pueue.sock')
     # Create Socket and exit with 1, if socket can't be created

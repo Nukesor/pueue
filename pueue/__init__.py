@@ -136,8 +136,15 @@ stop_Subcommand.add_argument(
 stop_Subcommand.set_defaults(func=execute_stop)
 
 
-# Create a closure to pass the proper path to daemonize
 def daemon_factory(path):
+    """Create a closure which creates a running daemon.
+
+    We need to create a closure which contains the correct path the
+    daemon should be started with. This is needed, as the `Daemonize`
+    library requires a library and doesn't accept arguments.
+    This function cleanup sockets and output files as well, if we
+    encounter any exceptions.
+    """
     def start_daemon():
         root_dir = path
         config_dir = os.path.join(root_dir, '.config/pueue')
@@ -148,7 +155,6 @@ def daemon_factory(path):
             print('Keyboard interrupt. Shutting down')
             cleanup(daemon.config_dir)
             sys.exit(0)
-            return daemon
         except:
             cleanup(config_dir)
     return start_daemon

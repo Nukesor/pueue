@@ -18,6 +18,18 @@ from terminaltables.terminal_io import terminal_size
 
 
 def execute_status(args, root_dir=None):
+    """Print the status of the daemon.
+
+    This function displays the current status of the daemon as well
+    as the whole queue and all available information about every entry
+    in the queue.
+    `terminaltables` is used to format and display the queue contents.
+    `colorclass` is used to color format the various items in the queue.
+
+    Args:
+        root_dir (string): The path to the root directory the daemon is running in.
+    """
+
     status = command_factory('status')({}, root_dir=root_dir)
     # First rows, showing daemon status
     if status['status'] == 'running':
@@ -97,8 +109,12 @@ def execute_status(args, root_dir=None):
     print('')
 
 
-def execute_log(args, root_dir=None):
-    """Print the current log file."""
+def execute_log(args, root_dir):
+    """Print the current log file.
+    Args:
+        root_dir (string): The path to the root directory the daemon is running in.
+    """
+
     log_path = os.path.join(root_dir, '.local/share/pueue/queue.log')
     log_file = open(log_path, 'r')
     print(log_file.read())
@@ -107,8 +123,10 @@ def execute_log(args, root_dir=None):
 def execute_show(args, root_dir):
     """Print stderr and stdout of the current running process.
 
-    If the parameter `--watch` is provided, we open a curses session
-    and tail the output live in the console.
+    Args:
+        args['watch'] (bool): If True, we open a curses session and tail
+                              the output live in the console.
+        root_dir (string): The path to the root directory the daemon is running in.
     """
     config_dir = os.path.join(root_dir, '.config/pueue')
     # Get current pueueSTDout file from tmp
