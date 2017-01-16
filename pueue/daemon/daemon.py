@@ -83,8 +83,7 @@ class Daemon():
         self.clientSocket.close()
 
     def log(self, rotate=False):
-        # If there is a finished process a
-        # human readable log will be written
+        """Write process output and status to a log file."""
         write_log(self.log_dir, self.queue, rotate)
 
     def main(self):
@@ -136,7 +135,6 @@ class Daemon():
                             self.queue.current['status'] = 'queued'
 
                     self.process = None
-                    self.current_key = None
                     self.processStatus = 'No running process'
 
             if self.reset:
@@ -148,7 +146,6 @@ class Daemon():
 
                 # Reset Log
                 self.log()
-                self.nextKey = 0
                 self.reset = False
 
             # Start next Process

@@ -139,11 +139,10 @@ stop_Subcommand.set_defaults(func=execute_stop)
 def daemon_factory(path):
     """Create a closure which creates a running daemon.
 
-    We need to create a closure which contains the correct path the
-    daemon should be started with. This is needed, as the `Daemonize`
-    library requires a library and doesn't accept arguments.
-    This function cleanup sockets and output files as well, if we
-    encounter any exceptions.
+    We need to create a closure that contains the correct path the daemon should
+    be started with. This is needed as the `Daemonize` library
+    requires a callable function for daemonization and doesn't accept any arguments.
+    This function cleans up sockets and output files in case we encounter any exceptions.
     """
     def start_daemon():
         root_dir = path

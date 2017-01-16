@@ -5,7 +5,7 @@ import getpass
 
 
 def get_file_descriptor(config_dir):
-    """Returns file descriptors for stderr and stdout of pueue's subprocess."""
+    """Returns file descriptors for stderr and stdout for pueue's subprocess."""
 
     # Create stdout file and get file descriptor
     stdout_path = os.path.join(config_dir, 'pueue.stdout')

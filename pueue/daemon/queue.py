@@ -34,9 +34,15 @@ class Queue():
         self.write()
 
     def next(self):
-        # Get the next processable item of the queue.
-        # Returns None if no key is found.
-        # This is the
+        """Get the next processable item of the queue.
+
+        A processable item is supposed to have the status `queued`.
+        If we find an entry `self.current_key` will be set to this entry's key.
+
+        Returns:
+            None : If no key is found.
+            Int: If a valid entry is found.
+        """
         smallest = None
         for key in self.queue.keys():
             if self.queue[key]['status'] == 'queued':
@@ -47,29 +53,32 @@ class Queue():
         return smallest
 
     def read(self):
-        queuePath = self.daemon.config_dir+'/queue'
-        if os.path.exists(queuePath):
-            queueFile = open(queuePath, 'rb')
+        """Read the queue of the last pueue session or set `self.queue = {}`."""
+        queue_path = self.daemon.config_dir+'/queue'
+        if os.path.exists(queue_path):
+            queue_file = open(queue_path, 'rb')
             try:
-                self.queue = pickle.load(queueFile)
+                self.queue = pickle.load(queue_file)
             except:
                 print('Queue file corrupted, deleting old queue')
-                os.remove(queuePath)
+                os.remove(queue_path)
                 self.queue = {}
-            queueFile.close()
+            queue_file.close()
         else:
             self.queue = {}
 
     def write(self):
-        queuePath = self.daemon.config_dir + '/queue'
-        queueFile = open(queuePath, 'wb+')
+        """Write the current queue to a file. We need this to continue an earlier session."""
+        queue_path = self.daemon.config_dir + '/queue'
+        queue_file = open(queue_path, 'wb+')
         try:
-            pickle.dump(self.queue, queueFile, -1)
+            pickle.dump(self.queue, queue_file, -1)
         except:
             print('Error while writing to queue file. Wrong file permissions?')
-        queueFile.close()
+        queue_file.close()
 
     def add_new(self, command):
+        """Add a new command to the queue."""
         self.queue[self.nextKey] = command
         self.queue[self.nextKey]['status'] = 'queued'
         self.queue[self.nextKey]['returncode'] = ''
