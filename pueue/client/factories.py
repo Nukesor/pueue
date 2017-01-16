@@ -17,10 +17,10 @@ def command_factory(command):
         function: The created function.
     """
     def communicate(body={}, root_dir=None):
-        """This function will
+        """Communicate with the daemon.
 
         This function sends a payload to the daemon and returns the unpickled
-        object which is returned by the daemon.
+        object sent by the daemon.
 
         Args:
             body (dir): Any other arguments that should be put into the payload.
@@ -30,15 +30,16 @@ def command_factory(command):
             function: The returned payload.
         """
 
-        # Initialize socket, message and send it
         client = connect_client_socket(root_dir)
         body['mode'] = command
+        # Delete the func entry we use to call the correct function with argparse
+        # as functions can't be pickled and this shouldn't be send to the daemon.
         if 'func' in body:
             del body['func']
         data_string = pickle.dumps(body, -1)
         client.send(data_string)
 
-        # Receive message and return it
+        # Receive message, unpickle and return it
         response = receive_data(client)
         return response
     return communicate
@@ -58,10 +59,12 @@ def print_command_factory(command):
         function: The created function.
     """
     def communicate(body={}, root_dir=None):
-        # Initialize socket, message and send it
         client = connect_client_socket(root_dir)
         body['mode'] = command
-        body['func'] = None
+        # Delete the func entry we use to call the correct function with argparse
+        # as functions can't be pickled and this shouldn't be send to the daemon.
+        if 'func' in body:
+            del body['func']
         data_string = pickle.dumps(body, -1)
         client.send(data_string)
 
