@@ -4,17 +4,24 @@ import pickle
 import select
 import signal
 import subprocess
+import configparser
 from copy import deepcopy
 from datetime import datetime
 
 from pueue.daemon.logs import write_log, remove_old_logs
-from pueue.helper.config import get_config
 from pueue.helper.socket import create_daemon_socket
-from pueue.helper.files import get_file_descriptor, cleanup
+from pueue.helper.files import cleanup
 from pueue.daemon.queue import Queue
+from pueue.daemon.process_handler import ProcessHandler
 
 
 class Daemon():
+    """The pueue daemon class.
+
+    This is the central piece of code, which contains all client<->daemon
+    communication code. The daemon manages the processes and the queue
+    with the help of two other classes `ProcessHandler` and `Queue`.
+    """
     def __init__(self, root_dir=None):
         """Initializes the daemon.
 
@@ -22,11 +29,13 @@ class Daemon():
         and the configuration files.
         """
         self.initialize_directories(root_dir)
-        self.config = get_config(self.config_dir)
+        self.read_config()
 
         remove_old_logs(self.config['log']['logTime'], self.log_dir)
         # Initialize queue
         self.queue = Queue(self)
+        self.process_handler = ProcessHandler(self.queue, self.config_dir)
+        self.process_handler.set_max(self.config['default']['maxProcesses'])
         # Rotate logs, if all items from the last session finished
         if self.queue.next() is None:
             # Rotate old log
@@ -37,8 +46,8 @@ class Daemon():
         self.socket = create_daemon_socket(self.config_dir)
 
         # If there are still jobs in the queue the daemon might pause,
-        # if this behaviour is defined in the config file.
-        # The old logfile is beeing loaded as well.
+        # if this behavior is defined in the config file.
+        # The old log file is being loaded as well.
         self.paused = False
         if len(self.queue) > 0 and not self.config['default']['resumeAfterStart']:
             self.paused = True
@@ -56,9 +65,6 @@ class Daemon():
         self.clientSocket = None
         self.process = None
         self.read_list = [self.socket]
-
-        # Stdout/Stderr management
-        self.stdout, self.stderr = get_file_descriptor(self.config_dir)
 
     def initialize_directories(self, root_dir):
         """Create all directories needed for logs and configs."""
@@ -82,6 +88,34 @@ class Daemon():
         self.read_list.remove(self.clientSocket)
         self.clientSocket.close()
 
+    def read_config(self):
+        """Read a previous configuration file or create a new with default values."""
+        config_file = os.path.join(self.config_dir, 'pueue.ini')
+        self.config = configparser.ConfigParser()
+        # Try to get configuration file and return it
+        # If this doesn't work, a new default config file will be created
+        if os.path.exists(config_file):
+            try:
+                self.config.read(config_file)
+                return
+            except:
+                print('Error while parsing config file. Deleting old config')
+
+        self.config['app'] = {
+            'stopAtError': True,
+            'resumeAfterStart': False,
+            'maxProcesses': 1,
+        }
+        self.config['log'] = {
+            'logTime': 60*60*24*14,
+        }
+        self.write_config()
+
+    def write_config(self):
+        config_file = os.path.join(self.config_dir, 'pueue.ini')
+        with open(config_file, 'w') as file_descriptor:
+            self.config.write(file_descriptor)
+
     def log(self, rotate=False):
         """Write process output and status to a log file."""
         write_log(self.log_dir, self.queue, rotate)
@@ -89,53 +123,8 @@ class Daemon():
     def main(self):
         while self.running:
             # Check if there is a running process
-            if self.process is not None:
-                # Poll process and check to check for termination
-                self.process.poll()
-                if self.process.returncode is not None:
-                    # If a process is terminated by `stop` or `kill`
-                    # we want to queue it again instead closing it as failed.
-                    if not self.stopping:
-                        # Get std_out and err_out
-                        output, error_output = self.process.communicate()
-                        self.stdout.seek(0)
-                        output = self.stdout.read().replace('\n', '\n    ')
 
-                        self.stderr.seek(0)
-                        error_output = self.stderr.read().replace('\n', '\n    ')
-
-                        # Mark queue entry as finished and save returncode
-                        self.queue.current['returncode'] = self.process.returncode
-                        if self.process.returncode != 0:
-                            self.queue.current['status'] = 'errored'
-                        else:
-                            self.queue.current['status'] = 'done'
-
-                        # Add outputs to queue
-                        self.queue.current['stdout'] = output
-                        self.queue.current['stderr'] = error_output
-                        self.queue.current['end'] = str(datetime.now().strftime("%H:%M"))
-
-                        # Pause Daemon, if it is configured to stop
-                        if self.config['default']['stopAtError'] is True and not self.reset:
-                            if self.process.returncode != 0:
-                                self.paused = True
-
-                        self.queue.write()
-                        self.log()
-                    else:
-                        # Process finally finished.
-                        # Now we can set the status to paused.
-                        self.paused = True
-                        self.stopping = False
-                        if self.remove_current:
-                            self.remove_current = False
-                            del self.queue[self.queue.current_key]
-                        else:
-                            self.queue.current['status'] = 'queued'
-
-                    self.process = None
-                    self.processStatus = 'No running process'
+            self.process_handler.check_finished()
 
             if self.reset:
                 # Rotate log
@@ -149,36 +138,8 @@ class Daemon():
                 self.reset = False
 
             # Start next Process
-            if not self.paused and self.process is None:
-                key = self.queue.next()
-                if key is not None:
-                    # Check if path exists
-                    if not os.path.exists(self.queue.current['path']):
-                        self.queue.current['status'] = 'errored'
-                        error_msg = "The directory for this command doesn't exist any longer"
-                        print(error_msg)
-                        self.queue.current['stdout'] = ''
-                        self.queue.current['stderr'] = error_msg
-
-                    else:
-                        # Remove the output from all stdout and stderr files
-                        self.stdout.seek(0)
-                        self.stdout.truncate()
-                        self.stderr.seek(0)
-                        self.stderr.truncate()
-                        # Spawn subprocess
-                        self.process = subprocess.Popen(
-                            self.queue.current['command'],
-                            shell=True,
-                            stdout=self.stdout,
-                            stderr=self.stderr,
-                            stdin=subprocess.PIPE,
-                            universal_newlines=True,
-                            cwd=self.queue.current['path']
-                        )
-                        self.queue.current['status'] = 'running'
-                        self.queue.current['start'] = str(datetime.now().strftime("%H:%M"))
-                        self.processStatus = 'running'
+            if not self.paused:
+                self.process_handler.spawn_new()
 
             # Create list for waitable objects
             readable, writable, errored = select.select(self.read_list, [], [], 1)
@@ -239,8 +200,7 @@ class Daemon():
         sys.exit(0)
 
     def stop_daemon(self, payload=None):
-        # Kill current process and set active
-        # to False to stop while loop
+        # Kill current process and set active to False to stop while loop
         self.running = False
         self.kill_process({'remove': False})
 
@@ -248,19 +208,7 @@ class Daemon():
                 'status': 'success'}
 
     def pipe_to_process(self, payload):
-        processInput = payload['input']
-        if self.process:
-            self.process.stdin.write(processInput)
-            self.process.stdin.flush()
-            return {
-                'message': 'Message sent',
-                'status': 'success'
-            }
-        else:
-            return {
-                'message': 'No process running.',
-                'status': 'failed'
-            }
+        self.process_handler(payload['input'])
 
     def send_status(self, payload):
         answer = {}

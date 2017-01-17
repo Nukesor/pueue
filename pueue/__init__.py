@@ -156,6 +156,7 @@ def daemon_factory(path):
             sys.exit(0)
         except:
             cleanup(config_dir)
+            raise
     return start_daemon
 
 
