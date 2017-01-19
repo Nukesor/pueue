@@ -182,9 +182,9 @@ class Daemon():
                             payload = {'mode': ''}
 
                         functions = {
-                            'add': self.queue.add_new,
+                            'add': self.add,
                             'remove': self.remove,
-                            'switch': self.queue.switch,
+                            'switch': self.switch,
                             'send': self.pipe_to_process,
                             'status': self.send_status,
                             'start': self.start,
@@ -209,7 +209,10 @@ class Daemon():
         sys.exit(0)
 
     def stop_daemon(self, payload=None):
-        """Kill current processes and initiate daemon shutdown."""
+        """Kill current processes and initiate daemon shutdown.
+
+        The daemon will shut down after a last check on all killed processes.
+        """
         self.process_handler.kill_all()
         self.running = False
 
@@ -349,6 +352,11 @@ class Daemon():
                 answer = {'message': 'Daemon already paused, kill all processes.',
                           'status': 'success'}
         return answer
+
+    def add(self, payload):
+        """Add a entry to the queue."""
+        self.queue.add(payload)
+        return {'message': 'Command added', 'status': 'success'}
 
     def remove(self, payload):
         """Remove a single entry from the queue."""
