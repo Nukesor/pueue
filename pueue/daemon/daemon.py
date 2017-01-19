@@ -370,10 +370,33 @@ class Daemon():
 
         return answer
 
+    def switch(self, payload):
+        first = payload['first']
+        second = payload['second']
+        running = self.process_handler.is_running(first) or self.process_handler.is_running(second)
+        if running:
+            answer = {
+                'message': "Can't switch running processes, "
+                "please stop the processes before switching them.",
+                'status': 'error'
+            }
+
+        else:
+            switched = self.queue.switch(first, second)
+            if switched:
+                answer = {
+                    'message': 'Command #{} and #{} switched'.format(first, second),
+                    'status': 'success'
+                }
+            else:
+                answer = {'message': "One of the specified keys doesn't exist in the queue.",
+                          'status': 'error'}
+        return answer
+
     def restart(self, payload):
         key = payload['key']
-        success = self.queue.restart(key)
-        if success:
+        restarted = self.queue.restart(key)
+        if restarted:
             answer = {'message': 'Command #{} queued again'.format(key),
                       'status': 'success'}
         else:

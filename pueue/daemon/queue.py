@@ -108,30 +108,11 @@ class Queue():
             return True
         return False
 
-    def switch(self, command):
-        first = command['first']
-        second = command['second']
-        # Send error answer to client in case there exists no such key
-        if first not in self.queue:
-            # Send error answer to client in case there exists no such key
-            answer = {'message': 'No command with key #{}'.format(str(first)), 'status': 'error'}
-        elif second not in self.queue:
-            # Send error answer to client in case there exists no such key
-            answer = {'message': 'No command with key #{}'.format(str(second)), 'status': 'error'}
-        else:
-            # Delete command from queue, save the queue and send response to client
-            if not self.daemon.paused and (first == self.current_key or second == self.current_key):
-                answer = {
-                    'message': "Can't switch currently running process, "
-                    "please stop the process before switching it.",
-                    'status': 'error'
-                }
-            else:
-                tmp = self.queue[second].copy()
-                self.queue[second] = self.queue[first].copy()
-                self.queue[first] = tmp
-                answer = {
-                    'message': 'Command #{} and #{} switched'.format(first, second),
-                    'status': 'success'
-                }
-        return answer
+    def switch(self, first, second):
+        """Switch two entries in the queue. Return False if an entry doesn't exist."""
+        if first in self.queue and second in self.queue:
+            tmp = self.queue[second].copy()
+            self.queue[second] = self.queue[first].copy()
+            self.queue[first] = tmp
+            return True
+        return False
