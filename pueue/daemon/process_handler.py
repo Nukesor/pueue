@@ -178,7 +178,7 @@ class ProcessHandler():
     def start_process(self, key):
         """Start a specific processes."""
         if key in self.processes and key in self.paused:
-            os.kill(self.process[key].pid, signal.SIGCONT)
+            os.kill(self.processes[key].pid, signal.SIGCONT)
             self.queue[key]['status'] = 'running'
             self.paused.remove(key)
             return True

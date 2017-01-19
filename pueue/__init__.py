@@ -67,6 +67,6 @@ def main():
         try:
             args.func(args_dict, root_dir)
         except EOFError:
-            print('Apparently the daemon just died. Sorry for that :/.')
+            print('Apparently the daemon just died. Sorry for that :/')
     else:
         print('Invalid Command. Please check -h')

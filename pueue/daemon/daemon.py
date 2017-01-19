@@ -280,9 +280,9 @@ class Daemon():
 
         # Start a all processes and the daemon
         else:
+            self.process_handler.start_all()
             if self.paused:
                 self.paused = False
-                self.process_handler.start_all()
                 answer = {'message': 'Daemon and all processes started.',
                           'status': 'success'}
             else:
@@ -303,9 +303,9 @@ class Daemon():
 
         # Pause all processes and the daemon
         else:
+            self.process_handler.pause_all()
             if not self.paused:
                 self.paused = True
-                self.process_handler.pause_all()
                 answer = {'message': 'Daemon and all processes paused.',
                           'status': 'success'}
             else:
@@ -326,9 +326,9 @@ class Daemon():
 
         # Stop all processes and the daemon
         else:
+            self.process_handler.stop_all()
             if not self.paused:
                 self.paused = True
-                self.process_handler.stop_all()
                 answer = {'message': 'Daemon paused and all processes stopped.',
                           'status': 'success'}
             else:
@@ -349,12 +349,13 @@ class Daemon():
 
         # Kill all processes and the daemon
         else:
+            self.process_handler.kill_all()
             if not self.paused:
                 self.paused = True
-                self.process_handler.kill_all()
                 answer = {'message': 'Daemon paused and all processes kill.',
                           'status': 'success'}
             else:
+
                 answer = {'message': 'Daemon already paused, kill all processes.',
                           'status': 'success'}
         return answer
