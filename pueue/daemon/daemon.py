@@ -183,13 +183,13 @@ class Daemon():
 
                         functions = {
                             'add': self.queue.add_new,
-                            'remove': self.queue.remove,
+                            'remove': self.remove,
                             'switch': self.queue.switch,
                             'send': self.pipe_to_process,
                             'status': self.send_status,
                             'start': self.start,
                             'pause': self.pause,
-                            'restart': self.queue.restart,
+                            'restart': self.restart,
                             'stop': self.stop_process,
                             'kill': self.kill_process,
                             'reset': self.reset_everything,
@@ -368,4 +368,15 @@ class Daemon():
             else:
                 answer = {'message': 'No command with key #{}'.format(str(key)), 'status': 'error'}
 
+        return answer
+
+    def restart(self, payload):
+        key = payload['key']
+        success = self.queue.restart(key)
+        if success:
+            answer = {'message': 'Command #{} queued again'.format(key),
+                      'status': 'success'}
+        else:
+            answer = {'message': 'No finished command for this key',
+                      'status': 'success'}
         return answer

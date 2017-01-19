@@ -99,32 +99,14 @@ class Queue():
             return True
         return False
 
-    def restart(self, command):
-        key = command['key']
-        if key not in self.queue:
-            # Send error answer to client in case there exists no such key
-            answer = {'message': 'No command with key #{}'.format(str(key)), 'status': 'error'}
-        else:
-            # Delete command from queue, save the queue and send response to client
-            if self.queue[key]['status'] == 'queued':
-                answer = {'message': 'Command #{} is already queued'
-                          .format(key), 'status': 'success'}
-            if self.queue[key]['status'] in ['running', 'stopping', 'killing']:
-                answer = {'message': 'Command #{} is currently running'
-                          .format(key), 'status': 'error'}
-            else:
-                self.queue[self.nextKey] = {}
-                self.queue[self.nextKey]['command'] = self.queue[key]['command']
-                self.queue[self.nextKey]['path'] = self.queue[key]['path']
-                self.queue[self.nextKey]['status'] = 'queued'
-                self.queue[self.nextKey]['returncode'] = ''
-                self.queue[self.nextKey]['start'] = ''
-                self.queue[self.nextKey]['end'] = ''
-                self.nextKey += 1
-                self.write()
-                answer = {'message': 'Command #{} queued again'
-                          .format(key), 'status': 'success'}
-        return answer
+    def restart(self, key):
+        """Restart a previously finished command."""
+        if self.queue[key]['status'] in ['errored', 'done']:
+            command = {'command': self.queue[key]['command'],
+                       'path': self.queue[key]['path']}
+            self.add_new(command)
+            return True
+        return False
 
     def switch(self, command):
         first = command['first']
