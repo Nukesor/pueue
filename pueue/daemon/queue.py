@@ -91,24 +91,13 @@ class Queue():
         self.write()
         return {'message': 'Command added', 'status': 'success'}
 
-    def remove(self, command):
-        key = command['key']
-        if key not in self.queue:
-            # Send error answer to client in case there exists no such key
-            answer = {'message': 'No command with key #{}'.format(str(key)), 'status': 'error'}
-        else:
-            # Delete command from queue, save the queue and send response to client
-            if not self.daemon.paused and key == self.current_key:
-                answer = {
-                    'message': "Can't remove currently running process, "
-                    "please stop the process before removing it.",
-                    'status': 'error'
-                }
-            else:
-                del self.queue[key]
-                self.write()
-                answer = {'message': 'Command #{} removed'.format(key), 'status': 'success'}
-        return answer
+    def remove(self, key):
+        """Remove a key from the queue, return `False` if no such key exists."""
+        if key in self.queue:
+            del self.queue[key]
+            self.write()
+            return True
+        return False
 
     def restart(self, command):
         key = command['key']

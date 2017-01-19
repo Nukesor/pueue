@@ -26,6 +26,9 @@ class ProcessHandler():
     def set_max(self, amount):
         self.max_processes = amount
 
+    def is_running(self, key):
+        return key in self.processes
+
     def get_descriptor(self, number):
         """Create file descriptors for process output."""
         # Create stdout file and get file descriptor

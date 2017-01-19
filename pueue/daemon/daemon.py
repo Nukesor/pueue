@@ -349,3 +349,23 @@ class Daemon():
                 answer = {'message': 'Daemon already paused, kill all processes.',
                           'status': 'success'}
         return answer
+
+    def remove(self, payload):
+        """Remove a single entry from the queue."""
+        key = payload['key']
+        running = self.process_handler.is_running(key)
+        if running:
+            answer = {
+                'message': "Can't remove running process, "
+                "please stop the process before removing it.",
+                'status': 'error'
+            }
+        else:
+            # Check if we can delete the command from the queue
+            removed = self.queue.remove(key)
+            if removed:
+                answer = {'message': 'Command #{} removed'.format(key), 'status': 'success'}
+            else:
+                answer = {'message': 'No command with key #{}'.format(str(key)), 'status': 'error'}
+
+        return answer
