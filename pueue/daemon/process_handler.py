@@ -1,4 +1,5 @@
 import os
+import signal
 import subprocess
 
 from datetime import datetime
@@ -55,8 +56,8 @@ class ProcessHandler():
 
     def clean_descriptor(self, number):
         """Close file descriptor and remove underlying files."""
-        self.descriptor[number]['stdout'].close()
-        self.descriptor[number]['stderr'].close()
+        self.descriptors[number]['stdout'].close()
+        self.descriptors[number]['stderr'].close()
 
         if os.path.exists(self.descriptors[number]['stdout_path']):
             os.remove(self.descriptors[number]['stdout_path'])
@@ -66,11 +67,11 @@ class ProcessHandler():
 
     def check_finished(self):
         """Poll all processes and handle any finished processes.
-
-
         """
-        for key, process in self.processes.items():
+        changed = False
+        for key in list(self.processes.keys()):
             # Poll process and check if it finshed
+            process = self.processes[key]
             process.poll()
             if process.returncode is not None:
                 # If a process is terminated by `stop` or `kill`
@@ -79,7 +80,7 @@ class ProcessHandler():
                     # Get std_out and err_out
                     output, error_output = process.communicate()
 
-                    descriptor = self.descriptor[number]
+                    descriptor = self.descriptors[key]
                     descriptor['stdout'].seek(0)
                     output = descriptor['stdout'].read().replace('\n', '\n    ')
 
@@ -99,7 +100,7 @@ class ProcessHandler():
                     self.queue[key]['end'] = str(datetime.now().strftime("%H:%M"))
 
                     self.queue.write()
-                    self.log()
+                    changed = True
                 else:
                     self.stopping.remove(key)
                     if key in self.to_remove:
@@ -111,14 +112,13 @@ class ProcessHandler():
                 self.clean_descriptor(key)
                 del self.processes[key]
 
+        # If anything should be logged we return True
+        return changed
+
 
     def spawn_new(self):
         free_slots = self.max_processes - len(self.processes)
         for item in range(free_slots):
-            print('Next')
-            print(self.max_processes)
-            print(len(self.processes))
-            print(free_slots)
             key = self.queue.next()
             if key is not None:
                 # Check if path exists
@@ -194,6 +194,7 @@ class ProcessHandler():
         return False
 
     def stop_process(self, key, remove=False, kill=False):
+        print('stopping key {}'.format(key))
         if key in self.processes:
             self.processes[key].poll()
             if self.processes[key].returncode is None:

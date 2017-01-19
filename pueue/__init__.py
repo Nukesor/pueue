@@ -28,6 +28,10 @@ def daemon_factory(path):
             print('Keyboard interrupt. Shutting down')
             daemon.stop_daemon()
         except:
+            try:
+                daemon.stop_daemon()
+            except:
+                pass
             cleanup(config_dir)
             raise
     return start_daemon

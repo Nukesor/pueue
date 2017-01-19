@@ -2,7 +2,6 @@ import os
 import sys
 import pickle
 import select
-import signal
 import configparser
 from copy import deepcopy
 
@@ -128,9 +127,9 @@ class Daemon():
 
         """
         while self.running:
-            # Check if there is a running process
-
-            self.process_handler.check_finished()
+            # Check for any finished processes
+            if self.process_handler.check_finished():
+                self.log()
 
             if self.reset:
                 # Rotate log
@@ -144,7 +143,7 @@ class Daemon():
                 self.reset = False
 
             # Start next Process
-            if not self.paused:
+            if not self.paused and self.running:
                 self.process_handler.spawn_new()
 
             # Create list for waitable objects
@@ -202,9 +201,10 @@ class Daemon():
                             self.respond_client({'message': 'Unknown Command',
                                                 'status': 'error'})
 
+        self.process_handler.wait_for_finish()
         # Close socket, clean everything up and exit
         self.socket.close()
-        cleanup()
+        cleanup(self.config_dir)
         sys.exit(0)
 
     def stop_daemon(self, payload=None):
@@ -270,7 +270,7 @@ class Daemon():
     def start(self, payload):
         """Start the daemon and all processes or only a specific process."""
         # Start a specific process, if we have a key in our payload
-        if 'key' in payload:
+        if payload['key']:
             success = self.process_handler.start_process(payload['key'])
             if success:
                 answer = {'message': 'Process started.', 'status': 'success'}
@@ -286,14 +286,14 @@ class Daemon():
                 answer = {'message': 'Daemon and all processes started.',
                           'status': 'success'}
             else:
-                answer = {'message': 'Daemon already running, starting all paused processes.',
+                answer = {'message': 'Daemon already paused, pausing all processes.',
                           'status': 'success'}
         return answer
 
     def pause(self, payload):
         """Start the daemon and all processes or only a specific process."""
         # Pause a specific process, if we have a key in our payload
-        if 'key' in payload:
+        if payload['key']:
             success = self.process_handler.pause_process(payload['key'])
             if success:
                 answer = {'message': 'Process paused.', 'status': 'success'}
@@ -306,7 +306,7 @@ class Daemon():
             if not self.paused:
                 self.paused = True
                 self.process_handler.pause_all()
-                answer = {'message': 'Daemon and all processes started.',
+                answer = {'message': 'Daemon and all processes paused.',
                           'status': 'success'}
             else:
                 answer = {'message': 'Daemon already paused, pausing all processes anyway.',
@@ -316,7 +316,7 @@ class Daemon():
     def stop_process(self, payload):
         """Pause the daemon and stop all processes or stop a specific process."""
         # Stop a specific process, if we have a key in our payload
-        if 'key' in payload:
+        if payload['key']:
             success = self.process_handler.stop_process(payload['key'])
             if success:
                 answer = {'message': 'Process stopping.', 'status': 'success'}
@@ -339,7 +339,7 @@ class Daemon():
     def kill_process(self, payload):
         """Pause the daemon and kill all processes or kill a specific process."""
         # Kill a specific process, if we have a key in our payload
-        if 'key' in payload:
+        if payload['key']:
             success = self.process_handler.kill_process(payload['key'])
             if success:
                 answer = {'message': 'Process killed.', 'status': 'success'}
