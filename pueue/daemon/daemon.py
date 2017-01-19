@@ -3,10 +3,8 @@ import sys
 import pickle
 import select
 import signal
-import subprocess
 import configparser
 from copy import deepcopy
-from datetime import datetime
 
 from pueue.daemon.logs import write_log, remove_old_logs
 from pueue.helper.socket import create_daemon_socket
@@ -35,7 +33,7 @@ class Daemon():
         # Initialize queue
         self.queue = Queue(self)
         self.process_handler = ProcessHandler(self.queue, self.config_dir)
-        self.process_handler.set_max(self.config['default']['maxProcesses'])
+        self.process_handler.set_max(int(self.config['default']['maxProcesses']))
         # Rotate logs, if all items from the last session finished
         if self.queue.next() is None:
             # Rotate old log
@@ -98,7 +96,7 @@ class Daemon():
             except:
                 print('Error while parsing config file. Deleting old config')
 
-        self.config['app'] = {
+        self.config['default'] = {
             'stopAtError': True,
             'resumeAfterStart': False,
             'maxProcesses': 1,
@@ -193,6 +191,7 @@ class Daemon():
                             'stop': self.stop_process,
                             'kill': self.kill_process,
                             'reset': self.reset_everything,
+                            'set': self.set_config,
                             'STOPDAEMON': self.stop_daemon,
                         }
 
@@ -217,6 +216,13 @@ class Daemon():
         self.running = False
 
         return {'message': 'Pueue daemon shutting down',
+                'status': 'success'}
+
+    def set_config(self, payload):
+        self.config['default'][payload['name']] = payload['value']
+        self.write_config()
+
+        return {'message': 'Configuration successfully updated.',
                 'status': 'success'}
 
     def pipe_to_process(self, payload):
@@ -355,7 +361,7 @@ class Daemon():
 
     def add(self, payload):
         """Add a entry to the queue."""
-        self.queue.add(payload)
+        self.queue.add_new(payload)
         return {'message': 'Command added', 'status': 'success'}
 
     def remove(self, payload):

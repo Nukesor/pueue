@@ -1,4 +1,7 @@
 import os
+import subprocess
+
+from datetime import datetime
 
 class ProcessHandler():
     """Manage underlying processes.
@@ -48,6 +51,7 @@ class ProcessHandler():
         self.descriptors[number]['stdout_path'] = stdout_path
         self.descriptors[number]['stderr'] =  err_descriptor
         self.descriptors[number]['stderr_path'] = stderr_path
+        return out_descriptor, err_descriptor
 
     def clean_descriptor(self, number):
         """Close file descriptor and remove underlying files."""
@@ -107,19 +111,20 @@ class ProcessHandler():
                 self.clean_descriptor(key)
                 del self.processes[key]
 
-        self.running_processes = len(self.processes)
-        return self.running_processes
-
 
     def spawn_new(self):
-        free_slots = self.max_processes - self.running_processes
+        free_slots = self.max_processes - len(self.processes)
         for item in range(free_slots):
+            print('Next')
+            print(self.max_processes)
+            print(len(self.processes))
+            print(free_slots)
             key = self.queue.next()
             if key is not None:
                 # Check if path exists
                 if not os.path.exists(self.queue[key]['path']):
                     self.queue[key]['status'] = 'errored'
-                    error_msg = "The directory for this command doesn't exist any longer: {}".format(self.queue[key]['path'])
+                    error_msg = "The directory for this command doesn't exist anymore: {}".format(self.queue[key]['path'])
                     print(error_msg)
                     self.queue[key]['stdout'] = ''
                     self.queue[key]['stderr'] = error_msg
@@ -128,7 +133,7 @@ class ProcessHandler():
                     # Get file descriptors
                     stdout, stderr = self.get_descriptor(key)
                     # Get
-                    self.process = subprocess.Popen(
+                    self.processes[key] = subprocess.Popen(
                         self.queue[key]['command'],
                         shell=True,
                         stdout=stdout,
@@ -182,7 +187,7 @@ class ProcessHandler():
     def pause_process(self, key):
         """Pause a specific processes."""
         if key in self.processes and key not in self.paused:
-            os.kill(self.process.pid, signal.SIGSTOP)
+            os.kill(self.processes[key].pid, signal.SIGSTOP)
             self.queue[key]['status'] = 'paused'
             self.paused.append(key)
             return True
@@ -191,15 +196,16 @@ class ProcessHandler():
     def stop_process(self, key, remove=False, kill=False):
         if key in self.processes:
             self.processes[key].poll()
-            if self.process.returncode is None:
+            if self.processes[key].returncode is None:
                 # Kill process
                 if kill:
-                    self.process.kill()
+                    self.processes[key].kill()
                     self.queue[key]['status'] = 'killing'
                 else:
-                    self.process.terminate()
+                    self.processes[key].terminate()
                     self.queue[key]['status'] = 'stopping'
 
-                self.stopping[key] = remove
+                self.stopping.append(key)
+                if remove: self.to_remove.append(key)
             return True
         return False

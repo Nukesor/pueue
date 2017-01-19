@@ -1,11 +1,11 @@
 #!/bin/env python3
 import os
 import sys
-import argparse
 
 from daemonize import Daemonize
 
 from pueue.helper.files import cleanup
+from pueue.helper.argument_parser import parser
 from pueue.daemon.daemon import Daemon
 from pueue.client.factories import print_command_factory
 
@@ -26,8 +26,7 @@ def daemon_factory(path):
             daemon.main()
         except KeyboardInterrupt:
             print('Keyboard interrupt. Shutting down')
-            cleanup(daemon.config_dir)
-            sys.exit(0)
+            daemon.stop_daemon()
         except:
             cleanup(config_dir)
             raise

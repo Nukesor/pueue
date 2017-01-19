@@ -89,7 +89,6 @@ class Queue():
 
         self.nextKey += 1
         self.write()
-        return {'message': 'Command added', 'status': 'success'}
 
     def remove(self, key):
         """Remove a key from the queue, return `False` if no such key exists."""
