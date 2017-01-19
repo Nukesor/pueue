@@ -57,9 +57,6 @@ class Daemon():
         self.reset = False
         self.remove_current = False
 
-        # Variables to get the current state of a process
-        self.processStatus = 'No running process'
-
         # Variables for handling sockets and child process
         self.clientAddress = None
         self.clientSocket = None
@@ -112,6 +109,7 @@ class Daemon():
         self.write_config()
 
     def write_config(self):
+        """Write the current configuration to the config file."""
         config_file = os.path.join(self.config_dir, 'pueue.ini')
         with open(config_file, 'w') as file_descriptor:
             self.config.write(file_descriptor)
@@ -121,6 +119,16 @@ class Daemon():
         write_log(self.log_dir, self.queue, rotate)
 
     def main(self):
+        """The main function containing the loop for communication and process management.
+
+        This function is the heart of the daemon.
+        It is responsible for:
+        - Client communication
+        - Calling the ProcessHandler API.
+        - Logging
+        - Cleanup on exit
+
+        """
         while self.running:
             # Check if there is a running process
 
@@ -195,22 +203,27 @@ class Daemon():
                             self.respond_client({'message': 'Unknown Command',
                                                 'status': 'error'})
 
+        # Close socket, clean everything up and exit
         self.socket.close()
         cleanup()
         sys.exit(0)
 
     def stop_daemon(self, payload=None):
-        # Kill current process and set active to False to stop while loop
+        """Kill current processes and initiate daemon shutdown."""
+        self.process_handler.kill_all()
         self.running = False
-        self.kill_process({'remove': False})
 
         return {'message': 'Pueue daemon shutting down',
                 'status': 'success'}
 
     def pipe_to_process(self, payload):
-        self.process_handler(payload['input'])
+        """Send something to stdin of a specific process."""
+        message = payload['input']
+        key = payload['key']
+        self.process_handler.send_to_process(message, key)
 
     def send_status(self, payload):
+        """Send the daemon status and the current queue for displaying."""
         answer = {}
         data = []
         # Get daemon status
@@ -218,9 +231,6 @@ class Daemon():
             answer['status'] = 'paused'
         else:
             answer['status'] = 'running'
-
-        # Get process status
-        answer['process'] = self.processStatus
 
         # Add current queue or a message, that queue is empty
         if len(self.queue) > 0:
@@ -240,102 +250,102 @@ class Daemon():
         return answer
 
     def reset_everything(self, payload):
-        # Terminate current process
+        """Kill all processes, delete the queue and clean everything up."""
 
-        if self.process is not None:
-            try:
-                self.process.terminate(timout=10)
-            except:
-                self.process.kill()
-            self.process.wait()
-
+        self.process_handler.kill_all()
         self.reset = True
-        self.log(rotate=True)
 
-        answer = {'message': 'Reseting current queue', 'status': 'success'}
+        answer = {'message': 'Resetting current queue', 'status': 'success'}
         return answer
 
     def start(self, payload):
-        # Start the process if it is paused
-        if self.process is not None and self.paused:
-            os.kill(self.process.pid, signal.SIGCONT)
-            self.queue.current['status'] = 'running'
-            self.processStatus = 'running'
+        """Start the daemon and all processes or only a specific process."""
+        # Start a specific process, if we have a key in our payload
+        if 'key' in payload:
+            success = self.process_handler.start_process(payload['key'])
+            if success:
+                answer = {'message': 'Process started.', 'status': 'success'}
+            else:
+                answer = {'message': 'No paused process with this key.',
+                          'status': 'error'}
 
-        # Start the daemon if in paused state
-        if self.paused:
-            self.paused = False
-            answer = {'message': 'Daemon started', 'status': 'success'}
+        # Start a all processes and the daemon
         else:
-            answer = {'message': 'Daemon already running', 'status': 'success'}
+            if self.paused:
+                self.paused = False
+                self.process_handler.start_all()
+                answer = {'message': 'Daemon and all processes started.',
+                          'status': 'success'}
+            else:
+                answer = {'message': 'Daemon already running, starting all paused processes.',
+                          'status': 'success'}
         return answer
 
     def pause(self, payload):
-        # Pause the currently running process
-        if self.process is not None and not self.paused and not payload['wait']:
-            os.kill(self.process.pid, signal.SIGSTOP)
-            self.queue.current['status'] = 'paused'
-            self.processStatus = 'paused'
+        """Start the daemon and all processes or only a specific process."""
+        # Pause a specific process, if we have a key in our payload
+        if 'key' in payload:
+            success = self.process_handler.pause_process(payload['key'])
+            if success:
+                answer = {'message': 'Process paused.', 'status': 'success'}
+            else:
+                answer = {'message': 'No running process with this key.',
+                          'status': 'error'}
 
-        # Pause the daemon
-        if not self.paused:
-            self.paused = True
-            answer = {'message': 'Daemon paused', 'status': 'success'}
+        # Pause all processes and the daemon
         else:
-            answer = {'message': 'Daemon already paused', 'status': 'success'}
+            if not self.paused:
+                self.paused = True
+                self.process_handler.pause_all()
+                answer = {'message': 'Daemon and all processes started.',
+                          'status': 'success'}
+            else:
+                answer = {'message': 'Daemon already paused, pausing all processes anyway.',
+                          'status': 'success'}
         return answer
 
     def stop_process(self, payload):
-        if (self.process is not None):
-            # Check if process just exited at this moment
-            self.process.poll()
-            if self.process.returncode is None:
-                # Terminate process
-                self.process.terminate()
+        """Pause the daemon and stop all processes or stop a specific process."""
+        # Stop a specific process, if we have a key in our payload
+        if 'key' in payload:
+            success = self.process_handler.stop_process(payload['key'])
+            if success:
+                answer = {'message': 'Process stopping.', 'status': 'success'}
+            else:
+                answer = {'message': 'No running process with this key.',
+                          'status': 'error'}
 
-                # Stop daemon
-                self.stopping = True
-                if payload['remove']:
-                    self.remove_current = True
-
-                # Set status of current process in queue back to `queued`
-                self.queue.current['status'] = 'stopping'
-
-                answer = {'message': 'Terminating current process and paused daemon',
+        # Stop all processes and the daemon
+        else:
+            if not self.paused:
+                self.paused = True
+                self.process_handler.stop_all()
+                answer = {'message': 'Daemon paused and all processes stopped.',
                           'status': 'success'}
             else:
-                # Only pausing daemon if the process just finished right now.
-                self.paused = True
-                answer = {'message': 'Process just finished, pausing daemon', 'status': 'success'}
-        else:
-            # Only pausing daemon if no process is running
-            self.paused = True
-            answer = {'message': 'No process running, pausing daemon', 'status': 'success'}
+                answer = {'message': 'Daemon already paused, stopping all processes.',
+                          'status': 'success'}
         return answer
 
     def kill_process(self, payload):
-        if (self.process is not None):
-            # Check if process just exited at this moment
-            self.process.poll()
-            if self.process.returncode is None:
-                # Kill process
-                self.process.kill()
-
-                # Stop daemon
-                self.stopping = True
-                if payload['remove']:
-                    self.remove_current = True
-
-                # Set status of current process in queue back to `queued`
-                self.queue.current['status'] = 'killing'
-
-                answer = {'message': 'Sent kill to process and paused daemon', 'status': 'success'}
+        """Pause the daemon and kill all processes or kill a specific process."""
+        # Kill a specific process, if we have a key in our payload
+        if 'key' in payload:
+            success = self.process_handler.kill_process(payload['key'])
+            if success:
+                answer = {'message': 'Process killed.', 'status': 'success'}
             else:
-                # Only pausing daemon if the process just finished right now.
-                self.paused = True
-                answer = {'message': "Process just terminated on it's own", 'status': 'success'}
+                answer = {'message': 'No running process with this key.',
+                          'status': 'error'}
+
+        # Kill all processes and the daemon
         else:
-            # Only pausing daemon if no process is running
-            self.paused = True
-            answer = {'message': 'No process running, pausing daemon', 'status': 'success'}
+            if not self.paused:
+                self.paused = True
+                self.process_handler.kill_all()
+                answer = {'message': 'Daemon paused and all processes kill.',
+                          'status': 'success'}
+            else:
+                answer = {'message': 'Daemon already paused, kill all processes.',
+                          'status': 'success'}
         return answer

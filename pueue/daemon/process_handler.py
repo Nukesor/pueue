@@ -14,9 +14,14 @@ class ProcessHandler():
         self.config_dir = config_dir
         self.queue = queue
 
+        self.stopped = False
         self.max_processes = 1
         self.processes = {}
         self.descriptors = {}
+
+        self.paused = []
+        self.stopping = []
+        self.to_remove = []
 
     def set_max(self, amount):
         self.max_processes = amount
@@ -53,125 +58,145 @@ class ProcessHandler():
             os.remove(self.descriptors[number]['stderr_path'])
 
     def check_finished(self):
-        if self.process is not None:
-            # Poll process and check to check for termination
-            self.process.poll()
-            if self.process.returncode is not None:
+        """Poll all processes and handle any finished processes.
+
+
+        """
+        for key, process in self.processes.items():
+            # Poll process and check if it finshed
+            process.poll()
+            if process.returncode is not None:
                 # If a process is terminated by `stop` or `kill`
                 # we want to queue it again instead closing it as failed.
-                if not self.stopping:
+                if key not in self.stopping:
                     # Get std_out and err_out
-                    output, error_output = self.process.communicate()
-                    self.stdout.seek(0)
-                    output = self.stdout.read().replace('\n', '\n    ')
+                    output, error_output = process.communicate()
 
-                    self.stderr.seek(0)
-                    error_output = self.stderr.read().replace('\n', '\n    ')
+                    descriptor = self.descriptor[number]
+                    descriptor['stdout'].seek(0)
+                    output = descriptor['stdout'].read().replace('\n', '\n    ')
+
+                    descriptor['stderr'].seek(0)
+                    error_output = descriptor['stderr'].read().replace('\n', '\n    ')
 
                     # Mark queue entry as finished and save returncode
-                    self.queue.current['returncode'] = self.process.returncode
-                    if self.process.returncode != 0:
-                        self.queue.current['status'] = 'errored'
+                    self.queue[key]['returncode'] = process.returncode
+                    if process.returncode != 0:
+                        self.queue[key]['status'] = 'errored'
                     else:
-                        self.queue.current['status'] = 'done'
+                        self.queue[key]['status'] = 'done'
 
                     # Add outputs to queue
-                    self.queue.current['stdout'] = output
-                    self.queue.current['stderr'] = error_output
-                    self.queue.current['end'] = str(datetime.now().strftime("%H:%M"))
-
-                    # Pause Daemon, if it is configured to stop
-                    if self.config['default']['stopAtError'] is True and not self.reset:
-                        if self.process.returncode != 0:
-                            self.paused = True
+                    self.queue[key]['stdout'] = output
+                    self.queue[key]['stderr'] = error_output
+                    self.queue[key]['end'] = str(datetime.now().strftime("%H:%M"))
 
                     self.queue.write()
                     self.log()
                 else:
-                    # Process finally finished.
-                    # Now we can set the status to paused.
-                    self.paused = True
-                    self.stopping = False
-                    if self.remove_current:
-                        self.remove_current = False
-                        del self.queue[self.queue.current_key]
+                    self.stopping.remove(key)
+                    if key in self.to_remove:
+                        self.to_remove.remove(key)
+                        del self.queue[key]
                     else:
-                        self.queue.current['status'] = 'queued'
+                        self.queue[key]['status'] = 'queued'
 
-                self.process = None
-                self.processStatus = 'No running process'
+                self.clean_descriptor(key)
+                del self.processes[key]
+
+        self.running_processes = len(self.processes)
+        return self.running_processes
+
 
     def spawn_new(self):
-        if self.process is None:
+        free_slots = self.max_processes - self.running_processes
+        for item in range(free_slots):
             key = self.queue.next()
             if key is not None:
                 # Check if path exists
-                if not os.path.exists(self.queue.current['path']):
-                    self.queue.current['status'] = 'errored'
-                    error_msg = "The directory for this command doesn't exist any longer"
+                if not os.path.exists(self.queue[key]['path']):
+                    self.queue[key]['status'] = 'errored'
+                    error_msg = "The directory for this command doesn't exist any longer: {}".format(self.queue[key]['path'])
                     print(error_msg)
-                    self.queue.current['stdout'] = ''
-                    self.queue.current['stderr'] = error_msg
+                    self.queue[key]['stdout'] = ''
+                    self.queue[key]['stderr'] = error_msg
 
                 else:
-                    # Remove the output from all stdout and stderr files
-                    self.stdout.seek(0)
-                    self.stdout.truncate()
-                    self.stderr.seek(0)
-                    self.stderr.truncate()
-                    # Spawn subprocess
+                    # Get file descriptors
+                    stdout, stderr = self.get_descriptor(key)
+                    # Get
                     self.process = subprocess.Popen(
-                        self.queue.current['command'],
+                        self.queue[key]['command'],
                         shell=True,
-                        stdout=self.stdout,
-                        stderr=self.stderr,
+                        stdout=stdout,
+                        stderr=stderr,
                         stdin=subprocess.PIPE,
                         universal_newlines=True,
-                        cwd=self.queue.current['path']
+                        cwd=self.queue[key]['path']
                     )
-                    self.queue.current['status'] = 'running'
-                    self.queue.current['start'] = str(datetime.now().strftime("%H:%M"))
-                    self.processStatus = 'running'
+                    self.queue[key]['status'] = 'running'
+                    self.queue[key]['start'] = str(datetime.now().strftime("%H:%M"))
+            else:
+                break
 
-    def send_to_process(self, data, key=None):
-        if self.process:
-            self.process.stdin.write(processInput)
-            self.process.stdin.flush()
-            return {
-                'message': 'Message sent',
-                'status': 'success'
-            }
-        else:
-            return {
-                'message': 'No process running.',
-                'status': 'failed'
-            }
+    def send_to_process(self, message, key):
+        self.processes[key].stdin.write(message)
+        self.processes[key].stdin.flush()
+        return {
+            'message': 'Message sent',
+            'status': 'success'
+        }
 
-    def start_process(self, key=None):
-        if self.process is not None and self.paused:
-            os.kill(self.process.pid, signal.SIGCONT)
-            self.queue.current['status'] = 'running'
-            self.processStatus = 'running'
+    def start_all(self):
+        """Start all running processes."""
+        for key in self.processes.keys():
+            self.start_process(key)
 
-    def pause_process(self, key=None):
-        # Pause the currently running process
-        if self.process is not None and not self.paused and not payload['wait']:
+    def pause_all(self):
+        """Pause all running processes."""
+        for key in self.processes.keys():
+            self.pause_process(key)
+
+    def stop_all(self):
+        """Stop all running processes."""
+        for key in self.processes.keys():
+            self.stop_process(key)
+
+    def kill_all(self):
+        """Kill all running processes."""
+        for key in self.processes.keys():
+            self.stop_process(key, kill=True)
+
+    def start_process(self, key):
+        """Start a specific processes."""
+        if key in self.processes and key in self.paused:
+            os.kill(self.process[key].pid, signal.SIGCONT)
+            self.queue[key]['status'] = 'running'
+            self.paused.remove(key)
+            return True
+        return False
+
+    def pause_process(self, key):
+        """Pause a specific processes."""
+        if key in self.processes and key not in self.paused:
             os.kill(self.process.pid, signal.SIGSTOP)
-            self.queue.current['status'] = 'paused'
-            self.processStatus = 'paused'
+            self.queue[key]['status'] = 'paused'
+            self.paused.append(key)
+            return True
+        return False
 
-    def stop_process(self, key=None):
-        if (self.process is not None):
-            # Check if process just exited at this moment
-            self.process.poll()
-            if self.process.returncode is None:
-                # Terminate process
-                self.process.terminate()
-
-    def kill_process(self, key=None):
-        if (self.process is not None):
-            # Check if process just exited at this moment
-            self.process.poll()
+    def stop_process(self, key, remove=False, kill=False):
+        if key in self.processes:
+            self.processes[key].poll()
             if self.process.returncode is None:
                 # Kill process
-                self.process.kill()
+                if kill:
+                    self.process.kill()
+                    self.queue[key]['status'] = 'killing'
+                else:
+                    self.process.terminate()
+                    self.queue[key]['status'] = 'stopping'
+
+                self.stopping[key] = remove
+            return True
+        return False

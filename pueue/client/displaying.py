@@ -37,10 +37,7 @@ def execute_status(args, root_dir=None):
     elif status['status'] == 'paused':
         status['status'] = Color('{autoyellow}' + '{}'.format(status['status']) + '{/autoyellow}')
 
-    if status['process'] == 'running' or status['process'] == 'paused':
-        status['process'] = Color('{autogreen}' + '{}'.format(status['process']) + '{/autogreen}')
-
-    print('Daemon: {}\nProcess status: {} \n'.format(status['status'], status['process']))
+    print('Daemon: {}\n'.format(status['status']))
 
     # Handle queue data
     data = status['data']
