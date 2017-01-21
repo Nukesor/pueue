@@ -131,19 +131,19 @@ class Daemon():
             if self.process_handler.check_finished():
                 self.log()
 
-            if self.reset:
+            if self.reset and self.process_handler.all_finished():
                 # Rotate log
                 self.log(rotate=True)
 
-                # Reset  queue
+                # Reset queue
                 self.queue.reset()
 
-                # Reset Log
+                # Overwrite old log
                 self.log()
                 self.reset = False
 
             # Start next Process
-            if not self.paused and self.running:
+            if not self.paused and not self.reset and self.running:
                 self.process_handler.spawn_new()
 
             # Create list for waitable objects
@@ -262,6 +262,7 @@ class Daemon():
         """Kill all processes, delete the queue and clean everything up."""
 
         self.process_handler.kill_all()
+        self.process_handler.wait_for_finish()
         self.reset = True
 
         answer = {'message': 'Resetting current queue', 'status': 'success'}

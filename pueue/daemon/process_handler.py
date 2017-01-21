@@ -1,4 +1,5 @@
 import os
+import time
 import signal
 import subprocess
 
@@ -28,10 +29,22 @@ class ProcessHandler():
         self.to_remove = []
 
     def set_max(self, amount):
+        """Set the amount of concurrent running processes."""
         self.max_processes = amount
 
     def is_running(self, key):
+        """Return if there is a running process for this key."""
         return key in self.processes
+
+    def all_finished(self):
+        """Return `False`, if there are any active processes."""
+        return not bool(len(self.processes))
+
+    def wait_for_finish(self):
+        """Wait until all processes finished."""
+        while not self.all_finished():
+            self.check_finished()
+            time.sleep(0.5)
 
     def get_descriptor(self, number):
         """Create file descriptors for process output."""
