@@ -190,7 +190,7 @@ class Daemon():
                             'stop': self.stop_process,
                             'kill': self.kill_process,
                             'reset': self.reset_everything,
-                            'set': self.set_config,
+                            'option': self.set_config,
                             'STOPDAEMON': self.stop_daemon,
                         }
 
@@ -219,7 +219,10 @@ class Daemon():
                 'status': 'success'}
 
     def set_config(self, payload):
-        self.config['default'][payload['name']] = payload['value']
+        self.config['default'][payload['option']] = str(payload['value'])
+
+        if payload['option'] == 'maxProcesses':
+            self.process_handler.set_max(payload['value'])
         self.write_config()
 
         return {'message': 'Configuration successfully updated.',
