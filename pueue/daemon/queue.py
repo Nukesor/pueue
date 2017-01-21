@@ -6,6 +6,7 @@ class Queue():
     def __init__(self, daemon):
         self.daemon = daemon
         self.read()
+        self.clean()
         if len(self.queue) > 0:
             self.nextKey = max(self.queue.keys()) + 1
         else:
@@ -32,6 +33,20 @@ class Queue():
     def reset(self):
         self.queue = {}
         self.write()
+
+    def clean(self):
+        """Clean queue items from a previous session.
+
+        In case a previous session crashed and there are still some running
+        entries in the queue ('running', 'stopping', 'killing'), we clean those
+        and enqueue them again.
+        """
+
+        for _, item in self.queue.items():
+            if item['status'] in ['running', 'stopping', 'killing']:
+                item['status'] = 'queued'
+                item['start'] = ''
+                item['end'] = ''
 
     def next(self):
         """Get the next processable item of the queue.

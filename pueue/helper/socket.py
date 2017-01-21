@@ -65,6 +65,8 @@ def create_daemon_socket(config_dir):
     socket_path = os.path.join(config_dir, 'pueue.sock')
     # Create Socket and exit with 1, if socket can't be created
     try:
+        if os.path.exists(socket_path):
+            os.remove(socket_path)
         daemon = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         daemon.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         daemon.bind(socket_path)

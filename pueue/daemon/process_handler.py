@@ -108,6 +108,8 @@ class ProcessHandler():
                         del self.queue[key]
                     else:
                         self.queue[key]['status'] = 'queued'
+                        self.queue[key]['start'] = ''
+                        self.queue[key]['end'] = ''
 
                 self.clean_descriptor(key)
                 del self.processes[key]
@@ -194,7 +196,6 @@ class ProcessHandler():
         return False
 
     def stop_process(self, key, remove=False, kill=False):
-        print('stopping key {}'.format(key))
         if key in self.processes:
             self.processes[key].poll()
             if self.processes[key].returncode is None:
