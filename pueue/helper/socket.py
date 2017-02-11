@@ -45,7 +45,12 @@ def connect_client_socket(root_dir):
     try:
         client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         socket_path = os.path.join(config_dir, 'pueue.sock')
-        client.connect(socket_path)
+        if os.path.exists(socket_path):
+            client.connect(socket_path)
+            print(socket_path)
+        else:
+            print("Socket doesn't exist")
+            raise Exception
     except:
         print("Error connecting to socket. Make sure the daemon is running")
         sys.exit(1)

@@ -38,22 +38,22 @@ status_subcommand = subparsers.add_parser(
 status_subcommand.set_defaults(func=execute_status)
 
 # Configuration
-option_parser = subparsers.add_parser(
-    'option', help='Command for various options.')
+config_parser = subparsers.add_parser(
+    'config', help='Command for various configs.')
 
-option_subparser = option_parser.add_subparsers(
-    title='option subcommands', help='Subcommands to set various options.')
+config_subparser = config_parser.add_subparsers(
+    title='config subcommands', help='Subcommands to set various configs.')
 
 
 # Configuration: Max process
-max_processes_subcommand = option_subparser.add_parser(
+max_processes_subcommand = config_subparser.add_parser(
     'maxProcesses', help='Set the amount of concurrent running processes.')
 max_processes_subcommand.add_argument(
     'value', type=int,
     help="The amount of concurrent running processes."
 )
 max_processes_subcommand.set_defaults(option='maxProcesses')
-max_processes_subcommand.set_defaults(func=print_command_factory('option'))
+max_processes_subcommand.set_defaults(func=print_command_factory('config'))
 
 # Show
 show_subcommand = subparsers.add_parser('show', help='Shows the output of the currently running process')

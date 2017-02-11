@@ -5,10 +5,11 @@ import select
 import configparser
 from copy import deepcopy
 
-from pueue.daemon.logs import write_log, remove_old_logs
-from pueue.helper.socket import create_daemon_socket
 from pueue.helper.files import cleanup
+from pueue.helper.socket import create_daemon_socket
+
 from pueue.daemon.queue import Queue
+from pueue.daemon.logger import Logger
 from pueue.daemon.process_handler import ProcessHandler
 
 
@@ -26,33 +27,47 @@ class Daemon():
         and the configuration files.
         """
         self.initialize_directories(root_dir)
-        self.read_config()
+        # Initialize logger before you do anything else.
+        # In case anything fails, we want to see something in our logs.
+        self.logger = Logger(root_dir)
 
-        remove_old_logs(self.config['log']['logTime'], self.log_dir)
-        # Initialize queue
-        self.queue = Queue(self)
-        self.process_handler = ProcessHandler(self.queue, self.config_dir)
-        self.process_handler.set_max(int(self.config['default']['maxProcesses']))
-        # Rotate logs, if all items from the last session finished
-        if self.queue.next() is None:
-            # Rotate old log
-            self.log(rotate=True)
-            # Remove old log file
-            self.log()
-            self.queue.write()
-        self.socket = create_daemon_socket(self.config_dir)
+        try:
+            # Get config and initialize Queue, Logger and ProcessHandler
+            self.read_config()
+            self.queue = Queue(self)
+            self.process_handler = ProcessHandler(self.queue, self.config_dir)
+            self.process_handler.set_max(int(self.config['default']['maxProcesses']))
+        except:
+            daemon.logger.exception()
+            raise
 
-        # If there are still jobs in the queue the daemon might pause,
-        # if this behavior is defined in the config file.
-        # The old log file is being loaded as well.
+        # Remove old log files
+        self.logger.remove_old(self.config['log']['logTime'])
+
+        try:
+            # Create daemon socket
+            self.socket = create_daemon_socket(self.config_dir)
+
+            # Rotate logs and reset queue, if all items from the last session finished
+            if self.queue.next() is None:
+                self.logger.rotate(self.queue)
+                self.queue.reset()
+        except:
+            daemon.logger.exception()
+            raise
+
+        # Flags for various behaviours
         self.paused = False
-        if len(self.queue) > 0 and not self.config['default']['resumeAfterStart']:
-            self.paused = True
-
         self.running = True
         self.stopping = False
         self.reset = False
         self.remove_current = False
+
+        # If there are still jobs in the queue the daemon might pause,
+        # if this behavior is defined in the config file.
+        # The old log file is being loaded as well.
+        if len(self.queue) > 0 and not self.config['default']['resumeAfterStart']:
+            self.paused = True
 
         # Variables for handling sockets and child process
         self.clientAddress = None
@@ -69,11 +84,6 @@ class Daemon():
         self.config_dir = os.path.join(root_dir, '.config/pueue')
         if not os.path.exists(self.config_dir):
             os.makedirs(self.config_dir)
-
-        # Create log directory, if it doesn't exist
-        self.log_dir = os.path.join(root_dir, '.local/share/pueue')
-        if not os.path.exists(self.log_dir):
-            os.makedirs(self.log_dir)
 
     def respond_client(self, answer):
         """Generic function to send an answer to the client."""
@@ -93,7 +103,8 @@ class Daemon():
                 self.config.read(config_file)
                 return
             except:
-                print('Error while parsing config file. Deleting old config')
+                self.logger.error('Error while parsing config file. Deleting old config')
+                self.logger.exception()
 
         self.config['default'] = {
             'stopAtError': True,
@@ -111,10 +122,6 @@ class Daemon():
         with open(config_file, 'w') as file_descriptor:
             self.config.write(file_descriptor)
 
-    def log(self, rotate=False):
-        """Write process output and status to a log file."""
-        write_log(self.log_dir, self.queue, rotate)
-
     def main(self):
         """The main function containing the loop for communication and process management.
 
@@ -126,81 +133,80 @@ class Daemon():
         - Cleanup on exit
 
         """
-        while self.running:
-            # Check for any finished processes
-            if self.process_handler.check_finished():
-                self.log()
+        try:
+            while self.running:
+                # Check for any finished processes
+                if self.process_handler.check_finished():
+                    self.logger.log(self.queue)
 
-            if self.reset and self.process_handler.all_finished():
-                # Rotate log
-                self.log(rotate=True)
+                if self.reset and self.process_handler.all_finished():
+                    # Rotate log and reset queue
+                    self.logger.rotate(self.queue)
+                    self.queue.reset()
+                    self.reset = False
 
-                # Reset queue
-                self.queue.reset()
+                # Start next Process
+                if not self.paused and not self.reset and self.running:
+                    self.process_handler.spawn_new()
 
-                # Overwrite old log
-                self.log()
-                self.reset = False
-
-            # Start next Process
-            if not self.paused and not self.reset and self.running:
-                self.process_handler.spawn_new()
-
-            # Create list for waitable objects
-            readable, writable, errored = select.select(self.read_list, [], [], 1)
-            for socket in readable:
-                if socket is self.socket:
-                    # Listening for clients to connect.
-                    # Client sockets are added to readlist to be processed.
-                    try:
-                        self.clientSocket, self.clientAddress = self.socket.accept()
-                        self.read_list.append(self.clientSocket)
-                    except:
-                        print('Daemon rejected client')
-                else:
-                    # Trying to receive instruction from client socket
-                    try:
-                        instruction = self.clientSocket.recv(1048576)
-                    except EOFError:
-                        print('Client died while sending message, dropping received data.')
-                        instruction = None
-
-                    # Check for valid instruction
-                    if instruction is not None:
-                        # Check if received data can be unpickled.
+                # Create list for waitable objects
+                readable, writable, errored = select.select(self.read_list, [], [], 1)
+                for socket in readable:
+                    if socket is self.socket:
+                        # Listening for clients to connect.
+                        # Client sockets are added to readlist to be processed.
                         try:
-                            payload = pickle.loads(instruction)
+                            self.clientSocket, self.clientAddress = self.socket.accept()
+                            self.read_list.append(self.clientSocket)
+                        except:
+                            self.logger.warning('Daemon rejected client')
+                    else:
+                        # Trying to receive instruction from client socket
+                        try:
+                            instruction = self.clientSocket.recv(1048576)
                         except EOFError:
-                            # Instruction is ignored if it can't be unpickled
-                            print('Received message is incomplete, dropping received data.')
-                            self.read_list.remove(self.clientSocket)
-                            self.clientSocket.close()
-                            # Set invalid payload
-                            payload = {'mode': ''}
+                            self.logger.warning('Client died while sending message, dropping received data.')
+                            instruction = None
 
-                        functions = {
-                            'add': self.add,
-                            'remove': self.remove,
-                            'switch': self.switch,
-                            'send': self.pipe_to_process,
-                            'status': self.send_status,
-                            'start': self.start,
-                            'pause': self.pause,
-                            'restart': self.restart,
-                            'stop': self.stop_process,
-                            'kill': self.kill_process,
-                            'reset': self.reset_everything,
-                            'option': self.set_config,
-                            'STOPDAEMON': self.stop_daemon,
-                        }
+                        # Check for valid instruction
+                        if instruction is not None:
+                            # Check if received data can be unpickled.
+                            try:
+                                payload = pickle.loads(instruction)
+                            except EOFError:
+                                # Instruction is ignored if it can't be unpickled
+                                self.logger.error('Received message is incomplete, dropping received data.')
+                                self.read_list.remove(self.clientSocket)
+                                self.clientSocket.close()
+                                # Set invalid payload
+                                payload = {'mode': ''}
 
-                        if payload['mode'] in functions.keys():
-                            response = functions[payload['mode']](payload)
-                            self.respond_client(response)
-                        else:
-                            self.respond_client({'message': 'Unknown Command',
-                                                'status': 'error'})
+                            functions = {
+                                'add': self.add,
+                                'remove': self.remove,
+                                'switch': self.switch,
+                                'send': self.pipe_to_process,
+                                'status': self.send_status,
+                                'start': self.start,
+                                'pause': self.pause,
+                                'restart': self.restart,
+                                'stop': self.stop_process,
+                                'kill': self.kill_process,
+                                'reset': self.reset_everything,
+                                'config': self.set_config,
+                                'STOPDAEMON': self.stop_daemon,
+                            }
 
+                            if payload['mode'] in functions.keys():
+                                response = functions[payload['mode']](payload)
+                                self.respond_client(response)
+                            else:
+                                self.respond_client({'message': 'Unknown Command',
+                                                    'status': 'error'})
+        except:
+            self.logger.exception()
+
+        # Wait for killed or stopped processes to finish (cleanup)
         self.process_handler.wait_for_finish()
         # Close socket, clean everything up and exit
         self.socket.close()
