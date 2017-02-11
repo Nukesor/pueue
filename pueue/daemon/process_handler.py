@@ -208,6 +208,9 @@ class ProcessHandler():
             return True
         return False
 
+    def kill_process(self, key, remove=False):
+        self.stop_process(key, remove, kill=True)
+
     def stop_process(self, key, remove=False, kill=False):
         if key in self.processes:
             self.processes[key].poll()
@@ -221,6 +224,7 @@ class ProcessHandler():
                     self.queue[key]['status'] = 'stopping'
 
                 self.stopping.append(key)
-                if remove: self.to_remove.append(key)
+                if remove:
+                    self.to_remove.append(key)
             return True
         return False
