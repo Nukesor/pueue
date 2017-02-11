@@ -6,15 +6,13 @@ from test.helper import (
 from pueue.client.displaying import execute_show, execute_log
 
 
-@pytest.mark.skip(reason="Needs to be adjusted to new multi process style")
 def test_show(daemon_setup, directory_setup):
     """The show command executes without failing.
 
     This implies that the daemon is running and the stdout file in /tmp
     is properly created.
     """
-    execute_add('sleep 0.5')
-    wait_for_process(0)
+    execute_add('sleep 120')
     execute_show({'watch': False}, directory_setup[0])
 
 

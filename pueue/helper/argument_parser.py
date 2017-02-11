@@ -25,7 +25,7 @@ parser.add_argument(
 
 parser.add_argument(
     '--root', type=str,
-    help='The root directory for configs and logs. Used for testing')
+    help='The root directory for configs and logs. Defaults to home.')
 
 # Initialze supbparser
 subparsers = parser.add_subparsers(
@@ -88,6 +88,10 @@ switch_subcommand = subparsers.add_parser(
 switch_subcommand.add_argument('first', help='The first command', type=int)
 switch_subcommand.add_argument('second', help='The second command', type=int)
 switch_subcommand.set_defaults(func=print_command_factory('switch'))
+switch_subcommand.add_argument(
+    'key', type=int,
+    help='The process this should be send to.'
+)
 
 # Send
 send_subcommand = subparsers.add_parser(

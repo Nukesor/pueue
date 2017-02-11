@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import math
 import pickle
@@ -125,11 +126,30 @@ def execute_show(args, root_dir):
                               the output live in the console.
         root_dir (string): The path to the root directory the daemon is running in.
     """
+    key = None
+    if args.get('key'):
+        key = args['key']
+    else:
+        status = command_factory('status')({}, root_dir=root_dir)
+        print(status)
+        for k in sorted(status['data'].keys()):
+            if status['data'][k]['status'] == 'running':
+                key = k
+                break
+        if not key:
+            for k in sorted(status['data'].keys(), reverse=True):
+                if status['data'][k]['status'] != 'queued':
+                    key = k
+                    break
+            if key is None:
+                print('No log found')
+                sys.exit(1)
+
     config_dir = os.path.join(root_dir, '.config/pueue')
     # Get current pueueSTDout file from tmp
     userName = getpass.getuser()
-    stdoutFile = os.path.join(config_dir, 'pueue.stdout')
-    stderrFile = os.path.join(config_dir, 'pueue.stderr')
+    stdoutFile = os.path.join(config_dir, 'pueue_process_{}.stdout'.format(key))
+    stderrFile = os.path.join(config_dir, 'pueue_process_{}.stderr'.format(key))
     stdoutDescriptor = open(stdoutFile, 'r')
     stderrDescriptor = open(stderrFile, 'r')
     running = True
