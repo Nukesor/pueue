@@ -198,8 +198,12 @@ class Daemon():
                             }
 
                             if payload['mode'] in functions.keys():
+                                self.logger.debug('Payload received:')
                                 self.logger.debug(payload)
                                 response = functions[payload['mode']](payload)
+
+                                self.logger.debug('Sending payload:')
+                                self.logger.debug(response)
                                 self.respond_client(response)
                             else:
                                 self.respond_client({'message': 'Unknown Command',
@@ -314,13 +318,18 @@ class Daemon():
 
         # Pause all processes and the daemon
         else:
-            self.process_handler.pause_all()
-            if not self.paused:
-                self.paused = True
-                answer = {'message': 'Daemon and all processes paused.',
-                          'status': 'success'}
+            if not payload['wait']:
+                self.process_handler.pause_all()
+                if not self.paused:
+                    self.paused = True
+                    answer = {'message': 'Daemon and all processes paused.',
+                              'status': 'success'}
+                else:
+                    answer = {'message': 'Daemon already paused, pausing all processes anyway.',
+                              'status': 'success'}
             else:
-                answer = {'message': 'Daemon already paused, pausing all processes anyway.',
+                self.paused = True
+                answer = {'message': 'Pausing daemon, but waiting for processes to finish.',
                           'status': 'success'}
         return answer
 

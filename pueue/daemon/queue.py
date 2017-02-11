@@ -8,9 +8,9 @@ class Queue():
         self.read()
         self.clean()
         if len(self.queue) > 0:
-            self.nextKey = max(self.queue.keys()) + 1
+            self.next_key = max(self.queue.keys()) + 1
         else:
-            self.nextKey = 0
+            self.next_key = 0
 
     def keys(self):
         return self.queue.keys()
@@ -32,6 +32,7 @@ class Queue():
 
     def reset(self):
         self.queue = {}
+        self.next_key = 0
         self.write()
 
     def clean(self):
@@ -94,15 +95,15 @@ class Queue():
 
     def add_new(self, command):
         """Add a new command to the queue."""
-        self.queue[self.nextKey] = command
-        self.queue[self.nextKey]['status'] = 'queued'
-        self.queue[self.nextKey]['returncode'] = ''
-        self.queue[self.nextKey]['stdout'] = ''
-        self.queue[self.nextKey]['stderr'] = ''
-        self.queue[self.nextKey]['start'] = ''
-        self.queue[self.nextKey]['end'] = ''
+        self.queue[self.next_key] = command
+        self.queue[self.next_key]['status'] = 'queued'
+        self.queue[self.next_key]['returncode'] = ''
+        self.queue[self.next_key]['stdout'] = ''
+        self.queue[self.next_key]['stderr'] = ''
+        self.queue[self.next_key]['start'] = ''
+        self.queue[self.next_key]['end'] = ''
 
-        self.nextKey += 1
+        self.next_key += 1
         self.write()
 
     def remove(self, key):
