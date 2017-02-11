@@ -137,7 +137,7 @@ class Daemon():
             while self.running:
                 # Check for any finished processes
                 if self.process_handler.check_finished():
-                    self.logger.log(self.queue)
+                    self.logger.write(self.queue)
 
                 if self.reset and self.process_handler.all_finished():
                     # Rotate log and reset queue
@@ -198,6 +198,7 @@ class Daemon():
                             }
 
                             if payload['mode'] in functions.keys():
+                                self.logger.debug(payload)
                                 response = functions[payload['mode']](payload)
                                 self.respond_client(response)
                             else:
@@ -280,7 +281,7 @@ class Daemon():
     def start(self, payload):
         """Start the daemon and all processes or only a specific process."""
         # Start a specific process, if we have a key in our payload
-        if payload['key']:
+        if 'key' in payload:
             success = self.process_handler.start_process(payload['key'])
             if success:
                 answer = {'message': 'Process started.', 'status': 'success'}
@@ -303,7 +304,7 @@ class Daemon():
     def pause(self, payload):
         """Start the daemon and all processes or only a specific process."""
         # Pause a specific process, if we have a key in our payload
-        if payload['key']:
+        if 'key' in payload:
             success = self.process_handler.pause_process(payload['key'])
             if success:
                 answer = {'message': 'Process paused.', 'status': 'success'}
@@ -326,7 +327,7 @@ class Daemon():
     def stop_process(self, payload):
         """Pause the daemon and stop all processes or stop a specific process."""
         # Stop a specific process, if we have a key in our payload
-        if payload['key']:
+        if 'key' in payload:
             success = self.process_handler.stop_process(payload['key'])
             if success:
                 answer = {'message': 'Process stopping.', 'status': 'success'}
@@ -349,7 +350,7 @@ class Daemon():
     def kill_process(self, payload):
         """Pause the daemon and kill all processes or kill a specific process."""
         # Kill a specific process, if we have a key in our payload
-        if payload['key']:
+        if 'key' in payload:
             success = self.process_handler.kill_process(payload['key'])
             if success:
                 answer = {'message': 'Process killed.', 'status': 'success'}

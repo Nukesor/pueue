@@ -47,7 +47,6 @@ def connect_client_socket(root_dir):
         socket_path = os.path.join(config_dir, 'pueue.sock')
         if os.path.exists(socket_path):
             client.connect(socket_path)
-            print(socket_path)
         else:
             print("Socket doesn't exist")
             raise Exception
