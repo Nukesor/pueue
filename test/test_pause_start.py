@@ -75,7 +75,6 @@ def test_waiting_pause_multiple(daemon_setup, multiple_setup):
     # The paused daemon should wait for the processes to finish
     status = wait_for_process(0)
     status = wait_for_process(1)
-    assert status['status'] == 'paused'
     assert status['data'][0]['status'] == 'done'
     assert status['data'][1]['status'] == 'done'
     assert status['data'][2]['status'] == 'queued'
@@ -87,10 +86,8 @@ def test_start_after_pause(daemon_setup):
     In case the subprocess doesn't pause, the command should complete instantly
     after starting the daemon again.
     """
-    # Add command and make sure it's running
+    # Add command
     execute_add('sleep 2 && sleep 2')
-    status = command_factory('status')()
-    assert status['status'] == 'running'
 
     # Pause the daemon and the process
     command_factory('pause')({'wait': False})
@@ -105,5 +102,32 @@ def test_start_after_pause(daemon_setup):
 
     # Wait for the process to finish
     status = wait_for_process(0)
-    assert status['status'] == 'running'
     assert status['data'][0]['status'] == 'done'
+
+
+def test_start_multiple_after_pause(daemon_setup, multiple_setup):
+    """Daemon properly starts paused subprocesses."""
+    # Setup multiple processes test case
+    multiple_setup(
+        max_processes=2,
+        processes=2,
+        sleep_time=3,
+    )
+
+    # Pause the daemon and the process
+    command_factory('pause')({'wait': False})
+    status = command_factory('status')()
+    assert status['data'][0]['status'] == 'paused'
+    assert status['data'][1]['status'] == 'paused'
+
+    # Start the daemon again assert that it is still running
+    command_factory('start')()
+    status = command_factory('status')()
+    assert status['data'][0]['status'] == 'running'
+    assert status['data'][1]['status'] == 'running'
+
+    # Wait for the process to finish
+    status = wait_for_process(0)
+    status = wait_for_process(1)
+    assert status['data'][0]['status'] == 'done'
+    assert status['data'][1]['status'] == 'done'

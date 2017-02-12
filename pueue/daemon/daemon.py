@@ -285,7 +285,7 @@ class Daemon():
     def start(self, payload):
         """Start the daemon and all processes or only a specific process."""
         # Start a specific process, if we have a key in our payload
-        if 'key' in payload:
+        if payload.get('key') is not None:
             success = self.process_handler.start_process(payload['key'])
             if success:
                 answer = {'message': 'Process started.', 'status': 'success'}
