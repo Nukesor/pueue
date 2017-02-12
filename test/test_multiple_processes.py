@@ -6,25 +6,20 @@ from test.helper import (
 )
 
 
-def test_multiple_spawned(daemon_setup):
-    """Pause the daemon."""
+def test_multiple_spawned(daemon_setup, multiple_setup):
+    """Check if multiple processes are running."""
 
-    # Set max processes to three concurrent processes
-    command_factory('config')({
-        "option": "maxProcesses",
-        "value": 3,
-    })
-    # Add sleep commands
-    execute_add('sleep 60')
-    execute_add('sleep 60')
-    execute_add('sleep 60')
-    execute_add('sleep 60')
-    # Pause it with `'wait': True`
-    # The paused daemon should wait for the process to finish
+    # Setup multiple processes test case
+    multiple_setup(
+        max_processes=3,
+        processes=4,
+        sleep_time=60,
+    )
+    # The fixture `multiple_setup` adds 4 new commands and sets
+    # the amount of concurrent processes to 3.
     status = command_factory('status')()
     assert status['status'] == 'running'
     assert status['data'][0]['status'] == 'running'
     assert status['data'][1]['status'] == 'running'
     assert status['data'][2]['status'] == 'running'
     assert status['data'][3]['status'] == 'queued'
-

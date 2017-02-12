@@ -3,7 +3,10 @@ import time
 import pytest
 import subprocess
 
-from test.helper import command_factory
+from test.helper import (
+    execute_add,
+    command_factory,
+)
 
 @pytest.fixture(scope='session')
 def directory_setup(request):
@@ -39,3 +42,20 @@ def daemon_setup(request, directory_setup):
         command_factory('reset')()
         command_factory('STOPDAEMON')()
     request.addfinalizer(daemon_teardown)
+
+
+@pytest.fixture(scope='function')
+def multiple_setup(daemon_setup):
+    """Return a function which sets up a multiple process test case."""
+
+    def setup(processes=4, max_processes=3, sleep_time=60):
+        # Set max processes to three concurrent processes
+        command_factory('config')({
+            "option": "maxProcesses",
+            "value": max_processes,
+        })
+        # Add sleep commands
+        for i in range(processes):
+            execute_add('sleep {}'.format(sleep_time))
+
+    return setup

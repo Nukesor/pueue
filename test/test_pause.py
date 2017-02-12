@@ -8,11 +8,36 @@ from test.helper import (
 
 def test_pause(daemon_setup):
     """Pause the daemon."""
+    # Assert that the daemon is running after setup
     status = command_factory('status')()
     assert status['status'] == 'running'
+
+    # Add a single command
+    execute_add('sleep 60')
     command_factory('pause')()
     status = command_factory('status')()
     assert status['status'] == 'paused'
+    assert status['data'][0]['status'] == 'paused'
+
+
+def test_pause_multiple(daemon_setup, multiple_setup):
+    """Pause the daemon with multiple running processes."""
+    # Add a single command
+
+    # Setup multiple processes test case
+    multiple_setup(
+        max_processes=3,
+        processes=4,
+        sleep_time=60,
+    )
+    # Pause and check if all running processes have been paused
+    command_factory('pause')()
+    status = command_factory('status')()
+    assert status['status'] == 'paused'
+    assert status['data'][0]['status'] == 'paused'
+    assert status['data'][1]['status'] == 'paused'
+    assert status['data'][2]['status'] == 'paused'
+    assert status['data'][3]['status'] == 'queued'
 
 
 def test_waiting_pause(daemon_setup):
@@ -22,16 +47,38 @@ def test_waiting_pause(daemon_setup):
     but waits for the current process to finish instead of
     pausing it.
     """
-    # Add sleep command
+    # Add sleep command and pause it with `'wait': True`
     execute_add('sleep 2')
-    status = command_factory('status')()
-    assert status['status'] == 'running'
-    # Pause it with `'wait': True`
     command_factory('pause')({'wait': True})
     # The paused daemon should wait for the process to finish
     status = wait_for_process(0)
     assert status['status'] == 'paused'
     assert status['data'][0]['status'] == 'done'
+
+
+def test_waiting_pause_multiple(daemon_setup, multiple_setup):
+    """Daemon waits for processes to finish.
+
+    With `wait=True` as a parameter the daemon pauses,
+    but waits for the current processes to finish instead of
+    pausing them.
+    """
+    # Setup multiple processes test case
+    multiple_setup(
+        max_processes=2,
+        processes=3,
+        sleep_time=3,
+    )
+
+    # Pause the daemon with `'wait': True`
+    command_factory('pause')({'wait': True})
+    # The paused daemon should wait for the processes to finish
+    status = wait_for_process(0)
+    status = wait_for_process(1)
+    assert status['status'] == 'paused'
+    assert status['data'][0]['status'] == 'done'
+    assert status['data'][1]['status'] == 'done'
+    assert status['data'][2]['status'] == 'queued'
 
 
 def test_start_after_pause(daemon_setup):
