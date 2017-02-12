@@ -4,9 +4,9 @@ setup(
     name='pueue',
     author='Arne Beer',
     author_email='arne@twobeer.de',
-    version='0.6.4',
-    description='Pueue is a fancy queue for bash commands',
-    keywords='bash queue command',
+    version='0.7.0',
+    description='Pueue is a fancy queue for shell commands',
+    keywords='shell queue command concurrent',
     url='http://github.com/nukesor/pueue',
     license='MIT',
     install_requires=[

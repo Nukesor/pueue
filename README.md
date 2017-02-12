@@ -2,12 +2,13 @@
 
 ![Pueue](https://raw.githubusercontent.com/Nukesor/images/master/pueue.png)
 
-Pueue is a daemon designed for sequential execution of long running heavy load tasks. Not being bound to any terminal you can check on your processes from everywhere and the queue will be processed, even if you exit your ssh session.
+Pueue is a daemon designed for sequential and parallel execution of long running heavy load tasks. Not being bound to any terminal it is possible to check on your processes from every terminal or using the API. And the best part is that the queue will be processed by the daemon, even if you exit your ssh session.
 
 It provides functionality for:
 - Easy output inspection.
 - Interaction with the running process
 - Manipulation of the scheduled task order
+- Running multiple tasks at once (You can decide how many concurrent tasks you want to run.)
 
 
 ## Why should I use it?
@@ -16,13 +17,14 @@ Pretty much everybody who lives on the command line had this situation, when one
 
 This normally ends with about 10 open terminals/tmux sessions and an overchallenged hard drive.
 
-Pueue is exactly designed for situations like this. It executes long running tasks in their respective directories, while not being bound to any terminal.  
+Pueue is specifically designed for those situations. It executes long running tasks in their respective directories, without being bound to any terminal.  
 
 Just a few possible applications:
 
 - Long running compression tasks
 - Movie encoding
 - Copying stuff
+- rsync tasks
 
 If I got your attention, give it a try!  
 If you think this is awesome, help me, join the development and create some PRs or suggest some improvements.
@@ -39,20 +41,31 @@ There are three different ways to install pueue.
 
 There is a help option (-h) for all commands, but I'll list them here anyway.
 
-`pueue --daemon` Starts the daemon. If the daemon finds a queue from a previous session it'll start in paused state!!  
-`pueue --no-daemon` Starts the daemon in the current terminal.  
-`pueue --stop-daemon` Daemon shuts down instantly. All running processes die.  
+`pueue --daemon` Starts the daemon. The daemon will try to load any queue from a previous session.  
+`pueue --no-daemon` Start the daemon in the current terminal.  
+`pueue --stop-daemon` Daemon will shut down after killing all processes.
 
-`pueue status` Shows the current state of the process and daemon as well as the processing state of the queue.
-`pueue show (--watch)` Shows the output of the currently running process. `show --watch` will continually show the stdout output of the subprocess in a `curses` session.
-`show` on it's own will also print the stderr, which can be useful if the subprocess prompts for user input (This is often piped to stderr).  
-`pueue log` Prints the output and statuses of all executed commands.  
+`pueue status` Show the current state of processes and the daemon as well as the processing state of the queue.
+`pueue show --watch --key $k` Show the output of `--key` or the oldest running process. `show --watch` will continually show the stdout output of the subprocess in a `curses` session.
+    `show` without `--watch` will print the stderr, which can be useful if the subprocess prompts for user input (This is often piped to stderr).  
+`pueue log $key` Print the output and status of all executed commands.  
 
-`pueue start` Daemon will start to process the queue. This starts any paused processes as well (`SIGCONT`).  
-`pueue pause ` Stop processing the queue and pause the underlying process by sending a `SIGSTOP`.  
+`pueue start` Daemon will start to process the queue. This will start all paused processes (`SIGCONT`).  
+
+`pueue pause --wait --key $k` This command has two different behaviours, depending on if a key is given:
+1. If a key is given, pause the specified process by sending a `SIGSTOP`.
+2. If no key is given, stop to process the queue and pause all running processes. If the `--wait` flag is set, the daemon will pause, but all running processes will finish on their own.
+
 `pueue restart` Enqueue a finished process.  
-`pueue stop (-r)` Terminate the current process (`kill`) and pause the daemon afterwards. If `-r` is provided the current running process will be removed from the queue.  
-`pueue kill (-r)` KILL the current process (`kill -9`) and pause the daemon afterwards. If `-r` is provided the current running process will be removed from the queue.  
+
+`pueue stop -r --key` This command has two different behaviours, depending on if a key is given:
+1. If a key is given, terminate the speecified process. If `-r` is provided this process will be removed from the queue.  
+2. If no key is given, terminate all running processes (`kill`) and pause the daemon.   
+
+`pueue kill -r --key` This command has two different behaviours, depending on if a key is given:  
+1. If a key is given, KILL the specified process (`kill -9`). If `-r` is provided the current running process will be removed from the queue.  
+2. If no key is given, KILL all running processes (`kill -9`) and pause the daemon. If `-r` is provided this process will be removed from the queue.  
+
 `pueue reset` Remove all commands from the queue, kill the current process and reset the queue index to 0.  
 
 `pueue add 'command'` Add a command to the queue.  
@@ -64,6 +77,9 @@ The stdin pipe is flushed after every `send` command. To simulate a `\n` you nee
 
         pueue send 'y
         '
+
+`pueue config` This command allows to set different config values without editing the config file and restarting the daemon. Look at `pueue config -h` for more information.
+
 
 ## Configs and Logs
 
