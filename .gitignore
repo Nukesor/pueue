@@ -58,3 +58,4 @@ target/
 
 # Venv
 venv/*
+temptest/*

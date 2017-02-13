@@ -1,3 +1,5 @@
+import os
+import sys
 import time
 import math
 import pickle
@@ -9,25 +11,34 @@ from textwrap import wrap
 from functools import reduce
 from colorclass import Color
 
-from pueue.helper.files import create_log_dir
 from pueue.helper.socket import connect_client_socket, receive_data
+from pueue.client.factories import command_factory
 
 from terminaltables import AsciiTable
 from terminaltables.terminal_io import terminal_size
 
 
-def execute_status(args):
-    status = get_status()
+def execute_status(args, root_dir=None):
+    """Print the status of the daemon.
+
+    This function displays the current status of the daemon as well
+    as the whole queue and all available information about every entry
+    in the queue.
+    `terminaltables` is used to format and display the queue contents.
+    `colorclass` is used to color format the various items in the queue.
+
+    Args:
+        root_dir (string): The path to the root directory the daemon is running in.
+    """
+
+    status = command_factory('status')({}, root_dir=root_dir)
     # First rows, showing daemon status
     if status['status'] == 'running':
         status['status'] = Color('{autogreen}' + '{}'.format(status['status']) + '{/autogreen}')
     elif status['status'] == 'paused':
         status['status'] = Color('{autoyellow}' + '{}'.format(status['status']) + '{/autoyellow}')
 
-    if status['process'] == 'running' or status['process'] == 'paused':
-        status['process'] = Color('{autogreen}' + '{}'.format(status['process']) + '{/autogreen}')
-
-    print('Daemon: {}\nProcess status: {} \n'.format(status['status'], status['process']))
+    print('Daemon: {}\n'.format(status['status']))
 
     # Handle queue data
     data = status['data']
@@ -96,17 +107,49 @@ def execute_status(args):
     print('')
 
 
-def execute_log(args):
-    logPath = create_log_dir() + '/queue.log'
-    logFile = open(logPath, 'r')
-    print(logFile.read())
+def execute_log(args, root_dir):
+    """Print the current log file.
+    Args:
+        root_dir (string): The path to the root directory the daemon is running in.
+    """
+
+    log_path = os.path.join(root_dir, '.local/share/pueue/queue.log')
+    log_file = open(log_path, 'r')
+    print(log_file.read())
 
 
-def execute_show(args):
+def execute_show(args, root_dir):
+    """Print stderr and stdout of the current running process.
+
+    Args:
+        args['watch'] (bool): If True, we open a curses session and tail
+                              the output live in the console.
+        root_dir (string): The path to the root directory the daemon is running in.
+    """
+    key = None
+    if args.get('key'):
+        key = args['key']
+    else:
+        status = command_factory('status')({}, root_dir=root_dir)
+        print(status)
+        for k in sorted(status['data'].keys()):
+            if status['data'][k]['status'] == 'running':
+                key = k
+                break
+        if not key:
+            for k in sorted(status['data'].keys(), reverse=True):
+                if status['data'][k]['status'] != 'queued':
+                    key = k
+                    break
+            if key is None:
+                print('No log found')
+                sys.exit(1)
+
+    config_dir = os.path.join(root_dir, '.config/pueue')
     # Get current pueueSTDout file from tmp
     userName = getpass.getuser()
-    stdoutFile = '/tmp/pueueStdout{}'.format(userName)
-    stderrFile = '/tmp/pueueStderr{}'.format(userName)
+    stdoutFile = os.path.join(config_dir, 'pueue_process_{}.stdout'.format(key))
+    stderrFile = os.path.join(config_dir, 'pueue_process_{}.stderr'.format(key))
     stdoutDescriptor = open(stdoutFile, 'r')
     stderrDescriptor = open(stderrFile, 'r')
     running = True
@@ -141,14 +184,3 @@ def execute_show(args):
         print('\n\nStderr output:\n')
         stderrDescriptor.seek(0)
         print(stderrDescriptor.read())
-
-
-def get_status():
-    # Initialize socket, message and send it
-    client = connect_client_socket()
-    instruction = {'mode': 'status'}
-    data_string = pickle.dumps(instruction, -1)
-    client.send(data_string)
-
-    response = receive_data(client)
-    return response
