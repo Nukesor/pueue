@@ -53,7 +53,6 @@ class Queue():
         """Get the next processable item of the queue.
 
         A processable item is supposed to have the status `queued`.
-        If we find an entry `self.current_key` will be set to this entry's key.
 
         Returns:
             None : If no key is found.
@@ -64,8 +63,6 @@ class Queue():
             if self.queue[key]['status'] == 'queued':
                 if smallest is None or key < smallest:
                     smallest = key
-                    self.current = self.queue[smallest]
-                    self.current_key = smallest
         return smallest
 
     def read(self):

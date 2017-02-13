@@ -25,6 +25,9 @@ def directory_setup(request):
 def daemon_setup(request, directory_setup):
     """Start a daemon with a local test directory."""
 
+    if os.path.exists(os.path.join(directory_setup[1], 'pueue.ini')):
+        os.remove(os.path.join(directory_setup[1], 'pueue.ini'))
+
     process = subprocess.Popen(
         'pueue --daemon --root {}'.format(directory_setup[0]),
         shell=True,

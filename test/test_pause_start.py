@@ -87,7 +87,7 @@ def test_start_after_pause(daemon_setup):
     after starting the daemon again.
     """
     # Add command
-    execute_add('sleep 2 && sleep 2')
+    execute_add('sleep 4')
 
     # Pause the daemon and the process
     command_factory('pause')({'wait': False})
@@ -131,3 +131,62 @@ def test_start_multiple_after_pause(daemon_setup, multiple_setup):
     status = wait_for_process(1)
     assert status['data'][0]['status'] == 'done'
     assert status['data'][1]['status'] == 'done'
+
+
+def test_multiple_start_during_pause(daemon_setup, multiple_setup):
+    """It's possible to start processes, while the daemon is paused.
+
+    This test checks if it's possible to start paused or queued tasks,
+    even if the daemon is paused and doesn't process the queue.
+    """
+    # Setup multiple processes test case
+    multiple_setup(
+        max_processes=2,
+        processes=4,
+        sleep_time=60,
+    )
+
+    # Pause all running processes and the daemon
+    command_factory('pause')()
+    status = command_factory('status')()
+
+    # Start the specific processes 0 and 3
+    command_factory('start')({'key': 0})
+    command_factory('start')({'key': 3})
+
+    # Check if 0 is running, 1 should be still paused and 3 should be running
+    status = command_factory('status')()
+    assert status['status'] == 'paused'
+    assert status['data'][0]['status'] == 'running'
+    assert status['data'][1]['status'] == 'paused'
+    assert status['data'][2]['status'] == 'queued'
+    assert status['data'][3]['status'] == 'running'
+
+    # Start 2 and check if it's running
+    command_factory('start')({'key': 2})
+    status = command_factory('status')()
+    assert status['data'][2]['status'] == 'running'
+
+
+def test_start_additional_process(daemon_setup):
+    """It's possible to start a task, even if max_processes is exceeded."""
+    execute_add('sleep 60')
+    execute_add('sleep 60')
+    execute_add('sleep 60')
+    execute_add('sleep 60')
+
+    status = command_factory('status')()
+    # Start the specific processes 0 and 3
+    command_factory('start')({'key': 3})
+
+    # Check if 0 is running, 1 should be still paused and 3 should be running
+    status = command_factory('status')()
+    assert status['data'][0]['status'] == 'running'
+    assert status['data'][1]['status'] == 'queued'
+    assert status['data'][2]['status'] == 'queued'
+    assert status['data'][3]['status'] == 'running'
+
+    # Start 2 and check if it's running
+    command_factory('start')({'key': 2})
+    status = command_factory('status')()
+    assert status['data'][2]['status'] == 'running'

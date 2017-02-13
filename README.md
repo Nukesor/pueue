@@ -51,7 +51,11 @@ There is a help option (-h) for all commands, but I'll list them here anyway.
     `show` without `--watch` will print the stderr, which can be useful if the subprocess prompts for user input (This is often piped to stderr).  
 
 `pueue log $key` Print the output and status of all executed commands.  
-`pueue start` Daemon will start to process the queue. This will start all paused processes (`SIGCONT`).  
+`pueue start --key`This command has three different behaviours, depending on if and which a key is given:  
+    1. If the key of a paused process is given, the process will be started (`SIGCONT`), this happens even if the daemon is paused.  
+    1. If the key of a queued process is given, the process will be started, this happens even if the daemon is paused or the max amount of processes is exceeded.  
+    3. If no key is given, the daemon will start to process the queue. This will start all paused processes (`SIGCONT`).  
+
 `pueue pause --wait --key $k` This command has two different behaviours, depending on if a key is given:  
     1. If a key is given, pause the specified process by sending a `SIGSTOP`.  
     2. If no key is given, stop processing the queue and pause all running processes. If the `--wait` flag is set, the daemon will pause, but all running processes will finish on their own.  

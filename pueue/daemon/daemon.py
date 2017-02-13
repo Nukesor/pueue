@@ -147,7 +147,7 @@ class Daemon():
 
                 # Start next Process
                 if not self.paused and not self.reset and self.running:
-                    self.process_handler.spawn_new()
+                    self.process_handler.check_for_new()
 
                 # Create list for waitable objects
                 readable, writable, errored = select.select(self.read_list, [], [], 1)
@@ -290,7 +290,7 @@ class Daemon():
             if success:
                 answer = {'message': 'Process started.', 'status': 'success'}
             else:
-                answer = {'message': 'No paused process with this key.',
+                answer = {'message': 'No paused or queued process with this key.',
                           'status': 'error'}
 
         # Start a all processes and the daemon

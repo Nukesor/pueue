@@ -130,37 +130,38 @@ class ProcessHandler():
         # If anything should be logged we return True
         return changed
 
-
-    def spawn_new(self):
+    def check_for_new(self):
         free_slots = self.max_processes - len(self.processes)
         for item in range(free_slots):
             key = self.queue.next()
             if key is not None:
-                # Check if path exists
-                if not os.path.exists(self.queue[key]['path']):
-                    self.queue[key]['status'] = 'errored'
-                    error_msg = "The directory for this command doesn't exist anymore: {}".format(self.queue[key]['path'])
-                    print(error_msg)
-                    self.queue[key]['stdout'] = ''
-                    self.queue[key]['stderr'] = error_msg
+                self.spawn_new(key)
 
-                else:
-                    # Get file descriptors
-                    stdout, stderr = self.get_descriptor(key)
-                    # Get
-                    self.processes[key] = subprocess.Popen(
-                        self.queue[key]['command'],
-                        shell=True,
-                        stdout=stdout,
-                        stderr=stderr,
-                        stdin=subprocess.PIPE,
-                        universal_newlines=True,
-                        cwd=self.queue[key]['path']
-                    )
-                    self.queue[key]['status'] = 'running'
-                    self.queue[key]['start'] = str(datetime.now().strftime("%H:%M"))
-            else:
-                break
+    def spawn_new(self, key):
+        # Check if path exists
+        if not os.path.exists(self.queue[key]['path']):
+            self.queue[key]['status'] = 'errored'
+            error_msg = "The directory for this command doesn't exist anymore: {}".format(self.queue[key]['path'])
+            print(error_msg)
+            self.queue[key]['stdout'] = ''
+            self.queue[key]['stderr'] = error_msg
+
+        else:
+            # Get file descriptors
+            stdout, stderr = self.get_descriptor(key)
+
+            # Create subprocess
+            self.processes[key] = subprocess.Popen(
+                self.queue[key]['command'],
+                shell=True,
+                stdout=stdout,
+                stderr=stderr,
+                stdin=subprocess.PIPE,
+                universal_newlines=True,
+                cwd=self.queue[key]['path']
+            )
+            self.queue[key]['status'] = 'running'
+            self.queue[key]['start'] = str(datetime.now().strftime("%H:%M"))
 
     def send_to_process(self, message, key):
         self.processes[key].stdin.write(message)
@@ -197,6 +198,11 @@ class ProcessHandler():
             self.queue[key]['status'] = 'running'
             self.paused.remove(key)
             return True
+        elif key not in self.processes:
+            if self.queue[key]['status'] == 'queued':
+                self.spawn_new(key)
+                return True
+
         return False
 
     def pause_process(self, key):
