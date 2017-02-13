@@ -11,7 +11,7 @@ def test_kill(daemon_setup):
     command_factory('kill')()
     status = command_factory('status')()
     assert status['status'] == 'paused'
-    assert status['data'][0]['status'] == 'queued'
+    assert status['data'][0]['status'] == 'queued' or 'killing'
 
 
 def test_kill_multiple(daemon_setup, multiple_setup):
@@ -26,9 +26,9 @@ def test_kill_multiple(daemon_setup, multiple_setup):
     command_factory('kill')()
     status = command_factory('status')()
     assert status['status'] == 'paused'
-    assert status['data'][0]['status'] == 'queued'
-    assert status['data'][1]['status'] == 'queued'
-    assert status['data'][2]['status'] == 'queued'
+    assert status['data'][0]['status'] == 'queued' or 'killing'
+    assert status['data'][1]['status'] == 'queued' or 'killing'
+    assert status['data'][2]['status'] == 'queued' or 'killing'
     assert status['data'][3]['status'] == 'queued'
 
 
@@ -77,7 +77,7 @@ def test_stop(daemon_setup):
     command_factory('stop')()
     status = command_factory('status')()
     assert status['status'] == 'paused'
-    assert status['data'][0]['status'] == 'queued'
+    assert status['data'][0]['status'] == 'queued' or 'stopping'
 
 
 def test_stop_remove(daemon_setup):
@@ -100,9 +100,9 @@ def test_stop_multiple(daemon_setup, multiple_setup):
     command_factory('stop')()
     status = command_factory('status')()
     assert status['status'] == 'paused'
-    assert status['data'][0]['status'] == 'queued'
-    assert status['data'][1]['status'] == 'queued'
-    assert status['data'][2]['status'] == 'queued'
+    assert status['data'][0]['status'] == 'queued' or 'stopping'
+    assert status['data'][1]['status'] == 'queued' or 'stopping'
+    assert status['data'][2]['status'] == 'queued' or 'stopping'
     assert status['data'][3]['status'] == 'queued'
 
 
