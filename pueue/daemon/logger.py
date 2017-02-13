@@ -31,7 +31,7 @@ class Logger():
         self.daemon_log_path = os.path.join(self.log_dir, 'daemon.log')
 
         self.logger = logging.getLogger('')
-        self.logger.setLevel(logging.DEBUG)
+        self.logger.setLevel(logging.INFO)
         log_format = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
         # Add a handler which outputs the log to stdout

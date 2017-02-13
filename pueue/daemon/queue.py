@@ -3,8 +3,8 @@ import pickle
 
 
 class Queue():
-    def __init__(self, daemon):
-        self.daemon = daemon
+    def __init__(self, config_dir):
+        self.config_dir = config_dir
         self.read()
         self.clean()
         if len(self.queue) > 0:
@@ -70,7 +70,7 @@ class Queue():
 
     def read(self):
         """Read the queue of the last pueue session or set `self.queue = {}`."""
-        queue_path = self.daemon.config_dir+'/queue'
+        queue_path = self.config_dir + '/queue'
         if os.path.exists(queue_path):
             queue_file = open(queue_path, 'rb')
             try:
@@ -85,7 +85,7 @@ class Queue():
 
     def write(self):
         """Write the current queue to a file. We need this to continue an earlier session."""
-        queue_path = self.daemon.config_dir + '/queue'
+        queue_path = self.config_dir + '/queue'
         queue_file = open(queue_path, 'wb+')
         try:
             pickle.dump(self.queue, queue_file, -1)

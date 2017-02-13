@@ -29,16 +29,16 @@ class Daemon():
         self.initialize_directories(root_dir)
         # Initialize logger before you do anything else.
         # In case anything fails, we want to see something in our logs.
+        self.read_config()
         self.logger = Logger(root_dir)
 
         try:
             # Get config and initialize Queue, Logger and ProcessHandler
-            self.read_config()
-            self.queue = Queue(self)
+            self.queue = Queue(self.config_dir)
             self.process_handler = ProcessHandler(self.queue, self.config_dir)
             self.process_handler.set_max(int(self.config['default']['maxProcesses']))
         except:
-            daemon.logger.exception()
+            self.logger.exception()
             raise
 
         # Remove old log files
@@ -53,7 +53,7 @@ class Daemon():
                 self.logger.rotate(self.queue)
                 self.queue.reset()
         except:
-            daemon.logger.exception()
+            self.logger.exception()
             raise
 
         # Flags for various behaviours
