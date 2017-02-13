@@ -1,4 +1,3 @@
-import os
 import pickle
 
 from pueue.helper.socket import connect_client_socket, receive_data, process_response

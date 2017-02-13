@@ -2,7 +2,6 @@ import os
 import sys
 import time
 import math
-import pickle
 import curses
 import getpass
 import operator
@@ -11,7 +10,6 @@ from textwrap import wrap
 from functools import reduce
 from colorclass import Color
 
-from pueue.helper.socket import connect_client_socket, receive_data
 from pueue.client.factories import command_factory
 
 from terminaltables import AsciiTable
@@ -147,7 +145,6 @@ def execute_show(args, root_dir):
 
     config_dir = os.path.join(root_dir, '.config/pueue')
     # Get current pueueSTDout file from tmp
-    userName = getpass.getuser()
     stdoutFile = os.path.join(config_dir, 'pueue_process_{}.stdout'.format(key))
     stderrFile = os.path.join(config_dir, 'pueue_process_{}.stderr'.format(key))
     stdoutDescriptor = open(stdoutFile, 'r')

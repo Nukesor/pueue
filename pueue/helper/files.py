@@ -1,7 +1,5 @@
 import os
-import sys
-import stat
-import getpass
+
 
 def cleanup(config_dir):
     """Removes temporary stderr and stdout files as well as the daemon socket."""

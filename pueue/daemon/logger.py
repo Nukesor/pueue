@@ -122,7 +122,6 @@ class Logger():
 
         log_file.close()
 
-
     def remove_old(self, max_log_time):
         """Remove all logs which are older than the specified time."""
         files = glob.glob('{}/queue-*'.format(self.log_dir))

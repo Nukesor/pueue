@@ -5,7 +5,6 @@ import socket
 import pickle
 
 
-
 def receive_data(socket):
     """Receive an answer from the daemon and return the response.
 
