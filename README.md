@@ -46,32 +46,29 @@ There is a help option (-h) for all commands, but I'll list them here anyway.
 `pueue --stop-daemon` Daemon will shut down after killing all processes.
 
 `pueue status` Show the current state of processes and the daemon as well as the processing state of the queue.
-`pueue show --watch --key $k` Show the output of `--key` or the oldest running process. `show --watch` will continually show the stdout output of the subprocess in a `curses` session.
+`pueue show --watch --key $k` Show the output of `--key` or the oldest running process.  
+    `show --watch` will continually show the stdout output of the subprocess in a `curses` session.  
     `show` without `--watch` will print the stderr, which can be useful if the subprocess prompts for user input (This is often piped to stderr).  
+
 `pueue log $key` Print the output and status of all executed commands.  
-
 `pueue start` Daemon will start to process the queue. This will start all paused processes (`SIGCONT`).  
-
-`pueue pause --wait --key $k` This command has two different behaviours, depending on if a key is given:
-1. If a key is given, pause the specified process by sending a `SIGSTOP`.
-2. If no key is given, stop to process the queue and pause all running processes. If the `--wait` flag is set, the daemon will pause, but all running processes will finish on their own.
+`pueue pause --wait --key $k` This command has two different behaviours, depending on if a key is given:  
+    1. If a key is given, pause the specified process by sending a `SIGSTOP`.  
+    2. If no key is given, stop to process the queue and pause all running processes. If the `--wait` flag is set, the daemon will pause, but all running processes will finish on their own.  
 
 `pueue restart` Enqueue a finished process.  
-
-`pueue stop -r --key` This command has two different behaviours, depending on if a key is given:
-1. If a key is given, terminate the speecified process. If `-r` is provided this process will be removed from the queue.  
-2. If no key is given, terminate all running processes (`kill`) and pause the daemon.   
+`pueue stop -r --key` This command has two different behaviours, depending on if a key is given:  
+    1. If a key is given, terminate the speecified process. If `-r` is provided this process will be removed from the queue.  
+    2. If no key is given, terminate all running processes (`kill`) and pause the daemon.  
 
 `pueue kill -r --key` This command has two different behaviours, depending on if a key is given:  
-1. If a key is given, KILL the specified process (`kill -9`). If `-r` is provided the current running process will be removed from the queue.  
-2. If no key is given, KILL all running processes (`kill -9`) and pause the daemon. If `-r` is provided this process will be removed from the queue.  
+    1. If a key is given, KILL the specified process (`kill -9`). If `-r` is provided the current running process will be removed from the queue.  
+    2. If no key is given, KILL all running processes (`kill -9`) and pause the daemon. If `-r` is provided this process will be removed from the queue.  
 
 `pueue reset` Remove all commands from the queue, kill the current process and reset the queue index to 0.  
-
 `pueue add 'command'` Add a command to the queue.  
 `pueue remove index` Remove the command at #index.  
 `pueue switch index1 index2` Switch the commands at position #index1 and #index2.  
-
 `pueue send 'input'` Send a string to the subprocess's stdin. In case a process prompts for user input, you can use this to interact with the subprocess.
 The stdin pipe is flushed after every `send` command. To simulate a `\n` you need to add a newline in your string:
 
