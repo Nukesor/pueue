@@ -54,11 +54,11 @@ There is a help option (-h) for all commands, but I'll list them here anyway.
 `pueue start` Daemon will start to process the queue. This will start all paused processes (`SIGCONT`).  
 `pueue pause --wait --key $k` This command has two different behaviours, depending on if a key is given:  
     1. If a key is given, pause the specified process by sending a `SIGSTOP`.  
-    2. If no key is given, stop to process the queue and pause all running processes. If the `--wait` flag is set, the daemon will pause, but all running processes will finish on their own.  
+    2. If no key is given, stop processing the queue and pause all running processes. If the `--wait` flag is set, the daemon will pause, but all running processes will finish on their own.  
 
 `pueue restart` Enqueue a finished process.  
 `pueue stop -r --key` This command has two different behaviours, depending on if a key is given:  
-    1. If a key is given, terminate the speecified process. If `-r` is provided this process will be removed from the queue.  
+    1. If a key is given, terminate the specified process. If `-r` is provided this process will be removed from the queue.  
     2. If no key is given, terminate all running processes (`kill`) and pause the daemon.  
 
 `pueue kill -r --key` This command has two different behaviours, depending on if a key is given:  
