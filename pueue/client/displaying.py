@@ -158,20 +158,21 @@ def execute_show(args, root_dir):
         stdscr.keypad(True)
         stdscr.refresh()
 
-        # Update output every two seconds
-        while running:
-            stdscr.clear()
-            stdoutDescriptor.seek(0)
-            message = stdoutDescriptor.read()
-            stdscr.addstr(0, 0, message)
-            stdscr.refresh()
-            time.sleep(2)
-
-        # Curses cleanup
-        curses.nocbreak()
-        stdscr.keypad(False)
-        curses.echo()
-        curses.endwin()
+        try:
+            # Update output every two seconds
+            while running:
+                stdscr.clear()
+                stdoutDescriptor.seek(0)
+                message = stdoutDescriptor.read()
+                stdscr.addstr(0, 0, message)
+                stdscr.refresh()
+                time.sleep(2)
+        except:
+            # Curses cleanup
+            curses.nocbreak()
+            stdscr.keypad(False)
+            curses.echo()
+            curses.endwin()
     else:
         print('Stdout output:\n')
         stdoutDescriptor.seek(0)
