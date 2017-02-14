@@ -106,7 +106,7 @@ class ProcessHandler():
                     # Mark queue entry as finished and save returncode
                     self.queue[key]['returncode'] = process.returncode
                     if process.returncode != 0:
-                        self.queue[key]['status'] = 'errored'
+                        self.queue[key]['status'] = 'failed'
                     else:
                         self.queue[key]['status'] = 'done'
 
@@ -143,7 +143,7 @@ class ProcessHandler():
     def spawn_new(self, key):
         # Check if path exists
         if not os.path.exists(self.queue[key]['path']):
-            self.queue[key]['status'] = 'errored'
+            self.queue[key]['status'] = 'failed'
             error_msg = "The directory for this command doesn't exist anymore: {}".format(self.queue[key]['path'])
             print(error_msg)
             self.queue[key]['stdout'] = ''

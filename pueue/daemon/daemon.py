@@ -150,7 +150,7 @@ class Daemon():
                     self.process_handler.check_for_new()
 
                 # Create list for waitable objects
-                readable, writable, errored = select.select(self.read_list, [], [], 1)
+                readable, writable, failed = select.select(self.read_list, [], [], 1)
                 for socket in readable:
                     if socket is self.socket:
                         # Listening for clients to connect.
@@ -193,6 +193,7 @@ class Daemon():
                                 'stop': self.stop_process,
                                 'kill': self.kill_process,
                                 'reset': self.reset_everything,
+                                'clear': self.clear,
                                 'config': self.set_config,
                                 'STOPDAEMON': self.stop_daemon,
                             }
@@ -280,6 +281,20 @@ class Daemon():
         self.reset = True
 
         answer = {'message': 'Resetting current queue', 'status': 'success'}
+        return answer
+
+    def clear(self, payload):
+        """Clears queue from any `done` or `failed` entries.
+
+        The log will be rotated once. Otherwise we would loose all logs from
+        thoes finished processes.
+        """
+
+        self.logger.rotate(self.queue)
+        self.queue.clear()
+        self.logger.write(self.queue)
+
+        answer = {'message': 'Finished entries have been removed.', 'status': 'success'}
         return answer
 
     def start(self, payload):

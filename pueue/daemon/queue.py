@@ -49,6 +49,11 @@ class Queue():
                 item['start'] = ''
                 item['end'] = ''
 
+    def clear(self):
+        for key in list(self.queue.keys()):
+            if self.queue[key]['status'] in ['done', 'failed']:
+                del self.queue[key]
+
     def next(self):
         """Get the next processable item of the queue.
 
@@ -113,7 +118,7 @@ class Queue():
 
     def restart(self, key):
         """Restart a previously finished command."""
-        if self.queue[key]['status'] in ['errored', 'done']:
+        if self.queue[key]['status'] in ['failed', 'done']:
             command = {'command': self.queue[key]['command'],
                        'path': self.queue[key]['path']}
             self.add_new(command)

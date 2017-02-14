@@ -117,7 +117,7 @@ class Logger():
 
                     log_file.write('\n')
                 except Exception as a:
-                    print('Errored while writing to log file. Wrong file permissions?')
+                    print('Failed while writing to log file. Wrong file permissions?')
                     print('Exception: {}'.format(str(a)))
 
         log_file.close()

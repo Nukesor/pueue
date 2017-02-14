@@ -88,6 +88,7 @@ def test_stop_remove(daemon_setup):
     assert status['status'] == 'running'
     assert status['data'] == 'Queue is empty'
 
+
 def test_stop_multiple(daemon_setup, multiple_setup):
     """Stop all running processes."""
     # Setup multiple processes test case

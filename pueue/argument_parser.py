@@ -108,6 +108,11 @@ reset_subcommand = subparsers.add_parser(
     'reset', help='Kill the current command, reset queue and rotate logs.')
 reset_subcommand.set_defaults(func=print_command_factory('reset'))
 
+# Clean
+clean_subcommand = subparsers.add_parser(
+    'clean', help='Remove all `done` or `failed` commands from the queue. This will rotate logs as well.')
+clean_subcommand.set_defaults(func=print_command_factory('clean'))
+
 # Pause
 pause_subcommand = subparsers.add_parser(
     'pause', help='Daemon will pause all running processes and stop to process the queue.')
