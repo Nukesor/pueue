@@ -4,8 +4,8 @@ import sys
 
 from daemonize import Daemonize
 
-from pueue.helper.files import cleanup
-from pueue.helper.argument_parser import parser
+from pueue.daemon.files import cleanup
+from pueue.argument_parser import parser
 from pueue.daemon.daemon import Daemon
 from pueue.client.factories import print_command_factory
 

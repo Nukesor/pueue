@@ -3,7 +3,6 @@ import sys
 import time
 import math
 import curses
-import getpass
 import operator
 
 from textwrap import wrap

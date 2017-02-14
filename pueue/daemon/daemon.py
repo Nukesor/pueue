@@ -5,8 +5,8 @@ import select
 import configparser
 from copy import deepcopy
 
-from pueue.helper.files import cleanup
-from pueue.helper.socket import create_daemon_socket
+from pueue.daemon.files import cleanup
+from pueue.daemon.socket import create_socket
 
 from pueue.daemon.queue import Queue
 from pueue.daemon.logger import Logger
@@ -46,7 +46,7 @@ class Daemon():
 
         try:
             # Create daemon socket
-            self.socket = create_daemon_socket(self.config_dir)
+            self.socket = create_socket(self.config_dir)
 
             # Rotate logs and reset queue, if all items from the last session finished
             if self.queue.next() is None:
@@ -70,8 +70,8 @@ class Daemon():
             self.paused = True
 
         # Variables for handling sockets and child process
-        self.clientAddress = None
-        self.clientSocket = None
+        self.client_address = None
+        self.client_socket = None
         self.process = None
         self.read_list = [self.socket]
 
@@ -88,9 +88,9 @@ class Daemon():
     def respond_client(self, answer):
         """Generic function to send an answer to the client."""
         response = pickle.dumps(answer, -1)
-        self.clientSocket.send(response)
-        self.read_list.remove(self.clientSocket)
-        self.clientSocket.close()
+        self.client_socket.send(response)
+        self.read_list.remove(self.client_socket)
+        self.client_socket.close()
 
     def read_config(self):
         """Read a previous configuration file or create a new with default values."""
@@ -156,14 +156,14 @@ class Daemon():
                         # Listening for clients to connect.
                         # Client sockets are added to readlist to be processed.
                         try:
-                            self.clientSocket, self.clientAddress = self.socket.accept()
-                            self.read_list.append(self.clientSocket)
+                            self.client_socket, self.client_address = self.socket.accept()
+                            self.read_list.append(self.client_socket)
                         except:
                             self.logger.warning('Daemon rejected client')
                     else:
                         # Trying to receive instruction from client socket
                         try:
-                            instruction = self.clientSocket.recv(1048576)
+                            instruction = self.client_socket.recv(1048576)
                         except EOFError:
                             self.logger.warning('Client died while sending message, dropping received data.')
                             instruction = None
@@ -176,8 +176,8 @@ class Daemon():
                             except EOFError:
                                 # Instruction is ignored if it can't be unpickled
                                 self.logger.error('Received message is incomplete, dropping received data.')
-                                self.read_list.remove(self.clientSocket)
-                                self.clientSocket.close()
+                                self.read_list.remove(self.client_socket)
+                                self.client_socket.close()
                                 # Set invalid payload
                                 payload = {'mode': ''}
 

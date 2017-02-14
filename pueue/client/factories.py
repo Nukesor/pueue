@@ -1,6 +1,6 @@
 import pickle
 
-from pueue.helper.socket import connect_client_socket, receive_data, process_response
+from pueue.client.socket import connect_socket, receive_data, process_response
 
 
 def command_factory(command):
@@ -29,7 +29,7 @@ def command_factory(command):
             function: The returned payload.
         """
 
-        client = connect_client_socket(root_dir)
+        client = connect_socket(root_dir)
         body['mode'] = command
         # Delete the func entry we use to call the correct function with argparse
         # as functions can't be pickled and this shouldn't be send to the daemon.
@@ -58,7 +58,7 @@ def print_command_factory(command):
         function: The created function.
     """
     def communicate(body={}, root_dir=None):
-        client = connect_client_socket(root_dir)
+        client = connect_socket(root_dir)
         body['mode'] = command
         # Delete the func entry we use to call the correct function with argparse
         # as functions can't be pickled and this shouldn't be send to the daemon.
