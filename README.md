@@ -82,7 +82,7 @@ The stdin pipe is flushed after every `send` command. To simulate a `\n` you nee
 `pueue config` This command allows to set different config values without editing the config file and restarting the daemon. Look at `pueue config -h` for more information.
 
 
-## Configs and Logs
+## Configs
 
 The configuration file of pueue is located in `~/.config/pueue/pueue.ini`.
 
@@ -94,12 +94,18 @@ The configuration file of pueue is located in `~/.config/pueue/pueue.ini`.
         [log]
         logTime = 1209600
 
-#### options
-
-`stopAtError = True` Define if the demon should enter paused state, if a process in the queue fails.
+`stopAtError = True` Determines if the demon should enter paused state, if a process in the queue fails.
 `resumeAfterStart = False` If you want pueue to instantly resume a queue from the last session, set this value to `True`.
+`maxProcesses = 1` Determines how many tasks should be processed concurrently.
 
-`logTime = 1209600` The logs of all your commands can be found in `~/.shared/pueue/*.log`. Old logs will be deleted after the time specified in your config.
+`logTime = 1209600`  Old logs will be deleted after the time specified in your config.
+
+## Logs 
+
+All logs can be found in `~/.shared/pueue/*.log`. Logs of previous pueue session will be rotated and contain a timestamp in the name.  
+In case the daemon fails or something goes wrong, there is a separate log for the daemon at `~/.shared/pueue/daemon.log`.
+If the daemon crashes, please send the stack trace from this log!
+
 
 ## Utils
 
