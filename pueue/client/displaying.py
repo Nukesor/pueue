@@ -126,6 +126,12 @@ def execute_show(args, root_dir):
     key = None
     if args.get('key'):
         key = args['key']
+        status = command_factory('status')({}, root_dir=root_dir)
+        if status['data'][key]['status'] != 'running':
+            print('No running process with this key, use `log` to show finished processes.')
+            return
+
+    # In case no key provided, we take the oldest running process
     else:
         status = command_factory('status')({}, root_dir=root_dir)
         for k in sorted(status['data'].keys()):
@@ -133,13 +139,8 @@ def execute_show(args, root_dir):
                 key = k
                 break
         if key is None:
-            for k in sorted(status['data'].keys(), reverse=True):
-                if status['data'][k]['status'] != 'queued':
-                    key = k
-                    break
-            if key is None:
-                print('No log found')
-                sys.exit(1)
+            print('No running process, use `log` to show finished processes.')
+            return
 
     config_dir = os.path.join(root_dir, '.config/pueue')
     # Get current pueueSTDout file from tmp
