@@ -128,12 +128,11 @@ def execute_show(args, root_dir):
         key = args['key']
     else:
         status = command_factory('status')({}, root_dir=root_dir)
-        print(status)
         for k in sorted(status['data'].keys()):
             if status['data'][k]['status'] == 'running':
                 key = k
                 break
-        if not key:
+        if key is None:
             for k in sorted(status['data'].keys(), reverse=True):
                 if status['data'][k]['status'] != 'queued':
                     key = k
