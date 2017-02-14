@@ -21,7 +21,7 @@ def execute_add(command):
 
 def wait_for_process(key):
     status = command_factory('status')()
-    while (key not in status['data']) or (status['data'][key]['status'] != 'done'):
+    while (key not in status['data']) or (status['data'][key]['status'] not in ['failed', 'done']):
         sleep(1)
         status = command_factory('status')()
     return status

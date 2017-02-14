@@ -25,6 +25,35 @@ def test_log(daemon_setup, directory_setup):
     execute_log({}, directory_setup[0])
 
 
+def test_log_specific(daemon_setup, directory_setup):
+    """The logging command executes without failing.
+
+    This implies that the daemon runs and creates proper log files.
+    """
+    execute_add('sleep 0.5')
+    wait_for_process(0)
+    execute_log({}, directory_setup[0])
+
+
+def test_log_running(daemon_setup, directory_setup):
+    """The logging command executes without failing.
+
+    This implies that the daemon runs and creates proper log files.
+    """
+    execute_add('sleep 60')
+    execute_log({'key': 0}, directory_setup[0])
+
+
+def test_log_failed(daemon_setup, directory_setup):
+    """The logging command executes without failing.
+
+    This implies that the daemon runs and creates proper log files.
+    """
+    execute_add('testfailcommand')
+    wait_for_process(0)
+    execute_log({'key': 0}, directory_setup[0])
+
+
 def test_show_finished(daemon_setup, directory_setup):
     """The show command executes without failing.
 

@@ -72,7 +72,7 @@ class Queue():
 
     def read(self):
         """Read the queue of the last pueue session or set `self.queue = {}`."""
-        queue_path = self.config_dir + '/queue'
+        queue_path = os.path.join(self.config_dir, '/queue')
         if os.path.exists(queue_path):
             queue_file = open(queue_path, 'rb')
             try:

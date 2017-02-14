@@ -50,7 +50,7 @@ There is a help option (-h) for all commands, but I'll list them here anyway.
     `show --watch` will continually show the stdout output of the subprocess in a `curses` session.  
     `show` without `--watch` will print the stderr, which can be useful if the subprocess prompts for user input (This is often piped to stderr).  
 
-`pueue log $key` Print the output and status of all executed commands.  
+`pueue log --key` Print the output and status of all finished processes or of a specific finished process.
 `pueue start --key`This command has three different behaviours, depending on if and which a key is given:  
     1. If the key of a paused process is given, the process will be started (`SIGCONT`), this happens even if the daemon is paused.  
     1. If the key of a queued process is given, the process will be started, this happens even if the daemon is paused or the max amount of processes is exceeded.  
@@ -70,7 +70,7 @@ There is a help option (-h) for all commands, but I'll list them here anyway.
     2. If no key is given, KILL all running processes (`kill -9`) and pause the daemon. If `-r` is provided this process will be removed from the queue.  
 
 `pueue reset` Remove all commands from the queue, kill the current process and reset the queue index to 0.  
-`pueue reset` Remove all `done` or `failed` commands from the queue. This will rotate logs as well.
+`pueue clear` Remove all `done` or `failed` commands from the queue. This will rotate logs as well.
 `pueue add 'command'` Add a command to the queue.  
 `pueue remove index` Remove the command at #index.  
 `pueue switch index1 index2` Switch the commands at position #index1 and #index2.  

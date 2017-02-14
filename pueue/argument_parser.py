@@ -66,6 +66,11 @@ show_subcommand.set_defaults(func=execute_show)
 # Logs
 logs_subcommand = subparsers.add_parser(
     'log', help='Print the current log file to the command line.')
+logs_subcommand.add_argument(
+    '-k', '--key', type=int,
+    help='Show the log of a single finished process.'
+)
+
 logs_subcommand.set_defaults(func=execute_log)
 
 # Add
