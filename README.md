@@ -2,7 +2,7 @@
 
 ![Pueue](https://raw.githubusercontent.com/Nukesor/images/master/pueue.png)
 
-[![GitHub release](https://img.shields.io/github/release/lovetoys/lovetoys.svg?maxAge=2592000)](https://github.com/lovetoys/lovetoys/releases/latest)
+[![GitHub release](https://img.shields.io/github/tag/nukesor/pueue.svg)](https://github.com/nukesor/pueue/releases/latest)
 
 Pueue is a daemon designed for sequential and parallel execution of long running heavy load tasks. Not being bound to any terminal it is possible to check on your processes from every terminal or using the API. And the best part is that the queue will be processed by the daemon, even if you exit your ssh session.
 
