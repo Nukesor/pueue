@@ -316,7 +316,7 @@ class Daemon():
                 answer = {'message': 'Daemon and all processes started.',
                           'status': 'success'}
             else:
-                answer = {'message': 'Daemon already paused, pausing all processes.',
+                answer = {'message': 'Daemon already running, starting all processes.',
                           'status': 'success'}
         return answer
 
