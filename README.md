@@ -48,10 +48,10 @@ There is a help option (-h) for all commands, but I'll list them here anyway.
 `pueue status` Show the current state of processes and the daemon as well as the processing state of the queue.
 `pueue show --watch --key $k` Show the output of `--key` or the oldest running process.  
     `show --watch` will continually show the stdout output of the subprocess in a `curses` session.  
-    `show` without `--watch` will print the stderr, which can be useful if the subprocess prompts for user input (This is often piped to stderr).  
+    `show` without `--watch` will print the stderr as well. This can be useful if the subprocess prompts for user input (This is often piped to stderr).  
 
 `pueue log --key` Print the output and status of all finished processes or of a specific finished process.
-`pueue start --key`This command has three different behaviours, depending on if and which a key is given:  
+`pueue start --key` This command has three different behaviours, depending on if and what kind of key is given:  
     1. If the key of a paused process is given, the process will be started (`SIGCONT`), this happens even if the daemon is paused.  
     1. If the key of a queued process is given, the process will be started, this happens even if the daemon is paused or the max amount of processes is exceeded.  
     3. If no key is given, the daemon will start to process the queue. This will start all paused processes (`SIGCONT`).  
@@ -67,7 +67,7 @@ There is a help option (-h) for all commands, but I'll list them here anyway.
 
 `pueue kill -r --key` This command has two different behaviours, depending on if a key is given:  
     1. If a key is given, KILL the specified process (`kill -9`). If `-r` is provided the current running process will be removed from the queue.  
-    2. If no key is given, KILL all running processes (`kill -9`) and pause the daemon. If `-r` is provided this process will be removed from the queue.  
+    2. If no key is given, KILL all running processes (`kill -9`) and pause the daemon.  
 
 `pueue reset` Remove all commands from the queue, kill the current process and reset the queue index to 0.  
 `pueue clear` Remove all `done` or `failed` commands from the queue. This will rotate logs as well.
