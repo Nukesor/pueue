@@ -47,7 +47,7 @@ There is a help option (-h) for all commands, but I'll list them here anyway.
 `pueue --no-daemon` Start the daemon in the current terminal.  
 `pueue --stop-daemon` Daemon will shut down after killing all processes.
 
-`pueue status` Show the current state of processes and the daemon as well as the processing state of the queue.
+`pueue status` Show the current state of the daemon and the processing state of the queue.  
 `pueue show --watch --key $k` Show the output of `--key` or the oldest running process.  
     `show --watch` will continually show the stdout output of the subprocess in a `curses` session.  
     `show` without `--watch` will print the stderr as well. This can be useful if the subprocess prompts for user input (This is often piped to stderr).  
