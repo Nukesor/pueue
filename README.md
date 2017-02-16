@@ -48,11 +48,12 @@ There is a help option (-h) for all commands, but I'll list them here anyway.
 `pueue --stop-daemon` Daemon will shut down after killing all processes.
 
 `pueue status` Show the current state of the daemon and the processing state of the queue.  
-`pueue show --watch --key $k` Show the output of `--key` or the oldest running process.  
+
+`pueue show --watch --key` Show the output of `--key` or the oldest running process.  
     `show --watch` will continually show the stdout output of the subprocess in a `curses` session.  
     `show` without `--watch` will print the stderr as well. This can be useful if the subprocess prompts for user input (This is often piped to stderr).  
 
-`pueue log --key` Print the output and status of all finished processes or of a specific finished process.
+`pueue log --key` Print the output and status of all finished processes or of a specific finished process.  
 `pueue start --key` This command has three different behaviours, depending on if and what kind of key is given:  
     1. If the key of a paused process is given, the process will be started (`SIGCONT`), this happens even if the daemon is paused.  
     1. If the key of a queued process is given, the process will be started, this happens even if the daemon is paused or the max amount of processes is exceeded.  
@@ -76,7 +77,7 @@ There is a help option (-h) for all commands, but I'll list them here anyway.
 `pueue add 'command'` Add a command to the queue.  
 `pueue remove index` Remove the command at #index.  
 `pueue switch index1 index2` Switch the commands at position #index1 and #index2.  
-`pueue send 'input'` Send a string to the subprocess's stdin. In case a process prompts for user input, you can use this to interact with the subprocess.
+`pueue send 'input'` Send a string to the subprocess's stdin. In case a process prompts for user input, you can use this to interact with the subprocess.  
 The stdin pipe is flushed after every `send` command. To simulate a `\n` you need to add a newline in your string:
 
         pueue send 'y
