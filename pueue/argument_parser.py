@@ -77,7 +77,7 @@ logs_subcommand.set_defaults(func=execute_log)
 add_subcommand = subparsers.add_parser(
     'add', help='Add a command to the queue.')
 add_subcommand.add_argument(
-    'command', type=str, help='The command to be added.')
+    'command', type=str, nargs='+', help='The command to be added.')
 add_subcommand.set_defaults(func=execute_add)
 
 # Remove
