@@ -32,7 +32,7 @@ def execute_status(args, root_dir=None):
     # First rows, showing daemon status
     if status['status'] == 'running':
         status['status'] = Color('{autogreen}' + '{}'.format(status['status']) + '{/autogreen}')
-    elif status['status'] == 'paused':
+    elif status['status'] in ['paused']:
         status['status'] = Color('{autoyellow}' + '{}'.format(status['status']) + '{/autoyellow}')
 
     print('Daemon: {}\n'.format(status['status']))
@@ -88,7 +88,7 @@ def execute_status(args, root_dir=None):
                 if j == 1:
                     if wrapped_string == 'done' or wrapped_string == 'running' or wrapped_string == 'paused':
                         wrapped_string = Color('{autogreen}' + '{}'.format(wrapped_string) + '{/autogreen}')
-                    elif wrapped_string == 'queued':
+                    elif wrapped_string in ['queued', 'stashed']:
                         wrapped_string = Color('{autoyellow}' + '{}'.format(wrapped_string) + '{/autoyellow}')
                     elif wrapped_string in ['failed', 'stopping', 'killing']:
                         wrapped_string = Color('{autored}' + '{}'.format(wrapped_string) + '{/autored}')
