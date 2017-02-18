@@ -4,7 +4,7 @@ setup(
     name='pueue',
     author='Arne Beer',
     author_email='arne@twobeer.de',
-    version='0.7.4',
+    version='0.7.5',
     description='Pueue is a fancy queue for shell commands',
     keywords='shell queue command concurrent',
     url='http://github.com/nukesor/pueue',
