@@ -12,13 +12,14 @@ class ProcessHandler():
     This class is responsible for spawning, handling and supervising processes.
     The ProcessHandler is capable of running a pool of processes.
     """
-    def __init__(self, queue, config_dir):
+    def __init__(self, queue, logger, config_dir):
         """Initializes the process handler.
 
         Create member variables.
         """
         self.config_dir = config_dir
         self.queue = queue
+        self.logger = logger
 
         self.stopped = False
         self.max_processes = 1
@@ -150,7 +151,7 @@ class ProcessHandler():
         if not os.path.exists(self.queue[key]['path']):
             self.queue[key]['status'] = 'failed'
             error_msg = "The directory for this command doesn't exist anymore: {}".format(self.queue[key]['path'])
-            print(error_msg)
+            self.logger.error(error_msg)
             self.queue[key]['stdout'] = ''
             self.queue[key]['stderr'] = error_msg
 

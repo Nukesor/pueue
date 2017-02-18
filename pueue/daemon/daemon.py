@@ -1,12 +1,13 @@
 import os
 import sys
+import stat
+import socket
 import pickle
 import select
 import configparser
 from copy import deepcopy
 
 from pueue.daemon.files import cleanup
-from pueue.daemon.socket import create_socket
 
 from pueue.daemon.queue import Queue
 from pueue.daemon.logger import Logger
@@ -35,7 +36,7 @@ class Daemon():
         try:
             # Get config and initialize Queue, Logger and ProcessHandler
             self.queue = Queue(self.config_dir)
-            self.process_handler = ProcessHandler(self.queue, self.config_dir)
+            self.process_handler = ProcessHandler(self.queue, self.logger, self.config_dir)
             self.process_handler.set_max(int(self.config['default']['maxProcesses']))
         except:
             self.logger.exception()
@@ -45,8 +46,8 @@ class Daemon():
         self.logger.remove_old(self.config['log']['logTime'])
 
         try:
-            # Create daemon socket
-            self.socket = create_socket(self.config_dir)
+            # Create daemon socket, exit if this doesn't work
+            self.create_socket()
 
             # Rotate logs and reset queue, if all items from the last session finished
             if self.queue.next() is None:
@@ -74,6 +75,35 @@ class Daemon():
         self.client_socket = None
         self.process = None
         self.read_list = [self.socket]
+
+    def create_socket(self):
+        """Create a socket for the daemon, depending on the directory location.
+
+        Args:
+            config_dir (str): The absolute path to the config directory used by the daemon.
+
+        Returns:
+            socket.socket: The daemon socket. Clients connect to this socket.
+        """
+
+        socket_path = os.path.join(self.config_dir, 'pueue.sock')
+        # Create Socket and exit with 1, if socket can't be created
+        try:
+            if os.path.exists(socket_path):
+                os.remove(socket_path)
+            self.socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            self.socket.bind(socket_path)
+            self.socket.setblocking(0)
+            self.socket.listen(0)
+            # Set file permissions
+            os.chmod(socket_path, stat.S_IRWXU)
+        except:
+            self.logger.error("Daemon couldn't socket. Aborting")
+            self.logger.exception()
+            sys.exit(1)
+
+        return self.socket
 
     def initialize_directories(self, root_dir):
         """Create all directories needed for logs and configs."""
