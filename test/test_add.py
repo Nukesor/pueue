@@ -3,7 +3,6 @@ from test.helper import command_factory
 
 def test_add(daemon_setup):
     """The daemon adds a  new task to its queue."""
-    command_factory('pause')()
     response = command_factory('add')({
         'command': 'ls',
         'path': '/tmp',

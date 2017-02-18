@@ -41,6 +41,16 @@ def test_kill_remove(daemon_setup):
     assert status['data'] == 'Queue is empty'
 
 
+def test_kill_single(daemon_setup):
+    """Kill a running process and check if it gets stashed."""
+    execute_add('sleep 60')
+    command_factory('kill')({'key': 0})
+    status = command_factory('status')()
+    status = wait_for_process(0)
+    assert status['status'] == 'running'
+    assert status['data'][0]['status'] == 'stashed'
+
+
 def test_kill_remove_resume(daemon_setup):
     """Everything works properly after killing all subprocesses."""
     # Add new command and kill it with remove flag set
@@ -87,6 +97,16 @@ def test_stop_remove(daemon_setup):
     status = command_factory('status')()
     assert status['status'] == 'running'
     assert status['data'] == 'Queue is empty'
+
+
+def test_stop_single(daemon_setup):
+    """Kill a running process and check if it gets stashed."""
+    execute_add('sleep 60')
+    command_factory('stop')({'key': 0})
+    status = command_factory('status')()
+    status = wait_for_process(0)
+    assert status['status'] == 'running'
+    assert status['data'][0]['status'] == 'stashed'
 
 
 def test_stop_multiple(daemon_setup, multiple_setup):

@@ -28,6 +28,7 @@ class ProcessHandler():
         self.paused = []
         self.stopping = []
         self.to_remove = []
+        self.to_stash = []
 
     def set_max(self, amount):
         """Set the amount of concurrent running processes."""
@@ -123,7 +124,11 @@ class ProcessHandler():
                         self.to_remove.remove(key)
                         del self.queue[key]
                     else:
-                        self.queue[key]['status'] = 'queued'
+                        if key in self.to_stash:
+                            self.to_stash.remove(key)
+                            self.queue[key]['status'] = 'stashed'
+                        else:
+                            self.queue[key]['status'] = 'queued'
                         self.queue[key]['start'] = ''
                         self.queue[key]['end'] = ''
 
@@ -217,10 +222,10 @@ class ProcessHandler():
             return True
         return False
 
-    def kill_process(self, key, remove=False):
-        self.stop_process(key, remove, kill=True)
+    def kill_process(self, key, remove=False, stash=False):
+        self.stop_process(key, remove=remove, kill=True, stash=stash)
 
-    def stop_process(self, key, remove=False, kill=False):
+    def stop_process(self, key, remove=False, kill=False, stash=False):
         if key in self.processes:
             self.processes[key].poll()
             if self.processes[key].returncode is None:
@@ -235,5 +240,7 @@ class ProcessHandler():
                 self.stopping.append(key)
                 if remove:
                     self.to_remove.append(key)
+                if stash:
+                    self.to_stash.append(key)
             return True
         return False

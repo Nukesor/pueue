@@ -189,6 +189,8 @@ class Daemon():
                                 'status': self.send_status,
                                 'start': self.start,
                                 'pause': self.pause,
+                                'stash': self.stash,
+                                'enqueue': self.enqueue,
                                 'restart': self.restart,
                                 'stop': self.stop_process,
                                 'kill': self.kill_process,
@@ -349,6 +351,40 @@ class Daemon():
 
         return answer
 
+    def stash(self, payload):
+        """Stash the specified process."""
+        # Pause a specific process, if we have a key in our payload
+        key = payload['key']
+        if self.queue.get(key) is not None:
+            if self.queue[key]['status'] == 'queued':
+                self.queue[key]['status'] = 'stashed'
+                answer = {'message': 'Process stashed.', 'status': 'success'}
+            else:
+                answer = {'message': 'The specified entry is not queued.',
+                          'status': 'error'}
+        else:
+            answer = {'message': 'No entry for this key.',
+                      'status': 'error'}
+
+        return answer
+
+    def enqueue(self, payload):
+        """Enqueue a stashed process."""
+        # Pause a specific process, if we have a key in our payload
+        key = payload['key']
+        if self.queue.get(key) is not None:
+            if self.queue[key]['status'] == 'stashed':
+                self.queue[key]['status'] = 'queued'
+                answer = {'message': 'Process enqueued.', 'status': 'success'}
+            else:
+                answer = {'message': 'The specified entry is not stashed.',
+                          'status': 'error'}
+        else:
+            answer = {'message': 'No entry for this key.',
+                      'status': 'error'}
+
+        return answer
+
     def stop_process(self, payload):
         """Pause the daemon and stop all processes or stop a specific process."""
         # Stop a specific process, if we have a key in our payload
@@ -358,7 +394,7 @@ class Daemon():
                 success = self.process_handler.stop_process(payload['key'], remove=True)
                 success_message = 'Process will be stopped and removed.'
             else:
-                success = self.process_handler.stop_process(payload['key'])
+                success = self.process_handler.stop_process(payload['key'], stash=True)
                 success_message = 'Process stopping.'
 
             if success:
@@ -388,7 +424,7 @@ class Daemon():
                 success = self.process_handler.kill_process(payload['key'], remove=True)
                 success_message = 'Process will be killed and removed.'
             else:
-                success = self.process_handler.kill_process(payload['key'])
+                success = self.process_handler.kill_process(payload['key'], stash=True)
                 success_message = 'Process killed.'
 
             if success:

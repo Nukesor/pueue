@@ -30,7 +30,11 @@ class Queue():
     def items(self):
         return self.queue.items()
 
+    def get(self, key):
+        return self.queue.get(key)
+
     def reset(self):
+        """Reset the queue."""
         self.queue = {}
         self.next_key = 0
         self.write()
@@ -50,6 +54,7 @@ class Queue():
                 item['end'] = ''
 
     def clear(self):
+        """Remove all completed tasks from the queue."""
         for key in list(self.queue.keys()):
             if self.queue[key]['status'] in ['done', 'failed']:
                 del self.queue[key]

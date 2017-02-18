@@ -6,6 +6,7 @@ from pueue.client.factories import command_factory as original_command_factory
 
 def command_factory(command):
     function = original_command_factory(command)
+
     def test_communicate(body={}):
         current = os.getcwd()
         path = os.path.join(current, 'temptest')
@@ -21,7 +22,7 @@ def execute_add(command):
 
 def wait_for_process(key):
     status = command_factory('status')()
-    while (key not in status['data']) or (status['data'][key]['status'] not in ['failed', 'done']):
+    while (key not in status['data']) or (status['data'][key]['status'] not in ['failed', 'done', 'stashed']):
         sleep(1)
         status = command_factory('status')()
     return status

@@ -59,17 +59,17 @@ There is a help option (-h) for all commands, but I'll list them here anyway.
     1. If the key of a queued process is given, the process will be started, this happens even if the daemon is paused or the max amount of processes is exceeded.  
     3. If no key is given, the daemon will start to process the queue. This will start all paused processes (`SIGCONT`).  
 
-`pueue pause --wait --key $k` This command has two different behaviours, depending on if a key is given:  
+`pueue pause --wait --key` This command has two different behaviours, depending on if a key is given:  
     1. If a key is given, pause the specified process by sending a `SIGSTOP`.  
     2. If no key is given, stop processing the queue and pause all running processes. If the `--wait` flag is set, the daemon will pause, but all running processes will finish on their own.  
 
 `pueue restart` Enqueue a finished process.  
 `pueue stop -r --key` This command has two different behaviours, depending on if a key is given:  
-    1. If a key is given, terminate the specified process. If `-r` is provided this process will be removed from the queue.  
+    1. If a key is given, terminate the specified process and stash it. If `-r` is provided this process will be removed from the queue.  
     2. If no key is given, terminate all running processes (`kill`) and pause the daemon.  
 
 `pueue kill -r --key` This command has two different behaviours, depending on if a key is given:  
-    1. If a key is given, KILL the specified process (`kill -9`). If `-r` is provided the current running process will be removed from the queue.  
+    1. If a key is given, KILL the specified process (`kill -9`) and stash it. If `-r` is provided the current running process will be removed from the queue.  
     2. If no key is given, KILL all running processes (`kill -9`) and pause the daemon.  
 
 `pueue reset` Remove all commands from the queue, kill the current process and reset the queue index to 0.  
