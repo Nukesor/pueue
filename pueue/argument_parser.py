@@ -171,13 +171,13 @@ stash_subcommand.set_defaults(func=print_command_factory('stash'))
 
 
 # Enqueue command
-stash_subcommand = subparsers.add_parser(
+enqueue_subcommand = subparsers.add_parser(
     'enqueue', help="The specified command's status will be set to 'queued'.")
-stash_subcommand.add_argument(
+enqueue_subcommand.add_argument(
     'key', type=int,
     help='The index of the command to be enqueued.'
 )
-stash_subcommand.set_defaults(func=print_command_factory('stash'))
+enqueue_subcommand.set_defaults(func=print_command_factory('enqueue'))
 
 
 # Kills the current running process
