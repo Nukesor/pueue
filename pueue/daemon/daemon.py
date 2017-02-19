@@ -181,8 +181,8 @@ class Daemon():
 
                 # Create list for waitable objects
                 readable, writable, failed = select.select(self.read_list, [], [], 1)
-                for socket in readable:
-                    if socket is self.socket:
+                for waiting_socket in readable:
+                    if waiting_socket is self.socket:
                         # Listening for clients to connect.
                         # Client sockets are added to readlist to be processed.
                         try:
