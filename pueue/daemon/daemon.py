@@ -337,7 +337,7 @@ class Daemon():
             if success:
                 answer = {'message': 'Process started.', 'status': 'success'}
             else:
-                answer = {'message': 'No paused or queued process with this key.',
+                answer = {'message': 'No paused, queued or stashed process with this key.',
                           'status': 'error'}
 
         # Start a all processes and the daemon
