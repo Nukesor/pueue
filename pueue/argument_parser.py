@@ -71,10 +71,9 @@ show_subcommand.set_defaults(func=execute_show)
 logs_subcommand = subparsers.add_parser(
     'log', help='Print the current log file to the command line.')
 logs_subcommand.add_argument(
-    '-k', '--key', type=int,
-    help='Show the log of a single finished process.'
+    'keys', type=int, nargs='*',
+    help='Show the logs of the specified processes.'
 )
-
 logs_subcommand.set_defaults(func=execute_log)
 
 
@@ -89,7 +88,8 @@ add_subcommand.set_defaults(func=execute_add)
 remove_subcommand = subparsers.add_parser(
     'remove', help='Remove a specific command from the queue.')
 remove_subcommand.add_argument(
-    'key', help='The index of the command to be deleted.', type=int)
+    'keys', type=int, nargs='+',
+    help='The index of the command to be deleted.')
 remove_subcommand.set_defaults(func=print_command_factory('remove'))
 
 
@@ -99,10 +99,6 @@ switch_subcommand = subparsers.add_parser(
 switch_subcommand.add_argument('first', help='The first command', type=int)
 switch_subcommand.add_argument('second', help='The second command', type=int)
 switch_subcommand.set_defaults(func=print_command_factory('switch'))
-switch_subcommand.add_argument(
-    'key', type=int,
-    help='The process this should be send to.'
-)
 
 
 # Send
@@ -111,7 +107,7 @@ send_subcommand = subparsers.add_parser(
 send_subcommand.add_argument('input', help='The input string', type=str)
 send_subcommand.add_argument(
     'key', type=int,
-    help='The process this should be send to.'
+    help='The index of the process, the message should be send to.'
 )
 send_subcommand.set_defaults(func=print_command_factory('send'))
 
@@ -136,8 +132,8 @@ pause_subcommand.add_argument(
     help='Pause the daemon, but wait for current processes to finish.'
 )
 pause_subcommand.add_argument(
-    '-k', '--key', type=int,
-    help='Pause a single process without pausing the Daemon.'
+    'keys', type=int, nargs='*',
+    help="The indices of the entries to be paused. The Daemon won't pause."
 )
 pause_subcommand.set_defaults(func=print_command_factory('pause'))
 
@@ -146,8 +142,8 @@ pause_subcommand.set_defaults(func=print_command_factory('pause'))
 start_subcommand = subparsers.add_parser(
     'start', help='Daemon will start all paused processes and continue to process the queue.')
 start_subcommand.add_argument(
-    '-k', '--key', type=int,
-    help="Start a single key. The daemon will not start in case it's paused."
+    'keys', type=int, nargs='*',
+    help="The indices of the entries to be started. The daemon will not start in case it's paused."
 )
 start_subcommand.set_defaults(func=print_command_factory('start'))
 
@@ -156,7 +152,8 @@ start_subcommand.set_defaults(func=print_command_factory('start'))
 restart_subcommand = subparsers.add_parser(
     'restart', help='Daemon will queue a finished process.')
 restart_subcommand.add_argument(
-    'key', help='The index of the entry to be restart', type=int)
+    'keys', type=int, nargs='+',
+    help='The indices of the entries to be restarted')
 restart_subcommand.set_defaults(func=print_command_factory('restart'))
 
 
@@ -164,8 +161,8 @@ restart_subcommand.set_defaults(func=print_command_factory('restart'))
 stash_subcommand = subparsers.add_parser(
     'stash', help="The specified command won't be processed by the daemon until it's enqueued.")
 stash_subcommand.add_argument(
-    'key', type=int,
-    help='The index of the command to be enqueued.'
+    'keys', type=int, nargs='+',
+    help='The indices of the commands to be stashed.'
 )
 stash_subcommand.set_defaults(func=print_command_factory('stash'))
 
@@ -174,8 +171,8 @@ stash_subcommand.set_defaults(func=print_command_factory('stash'))
 enqueue_subcommand = subparsers.add_parser(
     'enqueue', help="The specified command's status will be set to 'queued'.")
 enqueue_subcommand.add_argument(
-    'key', type=int,
-    help='The index of the command to be enqueued.'
+    'keys', type=int, nargs='+',
+    help='The indices of the commands to be enqueued.'
 )
 enqueue_subcommand.set_defaults(func=print_command_factory('enqueue'))
 
@@ -188,8 +185,8 @@ kill_subcommand.add_argument(
     help='All running processes/the selected process will be removed from the queue.'
 )
 kill_subcommand.add_argument(
-    '-k', '--key', type=int,
-    help="Kills a single process. The daemon won't stop."
+    'keys', type=int, nargs='*',
+    help="The indices of the processes to be killed. The daemon won't pause."
 )
 kill_subcommand.set_defaults(func=print_command_factory('kill'))
 
@@ -202,7 +199,7 @@ stop_subcommand.add_argument(
     help='If this flag is set, the all running processes/the selected process will be removed from the queue.'
 )
 stop_subcommand.add_argument(
-    '-k', '--key', type=int,
-    help="Stops a single process. The daemon won't stop."
+    'keys', type=int, nargs='*',
+    help="The indices of the processes to be stopped. The daemon won't pause."
 )
 stop_subcommand.set_defaults(func=print_command_factory('stop'))

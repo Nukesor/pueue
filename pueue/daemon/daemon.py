@@ -330,15 +330,28 @@ class Daemon():
         return answer
 
     def start(self, payload):
-        """Start the daemon and all processes or only a specific process."""
-        # Start a specific process, if we have a key in our payload
-        if payload.get('key') is not None:
-            success = self.process_handler.start_process(payload['key'])
-            if success:
-                answer = {'message': 'Process started.', 'status': 'success'}
-            else:
-                answer = {'message': 'No paused, queued or stashed process with this key.',
-                          'status': 'error'}
+        """Start the daemon and all processes or only specific processes."""
+        # Start specific processes, if `keys` is given in the payload
+        if payload.get('keys') is not None:
+            succeeded = []
+            failed = []
+            for key in payload.get('keys'):
+                success = self.process_handler.start_process(payload['key'])
+                if success:
+                    succeeded.append(key)
+                else:
+                    failed.append(key)
+
+            message = ''
+            if len(succeeded) > 0:
+                message += 'Started processes: {}.'.format(', '.join(succeeded))
+                status = 'success'
+            if len(failed) > 0:
+                message += '\nNo paused, queued or stashed process for keys: {}'.format(', '.join(succeeded))
+                status = 'error'
+
+            answer = {'message': message.strip(),
+                      'status': status}
 
         # Start a all processes and the daemon
         else:
@@ -353,15 +366,28 @@ class Daemon():
         return answer
 
     def pause(self, payload):
-        """Start the daemon and all processes or only a specific process."""
-        # Pause a specific process, if we have a key in our payload
-        if payload.get('key') is not None:
-            success = self.process_handler.pause_process(payload['key'])
-            if success:
-                answer = {'message': 'Process paused.', 'status': 'success'}
-            else:
-                answer = {'message': 'No running process with this key.',
-                          'status': 'error'}
+        """Start the daemon and all processes or only specific processes."""
+        # Pause specific processes, if `keys` is given in the payload
+        if payload.get('keys') is not None:
+            succeeded = []
+            failed = []
+            for key in payload.get('keys'):
+                success = self.process_handler.pause_process(key)
+                if success:
+                    succeeded.append(key)
+                else:
+                    failed.append(key)
+
+            message = ''
+            if len(succeeded) > 0:
+                message += 'Paused processes: {}.'.format(', '.join(succeeded))
+                status = 'success'
+            if len(failed) > 0:
+                message += '\nNo running process for keys: {}'.format(', '.join(succeeded))
+                status = 'error'
+
+            answer = {'message': message.strip(),
+                      'status': status}
 
         # Pause all processes and the daemon
         else:
@@ -382,7 +408,7 @@ class Daemon():
         return answer
 
     def stash(self, payload):
-        """Stash the specified process."""
+        """Stash the specified processes."""
         # Pause a specific process, if we have a key in our payload
         key = payload['key']
         if self.queue.get(key) is not None:

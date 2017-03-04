@@ -107,12 +107,12 @@ def execute_status(args, root_dir=None):
 def execute_log(args, root_dir):
     """Print the current log file.
     Args:
-        args['key'] (int): If given, we only look at the specific process.
+        args['keys'] (int): If given, we only look at the specified processes.
         root_dir (string): The path to the root directory the daemon is running in.
     """
 
     # Print the log of a specific process
-    if args.get('key') is not None:
+    if args.get('keys') is not None:
         config_dir = os.path.join(root_dir, '.config/pueue')
         queue_path = os.path.join(config_dir, 'queue')
         if os.path.exists(queue_path):
@@ -127,24 +127,25 @@ def execute_log(args, root_dir):
             print('There is no queue log file. Aborting.')
             return
 
-        key = args.get('key')
-        # Check if there is an entry with this key
-        if queue.get(key) and queue[key]['status'] in ['failed', 'done']:
-            entry = queue[args.get('key')]
-            print('Returncode: {}'.format(entry['returncode']))
-            print('Command: {}'.format(entry['command']))
-            print('Path: {}'.format(entry['path']))
-            print('Start: {}, End: {} \n'.format(entry['start'], entry['end']))
+        for key in args.get('keys'):
+            # Check if there is an entry with this key
+            if queue.get(key) and queue[key]['status'] in ['failed', 'done']:
+                entry = queue[key]
+                print('Log of entry: {}'.format(key))
+                print('Returncode: {}'.format(entry['returncode']))
+                print('Command: {}'.format(entry['command']))
+                print('Path: {}'.format(entry['path']))
+                print('Start: {}, End: {} \n'.format(entry['start'], entry['end']))
 
-            # Write STDERR
-            if len(entry['stderr']) > 0:
-                print(Color('{autored}Stderr output: {/autored}\n    ') + entry['stderr'])
+                # Write STDERR
+                if len(entry['stderr']) > 0:
+                    print(Color('{autored}Stderr output: {/autored}\n    ') + entry['stderr'])
 
-            # Write STDOUT
-            if len(entry['stdout']) > 0:
-                print(Color('{autogreen}Stdout output: {/autogreen}\n    ') + entry['stdout'])
-        else:
-            print('No finished process with this key.')
+                # Write STDOUT
+                if len(entry['stdout']) > 0:
+                    print(Color('{autogreen}Stdout output: {/autogreen}\n    ') + entry['stdout'])
+            else:
+                print('No finished process with key {}.'.format(key))
 
     # Print the log of all processes
     else:
