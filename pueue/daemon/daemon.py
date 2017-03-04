@@ -158,14 +158,16 @@ class Daemon():
         This function is the heart of the daemon.
         It is responsible for:
         - Client communication
-        - Calling the ProcessHandler API.
+        - Executing commands from clients
+        - Update the status of processes by polling the ProcessHandler.
         - Logging
         - Cleanup on exit
 
         """
         try:
             while self.running:
-                # Check for any finished processes
+                # Trigger the processing of finished processes by the ProcessHandler.
+                # If there are finished processes we write the log to keep it up to date.
                 if self.process_handler.check_finished():
                     self.logger.write(self.queue)
 
@@ -175,9 +177,15 @@ class Daemon():
                     self.queue.reset()
                     self.reset = False
 
-                # Start next Process
+                # Check if the ProcessHandler has any free slots to spawn a new process
                 if not self.paused and not self.reset and self.running:
                     self.process_handler.check_for_new()
+
+                # This is the communication section of the daemon.
+                # 1. Receive message from the client
+                # 2. Check payload and call respective function with payload as parameter.
+                # 3. Execute logic
+                # 4. Return payload with response to client
 
                 # Create list for waitable objects
                 readable, writable, failed = select.select(self.read_list, [], [], 1)

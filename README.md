@@ -48,43 +48,45 @@ There is a help option (-h) for all commands, but I'll list them here anyway.
 `pueue --stop-daemon` Daemon will shut down after killing all processes.
 
 `pueue status` Show the current state of the daemon and the processing state of the queue.  
+`pueue reset` Remove all commands from the queue, kill the current process and reset the queue index to 0.  
+`pueue clear` Remove all `done` or `failed` commands from the queue. This will rotate logs as well.
+`pueue config` This command allows to set different config values without editing the config file and restarting the daemon. Look at `pueue config -h` for more information.
 
-`pueue show --watch --key` Show the output of `--key` or the oldest running process.  
+`pueue add 'command'` Add a command to the queue.  
+`pueue remove keys...` Remove the specified entries. Running processes can't be removed.  
+`pueue stash keys...` Stash queued entries for later processing. They won't be processed by the daemon, but can be manually enqueued again.  
+`pueue enqueue keys...` Enqueue stashed entries. The entries will be normally processed.  
+`pueue switch index1 index2` Switch the entries at position `index1` and `index2`.  
+
+`pueue start [keys...]` This command has three different behaviors, depending on if and what kind of keys are given:  
+    1. If keys of paused processes are given, the processes will be started (`SIGCONT`), this happens even if the daemon is paused.  
+    1. If keys of queued or stashed processes are given, new processes will be spawned for those entries. This happens even if the daemon is paused or the max amount of processes is exceeded.  
+    3. Otherwise the daemon will start to process the queue. This will start all paused processes (`SIGCONT`).  
+
+`pueue pause [keys...] --wait` This command has two different behaviors, depending on if keys are given:  
+    1. If keys are given, pause the specified processes by sending a `SIGSTOP`.  
+    2. Otherwise stop processing the queue and pause all running processes. If the `--wait` flag is set, the daemon will pause, but all running processes will finish on their own.  
+
+`pueue restart [keys...]` Enqueue the specified `done` or `failed` processes again.  
+`pueue stop [keys...] -r` This command has two different behaviors, depending on if a key is given:  
+    1. If keys are given, terminate the specified processes and stash them. If `-r` is provided the processes will be removed from the queue.  
+    2. Otherwise terminate all running processes (`kill`) and pause the daemon.  
+
+`pueue kill [keys...] -r` This command has two different behaviors, depending on if keys are given:  
+    1. If keys are given, KILL the specified processes (`kill -9`) and stash them. If `-r` is provided the running processes will be removed from the queue.  
+    2. Otherwise KILL all running processes (`kill -9`) and pause the daemon.  
+
+
+`pueue show --key --watch ` Show the output of `--key` or the oldest running process.  
     `show --watch` will continually show the stdout output of the subprocess in a `curses` session.  
     `show` without `--watch` will print the stderr as well. This can be useful if the subprocess prompts for user input (This is often piped to stderr).  
 
-`pueue log --key` Print the output and status of all finished processes or of a specific finished process.  
-`pueue start --key` This command has three different behaviours, depending on if and what kind of key is given:  
-    1. If the key of a paused process is given, the process will be started (`SIGCONT`), this happens even if the daemon is paused.  
-    1. If the key of a queued process is given, the process will be started, this happens even if the daemon is paused or the max amount of processes is exceeded.  
-    3. If no key is given, the daemon will start to process the queue. This will start all paused processes (`SIGCONT`).  
-
-`pueue pause --wait --key` This command has two different behaviours, depending on if a key is given:  
-    1. If a key is given, pause the specified process by sending a `SIGSTOP`.  
-    2. If no key is given, stop processing the queue and pause all running processes. If the `--wait` flag is set, the daemon will pause, but all running processes will finish on their own.  
-
-`pueue restart` Enqueue a finished process.  
-`pueue stop -r --key` This command has two different behaviours, depending on if a key is given:  
-    1. If a key is given, terminate the specified process and stash it. If `-r` is provided this process will be removed from the queue.  
-    2. If no key is given, terminate all running processes (`kill`) and pause the daemon.  
-
-`pueue kill -r --key` This command has two different behaviours, depending on if a key is given:  
-    1. If a key is given, KILL the specified process (`kill -9`) and stash it. If `-r` is provided the current running process will be removed from the queue.  
-    2. If no key is given, KILL all running processes (`kill -9`) and pause the daemon.  
-
-`pueue reset` Remove all commands from the queue, kill the current process and reset the queue index to 0.  
-`pueue clear` Remove all `done` or `failed` commands from the queue. This will rotate logs as well.
-`pueue add 'command'` Add a command to the queue.  
-`pueue remove index` Remove the command at #index.  
-`pueue switch index1 index2` Switch the commands at position #index1 and #index2.  
+`pueue log [keys...]` Print the output and status of all finished processes or of the specified finished processes.  
 `pueue send 'input'` Send a string to the subprocess's stdin. In case a process prompts for user input, you can use this to interact with the subprocess.  
 The stdin pipe is flushed after every `send` command. To simulate a `\n` you need to add a newline in your string:
 
         pueue send 'y
         '
-
-`pueue config` This command allows to set different config values without editing the config file and restarting the daemon. Look at `pueue config -h` for more information.
-
 
 ## Configs
 

@@ -64,6 +64,11 @@ show_subcommand.add_argument(
     '-w', '--watch', action='store_true',
     help='Get live output in a curses session. Like tail -f.'
 )
+show_subcommand.add_argument(
+    '--key', '-k',  type=int,
+    help='Show the output of a specific process.'
+)
+
 show_subcommand.set_defaults(func=execute_show)
 
 
