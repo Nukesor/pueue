@@ -111,7 +111,7 @@ def execute_log(args, root_dir):
         root_dir (string): The path to the root directory the daemon is running in.
     """
 
-    # Print the log of a specific process
+    # Print the logs of all specified processes
     if args.get('keys') is not None:
         config_dir = os.path.join(root_dir, '.config/pueue')
         queue_path = os.path.join(config_dir, 'queue')
