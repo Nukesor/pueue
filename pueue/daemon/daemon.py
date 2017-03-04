@@ -350,8 +350,7 @@ class Daemon():
                 message += '\nNo paused, queued or stashed process for keys: {}'.format(', '.join(succeeded))
                 status = 'error'
 
-            answer = {'message': message.strip(),
-                      'status': status}
+            answer = {'message': message.strip(), 'status': status}
 
         # Start a all processes and the daemon
         else:
@@ -386,8 +385,7 @@ class Daemon():
                 message += '\nNo running process for keys: {}'.format(', '.join(succeeded))
                 status = 'error'
 
-            answer = {'message': message.strip(),
-                      'status': status}
+            answer = {'message': message.strip(), 'status': status}
 
         # Pause all processes and the daemon
         else:
@@ -409,35 +407,53 @@ class Daemon():
 
     def stash(self, payload):
         """Stash the specified processes."""
-        # Pause a specific process, if we have a key in our payload
-        key = payload['key']
-        if self.queue.get(key) is not None:
-            if self.queue[key]['status'] == 'queued':
-                self.queue[key]['status'] = 'stashed'
-                answer = {'message': 'Process stashed.', 'status': 'success'}
+        for key in payload['keys']:
+            succeeded = []
+            failed = []
+            if self.queue.get(key) is not None:
+                if self.queue[key]['status'] == 'queued':
+                    self.queue[key]['status'] = 'stashed'
+                    succeeded.append(key)
+                else:
+                    failed.append(key)
             else:
-                answer = {'message': 'The specified entry is not queued.',
-                          'status': 'error'}
-        else:
-            answer = {'message': 'No entry for this key.',
-                      'status': 'error'}
+                failed.append(key)
+
+        message = ''
+        if len(succeeded) > 0:
+            message += 'Stashed entries: {}.'.format(', '.join(succeeded))
+            status = 'success'
+        if len(failed) > 0:
+            message += '\nNo queued entry for keys: {}'.format(', '.join(succeeded))
+            status = 'error'
+
+        answer = {'message': message.strip(), 'status': status}
 
         return answer
 
     def enqueue(self, payload):
-        """Enqueue a stashed process."""
-        # Pause a specific process, if we have a key in our payload
-        key = payload['key']
-        if self.queue.get(key) is not None:
-            if self.queue[key]['status'] == 'stashed':
-                self.queue[key]['status'] = 'queued'
-                answer = {'message': 'Process enqueued.', 'status': 'success'}
+        """Enqueue the specified stashed processes."""
+        for key in payload['keys']:
+            succeeded = []
+            failed = []
+            if self.queue.get(key) is not None:
+                if self.queue[key]['status'] == 'stashed':
+                    self.queue[key]['status'] = 'queued'
+                    succeeded.append(key)
+                else:
+                    failed.append(key)
             else:
-                answer = {'message': 'The specified entry is not stashed.',
-                          'status': 'error'}
-        else:
-            answer = {'message': 'No entry for this key.',
-                      'status': 'error'}
+                failed.append(key)
+
+        message = ''
+        if len(succeeded) > 0:
+            message += 'Enqueued entries: {}.'.format(', '.join(succeeded))
+            status = 'success'
+        if len(failed) > 0:
+            message += '\nNo stashed entry for keys: {}'.format(', '.join(succeeded))
+            status = 'error'
+
+        answer = {'message': message.strip(), 'status': status}
 
         return answer
 
