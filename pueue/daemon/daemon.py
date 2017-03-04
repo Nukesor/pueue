@@ -432,7 +432,7 @@ class Daemon():
         return answer
 
     def enqueue(self, payload):
-        """Enqueue the specified stashed processes."""
+        """Enqueue the specified stashed entries."""
         succeeded = []
         failed = []
         for key in payload['keys']:
@@ -545,7 +545,7 @@ class Daemon():
     def add(self, payload):
         """Add a entry to the queue."""
         self.queue.add_new(payload)
-        return {'message': 'Command added', 'status': 'success'}
+        return {'message': 'Entry added', 'status': 'success'}
 
     def remove(self, payload):
         """Remove specified entries from the queue."""
@@ -575,6 +575,7 @@ class Daemon():
         return answer
 
     def switch(self, payload):
+        """Switch the two specified entry positions in the queue."""
         first = payload['first']
         second = payload['second']
         running = self.process_handler.is_running(first) or self.process_handler.is_running(second)
@@ -589,21 +590,32 @@ class Daemon():
             switched = self.queue.switch(first, second)
             if switched:
                 answer = {
-                    'message': 'Command #{} and #{} switched'.format(first, second),
+                    'message': 'Entries #{} and #{} switched'.format(first, second),
                     'status': 'success'
                 }
             else:
-                answer = {'message': "One of the specified keys doesn't exist in the queue.",
+                answer = {'message': "One or both entries do not exist or are not queued/stashed.",
                           'status': 'error'}
         return answer
 
     def restart(self, payload):
-        key = payload['key']
-        restarted = self.queue.restart(key)
-        if restarted:
-            answer = {'message': 'Command #{} queued again'.format(key),
-                      'status': 'success'}
-        else:
-            answer = {'message': 'No finished command for this key',
-                      'status': 'error'}
+        """Restart the specified entries."""
+        succeeded = []
+        failed = []
+        for key in payload['keys']:
+            restarted = self.queue.restart(key)
+            if restarted:
+                succeeded.append(key)
+            else:
+                failed.append(key)
+
+        message = ''
+        if len(succeeded) > 0:
+            message += 'Restarted entries: {}.'.format(', '.join(succeeded))
+            status = 'success'
+        if len(failed) > 0:
+            message += '\nNo finished entry for keys: {}'.format(', '.join(succeeded))
+            status = 'error'
+
+        answer = {'message': message.strip(), 'status': status}
         return answer
