@@ -407,9 +407,9 @@ class Daemon():
 
     def stash(self, payload):
         """Stash the specified processes."""
+        succeeded = []
+        failed = []
         for key in payload['keys']:
-            succeeded = []
-            failed = []
             if self.queue.get(key) is not None:
                 if self.queue[key]['status'] == 'queued':
                     self.queue[key]['status'] = 'stashed'
@@ -433,9 +433,9 @@ class Daemon():
 
     def enqueue(self, payload):
         """Enqueue the specified stashed processes."""
+        succeeded = []
+        failed = []
         for key in payload['keys']:
-            succeeded = []
-            failed = []
             if self.queue.get(key) is not None:
                 if self.queue[key]['status'] == 'stashed':
                     self.queue[key]['status'] = 'queued'
@@ -548,22 +548,29 @@ class Daemon():
         return {'message': 'Command added', 'status': 'success'}
 
     def remove(self, payload):
-        """Remove a single entry from the queue."""
-        key = payload['key']
-        running = self.process_handler.is_running(key)
-        if running:
-            answer = {
-                'message': "Can't remove running process, "
-                "please stop the process before removing it.",
-                'status': 'error'
-            }
-        else:
-            # Check if we can delete the command from the queue
-            removed = self.queue.remove(key)
-            if removed:
-                answer = {'message': 'Command #{} removed'.format(key), 'status': 'success'}
+        """Remove specified entries from the queue."""
+        succeeded = []
+        failed = []
+        for key in payload['keys']:
+            running = self.process_handler.is_running(key)
+            if not running:
+                removed = self.queue.remove(key)
+                if removed:
+                    succeeded.append(key)
+                else:
+                    failed.append(key)
             else:
-                answer = {'message': 'No command with key #{}'.format(str(key)), 'status': 'error'}
+                failed.append(key)
+
+        message = ''
+        if len(succeeded) > 0:
+            message += 'Removed entries: {}.'.format(', '.join(succeeded))
+            status = 'success'
+        if len(failed) > 0:
+            message += '\nRunning or non-existing entry for keys: {}'.format(', '.join(succeeded))
+            status = 'error'
+
+        answer = {'message': message.strip(), 'status': status}
 
         return answer
 
