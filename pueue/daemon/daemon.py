@@ -458,22 +458,34 @@ class Daemon():
         return answer
 
     def stop_process(self, payload):
-        """Pause the daemon and stop all processes or stop a specific process."""
-        # Stop a specific process, if we have a key in our payload
-        if payload.get('key') is not None:
-            # Mark the process as `to be removed` as soon as it terminates
-            if payload.get('remove'):
-                success = self.process_handler.stop_process(payload['key'], remove=True)
-                success_message = 'Process will be stopped and removed.'
-            else:
-                success = self.process_handler.stop_process(payload['key'], stash=True)
-                success_message = 'Process stopping.'
+        """Pause the daemon and stop all processes or stop specific processes."""
+        # Stop specific processes, if `keys` is given in the payload
+        if payload.get('keys') is not None:
+            succeeded = []
+            failed = []
+            status = 'success'
+            for key in payload.get('keys'):
+                if payload.get('remove'):
+                    success = self.process_handler.stop_process(payload['key'], remove=True)
+                else:
+                    success = self.process_handler.stop_process(payload['key'], stash=True)
+                if success:
+                    succeeded.append(key)
+                else:
+                    failed.append(key)
 
-            if success:
-                answer = {'message': success_message, 'status': 'success'}
-            else:
-                answer = {'message': 'No running process with this key.',
-                          'status': 'error'}
+            message = ''
+            if len(succeeded) > 0:
+                if payload.get('remove'):
+                    message += 'Stopped and removed processes: {}.'.format(', '.join(succeeded))
+                else:
+                    message += 'Stopped processes: {}.'.format(', '.join(succeeded))
+                status = 'success'
+            if len(failed) > 0:
+                message += '\nNo running process for keys: {}'.format(', '.join(succeeded))
+                status = 'error'
+
+            answer = {'message': message.strip(), 'status': status}
 
         # Stop all processes and the daemon
         else:
@@ -489,21 +501,33 @@ class Daemon():
 
     def kill_process(self, payload):
         """Pause the daemon and kill all processes or kill a specific process."""
-        # Kill a specific process, if we have a key in our payload
-        if payload.get('key') is not None:
-            # Mark the process as `to be removed` as soon as it terminates
-            if payload.get('remove'):
-                success = self.process_handler.kill_process(payload['key'], remove=True)
-                success_message = 'Process will be killed and removed.'
-            else:
-                success = self.process_handler.kill_process(payload['key'], stash=True)
-                success_message = 'Process killed.'
+        # Kill specific processes, if `keys` is given in the payload
+        if payload.get('keys') is not None:
+            succeeded = []
+            failed = []
+            status = 'success'
+            for key in payload.get('keys'):
+                if payload.get('remove'):
+                    success = self.process_handler.kill_process(payload['key'], remove=True)
+                else:
+                    success = self.process_handler.kill_process(payload['key'], stash=True)
+                if success:
+                    succeeded.append(key)
+                else:
+                    failed.append(key)
 
-            if success:
-                answer = {'message': success_message, 'status': 'success'}
-            else:
-                answer = {'message': 'No running process with this key.',
-                          'status': 'error'}
+            message = ''
+            if len(succeeded) > 0:
+                if payload.get('remove'):
+                    message += 'Killed and removed processes: {}.'.format(', '.join(succeeded))
+                else:
+                    message += 'Killed processes: {}.'.format(', '.join(succeeded))
+                status = 'success'
+            if len(failed) > 0:
+                message += '\nNo running process for keys: {}'.format(', '.join(succeeded))
+                status = 'error'
+
+            answer = {'message': message.strip(), 'status': status}
 
         # Kill all processes and the daemon
         else:
