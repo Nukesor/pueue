@@ -16,3 +16,4 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Removed `key` parameter from `send` command.
 - Wrong daemon response for `kill` command.
+- `stop` or `kill` sends the signal to all processes spawned by the shell process. This bug affected all command strings which caused the subprocess to spawn a `/bin/sh -c {command}` process.

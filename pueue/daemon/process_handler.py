@@ -167,6 +167,7 @@ class ProcessHandler():
                 stderr=stderr,
                 stdin=subprocess.PIPE,
                 universal_newlines=True,
+                preexec_fn=os.setsid,
                 cwd=self.queue[key]['path']
             )
             self.queue[key]['status'] = 'running'
@@ -232,10 +233,10 @@ class ProcessHandler():
             if self.processes[key].returncode is None:
                 # Kill process
                 if kill:
-                    self.processes[key].kill()
+                    os.killpg(os.getpgid(self.processes[key].pid), signal.SIGKILL)
                     self.queue[key]['status'] = 'killing'
                 else:
-                    self.processes[key].terminate()
+                    os.killpg(os.getpgid(self.processes[key].pid), signal.SIGTERM)
                     self.queue[key]['status'] = 'stopping'
 
                 self.stopping.append(key)
