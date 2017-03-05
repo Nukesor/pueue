@@ -346,16 +346,16 @@ class Daemon():
             for key in payload.get('keys'):
                 success = self.process_handler.start_process(payload['key'])
                 if success:
-                    succeeded.append(key)
+                    succeeded.append(str(key))
                 else:
-                    failed.append(key)
+                    failed.append(str(key))
 
             message = ''
             if len(succeeded) > 0:
                 message += 'Started processes: {}.'.format(', '.join(succeeded))
                 status = 'success'
             if len(failed) > 0:
-                message += '\nNo paused, queued or stashed process for keys: {}'.format(', '.join(succeeded))
+                message += '\nNo paused, queued or stashed process for keys: {}'.format(', '.join(failed))
                 status = 'error'
 
             answer = {'message': message.strip(), 'status': status}
@@ -381,16 +381,16 @@ class Daemon():
             for key in payload.get('keys'):
                 success = self.process_handler.pause_process(key)
                 if success:
-                    succeeded.append(key)
+                    succeeded.append(str(key))
                 else:
-                    failed.append(key)
+                    failed.append(str(key))
 
             message = ''
             if len(succeeded) > 0:
                 message += 'Paused processes: {}.'.format(', '.join(succeeded))
                 status = 'success'
             if len(failed) > 0:
-                message += '\nNo running process for keys: {}'.format(', '.join(succeeded))
+                message += '\nNo running process for keys: {}'.format(', '.join(failed))
                 status = 'error'
 
             answer = {'message': message.strip(), 'status': status}
@@ -421,18 +421,18 @@ class Daemon():
             if self.queue.get(key) is not None:
                 if self.queue[key]['status'] == 'queued':
                     self.queue[key]['status'] = 'stashed'
-                    succeeded.append(key)
+                    succeeded.append(str(key))
                 else:
-                    failed.append(key)
+                    failed.append(str(key))
             else:
-                failed.append(key)
+                failed.append(str(key))
 
         message = ''
         if len(succeeded) > 0:
             message += 'Stashed entries: {}.'.format(', '.join(succeeded))
             status = 'success'
         if len(failed) > 0:
-            message += '\nNo queued entry for keys: {}'.format(', '.join(succeeded))
+            message += '\nNo queued entry for keys: {}'.format(', '.join(failed))
             status = 'error'
 
         answer = {'message': message.strip(), 'status': status}
@@ -447,18 +447,18 @@ class Daemon():
             if self.queue.get(key) is not None:
                 if self.queue[key]['status'] == 'stashed':
                     self.queue[key]['status'] = 'queued'
-                    succeeded.append(key)
+                    succeeded.append(str(key))
                 else:
-                    failed.append(key)
+                    failed.append(str(key))
             else:
-                failed.append(key)
+                failed.append(str(key))
 
         message = ''
         if len(succeeded) > 0:
             message += 'Enqueued entries: {}.'.format(', '.join(succeeded))
             status = 'success'
         if len(failed) > 0:
-            message += '\nNo stashed entry for keys: {}'.format(', '.join(succeeded))
+            message += '\nNo stashed entry for keys: {}'.format(', '.join(failed))
             status = 'error'
 
         answer = {'message': message.strip(), 'status': status}
@@ -474,13 +474,13 @@ class Daemon():
             status = 'success'
             for key in payload.get('keys'):
                 if payload.get('remove'):
-                    success = self.process_handler.stop_process(payload['key'], remove=True)
+                    success = self.process_handler.stop_process(key, remove=True)
                 else:
-                    success = self.process_handler.stop_process(payload['key'], stash=True)
+                    success = self.process_handler.stop_process(key, stash=True)
                 if success:
-                    succeeded.append(key)
+                    succeeded.append(str(key))
                 else:
-                    failed.append(key)
+                    failed.append(str(key))
 
             message = ''
             if len(succeeded) > 0:
@@ -490,7 +490,7 @@ class Daemon():
                     message += 'Stopped processes: {}.'.format(', '.join(succeeded))
                 status = 'success'
             if len(failed) > 0:
-                message += '\nNo running process for keys: {}'.format(', '.join(succeeded))
+                message += '\nNo running process for keys: {}'.format(', '.join(failed))
                 status = 'error'
 
             answer = {'message': message.strip(), 'status': status}
@@ -516,13 +516,13 @@ class Daemon():
             status = 'success'
             for key in payload.get('keys'):
                 if payload.get('remove'):
-                    success = self.process_handler.kill_process(payload['key'], remove=True)
+                    success = self.process_handler.kill_process(key, remove=True)
                 else:
-                    success = self.process_handler.kill_process(payload['key'], stash=True)
+                    success = self.process_handler.kill_process(key, stash=True)
                 if success:
-                    succeeded.append(key)
+                    succeeded.append(str(key))
                 else:
-                    failed.append(key)
+                    failed.append(str(key))
 
             message = ''
             if len(succeeded) > 0:
@@ -532,7 +532,7 @@ class Daemon():
                     message += 'Killed processes: {}.'.format(', '.join(succeeded))
                 status = 'success'
             if len(failed) > 0:
-                message += '\nNo running process for keys: {}'.format(', '.join(succeeded))
+                message += '\nNo running process for keys: {}'.format(', '.join(failed))
                 status = 'error'
 
             answer = {'message': message.strip(), 'status': status}
@@ -564,18 +564,18 @@ class Daemon():
             if not running:
                 removed = self.queue.remove(key)
                 if removed:
-                    succeeded.append(key)
+                    succeeded.append(str(key))
                 else:
-                    failed.append(key)
+                    failed.append(str(key))
             else:
-                failed.append(key)
+                failed.append(str(key))
 
         message = ''
         if len(succeeded) > 0:
             message += 'Removed entries: {}.'.format(', '.join(succeeded))
             status = 'success'
         if len(failed) > 0:
-            message += '\nRunning or non-existing entry for keys: {}'.format(', '.join(succeeded))
+            message += '\nRunning or non-existing entry for keys: {}'.format(', '.join(failed))
             status = 'error'
 
         answer = {'message': message.strip(), 'status': status}
@@ -613,16 +613,16 @@ class Daemon():
         for key in payload['keys']:
             restarted = self.queue.restart(key)
             if restarted:
-                succeeded.append(key)
+                succeeded.append(str(key))
             else:
-                failed.append(key)
+                failed.append(str(key))
 
         message = ''
         if len(succeeded) > 0:
             message += 'Restarted entries: {}.'.format(', '.join(succeeded))
             status = 'success'
         if len(failed) > 0:
-            message += '\nNo finished entry for keys: {}'.format(', '.join(succeeded))
+            message += '\nNo finished entry for keys: {}'.format(', '.join(failed))
             status = 'error'
 
         answer = {'message': message.strip(), 'status': status}
