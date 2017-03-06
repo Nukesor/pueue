@@ -65,8 +65,6 @@ def test_pause_multiple_specific_invalid(daemon_setup, multiple_setup):
     The daemon should pause all valid keys and ignore all invalid keys.
     The response should be an error response.
     ."""
-    # Add a single command
-
     # Setup multiple processes test case
     multiple_setup(
         max_processes=3,
@@ -85,20 +83,29 @@ def test_pause_multiple_specific_invalid(daemon_setup, multiple_setup):
     assert status['data'][3]['status'] == 'queued'
 
 
-def test_waiting_pause(daemon_setup):
+def test_waiting_pause(daemon_setup, multiple_setup):
     """Daemon waits for process to finish.
 
     With `wait=True` as a parameter the daemon pauses,
     but waits for the current process to finish instead of
     pausing it.
     """
-    # Add sleep command and pause it with `'wait': True`
-    execute_add('sleep 2')
+    # Setup multiple processes test case
+    multiple_setup(
+        max_processes=2,
+        processes=1,
+        sleep_time=2,
+    )
+
+    # Add longer sleep command and pause all commands with `'wait': True`
+    execute_add('sleep 5')
     command_factory('pause')({'wait': True})
-    # The paused daemon should wait for the process to finish
+
+    # The paused daemon should wait for the processes to finish and handle finished
     status = wait_for_process(0)
     assert status['status'] == 'paused'
     assert status['data'][0]['status'] == 'done'
+    assert status['data'][1]['status'] == 'running'
 
 
 def test_waiting_pause_multiple(daemon_setup, multiple_setup):

@@ -14,7 +14,7 @@ def test_kill(daemon_setup):
     assert status['data'][0]['status'] == 'queued' or 'killing'
 
 
-def test_kill_multiple(daemon_setup, multiple_setup):
+def test_kill_all(daemon_setup, multiple_setup):
     """Kill all running processes."""
     # Setup multiple processes test case
     multiple_setup(
@@ -32,10 +32,31 @@ def test_kill_multiple(daemon_setup, multiple_setup):
     assert status['data'][3]['status'] == 'queued'
 
 
+def test_kill_multiple(daemon_setup, multiple_setup):
+    """Kill multiple running processes."""
+    # Setup multiple processes test case
+    multiple_setup(
+        max_processes=3,
+        processes=4,
+        sleep_time=60,
+    )
+
+    # Only kill two of three running processes and wait for them being processed.
+    command_factory('kill')({'keys': [0, 2]})
+    status = wait_for_process(2)
+
+    # Two should be stashed, and two should be running
+    assert status['status'] == 'running'
+    assert status['data'][0]['status'] == 'stashed'
+    assert status['data'][1]['status'] == 'running'
+    assert status['data'][2]['status'] == 'stashed'
+    assert status['data'][3]['status'] == 'running'
+
+
 def test_kill_remove(daemon_setup):
     """Kill a running process and remove it afterwards."""
     execute_add('sleep 60')
-    command_factory('kill')({'remove': True, 'key': 0})
+    command_factory('kill')({'remove': True, 'keys': [0]})
     status = command_factory('status')()
     assert status['status'] == 'running'
     assert status['data'] == 'Queue is empty'
@@ -44,7 +65,7 @@ def test_kill_remove(daemon_setup):
 def test_kill_single(daemon_setup):
     """Kill a running process and check if it gets stashed."""
     execute_add('sleep 60')
-    command_factory('kill')({'key': 0})
+    command_factory('kill')({'keys': [0]})
     status = command_factory('status')()
     status = wait_for_process(0)
     assert status['status'] == 'running'
@@ -55,7 +76,7 @@ def test_kill_remove_resume(daemon_setup):
     """Everything works properly after killing all subprocesses."""
     # Add new command and kill it with remove flag set
     execute_add('sleep 60')
-    command_factory('kill')({'remove': True, 'key': 0})
+    command_factory('kill')({'remove': True, 'keys': [0]})
 
     # Old process is removed and new process should be running fine
     execute_add('sleep 1')
@@ -64,7 +85,7 @@ def test_kill_remove_resume(daemon_setup):
     assert status['data'][1]['command'] == 'sleep 1'
 
 
-def test_kill_remove_resume_multiple(daemon_setup, multiple_setup):
+def test_kill_remove_all_resume(daemon_setup, multiple_setup):
     """Everything works properly after remove killing a subprocess."""
     # Setup multiple processes test case
     multiple_setup(
@@ -93,7 +114,7 @@ def test_stop(daemon_setup):
 def test_stop_remove(daemon_setup):
     """Stop a running process and remove it afterwards."""
     execute_add('sleep 2')
-    command_factory('stop')({'remove': True, 'key': 0})
+    command_factory('stop')({'remove': True, 'keys': [0]})
     status = command_factory('status')()
     assert status['status'] == 'running'
     assert status['data'] == 'Queue is empty'
@@ -102,14 +123,14 @@ def test_stop_remove(daemon_setup):
 def test_stop_single(daemon_setup):
     """Kill a running process and check if it gets stashed."""
     execute_add('sleep 60')
-    command_factory('stop')({'key': 0})
+    command_factory('stop')({'keys': [0]})
     status = command_factory('status')()
     status = wait_for_process(0)
     assert status['status'] == 'running'
     assert status['data'][0]['status'] == 'stashed'
 
 
-def test_stop_multiple(daemon_setup, multiple_setup):
+def test_stop_all(daemon_setup, multiple_setup):
     """Stop all running processes."""
     # Setup multiple processes test case
     multiple_setup(
@@ -131,7 +152,7 @@ def test_stop_remove_resume(daemon_setup):
     """Everything works properly after remove stopping a subprocess."""
     # Add status
     execute_add('sleep 2')
-    command_factory('stop')({'remove': True, 'key': 0})
+    command_factory('stop')({'remove': True, 'keys': [0]})
 
     # Old process is removed and new process should be running fine
     execute_add('sleep 1')
@@ -140,7 +161,7 @@ def test_stop_remove_resume(daemon_setup):
     assert status['data'][1]['command'] == 'sleep 1'
 
 
-def test_stop_remove_resume_multiple(daemon_setup, multiple_setup):
+def test_stop_remove_all_resume(daemon_setup, multiple_setup):
     """Everything works properly after stopping all subprocesses."""
     # Setup multiple processes test case
     multiple_setup(
@@ -156,3 +177,23 @@ def test_stop_remove_resume_multiple(daemon_setup, multiple_setup):
     assert status['data'][2]['status'] == 'done'
     assert status['data'][3]['status'] == 'running'
 
+
+def test_stop_multiple(daemon_setup, multiple_setup):
+    """Stop multiple running processes."""
+    # Setup multiple processes test case
+    multiple_setup(
+        max_processes=3,
+        processes=4,
+        sleep_time=60,
+    )
+
+    # Only stop two of three running processes and wait for them being processed.
+    command_factory('stop')({'keys': [0, 2]})
+    status = wait_for_process(2)
+
+    # Two should be stashed, and two should be running
+    assert status['status'] == 'running'
+    assert status['data'][0]['status'] == 'stashed'
+    assert status['data'][1]['status'] == 'running'
+    assert status['data'][2]['status'] == 'stashed'
+    assert status['data'][3]['status'] == 'running'
