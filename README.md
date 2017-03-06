@@ -49,8 +49,8 @@ There is a help option (-h) for all commands, but I'll list them here anyway.
 
 `pueue status` Show the current state of the daemon and the processing state of the queue.  
 `pueue reset` Remove all commands from the queue, kill the current process and reset the queue index to 0.  
-`pueue clear` Remove all `done` or `failed` commands from the queue. This will rotate logs as well.
-`pueue config` This command allows to set different config values without editing the config file and restarting the daemon. Look at `pueue config -h` for more information.
+`pueue clear` Remove all `done` or `failed` commands from the queue. This will rotate logs as well.  
+`pueue config` This command allows to set different config values without editing the config file and restarting the daemon. Look at `pueue config -h` for more information.  
 
 `pueue add 'command'` Add a command to the queue.  
 `pueue remove keys...` Remove the specified entries. Running processes can't be removed.  
