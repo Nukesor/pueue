@@ -52,7 +52,7 @@ There is a help option (-h) for all commands, but I'll list them here anyway.
 `pueue clear` Remove all `done` or `failed` commands from the queue. This will rotate logs as well.  
 `pueue config` This command allows to set different config values without editing the config file and restarting the daemon. Look at `pueue config -h` for more information.  
 
-`pueue add 'command'` Add a command to the queue.  
+`pueue add 'command'` Add a command to the queue. It can be used without quotation marks, but a `--` may be necessary if you want to pass parameters (`pueue add -- ls -al`). Also note that bash specific syntax like `|`, `&&` or `;` might cause unwanted behavior without quotation marks.  
 `pueue remove keys...` Remove the specified entries. Running processes can't be removed.  
 `pueue stash keys...` Stash queued entries for later processing. They won't be processed by the daemon, but can be manually enqueued again.  
 `pueue enqueue keys...` Enqueue stashed entries. The entries will be normally processed.  
