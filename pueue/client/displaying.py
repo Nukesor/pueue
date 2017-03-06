@@ -112,7 +112,7 @@ def execute_log(args, root_dir):
     """
 
     # Print the logs of all specified processes
-    if args.get('keys') is not None:
+    if args.get('keys'):
         config_dir = os.path.join(root_dir, '.config/pueue')
         queue_path = os.path.join(config_dir, 'queue')
         if os.path.exists(queue_path):

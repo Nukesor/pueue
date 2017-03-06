@@ -340,7 +340,7 @@ class Daemon():
     def start(self, payload):
         """Start the daemon and all processes or only specific processes."""
         # Start specific processes, if `keys` is given in the payload
-        if payload.get('keys') is not None:
+        if payload.get('keys'):
             succeeded = []
             failed = []
             for key in payload.get('keys'):
@@ -375,7 +375,7 @@ class Daemon():
     def pause(self, payload):
         """Start the daemon and all processes or only specific processes."""
         # Pause specific processes, if `keys` is given in the payload
-        if payload.get('keys') is not None:
+        if payload.get('keys'):
             succeeded = []
             failed = []
             for key in payload.get('keys'):
@@ -468,7 +468,7 @@ class Daemon():
     def stop_process(self, payload):
         """Pause the daemon and stop all processes or stop specific processes."""
         # Stop specific processes, if `keys` is given in the payload
-        if payload.get('keys') is not None:
+        if payload.get('keys'):
             succeeded = []
             failed = []
             status = 'success'
@@ -510,7 +510,7 @@ class Daemon():
     def kill_process(self, payload):
         """Pause the daemon and kill all processes or kill a specific process."""
         # Kill specific processes, if `keys` is given in the payload
-        if payload.get('keys') is not None:
+        if payload.get('keys'):
             succeeded = []
             failed = []
             status = 'success'
