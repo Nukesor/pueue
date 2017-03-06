@@ -8,6 +8,7 @@ from test.helper import (
     command_factory,
 )
 
+
 @pytest.fixture(scope='session')
 def directory_setup(request):
     """Create the test directory and return root and config path."""
