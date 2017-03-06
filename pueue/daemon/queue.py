@@ -101,7 +101,7 @@ class Queue():
         queue_file.close()
 
     def add_new(self, command):
-        """Add a new command to the queue."""
+        """Add a new entry to the queue."""
         self.queue[self.next_key] = command
         self.queue[self.next_key]['status'] = 'queued'
         self.queue[self.next_key]['returncode'] = ''
@@ -122,12 +122,13 @@ class Queue():
         return False
 
     def restart(self, key):
-        """Restart a previously finished command."""
-        if self.queue[key]['status'] in ['failed', 'done']:
-            command = {'command': self.queue[key]['command'],
-                       'path': self.queue[key]['path']}
-            self.add_new(command)
-            return True
+        """Restart a previously finished entry."""
+        if key in self.queue:
+            if self.queue[key]['status'] in ['failed', 'done']:
+                new_entry = {'command': self.queue[key]['command'],
+                             'path': self.queue[key]['path']}
+                self.add_new(new_entry)
+                return True
         return False
 
     def switch(self, first, second):
