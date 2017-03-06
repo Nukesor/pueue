@@ -14,8 +14,9 @@ All notable changes to this project will be documented in this file.
 - Daemon API now requires a `keys` parameter where `type(keys) == list` for the commands listed above.
 
 ### Fixed
-- Removed `key` parameter from `send` command.
-- Fixed crash when restarting a non-existing entry.
+- Fixed daemon crash when restarting a non-existing entry.
+- Fixed client crash for empty queue with `show`.
+- Fixed client crash for invalid key with `show`.
 - Wrong daemon response for `kill` command.
 - `stop` or `kill` sends the signal to all processes spawned by the shell process. This bug affected all command strings which caused the subprocess to spawn a `/bin/sh -c {command}` process.
 - `pause` or `start` sends the signal to all processes spawned by the shell process. This bug affected all command strings which caused the subprocess to spawn a `/bin/sh -c {command}` process.

@@ -162,17 +162,21 @@ def execute_show(args, root_dir):
                               the output live in the console.
         root_dir (string): The path to the root directory the daemon is running in.
     """
+
     key = None
     if args.get('key'):
         key = args['key']
         status = command_factory('status')({}, root_dir=root_dir)
-        if status['data'][key]['status'] != 'running':
+        if key not in status['data'] or status['data'][key]['status'] != 'running':
             print('No running process with this key, use `log` to show finished processes.')
             return
 
     # In case no key provided, we take the oldest running process
     else:
         status = command_factory('status')({}, root_dir=root_dir)
+        if isinstance(status['data'], str):
+            print(status['data'])
+            return
         for k in sorted(status['data'].keys()):
             if status['data'][k]['status'] == 'running':
                 key = k

@@ -15,6 +15,16 @@ def test_show(daemon_setup, directory_setup):
     execute_show({'watch': False}, directory_setup[0])
 
 
+def test_show_empty_queue(daemon_setup, directory_setup):
+    """The default `show` command doesn't crash, if there are no entries."""
+    execute_show({}, directory_setup[0])
+
+
+def test_show_specific_non_existing(daemon_setup, directory_setup):
+    """The default `show` command doesn't crash, if there are no entries."""
+    execute_show({'watch': False, 'keys': [0]}, directory_setup[0])
+
+
 def test_show_specific(daemon_setup, directory_setup):
     """The show command executes for a specific process without failing."""
     execute_add('sleep 120')
@@ -46,6 +56,11 @@ def test_log(daemon_setup, directory_setup):
     execute_log({}, directory_setup[0])
 
 
+def test_log_empty_queue(daemon_setup, directory_setup):
+    """The default `log` command doesn't crash, if there are no entries."""
+    execute_log({}, directory_setup[0])
+
+
 def test_log_specific(daemon_setup, directory_setup):
     """The `log` command for specific processes executes without failing."""
     execute_add('ls')
@@ -72,7 +87,7 @@ def test_log_running(daemon_setup, directory_setup):
 
 def test_log_failing(daemon_setup, directory_setup):
     """The `log` command works with keys of running or non existent entries."""
-    execute_add('sleep 60')
+    execute_add('ls')
     wait_for_process(0)
     execute_log({'keys': [0, 1, 3]}, directory_setup[0])
 
