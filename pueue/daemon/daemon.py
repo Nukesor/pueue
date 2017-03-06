@@ -344,7 +344,7 @@ class Daemon():
             succeeded = []
             failed = []
             for key in payload.get('keys'):
-                success = self.process_handler.start_process(payload['key'])
+                success = self.process_handler.start_process(key)
                 if success:
                     succeeded.append(str(key))
                 else:

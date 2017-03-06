@@ -22,8 +22,6 @@ def test_pause(daemon_setup):
 
 def test_pause_multiple(daemon_setup, multiple_setup):
     """Pause the daemon with multiple running processes."""
-    # Add a single command
-
     # Setup multiple processes test case
     multiple_setup(
         max_processes=3,
@@ -37,6 +35,53 @@ def test_pause_multiple(daemon_setup, multiple_setup):
     assert status['data'][0]['status'] == 'paused'
     assert status['data'][1]['status'] == 'paused'
     assert status['data'][2]['status'] == 'paused'
+    assert status['data'][3]['status'] == 'queued'
+
+
+def test_pause_multiple_specific(daemon_setup, multiple_setup):
+    """Pause specific entries of a daemon with multiple running processes."""
+    # Setup multiple processes test case
+    multiple_setup(
+        max_processes=3,
+        processes=4,
+        sleep_time=60,
+    )
+    # Pause specific valid entries. The response should be a success.
+    response = command_factory('pause')({'keys': [0, 1]})
+    assert response['status'] == 'success'
+
+    # Assert that all keys have been paused. The daemon should be still running.
+    status = command_factory('status')()
+    assert status['status'] == 'running'
+    assert status['data'][0]['status'] == 'paused'
+    assert status['data'][1]['status'] == 'paused'
+    assert status['data'][2]['status'] == 'running'
+    assert status['data'][3]['status'] == 'queued'
+
+
+def test_pause_multiple_specific_invalid(daemon_setup, multiple_setup):
+    """Pause specific valid and invalid entries of a daemon with multiple running processes
+
+    The daemon should pause all valid keys and ignore all invalid keys.
+    The response should be an error response.
+    ."""
+    # Add a single command
+
+    # Setup multiple processes test case
+    multiple_setup(
+        max_processes=3,
+        processes=4,
+        sleep_time=60,
+    )
+    # Pause and ensure that the response is an error, as we provided invalid keys.
+    response = command_factory('pause')({'keys': [0, 1, 3, 5]})
+    assert response['status'] == 'error'
+
+    # Assert that all valid keys have been paused.
+    status = command_factory('status')()
+    assert status['data'][0]['status'] == 'paused'
+    assert status['data'][1]['status'] == 'paused'
+    assert status['data'][2]['status'] == 'running'
     assert status['data'][3]['status'] == 'queued'
 
 
@@ -87,7 +132,7 @@ def test_start_after_pause(daemon_setup):
     after starting the daemon again.
     """
     # Add command
-    execute_add('sleep 4')
+    execute_add('sleep 4 && ls')
 
     # Pause the daemon and the process
     command_factory('pause')({'wait': False})
@@ -151,8 +196,8 @@ def test_multiple_start_during_pause(daemon_setup, multiple_setup):
     status = command_factory('status')()
 
     # Start the specific processes 0 and 3
-    command_factory('start')({'key': 0})
-    command_factory('start')({'key': 3})
+    command_factory('start')({'keys': [0]})
+    command_factory('start')({'keys': [3]})
 
     # Check if 0 is running, 1 should be still paused and 3 should be running
     status = command_factory('status')()
@@ -163,7 +208,7 @@ def test_multiple_start_during_pause(daemon_setup, multiple_setup):
     assert status['data'][3]['status'] == 'running'
 
     # Start 2 and check if it's running
-    command_factory('start')({'key': 2})
+    command_factory('start')({'keys': [2]})
     status = command_factory('status')()
     assert status['data'][2]['status'] == 'running'
 
@@ -177,7 +222,7 @@ def test_start_additional_process(daemon_setup):
 
     status = command_factory('status')()
     # Start the specific processes 0 and 3
-    command_factory('start')({'key': 3})
+    command_factory('start')({'keys': [3]})
 
     # Check if 0 is running, 1 should be still paused and 3 should be running
     status = command_factory('status')()
@@ -187,6 +232,6 @@ def test_start_additional_process(daemon_setup):
     assert status['data'][3]['status'] == 'running'
 
     # Start 2 and check if it's running
-    command_factory('start')({'key': 2})
+    command_factory('start')({'keys': [2]})
     status = command_factory('status')()
     assert status['data'][2]['status'] == 'running'
