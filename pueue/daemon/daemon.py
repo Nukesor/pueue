@@ -158,14 +158,16 @@ class Daemon():
         This function is the heart of the daemon.
         It is responsible for:
         - Client communication
-        - Calling the ProcessHandler API.
+        - Executing commands from clients
+        - Update the status of processes by polling the ProcessHandler.
         - Logging
         - Cleanup on exit
 
         """
         try:
             while self.running:
-                # Check for any finished processes
+                # Trigger the processing of finished processes by the ProcessHandler.
+                # If there are finished processes we write the log to keep it up to date.
                 if self.process_handler.check_finished():
                     self.logger.write(self.queue)
 
@@ -175,9 +177,15 @@ class Daemon():
                     self.queue.reset()
                     self.reset = False
 
-                # Start next Process
+                # Check if the ProcessHandler has any free slots to spawn a new process
                 if not self.paused and not self.reset and self.running:
                     self.process_handler.check_for_new()
+
+                # This is the communication section of the daemon.
+                # 1. Receive message from the client
+                # 2. Check payload and call respective function with payload as parameter.
+                # 3. Execute logic
+                # 4. Return payload with response to client
 
                 # Create list for waitable objects
                 readable, writable, failed = select.select(self.read_list, [], [], 1)
@@ -330,15 +338,27 @@ class Daemon():
         return answer
 
     def start(self, payload):
-        """Start the daemon and all processes or only a specific process."""
-        # Start a specific process, if we have a key in our payload
-        if payload.get('key') is not None:
-            success = self.process_handler.start_process(payload['key'])
-            if success:
-                answer = {'message': 'Process started.', 'status': 'success'}
-            else:
-                answer = {'message': 'No paused, queued or stashed process with this key.',
-                          'status': 'error'}
+        """Start the daemon and all processes or only specific processes."""
+        # Start specific processes, if `keys` is given in the payload
+        if payload.get('keys'):
+            succeeded = []
+            failed = []
+            for key in payload.get('keys'):
+                success = self.process_handler.start_process(key)
+                if success:
+                    succeeded.append(str(key))
+                else:
+                    failed.append(str(key))
+
+            message = ''
+            if len(succeeded) > 0:
+                message += 'Started processes: {}.'.format(', '.join(succeeded))
+                status = 'success'
+            if len(failed) > 0:
+                message += '\nNo paused, queued or stashed process for keys: {}'.format(', '.join(failed))
+                status = 'error'
+
+            answer = {'message': message.strip(), 'status': status}
 
         # Start a all processes and the daemon
         else:
@@ -353,15 +373,27 @@ class Daemon():
         return answer
 
     def pause(self, payload):
-        """Start the daemon and all processes or only a specific process."""
-        # Pause a specific process, if we have a key in our payload
-        if payload.get('key') is not None:
-            success = self.process_handler.pause_process(payload['key'])
-            if success:
-                answer = {'message': 'Process paused.', 'status': 'success'}
-            else:
-                answer = {'message': 'No running process with this key.',
-                          'status': 'error'}
+        """Start the daemon and all processes or only specific processes."""
+        # Pause specific processes, if `keys` is given in the payload
+        if payload.get('keys'):
+            succeeded = []
+            failed = []
+            for key in payload.get('keys'):
+                success = self.process_handler.pause_process(key)
+                if success:
+                    succeeded.append(str(key))
+                else:
+                    failed.append(str(key))
+
+            message = ''
+            if len(succeeded) > 0:
+                message += 'Paused processes: {}.'.format(', '.join(succeeded))
+                status = 'success'
+            if len(failed) > 0:
+                message += '\nNo running process for keys: {}'.format(', '.join(failed))
+                status = 'error'
+
+            answer = {'message': message.strip(), 'status': status}
 
         # Pause all processes and the daemon
         else:
@@ -382,56 +414,86 @@ class Daemon():
         return answer
 
     def stash(self, payload):
-        """Stash the specified process."""
-        # Pause a specific process, if we have a key in our payload
-        key = payload['key']
-        if self.queue.get(key) is not None:
-            if self.queue[key]['status'] == 'queued':
-                self.queue[key]['status'] = 'stashed'
-                answer = {'message': 'Process stashed.', 'status': 'success'}
+        """Stash the specified processes."""
+        succeeded = []
+        failed = []
+        for key in payload['keys']:
+            if self.queue.get(key) is not None:
+                if self.queue[key]['status'] == 'queued':
+                    self.queue[key]['status'] = 'stashed'
+                    succeeded.append(str(key))
+                else:
+                    failed.append(str(key))
             else:
-                answer = {'message': 'The specified entry is not queued.',
-                          'status': 'error'}
-        else:
-            answer = {'message': 'No entry for this key.',
-                      'status': 'error'}
+                failed.append(str(key))
+
+        message = ''
+        if len(succeeded) > 0:
+            message += 'Stashed entries: {}.'.format(', '.join(succeeded))
+            status = 'success'
+        if len(failed) > 0:
+            message += '\nNo queued entry for keys: {}'.format(', '.join(failed))
+            status = 'error'
+
+        answer = {'message': message.strip(), 'status': status}
 
         return answer
 
     def enqueue(self, payload):
-        """Enqueue a stashed process."""
-        # Pause a specific process, if we have a key in our payload
-        key = payload['key']
-        if self.queue.get(key) is not None:
-            if self.queue[key]['status'] == 'stashed':
-                self.queue[key]['status'] = 'queued'
-                answer = {'message': 'Process enqueued.', 'status': 'success'}
+        """Enqueue the specified stashed entries."""
+        succeeded = []
+        failed = []
+        for key in payload['keys']:
+            if self.queue.get(key) is not None:
+                if self.queue[key]['status'] == 'stashed':
+                    self.queue[key]['status'] = 'queued'
+                    succeeded.append(str(key))
+                else:
+                    failed.append(str(key))
             else:
-                answer = {'message': 'The specified entry is not stashed.',
-                          'status': 'error'}
-        else:
-            answer = {'message': 'No entry for this key.',
-                      'status': 'error'}
+                failed.append(str(key))
+
+        message = ''
+        if len(succeeded) > 0:
+            message += 'Enqueued entries: {}.'.format(', '.join(succeeded))
+            status = 'success'
+        if len(failed) > 0:
+            message += '\nNo stashed entry for keys: {}'.format(', '.join(failed))
+            status = 'error'
+
+        answer = {'message': message.strip(), 'status': status}
 
         return answer
 
     def stop_process(self, payload):
-        """Pause the daemon and stop all processes or stop a specific process."""
-        # Stop a specific process, if we have a key in our payload
-        if payload.get('key') is not None:
-            # Mark the process as `to be removed` as soon as it terminates
-            if payload.get('remove'):
-                success = self.process_handler.stop_process(payload['key'], remove=True)
-                success_message = 'Process will be stopped and removed.'
-            else:
-                success = self.process_handler.stop_process(payload['key'], stash=True)
-                success_message = 'Process stopping.'
+        """Pause the daemon and stop all processes or stop specific processes."""
+        # Stop specific processes, if `keys` is given in the payload
+        if payload.get('keys'):
+            succeeded = []
+            failed = []
+            status = 'success'
+            for key in payload.get('keys'):
+                if payload.get('remove'):
+                    success = self.process_handler.stop_process(key, remove=True)
+                else:
+                    success = self.process_handler.stop_process(key, stash=True)
+                if success:
+                    succeeded.append(str(key))
+                else:
+                    failed.append(str(key))
 
-            if success:
-                answer = {'message': success_message, 'status': 'success'}
-            else:
-                answer = {'message': 'No running process with this key.',
-                          'status': 'error'}
+            message = ''
+            if len(succeeded) > 0:
+                if payload.get('remove'):
+                    message += 'Stopped and removed processes: {}.'.format(', '.join(succeeded))
+                else:
+                    message += 'Stopped processes: {}.'.format(', '.join(succeeded))
+                status = 'success'
+            if len(failed) > 0:
+                message += '\nNo running process for keys: {}'.format(', '.join(failed))
+                status = 'error'
+
+            answer = {'message': message.strip(), 'status': status}
 
         # Stop all processes and the daemon
         else:
@@ -447,21 +509,33 @@ class Daemon():
 
     def kill_process(self, payload):
         """Pause the daemon and kill all processes or kill a specific process."""
-        # Kill a specific process, if we have a key in our payload
-        if payload.get('key') is not None:
-            # Mark the process as `to be removed` as soon as it terminates
-            if payload.get('remove'):
-                success = self.process_handler.kill_process(payload['key'], remove=True)
-                success_message = 'Process will be killed and removed.'
-            else:
-                success = self.process_handler.kill_process(payload['key'], stash=True)
-                success_message = 'Process killed.'
+        # Kill specific processes, if `keys` is given in the payload
+        if payload.get('keys'):
+            succeeded = []
+            failed = []
+            status = 'success'
+            for key in payload.get('keys'):
+                if payload.get('remove'):
+                    success = self.process_handler.kill_process(key, remove=True)
+                else:
+                    success = self.process_handler.kill_process(key, stash=True)
+                if success:
+                    succeeded.append(str(key))
+                else:
+                    failed.append(str(key))
 
-            if success:
-                answer = {'message': success_message, 'status': 'success'}
-            else:
-                answer = {'message': 'No running process with this key.',
-                          'status': 'error'}
+            message = ''
+            if len(succeeded) > 0:
+                if payload.get('remove'):
+                    message += 'Killed and removed processes: {}.'.format(', '.join(succeeded))
+                else:
+                    message += 'Killed processes: {}.'.format(', '.join(succeeded))
+                status = 'success'
+            if len(failed) > 0:
+                message += '\nNo running process for keys: {}'.format(', '.join(failed))
+                status = 'error'
+
+            answer = {'message': message.strip(), 'status': status}
 
         # Kill all processes and the daemon
         else:
@@ -479,29 +553,37 @@ class Daemon():
     def add(self, payload):
         """Add a entry to the queue."""
         self.queue.add_new(payload)
-        return {'message': 'Command added', 'status': 'success'}
+        return {'message': 'Entry added', 'status': 'success'}
 
     def remove(self, payload):
-        """Remove a single entry from the queue."""
-        key = payload['key']
-        running = self.process_handler.is_running(key)
-        if running:
-            answer = {
-                'message': "Can't remove running process, "
-                "please stop the process before removing it.",
-                'status': 'error'
-            }
-        else:
-            # Check if we can delete the command from the queue
-            removed = self.queue.remove(key)
-            if removed:
-                answer = {'message': 'Command #{} removed'.format(key), 'status': 'success'}
+        """Remove specified entries from the queue."""
+        succeeded = []
+        failed = []
+        for key in payload['keys']:
+            running = self.process_handler.is_running(key)
+            if not running:
+                removed = self.queue.remove(key)
+                if removed:
+                    succeeded.append(str(key))
+                else:
+                    failed.append(str(key))
             else:
-                answer = {'message': 'No command with key #{}'.format(str(key)), 'status': 'error'}
+                failed.append(str(key))
+
+        message = ''
+        if len(succeeded) > 0:
+            message += 'Removed entries: {}.'.format(', '.join(succeeded))
+            status = 'success'
+        if len(failed) > 0:
+            message += '\nRunning or non-existing entry for keys: {}'.format(', '.join(failed))
+            status = 'error'
+
+        answer = {'message': message.strip(), 'status': status}
 
         return answer
 
     def switch(self, payload):
+        """Switch the two specified entry positions in the queue."""
         first = payload['first']
         second = payload['second']
         running = self.process_handler.is_running(first) or self.process_handler.is_running(second)
@@ -516,21 +598,32 @@ class Daemon():
             switched = self.queue.switch(first, second)
             if switched:
                 answer = {
-                    'message': 'Command #{} and #{} switched'.format(first, second),
+                    'message': 'Entries #{} and #{} switched'.format(first, second),
                     'status': 'success'
                 }
             else:
-                answer = {'message': "One of the specified keys doesn't exist in the queue.",
+                answer = {'message': "One or both entries do not exist or are not queued/stashed.",
                           'status': 'error'}
         return answer
 
     def restart(self, payload):
-        key = payload['key']
-        restarted = self.queue.restart(key)
-        if restarted:
-            answer = {'message': 'Command #{} queued again'.format(key),
-                      'status': 'success'}
-        else:
-            answer = {'message': 'No finished command for this key',
-                      'status': 'error'}
+        """Restart the specified entries."""
+        succeeded = []
+        failed = []
+        for key in payload['keys']:
+            restarted = self.queue.restart(key)
+            if restarted:
+                succeeded.append(str(key))
+            else:
+                failed.append(str(key))
+
+        message = ''
+        if len(succeeded) > 0:
+            message += 'Restarted entries: {}.'.format(', '.join(succeeded))
+            status = 'success'
+        if len(failed) > 0:
+            message += '\nNo finished entry for keys: {}'.format(', '.join(failed))
+            status = 'error'
+
+        answer = {'message': message.strip(), 'status': status}
         return answer

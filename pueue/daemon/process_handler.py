@@ -167,6 +167,7 @@ class ProcessHandler():
                 stderr=stderr,
                 stdin=subprocess.PIPE,
                 universal_newlines=True,
+                preexec_fn=os.setsid,
                 cwd=self.queue[key]['path']
             )
             self.queue[key]['status'] = 'running'
@@ -203,7 +204,7 @@ class ProcessHandler():
     def start_process(self, key):
         """Start a specific processes."""
         if key in self.processes and key in self.paused:
-            os.kill(self.processes[key].pid, signal.SIGCONT)
+            os.killpg(os.getpgid(self.processes[key].pid), signal.SIGCONT)
             self.queue[key]['status'] = 'running'
             self.paused.remove(key)
             return True
@@ -217,7 +218,7 @@ class ProcessHandler():
     def pause_process(self, key):
         """Pause a specific processes."""
         if key in self.processes and key not in self.paused:
-            os.kill(self.processes[key].pid, signal.SIGSTOP)
+            os.killpg(os.getpgid(self.processes[key].pid), signal.SIGSTOP)
             self.queue[key]['status'] = 'paused'
             self.paused.append(key)
             return True
@@ -232,10 +233,10 @@ class ProcessHandler():
             if self.processes[key].returncode is None:
                 # Kill process
                 if kill:
-                    self.processes[key].kill()
+                    os.killpg(os.getpgid(self.processes[key].pid), signal.SIGKILL)
                     self.queue[key]['status'] = 'killing'
                 else:
-                    self.processes[key].terminate()
+                    os.killpg(os.getpgid(self.processes[key].pid), signal.SIGTERM)
                     self.queue[key]['status'] = 'stopping'
 
                 self.stopping.append(key)
