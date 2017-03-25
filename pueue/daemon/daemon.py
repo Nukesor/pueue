@@ -285,6 +285,8 @@ class Daemon():
         message = payload['input']
         key = payload['key']
         self.process_handler.send_to_process(message, key)
+        return {'message': 'Message sent',
+                'status': 'success'}
 
     def send_status(self, payload):
         """Send the daemon status and the current queue for displaying."""

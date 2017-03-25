@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 
 
+## [0.8.1]
+
+### Fixed
+- Fixed missing return message for `send`.
+
+
 ## [0.8.0]
 
 ### Added
