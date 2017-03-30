@@ -133,6 +133,8 @@ class ProcessHandler():
                         self.queue[key]['start'] = ''
                         self.queue[key]['end'] = ''
 
+                    self.queue.write()
+
                 self.clean_descriptor(key)
                 del self.processes[key]
 
@@ -172,6 +174,8 @@ class ProcessHandler():
             )
             self.queue[key]['status'] = 'running'
             self.queue[key]['start'] = str(datetime.now().strftime("%H:%M"))
+
+        self.queue.write()
 
     def send_to_process(self, message, key):
         self.processes[key].stdin.write(message)

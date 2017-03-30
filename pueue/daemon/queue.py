@@ -48,7 +48,7 @@ class Queue():
         """
 
         for _, item in self.queue.items():
-            if item['status'] in ['running', 'stopping', 'killing']:
+            if item['status'] in ['paused', 'running', 'stopping', 'killing']:
                 item['status'] = 'queued'
                 item['start'] = ''
                 item['end'] = ''
@@ -58,6 +58,7 @@ class Queue():
         for key in list(self.queue.keys()):
             if self.queue[key]['status'] in ['done', 'failed']:
                 del self.queue[key]
+        self.write()
 
     def next(self):
         """Get the next processable item of the queue.
@@ -128,6 +129,7 @@ class Queue():
                 new_entry = {'command': self.queue[key]['command'],
                              'path': self.queue[key]['path']}
                 self.add_new(new_entry)
+                self.write()
                 return True
         return False
 
@@ -141,5 +143,6 @@ class Queue():
             tmp = self.queue[second].copy()
             self.queue[second] = self.queue[first].copy()
             self.queue[first] = tmp
+            self.write()
             return True
         return False

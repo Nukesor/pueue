@@ -7,6 +7,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Fixed missing return message for `send`.
+- Write queue more often. This prevents entries from disappearing after reboot.
+- Set `paused` entries to `queued` on restart.
 
 
 ## [0.8.0]
