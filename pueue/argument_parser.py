@@ -1,6 +1,7 @@
 import argparse
 
 from pueue.client.factories import print_command_factory
+from pueue.daemon.signals import signals
 
 from pueue.client.displaying import (
     execute_status,
@@ -54,8 +55,10 @@ max_processes_subcommand.add_argument(
     'value', type=int,
     help="The amount of concurrent running processes."
 )
-max_processes_subcommand.set_defaults(option='maxProcesses')
-max_processes_subcommand.set_defaults(func=print_command_factory('config'))
+max_processes_subcommand.set_defaults(
+    func=print_command_factory('config'),
+    option='maxProcesses',
+)
 
 
 # Show
@@ -182,29 +185,32 @@ enqueue_subcommand.add_argument(
 enqueue_subcommand.set_defaults(func=print_command_factory('enqueue'))
 
 
+def doesnt_represent_int(string):
+    try:
+        int(string)
+        return False
+    except:
+        return True
+
+
+case_sensitive_signals = list(signals.keys())
+case_sensitive_signals += list(
+    map(lambda x: x.upper(),
+        filter(doesnt_represent_int, case_sensitive_signals))
+)
+
 # Kills the current running process
 kill_subcommand = subparsers.add_parser(
     'kill', help='Kill all processes and pause the Daemon.')
 kill_subcommand.add_argument(
-    '-r', '--remove', action='store_true',
-    help='All running processes/the selected process will be removed from the queue.'
+    '-s', '--signal', choices=case_sensitive_signals,
+    help='All running processes/the selected process will be removed from the queue.',
 )
 kill_subcommand.add_argument(
     'keys', type=int, nargs='*',
     help="The indices of the processes to be killed. The daemon won't pause."
 )
-kill_subcommand.set_defaults(func=print_command_factory('kill'))
-
-
-# Terminate the current running process and starts the next
-stop_subcommand = subparsers.add_parser(
-    'stop', help='Stop all processes and pause the Daemon.')
-stop_subcommand.add_argument(
-    '-r', '--remove', action='store_true',
-    help='If this flag is set, the all running processes/the selected process will be removed from the queue.'
+kill_subcommand.set_defaults(
+    func=print_command_factory('kill'),
+    signal='sigint',
 )
-stop_subcommand.add_argument(
-    'keys', type=int, nargs='*',
-    help="The indices of the processes to be stopped. The daemon won't pause."
-)
-stop_subcommand.set_defaults(func=print_command_factory('stop'))

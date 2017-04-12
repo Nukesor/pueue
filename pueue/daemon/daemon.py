@@ -1,6 +1,7 @@
 import os
 import sys
 import stat
+import signal
 import socket
 import pickle
 import select
@@ -12,6 +13,7 @@ from pueue.daemon.files import cleanup
 from pueue.daemon.queue import Queue
 from pueue.daemon.logger import Logger
 from pueue.daemon.process_handler import ProcessHandler
+from pueue.daemon.signals import signals
 
 
 class Daemon():
@@ -230,7 +232,6 @@ class Daemon():
                                 'stash': self.stash,
                                 'enqueue': self.enqueue,
                                 'restart': self.restart,
-                                'stop': self.stop_process,
                                 'kill': self.kill_process,
                                 'reset': self.reset_everything,
                                 'clear': self.clear,
@@ -264,7 +265,8 @@ class Daemon():
 
         The daemon will shut down after a last check on all killed processes.
         """
-        self.process_handler.kill_all()
+        kill_signal = signals['9']
+        self.process_handler.kill_all(kill_signal)
         self.running = False
 
         return {'message': 'Pueue daemon shutting down',
@@ -318,7 +320,8 @@ class Daemon():
     def reset_everything(self, payload):
         """Kill all processes, delete the queue and clean everything up."""
 
-        self.process_handler.kill_all()
+        kill_signal = signals['9']
+        self.process_handler.kill_all(kill_signal)
         self.process_handler.wait_for_finish()
         self.reset = True
 
@@ -467,60 +470,15 @@ class Daemon():
 
         return answer
 
-    def stop_process(self, payload):
-        """Pause the daemon and stop all processes or stop specific processes."""
-        # Stop specific processes, if `keys` is given in the payload
-        if payload.get('keys'):
-            succeeded = []
-            failed = []
-            status = 'success'
-            for key in payload.get('keys'):
-                if payload.get('remove'):
-                    success = self.process_handler.stop_process(key, remove=True)
-                else:
-                    success = self.process_handler.stop_process(key, stash=True)
-                if success:
-                    succeeded.append(str(key))
-                else:
-                    failed.append(str(key))
-
-            message = ''
-            if len(succeeded) > 0:
-                if payload.get('remove'):
-                    message += 'Stopped and removed processes: {}.'.format(', '.join(succeeded))
-                else:
-                    message += 'Stopped processes: {}.'.format(', '.join(succeeded))
-                status = 'success'
-            if len(failed) > 0:
-                message += '\nNo running process for keys: {}'.format(', '.join(failed))
-                status = 'error'
-
-            answer = {'message': message.strip(), 'status': status}
-
-        # Stop all processes and the daemon
-        else:
-            self.process_handler.stop_all()
-            if not self.paused:
-                self.paused = True
-                answer = {'message': 'Daemon paused and all processes stopped.',
-                          'status': 'success'}
-            else:
-                answer = {'message': 'Daemon already paused, stopping all processes.',
-                          'status': 'success'}
-        return answer
-
     def kill_process(self, payload):
         """Pause the daemon and kill all processes or kill a specific process."""
         # Kill specific processes, if `keys` is given in the payload
+        kill_signal = signals[payload['signal'].lower()]
         if payload.get('keys'):
             succeeded = []
             failed = []
-            status = 'success'
             for key in payload.get('keys'):
-                if payload.get('remove'):
-                    success = self.process_handler.kill_process(key, remove=True)
-                else:
-                    success = self.process_handler.kill_process(key, stash=True)
+                success = self.process_handler.kill_process(key, kill_signal)
                 if success:
                     succeeded.append(str(key))
                 else:
@@ -528,10 +486,7 @@ class Daemon():
 
             message = ''
             if len(succeeded) > 0:
-                if payload.get('remove'):
-                    message += 'Killed and removed processes: {}.'.format(', '.join(succeeded))
-                else:
-                    message += 'Killed processes: {}.'.format(', '.join(succeeded))
+                message += "Signal '{}' sent to processes: {}.".format(payload['signal'], ', '.join(succeeded))
                 status = 'success'
             if len(failed) > 0:
                 message += '\nNo running process for keys: {}'.format(', '.join(failed))
@@ -541,15 +496,13 @@ class Daemon():
 
         # Kill all processes and the daemon
         else:
-            self.process_handler.kill_all()
-            if not self.paused:
+            self.process_handler.kill_all(kill_signal)
+            if kill_signal == signal.SIGINT or \
+               kill_signal == signal.SIGTERM or \
+               kill_signal == signal.SIGKILL:
                 self.paused = True
-                answer = {'message': 'Daemon paused and all processes kill.',
-                          'status': 'success'}
-            else:
-
-                answer = {'message': 'Daemon already paused, kill all processes.',
-                          'status': 'success'}
+            answer = {'message': 'Signal send to all processes.',
+                      'status': 'success'}
         return answer
 
     def add(self, payload):

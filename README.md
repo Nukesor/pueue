@@ -68,13 +68,10 @@ There is a help option (-h) for all commands, but I'll list them here anyway.
     2. Otherwise stop processing the queue and pause all running processes. If the `--wait` flag is set, the daemon will pause, but all running processes will finish on their own.  
 
 `pueue restart [keys...]` Enqueue the specified `done` or `failed` processes again.  
-`pueue stop [keys...] -r` This command has two different behaviors, depending on if a key is given:  
-    1. If keys are given, terminate the specified processes and stash them. If `-r` is provided the processes will be removed from the queue.  
-    2. Otherwise terminate all running processes (`kill`) and pause the daemon.  
 
-`pueue kill [keys...] -r` This command has two different behaviors, depending on if keys are given:  
-    1. If keys are given, KILL the specified processes (`kill -9`) and stash them. If `-r` is provided the running processes will be removed from the queue.  
-    2. Otherwise KILL all running processes (`kill -9`) and pause the daemon.  
+`pueue kill [keys...] -s [signal]` This command tries to copy the behaviour of the Linux `kill` command. It will send a signal (default is `SigTerm`) to the specified processes:  
+    1. If keys are given, the signal will be send to the specified processes.
+    2. Otherwise send the signal to all running processes. If the signal is `sigint`, `sigterm` or `sigkill` the daemon will be paused.  
 
 
 `pueue show --key --watch ` Show the output of `--key` or the oldest running process.  
