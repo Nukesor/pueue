@@ -69,8 +69,8 @@ There is a help option (-h) for all commands, but I'll list them here anyway.
 
 `pueue restart [keys...]` Enqueue the specified `done` or `failed` processes again.  
 
-`pueue kill [keys...] -s [signal]` This command tries to copy the behaviour of the Linux `kill` command. It will send a signal (default is `SigTerm`) to the specified processes:  
-    1. If keys are given, the signal will be send to the specified processes.
+`pueue kill [keys...] -s [signal]` This command tries to copy the behaviour of the Linux `kill` command. It will send a signal (default is `SigTerm`) to the specified processes. Available signals can be viewed with `pueue kill -h` under the `-s` flag:  
+    1. If keys are given, the signal will be send to the specified processes.  
     2. Otherwise send the signal to all running processes. If the signal is `sigint`, `sigterm` or `sigkill` the daemon will be paused.  
 
 
