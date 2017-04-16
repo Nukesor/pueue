@@ -70,8 +70,8 @@ There is a help option (-h) for all commands, but I'll list them here anyway.
 `pueue restart [keys...]` Enqueue the specified `done` or `failed` processes again.  
 
 `pueue kill [keys...] -s [signal] -a` This command tries to copy the behaviour of the Linux `kill` command. It will send a signal (default is `sigterm`) to the specified processes.  
-    Available signals can be viewed with `pueue kill -h` under the `-s` flag. Either the int `15` the full name `sigterm/SIGTERM` or the abbreviation `term/TERM` can be used.  
-    Be aware that the signal will only be sent to the children of the shell process by default, i.e. if you send a `sigint` right after starting a `sleep 5 ; sleep 10` the `sleep 5` process will be stopped and the `sleep 10` will spawn afterwards. To send the signal to the parent process as well you need to add the `-a` flag.
+    Available signals can be viewed with `pueue kill -h` under the `-s` flag. Either the int `15`, the full name `sigterm/SIGTERM` or the abbreviation `term/TERM` can be used.  
+    Be aware that by default the signal will only be sent to the children of the shell process , i.e. if you send a `sigint` right after starting `sleep 5 ; sleep 10` the `sleep 5` process will be stopped and the `sleep 10` will spawn afterwards. To send the signal to the parent process as well you need to add the `-a` flag.
     1. If keys are given, the signal will be send to the specified processes.  
     2. Otherwise send the signal to all running processes. If the signal is `sigint`, `sigterm` or `sigkill` the daemon will be paused.  
 
