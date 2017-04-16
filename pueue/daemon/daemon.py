@@ -474,11 +474,12 @@ class Daemon():
         """Pause the daemon and kill all processes or kill a specific process."""
         # Kill specific processes, if `keys` is given in the payload
         kill_signal = signals[payload['signal'].lower()]
+        kill_shell = payload.get('all', False)
         if payload.get('keys'):
             succeeded = []
             failed = []
             for key in payload.get('keys'):
-                success = self.process_handler.kill_process(key, kill_signal)
+                success = self.process_handler.kill_process(key, kill_signal, kill_shell)
                 if success:
                     succeeded.append(str(key))
                 else:
@@ -496,7 +497,7 @@ class Daemon():
 
         # Kill all processes and the daemon
         else:
-            self.process_handler.kill_all(kill_signal)
+            self.process_handler.kill_all(kill_signal, kill_shell)
             if kill_signal == signal.SIGINT or \
                kill_signal == signal.SIGTERM or \
                kill_signal == signal.SIGKILL:

@@ -207,6 +207,10 @@ kill_subcommand.add_argument(
     help='All running processes/the selected process will be removed from the queue.',
 )
 kill_subcommand.add_argument(
+    '-a', '--all', action='store_true',
+    help='Send the signal to the spawned process AND the shell process.',
+)
+kill_subcommand.add_argument(
     'keys', type=int, nargs='*',
     help="The indices of the processes to be killed. The daemon won't pause."
 )

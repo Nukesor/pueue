@@ -1,6 +1,7 @@
 import os
 import time
 import signal
+import psutil
 import subprocess
 
 from datetime import datetime
@@ -195,10 +196,10 @@ class ProcessHandler():
         for key in self.processes.keys():
             self.pause_process(key)
 
-    def kill_all(self, kill_signal):
+    def kill_all(self, kill_signal, kill_shell):
         """Kill all running processes."""
         for key in self.processes.keys():
-            self.kill_process(key, kill_signal)
+            self.kill_process(key, kill_signal, kill_shell)
 
     def start_process(self, key):
         """Start a specific processes."""
@@ -223,14 +224,17 @@ class ProcessHandler():
             return True
         return False
 
-    def kill_process(self, key, kill_signal):
+    def kill_process(self, key, kill_signal, kill_shell):
         if key in self.processes:
             self.processes[key].poll()
             if self.processes[key].returncode is None:
                 # Kill process
-                os.killpg(os.getpgid(self.processes[key].pid), kill_signal)
-                if kill_signal == signal.SIGKILL or kill_signal == signal.SIGINT:
-                    self.queue[key]['status'] = 'killing'
+                shell_process = psutil.Process(self.processes[key].pid)
+                children = shell_process.children()
+                if kill_shell:
+                    shell_process.send_signal(kill_signal)
+                for child in children:
+                    child.send_signal(kill_signal)
 
             return True
         return False
