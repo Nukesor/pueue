@@ -196,7 +196,7 @@ class ProcessHandler():
         for key in self.processes.keys():
             self.pause_process(key)
 
-    def kill_all(self, kill_signal, kill_shell):
+    def kill_all(self, kill_signal, kill_shell=False):
         """Kill all running processes."""
         for key in self.processes.keys():
             self.kill_process(key, kill_signal, kill_shell)
@@ -224,17 +224,17 @@ class ProcessHandler():
             return True
         return False
 
-    def kill_process(self, key, kill_signal, kill_shell):
+    def kill_process(self, key, kill_signal, kill_shell=False):
         if key in self.processes:
             self.processes[key].poll()
             if self.processes[key].returncode is None:
                 # Kill process
                 shell_process = psutil.Process(self.processes[key].pid)
                 children = shell_process.children()
-                if kill_shell:
+                if kill_shell or len(children) == 0:
                     shell_process.send_signal(kill_signal)
                 for child in children:
                     child.send_signal(kill_signal)
 
-            return True
+                return True
         return False

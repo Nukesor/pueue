@@ -266,7 +266,7 @@ class Daemon():
         The daemon will shut down after a last check on all killed processes.
         """
         kill_signal = signals['9']
-        self.process_handler.kill_all(kill_signal)
+        self.process_handler.kill_all(kill_signal, True)
         self.running = False
 
         return {'message': 'Pueue daemon shutting down',
@@ -321,7 +321,7 @@ class Daemon():
         """Kill all processes, delete the queue and clean everything up."""
 
         kill_signal = signals['9']
-        self.process_handler.kill_all(kill_signal)
+        self.process_handler.kill_all(kill_signal, True)
         self.process_handler.wait_for_finish()
         self.reset = True
 
