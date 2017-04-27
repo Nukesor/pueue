@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - The `kill` command has been remodeled. Instead of always sending an `SigKill` it now allows you to specify the signal that should be sent (default is `SIGTERM`).  
     By default the signal will be sent to the processes spawned by the `shell` parent process. The new `-a/--all` flag is provided in case you want to send the signal to the parent process as well.  
     Available signals can be viewed with `pueue kill -h` under the `-s` flag. Either the int `15` the full name `sigterm/SIGTERM` or the abbreviation `term/TERM` can be used.  
+    For now we support: SIGHUP, SIGINT, SIGQUIT, SIGKILL, SIGTERM, SIGCONT, SIGSTOP
 - The `stop` command has been removed, as it is now covered by the `kill` command
 
 
