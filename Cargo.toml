@@ -1,0 +1,6 @@
+[package]
+name = "pueue"
+version = "0.1.0"
+authors = ["Arne Beer <arne@twobeer.de>"]
+
+[dependencies]
