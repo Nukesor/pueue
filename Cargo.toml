@@ -1,6 +1,15 @@
 [package]
 name = "pueue"
+description = "A shell commandline parallel processing management tool."
 version = "0.1.0"
 authors = ["Arne Beer <arne@twobeer.de>"]
+repository = "https://github.com/nukesor/pueue-rs"
+license = "MIT"
+keywords = ["shell", "commandline", "parallel", "daemon", ""]
+
+[badges]
+travis-ci = { repository = "nukesor/pueue-rs", branch = "master" }
+maintenance = { status = "actively-developed" }
 
 [dependencies]
+daemonize = "0.2.3"
