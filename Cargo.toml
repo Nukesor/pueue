@@ -5,11 +5,15 @@ version = "0.1.0"
 authors = ["Arne Beer <arne@twobeer.de>"]
 repository = "https://github.com/nukesor/pueue-rs"
 license = "MIT"
-keywords = ["shell", "commandline", "parallel", "daemon", ""]
+keywords = ["shell", "commandline", "parallel", "daemon"]
 
 [badges]
 travis-ci = { repository = "nukesor/pueue-rs", branch = "master" }
 maintenance = { status = "actively-developed" }
 
 [dependencies]
-daemonize = "0.2.3"
+daemonize = "^0.2"
+serde = "^1.0"
+serde_json = "^1.0"
+clap = "^2.31"
+prettytable-rs = "^0.6"
