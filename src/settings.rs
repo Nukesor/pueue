@@ -21,6 +21,7 @@ pub struct Daemon {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Worker {
     pub local: bool,
+    pub worker_group: String,
     pub address: String,
     pub port: u32,
 }
@@ -59,6 +60,7 @@ impl Settings {
         config.set_default("common.group_id", group_id)?;
 
         config.set_default("worker.local", true)?;
+        config.set_default("worker.worker_group", "local")?;
         config.set_default("worker.address", "127.0.0.1")?;
         config.set_default("worker.port", 2112)?;
 

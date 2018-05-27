@@ -5,7 +5,7 @@ extern crate users;
 //use daemonize::{Daemonize};
 //use users::{get_user_by_uid, get_current_uid};
 
-use pueue::communication::local::get_unix_listener;
+use pueue::daemon::Daemon;
 use pueue::settings::Settings;
 
 fn main() {
@@ -17,7 +17,9 @@ fn main() {
         println!("{:?}", save_result.err());
     }
 
-    let mut unix_listener = get_unix_listener(&settings);
+    let mut daemon = Daemon::new(&settings);
+
+    daemon.start();
 
     //    let user = get_user_by_uid(get_current_uid()).unwrap();
     //    let daemonize = Daemonize::new()
