@@ -1,3 +1,1 @@
-struct Queue {
-
-}
+struct Queue {}

@@ -1,5 +1,6 @@
 extern crate pueue;
 
+use pueue::communication::local::get_unix_stream;
 use pueue::settings::Settings;
 
 fn main() {
@@ -11,5 +12,5 @@ fn main() {
         println!("{:?}", save_result.err());
     }
 
-    println!("{:?}", settings);
+    let mut unix_listener = get_unix_stream(&settings);
 }

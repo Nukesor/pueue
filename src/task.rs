@@ -1,3 +1,1 @@
-struct Task {
-
-}
+struct Task {}
