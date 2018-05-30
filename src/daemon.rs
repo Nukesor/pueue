@@ -19,6 +19,7 @@ impl Daemon {
     /// such as the queue, sockets and the process handler.
     pub fn new(settings: &Settings) -> Self {
         let unix_listener = get_unix_listener(&settings);
+        unix_listener.set_nonblocking(true).expect("Failed to set set_nonblocking");
 
         Daemon {
             unix_listener: unix_listener,
@@ -30,27 +31,38 @@ impl Daemon {
     /// Incoming requests are handled in `self.handle_request`.
     pub fn check_connections(&self) {
         // accept connections and process them, spawning a new thread for each one
-        for stream in self.unix_listener.incoming() {
-            match stream {
-                Ok(mut stream) => {
-                    let mut request = String::new();
-                    let result = stream.read_to_string(&mut request);
-                    if result.is_err() {
-                        println!("Failed to receive message from local client. Ignoring.");
-                    }
+        loop {
+            // No incoming client connections, break the loop and other stuff
+            let incoming = self.unix_listener.accept();
+            if let Err(err) = incoming {
+                break;
+            }
+            let (mut stream, _addr) = incoming.unwrap();
 
-                    self.handle_request(&request);
-                }
-                Err(err) => {
-                    println!("Local client connection error. {:?}.", err);
-                    continue;
-                }
+            println!("Incoming");
+            // Receive the message.
+            let mut request = String::new();
+            let received = stream.read_to_string(&mut request);
+            if received.is_err() {
+                println!("Failed to receive message from local client.");
+            }
+
+            println!("Received");
+            let response = self.handle_request(&request);
+
+            println!("Send");
+            // Send the response message
+            let sent = stream.write_all(response.as_bytes());
+            if received.is_err() {
+                println!("Failed to send message to local client.");
             }
         }
     }
 
-    pub fn handle_request(&self, request: &str) {
+    pub fn handle_request(&self, request: &str) -> String {
         println!("{}", request);
+
+        String::from("Hallo, was geht so da drüben?")
     }
 
     /// Start the daemon.
@@ -79,7 +91,6 @@ impl Daemon {
             ),
         }
 
-        println!("tick");
         self.last_tick = Instant::now();
     }
 }
