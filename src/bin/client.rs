@@ -1,6 +1,9 @@
 extern crate pueue;
+extern crate tokio_core;
 
 use std::io::prelude::*;
+use tokio_core::reactor::Core;
+
 use pueue::communication::local::get_unix_stream;
 use pueue::settings::Settings;
 
@@ -13,7 +16,10 @@ fn main() {
         println!("{:?}", save_result.err());
     }
 
-    let mut unix_stream = get_unix_stream(&settings);
+
+    let core = Core::new().unwrap();
+    let handle = core.handle();
+    let mut unix_stream = get_unix_stream(&settings, &handle);
 
     unix_stream.write_all(b"hello world").unwrap();
     let mut response = String::new();

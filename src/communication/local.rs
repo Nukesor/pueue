@@ -1,12 +1,17 @@
+use std::io;
+use std::io::prelude::*;
 use std::fs::remove_file;
-use std::os::unix::net::{UnixListener, UnixStream};
 use std::path::Path;
+
+use tokio::prelude::*;
+use tokio_core::reactor::Handle;
+use tokio_uds::{UnixListener, UnixStream};
 
 use settings::Settings;
 
 /// Create a new unix listener.
 /// In case a socket already exists it will be removed
-pub fn get_unix_listener(settings: &Settings) -> UnixListener {
+pub fn get_unix_listener(settings: &Settings, handle: &Handle) -> UnixListener {
     let socket_path = get_socket_path(&settings);
 
     // Remove old socket
@@ -17,16 +22,16 @@ pub fn get_unix_listener(settings: &Settings) -> UnixListener {
 
     println!("Creating socket at {}", socket_path);
 
-    UnixListener::bind(socket_path).expect("Failed to create unix socket.")
+    UnixListener::bind(socket_path, handle).expect("Failed to create unix socket.")
 }
 
 /// Create a new unix stream.
 /// This is used by clients and connects to the local daemon server socket.
-pub fn get_unix_stream(settings: &Settings) -> UnixStream {
+pub fn get_unix_stream(settings: &Settings, handle: &Handle) -> UnixStream {
     let socket_path = get_socket_path(settings);
     println!("Connecting to socket at {}", socket_path);
 
-    UnixStream::connect(&socket_path).expect("Failed to connect to socket.")
+    UnixStream::connect(&socket_path, handle).expect("Failed to connect to socket.")
 }
 
 /// Helper function to create the socket path used by clients and the daemon.
@@ -38,4 +43,26 @@ pub fn get_socket_path(settings: &Settings) -> String {
         .to_str()
         .expect("Unable to create socket path.")
         .to_string()
+}
+
+pub struct UnixPoller {
+    pub connection: UnixStream,
+    pub message: String,
+}
+
+impl Future for UnixPoller {
+    type Item = ();
+    type Error = io::Error;
+
+    fn poll(&mut self) -> Result<Async<Self::Item>, Self::Error> {
+        // Check if we are allowed to read the stream
+        if self.connection.poll_read().is_not_ready() {
+            return Ok(Async::NotReady);
+        }
+
+        let _received = self.connection.read_to_string(&mut self.message)?;
+        println!("{}", self.message);
+
+        Ok(Async::Ready(()))
+    }
 }
