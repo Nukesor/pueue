@@ -2,8 +2,10 @@ extern crate daemonize;
 extern crate pueue;
 extern crate users;
 extern crate tokio;
+extern crate tokio_core;
 
 use tokio::prelude::*;
+use tokio_core::reactor::Core;
 
 //use daemonize::{Daemonize};
 //use users::{get_user_by_uid, get_current_uid};
@@ -20,7 +22,10 @@ fn main() {
         println!("{:?}", save_result.err());
     }
 
-    let daemon = Daemon::new(&settings);
+    let mut core = Core::new().unwrap();
+    let handle = core.handle();
 
-    tokio::run(daemon);
+    let daemon = Daemon::new(&settings, handle);
+
+    core.run(daemon).unwrap();
 }

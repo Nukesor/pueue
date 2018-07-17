@@ -45,12 +45,12 @@ pub fn get_socket_path(settings: &Settings) -> String {
         .to_string()
 }
 
-pub struct UnixPoller {
+pub struct UnixHandler {
     pub connection: UnixStream,
     pub message: String,
 }
 
-impl Future for UnixPoller {
+impl Future for UnixHandler {
     type Item = ();
     type Error = io::Error;
 

@@ -1,25 +1,23 @@
 use futures::Future;
 use tokio::prelude::*;
-use tokio_core::reactor::Core;
 use tokio_uds::UnixListener;
+use tokio_core::reactor::Handle;
 
-use communication::local::{get_unix_listener, UnixPoller};
+use communication::local::{get_unix_listener, UnixHandler};
 use settings::Settings;
 
 /// The daemon is center of all logic in pueue.
 /// This is the single source of truth for all clients and workers.
 pub struct Daemon {
     unix_listener: UnixListener,
-    unix_poller: Vec<UnixPoller>,
+    unix_poller: Vec<UnixHandler>,
 }
 
 impl Daemon {
     /// Create a new daemon.
     /// This function also handle the creation of other components,
     /// such as the queue, sockets and the process handler.
-    pub fn new(settings: &Settings) -> Self {
-        let core = Core::new().unwrap();
-        let handle = core.handle();
+    pub fn new(settings: &Settings, handle: Handle) -> Self {
         let unix_listener = get_unix_listener(&settings, &handle);
 
         Daemon {
@@ -44,7 +42,7 @@ impl Future for Daemon {
                     }
                     let (connection, _socket_addr) = result.unwrap();
 
-                    let connection = UnixPoller{
+                    let connection = UnixHandler{
                         connection: connection,
                         message: String::new(),
                     };
