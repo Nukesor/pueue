@@ -1,5 +1,3 @@
-use std::io;
-use std::io::prelude::*;
 use std::fs::remove_file;
 use std::path::Path;
 
@@ -31,7 +29,7 @@ pub fn get_unix_stream(settings: &Settings, handle: &Handle) -> UnixStream {
     let socket_path = get_socket_path(settings);
     println!("Connecting to socket at {}", socket_path);
 
-    UnixStream::connect(&socket_path, handle).expect("Failed to connect to socket.")
+    UnixStream::connect(&socket_path, handle).expect("Failed to connect to socket. Is the daemon running?")
 }
 
 /// Helper function to create the socket path used by clients and the daemon.
@@ -43,26 +41,4 @@ pub fn get_socket_path(settings: &Settings) -> String {
         .to_str()
         .expect("Unable to create socket path.")
         .to_string()
-}
-
-pub struct UnixHandler {
-    pub connection: UnixStream,
-    pub message: String,
-}
-
-impl Future for UnixHandler {
-    type Item = ();
-    type Error = io::Error;
-
-    fn poll(&mut self) -> Result<Async<Self::Item>, Self::Error> {
-        // Check if we are allowed to read the stream
-        if self.connection.poll_read().is_not_ready() {
-            return Ok(Async::NotReady);
-        }
-
-        let _received = self.connection.read_to_string(&mut self.message)?;
-        println!("{}", self.message);
-
-        Ok(Async::Ready(()))
-    }
 }
