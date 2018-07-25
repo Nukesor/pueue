@@ -1,9 +1,11 @@
-use std::io::Error as io_Error;
+use byteorder::{BigEndian, ReadBytesExt};
 use futures::Future;
-use tokio::io;
+use std::io::Cursor;
+use std::io::Error as io_Error;
+use tokio::io as tokio_io;
 use tokio::prelude::*;
-use tokio_uds::{UnixListener, UnixStream};
 use tokio_core::reactor::Handle;
+use tokio_uds::{UnixListener, UnixStream};
 
 use communication::local::get_unix_listener;
 use settings::Settings;
@@ -36,13 +38,21 @@ impl Daemon {
                 Async::Ready(()) => {
                     let result = self.unix_listener.accept();
                     if result.is_err() {
+                        println!("Failed to accept incoming unix connection.");
                         break;
                     }
 
                     let (stream, _socket_addr) = result.unwrap();
+                    let buffer: Vec<u8> = vec![0; 8];
 
-                    println!("Got new connection.");
-                    let incoming = io::read_to_end(stream, Vec::new());
+                    println!("Got new unix connection.");
+                    let incoming = tokio_io::read_exact(stream, buffer).then(|result| {
+                        let (stream, message) = result.unwrap();
+                        let mut header = Cursor::new(message);
+                        let message_size = header.read_u64::<BigEndian>().unwrap() as usize;
+                        let buffer: Vec<u8> = vec![0; message_size];
+                        tokio_io::read_exact(stream, buffer)
+                    });
                     self.unix_incoming.push(Box::new(incoming));
                 }
                 Async::NotReady => break,
@@ -79,7 +89,7 @@ impl Daemon {
                     println!("{}", message_result.unwrap());
 
                     let response = String::from("heyo");
-                    let response_future = io::write_all(stream, response.into_bytes());
+                    let response_future = tokio_io::write_all(stream, response.into_bytes());
                     self.unix_response.push(Box::new(response_future));
                     self.unix_incoming.remove(i);
                 }
@@ -107,7 +117,9 @@ impl Daemon {
 
             // Handle message and create response future
             match result.unwrap() {
-                Async::Ready((_, _)) => {self.unix_response.remove(i);},
+                Async::Ready((_, _)) => {
+                    self.unix_response.remove(i);
+                }
                 Async::NotReady => {}
             }
         }

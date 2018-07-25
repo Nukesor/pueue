@@ -1,8 +1,8 @@
 extern crate pueue;
 extern crate tokio_core;
 
-use pueue::settings::Settings;
 use pueue::client::client::Client;
+use pueue::settings::Settings;
 
 fn main() {
     let settings = Settings::new().unwrap();

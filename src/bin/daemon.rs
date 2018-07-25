@@ -1,8 +1,8 @@
 extern crate daemonize;
 extern crate pueue;
-extern crate users;
 extern crate tokio;
 extern crate tokio_core;
+extern crate users;
 
 use tokio::prelude::*;
 use tokio_core::reactor::Core;
