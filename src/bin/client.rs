@@ -13,5 +13,5 @@ fn main() {
         println!("{:?}", save_result.err());
     }
 
-    Client::answer(&settings);
+    Client::call(&settings);
 }

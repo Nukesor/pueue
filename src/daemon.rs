@@ -32,26 +32,35 @@ impl Daemon {
         }
     }
 
+    /// Poll the unix listener and accept new incoming connections
+    /// Create a new future for receiving the message and add it to unix_incoming
     fn accept_incoming(&mut self) {
         loop {
+            // Poll if we have a new incoming connection.
+            // In case we don't, break the loop
             match self.unix_listener.poll_read() {
                 Async::Ready(()) => {
+                    // Accept new connection
                     let result = self.unix_listener.accept();
+
+                    // Check if we can connect otherwise continue the loop
                     if result.is_err() {
                         println!("Failed to accept incoming unix connection.");
-                        break;
+                        println!("{:?}", result.err());
+                        continue;
                     }
-
                     let (stream, _socket_addr) = result.unwrap();
-                    let buffer: Vec<u8> = vec![0; 8];
 
-                    println!("Got new unix connection.");
-                    let incoming = tokio_io::read_exact(stream, buffer).then(|result| {
+                    // First read the 8byte header to determine the size of the message
+                    let incoming = tokio_io::read_exact(stream, vec![0; 8]).then(|result| {
                         let (stream, message) = result.unwrap();
+
+                        // Extract the message size from the header bytes
                         let mut header = Cursor::new(message);
                         let message_size = header.read_u64::<BigEndian>().unwrap() as usize;
-                        let buffer: Vec<u8> = vec![0; message_size];
-                        tokio_io::read_exact(stream, buffer)
+
+                        // Read the message
+                        tokio_io::read_exact(stream, vec![0; message_size])
                     });
                     self.unix_incoming.push(Box::new(incoming));
                 }
@@ -60,12 +69,13 @@ impl Daemon {
         }
     }
 
+    /// Continuously poll the existing incoming futures.
+    /// In case we received a message, handle it and create a response future.
+    /// The response future is added to unix_response and handled in a separate function.
     fn handle_incoming(&mut self) {
-        println!("Start incoming polls");
         let len = self.unix_incoming.len();
         for i in (0..len).rev() {
             let result = self.unix_incoming[i].poll();
-            println!("Polling for read {}", i);
 
             // Handle socket error
             if result.is_err() {
@@ -76,9 +86,10 @@ impl Daemon {
                 continue;
             }
 
-            // Handle message and create response future
+            // We received a message from a client. Handle it
             match result.unwrap() {
                 Async::Ready((stream, message_bytes)) => {
+                    // Extract message and handle invalid utf8
                     let message_result = String::from_utf8(message_bytes);
                     if message_result.is_err() {
                         println!("Didn't receive valid utf8.");
@@ -86,9 +97,10 @@ impl Daemon {
 
                         continue;
                     }
-                    println!("{}", message_result.unwrap());
 
-                    let response = String::from("heyo");
+                    println!("{}", message_result.unwrap());
+                    // Create a future for sending the response.
+                    let response = String::from("rofl");
                     let response_future = tokio_io::write_all(stream, response.into_bytes());
                     self.unix_response.push(Box::new(response_future));
                     self.unix_incoming.remove(i);
@@ -96,15 +108,13 @@ impl Daemon {
                 Async::NotReady => {}
             }
         }
-        println!("End incoming polls");
     }
 
+    /// Send the response to the client.
     fn handle_responses(&mut self) {
-        println!("Start response polls");
         let len = self.unix_response.len();
         for i in (0..len).rev() {
             let result = self.unix_response[i].poll();
-            println!("Polling for send {}", i);
 
             // Handle socket error
             if result.is_err() {
@@ -115,7 +125,7 @@ impl Daemon {
                 continue;
             }
 
-            // Handle message and create response future
+            // Check whether the response has been sent and remove the future and thereby the socket on success
             match result.unwrap() {
                 Async::Ready((_, _)) => {
                     self.unix_response.remove(i);
@@ -123,7 +133,6 @@ impl Daemon {
                 Async::NotReady => {}
             }
         }
-        println!("End response polls");
     }
 }
 
@@ -131,6 +140,8 @@ impl Future for Daemon {
     type Item = ();
     type Error = String;
 
+    /// The poll function of the daemon.
+    /// This is continuously called by the Tokio core.
     fn poll(&mut self) -> Result<Async<()>, Self::Error> {
         // Accept all new connections
         self.accept_incoming();
