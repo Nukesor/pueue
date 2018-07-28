@@ -2,12 +2,13 @@ use chrono::prelude::*;
 use chrono::DateTime;
 
 pub struct Task {
-    status: TaskStatus,
-    returncode: Option<u16>,
-    stdout: String,
-    stderr: String,
-    start: Option<DateTime<Local>>,
-    end: Option<DateTime<Local>>,
+    pub command: String,
+    pub status: TaskStatus,
+    pub returncode: Option<u16>,
+    pub stdout: Option<String>,
+    pub stderr: Option<String>,
+    pub start: Option<DateTime<Local>>,
+    pub end: Option<DateTime<Local>>,
 }
 
 pub enum TaskStatus {

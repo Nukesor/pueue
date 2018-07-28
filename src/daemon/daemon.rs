@@ -2,14 +2,17 @@ use byteorder::{BigEndian, ReadBytesExt};
 use futures::Future;
 use std::io::Cursor;
 use std::io::Error as io_Error;
+use std::cell::RefCell;
+use std::rc::Rc;
 use tokio::io as tokio_io;
 use tokio::prelude::*;
 use tokio_core::reactor::Handle;
 use tokio_uds::{UnixListener, UnixStream};
 
 use communication::local::get_unix_listener;
-use settings::Settings;
 use daemon::queue::QueueHandler;
+use daemon::task_handler::TaskHandler;
+use settings::Settings;
 
 /// The daemon is center of all logic in pueue.
 /// This is the single source of truth for all clients and workers.
@@ -17,7 +20,8 @@ pub struct Daemon {
     unix_listener: UnixListener,
     unix_incoming: Vec<Box<Future<Item = (UnixStream, Vec<u8>), Error = io_Error> + Send>>,
     unix_response: Vec<Box<Future<Item = (UnixStream, Vec<u8>), Error = io_Error> + Send>>,
-    queue_handler: Box<QueueHandler>
+    queue_handler: Rc<RefCell<QueueHandler>>,
+    task_handler: TaskHandler,
 }
 
 impl Daemon {
@@ -26,12 +30,15 @@ impl Daemon {
     /// such as the queue, sockets and the process handler.
     pub fn new(settings: &Settings, handle: Handle) -> Self {
         let unix_listener = get_unix_listener(&settings, &handle);
+        let queue_handler = Rc::new(RefCell::new(QueueHandler::new()));
+        let task_handler = TaskHandler::new(Rc::clone(&queue_handler));
 
         Daemon {
             unix_listener: unix_listener,
             unix_incoming: Vec::new(),
             unix_response: Vec::new(),
-            queue_handler: Box::new(QueueHandler::new()),
+            queue_handler: queue_handler,
+            task_handler: task_handler,
         }
     }
 
@@ -154,8 +161,18 @@ impl Future for Daemon {
 
         self.handle_responses();
 
+        self.task_handler.check_new();
+
         // `NotReady` is returned here because the future never actually
         // completes. The server runs until it is dropped.
         Ok(Async::NotReady)
+    }
+}
+
+
+impl Daemon {
+    pub fn handle_message(&mut self, message: String) {
+        let mut queue_handler = self.queue_handler.borrow_mut();
+        queue_handler.add_task(message);
     }
 }
