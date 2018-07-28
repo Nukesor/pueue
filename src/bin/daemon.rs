@@ -10,7 +10,7 @@ use tokio_core::reactor::Core;
 //use daemonize::{Daemonize};
 //use users::{get_user_by_uid, get_current_uid};
 
-use pueue::daemon::Daemon;
+use pueue::daemon::daemon::Daemon;
 use pueue::settings::Settings;
 
 fn main() {

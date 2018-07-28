@@ -9,6 +9,7 @@ use tokio_uds::{UnixListener, UnixStream};
 
 use communication::local::get_unix_listener;
 use settings::Settings;
+use daemon::queue::QueueHandler;
 
 /// The daemon is center of all logic in pueue.
 /// This is the single source of truth for all clients and workers.
@@ -16,6 +17,7 @@ pub struct Daemon {
     unix_listener: UnixListener,
     unix_incoming: Vec<Box<Future<Item = (UnixStream, Vec<u8>), Error = io_Error> + Send>>,
     unix_response: Vec<Box<Future<Item = (UnixStream, Vec<u8>), Error = io_Error> + Send>>,
+    queue_handler: Box<QueueHandler>
 }
 
 impl Daemon {
@@ -29,6 +31,7 @@ impl Daemon {
             unix_listener: unix_listener,
             unix_incoming: Vec::new(),
             unix_response: Vec::new(),
+            queue_handler: Box::new(QueueHandler::new()),
         }
     }
 
