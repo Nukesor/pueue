@@ -1,6 +1,7 @@
 use std::rc::Rc;
 use std::cell::RefCell;
 use daemon::queue::QueueHandler;
+use daemon::task::TaskStatus;
 
 pub struct TaskHandler {
     queue_handler: Rc<RefCell<QueueHandler>>,
@@ -16,9 +17,20 @@ impl TaskHandler {
 
 impl TaskHandler {
     pub fn check_new(&mut self) {
-        let mut queue_handler = self.queue_handler.borrow_mut();
-        let task = queue_handler.get_next_task();
+        let index = {
+            let queue_handler = self.queue_handler.borrow();
+            let next = queue_handler.get_next_task();
 
+            let (index, task) = if let Some((index, task)) = next {
+                (index, task)
+            } else {
+                return;
+            };
 
+            index
+        };
+
+        let mut queue_handler_mut = self.queue_handler.borrow_mut();
+        queue_handler_mut.change_status(index, TaskStatus::Running);
     }
 }

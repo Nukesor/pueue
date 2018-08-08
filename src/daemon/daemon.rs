@@ -101,16 +101,20 @@ impl Daemon {
                 Async::Ready((stream, message_bytes)) => {
                     // Extract message and handle invalid utf8
                     let message_result = String::from_utf8(message_bytes);
-                    if message_result.is_err() {
+
+                    let message = if let Ok(message) = message_result {
+                        message
+                    } else {
                         println!("Didn't receive valid utf8.");
                         self.unix_incoming.remove(i);
 
                         continue;
-                    }
+                    };
 
-                    println!("{}", message_result.unwrap());
+                    self.handle_message(&message, &String::from("/"));
+                    println!("{}", message);
                     // Create a future for sending the response.
-                    let response = String::from("rofl");
+                    let response = String::from("Command added");
                     let response_future = tokio_io::write_all(stream, response.into_bytes());
                     self.unix_response.push(Box::new(response_future));
                     self.unix_incoming.remove(i);
@@ -171,8 +175,8 @@ impl Future for Daemon {
 
 
 impl Daemon {
-    pub fn handle_message(&mut self, message: String) {
+    pub fn handle_message(&mut self, message: &String, path: &String) {
         let mut queue_handler = self.queue_handler.borrow_mut();
-        queue_handler.add_task(message);
+        queue_handler.add_task(&message, path);
     }
 }

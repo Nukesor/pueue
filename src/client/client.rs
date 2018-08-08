@@ -7,6 +7,7 @@ use tokio_io::io as tokio_io;
 
 use communication::local::get_unix_stream;
 use settings::Settings;
+use client::cli::get_app;
 
 /// The client
 pub struct Client {}
@@ -18,15 +19,24 @@ impl Client {
         let handle = core.handle();
         let unix_stream = get_unix_stream(&settings, &handle);
 
-        let message = b"hi omfg im so happy.?";
-        let byte_size = message.len() as u64;
+        // Get commandline arguments
+        let matches = get_app();
+
+        // Get command
+        let message = matches.value_of("command").unwrap();
+        let command_type = 1 as u64;
+
+        // Prepare command for transfer and determine message byte length
+        let payload= message.as_bytes();
+        let byte_size = payload.len() as u64;
 
         let mut header = vec![];
         header.write_u64::<BigEndian>(byte_size).unwrap();
+        //header.write_u64::<BigEndian>(command_type).unwrap();
 
         // Send the request size header and the request to the header
         let process = tokio_io::write_all(unix_stream, header)
-            .and_then(|(stream, _written)| tokio_io::write_all(stream, message))
+            .and_then(|(stream, _written)| tokio_io::write_all(stream, payload))
             // Now receive the response until the connection closes.
             .and_then(|(stream, _written)| {
                 tokio_io::read_to_end(stream, Vec::new())

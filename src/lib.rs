@@ -1,4 +1,5 @@
 extern crate byteorder;
+extern crate clap;
 extern crate chrono;
 extern crate config;
 extern crate serde;

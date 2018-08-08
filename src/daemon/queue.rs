@@ -1,7 +1,7 @@
 use daemon::task::{Task, TaskStatus};
 
 pub struct QueueHandler {
-    queue: Vec<Option<Task>>,
+    queue: Vec<Option<Box<Task>>>,
 }
 
 impl QueueHandler {
@@ -11,9 +11,10 @@ impl QueueHandler {
         }
     }
 
-    pub fn add_task(&mut self, message: String) {
+    pub fn add_task(&mut self, command: &String, path: &String) {
         let task = Task {
-            command: message,
+            command: command.clone(),
+            path: path.clone(),
             status: TaskStatus::Queued,
             returncode: None,
             stdout: None,
@@ -22,16 +23,18 @@ impl QueueHandler {
             end: None,
         };
 
-        self.queue.push(Some(task));
+        self.queue.push(Some(Box::new(task)));
     }
 
-    pub fn get_next_task(&mut self) -> Option<&Task> {
-        for i in 0..self.queue.len() {
-            match self.queue[i] {
+    pub fn get_next_task(&self) -> Option<(usize, Option<&Task>)> {
+        for (i, task) in self.queue.iter().enumerate() {
+            match task {
                 None => continue,
-                Some(ref task) => {
+                Some(task) => {
                     match task.status {
-                        TaskStatus::Queued => return Some(task),
+                        TaskStatus::Queued => {
+                            return Some((i as usize, Some(task)));
+                        },
                         _ => continue,
                     }
                 },
@@ -39,5 +42,13 @@ impl QueueHandler {
         }
 
         None
+    }
+
+    pub fn change_status(&mut self, index: usize, status: TaskStatus) {
+        let ref mut task = if let Some(ref mut task) = self.queue[index] {
+            task
+        } else { return; };
+
+        task.status = status;
     }
 }
