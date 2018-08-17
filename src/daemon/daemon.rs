@@ -150,6 +150,13 @@ impl Daemon {
     }
 }
 
+impl Daemon {
+    pub fn handle_message(&mut self, message: &String, path: &String) {
+        let mut queue_handler = self.queue_handler.borrow_mut();
+        queue_handler.add_task(&message, path);
+    }
+}
+
 impl Future for Daemon {
     type Item = ();
     type Error = String;
@@ -170,13 +177,5 @@ impl Future for Daemon {
         // `NotReady` is returned here because the future never actually
         // completes. The server runs until it is dropped.
         Ok(Async::NotReady)
-    }
-}
-
-
-impl Daemon {
-    pub fn handle_message(&mut self, message: &String, path: &String) {
-        let mut queue_handler = self.queue_handler.borrow_mut();
-        queue_handler.add_task(&message, path);
     }
 }

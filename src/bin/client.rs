@@ -1,6 +1,8 @@
 extern crate pueue;
 extern crate tokio_core;
 
+use tokio_core::reactor::Core;
+
 use pueue::client::client::Client;
 use pueue::settings::Settings;
 
@@ -13,5 +15,10 @@ fn main() {
         println!("{:?}", save_result.err());
     }
 
-    Client::call(&settings);
+    let mut core = Core::new().unwrap();
+    let handle = core.handle();
+
+    let client = Client::new(&settings, handle);
+
+    core.run(client).unwrap();
 }
