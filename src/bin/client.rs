@@ -18,7 +18,7 @@ fn main() {
     let mut core = Core::new().unwrap();
     let handle = core.handle();
 
-    let client = Client::new(&settings, handle);
+    let client = Client::new(settings, handle);
 
     core.run(client).unwrap();
 }

@@ -22,7 +22,7 @@ pub struct Client {
 }
 
 impl Client {
-    pub fn new(settings: Settings, handle: Handle, message: Vec<u8>) -> Self {
+    pub fn new(settings: Settings, handle: Handle) -> Self {
         let message = handle_cli();
 
         Client {
@@ -44,7 +44,7 @@ impl Client {
         let unix_stream = get_unix_stream(&self.settings, &self.handle);
 
         // Get command
-        let command_type = 1 as u64;
+        let command_index = get_command_index(&self.message.message_type);
 
         // Prepare command for transfer and determine message byte length
         let byte_size = self.message.payload.chars().count() as u64;
@@ -52,12 +52,12 @@ impl Client {
 
         let mut header = vec![];
         header.write_u64::<BigEndian>(byte_size).unwrap();
-        header.write_u64::<BigEndian>(command_type).unwrap();
+        header.write_u64::<BigEndian>(command_index).unwrap();
 
         // Send the request size header first.
         // Afterwards send the request.
         let communication_future = tokio_io::write_all(unix_stream, header)
-            .and_then(move |(stream, _written)| tokio_io::write_all(stream, payload.as_bytes()))
+            .and_then(move |(stream, _written)| tokio_io::write_all(stream, payload))
             .and_then(|(stream, _written)| tokio_io::read_to_end(stream, Vec::new()));
 
         self.communication_future = Some(Box::new(communication_future));

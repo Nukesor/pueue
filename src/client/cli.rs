@@ -21,7 +21,7 @@ pub fn handle_cli() -> Message {
     };
 
     let message = Message {
-        message_type: MessageTypes::Add,
+        message_type: MessageType::Add,
         payload: serde_json::to_string(&add).unwrap(),
         add: Some(add),
     };

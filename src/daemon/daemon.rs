@@ -62,12 +62,13 @@ impl Daemon {
                     let (stream, _socket_addr) = result.unwrap();
 
                     // First read the 8byte header to determine the size of the message
-                    let incoming = tokio_io::read_exact(stream, vec![0; 8]).then(|result| {
+                    let incoming = tokio_io::read_exact(stream, vec![0; 16]).then(|result| {
                         let (stream, message) = result.unwrap();
 
                         // Extract the message size from the header bytes
                         let mut header = Cursor::new(message);
                         let message_size = header.read_u64::<BigEndian>().unwrap() as usize;
+                        let command_index = header.read_u64::<BigEndian>().unwrap() as usize;
 
                         // Read the message
                         tokio_io::read_exact(stream, vec![0; message_size])
