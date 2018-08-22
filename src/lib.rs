@@ -1,12 +1,13 @@
 extern crate byteorder;
-extern crate clap;
 extern crate chrono;
+extern crate clap;
 extern crate config;
 extern crate serde;
 extern crate toml;
 #[macro_use]
 extern crate serde_derive;
 extern crate futures;
+extern crate serde_json;
 extern crate shellexpand;
 extern crate tokio;
 extern crate tokio_core;

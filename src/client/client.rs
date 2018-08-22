@@ -2,25 +2,29 @@ use byteorder::{BigEndian, WriteBytesExt};
 use futures::Future;
 use std::io::Error as io_Error;
 use tokio::prelude::*;
+use tokio_core::reactor::Handle;
 use tokio_io::io as tokio_io;
 use tokio_uds::UnixStream;
-use tokio_core::reactor::Handle;
 
+use client::cli::handle_cli;
 use communication::local::get_unix_stream;
+use communication::message::*;
 use settings::Settings;
-use client::cli::get_app;
 
 /// The client
 pub struct Client {
     handle: Handle,
     settings: Settings,
-    message: Vec<u8>,
+    message: Message,
     response: Option<String>,
-    communication_future: Option<Box<Future<Item = (UnixStream, Vec<u8>), Error = io_Error> + Send>>,
+    communication_future:
+        Option<Box<Future<Item = (UnixStream, Vec<u8>), Error = io_Error> + Send>>,
 }
 
 impl Client {
     pub fn new(settings: Settings, handle: Handle, message: Vec<u8>) -> Self {
+        let message = handle_cli();
+
         Client {
             handle: handle,
             settings: settings,
@@ -33,22 +37,18 @@ impl Client {
     pub fn send_message(&mut self) {
         // Early return if we are already waiting for a future.
         if self.communication_future.is_some() {
-            return
+            return;
         }
 
         // Create a new tokio core
         let unix_stream = get_unix_stream(&self.settings, &self.handle);
 
-        // Get commandline arguments
-        let matches = get_app();
-
         // Get command
-        let message = matches.value_of("command").unwrap();
         let command_type = 1 as u64;
 
         // Prepare command for transfer and determine message byte length
-        let payload = message.as_bytes();
-        let byte_size = payload.len() as u64;
+        let byte_size = self.message.payload.chars().count() as u64;
+        let payload = self.message.payload.clone();
 
         let mut header = vec![];
         header.write_u64::<BigEndian>(byte_size).unwrap();
@@ -57,10 +57,8 @@ impl Client {
         // Send the request size header first.
         // Afterwards send the request.
         let communication_future = tokio_io::write_all(unix_stream, header)
-            .and_then(move |(stream, _written)| tokio_io::write_all(stream, payload.clone()))
-            .and_then(|(stream, _written)| {
-                tokio_io::read_to_end(stream, Vec::new())
-            });
+            .and_then(move |(stream, _written)| tokio_io::write_all(stream, payload.as_bytes()))
+            .and_then(|(stream, _written)| tokio_io::read_to_end(stream, Vec::new()));
 
         self.communication_future = Some(Box::new(communication_future));
     }
@@ -102,9 +100,7 @@ impl Client {
 
                 true
             }
-            Async::NotReady => {
-                false
-            }
+            Async::NotReady => false,
         }
     }
 
@@ -115,10 +111,9 @@ impl Client {
             return false;
         };
 
-
         println!("{}", &response);
 
-        return true
+        return true;
     }
 }
 

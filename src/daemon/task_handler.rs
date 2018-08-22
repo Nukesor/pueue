@@ -1,7 +1,7 @@
-use std::rc::Rc;
-use std::cell::RefCell;
 use daemon::queue::QueueHandler;
 use daemon::task::TaskStatus;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 pub struct TaskHandler {
     queue_handler: Rc<RefCell<QueueHandler>>,

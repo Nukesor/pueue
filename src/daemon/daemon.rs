@@ -1,8 +1,8 @@
 use byteorder::{BigEndian, ReadBytesExt};
 use futures::Future;
+use std::cell::RefCell;
 use std::io::Cursor;
 use std::io::Error as io_Error;
-use std::cell::RefCell;
 use std::rc::Rc;
 use tokio::io as tokio_io;
 use tokio::prelude::*;

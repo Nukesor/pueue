@@ -6,9 +6,7 @@ pub struct QueueHandler {
 
 impl QueueHandler {
     pub fn new() -> Self {
-        QueueHandler {
-            queue: Vec::new(),
-        }
+        QueueHandler { queue: Vec::new() }
     }
 
     pub fn add_task(&mut self, command: &String, path: &String) {
@@ -30,13 +28,11 @@ impl QueueHandler {
         for (i, task) in self.queue.iter().enumerate() {
             match task {
                 None => continue,
-                Some(task) => {
-                    match task.status {
-                        TaskStatus::Queued => {
-                            return Some((i as usize, Some(task)));
-                        },
-                        _ => continue,
+                Some(task) => match task.status {
+                    TaskStatus::Queued => {
+                        return Some((i as usize, Some(task)));
                     }
+                    _ => continue,
                 },
             }
         }
@@ -47,7 +43,9 @@ impl QueueHandler {
     pub fn change_status(&mut self, index: usize, status: TaskStatus) {
         let ref mut task = if let Some(ref mut task) = self.queue[index] {
             task
-        } else { return; };
+        } else {
+            return;
+        };
 
         task.status = status;
     }
