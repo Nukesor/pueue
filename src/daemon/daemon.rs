@@ -6,7 +6,6 @@ use std::io::Error as io_Error;
 use std::rc::Rc;
 use tokio::io as tokio_io;
 use tokio::prelude::*;
-use tokio_core::reactor::Handle;
 use tokio_uds::{UnixListener, UnixStream};
 
 use communication::local::{get_unix_listener, ReceiveInstruction};
@@ -29,13 +28,12 @@ impl Daemon {
     /// Create a new daemon.
     /// This function also handle the creation of other components,
     /// such as the queue, sockets and the process handler.
-    pub fn new(settings: &Settings, handle: Handle) -> Self {
-        let unix_listener = get_unix_listener(&settings, &handle);
+    pub fn new(settings: &Settings) -> Self {
         let queue_handler = Rc::new(RefCell::new(QueueHandler::new()));
         let task_handler = TaskHandler::new(Rc::clone(&queue_handler));
 
         Daemon {
-            unix_listener: unix_listener,
+            unix_listener: get_unix_listener(&settings),
             unix_incoming: Vec::new(),
             unix_response: Vec::new(),
             queue_handler: queue_handler,
@@ -49,19 +47,17 @@ impl Daemon {
         loop {
             // Poll if we have a new incoming connection.
             // In case we don't, break the loop
-            match self.unix_listener.poll_read() {
-                Async::Ready(()) => {
-                    // Accept new connection
-                    let result = self.unix_listener.accept();
+            let accept_result = self.unix_listener.poll_accept();
+            let accept_future = if let Ok(future) = accept_result {
+                future
+            } else {
+                println!("Failed to accept incoming unix connection.");
+                println!("{:?}", accept_result.err());
+                continue;
+            };
 
-                    // Check if we can connect otherwise continue the loop
-                    if result.is_err() {
-                        println!("Failed to accept incoming unix connection.");
-                        println!("{:?}", result.err());
-                        continue;
-                    }
-                    let (stream, _socket_addr) = result.unwrap();
-
+            match accept_future {
+                Async::Ready((stream, _socket_addr)) => {
                     // First read the header to determine the size of the instruction
                     let incoming = tokio_io::read_exact(stream, vec![0; 16])
                         .then(|result| {
@@ -81,9 +77,9 @@ impl Daemon {
                                 instruction_type: message_type.unwrap(),
                                 read_instruction_future: Box::new(tokio_io::read_exact(stream, vec![0; instruction_size])),
                             })
-                    });
+                        });
                     self.unix_incoming.push(Box::new(incoming));
-                }
+                },
                 Async::NotReady => break,
             }
         }

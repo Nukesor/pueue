@@ -4,7 +4,6 @@ use std::io::Error as io_Error;
 
 use futures::Future;
 use tokio::prelude::*;
-use tokio_core::reactor::Handle;
 use tokio_uds::{UnixListener, UnixStream};
 
 use settings::Settings;
@@ -12,7 +11,7 @@ use communication::message::MessageType;
 
 /// Create a new unix listener.
 /// In case a socket already exists it will be removed
-pub fn get_unix_listener(settings: &Settings, handle: &Handle) -> UnixListener {
+pub fn get_unix_listener(settings: &Settings) -> UnixListener {
     let socket_path = get_socket_path(&settings);
 
     // Remove old socket
@@ -23,16 +22,7 @@ pub fn get_unix_listener(settings: &Settings, handle: &Handle) -> UnixListener {
 
     println!("Creating socket at {}", socket_path);
 
-    UnixListener::bind(socket_path, handle).expect("Failed to create unix socket.")
-}
-
-/// Create a new unix stream.
-/// This is used by clients and connects to the local daemon server socket.
-pub fn get_unix_stream(settings: &Settings, handle: &Handle) -> UnixStream {
-    let socket_path = get_socket_path(settings);
-
-    UnixStream::connect(&socket_path, handle)
-        .expect("Failed to connect to socket. Is the daemon running?")
+    UnixListener::bind(socket_path).expect("Failed to create unix socket.")
 }
 
 /// Helper function to create the socket path used by clients and the daemon.

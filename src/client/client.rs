@@ -2,18 +2,16 @@ use byteorder::{BigEndian, WriteBytesExt};
 use futures::Future;
 use std::io::Error as io_Error;
 use tokio::prelude::*;
-use tokio_core::reactor::Handle;
 use tokio_io::io as tokio_io;
 use tokio_uds::UnixStream;
 
 use client::cli::handle_cli;
-use communication::local::get_unix_stream;
+use communication::local::get_socket_path;
 use communication::message::*;
 use settings::Settings;
 
 /// The client
 pub struct Client {
-    handle: Handle,
     settings: Settings,
     message: Message,
     response: Option<String>,
@@ -22,11 +20,10 @@ pub struct Client {
 }
 
 impl Client {
-    pub fn new(settings: Settings, handle: Handle) -> Self {
+    pub fn new(settings: Settings) -> Self {
         let message = handle_cli();
 
         Client {
-            handle: handle,
             settings: settings,
             message: message,
             response: None,
@@ -39,9 +36,6 @@ impl Client {
         if self.communication_future.is_some() {
             return;
         }
-
-        // Create a new tokio core
-        let unix_stream = get_unix_stream(&self.settings, &self.handle);
 
         // Get command
         let command_index = get_message_index(&self.message.message_type);
@@ -56,7 +50,8 @@ impl Client {
 
         // Send the request size header first.
         // Afterwards send the request.
-        let communication_future = tokio_io::write_all(unix_stream, header)
+        let communication_future = UnixStream::connect(get_socket_path(&self.settings))
+            .and_then(move |stream| tokio_io::write_all(stream, header))
             .and_then(move |(stream, _written)| tokio_io::write_all(stream, payload))
             .and_then(|(stream, _written)| tokio_io::read_to_end(stream, Vec::new()));
 
