@@ -44,7 +44,7 @@ impl Client {
         let unix_stream = get_unix_stream(&self.settings, &self.handle);
 
         // Get command
-        let command_index = get_command_index(&self.message.message_type);
+        let command_index = get_message_index(&self.message.message_type);
 
         // Prepare command for transfer and determine message byte length
         let byte_size = self.message.payload.chars().count() as u64;

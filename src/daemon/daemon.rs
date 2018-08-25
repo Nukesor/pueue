@@ -9,7 +9,8 @@ use tokio::prelude::*;
 use tokio_core::reactor::Handle;
 use tokio_uds::{UnixListener, UnixStream};
 
-use communication::local::get_unix_listener;
+use communication::local::{get_unix_listener, ReceiveInstruction};
+use communication::message::{MessageType, get_message_type};
 use daemon::queue::QueueHandler;
 use daemon::task_handler::TaskHandler;
 use settings::Settings;
@@ -18,7 +19,7 @@ use settings::Settings;
 /// This is the single source of truth for all clients and workers.
 pub struct Daemon {
     unix_listener: UnixListener,
-    unix_incoming: Vec<Box<Future<Item = (UnixStream, Vec<u8>), Error = io_Error> + Send>>,
+    unix_incoming: Vec<Box<Future<Item = (MessageType, String, UnixStream), Error = String> + Send>>,
     unix_response: Vec<Box<Future<Item = (UnixStream, Vec<u8>), Error = io_Error> + Send>>,
     queue_handler: Rc<RefCell<QueueHandler>>,
     task_handler: TaskHandler,
@@ -43,7 +44,7 @@ impl Daemon {
     }
 
     /// Poll the unix listener and accept new incoming connections
-    /// Create a new future for receiving the message and add it to unix_incoming
+    /// Create a new future for receiving the instruction and add it to unix_incoming
     fn accept_incoming(&mut self) {
         loop {
             // Poll if we have a new incoming connection.
@@ -61,17 +62,25 @@ impl Daemon {
                     }
                     let (stream, _socket_addr) = result.unwrap();
 
-                    // First read the 8byte header to determine the size of the message
-                    let incoming = tokio_io::read_exact(stream, vec![0; 16]).then(|result| {
-                        let (stream, message) = result.unwrap();
+                    // First read the header to determine the size of the instruction
+                    let incoming = tokio_io::read_exact(stream, vec![0; 16])
+                        .then(|result| {
+                            let (stream, header) = result.unwrap();
 
-                        // Extract the message size from the header bytes
-                        let mut header = Cursor::new(message);
-                        let message_size = header.read_u64::<BigEndian>().unwrap() as usize;
-                        let command_index = header.read_u64::<BigEndian>().unwrap() as usize;
+                            // Extract the instruction size from the header bytes
+                            let mut header = Cursor::new(header);
+                            let instruction_size = header.read_u64::<BigEndian>().unwrap() as usize;
+                            let instruction_index = header.read_u64::<BigEndian>().unwrap() as usize;
 
-                        // Read the message
-                        tokio_io::read_exact(stream, vec![0; message_size])
+                            let message_type = get_message_type(instruction_index);
+                            if message_type.is_err() {
+                                return Err("Found invalid message_type");
+                            }
+
+                            Ok(ReceiveInstruction {
+                                instruction_type: message_type.unwrap(),
+                                read_instruction_future: Box::new(tokio_io::read_exact(stream, vec![0; instruction_size])),
+                            })
                     });
                     self.unix_incoming.push(Box::new(incoming));
                 }
@@ -81,7 +90,7 @@ impl Daemon {
     }
 
     /// Continuously poll the existing incoming futures.
-    /// In case we received a message, handle it and create a response future.
+    /// In case we received a instruction, handle it and create a response future.
     /// The response future is added to unix_response and handled in a separate function.
     fn handle_incoming(&mut self) {
         let len = self.unix_incoming.len();
@@ -97,23 +106,12 @@ impl Daemon {
                 continue;
             }
 
-            // We received a message from a client. Handle it
+            // We received an instruction from a client. Handle it
             match result.unwrap() {
-                Async::Ready((stream, message_bytes)) => {
-                    // Extract message and handle invalid utf8
-                    let message_result = String::from_utf8(message_bytes);
+                Async::Ready((instruction_type, instruction, stream)) => {
+                    println!("{}", instruction);
+                    self.handle_instruction(&instruction, &String::from("/"));
 
-                    let message = if let Ok(message) = message_result {
-                        message
-                    } else {
-                        println!("Didn't receive valid utf8.");
-                        self.unix_incoming.remove(i);
-
-                        continue;
-                    };
-
-                    self.handle_message(&message, &String::from("/"));
-                    println!("{}", message);
                     // Create a future for sending the response.
                     let response = String::from("Command added");
                     let response_future = tokio_io::write_all(stream, response.into_bytes());
@@ -152,9 +150,9 @@ impl Daemon {
 }
 
 impl Daemon {
-    pub fn handle_message(&mut self, message: &String, path: &String) {
+    pub fn handle_instruction(&mut self, instruction: &String, path: &String) {
         let mut queue_handler = self.queue_handler.borrow_mut();
-        queue_handler.add_task(&message, path);
+        queue_handler.add_task(&instruction, path);
     }
 }
 
@@ -168,7 +166,7 @@ impl Future for Daemon {
         // Accept all new connections
         self.accept_incoming();
 
-        // Poll all connection futures and handle the received message.
+        // Poll all connection futures and handle the received instruction.
         self.handle_incoming();
 
         self.handle_responses();

@@ -1,10 +1,14 @@
 use std::fs::remove_file;
 use std::path::Path;
+use std::io::Error as io_Error;
 
+use futures::Future;
+use tokio::prelude::*;
 use tokio_core::reactor::Handle;
 use tokio_uds::{UnixListener, UnixStream};
 
 use settings::Settings;
+use communication::message::MessageType;
 
 /// Create a new unix listener.
 /// In case a socket already exists it will be removed
@@ -40,4 +44,44 @@ pub fn get_socket_path(settings: &Settings) -> String {
         .to_str()
         .expect("Unable to create socket path.")
         .to_string()
+}
+
+pub struct ReceiveInstruction {
+    instruction_type: MessageType,
+    read_instruction_future: Box<Future<Item = (UnixStream, Vec<u8>), Error = io_Error> + Send>,
+}
+
+impl Future for ReceiveInstruction {
+    type Item = (MessageType, String, UnixStream);
+    type Error = String;
+
+    /// The poll for receiving an Instruction
+    fn poll(&mut self) -> Result<Async<Self::Item>, Self::Error> {
+
+        // Check if we received the instruction
+        let result = self.read_instruction_future.poll();
+
+        // The socket errored, return the error
+        if result.is_err() {
+            println!("{:?}", result.err());
+            return Err("Socket errored during read".to_string());
+        }
+
+        // We received an instruction from a client. Handle it
+        match result.unwrap() {
+            Async::Ready((stream, instruction_bytes)) => {
+                // Extract instruction and handle invalid utf8
+                let instruction_result = String::from_utf8(instruction_bytes);
+
+                let instruction = if let Ok(instruction) = instruction_result {
+                    instruction
+                } else {
+                    return Err(String::from("Didn't receive valid utf8."));
+                };
+
+                return Ok(Async::Ready((self.instruction_type, instruction, stream)))
+            },
+            Async::NotReady => Ok(Async::NotReady)
+        }
+    }
 }
