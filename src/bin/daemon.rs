@@ -23,9 +23,7 @@ fn main() {
     }
 
     let mut core = Core::new().unwrap();
-    let handle = core.handle();
-
-    let daemon = Daemon::new(&settings, handle);
+    let daemon = Daemon::new(&settings);
 
     core.run(daemon).unwrap();
 }

@@ -2,7 +2,7 @@ use std::fs::remove_file;
 use std::path::Path;
 use std::io::Error as io_Error;
 
-use futures::Future;
+use futures::{Future, Poll};
 use tokio::prelude::*;
 use tokio_uds::{UnixListener, UnixStream};
 
@@ -37,16 +37,16 @@ pub fn get_socket_path(settings: &Settings) -> String {
 }
 
 pub struct ReceiveInstruction {
-    instruction_type: MessageType,
-    read_instruction_future: Box<Future<Item = (UnixStream, Vec<u8>), Error = io_Error> + Send>,
+    pub instruction_type: MessageType,
+    pub read_instruction_future: Box<Future<Item = (UnixStream, Vec<u8>), Error = io_Error> + Send>,
 }
 
 impl Future for ReceiveInstruction {
     type Item = (MessageType, String, UnixStream);
     type Error = String;
 
-    /// The poll for receiving an Instruction
-    fn poll(&mut self) -> Result<Async<Self::Item>, Self::Error> {
+    /// Poll for a received instruction
+    fn poll(&mut self) -> Poll<Self::Item, Self::Error> {
 
         // Check if we received the instruction
         let result = self.read_instruction_future.poll();
@@ -57,8 +57,8 @@ impl Future for ReceiveInstruction {
             return Err("Socket errored during read".to_string());
         }
 
-        // We received an instruction from a client. Handle it
         match result.unwrap() {
+            // We received an instruction from a client. Handle it
             Async::Ready((stream, instruction_bytes)) => {
                 // Extract instruction and handle invalid utf8
                 let instruction_result = String::from_utf8(instruction_bytes);
@@ -69,8 +69,9 @@ impl Future for ReceiveInstruction {
                     return Err(String::from("Didn't receive valid utf8."));
                 };
 
-                return Ok(Async::Ready((self.instruction_type, instruction, stream)))
+                return Ok(Async::Ready((self.instruction_type.clone(), instruction, stream)))
             },
+            // Wait
             Async::NotReady => Ok(Async::NotReady)
         }
     }

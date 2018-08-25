@@ -31,6 +31,11 @@ impl Client {
         }
     }
 
+    /// Send a message to the daemon.
+    /// The JSON payload is highly dependent on the commandline input parameters
+    /// Some payloads are serialized `Add` or `Remove` messages.
+    /// Before we send the actual payload, a header is sent with two u64.
+    /// One signals the type of the message, whilst the other signals the length of the payload.
     pub fn send_message(&mut self) {
         // Early return if we are already waiting for a future.
         if self.communication_future.is_some() {
@@ -58,6 +63,7 @@ impl Client {
         self.communication_future = Some(Box::new(communication_future));
     }
 
+    /// Receive the response of the daemon and handle it.
     pub fn receive_answer(&mut self) -> bool {
         // Now receive the response until the connection closes.
         let result = self.communication_future.poll();
@@ -72,9 +78,10 @@ impl Client {
 
         // We received a response from the daemon. Handle it
         match result.unwrap() {
-            Async::Ready(response_result) => {
-                let (_, response_bytes) = if let Some((stream, response_bytes)) = response_result {
-                    (stream, response_bytes)
+            Async::Ready(received_bytes_result) => {
+                // Check whether we received something from the daemon.
+                let (_, received_bytes) = if let Some((stream, received_bytes)) = received_bytes_result {
+                    (stream, received_bytes)
                 } else {
                     // Handle socket error
                     println!("Received an empty message from the daemon.");
@@ -82,12 +89,13 @@ impl Client {
                 };
 
                 // Extract response and handle invalid utf8
-                let response_result = String::from_utf8(response_bytes);
+                let response_result = String::from_utf8(received_bytes);
 
                 let response = if let Ok(response) = response_result {
                     response
                 } else {
                     println!("Didn't receive valid utf8.");
+                    println!("{:?}", response_result.err());
                     panic!("Communication failed.");
                 };
 
@@ -99,6 +107,7 @@ impl Client {
         }
     }
 
+    /// Handle the response of a client.
     pub fn handle_response(&self) -> bool {
         let response = if let Some(ref response) = self.response {
             response

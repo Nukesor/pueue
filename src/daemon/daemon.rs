@@ -1,11 +1,11 @@
 use byteorder::{BigEndian, ReadBytesExt};
 use futures::Future;
+use futures::prelude::*;
 use std::cell::RefCell;
 use std::io::Cursor;
 use std::io::Error as io_Error;
 use std::rc::Rc;
 use tokio::io as tokio_io;
-use tokio::prelude::*;
 use tokio_uds::{UnixListener, UnixStream};
 
 use communication::local::{get_unix_listener, ReceiveInstruction};
@@ -56,6 +56,7 @@ impl Daemon {
                 continue;
             };
 
+            // Check if we can accept an incoming connection or if we need to wait a little.
             match accept_future {
                 Async::Ready((stream, _socket_addr)) => {
                     // First read the header to determine the size of the instruction
@@ -68,16 +69,21 @@ impl Daemon {
                             let instruction_size = header.read_u64::<BigEndian>().unwrap() as usize;
                             let instruction_index = header.read_u64::<BigEndian>().unwrap() as usize;
 
-                            let message_type = get_message_type(instruction_index);
-                            if message_type.is_err() {
-                                return Err("Found invalid message_type");
+                            // Try to resolve the instruction index
+                            // If we got an invalid instruction index, c
+                            let instruction_type = get_message_type(instruction_index);
+                            if instruction_type.is_err() {
+                                return Err(format!("Got invalid instruction_index: {}", instruction_index).to_string());
                             }
 
-                            Ok(ReceiveInstruction {
-                                instruction_type: message_type.unwrap(),
-                                read_instruction_future: Box::new(tokio_io::read_exact(stream, vec![0; instruction_size])),
-                            })
-                        });
+                        Ok(ReceiveInstruction {
+                            instruction_type: instruction_type.unwrap(),
+                            read_instruction_future: Box::new(tokio_io::read_exact(stream, vec![0; instruction_size])),
+                        })
+                    })
+                    .and_then(|future| {
+                        future
+                    });
                     self.unix_incoming.push(Box::new(incoming));
                 },
                 Async::NotReady => break,
@@ -105,6 +111,7 @@ impl Daemon {
             // We received an instruction from a client. Handle it
             match result.unwrap() {
                 Async::Ready((instruction_type, instruction, stream)) => {
+                    println!("{:?}", instruction_type);
                     println!("{}", instruction);
                     self.handle_instruction(&instruction, &String::from("/"));
 
