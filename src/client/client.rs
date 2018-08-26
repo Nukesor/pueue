@@ -107,7 +107,7 @@ impl Client {
         }
     }
 
-    /// Handle the response of a client.
+    /// Handle the response of the daemon.
     pub fn handle_response(&self) -> bool {
         let response = if let Some(ref response) = self.response {
             response
@@ -125,8 +125,8 @@ impl Future for Client {
     type Item = ();
     type Error = String;
 
-    /// The poll function of the daemon.
-    /// This is continuously called by the Tokio core.
+    /// The poll function of the client.
+    /// Send a message, receive the response and handle it accordingly to the current task.
     fn poll(&mut self) -> Result<Async<()>, Self::Error> {
         // Create the message payload and send it to the daemon.
         self.send_message();

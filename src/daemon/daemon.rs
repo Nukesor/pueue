@@ -5,11 +5,12 @@ use std::cell::RefCell;
 use std::io::Cursor;
 use std::io::Error as io_Error;
 use std::rc::Rc;
+use serde_json;
 use tokio::io as tokio_io;
 use tokio_uds::{UnixListener, UnixStream};
 
-use communication::local::{get_unix_listener, ReceiveInstruction};
-use communication::message::{MessageType, get_message_type};
+use communication::local::*;
+use communication::message::*;
 use daemon::queue::QueueHandler;
 use daemon::task_handler::TaskHandler;
 use settings::Settings;
@@ -113,7 +114,7 @@ impl Daemon {
                 Async::Ready((instruction_type, instruction, stream)) => {
                     println!("{:?}", instruction_type);
                     println!("{}", instruction);
-                    self.handle_instruction(&instruction, &String::from("/"));
+                    self.handle_instruction(&instruction_type, instruction);
 
                     // Create a future for sending the response.
                     let response = String::from("Command added");
@@ -153,9 +154,16 @@ impl Daemon {
 }
 
 impl Daemon {
-    pub fn handle_instruction(&mut self, instruction: &String, path: &String) {
+    pub fn handle_instruction(&mut self, instruction_type: &MessageType, instruction: String) {
         let mut queue_handler = self.queue_handler.borrow_mut();
-        queue_handler.add_task(&instruction, path);
+        let message = extract_message(instruction_type, instruction);
+
+        match instruction_type {
+            MessageType::Add => {
+                queue_handler.add_task(&message.add.as_ref().unwrap());
+            },
+            MessageType::Invalid => panic!("Invalid message type"),
+        };
     }
 }
 
