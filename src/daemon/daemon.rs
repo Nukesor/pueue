@@ -1,11 +1,11 @@
 use byteorder::{BigEndian, ReadBytesExt};
-use futures::Future;
 use futures::prelude::*;
+use futures::Future;
+use serde_json;
 use std::cell::RefCell;
 use std::io::Cursor;
 use std::io::Error as io_Error;
 use std::rc::Rc;
-use serde_json;
 use tokio::io as tokio_io;
 use tokio_uds::{UnixListener, UnixStream};
 
@@ -19,7 +19,8 @@ use settings::Settings;
 /// This is the single source of truth for all clients and workers.
 pub struct Daemon {
     unix_listener: UnixListener,
-    unix_incoming: Vec<Box<Future<Item = (MessageType, String, UnixStream), Error = String> + Send>>,
+    unix_incoming:
+        Vec<Box<Future<Item = (MessageType, String, UnixStream), Error = String> + Send>>,
     unix_response: Vec<Box<Future<Item = (UnixStream, Vec<u8>), Error = io_Error> + Send>>,
     queue_handler: Rc<RefCell<QueueHandler>>,
     task_handler: TaskHandler,
@@ -68,25 +69,29 @@ impl Daemon {
                             // Extract the instruction size from the header bytes
                             let mut header = Cursor::new(header);
                             let instruction_size = header.read_u64::<BigEndian>().unwrap() as usize;
-                            let instruction_index = header.read_u64::<BigEndian>().unwrap() as usize;
+                            let instruction_index =
+                                header.read_u64::<BigEndian>().unwrap() as usize;
 
                             // Try to resolve the instruction index
                             // If we got an invalid instruction index, c
                             let instruction_type = get_message_type(instruction_index);
                             if instruction_type.is_err() {
-                                return Err(format!("Got invalid instruction_index: {}", instruction_index).to_string());
+                                return Err(format!(
+                                    "Got invalid instruction_index: {}",
+                                    instruction_index
+                                ).to_string());
                             }
 
-                        Ok(ReceiveInstruction {
-                            instruction_type: instruction_type.unwrap(),
-                            read_instruction_future: Box::new(tokio_io::read_exact(stream, vec![0; instruction_size])),
-                        })
-                    })
-                    .and_then(|future| {
-                        future
-                    });
+                            Ok(ReceiveInstruction {
+                                instruction_type: instruction_type.unwrap(),
+                                read_instruction_future: Box::new(tokio_io::read_exact(
+                                    stream,
+                                    vec![0; instruction_size],
+                                )),
+                            })
+                        }).and_then(|future| future);
                     self.unix_incoming.push(Box::new(incoming));
-                },
+                }
                 Async::NotReady => break,
             }
         }
@@ -161,7 +166,7 @@ impl Daemon {
         match instruction_type {
             MessageType::Add => {
                 queue_handler.add_task(&message.add.as_ref().unwrap());
-            },
+            }
             MessageType::Invalid => panic!("Invalid message type"),
         };
     }

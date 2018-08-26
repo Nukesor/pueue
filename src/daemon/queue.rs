@@ -1,5 +1,5 @@
-use daemon::task::{Task, TaskStatus};
 use communication::message::*;
+use daemon::task::{Task, TaskStatus};
 
 pub struct QueueHandler {
     queue: Vec<Option<Box<Task>>>,
@@ -11,7 +11,6 @@ impl QueueHandler {
     }
 
     pub fn add_task(&mut self, add_message: &AddMessage) {
-
         let task = Task {
             command: add_message.command.clone(),
             path: add_message.path.clone(),

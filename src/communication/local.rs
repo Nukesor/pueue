@@ -1,13 +1,13 @@
 use std::fs::remove_file;
-use std::path::Path;
 use std::io::Error as io_Error;
+use std::path::Path;
 
 use futures::{Future, Poll};
 use tokio::prelude::*;
 use tokio_uds::{UnixListener, UnixStream};
 
-use settings::Settings;
 use communication::message::MessageType;
+use settings::Settings;
 
 /// Create a new unix listener.
 /// In case a socket already exists it will be removed
@@ -47,7 +47,6 @@ impl Future for ReceiveInstruction {
 
     /// Poll for a received instruction
     fn poll(&mut self) -> Poll<Self::Item, Self::Error> {
-
         // Check if we received the instruction
         let result = self.read_instruction_future.poll();
 
@@ -69,10 +68,14 @@ impl Future for ReceiveInstruction {
                     return Err(String::from("Didn't receive valid utf8."));
                 };
 
-                return Ok(Async::Ready((self.instruction_type.clone(), instruction, stream)))
-            },
+                return Ok(Async::Ready((
+                    self.instruction_type.clone(),
+                    instruction,
+                    stream,
+                )));
+            }
             // Wait
-            Async::NotReady => Ok(Async::NotReady)
+            Async::NotReady => Ok(Async::NotReady),
         }
     }
 }

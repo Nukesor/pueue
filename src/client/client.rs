@@ -80,13 +80,14 @@ impl Client {
         match result.unwrap() {
             Async::Ready(received_bytes_result) => {
                 // Check whether we received something from the daemon.
-                let (_, received_bytes) = if let Some((stream, received_bytes)) = received_bytes_result {
-                    (stream, received_bytes)
-                } else {
-                    // Handle socket error
-                    println!("Received an empty message from the daemon.");
-                    panic!("Communication failed.");
-                };
+                let (_, received_bytes) =
+                    if let Some((stream, received_bytes)) = received_bytes_result {
+                        (stream, received_bytes)
+                    } else {
+                        // Handle socket error
+                        println!("Received an empty message from the daemon.");
+                        panic!("Communication failed.");
+                    };
 
                 // Extract response and handle invalid utf8
                 let response_result = String::from_utf8(received_bytes);

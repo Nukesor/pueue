@@ -62,7 +62,7 @@ pub fn extract_message(message_type: &MessageType, message: String) -> Message {
                 add: Some(add_message),
                 ..Default::default()
             }
-        },
+        }
         MessageType::Invalid => panic!("Invalid message type"),
     }
 }
