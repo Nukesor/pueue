@@ -1,5 +1,6 @@
 use communication::message::*;
 use daemon::task::{Task, TaskStatus};
+use std::process::{Child, ExitStatus};
 
 pub struct QueueHandler {
     queue: Vec<Option<Box<Task>>>,
@@ -25,13 +26,13 @@ impl QueueHandler {
         self.queue.push(Some(Box::new(task)));
     }
 
-    pub fn get_next_task(&self) -> Option<(usize, Option<&Task>)> {
+    pub fn get_next_task(&self) -> Option<(usize, String, String)> {
         for (i, task) in self.queue.iter().enumerate() {
             match task {
                 None => continue,
                 Some(task) => match task.status {
                     TaskStatus::Queued => {
-                        return Some((i as usize, Some(task)));
+                        return Some((i as usize, task.command.clone(), task.path.clone()));
                     }
                     _ => continue,
                 },
@@ -49,5 +50,9 @@ impl QueueHandler {
         };
 
         task.status = status;
+    }
+
+    pub fn handle_finished_child(&mut self, index: usize, child: &Child, exit_status: ExitStatus) {
+
     }
 }

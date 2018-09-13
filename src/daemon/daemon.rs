@@ -187,7 +187,7 @@ impl Future for Daemon {
 
         self.handle_responses();
 
-        self.task_handler.check_new();
+        self.task_handler.check();
 
         // `NotReady` is returned here because the future never actually
         // completes. The server runs until it is dropped.
