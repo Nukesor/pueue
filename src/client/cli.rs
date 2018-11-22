@@ -13,7 +13,8 @@ pub fn handle_cli() -> Message {
                 .help("Command to execute")
                 .required(true)
                 .index(1),
-        ).get_matches();
+        )
+        .get_matches();
 
     let add = AddMessage {
         command: matches.value_of("command").unwrap().to_string(),

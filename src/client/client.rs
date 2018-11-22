@@ -1,6 +1,6 @@
 use byteorder::{BigEndian, WriteBytesExt};
+use failure::Error;
 use futures::Future;
-use std::io::Error as io_Error;
 use tokio::prelude::*;
 use tokio_io::io as tokio_io;
 use tokio_uds::UnixStream;
@@ -15,8 +15,7 @@ pub struct Client {
     settings: Settings,
     message: Message,
     response: Option<String>,
-    communication_future:
-        Option<Box<Future<Item = (UnixStream, Vec<u8>), Error = io_Error> + Send>>,
+    communication_future: Option<Box<Future<Item = (UnixStream, Vec<u8>), Error = Error> + Send>>,
 }
 
 impl Client {
@@ -60,7 +59,7 @@ impl Client {
             .and_then(move |(stream, _written)| tokio_io::write_all(stream, payload))
             .and_then(|(stream, _written)| tokio_io::read_to_end(stream, Vec::new()));
 
-        self.communication_future = Some(Box::new(communication_future));
+        self.communication_future = Some(Box::new(communication_future.map_err(|error| Error::from(error))));
     }
 
     /// Receive the response of the daemon and handle it.
@@ -124,7 +123,7 @@ impl Client {
 
 impl Future for Client {
     type Item = ();
-    type Error = String;
+    type Error = Error;
 
     /// The poll function of the client.
     /// Send a message, receive the response and handle it accordingly to the current task.

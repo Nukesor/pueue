@@ -1,6 +1,6 @@
 use daemon::queue::QueueHandler;
 use daemon::task::TaskStatus;
-use std::io::Error;
+use failure::Error;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::process::{Child, Command};
@@ -35,7 +35,9 @@ impl TaskHandler {
                 Err(error) => {
                     println!("Task {} failed with error {:?}", index, error);
 
-                    self.queue_handler.borrow_mut().change_status(*index, TaskStatus::Failed);
+                    self.queue_handler
+                        .borrow_mut()
+                        .change_status(*index, TaskStatus::Failed);
                 }
                 // Child process did not error yet
                 Ok(success) => {
@@ -45,7 +47,11 @@ impl TaskHandler {
 
                         // Child process is done
                         Some(exit_status) => {
-                            self.queue_handler.borrow_mut().handle_finished_child(*index, child, exit_status);
+                            self.queue_handler.borrow_mut().handle_finished_child(
+                                *index,
+                                child,
+                                exit_status,
+                            );
                         }
                     }
                 }
@@ -54,7 +60,7 @@ impl TaskHandler {
     }
 
     /// See if the task manager has a free slot and can start a new process.
-    fn check_new(&mut self) {
+    fn check_new(&mut self) -> Result<(), Error> {
         let (index, command, path) = {
             let queue_handler = self.queue_handler.borrow();
             let next = queue_handler.get_next_task();
@@ -62,18 +68,20 @@ impl TaskHandler {
             if let Some((index, command, path)) = next {
                 (index, command, path)
             } else {
-                return;
+                return Ok(());
             }
         };
 
-        self.start_process(index, command, path);
+        self.start_process(index, command, path)?;
 
         self.queue_handler
             .borrow_mut()
             .change_status(index, TaskStatus::Running);
+
+        Ok(())
     }
 
-    fn start_process(&mut self, index: usize, command: String, path: String) -> Result<(), Error>  {
+    fn start_process(&mut self, index: usize, command: String, path: String) -> Result<(), Error> {
         let child = Command::new(command).current_dir(path).spawn()?;
 
         self.children.insert(index, Box::new(child));

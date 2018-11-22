@@ -1,10 +1,9 @@
 use byteorder::{BigEndian, ReadBytesExt};
+use failure::Error;
 use futures::prelude::*;
 use futures::Future;
-use serde_json;
 use std::cell::RefCell;
 use std::io::Cursor;
-use std::io::Error as io_Error;
 use std::rc::Rc;
 use tokio::io as tokio_io;
 use tokio_uds::{UnixListener, UnixStream};
@@ -19,9 +18,8 @@ use settings::Settings;
 /// This is the single source of truth for all clients and workers.
 pub struct Daemon {
     unix_listener: UnixListener,
-    unix_incoming:
-        Vec<Box<Future<Item = (MessageType, String, UnixStream), Error = String> + Send>>,
-    unix_response: Vec<Box<Future<Item = (UnixStream, Vec<u8>), Error = io_Error> + Send>>,
+    unix_incoming: Vec<Box<Future<Item = (MessageType, String, UnixStream), Error = Error> + Send>>,
+    unix_response: Vec<Box<Future<Item = (UnixStream, Vec<u8>), Error = Error> + Send>>,
     queue_handler: Rc<RefCell<QueueHandler>>,
     task_handler: TaskHandler,
 }
@@ -64,7 +62,7 @@ impl Daemon {
                     // First read the header to determine the size of the instruction
                     let incoming = tokio_io::read_exact(stream, vec![0; 16])
                         .then(|result| {
-                            let (stream, header) = result.unwrap();
+                            let (stream, header) = result?;
 
                             // Extract the instruction size from the header bytes
                             let mut header = Cursor::new(header);
@@ -74,22 +72,17 @@ impl Daemon {
 
                             // Try to resolve the instruction index
                             // If we got an invalid instruction index, c
-                            let instruction_type = get_message_type(instruction_index);
-                            if instruction_type.is_err() {
-                                return Err(format!(
-                                    "Got invalid instruction_index: {}",
-                                    instruction_index
-                                ).to_string());
-                            }
+                            let instruction_type = get_message_type(instruction_index)?;
 
                             Ok(ReceiveInstruction {
-                                instruction_type: instruction_type.unwrap(),
+                                instruction_type: instruction_type,
                                 read_instruction_future: Box::new(tokio_io::read_exact(
                                     stream,
                                     vec![0; instruction_size],
-                                )),
+                                ).map_err(|error| Error::from(error))),
                             })
-                        }).and_then(|future| future);
+                        })
+                        .and_then(|future| future);
                     self.unix_incoming.push(Box::new(incoming));
                 }
                 Async::NotReady => break,
@@ -98,7 +91,7 @@ impl Daemon {
     }
 
     /// Continuously poll the existing incoming futures.
-    /// In case we received a instruction, handle it and create a response future.
+    /// In case we received an instruction, handle it and create a response future.
     /// The response future is added to unix_response and handled in a separate function.
     fn handle_incoming(&mut self) {
         let len = self.unix_incoming.len();
@@ -124,7 +117,7 @@ impl Daemon {
                     // Create a future for sending the response.
                     let response = String::from("Command added");
                     let response_future = tokio_io::write_all(stream, response.into_bytes());
-                    self.unix_response.push(Box::new(response_future));
+                    self.unix_response.push(Box::new(response_future.map_err(|error| Error::from(error))));
                     self.unix_incoming.remove(i);
                 }
                 Async::NotReady => {}
@@ -174,7 +167,7 @@ impl Daemon {
 
 impl Future for Daemon {
     type Item = ();
-    type Error = String;
+    type Error = Error;
 
     /// The poll function of the daemon.
     /// This is continuously called by the Tokio core.

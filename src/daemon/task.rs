@@ -1,6 +1,7 @@
 use chrono::prelude::*;
 use chrono::DateTime;
 
+#[derive(Serialize, Deserialize)]
 pub struct Task {
     pub command: String,
     pub path: String,
@@ -12,6 +13,7 @@ pub struct Task {
     pub end: Option<DateTime<Local>>,
 }
 
+#[derive(Serialize, Deserialize)]
 pub enum TaskStatus {
     Queued,
     Stashed,

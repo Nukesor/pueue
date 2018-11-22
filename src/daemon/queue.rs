@@ -2,6 +2,7 @@ use communication::message::*;
 use daemon::task::{Task, TaskStatus};
 use std::process::{Child, ExitStatus};
 
+#[derive(Serialize, Deserialize)]
 pub struct QueueHandler {
     queue: Vec<Option<Box<Task>>>,
 }
@@ -52,7 +53,5 @@ impl QueueHandler {
         task.status = status;
     }
 
-    pub fn handle_finished_child(&mut self, index: usize, child: &Child, exit_status: ExitStatus) {
-
-    }
+    pub fn handle_finished_child(&mut self, index: usize, child: &Child, exit_status: ExitStatus) {}
 }

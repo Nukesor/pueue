@@ -1,3 +1,4 @@
+use failure::{format_err, Error};
 use serde_json;
 
 #[derive(Clone, Debug)]
@@ -36,10 +37,10 @@ pub fn get_message_index(message_type: &MessageType) -> u64 {
 
 /// The counterpart to get_message_index
 /// Resolve a given message index to the correct message type
-pub fn get_message_type(message_index: usize) -> Result<MessageType, String> {
+pub fn get_message_type(message_index: usize) -> Result<MessageType, Error> {
     match message_index {
         1 => Ok(MessageType::Add),
-        _ => Err("Found invalid message index for MessageType".to_string()),
+        _ => Err(format_err!("Found invalid message index for MessageType")),
     }
 }
 
