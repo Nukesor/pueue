@@ -2,9 +2,7 @@ use byteorder::{BigEndian, ReadBytesExt};
 use failure::Error;
 use futures::prelude::*;
 use futures::Future;
-use std::cell::RefCell;
 use std::io::Cursor;
-use std::rc::Rc;
 use tokio::io as tokio_io;
 use tokio_uds::{UnixListener, UnixStream};
 
@@ -20,7 +18,7 @@ pub struct Daemon {
     unix_listener: UnixListener,
     unix_incoming: Vec<Box<Future<Item = (MessageType, String, UnixStream), Error = Error> + Send>>,
     unix_response: Vec<Box<Future<Item = (UnixStream, Vec<u8>), Error = Error> + Send>>,
-    queue_handler: Rc<RefCell<QueueHandler>>,
+    queue_handler: QueueHandler,
     task_handler: TaskHandler,
 }
 
@@ -29,14 +27,13 @@ impl Daemon {
     /// This function also handle the creation of other components,
     /// such as the queue, sockets and the process handler.
     pub fn new(settings: &Settings) -> Self {
-        let queue_handler = Rc::new(RefCell::new(QueueHandler::new()));
-        let task_handler = TaskHandler::new(Rc::clone(&queue_handler));
+        let task_handler = TaskHandler::new();
 
         Daemon {
             unix_listener: get_unix_listener(&settings),
             unix_incoming: Vec::new(),
             unix_response: Vec::new(),
-            queue_handler: queue_handler,
+            queue_handler: QueueHandler::new(),
             task_handler: task_handler,
         }
     }
@@ -153,12 +150,11 @@ impl Daemon {
 
 impl Daemon {
     pub fn handle_instruction(&mut self, instruction_type: &MessageType, instruction: String) {
-        let mut queue_handler = self.queue_handler.borrow_mut();
         let message = extract_message(instruction_type, instruction);
 
         match instruction_type {
             MessageType::Add => {
-                queue_handler.add_task(&message.add.as_ref().unwrap());
+                self.queue_handler.add_task(&message.add.as_ref().unwrap());
             }
             MessageType::Invalid => panic!("Invalid message type"),
         };
@@ -180,7 +176,7 @@ impl Future for Daemon {
 
         self.handle_responses();
 
-        self.task_handler.check();
+        self.task_handler.check(&mut self.queue_handler);
 
         // `NotReady` is returned here because the future never actually
         // completes. The server runs until it is dropped.
