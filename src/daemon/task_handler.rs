@@ -1,5 +1,5 @@
-use daemon::queue::QueueHandler;
 use daemon::task::TaskStatus;
+use daemon::queue::*;
 use failure::Error;
 use std::collections::HashMap;
 use std::process::{Child, Command};
@@ -17,13 +17,13 @@ impl TaskHandler {
 }
 
 impl TaskHandler {
-    pub fn check(&mut self, queue_handler: &mut QueueHandler) {
-        self.check_finished(queue_handler);
-        self.check_new(queue_handler);
+    pub fn check(&mut self, queue: &mut Queue) {
+        self.check_finished(queue);
+        self.check_new(queue);
     }
 
     /// Check whether there are any finished processes
-    fn check_finished(&mut self, queue_handler: &mut QueueHandler) {
+    fn check_finished(&mut self, queue: &mut Queue) {
         // Iterate over everything.
         for (index, child) in &mut self.children {
             match child.try_wait() {
@@ -31,7 +31,7 @@ impl TaskHandler {
                 Err(error) => {
                     println!("Task {} failed with error {:?}", index, error);
 
-                    queue_handler.change_status(*index, TaskStatus::Failed);
+                    change_status(queue, *index, TaskStatus::Failed);
                 }
                 // Child process did not error yet
                 Ok(success) => {
@@ -41,7 +41,8 @@ impl TaskHandler {
 
                         // Child process is done
                         Some(exit_status) => {
-                            queue_handler.handle_finished_child(
+                            handle_finished_child(
+                                queue,
                                 *index,
                                 child,
                                 exit_status,
@@ -54,9 +55,9 @@ impl TaskHandler {
     }
 
     /// See if the task manager has a free slot and can start a new process.
-    fn check_new(&mut self, queue_handler: &mut QueueHandler) -> Result<(), Error> {
+    fn check_new(&mut self, queue: &mut Queue) -> Result<(), Error> {
         let (index, command, path) = {
-            let next = queue_handler.get_next_task();
+            let next = get_next_task(queue);
 
             if let Some((index, command, path)) = next {
                 (index, command, path)
@@ -67,7 +68,7 @@ impl TaskHandler {
 
         self.start_process(index, command, path)?;
 
-        queue_handler.change_status(index, TaskStatus::Running);
+        change_status(queue, index, TaskStatus::Running);
 
         Ok(())
     }

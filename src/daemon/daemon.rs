@@ -9,7 +9,7 @@ use tokio_uds::{UnixListener, UnixStream};
 
 use communication::local::*;
 use communication::message::*;
-use daemon::queue::QueueHandler;
+use daemon::queue::*;
 use daemon::task_handler::TaskHandler;
 use settings::Settings;
 
@@ -19,7 +19,7 @@ pub struct Daemon {
     unix_listener: UnixListener,
     unix_incoming: Vec<Box<Future<Item = (MessageType, String, UnixStream), Error = Error> + Send>>,
     unix_response: Vec<Box<Future<Item = (UnixStream, Vec<u8>), Error = Error> + Send>>,
-    queue_handler: QueueHandler,
+    queue: Queue,
     task_handler: TaskHandler,
 }
 
@@ -34,7 +34,7 @@ impl Daemon {
             unix_listener: get_unix_listener(&settings),
             unix_incoming: Vec::new(),
             unix_response: Vec::new(),
-            queue_handler: QueueHandler::new(),
+            queue: Vec::new(),
             task_handler: task_handler,
         }
     }
@@ -166,7 +166,7 @@ impl Daemon {
                     } else {
                         panic!("Error in add message unwrap.");
                     };
-                    self.queue_handler.add_task(add_message);
+                    add_task(&mut self.queue, add_message);
                 }
                 MessageType::Invalid => panic!("Invalid message type"),
             };
@@ -191,7 +191,7 @@ impl Future for Daemon {
 
         self.handle_responses();
 
-        self.task_handler.check(&mut self.queue_handler);
+        self.task_handler.check(&mut self.queue);
 
         // `NotReady` is returned here because the future never actually
         // completes. The server runs until it is dropped.
