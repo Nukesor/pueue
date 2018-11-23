@@ -1,10 +1,8 @@
 use daemon::queue::QueueHandler;
 use daemon::task::TaskStatus;
 use failure::Error;
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::process::{Child, Command};
-use std::rc::Rc;
 
 pub struct TaskHandler {
     children: HashMap<usize, Box<Child>>,

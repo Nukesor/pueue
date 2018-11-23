@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use byteorder::{BigEndian, ReadBytesExt};
 use failure::Error;
 use futures::prelude::*;
@@ -90,8 +91,10 @@ impl Daemon {
     /// Continuously poll the existing incoming futures.
     /// In case we received an instruction, handle it and create a response future.
     /// The response future is added to unix_response and handled in a separate function.
-    fn handle_incoming(&mut self) {
+    fn handle_incoming(&mut self) -> HashMap<MessageType, String> {
+        let mut instructions: HashMap<MessageType, String> = HashMap::new();
         let len = self.unix_incoming.len();
+
         for i in (0..len).rev() {
             let result = self.unix_incoming[i].poll();
 
@@ -109,7 +112,8 @@ impl Daemon {
                 Async::Ready((instruction_type, instruction, stream)) => {
                     println!("{:?}", instruction_type);
                     println!("{}", instruction);
-                    self.handle_instruction(&instruction_type, instruction);
+
+                    instructions.insert(instruction_type, instruction);
 
                     // Create a future for sending the response.
                     let response = String::from("Command added");
@@ -120,6 +124,8 @@ impl Daemon {
                 Async::NotReady => {}
             }
         }
+
+        instructions
     }
 
     /// Send the response to the client.
@@ -149,15 +155,22 @@ impl Daemon {
 }
 
 impl Daemon {
-    pub fn handle_instruction(&mut self, instruction_type: &MessageType, instruction: String) {
-        let message = extract_message(instruction_type, instruction);
+    pub fn handle_instructions(&mut self, instructions: HashMap<MessageType, String> ) {
+        for (instruction_type, instruction) in instructions {
+            let message = extract_message(instruction_type.clone(), instruction);
 
-        match instruction_type {
-            MessageType::Add => {
-                self.queue_handler.add_task(&message.add.as_ref().unwrap());
-            }
-            MessageType::Invalid => panic!("Invalid message type"),
-        };
+            match instruction_type {
+                MessageType::Add => {
+                    let add_message = if let Some(add_message) = message.add {
+                        add_message
+                    } else {
+                        panic!("Error in add message unwrap.");
+                    };
+                    self.queue_handler.add_task(add_message);
+                }
+                MessageType::Invalid => panic!("Invalid message type"),
+            };
+        }
     }
 }
 
@@ -172,7 +185,9 @@ impl Future for Daemon {
         self.accept_incoming();
 
         // Poll all connection futures and handle the received instruction.
-        self.handle_incoming();
+        let instructions = self.handle_incoming();
+
+        self.handle_instructions(instructions);
 
         self.handle_responses();
 

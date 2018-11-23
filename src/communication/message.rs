@@ -1,7 +1,7 @@
 use failure::{format_err, Error};
 use serde_json;
 
-#[derive(Clone, Debug)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub enum MessageType {
     Add,
     Invalid,
@@ -45,7 +45,7 @@ pub fn get_message_type(message_index: usize) -> Result<MessageType, Error> {
 }
 
 /// Create a `Message` depending on the message_type
-pub fn extract_message(message_type: &MessageType, message: String) -> Message {
+pub fn extract_message(message_type: MessageType, message: String) -> Message {
     match message_type {
         // Handle the Add message
         MessageType::Add => {
