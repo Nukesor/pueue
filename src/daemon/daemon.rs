@@ -1,8 +1,8 @@
-use std::collections::HashMap;
 use byteorder::{BigEndian, ReadBytesExt};
 use failure::Error;
 use futures::prelude::*;
 use futures::Future;
+use std::collections::HashMap;
 use std::io::Cursor;
 use tokio::io as tokio_io;
 use tokio_uds::{UnixListener, UnixStream};
@@ -74,10 +74,10 @@ impl Daemon {
 
                             Ok(ReceiveInstruction {
                                 instruction_type: instruction_type,
-                                read_instruction_future: Box::new(tokio_io::read_exact(
-                                    stream,
-                                    vec![0; instruction_size],
-                                ).map_err(|error| Error::from(error))),
+                                read_instruction_future: Box::new(
+                                    tokio_io::read_exact(stream, vec![0; instruction_size])
+                                        .map_err(|error| Error::from(error)),
+                                ),
                             })
                         })
                         .and_then(|future| future);
@@ -118,7 +118,9 @@ impl Daemon {
                     // Create a future for sending the response.
                     let response = String::from("Command added");
                     let response_future = tokio_io::write_all(stream, response.into_bytes());
-                    self.unix_response.push(Box::new(response_future.map_err(|error| Error::from(error))));
+                    self.unix_response.push(Box::new(
+                        response_future.map_err(|error| Error::from(error)),
+                    ));
                     self.unix_incoming.remove(i);
                 }
                 Async::NotReady => {}
@@ -155,7 +157,7 @@ impl Daemon {
 }
 
 impl Daemon {
-    pub fn handle_instructions(&mut self, instructions: HashMap<MessageType, String> ) {
+    pub fn handle_instructions(&mut self, instructions: HashMap<MessageType, String>) {
         for (instruction_type, instruction) in instructions {
             let message = extract_message(instruction_type.clone(), instruction);
 

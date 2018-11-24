@@ -1,8 +1,9 @@
-use daemon::task::TaskStatus;
-use daemon::queue::*;
 use failure::Error;
 use std::collections::HashMap;
 use std::process::{Child, Command};
+
+use daemon::queue::*;
+use daemon::task::{Task, TaskStatus};
 
 pub struct TaskHandler {
     children: HashMap<usize, Box<Child>>,
@@ -41,12 +42,7 @@ impl TaskHandler {
 
                         // Child process is done
                         Some(exit_status) => {
-                            handle_finished_child(
-                                queue,
-                                *index,
-                                child,
-                                exit_status,
-                            );
+                            handle_finished_child(queue, *index, child, exit_status);
                         }
                     }
                 }
@@ -56,25 +52,24 @@ impl TaskHandler {
 
     /// See if the task manager has a free slot and can start a new process.
     fn check_new(&mut self, queue: &mut Queue) -> Result<(), Error> {
-        let (index, command, path) = {
-            let next = get_next_task(queue);
-
-            if let Some((index, command, path)) = next {
-                (index, command, path)
-            } else {
-                return Ok(());
-            }
+        let next_task = get_next_task(queue);
+        let (index, task) = if let Some((index, task)) = next_task {
+            (index, task)
+        } else {
+            return Ok(());
         };
 
-        self.start_process(index, command, path)?;
+        self.start_process(index, &task)?;
 
         change_status(queue, index, TaskStatus::Running);
 
         Ok(())
     }
 
-    fn start_process(&mut self, index: usize, command: String, path: String) -> Result<(), Error> {
-        let child = Command::new(command).current_dir(path).spawn()?;
+    fn start_process(&mut self, index: usize, task: &Task) -> Result<(), Error> {
+        let child = Command::new(task.command.clone())
+            .current_dir(task.path.clone())
+            .spawn()?;
 
         self.children.insert(index, Box::new(child));
 

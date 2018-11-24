@@ -59,7 +59,9 @@ impl Client {
             .and_then(move |(stream, _written)| tokio_io::write_all(stream, payload))
             .and_then(|(stream, _written)| tokio_io::read_to_end(stream, Vec::new()));
 
-        self.communication_future = Some(Box::new(communication_future.map_err(|error| Error::from(error))));
+        self.communication_future = Some(Box::new(
+            communication_future.map_err(|error| Error::from(error)),
+        ));
     }
 
     /// Receive the response of the daemon and handle it.

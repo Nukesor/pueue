@@ -1,6 +1,8 @@
+use std::mem;
+use std::process::{Child, ExitStatus};
+
 use communication::message::*;
 use daemon::task::{Task, TaskStatus};
-use std::process::{Child, ExitStatus};
 
 pub type Queue = Vec<Option<Box<Task>>>;
 
@@ -19,13 +21,13 @@ pub fn add_task(queue: &mut Queue, add_message: AddMessage) {
     queue.push(Some(Box::new(task)));
 }
 
-pub fn get_next_task(queue: &mut Queue) -> Option<(usize, String, String)> {
+pub fn get_next_task(queue: &mut Queue) -> Option<(usize, Task)> {
     for (i, task) in queue.iter().enumerate() {
         match task {
             None => continue,
             Some(task) => match task.status {
                 TaskStatus::Queued => {
-                    return Some((i as usize, task.command.clone(), task.path.clone()));
+                    return Some((i, *task.clone()));
                 }
                 _ => continue,
             },
@@ -33,6 +35,10 @@ pub fn get_next_task(queue: &mut Queue) -> Option<(usize, String, String)> {
     }
 
     None
+}
+
+pub fn update_task(queue: &mut Queue, index: usize, task: Task) {
+    mem::replace(&mut queue[index], Some(Box::new(task)));
 }
 
 pub fn change_status(queue: &mut Queue, index: usize, status: TaskStatus) {
@@ -45,4 +51,10 @@ pub fn change_status(queue: &mut Queue, index: usize, status: TaskStatus) {
     task.status = status;
 }
 
-pub fn handle_finished_child(queue: &mut Queue, index: usize, child: &Child, exit_status: ExitStatus) {}
+pub fn handle_finished_child(
+    queue: &mut Queue,
+    index: usize,
+    child: &Child,
+    exit_status: ExitStatus,
+) {
+}
