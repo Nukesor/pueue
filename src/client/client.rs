@@ -5,10 +5,10 @@ use tokio::prelude::*;
 use tokio_io::io as tokio_io;
 use tokio_uds::UnixStream;
 
-use client::cli::handle_cli;
-use communication::local::get_socket_path;
-use communication::message::*;
-use settings::Settings;
+use crate::client::cli::handle_cli;
+use crate::communication::local::get_socket_path;
+use crate::communication::message::*;
+use crate::settings::Settings;
 
 /// The client
 pub struct Client {

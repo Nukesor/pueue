@@ -1,7 +1,7 @@
 use clap::{App, Arg, SubCommand};
 use serde_json;
 
-use communication::message::*;
+use crate::communication::message::*;
 
 pub fn handle_cli() -> Message {
     let matches = App::new("Pueue client")

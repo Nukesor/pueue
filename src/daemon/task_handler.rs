@@ -2,8 +2,8 @@ use failure::Error;
 use std::collections::HashMap;
 use std::process::{Child, Command};
 
-use daemon::queue::*;
-use daemon::task::{Task, TaskStatus};
+use crate::daemon::queue::*;
+use crate::daemon::task::{Task, TaskStatus};
 
 pub struct TaskHandler {
     children: HashMap<usize, Box<Child>>,

@@ -7,11 +7,11 @@ use std::io::Cursor;
 use tokio::io as tokio_io;
 use tokio_uds::{UnixListener, UnixStream};
 
-use communication::local::*;
-use communication::message::*;
-use daemon::queue::*;
-use daemon::task_handler::TaskHandler;
-use settings::Settings;
+use crate::communication::local::*;
+use crate::communication::message::*;
+use crate::daemon::queue::*;
+use crate::daemon::task_handler::TaskHandler;
+use crate::settings::Settings;
 
 /// The daemon is center of all logic in pueue.
 /// This is the single source of truth for all clients and workers.

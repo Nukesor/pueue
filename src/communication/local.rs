@@ -6,8 +6,8 @@ use futures::{Future, Poll};
 use tokio::prelude::*;
 use tokio_uds::{UnixListener, UnixStream};
 
-use communication::message::MessageType;
-use settings::Settings;
+use crate::communication::message::MessageType;
+use crate::settings::Settings;
 
 /// Create a new unix listener.
 /// In case a socket already exists it will be removed

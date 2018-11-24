@@ -1,8 +1,8 @@
 use std::mem;
 use std::process::{Child, ExitStatus};
 
-use communication::message::*;
-use daemon::task::{Task, TaskStatus};
+use crate::communication::message::*;
+use crate::daemon::task::{Task, TaskStatus};
 
 pub type Queue = Vec<Option<Box<Task>>>;
 
