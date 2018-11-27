@@ -25,6 +25,7 @@ extern crate tokio;
 extern crate tokio_core;
 extern crate tokio_io;
 extern crate tokio_uds;
+extern crate tokio_process;
 
 pub mod client;
 pub mod communication;
