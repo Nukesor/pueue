@@ -1,11 +1,11 @@
-use byteorder::{BigEndian, ReadBytesExt};
-use failure::Error;
-use futures::prelude::*;
-use futures::Future;
-use std::collections::HashMap;
-use std::io::Cursor;
-use tokio::io as tokio_io;
-use tokio_uds::{UnixListener, UnixStream};
+use ::byteorder::{BigEndian, ReadBytesExt};
+use ::failure::Error;
+use ::futures::prelude::*;
+use ::futures::Future;
+use ::std::collections::HashMap;
+use ::std::io::Cursor;
+use ::tokio::io as tokio_io;
+use ::tokio_uds::{UnixListener, UnixStream};
 
 use crate::communication::local::*;
 use crate::communication::message::*;
@@ -17,8 +17,9 @@ use crate::settings::Settings;
 /// This is the single source of truth for all clients and workers.
 pub struct Daemon {
     unix_listener: UnixListener,
-    unix_incoming: Vec<Box<Future<Item = (MessageType, String, UnixStream), Error = Error> + Send>>,
-    unix_response: Vec<Box<Future<Item = (UnixStream, Vec<u8>), Error = Error> + Send>>,
+    unix_incoming:
+        Vec<Box<dyn Future<Item = (MessageType, String, UnixStream), Error = Error> + Send>>,
+    unix_response: Vec<Box<dyn Future<Item = (UnixStream, Vec<u8>), Error = Error> + Send>>,
     queue: Queue,
     task_handler: TaskHandler,
 }

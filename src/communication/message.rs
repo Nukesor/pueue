@@ -1,4 +1,5 @@
-use failure::{format_err, Error};
+use ::failure::{format_err, Error};
+use ::serde_derive::{Deserialize, Serialize};
 use serde_json;
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]

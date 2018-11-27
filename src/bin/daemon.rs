@@ -1,11 +1,6 @@
-extern crate daemonize;
-extern crate pueue;
-extern crate tokio;
-extern crate tokio_core;
-extern crate users;
-
-use tokio::prelude::*;
-use tokio_core::reactor::Core;
+use ::failure::Error;
+use ::tokio::prelude::*;
+use ::tokio_core::reactor::Core;
 
 //use daemonize::{Daemonize};
 //use users::{get_user_by_uid, get_current_uid};
@@ -13,7 +8,7 @@ use tokio_core::reactor::Core;
 use pueue::daemon::daemon::Daemon;
 use pueue::settings::Settings;
 
-fn main() {
+fn main() -> Result<(), Error> {
     let settings = Settings::new().unwrap();
     let save_result = settings.save();
 
@@ -22,8 +17,10 @@ fn main() {
         println!("{:?}", save_result.err());
     }
 
-    let mut core = Core::new().unwrap();
+    let mut core = Core::new()?;
     let daemon = Daemon::new(&settings);
 
-    core.run(daemon).unwrap();
+    core.run(daemon)?;
+
+    Ok(())
 }

@@ -1,9 +1,9 @@
-use byteorder::{BigEndian, WriteBytesExt};
-use failure::Error;
-use futures::Future;
-use tokio::prelude::*;
-use tokio_io::io as tokio_io;
-use tokio_uds::UnixStream;
+use ::byteorder::{BigEndian, WriteBytesExt};
+use ::failure::Error;
+use ::futures::Future;
+use ::tokio::prelude::*;
+use ::tokio_io::io as tokio_io;
+use ::tokio_uds::UnixStream;
 
 use crate::client::cli::handle_cli;
 use crate::communication::local::get_socket_path;
@@ -15,7 +15,8 @@ pub struct Client {
     settings: Settings,
     message: Message,
     response: Option<String>,
-    communication_future: Option<Box<Future<Item = (UnixStream, Vec<u8>), Error = Error> + Send>>,
+    communication_future:
+        Option<Box<dyn Future<Item = (UnixStream, Vec<u8>), Error = Error> + Send>>,
 }
 
 impl Client {

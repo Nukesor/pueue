@@ -1,3 +1,4 @@
+use serde_derive::{Deserialize, Serialize};
 use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
@@ -78,7 +79,7 @@ impl Settings {
 
     /// Save the current configuration as a file to the configuration path.
     /// The file is written to "~/.config/pueue.toml".
-    pub fn save(&self) -> Result<(), Box<Error>> {
+    pub fn save(&self) -> Result<(), Box<dyn Error>> {
         let content = toml::to_string(self).unwrap();
 
         let path = shellexpand::tilde(CONFIG_PATH).into_owned();

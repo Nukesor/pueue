@@ -6,6 +6,7 @@ authors = ["Arne Beer <arne@twobeer.de>"]
 repository = "https://github.com/nukesor/pueue-rs"
 license = "MIT"
 keywords = ["shell", "commandline", "parallel", "daemon"]
+edition = "2018"
 
 [badges]
 travis-ci = { repository = "nukesor/pueue-rs", branch = "master" }

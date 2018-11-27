@@ -1,5 +1,5 @@
-use std::mem;
-use std::process::{Child, ExitStatus};
+use ::std::mem;
+use ::std::process::{Child, ExitStatus};
 
 use crate::communication::message::*;
 use crate::daemon::task::{Task, TaskStatus};
@@ -52,9 +52,9 @@ pub fn change_status(queue: &mut Queue, index: usize, status: TaskStatus) {
 }
 
 pub fn handle_finished_child(
-    queue: &mut Queue,
-    index: usize,
-    child: &Child,
-    exit_status: ExitStatus,
+    _queue: &mut Queue,
+    _index: usize,
+    _child: &Child,
+    _exit_status: ExitStatus,
 ) {
 }

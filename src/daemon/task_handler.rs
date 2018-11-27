@@ -1,7 +1,7 @@
-use failure::Error;
-use std::collections::HashMap;
-use std::process::{Child, Command};
-use tokio_process::CommandExt;
+use ::failure::Error;
+use ::std::collections::HashMap;
+use ::std::process::{Child, Command};
+use ::tokio_process::CommandExt;
 
 use crate::daemon::queue::*;
 use crate::daemon::task::{Task, TaskStatus};

@@ -1,10 +1,9 @@
-use failure::Error;
-use std::fs::remove_file;
-use std::path::Path;
-
-use futures::{Future, Poll};
-use tokio::prelude::*;
-use tokio_uds::{UnixListener, UnixStream};
+use ::failure::Error;
+use ::futures::{Future, Poll};
+use ::std::fs::remove_file;
+use ::std::path::Path;
+use ::tokio::prelude::*;
+use ::tokio_uds::{UnixListener, UnixStream};
 
 use crate::communication::message::MessageType;
 use crate::settings::Settings;
@@ -39,7 +38,8 @@ pub fn get_socket_path(settings: &Settings) -> String {
 
 pub struct ReceiveInstruction {
     pub instruction_type: MessageType,
-    pub read_instruction_future: Box<Future<Item = (UnixStream, Vec<u8>), Error = Error> + Send>,
+    pub read_instruction_future:
+        Box<dyn Future<Item = (UnixStream, Vec<u8>), Error = Error> + Send>,
 }
 
 impl Future for ReceiveInstruction {
