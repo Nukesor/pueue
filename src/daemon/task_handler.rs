@@ -1,10 +1,11 @@
 use ::failure::Error;
 use ::std::collections::HashMap;
-use ::std::process::{Child, Command};
+use ::std::process::{Child, Command, Stdio};
 use ::tokio_process::CommandExt;
 
 use crate::daemon::queue::*;
 use crate::daemon::task::{Task, TaskStatus};
+use crate::file::log::{create_log_file_handles, open_log_file_handles};
 
 pub struct TaskHandler {
     children: HashMap<usize, Box<Child>>,
@@ -68,10 +69,13 @@ impl TaskHandler {
     }
 
     fn start_process(&mut self, index: usize, task: &Task) -> Result<(), Error> {
+        let (stdout_log, stderr_log) = create_log_file_handles(index)?;
         let child = Command::new(task.command.clone())
             .current_dir(task.path.clone())
+            .stdin(Stdio::piped())
+            .stdout(Stdio::from(stdout_log))
+            .stderr(Stdio::from(stderr_log))
             .spawn()?;
-
         self.children.insert(index, Box::new(child));
 
         Ok(())
