@@ -38,6 +38,7 @@ tokio-io= "^0.1"
 tokio-uds = "^0.2"
 tokio-process= "^0.2"
 bytes = "^0.4"
+uuid = { version = "^0.7", features = ["serde", "v4"] }
 
 strum = "0.11.0"
 strum_macros = "0.11.0"

@@ -1,16 +1,18 @@
 use ::failure::{format_err, Error};
 use ::serde_derive::{Deserialize, Serialize};
-use serde_json;
+use ::uuid::Uuid;
+use ::serde_json;
 
-#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Serialize, Deserialize)]
 pub enum MessageType {
     Add,
     Invalid,
 }
 
 /// The representation of a message
-/// It consists of
+#[derive(Serialize, Deserialize)]
 pub struct Message {
+    pub socket_uuid: Uuid,
     pub message_type: MessageType,
     pub payload: String,
     pub add: Option<AddMessage>,
@@ -19,6 +21,7 @@ pub struct Message {
 impl Default for Message {
     fn default() -> Message {
         Message {
+            socket_uuid: Uuid::new_v4(),
             message_type: MessageType::Invalid,
             payload: String::from(""),
             add: None,

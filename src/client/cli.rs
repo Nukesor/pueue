@@ -25,6 +25,7 @@ pub fn handle_cli() -> Message {
         message_type: MessageType::Add,
         payload: serde_json::to_string(&add).unwrap(),
         add: Some(add),
+        ..Default::default()
     };
 
     message
