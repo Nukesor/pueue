@@ -163,7 +163,8 @@ impl SocketHandler {
         self.unix_responses.contains_key(uuid)
     }
 
-    /// Send the response to the client.
+    /// Check messages have been sent to the client.
+    /// If a message has been successfully sent, add it unix_sockets again for further messages.
     pub fn handle_responses(&mut self) {
         let mut to_remove = Vec::new();
         let mut to_reuse = Vec::new();

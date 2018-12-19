@@ -40,13 +40,44 @@ impl Daemon {
 
             match instruction_type {
                 MessageType::Add => {
-                    let add_message = if let Some(add_message) = message.add {
-                        add_message
-                    } else {
-                        panic!("Error in add message unwrap.");
-                    };
+                    let add_message = message.add.expect("Error in add message unwrap.");
                     add_task(&mut self.queue, add_message);
                 }
+                MessageType::Remove => {
+                    let add_message = message.add.expect("Error in add message unwrap.");
+                    add_task(&mut self.queue, add_message);
+                }
+                MessageType::Switch => {
+                    let add_message = message.add.expect("Error in add message unwrap.");
+                    add_task(&mut self.queue, add_message);
+                }
+
+                MessageType::Start => {
+                    let add_message = message.add.expect("Error in add message unwrap.");
+                    add_task(&mut self.queue, add_message);
+                }
+                MessageType::Pause => {
+                    let add_message = message.add.expect("Error in add message unwrap.");
+                    add_task(&mut self.queue, add_message);
+                }
+                MessageType::Kill => {
+                    let add_message = message.add.expect("Error in add message unwrap.");
+                    add_task(&mut self.queue, add_message);
+                }
+
+                MessageType::Status => {
+                    let add_message = message.add.expect("Error in add message unwrap.");
+                    add_task(&mut self.queue, add_message);
+                }
+                MessageType::Reset => {
+                    let add_message = message.add.expect("Error in add message unwrap.");
+                    add_task(&mut self.queue, add_message);
+                }
+                MessageType::Clear => {
+                    let add_message = message.add.expect("Error in add message unwrap.");
+                    add_task(&mut self.queue, add_message);
+                }
+
                 MessageType::Invalid => panic!("Invalid message type"),
             };
         }

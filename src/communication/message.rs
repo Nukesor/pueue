@@ -6,6 +6,17 @@ use ::serde_json;
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Serialize, Deserialize)]
 pub enum MessageType {
     Add,
+    Remove,
+    Switch,
+
+    Start,
+    Pause,
+    Kill,
+
+    Status,
+    Reset,
+    Clear,
+
     Invalid,
 }
 
@@ -25,6 +36,8 @@ impl Default for Message {
             message_type: MessageType::Invalid,
             payload: String::from(""),
             add: None,
+            remove: None,
+            switch: None,
         }
     }
 }
@@ -35,6 +48,17 @@ impl Default for Message {
 pub fn get_message_index(message_type: &MessageType) -> u64 {
     match message_type {
         MessageType::Add => 1,
+        MessageType::Remove => 2,
+        MessageType::Switch => 3,
+
+        MessageType::Start => 10,
+        MessageType::Pause => 11,
+        MessageType::Kill => 12,
+
+        MessageType::Status => 20,
+        MessageType::Reset => 21,
+        MessageType::Clear => 22,
+
         MessageType::Invalid => panic!("Found invalid MessageType"),
     }
 }
@@ -44,6 +68,17 @@ pub fn get_message_index(message_type: &MessageType) -> u64 {
 pub fn get_message_type(message_index: usize) -> Result<MessageType, Error> {
     match message_index {
         1 => Ok(MessageType::Add),
+        2 => Ok(MessageType::Remove),
+        3 => Ok(MessageType::Switch),
+
+        10 => Ok(MessageType::Start),
+        11 => Ok(MessageType::Pause),
+        12 => Ok(MessageType::Kill),
+
+        20 => Ok(MessageType::Status),
+        21 => Ok(MessageType::Reset),
+        22 => Ok(MessageType::Clear),
+
         _ => Err(format_err!("Found invalid message index for MessageType")),
     }
 }
@@ -53,7 +88,7 @@ pub fn extract_message(message_type: MessageType, message: String) -> Message {
     match message_type {
         // Handle the Add message
         MessageType::Add => {
-            let result = serde_json::from_str(&message);
+            let result = serde_json::from_str::<AddMessage>(&message);
 
             let add_message = if let Ok(add_message) = result {
                 add_message
