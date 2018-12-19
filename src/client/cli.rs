@@ -1,5 +1,4 @@
 use clap::{App, Arg, SubCommand};
-use serde_json;
 
 use crate::communication::message::*;
 
@@ -16,17 +15,8 @@ pub fn handle_cli() -> Message {
         )
         .get_matches();
 
-    let add = AddMessage {
+    Message::Add(AddMessage {
         command: matches.value_of("command").unwrap().to_string(),
         path: String::from("/"),
-    };
-
-    let message = Message {
-        message_type: MessageType::Add,
-        payload: serde_json::to_string(&add).unwrap(),
-        add: Some(add),
-        ..Default::default()
-    };
-
-    message
+    })
 }

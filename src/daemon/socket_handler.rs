@@ -12,12 +12,11 @@ use crate::communication::local::*;
 use crate::communication::message::*;
 use crate::settings::Settings;
 
-
 pub struct SocketHandler {
     unix_listener: UnixListener,
-    unix_incoming:
-        Vec<Box<dyn Future<Item = (MessageType, String, UnixStream), Error = Error> + Send>>,
-    unix_responses: HashMap<Uuid, Box<dyn Future<Item = (UnixStream, Vec<u8>), Error = Error> + Send>>,
+    unix_incoming: Vec<Box<dyn Future<Item = (UnixStream, Vec<u8>), Error = Error> + Send>>,
+    unix_responses:
+        HashMap<Uuid, Box<dyn Future<Item = (UnixStream, Vec<u8>), Error = Error> + Send>>,
     unix_sockets: HashMap<Uuid, UnixStream>,
     unix_response_queue: Vec<Message>,
 }
@@ -35,7 +34,6 @@ impl SocketHandler {
             unix_response_queue: Vec::new(),
         }
     }
-
 
     /// Poll the unix listener and accept new incoming connections
     /// Create a new future for receiving the instruction and add it to unix_incoming
@@ -56,29 +54,16 @@ impl SocketHandler {
             match accept_future {
                 Async::Ready((stream, _socket_addr)) => {
                     // First read the header to determine the size of the instruction
-                    let incoming = tokio_io::read_exact(stream, vec![0; 16])
-                        .then(|result| {
-                            let (stream, header) = result?;
-
+                    let incoming = tokio_io::read_exact(stream, vec![0; 8])
+                        .and_then(|(stream, header)| {
                             // Extract the instruction size from the header bytes
                             let mut header = Cursor::new(header);
                             let instruction_size = header.read_u64::<BigEndian>().unwrap() as usize;
-                            let instruction_index =
-                                header.read_u64::<BigEndian>().unwrap() as usize;
+                            println!("{:?}", instruction_size);
 
-                            // Try to resolve the instruction index
-                            // If we got an invalid instruction index, c
-                            let instruction_type = get_message_type(instruction_index)?;
-
-                            Ok(ReceiveInstruction {
-                                instruction_type: instruction_type,
-                                read_instruction_future: Box::new(
-                                    tokio_io::read_exact(stream, vec![0; instruction_size])
-                                        .map_err(|error| Error::from(error)),
-                                ),
-                            })
+                            tokio_io::read_exact(stream, vec![0; instruction_size])
                         })
-                        .and_then(|future| future);
+                        .map_err(|error| Error::from(error));
                     self.unix_incoming.push(Box::new(incoming));
                 }
                 Async::NotReady => break,
@@ -89,8 +74,8 @@ impl SocketHandler {
     /// Continuously poll the existing incoming futures.
     /// In case we received an instruction, handle it and create a response future.
     /// The response future is added to unix_responses and handled in a separate function.
-    pub fn handle_incoming(&mut self) -> HashMap<MessageType, String> {
-        let mut instructions: HashMap<MessageType, String> = HashMap::new();
+    pub fn handle_incoming(&mut self) -> HashMap<Uuid, String> {
+        let mut instructions = HashMap::new();
         let len = self.unix_incoming.len();
 
         for i in (0..len).rev() {
@@ -107,15 +92,16 @@ impl SocketHandler {
 
             // We received an instruction from a client. Handle it
             match result.unwrap() {
-                Async::Ready((instruction_type, instruction, stream)) => {
-                    println!("{:?}", instruction_type);
+                Async::Ready((stream, instruction_bytes)) => {
+                    let instruction =
+                        String::from_utf8(instruction_bytes).expect("Failed to create utf8 string");
+
                     println!("{}", instruction);
                     let hash_uuid = Uuid::new_v4();
                     self.unix_sockets.insert(hash_uuid, stream);
                     self.unix_incoming.remove(i);
 
-                    instructions.insert(instruction_type, instruction);
-
+                    instructions.insert(hash_uuid, instruction);
                 }
                 Async::NotReady => {}
             }
@@ -126,10 +112,10 @@ impl SocketHandler {
 
     /// Send a message to a specific unix socket
     /// The uuid of the socket is contained inside the Message
-    pub fn send_or_queue_message(&mut self, message: Message) {
-        if self.can_be_responded_to(&message.socket_uuid) {
-            self.send_message(message)
-        } else if self.is_sending(&message.socket_uuid) {
+    pub fn send_or_queue_message(&mut self, uuid: Uuid, message: Message) {
+        if self.can_be_responded_to(&uuid) {
+            self.send_message(uuid, message)
+        } else if self.is_sending(&uuid) {
             self.unix_response_queue.push(message)
         } else {
             println!("Cannot send message. The unix socket doesn't seem to exist any longer.");
@@ -140,13 +126,17 @@ impl SocketHandler {
     }
 
     /// Create the response future for this message.
-    fn send_message(&mut self, message: Message) {
-        let stream = self.unix_sockets.remove(&message.socket_uuid).expect("Tried to remove non-existing unix socket.");
+    fn send_message(&mut self, uuid: Uuid, message: Message) {
+        let stream = self
+            .unix_sockets
+            .remove(&uuid)
+            .expect("Tried to remove non-existing unix socket.");
         if let Ok(response) = serde_json::to_string(&message) {
             let response_future = tokio_io::write_all(stream, response.into_bytes());
-            self.unix_responses.insert(message.socket_uuid, Box::new(
-                response_future.map_err(|error| Error::from(error)),
-            ));
+            self.unix_responses.insert(
+                uuid,
+                Box::new(response_future.map_err(|error| Error::from(error))),
+            );
         } else {
             // TODO: proper error handling
             println!("Error creating message");

@@ -6,10 +6,10 @@ use crate::daemon::task::{Task, TaskStatus};
 
 pub type Queue = Vec<Option<Box<Task>>>;
 
-pub fn add_task(queue: &mut Queue, add_message: AddMessage) {
+pub fn add_task(queue: &mut Queue, message: AddMessage) {
     let task = Task {
-        command: add_message.command.clone(),
-        path: add_message.path.clone(),
+        command: message.command.clone(),
+        path: message.path.clone(),
         status: TaskStatus::Queued,
         returncode: None,
         stdout: None,

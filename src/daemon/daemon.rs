@@ -2,11 +2,12 @@ use ::failure::Error;
 use ::futures::prelude::*;
 use ::futures::Future;
 use ::std::collections::HashMap;
+use ::uuid::Uuid;
 
 use crate::communication::message::*;
 use crate::daemon::queue::*;
-use crate::daemon::task_handler::TaskHandler;
 use crate::daemon::socket_handler::SocketHandler;
+use crate::daemon::task_handler::TaskHandler;
 use crate::settings::Settings;
 
 /// The daemon is center of all logic in pueue.
@@ -34,51 +35,22 @@ impl Daemon {
 }
 
 impl Daemon {
-    pub fn handle_instructions(&mut self, instructions: HashMap<MessageType, String>) {
+    pub fn handle_instructions(&mut self, instructions: HashMap<Uuid, String>) {
         for (instruction_type, instruction) in instructions {
-            let message = extract_message(instruction_type.clone(), instruction);
+            let message = if let Ok(message) = serde_json::from_str::<Message>(&instruction) {
+                message
+            } else {
+                panic!("Error during message deserialization");
+            };
 
-            match instruction_type {
-                MessageType::Add => {
-                    let add_message = message.add.expect("Error in add message unwrap.");
-                    add_task(&mut self.queue, add_message);
-                }
-                MessageType::Remove => {
-                    let add_message = message.add.expect("Error in add message unwrap.");
-                    add_task(&mut self.queue, add_message);
-                }
-                MessageType::Switch => {
-                    let add_message = message.add.expect("Error in add message unwrap.");
-                    add_task(&mut self.queue, add_message);
+            match message {
+                Message::Add(message) => {
+                    add_task(&mut self.queue, message);
                 }
 
-                MessageType::Start => {
-                    let add_message = message.add.expect("Error in add message unwrap.");
-                    add_task(&mut self.queue, add_message);
-                }
-                MessageType::Pause => {
-                    let add_message = message.add.expect("Error in add message unwrap.");
-                    add_task(&mut self.queue, add_message);
-                }
-                MessageType::Kill => {
-                    let add_message = message.add.expect("Error in add message unwrap.");
-                    add_task(&mut self.queue, add_message);
-                }
+                Message::Invalid => panic!("Invalid message type"),
 
-                MessageType::Status => {
-                    let add_message = message.add.expect("Error in add message unwrap.");
-                    add_task(&mut self.queue, add_message);
-                }
-                MessageType::Reset => {
-                    let add_message = message.add.expect("Error in add message unwrap.");
-                    add_task(&mut self.queue, add_message);
-                }
-                MessageType::Clear => {
-                    let add_message = message.add.expect("Error in add message unwrap.");
-                    add_task(&mut self.queue, add_message);
-                }
-
-                MessageType::Invalid => panic!("Invalid message type"),
+                _ => (),
             };
         }
     }

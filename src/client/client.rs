@@ -42,16 +42,14 @@ impl Client {
             return;
         }
 
-        // Get command
-        let command_index = get_message_index(&self.message.message_type);
-
-        // Prepare command for transfer and determine message byte length
-        let byte_size = self.message.payload.chars().count() as u64;
-        let payload = self.message.payload.clone();
+        // Prepare command for transfer and determine message byte size
+        let payload = serde_json::to_string(&self.message)
+            .expect("Failed to serialize message.")
+            .into_bytes();
+        let byte_size = payload.len() as u64;
 
         let mut header = vec![];
         header.write_u64::<BigEndian>(byte_size).unwrap();
-        header.write_u64::<BigEndian>(command_index).unwrap();
 
         // Send the request size header first.
         // Afterwards send the request.

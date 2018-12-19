@@ -1,5 +1,5 @@
-use ::std::fs::File;
 use ::failure::Error;
+use ::std::fs::File;
 
 pub fn open_log_file_handles(index: usize) -> Result<(File, File), Error> {
     let stdout_log = File::open(format!("{}_stdout.log", index))?;
