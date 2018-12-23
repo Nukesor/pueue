@@ -1,9 +1,9 @@
 use ::failure::Error;
-use ::std::collections::HashMap;
-use ::std::process::{Command, Stdio, ExitStatus};
-use ::tokio_process::{CommandExt, Child};
 use ::futures::prelude::*;
 use ::futures::Future;
+use ::std::collections::HashMap;
+use ::std::process::{Command, ExitStatus, Stdio};
+use ::tokio_process::{Child, CommandExt};
 
 use crate::daemon::queue::*;
 use crate::daemon::task::{Task, TaskStatus};
@@ -61,14 +61,12 @@ impl TaskHandler {
                         }
                         // Child process is not done, keep waiting
                         Async::NotReady => continue,
-
                     }
                 }
             }
         }
         (finished, errored)
     }
-
 
     /// See if the task manager has a free slot and can start a new process.
     fn check_new(&mut self, queue: &mut Queue) -> Result<(), Error> {

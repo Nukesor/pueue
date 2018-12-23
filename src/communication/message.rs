@@ -25,7 +25,6 @@ pub struct AddMessage {
     pub path: String,
 }
 
-
 #[derive(Serialize, Deserialize)]
 pub struct RemoveMessage {
     pub command: String,
@@ -45,25 +44,25 @@ pub struct StartMessage {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct PauseMessage{
+pub struct PauseMessage {
     pub command: String,
     pub path: String,
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct KillMessage{
+pub struct KillMessage {
     pub command: String,
     pub path: String,
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct SuccessMessage{
+pub struct SuccessMessage {
     pub command: String,
     pub path: String,
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct FailureMessage{
+pub struct FailureMessage {
     pub command: String,
     pub path: String,
 }

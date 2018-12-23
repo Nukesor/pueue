@@ -48,14 +48,11 @@ impl Daemon {
                     add_task(&mut self.queue, message);
                 }
 
-                Message::Remove(message) => {
-                }
+                Message::Remove(message) => {}
 
-                Message::Start(message) => {
-                }
+                Message::Start(message) => {}
 
-                Message::Pause(message) => {
-                }
+                Message::Pause(message) => {}
 
                 Message::Failure => panic!("Invalid message type"),
 
