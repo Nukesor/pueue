@@ -4,22 +4,66 @@ use ::serde_derive::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize)]
 pub enum Message {
     Add(AddMessage),
-    Remove,
-    Switch,
+    Remove(RemoveMessage),
+    Switch(SwitchMessage),
 
-    Start,
-    Pause,
-    Kill,
+    Start(StartMessage),
+    Pause(PauseMessage),
+    Kill(KillMessage),
 
-    Status,
     Reset,
     Clear,
 
-    Invalid,
+    Status,
+    Success,
+    Failure,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct AddMessage {
+    pub command: String,
+    pub path: String,
+}
+
+
+#[derive(Serialize, Deserialize)]
+pub struct RemoveMessage {
+    pub command: String,
+    pub path: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct SwitchMessage {
+    pub command: String,
+    pub path: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct StartMessage {
+    pub command: String,
+    pub path: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct PauseMessage{
+    pub command: String,
+    pub path: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct KillMessage{
+    pub command: String,
+    pub path: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct SuccessMessage{
+    pub command: String,
+    pub path: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct FailureMessage{
     pub command: String,
     pub path: String,
 }

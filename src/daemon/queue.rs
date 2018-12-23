@@ -1,5 +1,6 @@
 use ::std::mem;
-use ::std::process::{Child, ExitStatus};
+use ::std::process::ExitStatus;
+use ::tokio_process::Child;
 
 use crate::communication::message::*;
 use crate::daemon::task::{Task, TaskStatus};
@@ -54,7 +55,6 @@ pub fn change_status(queue: &mut Queue, index: usize, status: TaskStatus) {
 pub fn handle_finished_child(
     _queue: &mut Queue,
     _index: usize,
-    _child: &Child,
-    _exit_status: ExitStatus,
+    _child: Box<Child>,
 ) {
 }

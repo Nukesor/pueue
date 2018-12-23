@@ -1,7 +1,9 @@
 use ::failure::Error;
 use ::std::collections::HashMap;
-use ::std::process::{Child, Command, Stdio};
-use ::tokio_process::CommandExt;
+use ::std::process::{Command, Stdio, ExitStatus};
+use ::tokio_process::{CommandExt, Child};
+use ::futures::prelude::*;
+use ::futures::Future;
 
 use crate::daemon::queue::*;
 use crate::daemon::task::{Task, TaskStatus};
@@ -21,36 +23,52 @@ impl TaskHandler {
 
 impl TaskHandler {
     pub fn check(&mut self, queue: &mut Queue) {
-        self.check_finished(queue);
+        self.process_finished(queue);
         self.check_new(queue);
     }
 
     /// Check whether there are any finished processes
-    fn check_finished(&mut self, queue: &mut Queue) {
+    fn process_finished(&mut self, queue: &mut Queue) {
+        let (finished, errored) = self.get_finished();
         // Iterate over everything.
-        for (index, child) in &mut self.children {
-            match child.try_wait() {
+        for index in finished.iter() {
+            let child = self.children.remove(index).expect("Child went missing");
+            handle_finished_child(queue, *index, child);
+        }
+
+        for index in errored.iter() {
+            let child = self.children.remove(index).expect("Child went missing");
+            change_status(queue, *index, TaskStatus::Failed);
+        }
+    }
+
+    fn get_finished(&mut self) -> (Vec<usize>, Vec<usize>) {
+        let mut finished = Vec::new();
+        let mut errored = Vec::new();
+        for (index, child) in self.children.iter_mut() {
+            match child.poll() {
                 // Handle a child error.
                 Err(error) => {
                     println!("Task {} failed with error {:?}", index, error);
-
-                    change_status(queue, *index, TaskStatus::Failed);
+                    errored.push(index.clone());
                 }
                 // Child process did not error yet
                 Ok(success) => {
                     match success {
-                        // Child process is not done, keep waiting
-                        None => continue,
-
                         // Child process is done
-                        Some(exit_status) => {
-                            handle_finished_child(queue, *index, child, exit_status);
+                        Async::Ready(_) => {
+                            finished.push(index.clone());
                         }
+                        // Child process is not done, keep waiting
+                        Async::NotReady => continue,
+
                     }
                 }
             }
         }
+        (finished, errored)
     }
+
 
     /// See if the task manager has a free slot and can start a new process.
     fn check_new(&mut self, queue: &mut Queue) -> Result<(), Error> {
@@ -75,7 +93,7 @@ impl TaskHandler {
             .stdin(Stdio::piped())
             .stdout(Stdio::from(stdout_log))
             .stderr(Stdio::from(stderr_log))
-            .spawn()?;
+            .spawn_async()?;
         self.children.insert(index, Box::new(child));
 
         Ok(())
