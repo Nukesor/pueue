@@ -2,11 +2,13 @@ use ::std::mem;
 use ::tokio_process::Child;
 
 use crate::communication::message::*;
+use crate::daemon::error::DaemonError;
+use crate::daemon::task_handler::*;
 use crate::daemon::task::{Task, TaskStatus};
 
 pub type Queue = Vec<Option<Box<Task>>>;
 
-pub fn add_task(queue: &mut Queue, message: AddMessage) {
+pub fn add_task(queue: &mut Queue, message: AddMessage) -> Result<Message, DaemonError> {
     let task = Task {
         command: message.command.clone(),
         path: message.path.clone(),
@@ -19,6 +21,12 @@ pub fn add_task(queue: &mut Queue, message: AddMessage) {
     };
 
     queue.push(Some(Box::new(task)));
+
+    create_success_message(String::from("New task added."))
+}
+
+pub fn remove_task(queue: &mut Queue, task_handler: &mut TaskHandler, message: RemoveMessage) -> Result<Message, DaemonError> {
+    create_success_message(String::from("Task removed"))
 }
 
 pub fn get_next_task(queue: &mut Queue) -> Option<(usize, Task)> {
@@ -49,6 +57,14 @@ pub fn change_status(queue: &mut Queue, index: usize, status: TaskStatus) {
     };
 
     task.status = status;
+}
+
+pub fn get_task_status(queue: &Queue, index: usize) -> Option<TaskStatus> {
+    if let Some(ref task) = queue[index] {
+        Some(task.status.clone())
+    } else {
+        None
+    }
 }
 
 pub fn handle_finished_child(_queue: &mut Queue, _index: usize, _child: Box<Child>) {}

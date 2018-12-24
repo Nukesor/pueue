@@ -11,12 +11,14 @@ use crate::file::log::{create_log_file_handles, open_log_file_handles};
 
 pub struct TaskHandler {
     children: HashMap<usize, Box<Child>>,
+    is_running: bool,
 }
 
 impl TaskHandler {
     pub fn new() -> Self {
         TaskHandler {
             children: HashMap::new(),
+            is_running: true,
         }
     }
 }

@@ -74,8 +74,8 @@ impl SocketHandler {
     /// Continuously poll the existing incoming futures.
     /// In case we received an instruction, handle it and create a response future.
     /// The response future is added to unix_responses and handled in a separate function.
-    pub fn handle_incoming(&mut self) -> HashMap<Uuid, String> {
-        let mut instructions = HashMap::new();
+    pub fn handle_incoming(&mut self) -> Vec<(Uuid, String)> {
+        let mut instructions = Vec::new();
         let len = self.unix_incoming.len();
 
         for i in (0..len).rev() {
@@ -101,7 +101,7 @@ impl SocketHandler {
                     self.unix_sockets.insert(hash_uuid, stream);
                     self.unix_incoming.remove(i);
 
-                    instructions.insert(hash_uuid, instruction);
+                    instructions.push((hash_uuid, instruction));
                 }
                 Async::NotReady => {}
             }

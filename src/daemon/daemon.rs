@@ -35,29 +35,39 @@ impl Daemon {
 }
 
 impl Daemon {
-    pub fn handle_instructions(&mut self, instructions: HashMap<Uuid, String>) {
-        for (instruction_type, instruction) in instructions {
-            let message = if let Ok(message) = serde_json::from_str::<Message>(&instruction) {
-                message
+    pub fn handle_instructions(&mut self, mut instructions: Vec<(Uuid, String)>) {
+        let mut responses: Vec<(Uuid, Message)> = Vec::new();
+        while let Some((uuid, instruction)) = instructions.pop() {
+            let message_in = if let Ok(message_in) = serde_json::from_str::<Message>(&instruction) {
+                message_in
             } else {
-                panic!("Error during message deserialization");
+                let message_out = create_failure_message(String::from("Error during message deserialization"));
+                responses.push((uuid, message_out));
+                continue
             };
 
-            match message {
-                Message::Add(message) => {
-                    add_task(&mut self.queue, message);
+            let result = match message_in {
+                Message::Add(message_in) => {
+                    add_task(&mut self.queue, message_in)
                 }
-
-                Message::Remove(message) => {}
-
-                Message::Start(message) => {}
-
-                Message::Pause(message) => {}
-
-                Message::Failure => panic!("Invalid message type"),
-
-                _ => (),
+                Message::Remove(message_in) => {
+                    remove_task(&mut self.queue, &mut self.task_handler, message_in)
+                }
+                _ => {
+                    Ok(Message::Failure(FailureMessage{text: String::from("")}))
+                }
             };
+
+            match result {
+                Ok(message_out) => {
+                    responses.push((uuid, message_out));
+                },
+                Err(error) => {
+                    let text = format!("{:?}", error);
+                    let message_out = create_failure_message(text);
+                    responses.push((uuid, message_out));
+                }
+            }
         }
     }
 }
