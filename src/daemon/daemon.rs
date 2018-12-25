@@ -35,7 +35,7 @@ impl Daemon {
 }
 
 impl Daemon {
-    pub fn handle_instructions(&mut self, mut instructions: Vec<(Uuid, String)>) {
+    pub fn handle_instructions(&mut self, mut instructions: Vec<(Uuid, String)>) -> Vec<(Uuid, Message)> {
         let mut responses: Vec<(Uuid, Message)> = Vec::new();
         while let Some((uuid, instruction)) = instructions.pop() {
             let message_in = if let Ok(message_in) = serde_json::from_str::<Message>(&instruction) {
@@ -54,7 +54,7 @@ impl Daemon {
                     remove_task(&mut self.queue, &mut self.task_handler, message_in)
                 }
                 _ => {
-                    Ok(Message::Failure(FailureMessage{text: String::from("")}))
+                    Ok(Message::Failure(FailureMessage{text: String::from("Unhandled message type.")}))
                 }
             };
 
@@ -69,6 +69,8 @@ impl Daemon {
                 }
             }
         }
+
+        responses
     }
 }
 
@@ -85,9 +87,12 @@ impl Future for Daemon {
         // Poll all connection futures and handle the received instruction.
         let instructions = self.socket_handler.handle_incoming();
 
-        self.handle_instructions(instructions);
+        // Check for finished responses
+        self.socket_handler.check_responses();
 
-        self.socket_handler.handle_responses();
+        let responses = self.handle_instructions(instructions);
+        println!("{:?}", responses);
+        self.socket_handler.process_responses(responses);
 
         self.task_handler.check(&mut self.queue);
 

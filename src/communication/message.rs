@@ -3,7 +3,7 @@ use ::serde_derive::{Deserialize, Serialize};
 use crate::daemon::error::DaemonError;
 
 /// The Message used to add a new command to the daemon.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum Message {
     Add(AddMessage),
     Remove(RemoveMessage),
@@ -21,47 +21,47 @@ pub enum Message {
     Failure(FailureMessage),
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct AddMessage {
     pub command: String,
     pub path: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct RemoveMessage {
     pub indices: Vec<usize>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SwitchMessage {
     pub command: String,
     pub path: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct StartMessage {
     pub command: String,
     pub path: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct PauseMessage {
     pub command: String,
     pub path: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct KillMessage {
     pub command: String,
     pub path: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SuccessMessage {
     pub text: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct FailureMessage {
     pub text: String,
 }

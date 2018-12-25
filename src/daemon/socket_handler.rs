@@ -4,6 +4,7 @@ use ::futures::prelude::*;
 use ::futures::Future;
 use ::std::collections::HashMap;
 use ::std::io::Cursor;
+use ::std::net::Shutdown;
 use ::tokio::io as tokio_io;
 use ::tokio_uds::{UnixListener, UnixStream};
 use ::uuid::Uuid;
@@ -110,6 +111,13 @@ impl SocketHandler {
         instructions
     }
 
+    /// Send or queue a vector of messages
+    pub fn process_responses(&mut self, mut responses: Vec<(Uuid, Message)>) {
+        while let Some((uuid, message)) = responses.pop() {
+            self.send_or_queue_message(uuid, message);
+        }
+    }
+
     /// Send a message to a specific unix socket
     /// The uuid of the socket is contained inside the Message
     pub fn send_or_queue_message(&mut self, uuid: Uuid, message: Message) {
@@ -155,9 +163,9 @@ impl SocketHandler {
 
     /// Check messages have been sent to the client.
     /// If a message has been successfully sent, add it unix_sockets again for further messages.
-    pub fn handle_responses(&mut self) {
-        let mut to_remove = Vec::new();
-        let mut to_reuse = Vec::new();
+    pub fn check_responses(&mut self) {
+        let mut to_remove: Vec<Uuid> = Vec::new();
+        let mut to_reuse: Vec<Uuid> = Vec::new();
         for (uuid, future) in self.unix_responses.iter_mut() {
             let result = future.poll();
 
@@ -173,22 +181,29 @@ impl SocketHandler {
             // Check whether the response has been sent and remove the future and thereby the socket on success
             match result.unwrap() {
                 Async::Ready((_, _)) => {
-                    to_reuse.push(uuid);
+                    to_reuse.push(uuid.clone());
                 }
                 Async::NotReady => {}
             }
         }
 
         // Remove all sockets that errored in some kind of way.
-        for uuid in &to_remove {
+        for uuid in to_remove.iter() {
             self.unix_responses.remove(uuid);
         }
 
         // Add all sockets to the unix_sockets HashMap for further usage.
-        for uuid in &to_remove {
+        for uuid in to_reuse.iter() {
             if let Some(mut future) = self.unix_responses.remove(uuid) {
                 if let Ok(Async::Ready((stream, _))) = future.poll() {
-                    self.unix_sockets.insert(*uuid, stream);
+                    // Reuse logic for later, if we need sockets for constant communication
+                    // self.unix_sockets.insert(*uuid, stream);
+                    match stream.shutdown(Shutdown::Both) {
+                        Err(error) => {
+                            println!("Error during socket shutdown: {:?}", error);
+                        }
+                        _ => {println!("lol");}
+                    }
                 } else {
                     // TODO: Error handling
                     println!("A future should be ready but isn't");
