@@ -170,54 +170,37 @@ impl SocketHandler {
     /// Check messages have been sent to the client.
     /// If a message has been successfully sent, add it unix_sockets again for further messages.
     pub fn check_responses(&mut self) {
-        let mut to_remove: Vec<Uuid> = Vec::new();
-        let mut to_reuse: Vec<Uuid> = Vec::new();
-        for (uuid, future) in self.unix_responses.iter_mut() {
+        let mut not_ready = HashMap::new();
+        for (uuid, mut future) in self.unix_responses.drain().take(1) {
             let result = future.poll();
 
             // Handle socket error
             if result.is_err() {
                 println!("Socket errored during send");
                 println!("{:?}", result.err());
-                to_remove.push(uuid.clone());
 
                 continue;
             }
 
             // Check whether the response has been sent and remove the future and thereby the socket on success
             match result.unwrap() {
-                Async::Ready((_, _)) => {
-                    to_reuse.push(uuid.clone());
-                }
-                Async::NotReady => {}
-            }
-        }
-
-        // Remove all sockets that errored in some kind of way.
-        for uuid in to_remove.iter() {
-            self.unix_responses.remove(uuid);
-        }
-
-        // Add all sockets to the unix_sockets HashMap for further usage.
-        for uuid in to_reuse.iter() {
-            if let Some(mut future) = self.unix_responses.remove(uuid) {
-                if let Ok(Async::Ready((stream, _))) = future.poll() {
-                    // Reuse logic for later, if we need sockets for constant communication
-                    // self.unix_sockets.insert(*uuid, stream);
+                Async::Ready((stream, _)) => {
                     match stream.shutdown(Shutdown::Both) {
                         Err(error) => {
                             println!("Error during socket shutdown: {:?}", error);
                         }
-                        _ => {println!("lol");}
+                        _ => {
+                            println!("lol");
+                        }
                     }
-                } else {
-                    // TODO: Error handling
-                    println!("A future should be ready but isn't");
+                    continue
                 }
-            } else {
-                // TODO: Error handling
-                println!("Failed to get socket from unix_responses");
+                Async::NotReady => {
+                    not_ready.insert(uuid, future);
+                }
             }
         }
+
+        self.unix_responses = not_ready;
     }
 }
