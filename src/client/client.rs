@@ -1,4 +1,5 @@
-use ::byteorder::{BigEndian, WriteBytesExt};
+use ::byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
+use ::std::io::Cursor;
 use ::failure::Error;
 use ::futures::Future;
 use ::tokio::prelude::*;
@@ -56,11 +57,18 @@ impl Client {
         let communication_future = UnixStream::connect(get_socket_path(&self.settings))
             .and_then(move |stream| tokio_io::write_all(stream, header))
             .and_then(move |(stream, _written)| tokio_io::write_all(stream, payload))
-            .and_then(|(stream, _written)| tokio_io::read_to_end(stream, Vec::new()));
+            .and_then(|(stream, _written)| tokio_io::read_exact(stream, vec![0; 8]))
+            .and_then(|(stream, header)| {
+                // Extract the instruction size from the header bytes
+                let mut header = Cursor::new(header);
+                let instruction_size = header.read_u64::<BigEndian>().unwrap() as usize;
+                println!("{:?}", instruction_size);
 
-        self.communication_future = Some(Box::new(
-            communication_future.map_err(|error| Error::from(error)),
-        ));
+                tokio_io::read_exact(stream, vec![0; instruction_size])
+            })
+            .map_err(|error| Error::from(error));
+
+        self.communication_future = Some(Box::new(communication_future));
     }
 
     /// Receive the response of the daemon and handle it.

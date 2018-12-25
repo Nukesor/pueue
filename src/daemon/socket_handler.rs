@@ -1,4 +1,4 @@
-use ::byteorder::{BigEndian, ReadBytesExt};
+use ::byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use ::failure::Error;
 use ::futures::prelude::*;
 use ::futures::Future;
@@ -139,12 +139,18 @@ impl SocketHandler {
             .unix_sockets
             .remove(&uuid)
             .expect("Tried to remove non-existing unix socket.");
-        if let Ok(response) = serde_json::to_string(&message) {
-            let response_future = tokio_io::write_all(stream, response.into_bytes());
-            self.unix_responses.insert(
-                uuid,
-                Box::new(response_future.map_err(|error| Error::from(error))),
-            );
+
+        if let Ok(payload) = serde_json::to_string(&message) {
+            let payload = payload.into_bytes();
+            let byte_size = payload.len() as u64;
+
+            let mut header = vec![];
+            header.write_u64::<BigEndian>(byte_size).unwrap();
+
+            let response_future = tokio_io::write_all(stream, header)
+                .and_then(move |(stream, _written)| tokio_io::write_all(stream, payload))
+                .map_err(|error| Error::from(error));
+            self.unix_responses.insert(uuid, Box::new(response_future));
         } else {
             // TODO: proper error handling
             println!("Error creating message");
