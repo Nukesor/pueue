@@ -1,7 +1,6 @@
 use ::failure::Error;
 use ::futures::prelude::*;
 use ::futures::Future;
-use ::std::collections::HashMap;
 use ::uuid::Uuid;
 
 use crate::communication::message::*;
@@ -35,33 +34,35 @@ impl Daemon {
 }
 
 impl Daemon {
-    pub fn handle_instructions(&mut self, mut instructions: Vec<(Uuid, String)>) -> Vec<(Uuid, Message)> {
+    pub fn handle_instructions(
+        &mut self,
+        mut instructions: Vec<(Uuid, String)>,
+    ) -> Vec<(Uuid, Message)> {
         let mut responses: Vec<(Uuid, Message)> = Vec::new();
         while let Some((uuid, instruction)) = instructions.pop() {
             let message_in = if let Ok(message_in) = serde_json::from_str::<Message>(&instruction) {
                 message_in
             } else {
-                let message_out = create_failure_message(String::from("Error during message deserialization"));
+                let message_out =
+                    create_failure_message(String::from("Error during message deserialization"));
                 responses.push((uuid, message_out));
-                continue
+                continue;
             };
 
             let result = match message_in {
-                Message::Add(message_in) => {
-                    add_task(&mut self.queue, message_in)
-                }
+                Message::Add(message_in) => add_task(&mut self.queue, message_in),
                 Message::Remove(message_in) => {
                     remove_task(&mut self.queue, &mut self.task_handler, message_in)
                 }
-                _ => {
-                    Ok(Message::Failure(FailureMessage{text: String::from("Unhandled message type.")}))
-                }
+                _ => Ok(Message::Failure(FailureMessage {
+                    text: String::from("Unhandled message type."),
+                })),
             };
 
             match result {
                 Ok(message_out) => {
                     responses.push((uuid, message_out));
-                },
+                }
                 Err(error) => {
                     let text = format!("{:?}", error);
                     let message_out = create_failure_message(text);
@@ -76,7 +77,7 @@ impl Daemon {
 
 impl Future for Daemon {
     type Item = ();
-    type Error = Error;
+    type Error = ();
 
     /// The poll function of the daemon.
     /// This is continuously called by the Tokio core.
@@ -87,12 +88,11 @@ impl Future for Daemon {
         // Poll all connection futures and handle the received instruction.
         let instructions = self.socket_handler.handle_incoming();
 
+        let responses = self.handle_instructions(instructions);
+        self.socket_handler.process_responses(responses);
+
         // Check for finished responses
         self.socket_handler.check_responses();
-
-        let responses = self.handle_instructions(instructions);
-        println!("{:?}", responses);
-        self.socket_handler.process_responses(responses);
 
         self.task_handler.check(&mut self.queue);
 

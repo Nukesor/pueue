@@ -1,14 +1,11 @@
 use ::failure::Error;
 use ::tokio::prelude::*;
-use ::tokio_core::reactor::Core;
-
-//use daemonize::{Daemonize};
-//use users::{get_user_by_uid, get_current_uid};
+use tokio;
 
 use pueue::daemon::daemon::Daemon;
 use pueue::settings::Settings;
 
-fn main() -> Result<(), Error> {
+fn main() {
     let settings = Settings::new().unwrap();
     let save_result = settings.save();
 
@@ -17,10 +14,7 @@ fn main() -> Result<(), Error> {
         println!("{:?}", save_result.err());
     }
 
-    let mut core = Core::new()?;
     let daemon = Daemon::new(&settings);
 
-    core.run(daemon)?;
-
-    Ok(())
+    tokio::run(daemon);
 }

@@ -1,10 +1,10 @@
 use ::byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
-use ::std::io::Cursor;
 use ::failure::Error;
 use ::futures::Future;
+use ::std::io::Cursor;
+use ::tokio::io as tokio_io;
+use ::tokio::net::UnixStream;
 use ::tokio::prelude::*;
-use ::tokio_io::io as tokio_io;
-use ::tokio_uds::UnixStream;
 
 use crate::client::cli::handle_cli;
 use crate::communication::local::get_socket_path;
@@ -55,14 +55,13 @@ impl Client {
         // Send the request size header first.
         // Afterwards send the request.
         let communication_future = UnixStream::connect(get_socket_path(&self.settings))
-            .and_then(move |stream| tokio_io::write_all(stream, header))
-            .and_then(move |(stream, _written)| tokio_io::write_all(stream, payload))
+            .and_then(|stream| tokio_io::write_all(stream, header))
+            .and_then(|(stream, _written)| tokio_io::write_all(stream, payload))
             .and_then(|(stream, _written)| tokio_io::read_exact(stream, vec![0; 8]))
             .and_then(|(stream, header)| {
                 // Extract the instruction size from the header bytes
                 let mut header = Cursor::new(header);
                 let instruction_size = header.read_u64::<BigEndian>().unwrap() as usize;
-                println!("{:?}", instruction_size);
 
                 tokio_io::read_exact(stream, vec![0; instruction_size])
             })
@@ -132,11 +131,11 @@ impl Client {
 
 impl Future for Client {
     type Item = ();
-    type Error = Error;
+    type Error = ();
 
     /// The poll function of the client.
     /// Send a message, receive the response and handle it accordingly to the current task.
-    fn poll(&mut self) -> Result<Async<()>, Self::Error> {
+    fn poll(&mut self) -> Result<Async<Self::Item>, Self::Error> {
         // Create the message payload and send it to the daemon.
         self.send_message();
 

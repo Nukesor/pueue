@@ -1,10 +1,10 @@
 use ::failure::Error;
-use ::tokio_core::reactor::Core;
+use tokio;
 
 use pueue::client::client::Client;
 use pueue::settings::Settings;
 
-fn main() -> Result<(), Error> {
+fn main() {
     let settings = Settings::new().unwrap();
     let save_result = settings.save();
 
@@ -13,10 +13,7 @@ fn main() -> Result<(), Error> {
         println!("{:?}", save_result.err());
     }
 
-    let mut core = Core::new()?;
     let client = Client::new(settings);
 
-    core.run(client)?;
-
-    Ok(())
+    tokio::run(client);
 }

@@ -3,8 +3,8 @@ use ::tokio_process::Child;
 
 use crate::communication::message::*;
 use crate::daemon::error::DaemonError;
-use crate::daemon::task_handler::*;
 use crate::daemon::task::{Task, TaskStatus};
+use crate::daemon::task_handler::*;
 
 pub type Queue = Vec<Option<Box<Task>>>;
 
@@ -25,7 +25,11 @@ pub fn add_task(queue: &mut Queue, message: AddMessage) -> Result<Message, Daemo
     create_success_message(String::from("New task added."))
 }
 
-pub fn remove_task(queue: &mut Queue, task_handler: &mut TaskHandler, message: RemoveMessage) -> Result<Message, DaemonError> {
+pub fn remove_task(
+    queue: &mut Queue,
+    task_handler: &mut TaskHandler,
+    message: RemoveMessage,
+) -> Result<Message, DaemonError> {
     create_success_message(String::from("Task removed"))
 }
 

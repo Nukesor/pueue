@@ -6,7 +6,7 @@ use ::std::collections::HashMap;
 use ::std::io::Cursor;
 use ::std::net::Shutdown;
 use ::tokio::io as tokio_io;
-use ::tokio_uds::{UnixListener, UnixStream};
+use ::tokio::net::{UnixListener, UnixStream};
 use ::uuid::Uuid;
 
 use crate::communication::local::*;
@@ -60,7 +60,6 @@ impl SocketHandler {
                             // Extract the instruction size from the header bytes
                             let mut header = Cursor::new(header);
                             let instruction_size = header.read_u64::<BigEndian>().unwrap() as usize;
-                            println!("{:?}", instruction_size);
 
                             tokio_io::read_exact(stream, vec![0; instruction_size])
                         })
@@ -140,6 +139,8 @@ impl SocketHandler {
             .remove(&uuid)
             .expect("Tried to remove non-existing unix socket.");
 
+        println!("Sending message");
+
         if let Ok(payload) = serde_json::to_string(&message) {
             let payload = payload.into_bytes();
             let byte_size = payload.len() as u64;
@@ -148,7 +149,10 @@ impl SocketHandler {
             header.write_u64::<BigEndian>(byte_size).unwrap();
 
             let response_future = tokio_io::write_all(stream, header)
-                .and_then(move |(stream, _written)| tokio_io::write_all(stream, payload))
+                .and_then(|(stream, _written)| {
+                    println!("header sent");
+                    tokio_io::write_all(stream, payload)
+                })
                 .map_err(|error| Error::from(error));
             self.unix_responses.insert(uuid, Box::new(response_future));
         } else {
@@ -189,11 +193,9 @@ impl SocketHandler {
                         Err(error) => {
                             println!("Error during socket shutdown: {:?}", error);
                         }
-                        _ => {
-                            println!("lol");
-                        }
+                        _ => {}
                     }
-                    continue
+                    continue;
                 }
                 Async::NotReady => {
                     not_ready.insert(uuid, future);
