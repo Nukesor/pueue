@@ -1,5 +1,3 @@
-use ::failure::Error;
-use ::tokio::prelude::*;
 use tokio;
 
 use pueue::daemon::daemon::Daemon;

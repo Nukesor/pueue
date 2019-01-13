@@ -1,4 +1,3 @@
-use ::failure::Error;
 use tokio;
 
 use pueue::client::client::Client;

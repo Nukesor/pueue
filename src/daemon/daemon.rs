@@ -1,4 +1,3 @@
-use ::failure::Error;
 use ::futures::prelude::*;
 use ::futures::Future;
 use ::uuid::Uuid;

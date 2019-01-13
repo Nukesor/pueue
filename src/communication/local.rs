@@ -1,9 +1,6 @@
-use ::failure::Error;
-use ::futures::{Future, Poll};
 use ::std::fs::remove_file;
 use ::std::path::Path;
-use ::tokio::net::{UnixListener, UnixStream};
-use ::tokio::prelude::*;
+use ::tokio::net::UnixListener;
 
 use crate::settings::Settings;
 
