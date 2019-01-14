@@ -15,8 +15,10 @@ pub fn handle_cli() -> Message {
         )
         .get_matches();
 
+    let command: Vec<String> = matches.value_of("command").unwrap().to_string().split(" ").map(|x| x.to_string()).collect();
+
     Message::Add(AddMessage {
-        command: matches.value_of("command").unwrap().to_string(),
+        command: command,
         path: String::from("/"),
     })
 }

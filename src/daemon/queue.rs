@@ -9,8 +9,11 @@ use crate::daemon::task_handler::*;
 pub type Queue = Vec<Option<Box<Task>>>;
 
 pub fn add_task(queue: &mut Queue, message: AddMessage) -> Result<Message, DaemonError> {
+    let mut command = message.command.clone();
+    let arguments = command.split_off(1);
     let task = Task {
-        command: message.command.clone(),
+        command: command.pop().expect("Expected command"),
+        arguments: arguments,
         path: message.path.clone(),
         status: TaskStatus::Queued,
         returncode: None,

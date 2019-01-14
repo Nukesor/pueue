@@ -59,6 +59,7 @@ impl TaskHandler {
                     match success {
                         // Child process is done
                         Async::Ready(_) => {
+                            println!("Command successfully exited");
                             finished.push(index.clone());
                         }
                         // Child process is not done, keep waiting
@@ -89,6 +90,7 @@ impl TaskHandler {
     fn start_process(&mut self, index: usize, task: &Task) -> Result<(), Error> {
         let (stdout_log, stderr_log) = create_log_file_handles(index)?;
         let child = Command::new(task.command.clone())
+            .args(task.arguments.clone())
             .current_dir(task.path.clone())
             .stdin(Stdio::piped())
             .stdout(Stdio::from(stdout_log))

@@ -23,7 +23,7 @@ pub enum Message {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct AddMessage {
-    pub command: String,
+    pub command: Vec<String>,
     pub path: String,
 }
 
