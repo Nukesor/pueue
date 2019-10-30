@@ -1,4 +1,4 @@
-use ::failure::Error;
+use ::anyhow::Error;
 use ::std::fs::File;
 
 pub fn open_log_file_handles(index: usize) -> Result<(File, File), Error> {

@@ -1,7 +1,5 @@
-use tokio;
-
-use pueue::daemon::daemon::Daemon;
-use pueue::settings::Settings;
+//use pueue::daemon::daemon::Daemon;
+use ::pueue::settings::Settings;
 
 fn main() {
     let settings = Settings::new().unwrap();
@@ -12,7 +10,7 @@ fn main() {
         println!("{:?}", save_result.err());
     }
 
-    let daemon = Daemon::new(&settings);
-
-    tokio::run(daemon);
+    //    let daemon = Daemon::new(&settings);
+    //
+    //    tokio::run(daemon);
 }

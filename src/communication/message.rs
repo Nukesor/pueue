@@ -1,6 +1,6 @@
 use ::serde_derive::{Deserialize, Serialize};
 
-use crate::daemon::error::DaemonError;
+use ::anyhow::Error;
 
 /// The Message used to add a new command to the daemon.
 #[derive(Serialize, Deserialize, Debug)]
@@ -66,7 +66,7 @@ pub struct FailureMessage {
     pub text: String,
 }
 
-pub fn create_success_message(text: String) -> Result<Message, DaemonError> {
+pub fn create_success_message(text: String) -> Result<Message, Error> {
     Ok(Message::Success(SuccessMessage { text: text }))
 }
 

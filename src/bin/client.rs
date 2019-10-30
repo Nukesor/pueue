@@ -1,9 +1,10 @@
-use tokio;
+use ::anyhow::Result;
 
-use pueue::client::client::Client;
-use pueue::settings::Settings;
+use ::pueue::client::client::Client;
+use ::pueue::settings::Settings;
 
-fn main() {
+#[tokio::main]
+async fn main() -> Result<()> {
     let settings = Settings::new().unwrap();
     let save_result = settings.save();
 
@@ -12,7 +13,9 @@ fn main() {
         println!("{:?}", save_result.err());
     }
 
-    let client = Client::new(settings);
+    let mut client = Client::new(settings)?;
 
-    tokio::run(client);
+    client.run().await?;
+
+    Ok(())
 }

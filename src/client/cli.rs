@@ -1,8 +1,9 @@
-use clap::{App, Arg, SubCommand};
+use ::anyhow::{anyhow, Result};
+use clap::{App, Arg};
 
 use crate::communication::message::*;
 
-pub fn handle_cli() -> Message {
+pub fn handle_cli() -> Result<Message> {
     let matches = App::new("Pueue client")
         .version("0.1")
         .author("Arne Beer <contact@arne.beer>")
@@ -15,10 +16,17 @@ pub fn handle_cli() -> Message {
         )
         .get_matches();
 
-    let command: Vec<String> = matches.value_of("command").unwrap().to_string().split(" ").map(|x| x.to_string()).collect();
+    let command = matches
+        .value_of("command")
+        .ok_or(anyhow!("You need to specify a command"))?;
+    let command: Vec<String> = command
+        .to_string()
+        .split(" ")
+        .map(|x| x.to_string())
+        .collect();
 
-    Message::Add(AddMessage {
+    Ok(Message::Add(AddMessage {
         command: command,
         path: String::from("/"),
-    })
+    }))
 }
