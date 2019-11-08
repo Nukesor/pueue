@@ -1,14 +1,14 @@
 use ::std::mem;
-use ::tokio_process::Child;
+use ::anyhow::{Error, Result};
+use ::std::process::Child;
 
 use crate::communication::message::*;
-use crate::daemon::error::DaemonError;
 use crate::daemon::task::{Task, TaskStatus};
 use crate::daemon::task_handler::*;
 
 pub type Queue = Vec<Option<Box<Task>>>;
 
-pub fn add_task(queue: &mut Queue, message: AddMessage) -> Result<Message, DaemonError> {
+pub fn add_task(queue: &mut Queue, message: AddMessage) -> Result<Message> {
     let mut command = message.command.clone();
     let arguments = command.split_off(1);
     let task = Task {
@@ -32,7 +32,7 @@ pub fn remove_task(
     queue: &mut Queue,
     task_handler: &mut TaskHandler,
     message: RemoveMessage,
-) -> Result<Message, DaemonError> {
+) -> Result<Message> {
     create_success_message(String::from("Task removed"))
 }
 
@@ -74,4 +74,4 @@ pub fn get_task_status(queue: &Queue, index: usize) -> Option<TaskStatus> {
     }
 }
 
-pub fn handle_finished_child(_queue: &mut Queue, _index: usize, _child: Box<Child>) {}
+pub fn handle_finished_child(_queue: &mut Queue, _index: usize, _child: Child) {}

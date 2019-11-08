@@ -5,7 +5,6 @@ use ::tokio::net::TcpStream;
 use ::tokio::prelude::*;
 
 use crate::client::cli::handle_cli;
-use crate::communication::local::get_socket_path;
 use crate::communication::message::*;
 use crate::settings::Settings;
 
@@ -27,7 +26,7 @@ impl Client {
 
     pub async fn run(&mut self) -> Result<()> {
         // Connect to stream
-        let mut stream = TcpStream::connect(get_socket_path(&self.settings)).await?;
+        let mut stream = TcpStream::connect("127.0.0.1:8080").await?;
 
         // Create the message payload and send it to the daemon.
         self.send_message(&mut stream).await?;
@@ -66,7 +65,7 @@ impl Client {
     async fn receive_answer(&mut self, stream: &mut TcpStream) -> Result<String> {
         // Extract the instruction size from the header bytes
         let mut header_buffer = vec![0; 8];
-        stream.read_exact(&mut header_buffer).await?;
+        stream.read(&mut header_buffer).await?;
         let mut header = Cursor::new(header_buffer);
         let instruction_size = header.read_u64::<BigEndian>().unwrap() as usize;
 

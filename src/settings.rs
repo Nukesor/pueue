@@ -1,12 +1,12 @@
-use serde_derive::{Deserialize, Serialize};
-use std::error::Error;
-use std::fs::File;
-use std::io::prelude::*;
+use ::serde_derive::{Deserialize, Serialize};
+use ::anyhow::Result;
+use ::std::fs::File;
+use ::std::io::prelude::*;
 
-use config::{Config, ConfigError, File as ConfigFile};
-use shellexpand;
-use toml;
-use users::{get_current_uid, get_user_by_uid};
+use ::config::{Config, ConfigError, File as ConfigFile};
+use ::users::{get_current_uid, get_user_by_uid};
+use ::shellexpand;
+use ::toml;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Common {
@@ -79,7 +79,7 @@ impl Settings {
 
     /// Save the current configuration as a file to the configuration path.
     /// The file is written to "~/.config/pueue.toml".
-    pub fn save(&self) -> Result<(), Box<dyn Error>> {
+    pub fn save(&self) -> Result<()> {
         let content = toml::to_string(self).unwrap();
 
         let path = shellexpand::tilde(CONFIG_PATH).into_owned();

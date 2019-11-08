@@ -17,6 +17,7 @@ daemonize = "^0.4"
 chrono = { version = "^0.4", features = ["serde"] }
 users = "^0.9"
 anyhow = "1"
+async-std = "0.99"
 
 byteorder = "^1"
 serde = "^1.0"
@@ -30,7 +31,7 @@ shellexpand = "^1.0"
 config = "^0.9"
 toml = "^0.5"
 
-tokio = "0.2.0-alpha.6"
+tokio = { version = "0.2.0-alpha.6", features = ["process"] }
 bytes = "^0.4"
 uuid = { version = "^0.8", features = ["serde", "v4"] }
 

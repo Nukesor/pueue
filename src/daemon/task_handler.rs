@@ -1,16 +1,17 @@
-use ::failure::Error;
-use ::futures::prelude::*;
-use ::futures::Future;
 use ::std::collections::HashMap;
-use ::std::process::{Command, ExitStatus, Stdio};
-use ::tokio_process::{Child, CommandExt};
+use ::std::process::{ExitStatus, Stdio};
+use ::std::task::Poll;
+use ::std::future::Future;
+use ::std::process::{Command, Child};
+
+use ::anyhow::{Error, Result};
 
 use crate::daemon::queue::*;
 use crate::daemon::task::{Task, TaskStatus};
 use crate::file::log::{create_log_file_handles, open_log_file_handles};
 
 pub struct TaskHandler {
-    children: HashMap<usize, Box<Child>>,
+    children: HashMap<usize, Child>,
     is_running: bool,
 }
 
@@ -48,23 +49,16 @@ impl TaskHandler {
         let mut finished = Vec::new();
         let mut errored = Vec::new();
         for (index, child) in self.children.iter_mut() {
-            match child.poll() {
+            match child.try_wait() {
                 // Handle a child error.
                 Err(error) => {
                     println!("Task {} failed with error {:?}", index, error);
                     errored.push(index.clone());
                 }
-                // Child process did not error yet
-                Ok(success) => {
-                    match success {
-                        // Child process is done
-                        Async::Ready(_) => {
-                            println!("Command successfully exited");
-                            finished.push(index.clone());
-                        }
-                        // Child process is not done, keep waiting
-                        Async::NotReady => continue,
-                    }
+                // Child process did not exit yet
+                Ok(None) => continue,
+                Ok(exit_status) => {
+                    finished.push(index.clone());
                 }
             }
         }
@@ -87,7 +81,7 @@ impl TaskHandler {
         Ok(())
     }
 
-    fn start_process(&mut self, index: usize, task: &Task) -> Result<(), Error> {
+    fn start_process(&mut self, index: usize, task: &Task) -> Result<()> {
         let (stdout_log, stderr_log) = create_log_file_handles(index)?;
         let child = Command::new(task.command.clone())
             .args(task.arguments.clone())
@@ -95,8 +89,8 @@ impl TaskHandler {
             .stdin(Stdio::piped())
             .stdout(Stdio::from(stdout_log))
             .stderr(Stdio::from(stderr_log))
-            .spawn_async()?;
-        self.children.insert(index, Box::new(child));
+            .spawn()?;
+        self.children.insert(index, child);
 
         Ok(())
     }
