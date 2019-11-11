@@ -34,6 +34,7 @@ impl Client {
         // Check if we can receive the response from the daemon
         let response = self.receive_answer(&mut stream).await?;
 
+        println!("rofl");
         println!("{}", &response);
         Ok(())
     }

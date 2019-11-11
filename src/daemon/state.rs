@@ -18,6 +18,15 @@ pub struct State {
 }
 
 impl State {
+    pub fn new() -> State {
+        return State {
+            max_id: 0,
+            queued: BTreeMap::new(),
+            running: BTreeMap::new(),
+            finished: BTreeMap::new(),
+        }
+    }
+
     pub fn add_task(&mut self, message: AddMessage) -> Result<Message> {
         let mut command = message.command.clone();
         let arguments = command.split_off(1);
@@ -37,7 +46,7 @@ impl State {
         self.queued.insert(self.max_id, task);
         self.max_id += 1;
 
-        create_success_message(String::from("New task added."))
+        Ok(create_success_message(String::from("New task added.")))
     }
 
     pub fn remove_task(
@@ -45,7 +54,7 @@ impl State {
         task_handler: &mut TaskHandler,
         message: RemoveMessage,
     ) -> Result<Message> {
-        create_success_message(String::from("Task removed"))
+        Ok(create_success_message(String::from("Task removed")))
     }
 
     pub fn get_next_task(&mut self) -> Option<(i32)> {

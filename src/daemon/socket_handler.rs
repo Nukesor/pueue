@@ -1,5 +1,6 @@
-use ::byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use ::std::io::Cursor;
+use ::std::sync::mpsc::Sender;
+use ::byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use ::anyhow::Result;
 use ::tokio::net::{TcpListener, TcpStream};
 use ::tokio::prelude::*;
@@ -9,14 +10,15 @@ use crate::settings::Settings;
 
 /// Poll the unix listener and accept new incoming connections
 /// Create a new future to handle the message and spawn it
-pub async fn accept_incoming(settings: &Settings) -> Result<()> {
+pub async fn accept_incoming(_settings: Settings, sender: Sender<Message>) -> Result<()> {
     let mut listener = TcpListener::bind("127.0.0.1:8080").await?;
 
     loop {
         // Poll if we have a new incoming connection.
         let (socket, _) = listener.accept().await?;
+        let sender_clone = sender.clone();
         tokio::spawn(async move {
-            let result = handle_incoming(socket).await;
+            let result = handle_incoming(socket, sender_clone).await;
         });
     }
 }
@@ -24,7 +26,7 @@ pub async fn accept_incoming(settings: &Settings) -> Result<()> {
 /// Continuously poll the existing incoming futures.
 /// In case we received an instruction, handle it and create a response future.
 /// The response future is added to unix_responses and handled in a separate function.
-pub async fn handle_incoming(mut socket: TcpStream) -> Result<()> {
+pub async fn handle_incoming(mut socket: TcpStream, sender: Sender<Message>) -> Result<()> {
     // Receive the header with the size and type of the message
     let mut header = vec![0; 8];
     socket.read(&mut header).await?;
@@ -38,6 +40,11 @@ pub async fn handle_incoming(mut socket: TcpStream) -> Result<()> {
 
     let instruction = String::from_utf8(instruction_bytes)?;
     println!("{}", instruction);
+
+    let message: Message = serde_json::from_str(&instruction)?;
+    sender.send(message)?;
+
+    send_message(socket, create_success_message("yep, worked".to_string())).await?;
 
     Ok(())
 }
@@ -53,6 +60,7 @@ async fn send_message(mut socket: TcpStream, message: Message) -> Result<()> {
 
     socket.write_all(&header).await?;
     socket.write_all(&payload).await?;
+    println!("Response sent");
 
     Ok(())
 }

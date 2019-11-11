@@ -1,5 +1,11 @@
+use ::std::sync::mpsc::channel;
+use ::std::sync::{Mutex, Arc};
 use ::anyhow::{Result, bail, Error};
+
 use ::pueue::settings::Settings;
+use ::pueue::daemon::state::State;
+use ::pueue::daemon::task_handler::TaskHandler;
+use ::pueue::daemon::socket_handler::accept_incoming;
 
 
 #[tokio::main]
@@ -12,6 +18,13 @@ async fn main() -> Result<()> {
         }
         Ok(()) => {}
     };
+
+    let state = Arc::new(Mutex::new(State::new()));
+
+    let (sender, receiver) = channel();
+    let task_handler = TaskHandler::new(state, receiver);
+
+    accept_incoming(settings, sender).await;
 
     Ok(())
 }

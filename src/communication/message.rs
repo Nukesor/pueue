@@ -17,8 +17,8 @@ pub enum Message {
     Clear,
 
     Status,
-    Success(SuccessMessage),
-    Failure(FailureMessage),
+    Success(TextMessage),
+    Failure(TextMessage),
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -57,19 +57,14 @@ pub struct KillMessage {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct SuccessMessage {
+pub struct TextMessage {
     pub text: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct FailureMessage {
-    pub text: String,
-}
-
-pub fn create_success_message(text: String) -> Result<Message, Error> {
-    Ok(Message::Success(SuccessMessage { text: text }))
+pub fn create_success_message(text: String) -> Message {
+    Message::Success(TextMessage { text: text })
 }
 
 pub fn create_failure_message(text: String) -> Message {
-    Message::Failure(FailureMessage { text: text })
+    Message::Failure(TextMessage { text: text })
 }

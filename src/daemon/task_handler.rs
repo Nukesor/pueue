@@ -1,23 +1,27 @@
 use ::std::collections::BTreeMap;
 use ::std::process::{ExitStatus, Stdio};
 use ::std::process::{Command, Child};
+use std::sync::mpsc::Receiver;
 
 use ::anyhow::{Error, Result, anyhow};
 
 use crate::daemon::state::SharedState;
 use crate::daemon::task::{Task, TaskStatus};
-use crate::file::log::{create_log_file_handles, open_log_file_handles};
+use crate::communication::message::Message;
+use crate::file::log::create_log_file_handles;
 
 pub struct TaskHandler {
     state: SharedState,
+    receiver: Receiver<Message>,
     children: BTreeMap<i32, Child>,
     is_running: bool,
 }
 
 impl TaskHandler {
-    pub fn new(state: SharedState) -> Self {
+    pub fn new(state: SharedState, receiver: Receiver<Message>) -> Self {
         TaskHandler {
             state: state,
+            receiver: receiver,
             children: BTreeMap::new(),
             is_running: true,
         }
