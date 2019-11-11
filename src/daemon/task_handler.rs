@@ -1,7 +1,8 @@
 use ::std::collections::BTreeMap;
 use ::std::process::{ExitStatus, Stdio};
 use ::std::process::{Command, Child};
-use std::sync::mpsc::Receiver;
+use ::std::time::Duration;
+use ::std::sync::mpsc::Receiver;
 
 use ::anyhow::{Error, Result, anyhow};
 
@@ -29,9 +30,20 @@ impl TaskHandler {
 }
 
 impl TaskHandler {
-    pub fn check(&mut self) {
-        self.process_finished();
-        self.check_new();
+    pub fn run(&mut self) {
+        loop {
+            self.receive_commands();
+            self.process_finished();
+            self.check_new();
+        }
+    }
+
+    fn receive_commands(&mut self) {
+        let timeout = Duration::from_millis(250);
+        match self.receiver.recv_timeout(timeout) {
+            Ok(message) => println!("{:?}", message),
+            Err(err) => ()
+        };
     }
 
     /// Check whether there are any finished processes

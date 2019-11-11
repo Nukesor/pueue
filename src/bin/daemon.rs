@@ -1,5 +1,6 @@
 use ::std::sync::mpsc::channel;
 use ::std::sync::{Mutex, Arc};
+use ::std::thread;
 use ::anyhow::{Result, bail, Error};
 
 use ::pueue::settings::Settings;
@@ -22,7 +23,11 @@ async fn main() -> Result<()> {
     let state = Arc::new(Mutex::new(State::new()));
 
     let (sender, receiver) = channel();
-    let task_handler = TaskHandler::new(state, receiver);
+    let mut task_handler = TaskHandler::new(state, receiver);
+
+    thread::spawn(move || {
+        task_handler.run();
+    });
 
     accept_incoming(settings, sender).await;
 
