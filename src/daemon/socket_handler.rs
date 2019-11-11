@@ -16,7 +16,7 @@ pub async fn accept_incoming(settings: &Settings) -> Result<()> {
         // Poll if we have a new incoming connection.
         let (socket, _) = listener.accept().await?;
         tokio::spawn(async move {
-            handle_incoming(socket).await;
+            let result = handle_incoming(socket).await;
         });
     }
 }

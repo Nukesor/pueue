@@ -42,7 +42,7 @@ impl Client {
     /// The JSON payload is highly dependent on the commandline input parameters
     /// Some payloads are serialized `Add` or `Remove` messages.
     /// Before we send the actual payload, a header is sent with two u64.
-    /// One signals the type of the message, whilst the other signals the length of the payload.
+    /// The first represents the type of the message, the second is length of the payload.
     async fn send_message(&mut self, stream: &mut TcpStream) -> Result<()> {
         // Prepare command for transfer and determine message byte size
         let payload = serde_json::to_string(&self.message)

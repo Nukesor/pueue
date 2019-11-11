@@ -1,51 +1,52 @@
-use ::std::collections::HashMap;
+use ::std::collections::BTreeMap;
 use ::std::process::{ExitStatus, Stdio};
-use ::std::task::Poll;
-use ::std::future::Future;
 use ::std::process::{Command, Child};
 
-use ::anyhow::{Error, Result};
+use ::anyhow::{Error, Result, anyhow};
 
-use crate::daemon::queue::*;
+use crate::daemon::state::SharedState;
 use crate::daemon::task::{Task, TaskStatus};
 use crate::file::log::{create_log_file_handles, open_log_file_handles};
 
 pub struct TaskHandler {
-    children: HashMap<usize, Child>,
+    state: SharedState,
+    children: BTreeMap<i32, Child>,
     is_running: bool,
 }
 
 impl TaskHandler {
-    pub fn new() -> Self {
+    pub fn new(state: SharedState) -> Self {
         TaskHandler {
-            children: HashMap::new(),
+            state: state,
+            children: BTreeMap::new(),
             is_running: true,
         }
     }
 }
 
 impl TaskHandler {
-    pub fn check(&mut self, queue: &mut Queue) {
-        self.process_finished(queue);
-        self.check_new(queue);
+    pub fn check(&mut self) {
+        self.process_finished();
+        self.check_new();
     }
 
     /// Check whether there are any finished processes
-    fn process_finished(&mut self, queue: &mut Queue) {
+    fn process_finished(&mut self) {
         let (finished, errored) = self.get_finished();
+        let mut state = self.state.lock().unwrap();
         // Iterate over everything.
         for index in finished.iter() {
             let child = self.children.remove(index).expect("Child went missing");
-            handle_finished_child(queue, *index, child);
+            state.handle_finished_child(*index, child);
         }
 
         for index in errored.iter() {
             let child = self.children.remove(index).expect("Child went missing");
-            change_status(queue, *index, TaskStatus::Failed);
+            state.change_status(*index, TaskStatus::Failed);
         }
     }
 
-    fn get_finished(&mut self) -> (Vec<usize>, Vec<usize>) {
+    fn get_finished(&mut self) -> (Vec<i32>, Vec<i32>) {
         let mut finished = Vec::new();
         let mut errored = Vec::new();
         for (index, child) in self.children.iter_mut() {
@@ -66,9 +67,8 @@ impl TaskHandler {
     }
 
     /// See if the task manager has a free slot and can start a new process.
-    fn check_new(&mut self, queue: &mut Queue) -> Result<(), Error> {
-        let next_task = get_next_task(queue);
-        let (index, task) = if let Some((index, task)) = next_task {
+    fn check_new(&mut self) -> Result<()> {
+        let (index, task) = if let Some((index, task)) = self.get_next()? {
             (index, task)
         } else {
             return Ok(());
@@ -76,12 +76,10 @@ impl TaskHandler {
 
         self.start_process(index, &task)?;
 
-        change_status(queue, index, TaskStatus::Running);
-
         Ok(())
     }
 
-    fn start_process(&mut self, index: usize, task: &Task) -> Result<()> {
+    fn start_process(&mut self, index: i32, task: &Task) -> Result<()> {
         let (stdout_log, stderr_log) = create_log_file_handles(index)?;
         let child = Command::new(task.command.clone())
             .args(task.arguments.clone())
@@ -92,6 +90,21 @@ impl TaskHandler {
             .spawn()?;
         self.children.insert(index, child);
 
+        let mut state = self.state.lock().unwrap();
+        state.change_status(index, TaskStatus::Running);
+
         Ok(())
+    }
+
+    fn get_next(&mut self) -> Result<Option<(i32, Task)>> {
+        let mut state = self.state.lock().unwrap();
+        let next_task = state.get_next_task();
+        match next_task {
+            Some(index) => {
+                let task = state.queued.remove(&index).ok_or(anyhow!("Expected queued item"))?;
+                Ok(Some((index, task)))
+            }
+            None => Ok(None)
+        }
     }
 }

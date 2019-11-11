@@ -4,6 +4,7 @@ use ::serde_derive::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Task {
+    pub id: i32,
     pub command: String,
     pub arguments: Vec<String>,
     pub path: String,
