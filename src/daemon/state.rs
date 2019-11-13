@@ -1,6 +1,6 @@
-use ::std::sync::{Arc, Mutex};
 use ::std::collections::BTreeMap;
 use ::std::process::Child;
+use ::std::sync::{Arc, Mutex};
 
 use crate::daemon::task::{Task, TaskStatus};
 
@@ -21,7 +21,7 @@ impl State {
             queued: BTreeMap::new(),
             running: BTreeMap::new(),
             finished: BTreeMap::new(),
-        }
+        };
     }
 
     pub fn add_task(&mut self, mut task: Task) {

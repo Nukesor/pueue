@@ -1,29 +1,31 @@
 mod instructions;
 
+use ::anyhow::Result;
+use ::byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use ::std::io::Cursor;
 use ::std::sync::mpsc::Sender;
-use ::byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
-use ::anyhow::Result;
 use ::tokio::net::{TcpListener, TcpStream};
 use ::tokio::prelude::*;
 
 use crate::communication::message::*;
-use crate::daemon::state::SharedState;
 use crate::daemon::socket::instructions::handle_message;
+use crate::daemon::state::SharedState;
 use crate::settings::Settings;
-
-
 
 /// Poll the unix listener and accept new incoming connections
 /// Create a new future to handle the message and spawn it
-pub async fn accept_incoming(_settings: Settings, sender: Sender<Message>, state: SharedState) -> Result<()> {
+pub async fn accept_incoming(
+    _settings: Settings,
+    sender: Sender<Message>,
+    state: SharedState,
+) -> Result<()> {
     let mut listener = TcpListener::bind("127.0.0.1:8080").await?;
 
     loop {
         // Poll if we have a new incoming connection.
         let (socket, _) = listener.accept().await?;
         let sender_clone = sender.clone();
-        let state_clone  = state.clone();
+        let state_clone = state.clone();
         tokio::spawn(async move {
             let _result = handle_incoming(socket, sender_clone, state_clone).await;
         });
@@ -33,7 +35,11 @@ pub async fn accept_incoming(_settings: Settings, sender: Sender<Message>, state
 /// Continuously poll the existing incoming futures.
 /// In case we received an instruction, handle it and create a response future.
 /// The response future is added to unix_responses and handled in a separate function.
-pub async fn handle_incoming(mut socket: TcpStream, sender: Sender<Message>, state: SharedState) -> Result<()> {
+pub async fn handle_incoming(
+    mut socket: TcpStream,
+    sender: Sender<Message>,
+    state: SharedState,
+) -> Result<()> {
     // Receive the header with the size and type of the message
     let mut header = vec![0; 8];
     socket.read(&mut header).await?;
@@ -58,7 +64,6 @@ pub async fn handle_incoming(mut socket: TcpStream, sender: Sender<Message>, sta
     Ok(())
 }
 
-
 /// Create the response future for this message.
 async fn send_message(mut socket: TcpStream, message: Message) -> Result<()> {
     let payload = serde_json::to_string(&message)?.into_bytes();
@@ -73,7 +78,6 @@ async fn send_message(mut socket: TcpStream, message: Message) -> Result<()> {
 
     Ok(())
 }
-
 
 //pub fn handle_message(message: Message) -> Result<String> {
 //    match message {

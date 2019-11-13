@@ -1,14 +1,14 @@
 use ::std::collections::BTreeMap;
 use ::std::process::Stdio;
-use ::std::process::{Command, Child};
-use ::std::time::Duration;
+use ::std::process::{Child, Command};
 use ::std::sync::mpsc::Receiver;
+use ::std::time::Duration;
 
-use ::anyhow::{Result, anyhow};
+use ::anyhow::{anyhow, Result};
 
+use crate::communication::message::Message;
 use crate::daemon::state::SharedState;
 use crate::daemon::task::{Task, TaskStatus};
-use crate::communication::message::Message;
 use crate::file::log::create_log_file_handles;
 
 pub struct TaskHandler {
@@ -44,7 +44,7 @@ impl TaskHandler {
         let timeout = Duration::from_millis(250);
         match self.receiver.recv_timeout(timeout) {
             Ok(message) => println!("{:?}", message),
-            Err(_) => ()
+            Err(_) => (),
         };
     }
 
@@ -119,10 +119,13 @@ impl TaskHandler {
         let next_task = state.get_next_task();
         match next_task {
             Some(index) => {
-                let task = state.queued.remove(&index).ok_or(anyhow!("Expected queued item"))?;
+                let task = state
+                    .queued
+                    .remove(&index)
+                    .ok_or(anyhow!("Expected queued item"))?;
                 Ok(Some((index, task)))
             }
-            None => Ok(None)
+            None => Ok(None),
         }
     }
 }

@@ -1,10 +1,10 @@
-use ::std::fs::File;
-use ::std::io::prelude::*;
-use ::std::collections::HashMap;
-use ::std::path::{Path, PathBuf};
-use ::anyhow::{Result, anyhow};
+use ::anyhow::{anyhow, Result};
 use ::log::info;
 use ::serde_derive::{Deserialize, Serialize};
+use ::std::collections::HashMap;
+use ::std::fs::File;
+use ::std::io::prelude::*;
+use ::std::path::{Path, PathBuf};
 
 use ::config::Config;
 use ::toml;
@@ -88,8 +88,6 @@ fn parse_config(settings: &mut Config) -> Result<()> {
 
     Ok(())
 }
-
-
 
 #[cfg(target_os = "linux")]
 fn default_config_path() -> Result<PathBuf> {
