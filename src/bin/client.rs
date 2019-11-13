@@ -1,10 +1,12 @@
 use ::anyhow::Result;
+use ::simplelog::{Config, LevelFilter, SimpleLogger};
 
 use ::pueue::client::client::Client;
 use ::pueue::settings::Settings;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    let _ = SimpleLogger::init(LevelFilter::Info, Config::default());
     let settings = Settings::new().unwrap();
     let save_result = settings.save();
 

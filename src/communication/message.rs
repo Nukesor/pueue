@@ -1,7 +1,5 @@
 use ::serde_derive::{Deserialize, Serialize};
 
-use ::anyhow::Error;
-
 /// The Message used to add a new command to the daemon.
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Message {
@@ -23,7 +21,8 @@ pub enum Message {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct AddMessage {
-    pub command: Vec<String>,
+    pub command: String,
+    pub arguments: Vec<String>,
     pub path: String,
 }
 

@@ -19,14 +19,16 @@ pub fn handle_cli() -> Result<Message> {
     let command = matches
         .value_of("command")
         .ok_or(anyhow!("You need to specify a command"))?;
-    let command: Vec<String> = command
+
+    let mut command: Vec<String> = command
         .to_string()
         .split(" ")
         .map(|x| x.to_string())
         .collect();
 
     Ok(Message::Add(AddMessage {
-        command: command,
+        command: command.remove(0),
+        arguments: command,
         path: String::from("/"),
     }))
 }

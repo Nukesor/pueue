@@ -5,8 +5,8 @@ use ::anyhow::{Result, bail, Error};
 
 use ::pueue::settings::Settings;
 use ::pueue::daemon::state::State;
-use ::pueue::daemon::task_handler::TaskHandler;
-use ::pueue::daemon::socket_handler::accept_incoming;
+use ::pueue::daemon::task::handler::TaskHandler;
+use ::pueue::daemon::socket::accept_incoming;
 
 
 #[tokio::main]
@@ -23,13 +23,13 @@ async fn main() -> Result<()> {
     let state = Arc::new(Mutex::new(State::new()));
 
     let (sender, receiver) = channel();
-    let mut task_handler = TaskHandler::new(state, receiver);
+    let mut task_handler = TaskHandler::new(state.clone(), receiver);
 
     thread::spawn(move || {
         task_handler.run();
     });
 
-    accept_incoming(settings, sender).await;
+    accept_incoming(settings, sender, state.clone()).await?;
 
     Ok(())
 }

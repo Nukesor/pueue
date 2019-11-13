@@ -1,10 +1,10 @@
 use ::std::collections::BTreeMap;
-use ::std::process::{ExitStatus, Stdio};
+use ::std::process::Stdio;
 use ::std::process::{Command, Child};
 use ::std::time::Duration;
 use ::std::sync::mpsc::Receiver;
 
-use ::anyhow::{Error, Result, anyhow};
+use ::anyhow::{Result, anyhow};
 
 use crate::daemon::state::SharedState;
 use crate::daemon::task::{Task, TaskStatus};
@@ -34,7 +34,9 @@ impl TaskHandler {
         loop {
             self.receive_commands();
             self.process_finished();
-            self.check_new();
+            if self.is_running {
+                let _res = self.check_new();
+            }
         }
     }
 
@@ -42,7 +44,7 @@ impl TaskHandler {
         let timeout = Duration::from_millis(250);
         match self.receiver.recv_timeout(timeout) {
             Ok(message) => println!("{:?}", message),
-            Err(err) => ()
+            Err(_) => ()
         };
     }
 
@@ -57,7 +59,7 @@ impl TaskHandler {
         }
 
         for index in errored.iter() {
-            let child = self.children.remove(index).expect("Child went missing");
+            let _child = self.children.remove(index).expect("Child went missing");
             state.change_status(*index, TaskStatus::Failed);
         }
     }
@@ -74,7 +76,7 @@ impl TaskHandler {
                 }
                 // Child process did not exit yet
                 Ok(None) => continue,
-                Ok(exit_status) => {
+                Ok(_exit_status) => {
                     finished.push(index.clone());
                 }
             }

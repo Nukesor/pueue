@@ -26,7 +26,8 @@ impl Client {
 
     pub async fn run(&mut self) -> Result<()> {
         // Connect to stream
-        let mut stream = TcpStream::connect("127.0.0.1:8080").await?;
+        let address = format!("{}:{}", self.settings.daemon.address, self.settings.daemon.port);
+        let mut stream = TcpStream::connect(address).await?;
 
         // Create the message payload and send it to the daemon.
         self.send_message(&mut stream).await?;

@@ -1,92 +1,109 @@
-use ::serde_derive::{Deserialize, Serialize};
-use ::anyhow::Result;
 use ::std::fs::File;
 use ::std::io::prelude::*;
+use ::std::collections::HashMap;
+use ::std::path::{Path, PathBuf};
+use ::anyhow::{Result, anyhow};
+use ::log::info;
+use ::serde_derive::{Deserialize, Serialize};
 
-use ::config::{Config, ConfigError, File as ConfigFile};
-use ::users::{get_current_uid, get_user_by_uid};
-use ::shellexpand;
+use ::config::Config;
 use ::toml;
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct Common {
-    pub local_socket_dir: String,
-    pub group_id: u32,
+pub struct Client {
+    pub daemon_address: String,
+    pub daemon_port: String,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Daemon {
-    pub parallel_worker: u32,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct Worker {
-    pub local: bool,
-    pub worker_group: String,
+    pub default_worker_count: u32,
     pub address: String,
     pub port: u32,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct Client {
-    pub test: String,
+pub struct Group {
+    pub name: String,
+    pub worker_count: u32,
 }
 
 /// The struct representation of a full configuration.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Settings {
-    pub common: Common,
     pub client: Client,
     pub daemon: Daemon,
-    pub worker: Worker,
+    pub groups: HashMap<String, Group>,
 }
-
-const CONFIG_PATH: &str = "~/.config/pueue.toml";
 
 impl Settings {
     /// This function creates a new configuration instance and
     /// populates it with default values for every option.
     /// If a local config file already exists it is parsed and
     /// overwrites the default option values.
-    /// The local config is located at "~/.config/pueue.toml".
-    pub fn new() -> Result<Self, ConfigError> {
+    /// The local config is located at "~/.config/pueue.yml".
+    pub fn new() -> Result<Settings> {
         let mut config = Config::new();
 
-        // Get user and group id information
-        let user = get_user_by_uid(get_current_uid()).unwrap();
-        let group_id = user.primary_group_id() as i64;
-
         // Set pueue config defaults
-        config.set_default("common.local_socket_dir", "/tmp/")?;
-        config.set_default("common.group_id", group_id)?;
+        config.set_default("daemon.address", "127.0.0.1")?;
+        config.set_default("daemon.port", "6924")?;
+        config.set_default("daemon.default_parallel_worker", 1)?;
 
-        config.set_default("worker.local", true)?;
-        config.set_default("worker.worker_group", "local")?;
-        config.set_default("worker.address", "127.0.0.1")?;
-        config.set_default("worker.port", 2112)?;
-
-        config.set_default("daemon.parallel_worker", 1)?;
-
-        config.set_default("client.test", "he")?;
+        config.set_default("client.daemon_address", "127.0.0.1")?;
+        config.set_default("client.daemon_port", "6924")?;
 
         // Add in the home config file
-        let path = shellexpand::tilde(CONFIG_PATH).into_owned();
-        config.merge(ConfigFile::with_name(&path).required(false))?;
+        parse_config(&mut config)?;
 
         // You can deserialize (and thus freeze) the entire configuration
-        config.try_into()
+        Ok(config.try_into()?)
     }
 
     /// Save the current configuration as a file to the configuration path.
-    /// The file is written to "~/.config/pueue.toml".
+    /// The file is written to "~/.config/pueue.yml".
     pub fn save(&self) -> Result<()> {
         let content = toml::to_string(self).unwrap();
 
-        let path = shellexpand::tilde(CONFIG_PATH).into_owned();
-        let mut file = File::create(&path)?;
+        let mut file = File::create(default_config_path()?)?;
 
         file.write_all(content.as_bytes())?;
 
         Ok(())
     }
+}
+
+fn parse_config(settings: &mut Config) -> Result<()> {
+    info!("Parsing config files");
+    let config_paths = get_config_paths()?;
+
+    for path in config_paths.into_iter() {
+        info!("Checking path: {:?}", &path);
+        if path.exists() {
+            info!("Parsing config file at: {:?}", path);
+            let config_file = config::File::with_name(path.to_str().unwrap());
+            settings.merge(config_file)?;
+        }
+    }
+
+    Ok(())
+}
+
+
+
+#[cfg(target_os = "linux")]
+fn default_config_path() -> Result<PathBuf> {
+    let home_dir = dirs::home_dir().ok_or(anyhow!("Couldn't resolve home dir"))?;
+    Ok(home_dir.join(".config/pueue.yml"))
+}
+
+#[cfg(target_os = "linux")]
+fn get_config_paths() -> Result<Vec<PathBuf>> {
+    let mut paths = Vec::new();
+    let home_dir = dirs::home_dir().ok_or(anyhow!("Couldn't resolve home dir"))?;
+    paths.push(Path::new("/etc/pueue.yml").to_path_buf());
+    paths.push(home_dir.join(".config/pueue.yml"));
+    paths.push(Path::new("./pueue.yml").to_path_buf());
+
+    Ok(paths)
 }
