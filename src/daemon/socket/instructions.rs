@@ -17,11 +17,12 @@ pub fn handle_message(
 }
 
 fn add_task(message: AddMessage, state: SharedState) -> Result<Message> {
-    let mut state = state.lock().unwrap();
 
     let task = Task::new(message.command, message.arguments, message.path);
-
-    state.add_task(task);
+    {
+        let mut state = state.lock().unwrap();
+        state.add_task(task);
+    }
 
     Ok(create_success_message(String::from("New task added.")))
 }

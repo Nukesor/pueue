@@ -7,33 +7,32 @@ use ::std::io::prelude::*;
 use ::std::path::{Path, PathBuf};
 
 use ::config::Config;
-use ::toml;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Client {
     pub daemon_address: String,
     pub daemon_port: String,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Daemon {
-    pub default_worker_count: u32,
+    pub default_worker_count: usize,
     pub address: String,
     pub port: u32,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Group {
     pub name: String,
     pub worker_count: u32,
 }
 
 /// The struct representation of a full configuration.
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Settings {
     pub client: Client,
     pub daemon: Daemon,
-    pub groups: HashMap<String, Group>,
+//    pub groups: HashMap<String, Group>,
 }
 
 impl Settings {
@@ -48,10 +47,12 @@ impl Settings {
         // Set pueue config defaults
         config.set_default("daemon.address", "127.0.0.1")?;
         config.set_default("daemon.port", "6924")?;
-        config.set_default("daemon.default_parallel_worker", 1)?;
+        config.set_default("daemon.default_worker_count", 1)?;
 
         config.set_default("client.daemon_address", "127.0.0.1")?;
         config.set_default("client.daemon_port", "6924")?;
+//        let groups: HashMap<String, Group> = HashMap::new();
+//        config.set_default("client.groups", groups)?;
 
         // Add in the home config file
         parse_config(&mut config)?;
@@ -63,10 +64,8 @@ impl Settings {
     /// Save the current configuration as a file to the configuration path.
     /// The file is written to "~/.config/pueue.yml".
     pub fn save(&self) -> Result<()> {
-        let content = toml::to_string(self).unwrap();
-
+        let content = serde_yaml::to_string(self)?;
         let mut file = File::create(default_config_path()?)?;
-
         file.write_all(content.as_bytes())?;
 
         Ok(())

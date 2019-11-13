@@ -7,7 +7,7 @@ use ::pueue::settings::Settings;
 #[tokio::main]
 async fn main() -> Result<()> {
     let _ = SimpleLogger::init(LevelFilter::Info, Config::default());
-    let settings = Settings::new().unwrap();
+    let settings = Settings::new()?;
     let save_result = settings.save();
 
     if save_result.is_err() {

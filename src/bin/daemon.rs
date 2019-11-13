@@ -10,7 +10,7 @@ use ::pueue::settings::Settings;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let settings = Settings::new().unwrap();
+    let settings = Settings::new()?;
     match settings.save() {
         Err(error) => {
             let error: Error = From::from(error);
@@ -22,7 +22,7 @@ async fn main() -> Result<()> {
     let state = Arc::new(Mutex::new(State::new()));
 
     let (sender, receiver) = channel();
-    let mut task_handler = TaskHandler::new(state.clone(), receiver);
+    let mut task_handler = TaskHandler::new(settings.clone(), state.clone(), receiver);
 
     thread::spawn(move || {
         task_handler.run();

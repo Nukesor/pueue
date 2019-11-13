@@ -2,6 +2,7 @@ mod instructions;
 
 use ::anyhow::Result;
 use ::byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
+use ::log::info;
 use ::std::io::Cursor;
 use ::std::sync::mpsc::Sender;
 use ::tokio::net::{TcpListener, TcpStream};
@@ -15,11 +16,12 @@ use crate::settings::Settings;
 /// Poll the unix listener and accept new incoming connections
 /// Create a new future to handle the message and spawn it
 pub async fn accept_incoming(
-    _settings: Settings,
+    settings: Settings,
     sender: Sender<Message>,
     state: SharedState,
 ) -> Result<()> {
-    let mut listener = TcpListener::bind("127.0.0.1:8080").await?;
+    let address = format!("{}:{}", settings.client.daemon_address, settings.client.daemon_port);
+    let mut listener = TcpListener::bind(address).await?;
 
     loop {
         // Poll if we have a new incoming connection.
@@ -52,7 +54,7 @@ pub async fn handle_incoming(
 
     // Receive the message and deserialize it
     let instruction = String::from_utf8(instruction_bytes)?;
-    println!("{}", instruction);
+    info!("Received instruction: {}", instruction);
     let message: Message = serde_json::from_str(&instruction)?;
 
     // Process the message
@@ -74,19 +76,6 @@ async fn send_message(mut socket: TcpStream, message: Message) -> Result<()> {
 
     socket.write_all(&header).await?;
     socket.write_all(&payload).await?;
-    println!("Response sent");
 
     Ok(())
 }
-
-//pub fn handle_message(message: Message) -> Result<String> {
-//    match message {
-//        Message::Add(message_in) => add_task(&mut self.queue, message_in),
-//        Message::Remove(message_in) => {
-//            remove_task(&mut self.queue, &mut self.task_handler, message_in)
-//        }
-//        _ => Ok(Message::Failure(FailureMessage {
-//            text: String::from("Unhandled message type."),
-//        })),
-//    }
-//}

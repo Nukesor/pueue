@@ -5,23 +5,27 @@ use ::std::sync::mpsc::Receiver;
 use ::std::time::Duration;
 
 use ::anyhow::{anyhow, Result};
+use ::log::info;
 
 use crate::communication::message::Message;
 use crate::daemon::state::SharedState;
 use crate::daemon::task::{Task, TaskStatus};
 use crate::file::log::create_log_file_handles;
+use crate::settings::Settings;
 
 pub struct TaskHandler {
     state: SharedState,
+    settings: Settings,
     receiver: Receiver<Message>,
-    children: BTreeMap<i32, Child>,
+    pub children: BTreeMap<i32, Child>,
     is_running: bool,
 }
 
 impl TaskHandler {
-    pub fn new(state: SharedState, receiver: Receiver<Message>) -> Self {
+    pub fn new(settings: Settings, state: SharedState, receiver: Receiver<Message>) -> Self {
         TaskHandler {
             state: state,
+            settings: settings,
             receiver: receiver,
             children: BTreeMap::new(),
             is_running: true,
@@ -30,6 +34,11 @@ impl TaskHandler {
 }
 
 impl TaskHandler {
+    /// Main loop of the task handler
+    /// In here a few things happen:
+    /// 1. Propagated commands from socket communication is received and handled
+    /// 2. Check whether any tasks just finished
+    /// 3. Check whether we can spawn new tasks
     pub fn run(&mut self) {
         loop {
             self.receive_commands();
@@ -38,6 +47,53 @@ impl TaskHandler {
                 let _res = self.check_new();
             }
         }
+    }
+
+    /// See if the task manager has a free slot and a queued task.
+    /// If that's the case, start a new process.
+    fn check_new(&mut self) -> Result<()> {
+        // All slots are already occupied
+        if self.children.len() >= self.settings.daemon.default_worker_count {
+            return Ok(());
+        }
+
+        if let Some((id, task)) = self.get_next()? {
+            self.start_process(id, &task)?;
+        }
+
+        Ok(())
+    }
+
+    /// Return the next task that's queued for execution.
+    /// None if no new task could be found.
+    fn get_next(&mut self) -> Result<Option<(i32, Task)>> {
+        let mut state = self.state.lock().unwrap();
+        if let Some(id) = state.get_next_task() {
+            let task = state.remove_task(id).ok_or(anyhow!("Expected queued item"))?;
+            Ok(Some((id, task)))
+        } else {
+            Ok(None)
+        }
+    }
+
+    /// Actually spawn a new sub process
+    /// The output of subprocesses is piped into a seperate file for easier access
+    fn start_process(&mut self, id: i32, task: &Task) -> Result<()> {
+        let (stdout_log, stderr_log) = create_log_file_handles(id)?;
+        let child = Command::new(&task.command)
+            .args(&task.arguments)
+            .current_dir(&task.path)
+            .stdin(Stdio::piped())
+            .stdout(Stdio::from(stdout_log))
+            .stderr(Stdio::from(stderr_log))
+            .spawn()?;
+        self.children.insert(id, child);
+        info!("Started task: {} {:?}", task.command, task.arguments);
+
+        let mut state = self.state.lock().unwrap();
+        state.change_status(id, TaskStatus::Running);
+
+        Ok(())
     }
 
     fn receive_commands(&mut self) {
@@ -53,79 +109,34 @@ impl TaskHandler {
         let (finished, errored) = self.get_finished();
         let mut state = self.state.lock().unwrap();
         // Iterate over everything.
-        for index in finished.iter() {
-            let child = self.children.remove(index).expect("Child went missing");
-            state.handle_finished_child(*index, child);
+        for id in finished.iter() {
+            let child = self.children.remove(id).expect("Child went missing");
+            state.handle_finished_child(*id, child);
         }
 
-        for index in errored.iter() {
-            let _child = self.children.remove(index).expect("Child went missing");
-            state.change_status(*index, TaskStatus::Failed);
+        for id in errored.iter() {
+            let _child = self.children.remove(id).expect("Child went missing");
+            state.change_status(*id, TaskStatus::Failed);
         }
     }
 
     fn get_finished(&mut self) -> (Vec<i32>, Vec<i32>) {
         let mut finished = Vec::new();
         let mut errored = Vec::new();
-        for (index, child) in self.children.iter_mut() {
+        for (id, child) in self.children.iter_mut() {
             match child.try_wait() {
                 // Handle a child error.
                 Err(error) => {
-                    println!("Task {} failed with error {:?}", index, error);
-                    errored.push(index.clone());
+                    info!("Task {} failed with error {:?}", id, error);
+                    errored.push(*id);
                 }
                 // Child process did not exit yet
                 Ok(None) => continue,
                 Ok(_exit_status) => {
-                    finished.push(index.clone());
+                    finished.push(*id);
                 }
             }
         }
         (finished, errored)
-    }
-
-    /// See if the task manager has a free slot and can start a new process.
-    fn check_new(&mut self) -> Result<()> {
-        let (index, task) = if let Some((index, task)) = self.get_next()? {
-            (index, task)
-        } else {
-            return Ok(());
-        };
-
-        self.start_process(index, &task)?;
-
-        Ok(())
-    }
-
-    fn start_process(&mut self, index: i32, task: &Task) -> Result<()> {
-        let (stdout_log, stderr_log) = create_log_file_handles(index)?;
-        let child = Command::new(task.command.clone())
-            .args(task.arguments.clone())
-            .current_dir(task.path.clone())
-            .stdin(Stdio::piped())
-            .stdout(Stdio::from(stdout_log))
-            .stderr(Stdio::from(stderr_log))
-            .spawn()?;
-        self.children.insert(index, child);
-
-        let mut state = self.state.lock().unwrap();
-        state.change_status(index, TaskStatus::Running);
-
-        Ok(())
-    }
-
-    fn get_next(&mut self) -> Result<Option<(i32, Task)>> {
-        let mut state = self.state.lock().unwrap();
-        let next_task = state.get_next_task();
-        match next_task {
-            Some(index) => {
-                let task = state
-                    .queued
-                    .remove(&index)
-                    .ok_or(anyhow!("Expected queued item"))?;
-                Ok(Some((index, task)))
-            }
-            None => Ok(None),
-        }
     }
 }
