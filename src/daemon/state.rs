@@ -1,11 +1,14 @@
 use ::std::collections::BTreeMap;
 use ::std::process::Child;
 use ::std::sync::{Arc, Mutex};
+use ::serde_derive::{Deserialize, Serialize};
 
 use crate::daemon::task::{Task, TaskStatus};
 
 pub type SharedState = Arc<Mutex<State>>;
 
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct State {
     max_id: i32,
 

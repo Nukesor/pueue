@@ -1,5 +1,7 @@
 use ::serde_derive::{Deserialize, Serialize};
 
+use crate::daemon::state::State;
+
 /// The Message used to add a new command to the daemon.
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Message {
@@ -15,6 +17,7 @@ pub enum Message {
     Clear,
 
     Status,
+    StatusResponse(State),
     Success(TextMessage),
     Failure(TextMessage),
 }

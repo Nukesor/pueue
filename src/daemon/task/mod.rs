@@ -4,7 +4,7 @@ use ::chrono::prelude::*;
 use ::chrono::DateTime;
 use ::serde_derive::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum TaskStatus {
     Queued,
     Stashed,
@@ -13,7 +13,7 @@ pub enum TaskStatus {
     Failed,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Task {
     pub id: i32,
     pub command: String,

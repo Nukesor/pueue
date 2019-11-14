@@ -99,7 +99,6 @@ impl TaskHandler {
     }
 
     fn receive_commands(&mut self) {
-        info!("lol");
         let timeout = Duration::from_millis(250);
         match self.receiver.recv_timeout(timeout) {
             Ok(message) => info!("{:?}", message),
