@@ -40,12 +40,14 @@ impl TaskHandler {
     /// 2. Check whether any tasks just finished
     /// 3. Check whether we can spawn new tasks
     pub fn run(&mut self) {
+        let timeout = Duration::from_millis(250);
         loop {
             self.receive_commands();
             self.process_finished();
             if self.is_running {
                 let _res = self.check_new();
             }
+            std::thread::sleep(timeout);
         }
     }
 
@@ -97,10 +99,11 @@ impl TaskHandler {
     }
 
     fn receive_commands(&mut self) {
+        info!("lol");
         let timeout = Duration::from_millis(250);
         match self.receiver.recv_timeout(timeout) {
-            Ok(message) => println!("{:?}", message),
-            Err(_) => (),
+            Ok(message) => info!("{:?}", message),
+            Err(_) => {},
         };
     }
 

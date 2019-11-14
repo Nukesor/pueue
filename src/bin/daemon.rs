@@ -2,6 +2,7 @@ use ::anyhow::{bail, Error, Result};
 use ::std::sync::mpsc::channel;
 use ::std::sync::{Arc, Mutex};
 use ::std::thread;
+use ::simplelog::{Config, LevelFilter, SimpleLogger};
 
 use ::pueue::daemon::socket::accept_incoming;
 use ::pueue::daemon::state::State;
@@ -10,6 +11,7 @@ use ::pueue::settings::Settings;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    let _ = SimpleLogger::init(LevelFilter::Info, Config::default());
     let settings = Settings::new()?;
     match settings.save() {
         Err(error) => {
