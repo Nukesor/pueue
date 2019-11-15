@@ -47,8 +47,12 @@ pub fn print_state(state: State) {
                 }
             },
             None => {
-                row.add_cell(Cell::new("Killed")
-                    .with_style(Attr::ForegroundColor(color::RED)));
+                if let Some(_) = task.end {
+                    row.add_cell(Cell::new("Killed")
+                        .with_style(Attr::ForegroundColor(color::RED)));
+                } else {
+                    row.add_cell(Cell::new(""));
+                }
             },
         }
 

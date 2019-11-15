@@ -1,7 +1,6 @@
 use ::anyhow::{anyhow, Result};
 use ::log::info;
 use ::serde_derive::{Deserialize, Serialize};
-use ::std::collections::HashMap;
 use ::std::fs::File;
 use ::std::io::prelude::*;
 use ::std::path::{Path, PathBuf};

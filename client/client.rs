@@ -7,7 +7,6 @@ use ::log::info;
 
 use ::pueue::communication::message::*;
 use ::pueue::settings::Settings;
-use crate::cli::handle_cli;
 use crate::output::print_state;
 
 /// The client
@@ -17,9 +16,7 @@ pub struct Client {
 }
 
 impl Client {
-    pub fn new(settings: Settings) -> Result<Self> {
-        let message = handle_cli()?;
-
+    pub fn new(settings: Settings, message: Message) -> Result<Self> {
         Ok(Client {
             settings: settings,
             message: message,
