@@ -1,6 +1,7 @@
 use ::std::collections::BTreeMap;
 use ::std::process::Child;
 use ::std::sync::{Arc, Mutex};
+use ::chrono::prelude::*;
 use ::serde_derive::{Deserialize, Serialize};
 
 use crate::task::{Task, TaskStatus};
@@ -11,8 +12,7 @@ pub type SharedState = Arc<Mutex<State>>;
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct State {
     max_id: i32,
-
-    tasks: BTreeMap<i32, Task>,
+    pub tasks: BTreeMap<i32, Task>,
 }
 
 impl State {
@@ -43,7 +43,7 @@ impl State {
         return clone;
     }
 
-    pub fn get_next_task(&mut self) -> Option<(i32)> {
+    pub fn get_next_task(&mut self) -> Option<i32> {
         for (id, task) in self.tasks.iter() {
             match task.status {
                 TaskStatus::Queued => {
@@ -57,7 +57,15 @@ impl State {
 
     pub fn change_status(&mut self, id: i32, status: TaskStatus) {
         if let Some(ref mut task) = self.tasks.get_mut(&id) {
-            task.status = status;
+            if status == TaskStatus::Running {
+                match task.status {
+                    TaskStatus::Queued => {
+                        task.status = status;
+                        task.start = Some(Local::now());
+                    },
+                    _ => task.status = status
+                }
+            }
         };
     }
 
@@ -78,5 +86,6 @@ impl State {
         };
 
         task.exit_code = Some(exit_code);
+        task.end = Some(Local::now());
     }
 }

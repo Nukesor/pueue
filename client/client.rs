@@ -8,6 +8,7 @@ use ::log::info;
 use ::pueue::communication::message::*;
 use ::pueue::settings::Settings;
 use crate::cli::handle_cli;
+use crate::output::print_state;
 
 /// The client
 pub struct Client {
@@ -46,7 +47,7 @@ impl Client {
                 info!("{}", text);
             }
             Message::StatusResponse(state) => {
-                info!("{:?}", state);
+                print_state(state);
             }
             _ => ()
         }

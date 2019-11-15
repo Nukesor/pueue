@@ -1,11 +1,12 @@
 use ::anyhow::Result;
 use ::simplelog::{Config, LevelFilter, SimpleLogger};
 
-use crate::client::Client;
 use ::pueue::settings::Settings;
+use crate::client::Client;
 
 pub mod cli;
 pub mod client;
+pub mod output;
 
 #[tokio::main]
 async fn main() -> Result<()> {
