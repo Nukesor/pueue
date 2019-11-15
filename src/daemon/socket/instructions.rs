@@ -30,7 +30,7 @@ fn add_task(message: AddMessage, state: SharedState) -> Result<Message> {
 fn get_status( state: SharedState) -> Result<Message> {
     let state_clone: State;
     {
-        let mut state = state.lock().unwrap();
+        let state = state.lock().unwrap();
         state_clone = state.clone();
     }
 

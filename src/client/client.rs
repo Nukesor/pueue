@@ -3,6 +3,7 @@ use ::byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use ::std::io::Cursor;
 use ::tokio::net::TcpStream;
 use ::tokio::prelude::*;
+use ::log::info;
 
 use crate::client::cli::handle_cli;
 use crate::communication::message::*;
@@ -37,9 +38,19 @@ impl Client {
 
         // Check if we can receive the response from the daemon
         let response = self.receive_answer(&mut stream).await?;
+        // Interpret the response
+        let message: Message = serde_json::from_str(&response)?;
 
-        println!("rofl");
-        println!("{}", &response);
+        match message {
+            Message::Success(text) => {
+                info!("{}", text);
+            }
+            Message::StatusResponse(state) => {
+                info!("{:?}", state);
+            }
+            _ => ()
+        }
+
         Ok(())
     }
 

@@ -33,6 +33,16 @@ impl State {
         self.tasks.remove(&id)
     }
 
+    pub fn get_task_clone(&mut self, id: i32) -> Option<Task> {
+        let task = self.tasks.remove(&id);
+        let clone = task.clone();
+        if let Some(task) = task {
+            self.tasks.insert(id, task);
+        }
+
+        return clone;
+    }
+
     pub fn get_next_task(&mut self) -> Option<(i32)> {
         for (id, task) in self.tasks.iter() {
             match task.status {
@@ -58,5 +68,15 @@ impl State {
         None
     }
 
-    pub fn handle_finished_child(&mut self, _index: i32, _child: Child) {}
+    pub fn handle_finished_child(&mut self, id: i32, mut child: Child) {
+        let mut task = self.tasks.get_mut(&id).unwrap();
+        task.status = TaskStatus::Done;
+
+        let exit_code = match child.wait().unwrap().code() {
+            Some(code) => code,
+            None => 254,
+        };
+
+        task.exit_code = Some(exit_code);
+    }
 }

@@ -4,7 +4,7 @@ use ::std::process::{Child, Command};
 use ::std::sync::mpsc::Receiver;
 use ::std::time::Duration;
 
-use ::anyhow::{anyhow, Result};
+use ::anyhow::Result;
 use ::log::info;
 
 use crate::communication::message::Message;
@@ -69,7 +69,7 @@ impl TaskHandler {
     fn get_next(&mut self) -> Result<Option<(i32, Task)>> {
         let mut state = self.state.lock().unwrap();
         if let Some(id) = state.get_next_task() {
-            let task = state.remove_task(id).ok_or(anyhow!("Expected queued item"))?;
+            let task = state.get_task_clone(id).unwrap();
             Ok(Some((id, task)))
         } else {
             Ok(None)
