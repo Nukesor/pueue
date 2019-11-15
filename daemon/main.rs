@@ -4,10 +4,13 @@ use ::std::sync::{Arc, Mutex};
 use ::std::thread;
 use ::simplelog::{Config, LevelFilter, SimpleLogger};
 
-use ::pueue::daemon::socket::accept_incoming;
-use ::pueue::daemon::state::State;
-use ::pueue::daemon::task::handler::TaskHandler;
+use ::pueue::state::State;
 use ::pueue::settings::Settings;
+use crate::socket::accept_incoming;
+use crate::task_handler::TaskHandler;
+
+pub mod socket;
+pub mod task_handler;
 
 #[tokio::main]
 async fn main() -> Result<()> {

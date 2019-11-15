@@ -7,11 +7,11 @@ use ::std::time::Duration;
 use ::anyhow::Result;
 use ::log::info;
 
-use crate::communication::message::Message;
-use crate::daemon::state::SharedState;
-use crate::daemon::task::{Task, TaskStatus};
-use crate::file::log::create_log_file_handles;
-use crate::settings::Settings;
+use ::pueue::communication::message::Message;
+use ::pueue::file::log::create_log_file_handles;
+use ::pueue::settings::Settings;
+use ::pueue::state::SharedState;
+use ::pueue::task::{Task, TaskStatus};
 
 pub struct TaskHandler {
     state: SharedState,

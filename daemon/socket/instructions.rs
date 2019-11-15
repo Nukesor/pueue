@@ -1,9 +1,9 @@
 use ::anyhow::Result;
 use ::std::sync::mpsc::Sender;
 
-use crate::communication::message::*;
-use crate::daemon::state::{SharedState, State};
-use crate::daemon::task::Task;
+use ::pueue::communication::message::*;
+use ::pueue::state::{SharedState, State};
+use ::pueue::task::Task;
 
 pub fn handle_message(
     message: Message,

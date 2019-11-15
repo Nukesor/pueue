@@ -1,7 +1,7 @@
 use ::anyhow::{anyhow, Result};
 use clap::{App, Arg, SubCommand, ArgMatches};
 
-use crate::communication::message::*;
+use ::pueue::communication::message::*;
 
 pub fn handle_cli() -> Result<Message> {
     let matches = App::new("Pueue client")

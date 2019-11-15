@@ -8,10 +8,10 @@ use ::std::sync::mpsc::Sender;
 use ::tokio::net::{TcpListener, TcpStream};
 use ::tokio::prelude::*;
 
-use crate::communication::message::*;
-use crate::daemon::socket::instructions::handle_message;
-use crate::daemon::state::SharedState;
-use crate::settings::Settings;
+use ::pueue::communication::message::*;
+use ::pueue::state::SharedState;
+use ::pueue::settings::Settings;
+use crate::socket::instructions::handle_message;
 
 /// Poll the unix listener and accept new incoming connections
 /// Create a new future to handle the message and spawn it

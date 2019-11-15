@@ -1,6 +1,6 @@
 use ::serde_derive::{Deserialize, Serialize};
 
-use crate::daemon::state::State;
+use crate::state::State;
 
 /// The Message used to add a new command to the daemon.
 #[derive(Serialize, Deserialize, Debug)]

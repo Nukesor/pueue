@@ -5,9 +5,9 @@ use ::tokio::net::TcpStream;
 use ::tokio::prelude::*;
 use ::log::info;
 
-use crate::client::cli::handle_cli;
-use crate::communication::message::*;
-use crate::settings::Settings;
+use ::pueue::communication::message::*;
+use ::pueue::settings::Settings;
+use crate::cli::handle_cli;
 
 /// The client
 pub struct Client {

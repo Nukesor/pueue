@@ -12,6 +12,14 @@ edition = "2018"
 travis-ci = { repository = "nukesor/pueue-rs", branch = "master" }
 maintenance = { status = "actively-developed" }
 
+[[bin]]
+name = "client"
+path = "client/main.rs"
+
+[[bin]]
+name = "daemon"
+path = "daemon/main.rs"
+
 [dependencies]
 daemonize = "^0.4"
 chrono = { version = "^0.4", features = ["serde"] }
