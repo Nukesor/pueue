@@ -6,8 +6,15 @@ use ::pueue::task::TaskStatus;
 
 /// Print the current state of the daemon in a nicely formatted table
 pub fn print_state(state: State) {
+
+    if state.tasks.len()  == 0 {
+        println!("Task list is empty. Add tasks with `pueue add -- [cmd]`");
+
+        return
+    }
+
     let mut table = Table::new();
-    table.set_format(*format::consts::FORMAT_NO_BORDER);
+    table.set_format(*format::consts::FORMAT_NO_COLSEP);
     let header_row = Row::new(vec![
         Cell::new("Index"),
         Cell::new("Status"),
@@ -17,7 +24,7 @@ pub fn print_state(state: State) {
         Cell::new("Start"),
         Cell::new("End"),
     ]);
-    table.add_row(header_row);
+    table.set_titles(header_row);
 
     for (id, task) in state.tasks {
         let mut row = Row::new(vec![]);
@@ -39,15 +46,15 @@ pub fn print_state(state: State) {
             Some(code) => {
                 // Everything that's not 0, is failed task
                 if code == 0 {
-                    row.add_cell(Cell::new(&task.status.to_string())
+                    row.add_cell(Cell::new(&code.to_string())
                         .with_style(Attr::ForegroundColor(color::GREEN)));
                 } else {
-                    row.add_cell(Cell::new(&task.status.to_string())
+                    row.add_cell(Cell::new(&code.to_string())
                         .with_style(Attr::ForegroundColor(color::RED)));
                 }
             },
             None => {
-                if let Some(_) = task.end {
+                if task.is_done() {
                     row.add_cell(Cell::new("Killed")
                         .with_style(Attr::ForegroundColor(color::RED)));
                 } else {

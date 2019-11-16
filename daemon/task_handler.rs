@@ -52,13 +52,14 @@ impl TaskHandler {
     /// See if the task manager has a free slot and a queued task.
     /// If that's the case, start a new process.
     fn check_new(&mut self) -> Result<()> {
-        // All slots are already occupied
-        if self.children.len() >= self.settings.daemon.default_worker_count {
-            return Ok(());
-        }
-
-        if let Some((id, task)) = self.get_next()? {
-            self.start_process(id, &task)?;
+        // Check while there are still slots left
+        // Break the loop if no next task is found
+        while self.children.len() < self.settings.daemon.default_worker_count {
+            info!("Check for next");
+            match self.get_next()? {
+                Some((id, task)) => self.start_process(id, &task)?,
+                None => break,
+            }
         }
 
         Ok(())
@@ -68,11 +69,12 @@ impl TaskHandler {
     /// None if no new task could be found.
     fn get_next(&mut self) -> Result<Option<(i32, Task)>> {
         let mut state = self.state.lock().unwrap();
-        if let Some(id) = state.get_next_task() {
-            let task = state.get_task_clone(id).unwrap();
-            Ok(Some((id, task)))
-        } else {
-            Ok(None)
+        match state.get_next_task() {
+            Some(id) => {
+                let task = state.get_task_clone(id).unwrap();
+                Ok(Some((id, task)))
+            }
+            None => Ok(None),
         }
     }
 
@@ -111,16 +113,21 @@ impl TaskHandler {
     /// Check whether there are any finished processes
     fn process_finished(&mut self) {
         let (finished, errored) = self.get_finished();
-        let mut state = self.state.lock().unwrap();
         // Iterate over everything.
         for id in finished.iter() {
             let child = self.children.remove(id).expect("Child went missing");
-            state.handle_finished_child(*id, child);
+            {
+                let mut state = self.state.lock().unwrap();
+                state.handle_finished_child(*id, child);
+            }
         }
 
         for id in errored.iter() {
             let _child = self.children.remove(id).expect("Child went missing");
-            state.change_status(*id, TaskStatus::Failed);
+            {
+                let mut state = self.state.lock().unwrap();
+                state.change_status(*id, TaskStatus::Failed);
+            }
         }
     }
 

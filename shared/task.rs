@@ -7,10 +7,16 @@ pub enum TaskStatus {
     Queued,
     Stashed,
     Running,
+    Paused,
     Done,
     Failed,
 }
 
+/// Representation of a task.
+/// start will be set the second the task starts processing.
+/// exit_code, output and end won't be initialized, until the task has finished.
+/// The output of the task is written into seperate files.
+/// Upon task completion, the output is read from the files and put into the struct.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Task {
     pub id: i32,
@@ -39,5 +45,17 @@ impl Task {
             start: None,
             end: None,
         }
+    }
+
+    pub fn is_running(&self) -> bool {
+        return self.status == TaskStatus::Running || self.status == TaskStatus::Paused
+    }
+
+    pub fn is_done(&self) -> bool {
+        return self.status == TaskStatus::Done || self.status == TaskStatus::Failed
+    }
+
+    pub fn is_queued(&self) -> bool {
+        return self.status == TaskStatus::Queued || self.status == TaskStatus::Stashed
     }
 }

@@ -27,6 +27,7 @@ pub struct AddMessage {
     pub command: String,
     pub arguments: Vec<String>,
     pub path: String,
+    pub start_immediately: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

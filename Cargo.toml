@@ -40,7 +40,7 @@ serde_derive = "^1.0"
 log = "0.4"
 simplelog = "0.7"
 dirs = "2"
-clap = "^2"
+structopt = "0.3"
 prettytable-rs = "^0.8"
 
 config = "^0.9"
