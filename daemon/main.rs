@@ -14,7 +14,7 @@ pub mod task_handler;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let _ = SimpleLogger::init(LevelFilter::Info, Config::default());
+    let _ = SimpleLogger::init(LevelFilter::Debug, Config::default());
     let settings = Settings::new()?;
     match settings.save() {
         Err(error) => {

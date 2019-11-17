@@ -3,7 +3,7 @@ use ::serde_derive::{Deserialize, Serialize};
 use crate::state::State;
 
 /// The Message used to add a new command to the daemon.
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum Message {
     Add(AddMessage),
     Remove(RemoveMessage),
@@ -22,7 +22,7 @@ pub enum Message {
     Failure(String),
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct AddMessage {
     pub command: String,
     pub arguments: Vec<String>,
@@ -30,36 +30,35 @@ pub struct AddMessage {
     pub start_immediately: bool,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RemoveMessage {
     pub indices: Vec<usize>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct SwitchMessage {
     pub command: String,
     pub path: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct StartMessage {
-    pub command: String,
-    pub path: String,
+    pub task_ids: Option<Vec<i32>>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct PauseMessage {
-    pub command: String,
-    pub path: String,
+    pub wait: bool,
+    pub task_ids: Option<Vec<i32>>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct KillMessage {
     pub command: String,
     pub path: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TextMessage {
     pub text: String,
 }

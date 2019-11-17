@@ -55,17 +55,14 @@ impl State {
         None
     }
 
-    pub fn change_status(&mut self, id: i32, status: TaskStatus) {
+    pub fn change_status(&mut self, id: i32, new_status: TaskStatus) {
         if let Some(ref mut task) = self.tasks.get_mut(&id) {
-            if status == TaskStatus::Running {
-                match task.status {
-                    TaskStatus::Queued => {
-                        task.status = status;
-                        task.start = Some(Local::now());
-                    },
-                    _ => task.status = status
+            if new_status == TaskStatus::Running {
+                if TaskStatus::Queued == task.status || TaskStatus::Stashed == task.status {
+                    task.start = Some(Local::now());
                 }
             }
+            task.status = new_status;
         };
     }
 

@@ -58,7 +58,7 @@ pub async fn handle_incoming(
     let message: Message = serde_json::from_str(&instruction)?;
 
     // Process the message
-    let response = handle_message(message, sender, state)?;
+    let response = handle_message(message, sender, state);
 
     // Respond to the client
     send_message(socket, response).await?;

@@ -5,13 +5,17 @@ use ::std::sync::mpsc::Receiver;
 use ::std::time::Duration;
 
 use ::anyhow::Result;
-use ::log::info;
+use ::log::{info, debug, warn};
+use ::nix::sys::signal;
+use ::nix::sys::signal::Signal;
+use ::nix::unistd::Pid;
 
-use ::pueue::communication::message::Message;
+use ::pueue::communication::message::*;
 use ::pueue::file::log::create_log_file_handles;
 use ::pueue::settings::Settings;
 use ::pueue::state::SharedState;
 use ::pueue::task::{Task, TaskStatus};
+
 
 pub struct TaskHandler {
     state: SharedState,
@@ -29,6 +33,19 @@ impl TaskHandler {
             receiver: receiver,
             children: BTreeMap::new(),
             is_running: true,
+        }
+    }
+}
+
+/// The task handler needs to kill all child processes as soon, as the program exits
+/// This is needed to prevent detached processes
+impl Drop for TaskHandler {
+    fn drop(&mut self) {
+        let ids: Vec<i32> = self.children.keys().cloned().collect();
+        for id in ids {
+            let mut child = self.children.remove(&id).expect("Failed killing children");
+            info!("Killing child {}", id);
+            let _ = child.kill();
         }
     }
 }
@@ -55,7 +72,6 @@ impl TaskHandler {
         // Check while there are still slots left
         // Break the loop if no next task is found
         while self.children.len() < self.settings.daemon.default_worker_count {
-            info!("Check for next");
             match self.get_next()? {
                 Some((id, task)) => self.start_process(id, &task)?,
                 None => break,
@@ -81,6 +97,11 @@ impl TaskHandler {
     /// Actually spawn a new sub process
     /// The output of subprocesses is piped into a seperate file for easier access
     fn start_process(&mut self, id: i32, task: &Task) -> Result<()> {
+        // Already get the mutex here to ensure that the task won't be manipulated
+        // or removed while we are starting it over here.
+        let mut state = self.state.lock().unwrap();
+
+        // Spawn the actual subprocess
         let (stdout_log, stderr_log) = create_log_file_handles(id)?;
         let child = Command::new(&task.command)
             .args(&task.arguments)
@@ -92,28 +113,15 @@ impl TaskHandler {
         self.children.insert(id, child);
         info!("Started task: {} {:?}", task.command, task.arguments);
 
-        let mut state = self.state.lock().unwrap();
         state.change_status(id, TaskStatus::Running);
 
         Ok(())
     }
 
-    fn receive_commands(&mut self) {
-        let timeout = Duration::from_millis(100);
-        // Don't use recv_timeout for now, until this bug get's fixed
-        // https://github.com/rust-lang/rust/issues/39364
-        //match self.receiver.recv_timeout(timeout) {
-        std::thread::sleep(timeout);
-        match self.receiver.try_recv() {
-            Ok(message) => info!("{:?}", message),
-            Err(_) => {},
-        };
-    }
-
     /// Check whether there are any finished processes
+    /// In case there are, handle them and update the shared state
     fn process_finished(&mut self) {
         let (finished, errored) = self.get_finished();
-        // Iterate over everything.
         for id in finished.iter() {
             let child = self.children.remove(id).expect("Child went missing");
             {
@@ -131,6 +139,8 @@ impl TaskHandler {
         }
     }
 
+    /// Gather all finished tasks and sort them by finished and errored.
+    /// Returns two lists of task ids, namely finished_task_ids and errored _task_ids
     fn get_finished(&mut self) -> (Vec<i32>, Vec<i32>) {
         let mut finished = Vec::new();
         let mut errored = Vec::new();
@@ -144,10 +154,139 @@ impl TaskHandler {
                 // Child process did not exit yet
                 Ok(None) => continue,
                 Ok(_exit_status) => {
+                    info!("Task {} just finished", id);
                     finished.push(*id);
                 }
             }
         }
         (finished, errored)
+    }
+
+    /// Some client instructions require immediate action by the task handler
+    /// These commands are
+    fn receive_commands(&mut self) {
+        let timeout = Duration::from_millis(100);
+        // Don't use recv_timeout for now, until this bug get's fixed
+        // https://github.com/rust-lang/rust/issues/39364
+        //match self.receiver.recv_timeout(timeout) {
+        std::thread::sleep(timeout);
+        match self.receiver.try_recv() {
+            Ok(message) => self.handle_message(message),
+            Err(_) => {},
+        };
+    }
+
+    fn handle_message(&mut self, message: Message) {
+        match message {
+            Message::Pause(message) => self.pause(message),
+            Message::Start(message) => self.start(message),
+            _ => info!("Received unhandled message {:?}", message),
+        }
+    }
+
+    /// Send a signal to a unix process
+    fn send_signal(&mut self, id: i32, signal: Signal) -> Result<(), nix::Error> {
+        if let Some(child) = self.children.get(&id) {
+            debug!("Sending signal {} to {}", signal, id);
+            let pid = Pid::from_raw(child.id() as i32);
+            return signal::kill(pid, signal);
+        };
+
+        info!("Child with id {} for signal {} doesn't exist.", signal, id);
+        Ok(())
+    }
+
+    /// Handle the pause message:
+    /// 1. Either pause the daemon and all tasks.
+    /// 2. Or only pause specific tasks.
+    fn pause(&mut self, message: PauseMessage) {
+        // Only pause specific tasks
+        if let Some(task_ids) = message.task_ids {
+            for id in task_ids {
+                self.pause_task(id);
+            }
+            return
+        }
+
+        // Pause the daemon and all tasks
+        info!("Pausing daemon");
+        self.is_running = false;
+        let keys: Vec<i32> = self.children.keys().cloned().collect();
+        if !message.wait {
+            for id in keys {
+                self.pause_task(id);
+            }
+        }
+    }
+
+    /// Pause a specific task.
+    /// Send a signal to the process to actually pause the OS process
+    fn pause_task(&mut self, id: i32) {
+        match self.send_signal(id, Signal::SIGSTOP) {
+            Err(err) => info!("Failed pausing task {}: {:?}", id, err),
+            Ok(_) => {
+                info!("Paused task {}", id);
+                let mut state = self.state.lock().unwrap();
+                state.change_status(id, TaskStatus::Paused);
+            }
+        }
+    }
+
+    /// Handle the start message:
+    /// 1. Either start the daemon and all tasks.
+    /// 2. Or force the start of specific tasks.
+    fn start(&mut self, message: StartMessage) {
+        // Only pause specific tasks
+        if let Some(task_ids) = message.task_ids {
+            for id in task_ids {
+                // Continue all children that are simply paused
+                if self.children.contains_key(&id) {
+                    self.continue_task(id);
+                } else {
+                // Start processes for all tasks that haven't been started yet
+                    let task = {
+                        let mut state = self.state.lock().unwrap();
+                        state.get_task_clone(id)
+                    };
+
+                    if let Some(task) = task {
+                        self.start_process(id, &task);
+                    }
+                }
+            }
+            return
+        }
+
+        // Start the daemon and all paused tasks
+        info!("Resuming daemon (start)");
+        self.is_running = true;
+        let keys: Vec<i32> = self.children.keys().cloned().collect();
+        for id in keys {
+            self.continue_task(id);
+        }
+    }
+
+    /// Send a start signal to a paused task to continue execution
+    fn continue_task(&mut self, id: i32) {
+        match self.send_signal(id, Signal::SIGCONT) {
+            Err(err) => warn!("Failed starting task {}: {:?}", id, err),
+            Ok(_) => {
+                info!("Resumed task {}", id);
+                let mut state = self.state.lock().unwrap();
+                state.change_status(id, TaskStatus::Running);
+            }
+        }
+    }
+
+    /// Kill a specific task and handle it accordingly
+    /// Triggered on `reset` and `kill`.
+    fn kill_task(&mut self, id: i32) {
+        if let Some(child) = self.children.get_mut(&id) {
+            debug!("Killing task {}", id);
+            match child.kill() {
+                Err(_) => debug!("Task {} has already finished by itself", id),
+                _ => ()
+            };
+        }
     }
 }

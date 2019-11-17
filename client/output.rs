@@ -6,7 +6,6 @@ use ::pueue::task::TaskStatus;
 
 /// Print the current state of the daemon in a nicely formatted table
 pub fn print_state(state: State) {
-
     if state.tasks.len()  == 0 {
         println!("Task list is empty. Add tasks with `pueue add -- [cmd]`");
 
