@@ -15,8 +15,15 @@ use ::pueue::state::SharedState;
 
 /// Poll the unix listener and accept new incoming connections
 /// Create a new future to handle the message and spawn it
-pub async fn accept_incoming(settings: Settings, sender: Sender<Message>, state: SharedState) -> Result<()> {
-    let address = format!("{}:{}", settings.client.daemon_address, settings.client.daemon_port);
+pub async fn accept_incoming(
+    settings: Settings,
+    sender: Sender<Message>,
+    state: SharedState,
+) -> Result<()> {
+    let address = format!(
+        "{}:{}",
+        settings.client.daemon_address, settings.client.daemon_port
+    );
     let mut listener = TcpListener::bind(address).await?;
 
     loop {
@@ -33,7 +40,11 @@ pub async fn accept_incoming(settings: Settings, sender: Sender<Message>, state:
 /// Continuously poll the existing incoming futures.
 /// In case we received an instruction, handle it and create a response future.
 /// The response future is added to unix_responses and handled in a separate function.
-pub async fn handle_incoming(mut socket: TcpStream, sender: Sender<Message>, state: SharedState) -> Result<()> {
+pub async fn handle_incoming(
+    mut socket: TcpStream,
+    sender: Sender<Message>,
+    state: SharedState,
+) -> Result<()> {
     // Receive the header with the size and type of the message
     let mut header = vec![0; 8];
     socket.read(&mut header).await?;

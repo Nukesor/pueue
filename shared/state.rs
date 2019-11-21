@@ -49,7 +49,7 @@ impl State {
             match task.status {
                 TaskStatus::Queued => {
                     return Some(*id);
-                },
+                }
                 _ => continue,
             }
         }
@@ -92,7 +92,11 @@ impl State {
     /// The second result is the list of task_ids that don't match these statuses.
     ///
     /// Additionally, if no task_ids are specified, return ids of all tasks
-    pub fn tasks_in_statuses(&mut self, task_ids: Option<Vec<i32>>, statuses: Vec<TaskStatus>) -> (Vec<i32>, Vec<i32>) {
+    pub fn tasks_in_statuses(
+        &mut self,
+        task_ids: Option<Vec<i32>>,
+        statuses: Vec<TaskStatus>,
+    ) -> (Vec<i32>, Vec<i32>) {
         let task_ids = match task_ids {
             Some(ids) => ids,
             None => self.tasks.keys().cloned().collect(),
@@ -123,7 +127,11 @@ impl State {
     }
 
     /// The same as tasks_in_statuses, but with inverted statuses
-    pub fn tasks_not_in_statuses(&mut self, task_ids: Option<Vec<i32>>, excluded_statuses: Vec<TaskStatus>) -> (Vec<i32>, Vec<i32>) {
+    pub fn tasks_not_in_statuses(
+        &mut self,
+        task_ids: Option<Vec<i32>>,
+        excluded_statuses: Vec<TaskStatus>,
+    ) -> (Vec<i32>, Vec<i32>) {
         let mut valid_statuses = Vec::new();
         // Create a list of all valid statuses
         // (statuses that aren't the exl

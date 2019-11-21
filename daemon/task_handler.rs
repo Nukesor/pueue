@@ -88,7 +88,7 @@ impl TaskHandler {
             Some(id) => {
                 let task = state.get_task_clone(id).unwrap();
                 Ok(Some((id, task)))
-            },
+            }
             None => Ok(None),
         }
     }
@@ -149,13 +149,13 @@ impl TaskHandler {
                 Err(error) => {
                     info!("Task {} failed with error {:?}", id, error);
                     errored.push(*id);
-                },
+                }
                 // Child process did not exit yet
                 Ok(None) => continue,
                 Ok(_exit_status) => {
                     info!("Task {} just finished", id);
                     finished.push(*id);
-                },
+                }
             }
         }
         (finished, errored)
@@ -171,7 +171,7 @@ impl TaskHandler {
         std::thread::sleep(timeout);
         match self.receiver.try_recv() {
             Ok(message) => self.handle_message(message),
-            Err(_) => {},
+            Err(_) => {}
         };
     }
 
@@ -192,7 +192,10 @@ impl TaskHandler {
             return Ok(true);
         };
 
-        error!("Tried to send signal {} to non existing child {}", signal, id);
+        error!(
+            "Tried to send signal {} to non existing child {}",
+            signal, id
+        );
         Ok(false)
     }
 
@@ -232,7 +235,7 @@ impl TaskHandler {
                     let mut state = self.state.lock().unwrap();
                     state.change_status(id, TaskStatus::Paused);
                 }
-            },
+            }
         }
     }
 
@@ -282,7 +285,7 @@ impl TaskHandler {
                     let mut state = self.state.lock().unwrap();
                     state.change_status(id, TaskStatus::Running);
                 }
-            },
+            }
         }
     }
 

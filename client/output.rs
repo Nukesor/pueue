@@ -45,18 +45,23 @@ pub fn print_state(state: State) {
             Some(code) => {
                 // Everything that's not 0, is failed task
                 if code == 0 {
-                    row.add_cell(Cell::new(&code.to_string()).with_style(Attr::ForegroundColor(color::GREEN)));
+                    row.add_cell(
+                        Cell::new(&code.to_string())
+                            .with_style(Attr::ForegroundColor(color::GREEN)),
+                    );
                 } else {
-                    row.add_cell(Cell::new(&code.to_string()).with_style(Attr::ForegroundColor(color::RED)));
+                    row.add_cell(
+                        Cell::new(&code.to_string()).with_style(Attr::ForegroundColor(color::RED)),
+                    );
                 }
-            },
+            }
             None => {
                 if task.is_done() {
                     row.add_cell(Cell::new("Killed").with_style(Attr::ForegroundColor(color::RED)));
                 } else {
                     row.add_cell(Cell::new(""));
                 }
-            },
+            }
         }
 
         // Add command and path
