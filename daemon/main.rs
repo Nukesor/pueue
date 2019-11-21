@@ -20,8 +20,8 @@ async fn main() -> Result<()> {
         Err(error) => {
             let error: Error = From::from(error);
             bail!(error.context("Failed saving the config file"));
-        }
-        Ok(()) => {}
+        },
+        Ok(()) => {},
     };
 
     let state = Arc::new(Mutex::new(State::new()));

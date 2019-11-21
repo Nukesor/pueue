@@ -5,7 +5,7 @@ use ::std::sync::mpsc::Receiver;
 use ::std::time::Duration;
 
 use ::anyhow::Result;
-use ::log::{debug, info, warn, error};
+use ::log::{debug, error, info, warn};
 use ::nix::sys::signal;
 use ::nix::sys::signal::Signal;
 use ::nix::unistd::Pid;
@@ -88,7 +88,7 @@ impl TaskHandler {
             Some(id) => {
                 let task = state.get_task_clone(id).unwrap();
                 Ok(Some((id, task)))
-            }
+            },
             None => Ok(None),
         }
     }
@@ -149,13 +149,13 @@ impl TaskHandler {
                 Err(error) => {
                     info!("Task {} failed with error {:?}", id, error);
                     errored.push(*id);
-                }
+                },
                 // Child process did not exit yet
                 Ok(None) => continue,
                 Ok(_exit_status) => {
                     info!("Task {} just finished", id);
                     finished.push(*id);
-                }
+                },
             }
         }
         (finished, errored)
@@ -171,7 +171,7 @@ impl TaskHandler {
         std::thread::sleep(timeout);
         match self.receiver.try_recv() {
             Ok(message) => self.handle_message(message),
-            Err(_) => {}
+            Err(_) => {},
         };
     }
 
@@ -184,7 +184,7 @@ impl TaskHandler {
     }
 
     /// Send a signal to a unix process
-    fn send_signal(&mut self, id: i32, signal: Signal) -> Result<bool , nix::Error> {
+    fn send_signal(&mut self, id: i32, signal: Signal) -> Result<bool, nix::Error> {
         if let Some(child) = self.children.get(&id) {
             debug!("Sending signal {} to {}", signal, id);
             let pid = Pid::from_raw(child.id() as i32);
@@ -232,7 +232,7 @@ impl TaskHandler {
                     let mut state = self.state.lock().unwrap();
                     state.change_status(id, TaskStatus::Paused);
                 }
-            }
+            },
         }
     }
 
@@ -282,7 +282,7 @@ impl TaskHandler {
                     let mut state = self.state.lock().unwrap();
                     state.change_status(id, TaskStatus::Running);
                 }
-            }
+            },
         }
     }
 

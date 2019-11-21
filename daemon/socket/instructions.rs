@@ -27,9 +27,7 @@ fn add_task(message: AddMessage, sender: Sender<Message>, state: SharedState) ->
         let start_message = StartMessage {
             task_ids: Some(vec![task_id]),
         };
-        sender
-            .send(Message::Start(start_message))
-            .expect(SENDER_ERR);
+        sender.send(Message::Start(start_message)).expect(SENDER_ERR);
     }
 
     create_success_message(String::from("New task added."))
@@ -47,9 +45,7 @@ fn get_status(state: SharedState) -> Message {
 
 /// Forward the pause message to the task handler and respond to the client
 fn pause(message: PauseMessage, sender: Sender<Message>, state: SharedState) -> Message {
-    sender
-        .send(Message::Pause(message.clone()))
-        .expect(SENDER_ERR);
+    sender.send(Message::Pause(message.clone())).expect(SENDER_ERR);
     if let Some(task_ids) = message.task_ids {
         let response = compile_task_response(
             "Specified tasks are being paused",
@@ -65,9 +61,7 @@ fn pause(message: PauseMessage, sender: Sender<Message>, state: SharedState) -> 
 
 /// Forward the start message to the task handler and respond to the client
 fn start(message: StartMessage, sender: Sender<Message>, state: SharedState) -> Message {
-    sender
-        .send(Message::Start(message.clone()))
-        .expect(SENDER_ERR);
+    sender.send(Message::Start(message.clone())).expect(SENDER_ERR);
     if let Some(task_ids) = message.task_ids {
         let response = compile_task_response(
             "Specified tasks are being started",

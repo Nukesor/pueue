@@ -48,7 +48,7 @@ impl State {
             match task.status {
                 TaskStatus::Queued => {
                     return Some(*id);
-                }
+                },
                 _ => continue,
             }
         }
@@ -91,11 +91,7 @@ impl State {
     /// The second result is the list of task_ids that don't match these states.
     ///
     /// Additionally, if no task_ids are specified, return ids of all tasks
-    pub fn tasks_in_states(
-        &mut self,
-        task_ids: Option<Vec<i32>>,
-        stati: Vec<TaskStatus>,
-    ) -> (Vec<i32>, Vec<i32>) {
+    pub fn tasks_in_states(&mut self, task_ids: Option<Vec<i32>>, stati: Vec<TaskStatus>) -> (Vec<i32>, Vec<i32>) {
         let task_ids = match task_ids {
             Some(ids) => ids,
             None => self.tasks.keys().cloned().collect(),
@@ -113,7 +109,7 @@ impl State {
             }
 
             // Unwrap, since we just checked, whether it exists.
-            let task  = self.tasks.get(&task_id).unwrap();
+            let task = self.tasks.get(&task_id).unwrap();
 
             if stati.contains(&task.status) {
                 matching.push(*task_id);

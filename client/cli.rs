@@ -101,7 +101,7 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
                 path: String::from("/"),
                 start_immediately: *start_immediately,
             }))
-        }
+        },
         SubCommand::Status => Ok(Message::Status),
         SubCommand::Pause { wait, task_ids } => {
             let message = PauseMessage {
@@ -109,16 +109,16 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
                 task_ids: task_ids.clone(),
             };
             Ok(Message::Pause(message))
-        }
+        },
         SubCommand::Start { task_ids } => {
             let message = StartMessage {
                 task_ids: task_ids.clone(),
             };
             Ok(Message::Start(message))
-        }
+        },
         _ => {
             println!("{:?}", opt);
             Err(anyhow!("Failed to interpret command. Please use --help"))
-        }
+        },
     }
 }

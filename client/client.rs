@@ -24,10 +24,7 @@ impl Client {
 
     pub async fn run(&mut self) -> Result<()> {
         // Connect to stream
-        let address = format!(
-            "{}:{}",
-            self.settings.daemon.address, self.settings.daemon.port
-        );
+        let address = format!("{}:{}", self.settings.daemon.address, self.settings.daemon.port);
         let mut stream = TcpStream::connect(address).await?;
 
         // Create the message payload and send it to the daemon.
@@ -41,10 +38,10 @@ impl Client {
         match message {
             Message::Success(text) => {
                 println!("{}", text);
-            }
+            },
             Message::StatusResponse(state) => {
                 print_state(state);
-            }
+            },
             _ => (),
         }
 
