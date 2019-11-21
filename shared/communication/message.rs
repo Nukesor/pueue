@@ -32,7 +32,7 @@ pub struct AddMessage {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RemoveMessage {
-    pub indices: Vec<usize>,
+    pub task_ids: Vec<i32>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -54,8 +54,8 @@ pub struct PauseMessage {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct KillMessage {
-    pub command: String,
-    pub path: String,
+    pub all: bool,
+    pub task_ids: Option<Vec<i32>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

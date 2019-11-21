@@ -3,6 +3,7 @@ use ::serde_derive::{Deserialize, Serialize};
 use ::std::collections::BTreeMap;
 use ::std::process::Child;
 use ::std::sync::{Arc, Mutex};
+use ::strum::IntoEnumIterator;
 
 use crate::task::{Task, TaskStatus};
 
@@ -86,12 +87,12 @@ impl State {
         task.end = Some(Local::now());
     }
 
-    /// This checks, whether the given task_ids are in the specified states.
-    /// The first result is the list of task_ids that match these states.
-    /// The second result is the list of task_ids that don't match these states.
+    /// This checks, whether the given task_ids are in the specified statuses.
+    /// The first result is the list of task_ids that match these statuses.
+    /// The second result is the list of task_ids that don't match these statuses.
     ///
     /// Additionally, if no task_ids are specified, return ids of all tasks
-    pub fn tasks_in_states(&mut self, task_ids: Option<Vec<i32>>, stati: Vec<TaskStatus>) -> (Vec<i32>, Vec<i32>) {
+    pub fn tasks_in_statuses(&mut self, task_ids: Option<Vec<i32>>, statuses: Vec<TaskStatus>) -> (Vec<i32>, Vec<i32>) {
         let task_ids = match task_ids {
             Some(ids) => ids,
             None => self.tasks.keys().cloned().collect(),
@@ -100,7 +101,7 @@ impl State {
         let mut matching = Vec::new();
         let mut mismatching = Vec::new();
 
-        // Filter all task id's that match the provided states.
+        // Filter all task id's that match the provided statuses.
         for task_id in task_ids.iter() {
             // We aren't interested in this task, continue
             if !self.tasks.contains_key(&task_id) {
@@ -111,7 +112,7 @@ impl State {
             // Unwrap, since we just checked, whether it exists.
             let task = self.tasks.get(&task_id).unwrap();
 
-            if stati.contains(&task.status) {
+            if statuses.contains(&task.status) {
                 matching.push(*task_id);
             } else {
                 mismatching.push(*task_id);
@@ -119,5 +120,19 @@ impl State {
         }
 
         (matching, mismatching)
+    }
+
+    /// The same as tasks_in_statuses, but with inverted statuses
+    pub fn tasks_not_in_statuses(&mut self, task_ids: Option<Vec<i32>>, excluded_statuses: Vec<TaskStatus>) -> (Vec<i32>, Vec<i32>) {
+        let mut valid_statuses = Vec::new();
+        // Create a list of all valid statuses
+        // (statuses that aren't the exl
+        for status in TaskStatus::iter() {
+            if !excluded_statuses.contains(&status) {
+                valid_statuses.push(status);
+            }
+        }
+
+        self.tasks_in_statuses(task_ids, valid_statuses)
     }
 }

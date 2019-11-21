@@ -16,6 +16,12 @@ pub enum SubCommand {
         #[structopt(name = "start", short, long)]
         start_immediately: bool,
     },
+    /// Remove tasks from the list.
+    /// You cannot remove running or paused tasks.
+    Remove {
+        /// The task ids to be removed
+        task_ids: Vec<i32>,
+    },
     /// Wake the daemon from its paused state, including continuing all paused tasks.
     /// Does nothing if the daemon isn't paused.
     Start {
@@ -51,13 +57,11 @@ pub enum SubCommand {
     /// Afterwards either `enqueue` them, to be normally handled or forcefully `start` them.
     Stash {
         /// The id(s) of the tasks you want to stash
-        #[structopt()]
         task_ids: Vec<i32>,
     },
     /// Enqueue stashed tasks. They'll be handled normally afterwards.
     Enqueue {
         /// The id(s) of the tasks you want to enqueue
-        #[structopt()]
         task_ids: Vec<i32>,
     },
     /// Display the current status of all tasks
@@ -101,6 +105,12 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
                 path: String::from("/"),
                 start_immediately: *start_immediately,
             }))
+        },
+        SubCommand::Remove{task_ids} => {
+            let message = RemoveMessage {
+                task_ids: task_ids.clone(),
+            };
+            Ok(Message::Remove(message))
         },
         SubCommand::Status => Ok(Message::Status),
         SubCommand::Pause { wait, task_ids } => {

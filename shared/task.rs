@@ -1,8 +1,8 @@
 use ::chrono::prelude::*;
 use ::serde_derive::{Deserialize, Serialize};
-use ::strum_macros::Display;
+use ::strum_macros::{Display, EnumIter};
 
-#[derive(Clone, Display, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Display, Debug, Serialize, Deserialize, PartialEq, EnumIter)]
 pub enum TaskStatus {
     Queued,
     Stashed,
