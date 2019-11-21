@@ -3,11 +3,10 @@ use ::byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use ::std::io::Cursor;
 use ::tokio::net::TcpStream;
 use ::tokio::prelude::*;
-use ::log::info;
 
+use crate::output::print_state;
 use ::pueue::communication::message::*;
 use ::pueue::settings::Settings;
-use crate::output::print_state;
 
 /// The client
 pub struct Client {
@@ -41,12 +40,12 @@ impl Client {
 
         match message {
             Message::Success(text) => {
-                info!("{}", text);
+                println!("{}", text);
             }
             Message::StatusResponse(state) => {
                 print_state(state);
             }
-            _ => ()
+            _ => (),
         }
 
         Ok(())

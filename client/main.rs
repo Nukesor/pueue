@@ -8,7 +8,7 @@ pub mod cli;
 pub mod client;
 pub mod output;
 
-use crate::cli::{Opt, get_message_from_opt};
+use crate::cli::{get_message_from_opt, Opt};
 use crate::client::Client;
 
 #[tokio::main]

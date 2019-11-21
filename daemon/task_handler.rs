@@ -5,7 +5,7 @@ use ::std::sync::mpsc::Receiver;
 use ::std::time::Duration;
 
 use ::anyhow::Result;
-use ::log::{info, debug, warn};
+use ::log::{debug, info, warn, error};
 use ::nix::sys::signal;
 use ::nix::sys::signal::Signal;
 use ::nix::unistd::Pid;
@@ -15,7 +15,6 @@ use ::pueue::file::log::create_log_file_handles;
 use ::pueue::settings::Settings;
 use ::pueue::state::SharedState;
 use ::pueue::task::{Task, TaskStatus};
-
 
 pub struct TaskHandler {
     state: SharedState,
@@ -172,7 +171,7 @@ impl TaskHandler {
         std::thread::sleep(timeout);
         match self.receiver.try_recv() {
             Ok(message) => self.handle_message(message),
-            Err(_) => {},
+            Err(_) => {}
         };
     }
 
@@ -185,15 +184,16 @@ impl TaskHandler {
     }
 
     /// Send a signal to a unix process
-    fn send_signal(&mut self, id: i32, signal: Signal) -> Result<(), nix::Error> {
+    fn send_signal(&mut self, id: i32, signal: Signal) -> Result<bool , nix::Error> {
         if let Some(child) = self.children.get(&id) {
             debug!("Sending signal {} to {}", signal, id);
             let pid = Pid::from_raw(child.id() as i32);
-            return signal::kill(pid, signal);
+            signal::kill(pid, signal)?;
+            return Ok(true);
         };
 
-        info!("Child with id {} for signal {} doesn't exist.", signal, id);
-        Ok(())
+        error!("Tried to send signal {} to non existing child {}", signal, id);
+        Ok(false)
     }
 
     /// Handle the pause message:
@@ -205,7 +205,7 @@ impl TaskHandler {
             for id in task_ids {
                 self.pause_task(id);
             }
-            return
+            return;
         }
 
         // Pause the daemon and all tasks
@@ -222,12 +222,16 @@ impl TaskHandler {
     /// Pause a specific task.
     /// Send a signal to the process to actually pause the OS process
     fn pause_task(&mut self, id: i32) {
+        if !self.children.contains_key(&id) {
+            return;
+        }
         match self.send_signal(id, Signal::SIGSTOP) {
             Err(err) => info!("Failed pausing task {}: {:?}", id, err),
-            Ok(_) => {
-                info!("Paused task {}", id);
-                let mut state = self.state.lock().unwrap();
-                state.change_status(id, TaskStatus::Paused);
+            Ok(success) => {
+                if success {
+                    let mut state = self.state.lock().unwrap();
+                    state.change_status(id, TaskStatus::Paused);
+                }
             }
         }
     }
@@ -243,7 +247,7 @@ impl TaskHandler {
                 if self.children.contains_key(&id) {
                     self.continue_task(id);
                 } else {
-                // Start processes for all tasks that haven't been started yet
+                    // Start processes for all tasks that haven't been started yet
                     let task = {
                         let mut state = self.state.lock().unwrap();
                         state.get_task_clone(id)
@@ -254,7 +258,7 @@ impl TaskHandler {
                     }
                 }
             }
-            return
+            return;
         }
 
         // Start the daemon and all paused tasks
@@ -268,12 +272,16 @@ impl TaskHandler {
 
     /// Send a start signal to a paused task to continue execution
     fn continue_task(&mut self, id: i32) {
+        if !self.children.contains_key(&id) {
+            return;
+        }
         match self.send_signal(id, Signal::SIGCONT) {
             Err(err) => warn!("Failed starting task {}: {:?}", id, err),
-            Ok(_) => {
-                info!("Resumed task {}", id);
-                let mut state = self.state.lock().unwrap();
-                state.change_status(id, TaskStatus::Running);
+            Ok(success) => {
+                if success {
+                    let mut state = self.state.lock().unwrap();
+                    state.change_status(id, TaskStatus::Running);
+                }
             }
         }
     }
@@ -282,10 +290,9 @@ impl TaskHandler {
     /// Triggered on `reset` and `kill`.
     fn kill_task(&mut self, id: i32) {
         if let Some(child) = self.children.get_mut(&id) {
-            debug!("Killing task {}", id);
             match child.kill() {
                 Err(_) => debug!("Task {} has already finished by itself", id),
-                _ => ()
+                _ => (),
             };
         }
     }

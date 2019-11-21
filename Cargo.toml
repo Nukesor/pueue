@@ -13,11 +13,11 @@ travis-ci = { repository = "nukesor/pueue-rs", branch = "master" }
 maintenance = { status = "actively-developed" }
 
 [[bin]]
-name = "client"
+name = "pueue"
 path = "client/main.rs"
 
 [[bin]]
-name = "daemon"
+name = "pueue-daemon"
 path = "daemon/main.rs"
 
 [lib]

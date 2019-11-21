@@ -8,10 +8,10 @@ use ::std::sync::mpsc::Sender;
 use ::tokio::net::{TcpListener, TcpStream};
 use ::tokio::prelude::*;
 
-use ::pueue::communication::message::*;
-use ::pueue::state::SharedState;
-use ::pueue::settings::Settings;
 use crate::socket::instructions::handle_message;
+use ::pueue::communication::message::*;
+use ::pueue::settings::Settings;
+use ::pueue::state::SharedState;
 
 /// Poll the unix listener and accept new incoming connections
 /// Create a new future to handle the message and spawn it
@@ -20,7 +20,10 @@ pub async fn accept_incoming(
     sender: Sender<Message>,
     state: SharedState,
 ) -> Result<()> {
-    let address = format!("{}:{}", settings.client.daemon_address, settings.client.daemon_port);
+    let address = format!(
+        "{}:{}",
+        settings.client.daemon_address, settings.client.daemon_port
+    );
     let mut listener = TcpListener::bind(address).await?;
 
     loop {

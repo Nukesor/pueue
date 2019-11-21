@@ -1,6 +1,6 @@
 use ::anyhow::{anyhow, Result};
-use ::structopt::StructOpt;
 use ::std::path::PathBuf;
+use ::structopt::StructOpt;
 
 use ::pueue::communication::message::*;
 
@@ -72,7 +72,7 @@ pub enum SubCommand {
 #[structopt(
     name = "Pueue client",
     about = "Interact with the Pueue daemon",
-    author = "Arne Beer <contact@arne.beer>",
+    author = "Arne Beer <contact@arne.beer>"
 )]
 pub struct Opt {
     // The number of occurrences of the `v/verbose` flag
@@ -88,31 +88,37 @@ pub struct Opt {
     pub cmd: SubCommand,
 }
 
-
 pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
     match &opt.cmd {
-        SubCommand::Add{command, start_immediately}  => {
+        SubCommand::Add {
+            command,
+            start_immediately,
+        } => {
             let mut command = command.to_vec().clone();
             Ok(Message::Add(AddMessage {
                 command: command.remove(0),
                 arguments: command,
                 path: String::from("/"),
-                start_immediately: *start_immediately
+                start_immediately: *start_immediately,
             }))
-        },
+        }
         SubCommand::Status => Ok(Message::Status),
-        SubCommand::Pause{wait, task_ids} => {
-            let message = PauseMessage{wait: *wait, task_ids: task_ids.clone()};
+        SubCommand::Pause { wait, task_ids } => {
+            let message = PauseMessage {
+                wait: *wait,
+                task_ids: task_ids.clone(),
+            };
             Ok(Message::Pause(message))
-        },
-        SubCommand::Start{task_ids} => {
-            let message = StartMessage{task_ids: task_ids.clone()};
+        }
+        SubCommand::Start { task_ids } => {
+            let message = StartMessage {
+                task_ids: task_ids.clone(),
+            };
             Ok(Message::Start(message))
-        },
+        }
         _ => {
             println!("{:?}", opt);
             Err(anyhow!("Failed to interpret command. Please use --help"))
         }
     }
-
 }

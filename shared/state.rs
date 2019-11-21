@@ -1,13 +1,12 @@
+use ::chrono::prelude::*;
+use ::serde_derive::{Deserialize, Serialize};
 use ::std::collections::BTreeMap;
 use ::std::process::Child;
 use ::std::sync::{Arc, Mutex};
-use ::chrono::prelude::*;
-use ::serde_derive::{Deserialize, Serialize};
 
 use crate::task::{Task, TaskStatus};
 
 pub type SharedState = Arc<Mutex<State>>;
-
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct State {
@@ -23,10 +22,11 @@ impl State {
         };
     }
 
-    pub fn add_task(&mut self, mut task: Task) {
+    pub fn add_task(&mut self, mut task: Task) -> i32 {
         task.id = self.max_id;
         self.tasks.insert(self.max_id, task);
         self.max_id += 1;
+        self.max_id - 1
     }
 
     pub fn remove_task(&mut self, id: i32) -> Option<Task> {
@@ -84,5 +84,44 @@ impl State {
 
         task.exit_code = Some(exit_code);
         task.end = Some(Local::now());
+    }
+
+    /// This checks, whether the given task_ids are in the specified states.
+    /// The first result is the list of task_ids that match these states.
+    /// The second result is the list of task_ids that don't match these states.
+    ///
+    /// Additionally, if no task_ids are specified, return ids of all tasks
+    pub fn tasks_in_states(
+        &mut self,
+        task_ids: Option<Vec<i32>>,
+        stati: Vec<TaskStatus>,
+    ) -> (Vec<i32>, Vec<i32>) {
+        let task_ids = match task_ids {
+            Some(ids) => ids,
+            None => self.tasks.keys().cloned().collect(),
+        };
+
+        let mut matching = Vec::new();
+        let mut mismatching = Vec::new();
+
+        // Filter all task id's that match the provided states.
+        for task_id in task_ids.iter() {
+            // We aren't interested in this task, continue
+            if !self.tasks.contains_key(&task_id) {
+                mismatching.push(*task_id);
+                continue;
+            }
+
+            // Unwrap, since we just checked, whether it exists.
+            let task  = self.tasks.get(&task_id).unwrap();
+
+            if stati.contains(&task.status) {
+                matching.push(*task_id);
+            } else {
+                mismatching.push(*task_id);
+            }
+        }
+
+        (matching, mismatching)
     }
 }

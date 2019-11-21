@@ -48,14 +48,14 @@ impl Task {
     }
 
     pub fn is_running(&self) -> bool {
-        return self.status == TaskStatus::Running || self.status == TaskStatus::Paused
+        return self.status == TaskStatus::Running || self.status == TaskStatus::Paused;
     }
 
     pub fn is_done(&self) -> bool {
-        return self.status == TaskStatus::Done || self.status == TaskStatus::Failed
+        return self.status == TaskStatus::Done || self.status == TaskStatus::Failed;
     }
 
     pub fn is_queued(&self) -> bool {
-        return self.status == TaskStatus::Queued || self.status == TaskStatus::Stashed
+        return self.status == TaskStatus::Queued || self.status == TaskStatus::Stashed;
     }
 }

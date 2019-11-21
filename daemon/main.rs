@@ -1,13 +1,13 @@
 use ::anyhow::{bail, Error, Result};
+use ::simplelog::{Config, LevelFilter, SimpleLogger};
 use ::std::sync::mpsc::channel;
 use ::std::sync::{Arc, Mutex};
 use ::std::thread;
-use ::simplelog::{Config, LevelFilter, SimpleLogger};
 
-use ::pueue::state::State;
-use ::pueue::settings::Settings;
 use crate::socket::accept_incoming;
 use crate::task_handler::TaskHandler;
+use ::pueue::settings::Settings;
+use ::pueue::state::State;
 
 pub mod socket;
 pub mod task_handler;
