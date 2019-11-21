@@ -9,9 +9,10 @@ static SENDER_ERR: &str = "Failed to send message to task handler thread";
 pub fn handle_message(message: Message, sender: Sender<Message>, state: SharedState) -> Message {
     match message {
         Message::Add(message) => add_task(message, sender, state),
-        Message::Pause(message) => pause(message, sender, state),
-        Message::Start(message) => start(message, sender, state),
         Message::Remove(message) => remove(message, state),
+        Message::Start(message) => start(message, sender, state),
+        Message::Pause(message) => pause(message, sender, state),
+        Message::Kill(message) => kill(message, sender, state),
         Message::Status => get_status(state),
         _ => create_failure_message(String::from("Not implemented yet")),
     }
@@ -61,6 +62,24 @@ fn get_status(state: SharedState) -> Message {
 
     Message::StatusResponse(state_clone)
 }
+/// Forward the start message to the task handler and respond to the client
+fn start(message: StartMessage, sender: Sender<Message>, state: SharedState) -> Message {
+    sender
+        .send(Message::Start(message.clone()))
+        .expect(SENDER_ERR);
+    if let Some(task_ids) = message.task_ids {
+        let response = task_response_helper(
+            "Tasks are being started",
+            task_ids,
+            vec![TaskStatus::Paused, TaskStatus::Queued, TaskStatus::Stashed],
+            state,
+        );
+        return create_success_message(response);
+    }
+
+    return create_success_message(String::from("Daemon and all tasks are being resumed."));
+}
+
 
 /// Forward the pause message to the task handler and respond to the client
 fn pause(message: PauseMessage, sender: Sender<Message>, state: SharedState) -> Message {
@@ -80,23 +99,26 @@ fn pause(message: PauseMessage, sender: Sender<Message>, state: SharedState) -> 
     return create_success_message(String::from("Daemon and all tasks are being paused."));
 }
 
-/// Forward the start message to the task handler and respond to the client
-fn start(message: StartMessage, sender: Sender<Message>, state: SharedState) -> Message {
+
+/// Forward the kill message to the task handler and respond to the client
+fn kill(message: KillMessage, sender: Sender<Message>, state: SharedState) -> Message {
     sender
-        .send(Message::Start(message.clone()))
+        .send(Message::Kill(message.clone()))
         .expect(SENDER_ERR);
-    if let Some(task_ids) = message.task_ids {
+
+    if !message.task_ids.is_empty() {
         let response = task_response_helper(
-            "Tasks are being started",
-            task_ids,
-            vec![TaskStatus::Paused, TaskStatus::Queued, TaskStatus::Stashed],
+            "Tasks are being killed",
+            message.task_ids,
+            vec![TaskStatus::Running, TaskStatus::Paused],
             state,
         );
         return create_success_message(response);
     }
 
-    return create_success_message(String::from("Daemon and all tasks are being resumed."));
+    return create_success_message(String::from("All tasks are being killed."));
 }
+
 
 fn task_response_helper(
     message: &'static str,

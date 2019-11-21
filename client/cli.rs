@@ -53,6 +53,19 @@ pub enum SubCommand {
         #[structopt(short, long, group("pause"))]
         task_ids: Option<Vec<i32>>,
     },
+    /// Pause the daemon and all running tasks.
+    /// A paused daemon won't start any new tasks.
+    /// Daemon and tasks can be continued with `start`
+    Kill {
+        /// Pause the daemon, but let any running tasks finish by themselves.
+        #[structopt(short, long, group("kill"), conflicts_with("task_ids"))]
+        all: bool,
+
+        /// Enforce starting these tasks.
+        /// Doesn't affect the daemon or any other tasks.
+        #[structopt(group("kill"), required_unless("all"))]
+        task_ids: Vec<i32>,
+    },
     /// Stash some tasks. These tasks won't be automatically started.
     /// Afterwards either `enqueue` them, to be normally handled or forcefully `start` them.
     Stash {
@@ -105,27 +118,34 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
                 path: String::from("/"),
                 start_immediately: *start_immediately,
             }))
-        }
+        },
         SubCommand::Remove { task_ids } => {
             let message = RemoveMessage {
                 task_ids: task_ids.clone(),
             };
             Ok(Message::Remove(message))
-        }
+        },
         SubCommand::Status => Ok(Message::Status),
+        SubCommand::Start { task_ids } => {
+            let message = StartMessage {
+                task_ids: task_ids.clone(),
+            };
+            Ok(Message::Start(message))
+        },
         SubCommand::Pause { wait, task_ids } => {
             let message = PauseMessage {
                 wait: *wait,
                 task_ids: task_ids.clone(),
             };
             Ok(Message::Pause(message))
-        }
-        SubCommand::Start { task_ids } => {
-            let message = StartMessage {
+        },
+        SubCommand::Kill{ all, task_ids } => {
+            let message = KillMessage {
+                all: *all,
                 task_ids: task_ids.clone(),
             };
-            Ok(Message::Start(message))
-        }
+            Ok(Message::Kill(message))
+        },
         _ => {
             println!("{:?}", opt);
             Err(anyhow!("Failed to interpret command. Please use --help"))

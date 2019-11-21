@@ -55,7 +55,7 @@ pub struct PauseMessage {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct KillMessage {
     pub all: bool,
-    pub task_ids: Option<Vec<i32>>,
+    pub task_ids: Vec<i32>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

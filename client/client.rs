@@ -4,7 +4,7 @@ use ::std::io::Cursor;
 use ::tokio::net::TcpStream;
 use ::tokio::prelude::*;
 
-use crate::output::print_state;
+use crate::output::*;
 use ::pueue::communication::message::*;
 use ::pueue::settings::Settings;
 
@@ -39,12 +39,9 @@ impl Client {
         let message: Message = serde_json::from_str(&response)?;
 
         match message {
-            Message::Success(text) => {
-                println!("{}", text);
-            }
-            Message::StatusResponse(state) => {
-                print_state(state);
-            }
+            Message::Success(text) => print_success(text),
+            Message::Failure(text) => print_error(text),
+            Message::StatusResponse(state) => print_state(state),
             _ => (),
         }
 

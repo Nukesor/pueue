@@ -1,8 +1,18 @@
-use prettytable::{color, format, Attr, Cell, Row, Table};
-use std::string::ToString;
+use ::prettytable::{color, format, Attr, Cell, Row, Table};
+use ::std::string::ToString;
+use ::termion::color as t_color;
 
 use ::pueue::state::State;
 use ::pueue::task::TaskStatus;
+
+
+pub fn print_success(message: String) {
+    println!("{}{}", t_color::Fg(t_color::Green), message);
+}
+
+pub fn print_error(message: String) {
+    println!("{}{}", t_color::Fg(t_color::Red), message);
+}
 
 /// Print the current state of the daemon in a nicely formatted table
 pub fn print_state(state: State) {

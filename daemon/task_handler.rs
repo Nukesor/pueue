@@ -179,6 +179,7 @@ impl TaskHandler {
         match message {
             Message::Pause(message) => self.pause(message),
             Message::Start(message) => self.start(message),
+            Message::Kill(message) => self.kill(message),
             _ => info!("Received unhandled message {:?}", message),
         }
     }
@@ -197,46 +198,6 @@ impl TaskHandler {
             signal, id
         );
         Ok(false)
-    }
-
-    /// Handle the pause message:
-    /// 1. Either pause the daemon and all tasks.
-    /// 2. Or only pause specific tasks.
-    fn pause(&mut self, message: PauseMessage) {
-        // Only pause specific tasks
-        if let Some(task_ids) = message.task_ids {
-            for id in task_ids {
-                self.pause_task(id);
-            }
-            return;
-        }
-
-        // Pause the daemon and all tasks
-        info!("Pausing daemon");
-        self.is_running = false;
-        let keys: Vec<i32> = self.children.keys().cloned().collect();
-        if !message.wait {
-            for id in keys {
-                self.pause_task(id);
-            }
-        }
-    }
-
-    /// Pause a specific task.
-    /// Send a signal to the process to actually pause the OS process
-    fn pause_task(&mut self, id: i32) {
-        if !self.children.contains_key(&id) {
-            return;
-        }
-        match self.send_signal(id, Signal::SIGSTOP) {
-            Err(err) => info!("Failed pausing task {}: {:?}", id, err),
-            Ok(success) => {
-                if success {
-                    let mut state = self.state.lock().unwrap();
-                    state.change_status(id, TaskStatus::Paused);
-                }
-            }
-        }
     }
 
     /// Handle the start message:
@@ -289,14 +250,77 @@ impl TaskHandler {
         }
     }
 
+    /// Handle the pause message:
+    /// 1. Either pause the daemon and all tasks.
+    /// 2. Or only pause specific tasks.
+    fn pause(&mut self, message: PauseMessage) {
+        // Only pause specific tasks
+        if let Some(task_ids) = message.task_ids {
+            for id in task_ids {
+                self.pause_task(id);
+            }
+            return;
+        }
+
+        // Pause the daemon and all tasks
+        info!("Pausing daemon");
+        self.is_running = false;
+        let keys: Vec<i32> = self.children.keys().cloned().collect();
+        if !message.wait {
+            for id in keys {
+                self.pause_task(id);
+            }
+        }
+    }
+
+    /// Pause a specific task.
+    /// Send a signal to the process to actually pause the OS process
+    fn pause_task(&mut self, id: i32) {
+        if !self.children.contains_key(&id) {
+            return;
+        }
+        match self.send_signal(id, Signal::SIGSTOP) {
+            Err(err) => info!("Failed pausing task {}: {:?}", id, err),
+            Ok(success) => {
+                if success {
+                    let mut state = self.state.lock().unwrap();
+                    state.change_status(id, TaskStatus::Paused);
+                }
+            }
+        }
+    }
+
+    /// Handle the pause message:
+    /// 1. Either kill all tasks.
+    /// 2. Or only kill specific tasks.
+    fn kill(&mut self, message: KillMessage) {
+        println!("lol");
+        // Only pause specific tasks
+        if !message.task_ids.is_empty() {
+            for id in message.task_ids {
+                self.kill_task(id);
+            }
+            return;
+        }
+
+        // Pause the daemon and all tasks
+        info!("Killing all spawned children");
+        let keys: Vec<i32> = self.children.keys().cloned().collect();
+        for id in keys {
+            self.kill_task(id);
+        }
+    }
+
     /// Kill a specific task and handle it accordingly
     /// Triggered on `reset` and `kill`.
-    fn kill_task(&mut self, id: i32) {
-        if let Some(child) = self.children.get_mut(&id) {
+    fn kill_task(&mut self, task_id: i32) {
+        if let Some(child) = self.children.get_mut(&task_id) {
             match child.kill() {
-                Err(_) => debug!("Task {} has already finished by itself", id),
+                Err(_) => debug!("Task {} has already finished by itself", task_id),
                 _ => (),
             };
+        } else {
+            warn!("Tried to kill non-existing child: {}", task_id);
         }
     }
 }
