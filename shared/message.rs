@@ -8,6 +8,8 @@ pub enum Message {
     Add(AddMessage),
     Remove(RemoveMessage),
     Switch(SwitchMessage),
+    Stash(StashMessage),
+    Enqueue(EnqueueMessage),
 
     Start(StartMessage),
     Restart(RestartMessage),
@@ -33,6 +35,16 @@ pub struct AddMessage {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RemoveMessage {
+    pub task_ids: Vec<i32>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct StashMessage {
+    pub task_ids: Vec<i32>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct EnqueueMessage {
     pub task_ids: Vec<i32>,
 }
 

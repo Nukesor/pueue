@@ -13,6 +13,8 @@ pub fn handle_message(message: Message, sender: Sender<Message>, state: SharedSt
         Message::Start(message) => start(message, sender, state),
         Message::Restart(message) => restart(message, sender, state),
         Message::Pause(message) => pause(message, sender, state),
+        Message::Stash(message) => stash(message, state),
+        Message::Enqueue(message) => enqueue(message, state),
         Message::Kill(message) => kill(message, sender, state),
         Message::Clean => clean(state),
         Message::Reset => reset(sender),
@@ -134,6 +136,46 @@ fn pause(message: PauseMessage, sender: Sender<Message>, state: SharedState) -> 
 
     return create_success_message(String::from("Daemon and all tasks are being paused."));
 }
+
+/// Stash specific queued tasks.
+/// They won't be executed until enqueued again or explicitely started
+fn stash(message: StashMessage, state: SharedState) -> Message {
+    let (matching, mismatching) = {
+        let mut state = state.lock().unwrap();
+        let (matching, mismatching) = state.tasks_in_statuses(Some(message.task_ids), vec![TaskStatus::Queued]);
+
+        for task_id in &matching {
+            state.change_status(*task_id, TaskStatus::Stashed);
+        }
+
+        (matching, mismatching)
+    };
+
+    let message = "Tasks are stashed";
+    let response = compile_task_response(message, matching, mismatching);
+    return create_success_message(response);
+}
+
+
+/// Enqueue specific stashed tasks.
+/// They will be normally handled afterwards.
+fn enqueue(message: EnqueueMessage, state: SharedState) -> Message {
+    let (matching, mismatching) = {
+        let mut state = state.lock().unwrap();
+        let (matching, mismatching) = state.tasks_in_statuses(Some(message.task_ids), vec![TaskStatus::Stashed]);
+
+        for task_id in &matching {
+            state.change_status(*task_id, TaskStatus::Queued);
+        }
+
+        (matching, mismatching)
+    };
+
+    let message = "Tasks are enqueued";
+    let response = compile_task_response(message, matching, mismatching);
+    return create_success_message(response);
+}
+
 
 /// Forward the kill message to the task handler and respond to the client
 fn kill(message: KillMessage, sender: Sender<Message>, state: SharedState) -> Message {

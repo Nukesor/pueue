@@ -113,6 +113,8 @@ pub struct Opt {
     pub cmd: SubCommand,
 }
 
+// Convert and pre-process the sub-command into a valid message
+// that can be understood by the daemon
 pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
     match &opt.cmd {
         SubCommand::Add {
@@ -130,13 +132,25 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
                 path: cwd.to_string(),
                 start_immediately: *start_immediately,
             }))
-        }
+        },
         SubCommand::Remove { task_ids } => {
             let message = RemoveMessage {
                 task_ids: task_ids.clone(),
             };
             Ok(Message::Remove(message))
-        }
+        },
+        SubCommand::Stash { task_ids } => {
+            let message = StashMessage {
+                task_ids: task_ids.clone(),
+            };
+            Ok(Message::Stash(message))
+        },
+        SubCommand::Enqueue { task_ids } => {
+            let message = EnqueueMessage {
+                task_ids: task_ids.clone(),
+            };
+            Ok(Message::Enqueue(message))
+        },
         SubCommand::Status => Ok(Message::Status),
         SubCommand::Log { task_ids: _ } => Ok(Message::Status),
         SubCommand::Start { task_ids } => {
@@ -144,7 +158,7 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
                 task_ids: task_ids.clone(),
             };
             Ok(Message::Start(message))
-        }
+        },
         SubCommand::Restart {
             task_ids,
             start_immediately,
@@ -154,26 +168,22 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
                 start_immediately: *start_immediately,
             };
             Ok(Message::Restart(message))
-        }
+        },
         SubCommand::Pause { wait, task_ids } => {
             let message = PauseMessage {
                 wait: *wait,
                 task_ids: task_ids.clone(),
             };
             Ok(Message::Pause(message))
-        }
+        },
         SubCommand::Kill { all, task_ids } => {
             let message = KillMessage {
                 all: *all,
                 task_ids: task_ids.clone(),
             };
             Ok(Message::Kill(message))
-        }
+        },
         SubCommand::Clean => Ok(Message::Clean),
         SubCommand::Reset => Ok(Message::Reset),
-        _ => {
-            println!("{:?}", opt);
-            Err(anyhow!("Failed to interpret command. Please use --help"))
-        }
     }
 }
