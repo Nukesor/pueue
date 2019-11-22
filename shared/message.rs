@@ -16,10 +16,12 @@ pub enum Message {
     Pause(PauseMessage),
     Kill(KillMessage),
 
+    Send(SendMessage),
+
+    Status,
     Reset,
     Clean,
 
-    Status,
     StatusResponse(State),
     Success(String),
     Failure(String),
@@ -28,7 +30,6 @@ pub enum Message {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct AddMessage {
     pub command: String,
-    pub arguments: Vec<String>,
     pub path: String,
     pub start_immediately: bool,
 }
@@ -36,6 +37,12 @@ pub struct AddMessage {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RemoveMessage {
     pub task_ids: Vec<i32>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct SwitchMessage {
+    pub command: String,
+    pub path: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -48,11 +55,6 @@ pub struct EnqueueMessage {
     pub task_ids: Vec<i32>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct SwitchMessage {
-    pub command: String,
-    pub path: String,
-}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct StartMessage {
@@ -77,15 +79,23 @@ pub struct KillMessage {
     pub task_ids: Vec<i32>,
 }
 
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct SendMessage {
+    pub task_id: i32,
+    pub input: String,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TextMessage {
     pub text: String,
 }
 
-pub fn create_success_message(text: String) -> Message {
-    Message::Success(text)
+
+pub fn create_success_message<T: ToString>(text: T) -> Message {
+    Message::Success(text.to_string())
 }
 
-pub fn create_failure_message(text: String) -> Message {
-    Message::Failure(text)
+pub fn create_failure_message<T: ToString>(text: T) -> Message {
+    Message::Failure(text.to_string())
 }

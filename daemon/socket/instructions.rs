@@ -12,21 +12,25 @@ pub fn handle_message(message: Message, sender: Sender<Message>, state: SharedSt
         Message::Remove(message) => remove(message, state),
         Message::Start(message) => start(message, sender, state),
         Message::Restart(message) => restart(message, sender, state),
+
         Message::Pause(message) => pause(message, sender, state),
         Message::Stash(message) => stash(message, state),
         Message::Enqueue(message) => enqueue(message, state),
         Message::Kill(message) => kill(message, sender, state),
+
+        Message::Send(message) => send(message, sender, state),
+
         Message::Clean => clean(state),
         Message::Reset => reset(sender),
         Message::Status => get_status(state),
-        _ => create_failure_message(String::from("Not implemented yet")),
+        _ => create_failure_message("Not implemented yet"),
     }
 }
 
 /// Queues a new task to the state.
 /// If the start_immediately flag is set, send a StartMessage to the task handler
 fn add_task(message: AddMessage, sender: Sender<Message>, state: SharedState) -> Message {
-    let task = Task::new(message.command, message.arguments, message.path);
+    let task = Task::new(message.command, message.path);
     let task_id: i32;
     {
         let mut state = state.lock().unwrap();
@@ -41,7 +45,7 @@ fn add_task(message: AddMessage, sender: Sender<Message>, state: SharedState) ->
             .expect(SENDER_ERR);
     }
 
-    create_success_message(String::from("New task added."))
+    create_success_message("New task added.")
 }
 
 /// Remove tasks from the queue
@@ -78,7 +82,7 @@ fn start(message: StartMessage, sender: Sender<Message>, state: SharedState) -> 
         return create_success_message(response);
     }
 
-    return create_success_message(String::from("Daemon and all tasks are being resumed."));
+    return create_success_message("Daemon and all tasks are being resumed.");
 }
 
 /// Create and enqueue tasks from already finished tasks
@@ -134,7 +138,7 @@ fn pause(message: PauseMessage, sender: Sender<Message>, state: SharedState) -> 
         return create_success_message(response);
     }
 
-    return create_success_message(String::from("Daemon and all tasks are being paused."));
+    return create_success_message("Daemon and all tasks are being paused.");
 }
 
 /// Stash specific queued tasks.
@@ -193,7 +197,32 @@ fn kill(message: KillMessage, sender: Sender<Message>, state: SharedState) -> Me
         return create_success_message(response);
     }
 
-    return create_success_message(String::from("All tasks are being killed."));
+    return create_success_message("All tasks are being killed.");
+}
+
+// Send some user defined input to a process
+// The message will be forwarded to the task handler.
+// In here we only do some error handling.
+fn send(message: SendMessage, sender: Sender<Message>, state: SharedState) -> Message {
+    // Check whether the task exists and is running, abort if that's not the case
+    {
+        let state = state.lock().unwrap();
+        match state.tasks.get(&message.task_id) {
+            Some(task) => {
+                if task.status != TaskStatus::Running {
+                    return create_failure_message("You can only send input to a running task");
+                }
+            }
+            None => return create_failure_message("No task with this id."),
+        }
+    }
+
+    // Check whether the task exists and is running, abort if that's not the case
+    sender
+        .send(Message::Send(message))
+        .expect(SENDER_ERR);
+
+    return create_success_message("Message is being send to the process.");
 }
 
 /// Remove all failed or done tasks from the state
@@ -206,14 +235,14 @@ fn clean(state: SharedState) -> Message {
         let _ = state.tasks.remove(task_id).unwrap();
     }
 
-    return create_success_message(String::from("All finished tasks have been removed"));
+    return create_success_message("All finished tasks have been removed");
 }
 
 // Forward the reset request to the task handler
 // The handler then kills all children and clears the task queue
 fn reset(sender: Sender<Message>) -> Message {
     sender.send(Message::Reset).expect(SENDER_ERR);
-    return create_success_message(String::from("Everything is being reset right now."));
+    return create_success_message("Everything is being reset right now.");
 }
 
 fn task_response_helper(

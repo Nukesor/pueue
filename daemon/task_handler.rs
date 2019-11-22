@@ -3,6 +3,7 @@ use ::std::process::Stdio;
 use ::std::process::{Child, Command};
 use ::std::sync::mpsc::Receiver;
 use ::std::time::Duration;
+use ::std::io::Write;
 
 use ::anyhow::Result;
 use ::chrono::prelude::*;
@@ -114,8 +115,9 @@ impl TaskHandler {
         };
 
         // Spawn the actual subprocess
-        let spawn_result = Command::new(&task.command)
-            .args(&task.arguments)
+        let spawn_result = Command::new("sh")
+            .arg("-c")
+            .arg(&task.command)
             .current_dir(&task.path)
             .stdin(Stdio::piped())
             .stdout(Stdio::from(stdout_log))
@@ -135,7 +137,7 @@ impl TaskHandler {
             }
         };
         self.children.insert(task_id, child);
-        info!("Started task: {} {:?}", task.command, task.arguments);
+        info!("Started task: {}", task.command);
 
         state.change_status(task_id, TaskStatus::Running);
     }
@@ -234,6 +236,7 @@ impl TaskHandler {
             Message::Pause(message) => self.pause(message),
             Message::Start(message) => self.start(message),
             Message::Kill(message) => self.kill(message),
+            Message::Send(message) => self.send(message),
             Message::Reset => self.reset(),
             _ => info!("Received unhandled message {:?}", message),
         }
@@ -375,6 +378,25 @@ impl TaskHandler {
             };
         } else {
             warn!("Tried to kill non-existing child: {}", task_id);
+        }
+    }
+
+    /// Send some input to a child process
+    fn send(&mut self, message:SendMessage) {
+        let task_id = message.task_id;
+        let input = message.input;
+        let child = match self.children.get_mut(&task_id) {
+            Some(child) => child,
+            None => {
+                warn!("Task {} finished before input could be sent: {}", task_id, input);
+                return;
+            }
+        };
+        {
+            let child_stdin = child.stdin.as_mut().unwrap();
+            if let Err(err) = child_stdin.write_all(&input.clone().into_bytes()) {
+                warn!("Failed to send input to task {} with err {:?}: {}", task_id, err, input);
+            };
         }
     }
 

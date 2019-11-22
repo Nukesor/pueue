@@ -171,7 +171,7 @@ pub fn print_log(task_id: i32, state: &State) {
         exit_status,
         style::Reset
     );
-    println!("Command: {} {}", task.command, task.arguments.join(" "));
+    println!("Command: {}", task.command);
     println!("Path: {}", task.path);
     if let Some(start) = task.start {
         println!("Start: {}", start.to_rfc2822());

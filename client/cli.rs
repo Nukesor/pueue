@@ -11,8 +11,8 @@ pub enum SubCommand {
     /// Queue a task for execution
     Add {
         /// The command that should be added
-        #[structopt(value_delimiter = " ")]
-        command: Vec<String>,
+        #[structopt()]
+        command: String,
 
         /// Start the task immediately
         #[structopt(name = "immediate", short, long)]
@@ -24,6 +24,18 @@ pub enum SubCommand {
         /// The task ids to be removed
         task_ids: Vec<i32>,
     },
+    /// Stash some tasks. These tasks won't be automatically started.
+    /// Afterwards either `enqueue` them, to be normally handled or forcefully `start` them.
+    Stash {
+        /// The id(s) of the tasks you want to stash
+        task_ids: Vec<i32>,
+    },
+    /// Enqueue stashed tasks. They'll be handled normally afterwards.
+    Enqueue {
+        /// The id(s) of the tasks you want to enqueue
+        task_ids: Vec<i32>,
+    },
+
     /// Wake the daemon from its paused state, including continuing all paused tasks.
     /// Does nothing if the daemon isn't paused.
     Start {
@@ -68,17 +80,16 @@ pub enum SubCommand {
         #[structopt(group("kill"), required_unless("all"))]
         task_ids: Vec<i32>,
     },
-    /// Stash some tasks. These tasks won't be automatically started.
-    /// Afterwards either `enqueue` them, to be normally handled or forcefully `start` them.
-    Stash {
-        /// The id(s) of the tasks you want to stash
-        task_ids: Vec<i32>,
+
+    /// Send something to a task. For example, useful for sending confirmations ('y\n')
+    Send {
+        /// The id of the task
+        task_id: i32,
+
+        /// The input that should be sent to the process
+        input: String,
     },
-    /// Enqueue stashed tasks. They'll be handled normally afterwards.
-    Enqueue {
-        /// The id(s) of the tasks you want to enqueue
-        task_ids: Vec<i32>,
-    },
+
     /// Display the current status of all tasks
     Status,
     /// Display the log output of finished tasks
@@ -121,14 +132,12 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
             command,
             start_immediately,
         } => {
-            let mut command = command.to_vec().clone();
             let cwd_pathbuf = current_dir()?;
             let cwd = cwd_pathbuf.to_str().ok_or(anyhow!(
                 "Cannot parse current working directory (Invalid utf8?)"
             ))?;
             Ok(Message::Add(AddMessage {
-                command: command.remove(0),
-                arguments: command,
+                command: command.to_string(),
                 path: cwd.to_string(),
                 start_immediately: *start_immediately,
             }))
@@ -151,8 +160,6 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
             };
             Ok(Message::Enqueue(message))
         },
-        SubCommand::Status => Ok(Message::Status),
-        SubCommand::Log { task_ids: _ } => Ok(Message::Status),
         SubCommand::Start { task_ids } => {
             let message = StartMessage {
                 task_ids: task_ids.clone(),
@@ -183,6 +190,17 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
             };
             Ok(Message::Kill(message))
         },
+
+        SubCommand::Send { task_id, input } => {
+            let message = SendMessage {
+                task_id: *task_id,
+                input: input.clone(),
+            };
+            Ok(Message::Send(message))
+        },
+
+        SubCommand::Status => Ok(Message::Status),
+        SubCommand::Log { task_ids: _ } => Ok(Message::Status),
         SubCommand::Clean => Ok(Message::Clean),
         SubCommand::Reset => Ok(Message::Reset),
     }

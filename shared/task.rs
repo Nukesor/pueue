@@ -21,7 +21,6 @@ pub enum TaskStatus {
 pub struct Task {
     pub id: i32,
     pub command: String,
-    pub arguments: Vec<String>,
     pub path: String,
     pub status: TaskStatus,
     pub exit_code: Option<i32>,
@@ -32,11 +31,10 @@ pub struct Task {
 }
 
 impl Task {
-    pub fn new(command: String, arguments: Vec<String>, path: String) -> Task {
+    pub fn new(command: String, path: String) -> Task {
         Task {
             id: 0,
             command: command,
-            arguments: arguments,
             path: path,
             status: TaskStatus::Queued,
             exit_code: None,
@@ -51,7 +49,6 @@ impl Task {
         Task {
             id: 0,
             command: task.command.clone(),
-            arguments: task.arguments.clone(),
             path: task.path.clone(),
             status: TaskStatus::Queued,
             exit_code: None,
