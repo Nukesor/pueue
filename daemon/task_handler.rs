@@ -126,9 +126,11 @@ impl TaskHandler {
         let child = match spawn_result {
             Ok(child) => child,
             Err(err) => {
-                error!("Failed to spawn child {} with err: {:?}", task_id, err);
+                let error = format!("Failed to spawn child {} with err: {:?}", task_id, err);
+                error!("{}", error);
                 clean_log_handles(task_id);
                 state.change_status(task_id, TaskStatus::Failed);
+                state.add_error_message(task_id, error);
                 return;
             }
         };

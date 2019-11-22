@@ -66,6 +66,12 @@ impl State {
         };
     }
 
+    pub fn add_error_message(&mut self, id: i32, message: String) {
+        if let Some(ref mut task) = self.tasks.get_mut(&id) {
+            task.stderr = Some(message);
+        }
+    }
+
     pub fn get_task_status(&mut self, id: i32) -> Option<TaskStatus> {
         if let Some(ref task) = self.tasks.get(&id) {
             return Some(task.status.clone());
