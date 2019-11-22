@@ -3,20 +3,24 @@ use ::byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use ::std::io::Cursor;
 use ::tokio::net::TcpStream;
 use ::tokio::prelude::*;
+use ::log::error;
 
 use crate::output::*;
+use crate::cli::{Opt, SubCommand};
 use ::pueue::communication::message::*;
 use ::pueue::settings::Settings;
 
 /// The client
 pub struct Client {
+    opt: Opt,
     settings: Settings,
     message: Message,
 }
 
 impl Client {
-    pub fn new(settings: Settings, message: Message) -> Result<Self> {
+    pub fn new(settings: Settings, message: Message, opt: Opt) -> Result<Self> {
         Ok(Client {
+            opt: opt,
             settings: settings,
             message: message,
         })
@@ -38,11 +42,18 @@ impl Client {
         // Interpret the response
         let message: Message = serde_json::from_str(&response)?;
 
+        // Handle some messages directly
         match message {
             Message::Success(text) => print_success(text),
             Message::Failure(text) => print_error(text),
-            Message::StatusResponse(state) => print_state(state),
-            _ => (),
+            _ => {
+                // Other messages will be handled depending on the original cli-command
+                match &self.opt.cmd {
+                    SubCommand::Status => print_state(message),
+                    SubCommand::Log{task_ids} => print_logs(message, task_ids.clone()),
+                    _ => error!("Received unhandled response message"),
+                }
+            }
         }
 
         Ok(())

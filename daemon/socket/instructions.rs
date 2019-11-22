@@ -55,12 +55,8 @@ fn remove(message: RemoveMessage, state: SharedState) -> Message {
 /// Simply return the current state to the client
 fn get_status(state: SharedState) -> Message {
     let state_clone: State;
-    {
-        let state = state.lock().unwrap();
-        state_clone = state.clone();
-    }
-
-    Message::StatusResponse(state_clone)
+    let state = state.lock().unwrap();
+    Message::StatusResponse(state.clone())
 }
 /// Forward the start message to the task handler and respond to the client
 fn start(message: StartMessage, sender: Sender<Message>, state: SharedState) -> Message {

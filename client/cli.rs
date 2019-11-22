@@ -79,6 +79,12 @@ pub enum SubCommand {
     },
     /// Display the current status of all tasks
     Status,
+    /// Display the log output of finished tasks
+    Log {
+        /// Specify for which specific tasks you want to see the output
+        #[structopt(short, long)]
+        task_ids: Option<Vec<i32>>,
+    },
     /// Kill all running tasks, remove all tasks and reset max_id.
     Reset,
     /// Remove all finished tasks from the list (also clears logs).
@@ -126,6 +132,7 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
             Ok(Message::Remove(message))
         },
         SubCommand::Status => Ok(Message::Status),
+        SubCommand::Log{task_ids: _} => Ok(Message::Status),
         SubCommand::Start { task_ids } => {
             let message = StartMessage {
                 task_ids: task_ids.clone(),

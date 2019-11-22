@@ -1,7 +1,6 @@
 use ::chrono::prelude::*;
 use ::serde_derive::{Deserialize, Serialize};
 use ::std::collections::BTreeMap;
-use ::std::process::Child;
 use ::std::sync::{Arc, Mutex};
 use ::strum::IntoEnumIterator;
 
@@ -72,19 +71,6 @@ impl State {
             return Some(task.status.clone());
         };
         None
-    }
-
-    pub fn handle_finished_child(&mut self, id: i32, mut child: Child) {
-        let mut task = self.tasks.get_mut(&id).unwrap();
-        task.status = TaskStatus::Done;
-
-        let exit_code = match child.wait().unwrap().code() {
-            Some(code) => code,
-            None => 254,
-        };
-
-        task.exit_code = Some(exit_code);
-        task.end = Some(Local::now());
     }
 
     /// This checks, whether the given task_ids are in the specified statuses.

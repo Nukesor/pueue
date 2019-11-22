@@ -5,13 +5,14 @@ use ::std::sync::mpsc::Receiver;
 use ::std::time::Duration;
 
 use ::anyhow::Result;
+use ::chrono::prelude::*;
 use ::log::{debug, error, info, warn};
 use ::nix::sys::signal;
 use ::nix::sys::signal::Signal;
 use ::nix::unistd::Pid;
 
 use ::pueue::communication::message::*;
-use ::pueue::file::log::create_log_file_handles;
+use ::pueue::log::*;
 use ::pueue::settings::Settings;
 use ::pueue::state::SharedState;
 use ::pueue::task::{Task, TaskStatus};
@@ -72,7 +73,7 @@ impl TaskHandler {
         // Break the loop if no next task is found
         while self.children.len() < self.settings.daemon.default_worker_count {
             match self.get_next()? {
-                Some((id, task)) => self.start_process(id, &task)?,
+                Some((id, task)) => self.start_process(id, &task),
                 None => break,
             }
         }
@@ -95,46 +96,85 @@ impl TaskHandler {
 
     /// Actually spawn a new sub process
     /// The output of subprocesses is piped into a seperate file for easier access
-    fn start_process(&mut self, id: i32, task: &Task) -> Result<()> {
+    fn start_process(&mut self, task_id: i32, task: &Task) {
         // Already get the mutex here to ensure that the task won't be manipulated
         // or removed while we are starting it over here.
         let mut state = self.state.lock().unwrap();
 
+        // Try to get the log files to which the output of the process
+        // Will be written. Error if this doesn't work!
+        let (stdout_log, stderr_log) = match create_log_file_handles(task_id) {
+            Ok((out, err)) => (out, err),
+            Err(err) => {
+                error!("Failed to create child log files: {:?}", err);
+                return;
+            },
+        };
+
         // Spawn the actual subprocess
-        let (stdout_log, stderr_log) = create_log_file_handles(id)?;
-        let child = Command::new(&task.command)
+        let spawn_result = Command::new(&task.command)
             .args(&task.arguments)
             .current_dir(&task.path)
             .stdin(Stdio::piped())
             .stdout(Stdio::from(stdout_log))
             .stderr(Stdio::from(stderr_log))
-            .spawn()?;
-        self.children.insert(id, child);
+            .spawn();
+
+        // The spawning
+        let child = match spawn_result {
+            Ok(child) => child,
+            Err(err) => {
+                error!("Failed to spawn child {} with err: {:?}", task_id, err);
+                clean_log_handles(task_id);
+                state.change_status(task_id, TaskStatus::Failed);
+                return;
+            }
+        };
+        self.children.insert(task_id, child);
         info!("Started task: {} {:?}", task.command, task.arguments);
 
-        state.change_status(id, TaskStatus::Running);
-
-        Ok(())
+        state.change_status(task_id, TaskStatus::Running);
     }
 
     /// Check whether there are any finished processes
     /// In case there are, handle them and update the shared state
     fn process_finished(&mut self) {
         let (finished, errored) = self.get_finished();
-        for id in finished.iter() {
-            let child = self.children.remove(id).expect("Child went missing");
-            {
-                let mut state = self.state.lock().unwrap();
-                state.handle_finished_child(*id, child);
-            }
+        for task_id in finished.iter() {
+            let mut child = self.children.remove(task_id).expect("Child went missing");
+            // Return 254, if the process has been killed by a signal
+            // This is kind of dirty, but we work with it for now
+            let exit_code = match child.wait().unwrap().code() {
+                Some(code) => code,
+                None => 254,
+            };
+
+            // Get the stdout and stderr of this task from the output files
+            let (stdout, stderr) = match read_log_files(*task_id) {
+                Ok((stdout, stderr)) => (Some(stdout), Some(stderr)),
+                Err(err) => {
+                    error!("Failed reading log files for task {} with error {:?}", task_id, err);
+                    (None, None)
+                }
+            };
+            // Now remove the output files. Don't do anything if this fails.
+            // This is something the user must take care of.
+            clean_log_handles(*task_id);
+
+            let mut state = self.state.lock().unwrap();
+            let mut task = state.tasks.get_mut(&task_id).unwrap();
+            task.status = TaskStatus::Done;
+            task.stdout = stdout;
+            task.stderr = stderr;
+
+            task.exit_code = Some(exit_code);
+            task.end = Some(Local::now());
         }
 
-        for id in errored.iter() {
-            let _child = self.children.remove(id).expect("Child went missing");
-            {
-                let mut state = self.state.lock().unwrap();
-                state.change_status(*id, TaskStatus::Failed);
-            }
+        for task_id in errored.iter() {
+            let _child = self.children.remove(task_id).expect("Child went missing");
+            let mut state = self.state.lock().unwrap();
+            state.change_status(*task_id, TaskStatus::Failed);
         }
     }
 
