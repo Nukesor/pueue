@@ -1,7 +1,7 @@
 use ::std::sync::mpsc::Sender;
 
 use ::pueue::communication::message::*;
-use ::pueue::state::{SharedState, State};
+use ::pueue::state::SharedState;
 use ::pueue::task::{Task, TaskStatus};
 
 static SENDER_ERR: &str = "Failed to send message to task handler thread";
@@ -11,6 +11,7 @@ pub fn handle_message(message: Message, sender: Sender<Message>, state: SharedSt
         Message::Add(message) => add_task(message, sender, state),
         Message::Remove(message) => remove(message, state),
         Message::Start(message) => start(message, sender, state),
+        Message::Restart(message) => restart(message, sender, state),
         Message::Pause(message) => pause(message, sender, state),
         Message::Kill(message) => kill(message, sender, state),
         Message::Status => get_status(state),
@@ -54,10 +55,10 @@ fn remove(message: RemoveMessage, state: SharedState) -> Message {
 
 /// Simply return the current state to the client
 fn get_status(state: SharedState) -> Message {
-    let state_clone: State;
     let state = state.lock().unwrap();
     Message::StatusResponse(state.clone())
 }
+
 /// Forward the start message to the task handler and respond to the client
 fn start(message: StartMessage, sender: Sender<Message>, state: SharedState) -> Message {
     sender
@@ -74,6 +75,44 @@ fn start(message: StartMessage, sender: Sender<Message>, state: SharedState) -> 
     }
 
     return create_success_message(String::from("Daemon and all tasks are being resumed."));
+}
+
+/// Create and enqueue tasks from already finished tasks
+/// The user can specify to immediately start the newly created tasks.
+fn restart(message: RestartMessage, sender: Sender<Message>, state: SharedState) -> Message {
+    let response: String;
+    let new_ids = {
+        let mut state = state.lock().unwrap();
+        let statuses = vec![TaskStatus::Done, TaskStatus::Failed];
+        let (matching, mismatching) = state.tasks_in_statuses(Some(message.task_ids), statuses);
+
+        let mut new_ids = Vec::new();
+        for task_id in &matching {
+            let task = state.tasks.get(task_id).unwrap();
+            let new_task = Task::from_task(task);
+            new_ids.push(state.add_task(new_task));
+        }
+
+        // Already create the response string in here. Otherwise we would
+        // need to get matching/mismatching out of this scope
+        let message = "Restarted tasks";
+        response = compile_task_response(message, matching, mismatching);
+
+        new_ids
+    };
+
+    // If the restarted tasks should be started immediately, send a message
+    // with the new task ids to the task handler.
+    if message.start_immediately {
+        let start_message = StartMessage {
+            task_ids: Some(new_ids),
+        };
+        sender
+            .send(Message::Start(start_message))
+            .expect(SENDER_ERR);
+    }
+
+    return create_success_message(response);
 }
 
 /// Forward the pause message to the task handler and respond to the client

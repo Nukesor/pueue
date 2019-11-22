@@ -47,6 +47,21 @@ impl Task {
         }
     }
 
+    pub fn from_task(task: &Task) -> Task {
+        Task {
+            id: 0,
+            command: task.command.clone(),
+            arguments: task.arguments.clone(),
+            path: task.path.clone(),
+            status: TaskStatus::Queued,
+            exit_code: None,
+            stdout: None,
+            stderr: None,
+            start: None,
+            end: None,
+        }
+    }
+
     pub fn is_running(&self) -> bool {
         return self.status == TaskStatus::Running || self.status == TaskStatus::Paused;
     }

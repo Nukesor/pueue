@@ -15,7 +15,7 @@ pub enum SubCommand {
         command: Vec<String>,
 
         /// Start the task immediately
-        #[structopt(name = "start", short, long)]
+        #[structopt(name = "immediate", short, long)]
         start_immediately: bool,
     },
     /// Remove tasks from the list.
@@ -35,11 +35,11 @@ pub enum SubCommand {
     },
     Restart {
         /// Restart the
-        #[structopt(short, long)]
+        #[structopt()]
         task_ids: Vec<i32>,
 
         /// Start the task(s) immediately
-        #[structopt(name = "immediat", short, long)]
+        #[structopt(name = "immediate", short, long)]
         start_immediately: bool,
     },
     /// Pause the daemon and all running tasks.
@@ -144,6 +144,16 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
                 task_ids: task_ids.clone(),
             };
             Ok(Message::Start(message))
+        }
+        SubCommand::Restart {
+            task_ids,
+            start_immediately,
+        } => {
+            let message = RestartMessage {
+                task_ids: task_ids.clone(),
+                start_immediately: *start_immediately,
+            };
+            Ok(Message::Restart(message))
         }
         SubCommand::Pause { wait, task_ids } => {
             let message = PauseMessage {

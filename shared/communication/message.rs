@@ -10,6 +10,7 @@ pub enum Message {
     Switch(SwitchMessage),
 
     Start(StartMessage),
+    Restart(RestartMessage),
     Pause(PauseMessage),
     Kill(KillMessage),
 
@@ -44,6 +45,12 @@ pub struct SwitchMessage {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct StartMessage {
     pub task_ids: Option<Vec<i32>>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct RestartMessage {
+    pub task_ids: Vec<i32>,
+    pub start_immediately: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
