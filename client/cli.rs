@@ -1,5 +1,7 @@
-use ::anyhow::{anyhow, Result};
 use ::std::path::PathBuf;
+use ::std::env::current_dir;
+
+use ::anyhow::{anyhow, Result};
 use ::structopt::StructOpt;
 
 use ::pueue::communication::message::*;
@@ -118,10 +120,12 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
             start_immediately,
         } => {
             let mut command = command.to_vec().clone();
+            let cwd_pathbuf = current_dir()?;
+            let cwd = cwd_pathbuf.to_str().ok_or(anyhow!("Cannot parse current working directory (Invalid utf8?)"))?;
             Ok(Message::Add(AddMessage {
                 command: command.remove(0),
                 arguments: command,
-                path: String::from("/"),
+                path: cwd.to_string(),
                 start_immediately: *start_immediately,
             }))
         },

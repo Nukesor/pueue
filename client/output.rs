@@ -153,6 +153,7 @@ pub fn print_log(task_id: i32, state: &State) {
         None => format!("{}{}{}", t_color::Fg(t_color::Red), "failed to Spawn", style::Reset),
     };
 
+    println!("\n");
     println!("{}Task {} {}{}", style::Bold, task.id, exit_status, style::Reset);
     println!("Command: {} {}", task.command, task.arguments.join(" "));
     println!("Path: {}", task.path);
@@ -176,5 +177,4 @@ pub fn print_log(task_id: i32, state: &State) {
             println!("{}", stderr);
         }
     }
-    println!("\n");
 }
