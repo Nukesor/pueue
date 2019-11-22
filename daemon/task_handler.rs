@@ -11,7 +11,7 @@ use ::nix::sys::signal;
 use ::nix::sys::signal::Signal;
 use ::nix::unistd::Pid;
 
-use ::pueue::communication::message::*;
+use ::pueue::message::*;
 use ::pueue::log::*;
 use ::pueue::settings::Settings;
 use ::pueue::state::SharedState;
@@ -23,6 +23,7 @@ pub struct TaskHandler {
     receiver: Receiver<Message>,
     pub children: BTreeMap<i32, Child>,
     is_running: bool,
+    reset: bool,
 }
 
 impl TaskHandler {
@@ -33,6 +34,7 @@ impl TaskHandler {
             receiver: receiver,
             children: BTreeMap::new(),
             is_running: true,
+            reset: false,
         }
     }
 }
@@ -60,7 +62,7 @@ impl TaskHandler {
         loop {
             self.receive_commands();
             self.process_finished();
-            if self.is_running {
+            if self.is_running && !self.reset {
                 let _res = self.check_new();
             }
         }
@@ -179,6 +181,13 @@ impl TaskHandler {
             let mut state = self.state.lock().unwrap();
             state.change_status(*task_id, TaskStatus::Failed);
         }
+
+        // The daemon got a reset request and all children just finished
+        if self.reset && self.children.is_empty() {
+            let mut state = self.state.lock().unwrap();
+            state.reset();
+            self.reset = false;
+        }
     }
 
     /// Gather all finished tasks and sort them by finished and errored.
@@ -223,6 +232,7 @@ impl TaskHandler {
             Message::Pause(message) => self.pause(message),
             Message::Start(message) => self.start(message),
             Message::Kill(message) => self.kill(message),
+            Message::Reset => self.reset(),
             _ => info!("Received unhandled message {:?}", message),
         }
     }
@@ -337,7 +347,6 @@ impl TaskHandler {
     /// 1. Either kill all tasks.
     /// 2. Or only kill specific tasks.
     fn kill(&mut self, message: KillMessage) {
-        println!("lol");
         // Only pause specific tasks
         if !message.task_ids.is_empty() {
             for id in message.task_ids {
@@ -365,5 +374,15 @@ impl TaskHandler {
         } else {
             warn!("Tried to kill non-existing child: {}", task_id);
         }
+    }
+
+    // Kill all children by reusing the `kill` function
+    // Set the `reset` flag, which will prevent new tasks from being spawned.
+    // If all children finished, the state will be completely reset.
+    fn reset(&mut self) {
+        let message = KillMessage { task_ids: Vec::new(), all: true};
+        self.kill(message);
+
+        self.reset = true;
     }
 }

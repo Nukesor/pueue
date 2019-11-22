@@ -7,7 +7,7 @@ use ::tokio::prelude::*;
 
 use crate::cli::{Opt, SubCommand};
 use crate::output::*;
-use ::pueue::communication::message::*;
+use ::pueue::message::*;
 use ::pueue::settings::Settings;
 
 /// The client

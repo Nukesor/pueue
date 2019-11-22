@@ -4,7 +4,7 @@ use ::std::path::PathBuf;
 use ::anyhow::{anyhow, Result};
 use ::structopt::StructOpt;
 
-use ::pueue::communication::message::*;
+use ::pueue::message::*;
 
 #[derive(StructOpt, Debug)]
 pub enum SubCommand {
@@ -169,6 +169,8 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
             };
             Ok(Message::Kill(message))
         }
+        SubCommand::Clean => Ok(Message::Clean),
+        SubCommand::Reset => Ok(Message::Reset),
         _ => {
             println!("{:?}", opt);
             Err(anyhow!("Failed to interpret command. Please use --help"))

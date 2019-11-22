@@ -15,7 +15,7 @@ pub enum Message {
     Kill(KillMessage),
 
     Reset,
-    Clear,
+    Clean,
 
     Status,
     StatusResponse(State),

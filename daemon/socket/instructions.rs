@@ -1,6 +1,6 @@
 use ::std::sync::mpsc::Sender;
 
-use ::pueue::communication::message::*;
+use ::pueue::message::*;
 use ::pueue::state::SharedState;
 use ::pueue::task::{Task, TaskStatus};
 
@@ -14,6 +14,8 @@ pub fn handle_message(message: Message, sender: Sender<Message>, state: SharedSt
         Message::Restart(message) => restart(message, sender, state),
         Message::Pause(message) => pause(message, sender, state),
         Message::Kill(message) => kill(message, sender, state),
+        Message::Clean => clean(state),
+        Message::Reset => reset(sender),
         Message::Status => get_status(state),
         _ => create_failure_message(String::from("Not implemented yet")),
     }
@@ -150,6 +152,26 @@ fn kill(message: KillMessage, sender: Sender<Message>, state: SharedState) -> Me
     }
 
     return create_success_message(String::from("All tasks are being killed."));
+}
+
+/// Remove all failed or done tasks from the state
+fn clean(state: SharedState) -> Message {
+    let mut state = state.lock().unwrap();
+    let statuses = vec![TaskStatus::Done, TaskStatus::Failed];
+    let (matching, _) = state.tasks_in_statuses(None, statuses);
+
+    for task_id in &matching {
+        let _ = state.tasks.remove(task_id).unwrap();
+    }
+
+    return create_success_message(String::from("All finished tasks have been removed"));
+}
+
+// Forward the reset request to the task handler
+// The handler then kills all children and clears the task queue
+fn reset(sender: Sender<Message>) -> Message {
+    sender.send(Message::Reset).expect(SENDER_ERR);
+    return create_success_message(String::from("Everything is being reset right now."));
 }
 
 fn task_response_helper(

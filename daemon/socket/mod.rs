@@ -9,7 +9,7 @@ use ::tokio::net::{TcpListener, TcpStream};
 use ::tokio::prelude::*;
 
 use crate::socket::instructions::handle_message;
-use ::pueue::communication::message::*;
+use ::pueue::message::*;
 use ::pueue::settings::Settings;
 use ::pueue::state::SharedState;
 

@@ -2,7 +2,7 @@ use ::prettytable::{color, format, Attr, Cell, Row, Table};
 use ::std::string::ToString;
 use ::termion::{color as t_color, style};
 
-use ::pueue::communication::message::*;
+use ::pueue::message::*;
 use ::pueue::state::State;
 use ::pueue::task::TaskStatus;
 
