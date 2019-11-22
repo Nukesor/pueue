@@ -1,5 +1,5 @@
-use ::std::path::PathBuf;
 use ::std::env::current_dir;
+use ::std::path::PathBuf;
 
 use ::anyhow::{anyhow, Result};
 use ::structopt::StructOpt;
@@ -121,42 +121,44 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
         } => {
             let mut command = command.to_vec().clone();
             let cwd_pathbuf = current_dir()?;
-            let cwd = cwd_pathbuf.to_str().ok_or(anyhow!("Cannot parse current working directory (Invalid utf8?)"))?;
+            let cwd = cwd_pathbuf.to_str().ok_or(anyhow!(
+                "Cannot parse current working directory (Invalid utf8?)"
+            ))?;
             Ok(Message::Add(AddMessage {
                 command: command.remove(0),
                 arguments: command,
                 path: cwd.to_string(),
                 start_immediately: *start_immediately,
             }))
-        },
+        }
         SubCommand::Remove { task_ids } => {
             let message = RemoveMessage {
                 task_ids: task_ids.clone(),
             };
             Ok(Message::Remove(message))
-        },
+        }
         SubCommand::Status => Ok(Message::Status),
-        SubCommand::Log{task_ids: _} => Ok(Message::Status),
+        SubCommand::Log { task_ids: _ } => Ok(Message::Status),
         SubCommand::Start { task_ids } => {
             let message = StartMessage {
                 task_ids: task_ids.clone(),
             };
             Ok(Message::Start(message))
-        },
+        }
         SubCommand::Pause { wait, task_ids } => {
             let message = PauseMessage {
                 wait: *wait,
                 task_ids: task_ids.clone(),
             };
             Ok(Message::Pause(message))
-        },
-        SubCommand::Kill{ all, task_ids } => {
+        }
+        SubCommand::Kill { all, task_ids } => {
             let message = KillMessage {
                 all: *all,
                 task_ids: task_ids.clone(),
             };
             Ok(Message::Kill(message))
-        },
+        }
         _ => {
             println!("{:?}", opt);
             Err(anyhow!("Failed to interpret command. Please use --help"))

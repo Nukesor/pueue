@@ -1,6 +1,6 @@
 use ::anyhow::Result;
-use ::std::fs::{File, remove_file};
 use ::log::error;
+use ::std::fs::{remove_file, File};
 use ::std::io::prelude::*;
 
 pub fn create_log_file_handles(task_id: i32) -> Result<(File, File)> {
@@ -25,9 +25,15 @@ pub fn read_log_files(task_id: i32) -> Result<(String, String)> {
 
 pub fn clean_log_handles(task_id: i32) {
     if let Err(err) = remove_file(format!("/tmp/{}_stdout.log", task_id)) {
-        error!("Failed to remove stdout file for task {} with error {:?}", task_id, err);
+        error!(
+            "Failed to remove stdout file for task {} with error {:?}",
+            task_id, err
+        );
     };
     if let Err(err) = remove_file(format!("/tmp/{}_stderr.log", task_id)) {
-        error!("Failed to remove stderr file for task {} with error {:?}", task_id, err);
+        error!(
+            "Failed to remove stderr file for task {} with error {:?}",
+            task_id, err
+        );
     };
 }

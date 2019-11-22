@@ -108,7 +108,7 @@ impl TaskHandler {
             Err(err) => {
                 error!("Failed to create child log files: {:?}", err);
                 return;
-            },
+            }
         };
 
         // Spawn the actual subprocess
@@ -153,7 +153,10 @@ impl TaskHandler {
             let (stdout, stderr) = match read_log_files(*task_id) {
                 Ok((stdout, stderr)) => (Some(stdout), Some(stderr)),
                 Err(err) => {
-                    error!("Failed reading log files for task {} with error {:?}", task_id, err);
+                    error!(
+                        "Failed reading log files for task {} with error {:?}",
+                        task_id, err
+                    );
                     (None, None)
                 }
             };

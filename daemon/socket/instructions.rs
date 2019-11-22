@@ -76,7 +76,6 @@ fn start(message: StartMessage, sender: Sender<Message>, state: SharedState) -> 
     return create_success_message(String::from("Daemon and all tasks are being resumed."));
 }
 
-
 /// Forward the pause message to the task handler and respond to the client
 fn pause(message: PauseMessage, sender: Sender<Message>, state: SharedState) -> Message {
     sender
@@ -94,7 +93,6 @@ fn pause(message: PauseMessage, sender: Sender<Message>, state: SharedState) -> 
 
     return create_success_message(String::from("Daemon and all tasks are being paused."));
 }
-
 
 /// Forward the kill message to the task handler and respond to the client
 fn kill(message: KillMessage, sender: Sender<Message>, state: SharedState) -> Message {
@@ -114,7 +112,6 @@ fn kill(message: KillMessage, sender: Sender<Message>, state: SharedState) -> Me
 
     return create_success_message(String::from("All tasks are being killed."));
 }
-
 
 fn task_response_helper(
     message: &'static str,

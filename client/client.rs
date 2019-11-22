@@ -1,12 +1,12 @@
 use ::anyhow::Result;
 use ::byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
+use ::log::error;
 use ::std::io::Cursor;
 use ::tokio::net::TcpStream;
 use ::tokio::prelude::*;
-use ::log::error;
 
-use crate::output::*;
 use crate::cli::{Opt, SubCommand};
+use crate::output::*;
 use ::pueue::communication::message::*;
 use ::pueue::settings::Settings;
 
@@ -50,7 +50,7 @@ impl Client {
                 // Other messages will be handled depending on the original cli-command
                 match &self.opt.cmd {
                     SubCommand::Status => print_state(message),
-                    SubCommand::Log{task_ids} => print_logs(message, task_ids.clone()),
+                    SubCommand::Log { task_ids } => print_logs(message, task_ids.clone()),
                     _ => error!("Received unhandled response message"),
                 }
             }
