@@ -58,7 +58,6 @@ pub struct EnqueueMessage {
     pub task_ids: Vec<i32>,
 }
 
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct StartMessage {
     pub task_ids: Option<Vec<i32>>,
@@ -82,7 +81,6 @@ pub struct KillMessage {
     pub task_ids: Vec<i32>,
 }
 
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct SendMessage {
     pub task_id: i32,
@@ -105,7 +103,6 @@ pub struct EditResponseMessage {
     pub task_id: i32,
     pub command: String,
 }
-
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TextMessage {

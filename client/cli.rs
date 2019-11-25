@@ -146,31 +146,31 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
                 path: cwd.to_string(),
                 start_immediately: *start_immediately,
             }))
-        },
+        }
         SubCommand::Remove { task_ids } => {
             let message = RemoveMessage {
                 task_ids: task_ids.clone(),
             };
             Ok(Message::Remove(message))
-        },
+        }
         SubCommand::Stash { task_ids } => {
             let message = StashMessage {
                 task_ids: task_ids.clone(),
             };
             Ok(Message::Stash(message))
-        },
+        }
         SubCommand::Enqueue { task_ids } => {
             let message = EnqueueMessage {
                 task_ids: task_ids.clone(),
             };
             Ok(Message::Enqueue(message))
-        },
+        }
         SubCommand::Start { task_ids } => {
             let message = StartMessage {
                 task_ids: task_ids.clone(),
             };
             Ok(Message::Start(message))
-        },
+        }
         SubCommand::Restart {
             task_ids,
             start_immediately,
@@ -180,21 +180,21 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
                 start_immediately: *start_immediately,
             };
             Ok(Message::Restart(message))
-        },
+        }
         SubCommand::Pause { wait, task_ids } => {
             let message = PauseMessage {
                 wait: *wait,
                 task_ids: task_ids.clone(),
             };
             Ok(Message::Pause(message))
-        },
+        }
         SubCommand::Kill { all, task_ids } => {
             let message = KillMessage {
                 all: *all,
                 task_ids: task_ids.clone(),
             };
             Ok(Message::Kill(message))
-        },
+        }
 
         SubCommand::Send { task_id, input } => {
             let message = SendMessage {
@@ -202,13 +202,11 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
                 input: input.clone(),
             };
             Ok(Message::Send(message))
-        },
-        SubCommand::Edit {task_id} => {
-            let message = EditRequestMessage {
-                task_id: *task_id,
-            };
+        }
+        SubCommand::Edit { task_id } => {
+            let message = EditRequestMessage { task_id: *task_id };
             Ok(Message::EditRequest(message))
-        },
+        }
 
         SubCommand::Status => Ok(Message::Status),
         SubCommand::Log { task_ids: _ } => Ok(Message::Status),

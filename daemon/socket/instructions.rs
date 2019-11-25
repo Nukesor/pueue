@@ -148,7 +148,8 @@ fn pause(message: PauseMessage, sender: &Sender<Message>, state: &SharedState) -
 fn stash(message: StashMessage, state: &SharedState) -> Message {
     let (matching, mismatching) = {
         let mut state = state.lock().unwrap();
-        let (matching, mismatching) = state.tasks_in_statuses(Some(message.task_ids), vec![TaskStatus::Queued]);
+        let (matching, mismatching) =
+            state.tasks_in_statuses(Some(message.task_ids), vec![TaskStatus::Queued]);
 
         for task_id in &matching {
             state.change_status(*task_id, TaskStatus::Stashed);
@@ -162,13 +163,15 @@ fn stash(message: StashMessage, state: &SharedState) -> Message {
     return create_success_message(response);
 }
 
-
 /// Enqueue specific stashed tasks.
 /// They will be normally handled afterwards.
 fn enqueue(message: EnqueueMessage, state: &SharedState) -> Message {
     let (matching, mismatching) = {
         let mut state = state.lock().unwrap();
-        let (matching, mismatching) = state.tasks_in_statuses(Some(message.task_ids), vec![TaskStatus::Stashed, TaskStatus::Locked]);
+        let (matching, mismatching) = state.tasks_in_statuses(
+            Some(message.task_ids),
+            vec![TaskStatus::Stashed, TaskStatus::Locked],
+        );
 
         for task_id in &matching {
             state.change_status(*task_id, TaskStatus::Queued);
@@ -181,7 +184,6 @@ fn enqueue(message: EnqueueMessage, state: &SharedState) -> Message {
     let response = compile_task_response(message, matching, mismatching);
     return create_success_message(response);
 }
-
 
 /// Forward the kill message to the task handler and respond to the client
 fn kill(message: KillMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
@@ -255,13 +257,10 @@ fn send(message: SendMessage, sender: &Sender<Message>, state: &SharedState) -> 
     }
 
     // Check whether the task exists and is running, abort if that's not the case
-    sender
-        .send(Message::Send(message))
-        .expect(SENDER_ERR);
+    sender.send(Message::Send(message)).expect(SENDER_ERR);
 
     return create_success_message("Message is being send to the process.");
 }
-
 
 // If a user wants to edit a message, we need to send him the current command
 // and lock the task to prevent execution, before the user has finished editing the command
@@ -276,7 +275,7 @@ fn edit_request(message: EditRequestMessage, state: &SharedState) -> Message {
             task.prev_status = task.status.clone();
             task.status = TaskStatus::Locked;
 
-            let message = EditResponseMessage{
+            let message = EditResponseMessage {
                 task_id: task.id,
                 command: task.command.clone(),
             };
@@ -285,7 +284,6 @@ fn edit_request(message: EditRequestMessage, state: &SharedState) -> Message {
         None => return create_failure_message("No task with this id."),
     }
 }
-
 
 // Handle the actual updated command
 fn edit(message: EditMessage, state: &SharedState) -> Message {
@@ -302,10 +300,14 @@ fn edit(message: EditMessage, state: &SharedState) -> Message {
 
             return create_success_message("Command has been updated");
         }
-        None => return create_failure_message(format!("Task to edit has gone away: {}", message.task_id)),
+        None => {
+            return create_failure_message(format!(
+                "Task to edit has gone away: {}",
+                message.task_id
+            ))
+        }
     }
 }
-
 
 /// Compile a response for instructions with multiple tasks ids
 /// A custom message will be combined with a text about all matching tasks

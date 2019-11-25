@@ -6,8 +6,8 @@ use ::tokio::net::TcpStream;
 use ::tokio::prelude::*;
 
 use crate::cli::{Opt, SubCommand};
-use crate::output::*;
 use crate::instructions::*;
+use crate::output::*;
 use ::pueue::message::*;
 use ::pueue::settings::Settings;
 
@@ -20,10 +20,7 @@ pub struct Client {
 
 impl Client {
     pub fn new(settings: Settings, message: Message, opt: Opt) -> Result<Self> {
-        let address = format!(
-            "{}:{}",
-            settings.daemon.address, settings.daemon.port
-        );
+        let address = format!("{}:{}", settings.daemon.address, settings.daemon.port);
 
         Ok(Client {
             opt: opt,
@@ -65,8 +62,8 @@ impl Client {
                         send_message(&message, &mut stream).await?;
                         let message = receive_answer(&mut stream).await?;
                         match message {
-                             Message::Success(text) => print_success(text),
-                             _ => error!("Got involid response {:?}", message)
+                            Message::Success(text) => print_success(text),
+                            _ => error!("Got involid response {:?}", message),
                         }
                     }
                     _ => error!("Received unhandled response message"),
@@ -76,7 +73,6 @@ impl Client {
 
         Ok(())
     }
-
 }
 
 /// Send a message to the daemon.
@@ -84,7 +80,7 @@ impl Client {
 /// Some payloads are serialized `Add` or `Remove` messages.
 /// Before we send the actual payload, a header is sent with two u64.
 /// The first represents the type of the message, the second is length of the payload.
-async fn send_message(message: &Message,  stream: &mut TcpStream) -> Result<()> {
+async fn send_message(message: &Message, stream: &mut TcpStream) -> Result<()> {
     // Prepare command for transfer and determine message byte size
     let payload = serde_json::to_string(message)
         .expect("Failed to serialize message.")
@@ -101,7 +97,6 @@ async fn send_message(message: &Message,  stream: &mut TcpStream) -> Result<()> 
 
     Ok(())
 }
-
 
 /// Receive the response of the daemon and handle it.
 async fn receive_answer(stream: &mut TcpStream) -> Result<Message> {

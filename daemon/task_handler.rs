@@ -1,9 +1,9 @@
 use ::std::collections::BTreeMap;
+use ::std::io::Write;
 use ::std::process::Stdio;
 use ::std::process::{Child, Command};
 use ::std::sync::mpsc::Receiver;
 use ::std::time::Duration;
-use ::std::io::Write;
 
 use ::anyhow::Result;
 use ::chrono::prelude::*;
@@ -12,8 +12,8 @@ use ::nix::sys::signal;
 use ::nix::sys::signal::Signal;
 use ::nix::unistd::Pid;
 
-use ::pueue::message::*;
 use ::pueue::log::*;
+use ::pueue::message::*;
 use ::pueue::settings::Settings;
 use ::pueue::state::SharedState;
 use ::pueue::task::{Task, TaskStatus};
@@ -382,20 +382,26 @@ impl TaskHandler {
     }
 
     /// Send some input to a child process
-    fn send(&mut self, message:SendMessage) {
+    fn send(&mut self, message: SendMessage) {
         let task_id = message.task_id;
         let input = message.input;
         let child = match self.children.get_mut(&task_id) {
             Some(child) => child,
             None => {
-                warn!("Task {} finished before input could be sent: {}", task_id, input);
+                warn!(
+                    "Task {} finished before input could be sent: {}",
+                    task_id, input
+                );
                 return;
             }
         };
         {
             let child_stdin = child.stdin.as_mut().unwrap();
             if let Err(err) = child_stdin.write_all(&input.clone().into_bytes()) {
-                warn!("Failed to send input to task {} with err {:?}: {}", task_id, err, input);
+                warn!(
+                    "Failed to send input to task {} with err {:?}: {}",
+                    task_id, err, input
+                );
             };
         }
     }
@@ -404,7 +410,10 @@ impl TaskHandler {
     // Set the `reset` flag, which will prevent new tasks from being spawned.
     // If all children finished, the state will be completely reset.
     fn reset(&mut self) {
-        let message = KillMessage { task_ids: Vec::new(), all: true};
+        let message = KillMessage {
+            task_ids: Vec::new(),
+            all: true,
+        };
         self.kill(message);
 
         self.reset = true;

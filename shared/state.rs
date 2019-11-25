@@ -133,7 +133,7 @@ impl State {
         self.tasks_in_statuses(task_ids, valid_statuses)
     }
 
-    pub fn reset (&mut self) {
+    pub fn reset(&mut self) {
         self.max_id = 0;
         self.tasks = BTreeMap::new();
     }
