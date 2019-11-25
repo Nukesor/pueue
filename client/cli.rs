@@ -89,6 +89,11 @@ pub enum SubCommand {
         /// The input that should be sent to the process
         input: String,
     },
+    /// Edit the command of a stashed or queued task.
+    Edit {
+        /// The id of the task
+        task_id: i32,
+    },
 
     /// Display the current status of all tasks
     Status,
@@ -197,6 +202,12 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
                 input: input.clone(),
             };
             Ok(Message::Send(message))
+        },
+        SubCommand::Edit {task_id} => {
+            let message = EditRequestMessage {
+                task_id: *task_id,
+            };
+            Ok(Message::EditRequest(message))
         },
 
         SubCommand::Status => Ok(Message::Status),

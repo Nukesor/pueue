@@ -17,6 +17,9 @@ pub enum Message {
     Kill(KillMessage),
 
     Send(SendMessage),
+    EditRequest(EditRequestMessage),
+    EditResponse(EditResponseMessage),
+    Edit(EditMessage),
 
     Status,
     Reset,
@@ -87,10 +90,27 @@ pub struct SendMessage {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct EditMessage {
+    pub task_id: i32,
+    pub command: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct EditRequestMessage {
+    pub task_id: i32,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct EditResponseMessage {
+    pub task_id: i32,
+    pub command: String,
+}
+
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TextMessage {
     pub text: String,
 }
-
 
 pub fn create_success_message<T: ToString>(text: T) -> Message {
     Message::Success(text.to_string())

@@ -10,6 +10,7 @@ pub enum TaskStatus {
     Paused,
     Done,
     Failed,
+    Locked,
 }
 
 /// Representation of a task.
@@ -23,6 +24,7 @@ pub struct Task {
     pub command: String,
     pub path: String,
     pub status: TaskStatus,
+    pub prev_status: TaskStatus,
     pub exit_code: Option<i32>,
     pub stdout: Option<String>,
     pub stderr: Option<String>,
@@ -37,6 +39,7 @@ impl Task {
             command: command,
             path: path,
             status: TaskStatus::Queued,
+            prev_status: TaskStatus::Queued,
             exit_code: None,
             stdout: None,
             stderr: None,
@@ -51,6 +54,7 @@ impl Task {
             command: task.command.clone(),
             path: task.path.clone(),
             status: TaskStatus::Queued,
+            prev_status: TaskStatus::Queued,
             exit_code: None,
             stdout: None,
             stderr: None,

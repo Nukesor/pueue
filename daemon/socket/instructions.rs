@@ -6,7 +6,7 @@ use ::pueue::task::{Task, TaskStatus};
 
 static SENDER_ERR: &str = "Failed to send message to task handler thread";
 
-pub fn handle_message(message: Message, sender: Sender<Message>, state: SharedState) -> Message {
+pub fn handle_message(message: Message, sender: &Sender<Message>, state: &SharedState) -> Message {
     match message {
         Message::Add(message) => add_task(message, sender, state),
         Message::Remove(message) => remove(message, state),
@@ -19,6 +19,8 @@ pub fn handle_message(message: Message, sender: Sender<Message>, state: SharedSt
         Message::Kill(message) => kill(message, sender, state),
 
         Message::Send(message) => send(message, sender, state),
+        Message::EditRequest(message) => edit_request(message, state),
+        Message::Edit(message) => edit(message, state),
 
         Message::Clean => clean(state),
         Message::Reset => reset(sender),
@@ -29,7 +31,7 @@ pub fn handle_message(message: Message, sender: Sender<Message>, state: SharedSt
 
 /// Queues a new task to the state.
 /// If the start_immediately flag is set, send a StartMessage to the task handler
-fn add_task(message: AddMessage, sender: Sender<Message>, state: SharedState) -> Message {
+fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
     let task = Task::new(message.command, message.path);
     let task_id: i32;
     {
@@ -49,7 +51,7 @@ fn add_task(message: AddMessage, sender: Sender<Message>, state: SharedState) ->
 }
 
 /// Remove tasks from the queue
-fn remove(message: RemoveMessage, state: SharedState) -> Message {
+fn remove(message: RemoveMessage, state: &SharedState) -> Message {
     let (matching, mismatching) = {
         let statuses = vec![TaskStatus::Running, TaskStatus::Paused];
         let mut state = state.lock().unwrap();
@@ -62,13 +64,13 @@ fn remove(message: RemoveMessage, state: SharedState) -> Message {
 }
 
 /// Simply return the current state to the client
-fn get_status(state: SharedState) -> Message {
+fn get_status(state: &SharedState) -> Message {
     let state = state.lock().unwrap();
     Message::StatusResponse(state.clone())
 }
 
 /// Forward the start message to the task handler and respond to the client
-fn start(message: StartMessage, sender: Sender<Message>, state: SharedState) -> Message {
+fn start(message: StartMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
     sender
         .send(Message::Start(message.clone()))
         .expect(SENDER_ERR);
@@ -87,7 +89,7 @@ fn start(message: StartMessage, sender: Sender<Message>, state: SharedState) -> 
 
 /// Create and enqueue tasks from already finished tasks
 /// The user can specify to immediately start the newly created tasks.
-fn restart(message: RestartMessage, sender: Sender<Message>, state: SharedState) -> Message {
+fn restart(message: RestartMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
     let response: String;
     let new_ids = {
         let mut state = state.lock().unwrap();
@@ -124,7 +126,7 @@ fn restart(message: RestartMessage, sender: Sender<Message>, state: SharedState)
 }
 
 /// Forward the pause message to the task handler and respond to the client
-fn pause(message: PauseMessage, sender: Sender<Message>, state: SharedState) -> Message {
+fn pause(message: PauseMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
     sender
         .send(Message::Pause(message.clone()))
         .expect(SENDER_ERR);
@@ -143,7 +145,7 @@ fn pause(message: PauseMessage, sender: Sender<Message>, state: SharedState) -> 
 
 /// Stash specific queued tasks.
 /// They won't be executed until enqueued again or explicitely started
-fn stash(message: StashMessage, state: SharedState) -> Message {
+fn stash(message: StashMessage, state: &SharedState) -> Message {
     let (matching, mismatching) = {
         let mut state = state.lock().unwrap();
         let (matching, mismatching) = state.tasks_in_statuses(Some(message.task_ids), vec![TaskStatus::Queued]);
@@ -163,10 +165,10 @@ fn stash(message: StashMessage, state: SharedState) -> Message {
 
 /// Enqueue specific stashed tasks.
 /// They will be normally handled afterwards.
-fn enqueue(message: EnqueueMessage, state: SharedState) -> Message {
+fn enqueue(message: EnqueueMessage, state: &SharedState) -> Message {
     let (matching, mismatching) = {
         let mut state = state.lock().unwrap();
-        let (matching, mismatching) = state.tasks_in_statuses(Some(message.task_ids), vec![TaskStatus::Stashed]);
+        let (matching, mismatching) = state.tasks_in_statuses(Some(message.task_ids), vec![TaskStatus::Stashed, TaskStatus::Locked]);
 
         for task_id in &matching {
             state.change_status(*task_id, TaskStatus::Queued);
@@ -182,7 +184,7 @@ fn enqueue(message: EnqueueMessage, state: SharedState) -> Message {
 
 
 /// Forward the kill message to the task handler and respond to the client
-fn kill(message: KillMessage, sender: Sender<Message>, state: SharedState) -> Message {
+fn kill(message: KillMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
     sender
         .send(Message::Kill(message.clone()))
         .expect(SENDER_ERR);
@@ -200,10 +202,45 @@ fn kill(message: KillMessage, sender: Sender<Message>, state: SharedState) -> Me
     return create_success_message("All tasks are being killed.");
 }
 
+/// Remove all failed or done tasks from the state
+fn clean(state: &SharedState) -> Message {
+    let mut state = state.lock().unwrap();
+    let statuses = vec![TaskStatus::Done, TaskStatus::Failed];
+    let (matching, _) = state.tasks_in_statuses(None, statuses);
+
+    for task_id in &matching {
+        let _ = state.tasks.remove(task_id).unwrap();
+    }
+
+    return create_success_message("All finished tasks have been removed");
+}
+
+// Forward the reset request to the task handler
+// The handler then kills all children and clears the task queue
+fn reset(sender: &Sender<Message>) -> Message {
+    sender.send(Message::Reset).expect(SENDER_ERR);
+    return create_success_message("Everything is being reset right now.");
+}
+
+fn task_response_helper(
+    message: &'static str,
+    task_ids: Vec<i32>,
+    statuses: Vec<TaskStatus>,
+    state: &SharedState,
+) -> String {
+    // Get all matching/mismatching task_ids for all given ids and statuses
+    let (matching, mismatching) = {
+        let mut state = state.lock().unwrap();
+        state.tasks_in_statuses(Some(task_ids), statuses)
+    };
+
+    compile_task_response(message, matching, mismatching)
+}
+
 // Send some user defined input to a process
 // The message will be forwarded to the task handler.
 // In here we only do some error handling.
-fn send(message: SendMessage, sender: Sender<Message>, state: SharedState) -> Message {
+fn send(message: SendMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
     // Check whether the task exists and is running, abort if that's not the case
     {
         let state = state.lock().unwrap();
@@ -225,40 +262,50 @@ fn send(message: SendMessage, sender: Sender<Message>, state: SharedState) -> Me
     return create_success_message("Message is being send to the process.");
 }
 
-/// Remove all failed or done tasks from the state
-fn clean(state: SharedState) -> Message {
+
+// If a user wants to edit a message, we need to send him the current command
+// and lock the task to prevent execution, before the user has finished editing the command
+fn edit_request(message: EditRequestMessage, state: &SharedState) -> Message {
+    // Check whether the task exists and is queued/stashed, abort if that's not the case
     let mut state = state.lock().unwrap();
-    let statuses = vec![TaskStatus::Done, TaskStatus::Failed];
-    let (matching, _) = state.tasks_in_statuses(None, statuses);
+    match state.tasks.get_mut(&message.task_id) {
+        Some(task) => {
+            if !task.is_queued() {
+                return create_failure_message("You can only send input to a queued/stashed task");
+            }
+            task.prev_status = task.status.clone();
+            task.status = TaskStatus::Locked;
 
-    for task_id in &matching {
-        let _ = state.tasks.remove(task_id).unwrap();
+            let message = EditResponseMessage{
+                task_id: task.id,
+                command: task.command.clone(),
+            };
+            return Message::EditResponse(message);
+        }
+        None => return create_failure_message("No task with this id."),
     }
-
-    return create_success_message("All finished tasks have been removed");
 }
 
-// Forward the reset request to the task handler
-// The handler then kills all children and clears the task queue
-fn reset(sender: Sender<Message>) -> Message {
-    sender.send(Message::Reset).expect(SENDER_ERR);
-    return create_success_message("Everything is being reset right now.");
+
+// Handle the actual updated command
+fn edit(message: EditMessage, state: &SharedState) -> Message {
+    // Check whether the task exists and is queued/stashed, abort if that's not the case
+    let mut state = state.lock().unwrap();
+    match state.tasks.get_mut(&message.task_id) {
+        Some(task) => {
+            if !(task.status == TaskStatus::Locked) {
+                return create_failure_message("Task is no longer locked.");
+            }
+
+            task.status = task.prev_status.clone();
+            task.command = message.command.clone();
+
+            return create_success_message("Command has been updated");
+        }
+        None => return create_failure_message(format!("Task to edit has gone away: {}", message.task_id)),
+    }
 }
 
-fn task_response_helper(
-    message: &'static str,
-    task_ids: Vec<i32>,
-    statuses: Vec<TaskStatus>,
-    state: SharedState,
-) -> String {
-    // Get all matching/mismatching task_ids for all given ids and statuses
-    let (matching, mismatching) = {
-        let mut state = state.lock().unwrap();
-        state.tasks_in_statuses(Some(task_ids), statuses)
-    };
-
-    compile_task_response(message, matching, mismatching)
-}
 
 /// Compile a response for instructions with multiple tasks ids
 /// A custom message will be combined with a text about all matching tasks

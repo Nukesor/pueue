@@ -45,32 +45,32 @@ pub async fn handle_incoming(
     sender: Sender<Message>,
     state: SharedState,
 ) -> Result<()> {
-    // Receive the header with the size and type of the message
-    let mut header = vec![0; 8];
-    socket.read(&mut header).await?;
+    loop {
+        // Receive the header with the size and type of the message
+        let mut header = vec![0; 8];
+        socket.read(&mut header).await?;
 
-    // Extract the instruction size from the header bytes
-    let mut header = Cursor::new(header);
-    let instruction_size = header.read_u64::<BigEndian>()? as usize;
-    let mut instruction_bytes = vec![0; instruction_size];
-    socket.read(&mut instruction_bytes).await?;
+        // Extract the instruction size from the header bytes
+        let mut header = Cursor::new(header);
+        let instruction_size = header.read_u64::<BigEndian>()? as usize;
+        let mut instruction_bytes = vec![0; instruction_size];
+        socket.read(&mut instruction_bytes).await?;
 
-    // Receive the message and deserialize it
-    let instruction = String::from_utf8(instruction_bytes)?;
-    info!("Received instruction: {}", instruction);
-    let message: Message = serde_json::from_str(&instruction)?;
+        // Receive the message and deserialize it
+        let instruction = String::from_utf8(instruction_bytes)?;
+        info!("Received instruction: {}", instruction);
+        let message: Message = serde_json::from_str(&instruction)?;
 
-    // Process the message
-    let response = handle_message(message, sender, state);
+        // Process the message
+        let response = handle_message(message, &sender, &state);
 
-    // Respond to the client
-    send_message(socket, response).await?;
-
-    Ok(())
+        // Respond to the client
+        send_message(&mut socket, response).await?;
+    }
 }
 
 /// Create the response future for this message.
-async fn send_message(mut socket: TcpStream, message: Message) -> Result<()> {
+async fn send_message(socket: &mut TcpStream, message: Message) -> Result<()> {
     let payload = serde_json::to_string(&message)?.into_bytes();
     let byte_size = payload.len() as u64;
 

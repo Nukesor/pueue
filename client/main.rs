@@ -6,6 +6,7 @@ use ::pueue::settings::Settings;
 
 pub mod cli;
 pub mod client;
+pub mod instructions;
 pub mod output;
 
 use crate::cli::{get_message_from_opt, Opt};

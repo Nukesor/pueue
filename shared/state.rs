@@ -45,11 +45,8 @@ impl State {
 
     pub fn get_next_task(&mut self) -> Option<i32> {
         for (id, task) in self.tasks.iter() {
-            match task.status {
-                TaskStatus::Queued => {
-                    return Some(*id);
-                }
-                _ => continue,
+            if task.status == TaskStatus::Queued {
+                return Some(*id);
             }
         }
         None
