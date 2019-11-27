@@ -10,12 +10,13 @@ pub fn handle_message(message: Message, sender: &Sender<Message>, state: &Shared
     match message {
         Message::Add(message) => add_task(message, sender, state),
         Message::Remove(message) => remove(message, state),
-        Message::Start(message) => start(message, sender, state),
-        Message::Restart(message) => restart(message, sender, state),
-
-        Message::Pause(message) => pause(message, sender, state),
+        Message::Switch(message) => switch(message, state),
         Message::Stash(message) => stash(message, state),
         Message::Enqueue(message) => enqueue(message, state),
+
+        Message::Start(message) => start(message, sender, state),
+        Message::Restart(message) => restart(message, sender, state),
+        Message::Pause(message) => pause(message, sender, state),
         Message::Kill(message) => kill(message, sender, state),
 
         Message::Send(message) => send(message, sender, state),
@@ -63,11 +64,76 @@ fn remove(message: RemoveMessage, state: &SharedState) -> Message {
     create_success_message(message)
 }
 
-/// Simply return the current state to the client
-fn get_status(state: &SharedState) -> Message {
-    let state = state.lock().unwrap();
-    Message::StatusResponse(state.clone())
+/// Switch the position of two tasks in the upcoming queue
+fn switch(message: SwitchMessage, state: &SharedState) -> Message {
+    let task_ids = vec![message.task_id_1, message.task_id_2];
+    let statuses = vec![TaskStatus::Queued, TaskStatus::Stashed];
+    let mut state = state.lock().unwrap();
+    let (_, mismatching) = state.tasks_in_statuses(Some(task_ids.clone().to_vec()), statuses);
+    if !mismatching.is_empty() {
+        return create_failure_message("Tasks have to be either queued or stashed.");
+    }
+
+    // Get the tasks. Expect them to be there, since we found no mismatch
+    let mut first_task = state.tasks.remove(&task_ids[0]).unwrap();
+    let mut second_task = state.tasks.remove(&task_ids[1]).unwrap();
+
+    // Switch task ids
+    let temp_id = first_task.id;
+    first_task.id = second_task.id;
+    second_task.id = temp_id;
+
+    // Put tasks back in again
+    state.tasks.insert(first_task.id, first_task);
+    state.tasks.insert(second_task.id, second_task);
+
+    create_success_message("Tasks have been switched")
 }
+
+
+/// Stash specific queued tasks.
+/// They won't be executed until enqueued again or explicitely started
+fn stash(message: StashMessage, state: &SharedState) -> Message {
+    let (matching, mismatching) = {
+        let mut state = state.lock().unwrap();
+        let (matching, mismatching) =
+            state.tasks_in_statuses(Some(message.task_ids), vec![TaskStatus::Queued]);
+
+        for task_id in &matching {
+            state.change_status(*task_id, TaskStatus::Stashed);
+        }
+
+        (matching, mismatching)
+    };
+
+    let message = "Tasks are stashed";
+    let response = compile_task_response(message, matching, mismatching);
+    return create_success_message(response);
+}
+
+/// Enqueue specific stashed tasks.
+/// They will be normally handled afterwards.
+fn enqueue(message: EnqueueMessage, state: &SharedState) -> Message {
+    let (matching, mismatching) = {
+        let mut state = state.lock().unwrap();
+        let (matching, mismatching) = state.tasks_in_statuses(
+            Some(message.task_ids),
+            vec![TaskStatus::Stashed, TaskStatus::Locked],
+        );
+
+        for task_id in &matching {
+            state.change_status(*task_id, TaskStatus::Queued);
+        }
+
+        (matching, mismatching)
+    };
+
+    let message = "Tasks are enqueued";
+    let response = compile_task_response(message, matching, mismatching);
+    return create_success_message(response);
+}
+
+
 
 /// Forward the start message to the task handler and respond to the client
 fn start(message: StartMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
@@ -143,48 +209,6 @@ fn pause(message: PauseMessage, sender: &Sender<Message>, state: &SharedState) -
     return create_success_message("Daemon and all tasks are being paused.");
 }
 
-/// Stash specific queued tasks.
-/// They won't be executed until enqueued again or explicitely started
-fn stash(message: StashMessage, state: &SharedState) -> Message {
-    let (matching, mismatching) = {
-        let mut state = state.lock().unwrap();
-        let (matching, mismatching) =
-            state.tasks_in_statuses(Some(message.task_ids), vec![TaskStatus::Queued]);
-
-        for task_id in &matching {
-            state.change_status(*task_id, TaskStatus::Stashed);
-        }
-
-        (matching, mismatching)
-    };
-
-    let message = "Tasks are stashed";
-    let response = compile_task_response(message, matching, mismatching);
-    return create_success_message(response);
-}
-
-/// Enqueue specific stashed tasks.
-/// They will be normally handled afterwards.
-fn enqueue(message: EnqueueMessage, state: &SharedState) -> Message {
-    let (matching, mismatching) = {
-        let mut state = state.lock().unwrap();
-        let (matching, mismatching) = state.tasks_in_statuses(
-            Some(message.task_ids),
-            vec![TaskStatus::Stashed, TaskStatus::Locked],
-        );
-
-        for task_id in &matching {
-            state.change_status(*task_id, TaskStatus::Queued);
-        }
-
-        (matching, mismatching)
-    };
-
-    let message = "Tasks are enqueued";
-    let response = compile_task_response(message, matching, mismatching);
-    return create_success_message(response);
-}
-
 /// Forward the kill message to the task handler and respond to the client
 fn kill(message: KillMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
     sender
@@ -202,41 +226,6 @@ fn kill(message: KillMessage, sender: &Sender<Message>, state: &SharedState) -> 
     }
 
     return create_success_message("All tasks are being killed.");
-}
-
-/// Remove all failed or done tasks from the state
-fn clean(state: &SharedState) -> Message {
-    let mut state = state.lock().unwrap();
-    let statuses = vec![TaskStatus::Done, TaskStatus::Failed];
-    let (matching, _) = state.tasks_in_statuses(None, statuses);
-
-    for task_id in &matching {
-        let _ = state.tasks.remove(task_id).unwrap();
-    }
-
-    return create_success_message("All finished tasks have been removed");
-}
-
-// Forward the reset request to the task handler
-// The handler then kills all children and clears the task queue
-fn reset(sender: &Sender<Message>) -> Message {
-    sender.send(Message::Reset).expect(SENDER_ERR);
-    return create_success_message("Everything is being reset right now.");
-}
-
-fn task_response_helper(
-    message: &'static str,
-    task_ids: Vec<i32>,
-    statuses: Vec<TaskStatus>,
-    state: &SharedState,
-) -> String {
-    // Get all matching/mismatching task_ids for all given ids and statuses
-    let (matching, mismatching) = {
-        let mut state = state.lock().unwrap();
-        state.tasks_in_statuses(Some(task_ids), statuses)
-    };
-
-    compile_task_response(message, matching, mismatching)
 }
 
 // Send some user defined input to a process
@@ -285,6 +274,7 @@ fn edit_request(message: EditRequestMessage, state: &SharedState) -> Message {
     }
 }
 
+
 // Handle the actual updated command
 fn edit(message: EditMessage, state: &SharedState) -> Message {
     // Check whether the task exists and is queued/stashed, abort if that's not the case
@@ -307,6 +297,48 @@ fn edit(message: EditMessage, state: &SharedState) -> Message {
             ))
         }
     }
+}
+
+
+/// Remove all failed or done tasks from the state
+fn clean(state: &SharedState) -> Message {
+    let mut state = state.lock().unwrap();
+    let statuses = vec![TaskStatus::Done, TaskStatus::Failed];
+    let (matching, _) = state.tasks_in_statuses(None, statuses);
+
+    for task_id in &matching {
+        let _ = state.tasks.remove(task_id).unwrap();
+    }
+
+    return create_success_message("All finished tasks have been removed");
+}
+
+// Forward the reset request to the task handler
+// The handler then kills all children and clears the task queue
+fn reset(sender: &Sender<Message>) -> Message {
+    sender.send(Message::Reset).expect(SENDER_ERR);
+    return create_success_message("Everything is being reset right now.");
+}
+
+/// Simply return the current state to the client
+fn get_status(state: &SharedState) -> Message {
+    let state = state.lock().unwrap();
+    Message::StatusResponse(state.clone())
+}
+
+fn task_response_helper(
+    message: &'static str,
+    task_ids: Vec<i32>,
+    statuses: Vec<TaskStatus>,
+    state: &SharedState,
+) -> String {
+    // Get all matching/mismatching task_ids for all given ids and statuses
+    let (matching, mismatching) = {
+        let mut state = state.lock().unwrap();
+        state.tasks_in_statuses(Some(task_ids), statuses)
+    };
+
+    compile_task_response(message, matching, mismatching)
 }
 
 /// Compile a response for instructions with multiple tasks ids
