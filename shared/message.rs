@@ -44,8 +44,8 @@ pub struct RemoveMessage {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct SwitchMessage {
-    pub command: String,
-    pub path: String,
+    pub task_id_1: i32,
+    pub task_id_2: i32,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

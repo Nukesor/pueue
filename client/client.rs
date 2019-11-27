@@ -2,8 +2,8 @@ use ::anyhow::Result;
 use ::byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use ::log::error;
 use ::std::io::Cursor;
-use ::tokio::net::TcpStream;
-use ::tokio::prelude::*;
+use ::async_std::net::TcpStream;
+use ::async_std::prelude::*;
 
 use crate::cli::{Opt, SubCommand};
 use crate::instructions::*;

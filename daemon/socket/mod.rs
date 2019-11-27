@@ -5,8 +5,9 @@ use ::byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use ::log::info;
 use ::std::io::Cursor;
 use ::std::sync::mpsc::Sender;
-use ::tokio::net::{TcpListener, TcpStream};
-use ::tokio::prelude::*;
+use ::async_std::net::{TcpListener, TcpStream};
+use ::async_std::task;
+use ::async_std::prelude::*;
 
 use crate::socket::instructions::handle_message;
 use ::pueue::message::*;
@@ -24,14 +25,14 @@ pub async fn accept_incoming(
         "{}:{}",
         settings.client.daemon_address, settings.client.daemon_port
     );
-    let mut listener = TcpListener::bind(address).await?;
+    let listener = TcpListener::bind(address).await?;
 
     loop {
         // Poll if we have a new incoming connection.
         let (socket, _) = listener.accept().await?;
         let sender_clone = sender.clone();
         let state_clone = state.clone();
-        tokio::spawn(async move {
+        task::spawn(async move {
             let _result = handle_incoming(socket, sender_clone, state_clone).await;
         });
     }

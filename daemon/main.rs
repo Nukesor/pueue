@@ -12,7 +12,7 @@ use ::pueue::state::State;
 pub mod socket;
 pub mod task_handler;
 
-#[tokio::main]
+#[async_std::main]
 async fn main() -> Result<()> {
     let _ = SimpleLogger::init(LevelFilter::Debug, Config::default());
     let settings = Settings::new()?;

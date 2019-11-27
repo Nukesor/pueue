@@ -24,6 +24,13 @@ pub enum SubCommand {
         /// The task ids to be removed
         task_ids: Vec<i32>,
     },
+    /// Switches the queue position two commands. Only works on queued or stashed commands
+    Switch {
+        /// The first task id
+        task_id_1: i32,
+        /// The second task id
+        task_id_2: i32,
+    },
     /// Stash some tasks. These tasks won't be automatically started.
     /// Afterwards either `enqueue` them, to be normally handled or forcefully `start` them.
     Stash {
@@ -158,6 +165,13 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
                 task_ids: task_ids.clone(),
             };
             Ok(Message::Stash(message))
+        }
+        SubCommand::Switch { task_id_1, task_id_2 } => {
+            let message = SwitchMessage {
+                task_id_1: *task_id_1,
+                task_id_2: *task_id_2,
+            };
+            Ok(Message::Switch(message))
         }
         SubCommand::Enqueue { task_ids } => {
             let message = EnqueueMessage {

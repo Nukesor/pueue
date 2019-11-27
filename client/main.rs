@@ -12,7 +12,7 @@ pub mod output;
 use crate::cli::{get_message_from_opt, Opt};
 use crate::client::Client;
 
-#[tokio::main]
+#[async_std::main]
 async fn main() -> Result<()> {
     let settings = Settings::new()?;
     let save_result = settings.save();
