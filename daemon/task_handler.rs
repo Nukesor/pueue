@@ -23,7 +23,7 @@ pub struct TaskHandler {
     settings: Settings,
     receiver: Receiver<Message>,
     pub children: BTreeMap<i32, Child>,
-    is_running: bool,
+    running: bool,
     reset: bool,
 }
 
@@ -34,7 +34,7 @@ impl TaskHandler {
             settings: settings,
             receiver: receiver,
             children: BTreeMap::new(),
-            is_running: true,
+            running: true,
             reset: false,
         }
     }
@@ -63,7 +63,7 @@ impl TaskHandler {
         loop {
             self.receive_commands();
             self.process_finished();
-            if self.is_running && !self.reset {
+            if self.running && !self.reset {
                 let _res = self.check_new();
             }
         }
@@ -285,7 +285,12 @@ impl TaskHandler {
 
         // Start the daemon and all paused tasks
         info!("Resuming daemon (start)");
-        self.is_running = true;
+        {
+            let mut state = self.state.lock().unwrap();
+            state.running = true;
+            self.running = true;
+        }
+
         let keys: Vec<i32> = self.children.keys().cloned().collect();
         for id in keys {
             self.continue_task(id);
@@ -322,7 +327,11 @@ impl TaskHandler {
 
         // Pause the daemon and all tasks
         info!("Pausing daemon");
-        self.is_running = false;
+        {
+            let mut state = self.state.lock().unwrap();
+            state.running = false;
+            self.running = false;
+        }
         let keys: Vec<i32> = self.children.keys().cloned().collect();
         if !message.wait {
             for id in keys {

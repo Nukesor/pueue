@@ -11,6 +11,7 @@ pub type SharedState = Arc<Mutex<State>>;
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct State {
     max_id: i32,
+    pub running: bool,
     pub tasks: BTreeMap<i32, Task>,
 }
 
@@ -18,6 +19,7 @@ impl State {
     pub fn new() -> State {
         return State {
             max_id: 0,
+            running: true,
             tasks: BTreeMap::new(),
         };
     }
