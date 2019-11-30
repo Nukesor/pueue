@@ -25,6 +25,17 @@ pub fn print_state(message: Message) {
 
         return;
     }
+    let mut daemon_status = String::from("Daemon status: ");
+    if state.running {
+        daemon_status.push_str(&format!("{}", t_color::Fg(t_color::Green)));
+        daemon_status.push_str("running");
+    } else {
+        daemon_status.push_str(&format!("{}", t_color::Fg(t_color::Yellow)));
+        daemon_status.push_str("paused");
+    }
+    daemon_status.push_str(&format!("{}", style::Reset));
+
+    println!("{}", daemon_status);
 
     let mut table = Table::new();
     table.set_format(*format::consts::FORMAT_NO_COLSEP);

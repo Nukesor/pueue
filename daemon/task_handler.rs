@@ -29,12 +29,16 @@ pub struct TaskHandler {
 
 impl TaskHandler {
     pub fn new(settings: Settings, state: SharedState, receiver: Receiver<Message>) -> Self {
+        let running = {
+            let state = state.lock().unwrap();
+            state.running
+        };
         TaskHandler {
             state: state,
             settings: settings,
             receiver: receiver,
             children: BTreeMap::new(),
-            running: true,
+            running: running,
             reset: false,
         }
     }
@@ -178,6 +182,8 @@ impl TaskHandler {
 
             task.exit_code = Some(exit_code);
             task.end = Some(Local::now());
+
+            state.save()
         }
 
         for task_id in errored.iter() {
@@ -262,7 +268,7 @@ impl TaskHandler {
     /// 1. Either start the daemon and all tasks.
     /// 2. Or force the start of specific tasks.
     fn start(&mut self, message: StartMessage) {
-        // Only pause specific tasks
+        // Only start specific tasks
         if let Some(task_ids) = message.task_ids {
             for id in task_ids {
                 // Continue all children that are simply paused
@@ -284,17 +290,18 @@ impl TaskHandler {
         }
 
         // Start the daemon and all paused tasks
+        let keys: Vec<i32> = self.children.keys().cloned().collect();
+        for id in keys {
+            self.continue_task(id);
+        }
         info!("Resuming daemon (start)");
         {
             let mut state = self.state.lock().unwrap();
             state.running = true;
             self.running = true;
+            state.save();
         }
 
-        let keys: Vec<i32> = self.children.keys().cloned().collect();
-        for id in keys {
-            self.continue_task(id);
-        }
     }
 
     /// Send a start signal to a paused task to continue execution
@@ -326,17 +333,18 @@ impl TaskHandler {
         }
 
         // Pause the daemon and all tasks
-        info!("Pausing daemon");
-        {
-            let mut state = self.state.lock().unwrap();
-            state.running = false;
-            self.running = false;
-        }
         let keys: Vec<i32> = self.children.keys().cloned().collect();
         if !message.wait {
             for id in keys {
                 self.pause_task(id);
             }
+        }
+        info!("Pausing daemon");
+        {
+            let mut state = self.state.lock().unwrap();
+            state.running = false;
+            self.running = false;
+            state.save();
         }
     }
 

@@ -1,24 +1,30 @@
-use ::chrono::prelude::*;
-use ::serde_derive::{Deserialize, Serialize};
 use ::std::collections::BTreeMap;
 use ::std::sync::{Arc, Mutex};
+use ::std::fs;
+use ::std::path::Path;
+use ::chrono::prelude::*;
+use ::serde_derive::{Deserialize, Serialize};
 use ::strum::IntoEnumIterator;
+use ::log::{info, error};
 
 use crate::task::{Task, TaskStatus};
+use crate::settings::Settings;
 
 pub type SharedState = Arc<Mutex<State>>;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct State {
     max_id: i32,
+    settings: Settings,
     pub running: bool,
     pub tasks: BTreeMap<i32, Task>,
 }
 
 impl State {
-    pub fn new() -> State {
+    pub fn new(settings: &Settings) -> State {
         return State {
             max_id: 0,
+            settings: settings.clone(),
             running: true,
             tasks: BTreeMap::new(),
         };
@@ -28,6 +34,7 @@ impl State {
         task.id = self.max_id;
         self.tasks.insert(self.max_id, task);
         self.max_id += 1;
+        self.save();
         self.max_id - 1
     }
 
@@ -62,6 +69,7 @@ impl State {
                 }
             }
             task.status = new_status;
+            self.save();
         };
     }
 
@@ -138,5 +146,72 @@ impl State {
     pub fn reset(&mut self) {
         self.max_id = 0;
         self.tasks = BTreeMap::new();
+        self.save();
     }
+
+    /// Save the current state to disk.
+    /// We do this to restore in case of a crash
+    pub fn save(&mut self) {
+        let serialized = serde_json::to_string(&self);
+        if let Err(error) = serialized {
+            error!("Failed to serialize state: {:?}", error);
+            return;
+        }
+
+        let serialized = serialized.unwrap();
+
+        let path = Path::new(&self.settings.daemon.log_directory);
+        let temp = path.join("state.json.partial");
+        let real = path.join("state.json");
+
+        // Write to temporary log file first, to prevent loss due to crashes
+        if let Err(error) = fs::write(&temp, serialized) {
+            error!("Failed to write log to directory. File permissions? Error: {:?}", error);
+            return;
+        }
+
+        // Overwrite the original with the temp file, if everything went fine
+        if let Err(error) = fs::rename(&temp, real) {
+            error!("Failed to overwrite old log file. File permissions? Error: {:?}", error);
+            return
+        }
+    }
+
+
+    /// Restore the last state from a previous session
+    /// The state is stored as json in the log directory
+    pub fn restore(&mut self) {
+        let path = Path::new(&self.settings.daemon.log_directory).join("state.json");
+
+        // Ignore if the file doesn't exist. It doesn't have to.
+        if !path.exists() {
+            info!("Couldn't find state from previous session at location: {:?}", path);
+            return;
+        }
+
+        // Try to load the file
+        let data = fs::read_to_string(&path);
+        if let Err(error) = data {
+            error!("Failed to read previous state log: {:?}", error);
+            return;
+        }
+        let data = data.unwrap();
+
+        // Try to deserialize it into a state
+        let deserialized: Result<State, serde_json::error::Error> = serde_json::from_str(&data);
+        if let Err(error) = deserialized {
+            error!("Failed to deserialize previous state log: {:?}", error);
+            return;
+        }
+        let state = deserialized.unwrap();
+
+        // Actually restore it from the deserialized json
+        for (task_id, task) in state.tasks.iter() {
+            self.tasks.insert(*task_id, task.clone());
+        }
+
+        self.running = state.running;
+        self.max_id = state.max_id;
+    }
+
 }
