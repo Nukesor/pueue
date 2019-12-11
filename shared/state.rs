@@ -1,7 +1,7 @@
 use ::std::collections::BTreeMap;
 use ::std::sync::{Arc, Mutex};
 use ::std::fs;
-use ::std::path::Path;
+use ::std::path::{Path, PathBuf};
 use ::chrono::prelude::*;
 use ::serde_derive::{Deserialize, Serialize};
 use ::strum::IntoEnumIterator;
@@ -144,6 +144,7 @@ impl State {
     }
 
     pub fn clean(&mut self) {
+        self.backup();
         let statuses = vec![TaskStatus::Done, TaskStatus::Failed];
         let (matching, _) = self.tasks_in_statuses(None, statuses);
 
@@ -155,6 +156,7 @@ impl State {
     }
 
     pub fn reset(&mut self) {
+        self.backup();
         self.max_id = 0;
         self.tasks = BTreeMap::new();
         self.save();
@@ -163,6 +165,17 @@ impl State {
     /// Save the current state to disk.
     /// We do this to restore in case of a crash
     pub fn save(&mut self) {
+        self.save_to_file(false);
+    }
+
+    /// Save the current current state in a file with a timestamp
+    /// At the same time remove old state logs from the log directory
+    /// This function is called, when large changes to the state are applied, e.g. clean/reset
+    pub fn backup(&mut self) {
+        self.save_to_file(true);
+    }
+
+    pub fn save_to_file(&mut self, log: bool) {
         let serialized = serde_json::to_string(&self);
         if let Err(error) = serialized {
             error!("Failed to serialize state: {:?}", error);
@@ -171,9 +184,17 @@ impl State {
 
         let serialized = serialized.unwrap();
 
-        let path = Path::new(&self.settings.daemon.log_directory);
-        let temp = path.join("state.json.partial");
-        let real = path.join("state.json");
+        let path = Path::new(&self.settings.daemon.pueue_directory);
+        let temp: PathBuf;
+        let real: PathBuf;
+        if log {
+            temp = path.join(format!("backup.json.partial"));
+            real = path.join(format!("state.json", ));
+        } else {
+            temp = path.join("state.json.partial");
+            real = path.join("state.json");
+        }
+
 
         // Write to temporary log file first, to prevent loss due to crashes
         if let Err(error) = fs::write(&temp, serialized) {
@@ -192,7 +213,7 @@ impl State {
     /// Restore the last state from a previous session
     /// The state is stored as json in the log directory
     pub fn restore(&mut self) {
-        let path = Path::new(&self.settings.daemon.log_directory).join("state.json");
+        let path = Path::new(&self.settings.daemon.pueue_directory).join("state.json");
 
         // Ignore if the file doesn't exist. It doesn't have to.
         if !path.exists() {

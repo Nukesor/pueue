@@ -110,7 +110,7 @@ impl TaskHandler {
 
         // Try to get the log files to which the output of the process
         // Will be written. Error if this doesn't work!
-        let (stdout_log, stderr_log) = match create_log_file_handles(task_id) {
+        let (stdout_log, stderr_log) = match create_log_file_handles(task_id, &self.settings) {
             Ok((out, err)) => (out, err),
             Err(err) => {
                 error!("Failed to create child log files: {:?}", err);
@@ -134,7 +134,7 @@ impl TaskHandler {
             Err(err) => {
                 let error = format!("Failed to spawn child {} with err: {:?}", task_id, err);
                 error!("{}", error);
-                clean_log_handles(task_id);
+                clean_log_handles(task_id, &self.settings);
                 state.change_status(task_id, TaskStatus::Failed);
                 state.add_error_message(task_id, error);
                 return;
@@ -160,7 +160,7 @@ impl TaskHandler {
             };
 
             // Get the stdout and stderr of this task from the output files
-            let (stdout, stderr) = match read_log_files(*task_id) {
+            let (stdout, stderr) = match read_log_files(*task_id, &self.settings) {
                 Ok((stdout, stderr)) => (Some(stdout), Some(stderr)),
                 Err(err) => {
                     error!(
@@ -172,7 +172,7 @@ impl TaskHandler {
             };
             // Now remove the output files. Don't do anything if this fails.
             // This is something the user must take care of.
-            clean_log_handles(*task_id);
+            clean_log_handles(*task_id, &self.settings);
 
             let mut state = self.state.lock().unwrap();
             let mut task = state.tasks.get_mut(&task_id).unwrap();

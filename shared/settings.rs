@@ -15,7 +15,7 @@ pub struct Client {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Daemon {
-    pub log_directory: String,
+    pub pueue_directory: String,
     pub default_worker_count: usize,
     pub address: String,
     pub port: u32,
@@ -45,7 +45,7 @@ impl Settings {
         let mut config = Config::new();
 
         // Set pueue config defaults
-        config.set_default("daemon.log_directory", default_log_path()?)?;
+        config.set_default("daemon.pueue_directory", default_pueue_path()?)?;
         config.set_default("daemon.address", "127.0.0.1")?;
         config.set_default("daemon.port", "6924")?;
         config.set_default("daemon.default_worker_count", 1)?;
@@ -107,7 +107,7 @@ fn get_config_paths() -> Result<Vec<PathBuf>> {
 }
 
 #[cfg(target_os = "linux")]
-fn default_log_path() -> Result<String> {
+fn default_pueue_path() -> Result<String> {
     let home_dir = dirs::home_dir().ok_or(anyhow!("Couldn't resolve home dir"))?;
     let path = home_dir.join(".local/share/pueue");
     path.to_str().map_or_else(
