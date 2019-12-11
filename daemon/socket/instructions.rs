@@ -303,12 +303,7 @@ fn edit(message: EditMessage, state: &SharedState) -> Message {
 /// Remove all failed or done tasks from the state
 fn clean(state: &SharedState) -> Message {
     let mut state = state.lock().unwrap();
-    let statuses = vec![TaskStatus::Done, TaskStatus::Failed];
-    let (matching, _) = state.tasks_in_statuses(None, statuses);
-
-    for task_id in &matching {
-        let _ = state.tasks.remove(task_id).unwrap();
-    }
+    state.clean();
 
     return create_success_message("All finished tasks have been removed");
 }

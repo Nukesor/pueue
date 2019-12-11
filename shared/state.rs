@@ -143,6 +143,17 @@ impl State {
         self.tasks_in_statuses(task_ids, valid_statuses)
     }
 
+    pub fn clean(&mut self) {
+        let statuses = vec![TaskStatus::Done, TaskStatus::Failed];
+        let (matching, _) = self.tasks_in_statuses(None, statuses);
+
+        for task_id in &matching {
+            let _ = self.tasks.remove(task_id).unwrap();
+        }
+
+        self.save();
+    }
+
     pub fn reset(&mut self) {
         self.max_id = 0;
         self.tasks = BTreeMap::new();
