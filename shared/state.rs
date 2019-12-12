@@ -248,10 +248,25 @@ impl State {
             error!("Failed to deserialize previous state log: {:?}", error);
             return;
         }
-        let state = deserialized.unwrap();
+        let mut state = deserialized.unwrap();
 
-        // Actually restore it from the deserialized json
-        for (task_id, task) in state.tasks.iter() {
+        // Restore the state from the file
+        // While restoring the tasks, check for any invalid/broken stati
+        for (task_id, task) in state.tasks.iter_mut() {
+            // Handle ungraceful shutdowns while executing tasks
+            if task.status == TaskStatus::Running || task.status == TaskStatus::Failed {
+                task.status = TaskStatus::Failed;
+            }
+            // Crash during editing of the task command
+            if task.status == TaskStatus::Locked {
+                task.status = TaskStatus::Stashed;
+            }
+            // If there are any queued tasks, pause the daemon
+            // This should prevent any unwanted execution of tasks due to a system crash
+            if task.status == TaskStatus::Queued {
+                state.running = false;
+            }
+
             self.tasks.insert(*task_id, task.clone());
         }
 
