@@ -10,6 +10,7 @@ pub enum TaskStatus {
     Paused,
     Done,
     Failed,
+    /// Used while the command of a task is edited (to prevent starting the task)
     Locked,
 }
 

@@ -39,12 +39,12 @@ impl Client {
         // Check if we can receive the response from the daemon
         let message = receive_answer(&mut stream).await?;
 
-        self.handle_message(message).await?;
+        self.handle_message(message, stream).await?;
 
         Ok(())
     }
 
-    async fn handle_message(&mut self, message: Message) -> Result<()> {
+    async fn handle_message(&mut self, message: Message, mut stream: TcpStream) -> Result<()> {
         // Handle some messages directly
         match message {
             Message::Success(text) => print_success(text),
@@ -57,8 +57,6 @@ impl Client {
                     SubCommand::Edit { task_id: _ } => {
                         // Create a new message with the edited command
                         let message = edit(message);
-                        // Open a new connection (One connection is only viable for a single request)
-                        let mut stream = TcpStream::connect(&self.daemon_address).await?;
                         send_message(&message, &mut stream).await?;
                         let message = receive_answer(&mut stream).await?;
                         match message {

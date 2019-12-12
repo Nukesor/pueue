@@ -260,7 +260,7 @@ fn edit_request(message: EditRequestMessage, state: &SharedState) -> Message {
     match state.tasks.get_mut(&message.task_id) {
         Some(task) => {
             if !task.is_queued() {
-                return create_failure_message("You can only send input to a queued/stashed task");
+                return create_failure_message("You can only edit a queued/stashed task");
             }
             task.prev_status = task.status.clone();
             task.status = TaskStatus::Locked;
