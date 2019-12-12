@@ -103,12 +103,22 @@ pub enum SubCommand {
     },
 
     /// Display the current status of all tasks
-    Status,
+    Status {
+        /// Print the current state as json to stdout
+        /// This doesn't include stdout/stderr of tasks.
+        /// Use `log -j` if you want everything
+        #[structopt(short, long)]
+        json: bool,
+    },
     /// Display the log output of finished tasks
     Log {
         /// Specify for which specific tasks you want to see the output
         #[structopt(short, long)]
         task_ids: Option<Vec<i32>>,
+        /// Print the current state as json
+        /// Includes EVERYTHING
+        #[structopt(short, long)]
+        json: bool,
     },
     /// Show the output of a currently running task
     /// This command allows following (like `tail -f`)
@@ -234,8 +244,8 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
             Ok(Message::EditRequest(message))
         }
 
-        SubCommand::Status => Ok(Message::SimpleStatus),
-        SubCommand::Log { task_ids: _ } => Ok(Message::Status),
+        SubCommand::Status{ json: _ } => Ok(Message::SimpleStatus),
+        SubCommand::Log { task_ids: _, json: _ } => Ok(Message::Status),
         SubCommand::Show { task_id, follow, err } => {
             let message = StreamRequestMessage {
                 task_id: *task_id,

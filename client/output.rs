@@ -15,11 +15,16 @@ pub fn print_error(message: String) {
 }
 
 /// Print the current state of the daemon in a nicely formatted table
-pub fn print_state(message: Message) {
+pub fn print_state(message: Message, json: bool) {
     let state = match message {
         Message::StatusResponse(state) => state,
         _ => return,
     };
+    if json {
+        println!("{}", serde_json::to_string(&state).unwrap());
+        return
+    }
+
     if state.tasks.len() == 0 {
         println!("Task list is empty. Add tasks with `pueue add -- [cmd]`");
 
@@ -119,11 +124,15 @@ pub fn print_state(message: Message) {
 /// Print the log ouput of finished tasks.
 /// Either print the logs of every task
 /// or only print the logs of the specified tasks.
-pub fn print_logs(message: Message, task_ids: Option<Vec<i32>>) {
+pub fn print_logs(message: Message, task_ids: Option<Vec<i32>>, json: bool) {
     let state = match message {
         Message::StatusResponse(state) => state,
         _ => return,
     };
+    if json {
+        println!("{}", serde_json::to_string(&state).unwrap());
+        return
+    }
 
     match task_ids {
         Some(task_ids) => {

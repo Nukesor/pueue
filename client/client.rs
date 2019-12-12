@@ -60,8 +60,8 @@ impl Client {
             _ => {
                 // Other messages will be handled depending on the original cli-command
                 match &self.opt.cmd {
-                    SubCommand::Status => print_state(message),
-                    SubCommand::Log { task_ids } => print_logs(message, task_ids.clone()),
+                    SubCommand::Status{ json } => print_state(message, *json),
+                    SubCommand::Log { task_ids, json } => print_logs(message, task_ids.clone(), *json),
                     SubCommand::Edit { task_id: _ } => {
                         // Create a new message with the edited command
                         let message = edit(message);
