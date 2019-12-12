@@ -28,8 +28,7 @@ async fn main() -> Result<()> {
 
     init_directories(&settings.daemon.pueue_directory);
 
-    let mut state = State::new(&settings);
-    state.restore();
+    let state = State::new(&settings);
     let state = Arc::new(Mutex::new(state));
 
     let (sender, receiver) = channel();

@@ -1,7 +1,9 @@
-use ::std::collections::BTreeMap;
 use ::std::sync::{Arc, Mutex};
 use ::std::fs;
+use ::std::collections::BTreeMap;
+use ::std::time::SystemTime;
 use ::std::path::{Path, PathBuf};
+use ::anyhow::Result;
 use ::chrono::prelude::*;
 use ::serde_derive::{Deserialize, Serialize};
 use ::strum::IntoEnumIterator;
@@ -22,12 +24,14 @@ pub struct State {
 
 impl State {
     pub fn new(settings: &Settings) -> State {
-        return State {
+        let mut state = State {
             max_id: 0,
             settings: settings.clone(),
             running: true,
             tasks: BTreeMap::new(),
         };
+        state.restore();
+        state
     }
 
     pub fn add_task(&mut self, mut task: Task) -> i32 {
@@ -143,6 +147,7 @@ impl State {
         self.tasks_in_statuses(task_ids, valid_statuses)
     }
 
+    /// Remove all finished tasks (clean up the task queue)
     pub fn clean(&mut self) {
         self.backup();
         let statuses = vec![TaskStatus::Done, TaskStatus::Failed];
@@ -162,8 +167,7 @@ impl State {
         self.save();
     }
 
-    /// Save the current state to disk.
-    /// We do this to restore in case of a crash
+    /// Convenience wrapper around save_to_file
     pub fn save(&mut self) {
         self.save_to_file(false);
     }
@@ -171,11 +175,17 @@ impl State {
     /// Save the current current state in a file with a timestamp
     /// At the same time remove old state logs from the log directory
     /// This function is called, when large changes to the state are applied, e.g. clean/reset
-    pub fn backup(&mut self) {
+    fn backup(&mut self) {
         self.save_to_file(true);
+        if let Err(error) = self.rotate() {
+            error!("Failed to rotate files: {:?}", error);
+        };
     }
 
-    pub fn save_to_file(&mut self, log: bool) {
+    /// Save the current state to disk.
+    /// We do this to restore in case of a crash
+    /// If log == true, the file will be saved with a time stamp
+    fn save_to_file(&mut self, log: bool) {
         let serialized = serde_json::to_string(&self);
         if let Err(error) = serialized {
             error!("Failed to serialize state: {:?}", error);
@@ -188,8 +198,11 @@ impl State {
         let temp: PathBuf;
         let real: PathBuf;
         if log {
-            temp = path.join(format!("backup.json.partial"));
-            real = path.join(format!("state.json", ));
+            let path = path.join("log");
+            let now: DateTime<Utc> = Utc::now();
+            let time = now.format("%Y-%m-%d_%H-%M-%S");
+            temp = path.join(format!("{}_backup.json.partial", time));
+            real = path.join(format!("{}_state.json", time));
         } else {
             temp = path.join("state.json.partial");
             real = path.join("state.json");
@@ -212,7 +225,7 @@ impl State {
 
     /// Restore the last state from a previous session
     /// The state is stored as json in the log directory
-    pub fn restore(&mut self) {
+    fn restore(&mut self) {
         let path = Path::new(&self.settings.daemon.pueue_directory).join("state.json");
 
         // Ignore if the file doesn't exist. It doesn't have to.
@@ -246,4 +259,33 @@ impl State {
         self.max_id = state.max_id;
     }
 
+    /// Remove old logs that aren't needed any longer
+    fn rotate(&mut self) -> Result<()> {
+        let path = Path::new(&self.settings.daemon.pueue_directory);
+        let path = path.join("log");
+
+        // Get all log files in the directory with their respective system time
+        let mut entries: BTreeMap<SystemTime, PathBuf> = BTreeMap::new();
+        let mut directory_list = fs::read_dir(path)?;
+        while let Some(Ok(entry)) = directory_list.next() {
+            let path = entry.path();
+
+            let metadata = entry.metadata()?;
+            let time = metadata.modified()?;
+            entries.insert(time, path);
+        }
+
+        // Remove all files aove the threshold
+        // Old files are removed first (implictly by the BTree order)
+        let mut number_entries = entries.len();
+        let mut iter = entries.iter();
+        while number_entries > 10 {
+            if let Some((_, path)) = iter.next() {
+                fs::remove_file(path)?;
+                number_entries -= 1;
+            }
+        }
+
+        Ok(())
+    }
 }
