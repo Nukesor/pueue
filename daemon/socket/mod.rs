@@ -1,7 +1,9 @@
 mod instructions;
+mod send;
+mod stream;
 
 use ::anyhow::Result;
-use ::byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
+use ::byteorder::{BigEndian, ReadBytesExt};
 use ::log::info;
 use ::std::io::Cursor;
 use ::std::sync::mpsc::Sender;
@@ -10,6 +12,8 @@ use ::async_std::task;
 use ::async_std::prelude::*;
 
 use crate::socket::instructions::handle_message;
+use crate::socket::send::send_message;
+use crate::socket::stream::handle_show;
 use ::pueue::message::*;
 use ::pueue::settings::Settings;
 use ::pueue::state::SharedState;
@@ -32,8 +36,9 @@ pub async fn accept_incoming(
         let (socket, _) = listener.accept().await?;
         let sender_clone = sender.clone();
         let state_clone = state.clone();
+        let settings_clone = settings.clone();
         task::spawn(async move {
-            let _result = handle_incoming(socket, sender_clone, state_clone).await;
+            let _result = handle_incoming(socket, sender_clone, state_clone, settings_clone).await;
         });
     }
 }
@@ -45,6 +50,7 @@ pub async fn handle_incoming(
     mut socket: TcpStream,
     sender: Sender<Message>,
     state: SharedState,
+    settings: Settings,
 ) -> Result<()> {
     loop {
         // Receive the header with the size and type of the message
@@ -62,24 +68,16 @@ pub async fn handle_incoming(
         let message: Message = serde_json::from_str(&instruction)?;
         info!("Received instruction: {}", instruction);
 
-        // Process the message
-        let response = handle_message(message, &sender, &state);
+        let response = if let Message::StreamRequest(message) = message {
+            // The client requested the output of a task
+            // Since we allow streaming, this needs to be handled seperately
+            handle_show(&settings, &mut socket, message).await?
+        } else {
+            // Process a normal message
+            handle_message(message, &sender, &state)
+        };
 
         // Respond to the client
         send_message(&mut socket, response).await?;
     }
-}
-
-/// Create the response future for this message.
-async fn send_message(socket: &mut TcpStream, message: Message) -> Result<()> {
-    let payload = serde_json::to_string(&message)?.into_bytes();
-    let byte_size = payload.len() as u64;
-
-    let mut header = vec![];
-    header.write_u64::<BigEndian>(byte_size).unwrap();
-
-    socket.write_all(&header).await?;
-    socket.write_all(&payload).await?;
-
-    Ok(())
 }

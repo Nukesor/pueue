@@ -110,6 +110,18 @@ pub enum SubCommand {
         #[structopt(short, long)]
         task_ids: Option<Vec<i32>>,
     },
+    /// Show the output of a currently running task
+    /// This command allows following (like `tail -f`)
+    Show {
+        /// The id of the task
+        task_id: i32,
+        /// Continuously print stdout (like `tail -f`)
+        #[structopt(short, long)]
+        follow: bool,
+        /// Like -f, but shows stderr instead of stdeout.
+        #[structopt(short, long)]
+        err: bool,
+    },
     /// Kill all running tasks, remove all tasks and reset max_id.
     Reset,
     /// Remove all finished tasks from the list (also clears logs).
@@ -224,6 +236,14 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
 
         SubCommand::Status => Ok(Message::SimpleStatus),
         SubCommand::Log { task_ids: _ } => Ok(Message::Status),
+        SubCommand::Show { task_id, follow, err } => {
+            let message = StreamRequestMessage {
+                task_id: *task_id,
+                follow: *follow,
+                err: *err,
+            };
+            Ok(Message::StreamRequest(message))
+        },
         SubCommand::Clean => Ok(Message::Clean),
         SubCommand::Reset => Ok(Message::Reset),
     }

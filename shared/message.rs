@@ -23,6 +23,9 @@ pub enum Message {
 
     SimpleStatus,
     Status,
+    Stream(String),
+    // The boolean decides, whether the stream should be continuous or a oneshot
+    StreamRequest(StreamRequestMessage),
     Reset,
     Clean,
 
@@ -103,6 +106,13 @@ pub struct EditRequestMessage {
 pub struct EditResponseMessage {
     pub task_id: i32,
     pub command: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct StreamRequestMessage {
+    pub task_id: i32,
+    pub follow: bool,
+    pub err: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

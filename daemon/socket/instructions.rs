@@ -288,6 +288,7 @@ fn edit(message: EditMessage, state: &SharedState) -> Message {
 
             task.status = task.prev_status.clone();
             task.command = message.command.clone();
+            state.save();
 
             return create_success_message("Command has been updated");
         }

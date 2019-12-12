@@ -26,7 +26,7 @@ path = "shared/lib.rs"
 
 [dependencies]
 anyhow = "1"
-async-std = { version = "1", features = ["attributes"] }
+async-std = { version = "1", features = ["attributes", "unstable"] }
 dirs = "2"
 users = "^0.9"
 chrono = { version = "^0.4", features = ["serde"] }

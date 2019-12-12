@@ -1,7 +1,7 @@
+use ::std::io::{self, Write, Cursor};
 use ::anyhow::Result;
 use ::byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use ::log::error;
-use ::std::io::Cursor;
 use ::async_std::net::TcpStream;
 use ::async_std::prelude::*;
 
@@ -37,18 +37,26 @@ impl Client {
         send_message(&self.message, &mut stream).await?;
 
         // Check if we can receive the response from the daemon
-        let message = receive_answer(&mut stream).await?;
+        let mut message = receive_answer(&mut stream).await?;
 
-        self.handle_message(message, stream).await?;
+        while self.handle_message(message, &mut stream).await? {
+            // Check if we can receive the response from the daemon
+            message = receive_answer(&mut stream).await?;
+        };
 
         Ok(())
     }
 
-    async fn handle_message(&mut self, message: Message, mut stream: TcpStream) -> Result<()> {
+    async fn handle_message(&mut self, message: Message, stream: &mut TcpStream) -> Result<bool> {
         // Handle some messages directly
         match message {
             Message::Success(text) => print_success(text),
             Message::Failure(text) => print_error(text),
+            Message::Stream(text) => {
+                print!("{}", text);
+                io::stdout().flush().unwrap();
+                return Ok(true);
+            }
             _ => {
                 // Other messages will be handled depending on the original cli-command
                 match &self.opt.cmd {
@@ -57,19 +65,15 @@ impl Client {
                     SubCommand::Edit { task_id: _ } => {
                         // Create a new message with the edited command
                         let message = edit(message);
-                        send_message(&message, &mut stream).await?;
-                        let message = receive_answer(&mut stream).await?;
-                        match message {
-                            Message::Success(text) => print_success(text),
-                            _ => error!("Got involid response {:?}", message),
-                        }
+                        send_message(&message, stream).await?;
+                        return Ok(true);
                     }
                     _ => error!("Received unhandled response message"),
                 }
             }
         };
 
-        Ok(())
+        Ok(false)
     }
 }
 
