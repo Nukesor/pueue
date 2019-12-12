@@ -222,7 +222,7 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
             Ok(Message::EditRequest(message))
         }
 
-        SubCommand::Status => Ok(Message::Status),
+        SubCommand::Status => Ok(Message::SimpleStatus),
         SubCommand::Log { task_ids: _ } => Ok(Message::Status),
         SubCommand::Clean => Ok(Message::Clean),
         SubCommand::Reset => Ok(Message::Reset),

@@ -25,6 +25,7 @@ pub fn handle_message(message: Message, sender: &Sender<Message>, state: &Shared
 
         Message::Clean => clean(state),
         Message::Reset => reset(sender),
+        Message::SimpleStatus => get_simple_status(state),
         Message::Status => get_status(state),
         _ => create_failure_message("Not implemented yet"),
     }
@@ -315,11 +316,22 @@ fn reset(sender: &Sender<Message>) -> Message {
     return create_success_message("Everything is being reset right now.");
 }
 
-/// Simply return the current state to the client
+/// Return the full current state to the client
 fn get_status(state: &SharedState) -> Message {
     let state = state.lock().unwrap();
     Message::StatusResponse(state.clone())
 }
+
+/// Return the current state without any stdou/stderr to the client
+fn get_simple_status(state: &SharedState) -> Message {
+    let mut state = {state.lock().unwrap().clone()};
+    for (_, task) in state.tasks.iter_mut() {
+        task.stdout = None;
+        task.stderr = None;
+    }
+    Message::StatusResponse(state)
+}
+
 
 fn task_response_helper(
     message: &'static str,

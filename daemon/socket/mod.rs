@@ -59,8 +59,8 @@ pub async fn handle_incoming(
 
         // Receive the message and deserialize it
         let instruction = String::from_utf8(instruction_bytes)?;
-        info!("Received instruction: {}", instruction);
         let message: Message = serde_json::from_str(&instruction)?;
+        info!("Received instruction: {}", instruction);
 
         // Process the message
         let response = handle_message(message, &sender, &state);

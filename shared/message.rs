@@ -21,6 +21,7 @@ pub enum Message {
     EditResponse(EditResponseMessage),
     Edit(EditMessage),
 
+    SimpleStatus,
     Status,
     Reset,
     Clean,
