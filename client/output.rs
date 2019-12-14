@@ -22,7 +22,7 @@ pub fn print_state(message: Message, json: bool) {
     };
     if json {
         println!("{}", serde_json::to_string(&state).unwrap());
-        return
+        return;
     }
 
     if state.tasks.len() == 0 {
@@ -131,7 +131,7 @@ pub fn print_logs(message: Message, task_ids: Option<Vec<i32>>, json: bool) {
     };
     if json {
         println!("{}", serde_json::to_string(&state).unwrap());
-        return
+        return;
     }
 
     match task_ids {

@@ -1,9 +1,9 @@
-use ::std::io::{self, Write, Cursor};
 use ::anyhow::Result;
-use ::byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
-use ::log::error;
 use ::async_std::net::TcpStream;
 use ::async_std::prelude::*;
+use ::byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
+use ::log::error;
+use ::std::io::{self, Cursor, Write};
 
 use crate::cli::{Opt, SubCommand};
 use crate::instructions::*;
@@ -56,7 +56,7 @@ impl Client {
         while self.handle_message(message, &mut stream).await? {
             // Check if we can receive the response from the daemon
             message = receive_answer(&mut stream).await?;
-        };
+        }
 
         Ok(())
     }
@@ -74,8 +74,10 @@ impl Client {
             _ => {
                 // Other messages will be handled depending on the original cli-command
                 match &self.opt.cmd {
-                    SubCommand::Status{ json } => print_state(message, *json),
-                    SubCommand::Log { task_ids, json } => print_logs(message, task_ids.clone(), *json),
+                    SubCommand::Status { json } => print_state(message, *json),
+                    SubCommand::Log { task_ids, json } => {
+                        print_logs(message, task_ids.clone(), *json)
+                    }
                     SubCommand::Edit { task_id: _ } => {
                         // Create a new message with the edited command
                         let message = edit(message);

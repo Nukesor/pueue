@@ -112,6 +112,6 @@ fn default_pueue_path() -> Result<String> {
     let path = home_dir.join(".local/share/pueue");
     path.to_str().map_or_else(
         || Err(anyhow!("Failed to parse log path (Weird characters?)")),
-        |v| Ok(v.to_string()))
+        |v| Ok(v.to_string()),
+    )
 }
-

@@ -301,7 +301,6 @@ impl TaskHandler {
             self.running = true;
             state.save();
         }
-
     }
 
     /// Send a start signal to a paused task to continue execution

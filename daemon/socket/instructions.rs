@@ -91,7 +91,6 @@ fn switch(message: SwitchMessage, state: &SharedState) -> Message {
     create_success_message("Tasks have been switched")
 }
 
-
 /// Stash specific queued tasks.
 /// They won't be executed until enqueued again or explicitely started
 fn stash(message: StashMessage, state: &SharedState) -> Message {
@@ -133,8 +132,6 @@ fn enqueue(message: EnqueueMessage, state: &SharedState) -> Message {
     let response = compile_task_response(message, matching, mismatching);
     return create_success_message(response);
 }
-
-
 
 /// Forward the start message to the task handler and respond to the client
 fn start(message: StartMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
@@ -275,7 +272,6 @@ fn edit_request(message: EditRequestMessage, state: &SharedState) -> Message {
     }
 }
 
-
 // Handle the actual updated command
 fn edit(message: EditMessage, state: &SharedState) -> Message {
     // Check whether the task exists and is queued/stashed, abort if that's not the case
@@ -301,7 +297,6 @@ fn edit(message: EditMessage, state: &SharedState) -> Message {
     }
 }
 
-
 /// Remove all failed or done tasks from the state
 fn clean(state: &SharedState) -> Message {
     let mut state = state.lock().unwrap();
@@ -325,14 +320,13 @@ fn get_status(state: &SharedState) -> Message {
 
 /// Return the current state without any stdou/stderr to the client
 fn get_simple_status(state: &SharedState) -> Message {
-    let mut state = {state.lock().unwrap().clone()};
+    let mut state = { state.lock().unwrap().clone() };
     for (_, task) in state.tasks.iter_mut() {
         task.stdout = None;
         task.stderr = None;
     }
     Message::StatusResponse(state)
 }
-
 
 fn task_response_helper(
     message: &'static str,

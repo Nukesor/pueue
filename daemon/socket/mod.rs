@@ -3,13 +3,13 @@ mod send;
 mod stream;
 
 use ::anyhow::Result;
+use ::async_std::net::{TcpListener, TcpStream};
+use ::async_std::prelude::*;
+use ::async_std::task;
 use ::byteorder::{BigEndian, ReadBytesExt};
 use ::log::info;
 use ::std::io::Cursor;
 use ::std::sync::mpsc::Sender;
-use ::async_std::net::{TcpListener, TcpStream};
-use ::async_std::task;
-use ::async_std::prelude::*;
 
 use crate::socket::instructions::handle_message;
 use crate::socket::send::send_message;

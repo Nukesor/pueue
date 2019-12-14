@@ -196,7 +196,10 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
             };
             Ok(Message::Stash(message))
         }
-        SubCommand::Switch { task_id_1, task_id_2 } => {
+        SubCommand::Switch {
+            task_id_1,
+            task_id_2,
+        } => {
             let message = SwitchMessage {
                 task_id_1: *task_id_1,
                 task_id_2: *task_id_2,
@@ -252,16 +255,23 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
             Ok(Message::EditRequest(message))
         }
 
-        SubCommand::Status{ json: _ } => Ok(Message::SimpleStatus),
-        SubCommand::Log { task_ids: _, json: _ } => Ok(Message::Status),
-        SubCommand::Show { task_id, follow, err } => {
+        SubCommand::Status { json: _ } => Ok(Message::SimpleStatus),
+        SubCommand::Log {
+            task_ids: _,
+            json: _,
+        } => Ok(Message::Status),
+        SubCommand::Show {
+            task_id,
+            follow,
+            err,
+        } => {
             let message = StreamRequestMessage {
                 task_id: *task_id,
                 follow: *follow,
                 err: *err,
             };
             Ok(Message::StreamRequest(message))
-        },
+        }
         SubCommand::Clean => Ok(Message::Clean),
         SubCommand::Reset => Ok(Message::Reset),
     }

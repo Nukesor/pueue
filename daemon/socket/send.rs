@@ -1,7 +1,7 @@
 use ::anyhow::Result;
-use ::byteorder::{BigEndian, WriteBytesExt};
 use ::async_std::net::TcpStream;
 use ::async_std::prelude::*;
+use ::byteorder::{BigEndian, WriteBytesExt};
 
 use ::pueue::message::*;
 

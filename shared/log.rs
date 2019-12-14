@@ -6,7 +6,6 @@ use ::std::path::{Path, PathBuf};
 
 use crate::settings::Settings;
 
-
 pub fn get_log_paths(task_id: i32, settings: &Settings) -> (PathBuf, PathBuf) {
     let pueue_dir = Path::new(&settings.daemon.pueue_directory).join("temp");
     let out_path = pueue_dir.join(format!("{}_stdout.log", task_id));

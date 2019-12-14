@@ -1,10 +1,10 @@
 use ::anyhow::{bail, Error, Result};
 use ::simplelog::{Config, LevelFilter, SimpleLogger};
+use ::std::fs::create_dir_all;
+use ::std::path::Path;
 use ::std::sync::mpsc::channel;
 use ::std::sync::{Arc, Mutex};
 use ::std::thread;
-use ::std::path::Path;
-use ::std::fs::create_dir_all;
 
 use crate::socket::accept_incoming;
 use crate::task_handler::TaskHandler;
@@ -43,26 +43,34 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-
 /// Initialize all directories needed for normal operation
 pub fn init_directories(path: &String) {
     let pueue_dir = Path::new(path);
     if !pueue_dir.exists() {
         if let Err(error) = create_dir_all(&pueue_dir) {
-            panic!("Failed to create main directory at {:?} error: {:?}", pueue_dir, error);
+            panic!(
+                "Failed to create main directory at {:?} error: {:?}",
+                pueue_dir, error
+            );
         }
     }
     let log_dir = pueue_dir.join("log");
     if !log_dir.exists() {
         if let Err(error) = create_dir_all(&log_dir) {
-            panic!("Failed to create log directory at {:?} error: {:?}", log_dir, error);
+            panic!(
+                "Failed to create log directory at {:?} error: {:?}",
+                log_dir, error
+            );
         }
     }
 
     let temp_dir = pueue_dir.join("temp");
     if !temp_dir.exists() {
         if let Err(error) = create_dir_all(&temp_dir) {
-            panic!("Failed to create temp directory at {:?} error: {:?}", temp_dir, error);
+            panic!(
+                "Failed to create temp directory at {:?} error: {:?}",
+                temp_dir, error
+            );
         }
     }
 }

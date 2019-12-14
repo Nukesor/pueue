@@ -1,16 +1,16 @@
-use ::std::sync::{Arc, Mutex};
-use ::std::fs;
-use ::std::collections::BTreeMap;
-use ::std::time::SystemTime;
-use ::std::path::{Path, PathBuf};
 use ::anyhow::Result;
 use ::chrono::prelude::*;
+use ::log::{error, info};
 use ::serde_derive::{Deserialize, Serialize};
+use ::std::collections::BTreeMap;
+use ::std::fs;
+use ::std::path::{Path, PathBuf};
+use ::std::sync::{Arc, Mutex};
+use ::std::time::SystemTime;
 use ::strum::IntoEnumIterator;
-use ::log::{info, error};
 
-use crate::task::{Task, TaskStatus};
 use crate::settings::Settings;
+use crate::task::{Task, TaskStatus};
 
 pub type SharedState = Arc<Mutex<State>>;
 
@@ -208,20 +208,24 @@ impl State {
             real = path.join("state.json");
         }
 
-
         // Write to temporary log file first, to prevent loss due to crashes
         if let Err(error) = fs::write(&temp, serialized) {
-            error!("Failed to write log to directory. File permissions? Error: {:?}", error);
+            error!(
+                "Failed to write log to directory. File permissions? Error: {:?}",
+                error
+            );
             return;
         }
 
         // Overwrite the original with the temp file, if everything went fine
         if let Err(error) = fs::rename(&temp, real) {
-            error!("Failed to overwrite old log file. File permissions? Error: {:?}", error);
-            return
+            error!(
+                "Failed to overwrite old log file. File permissions? Error: {:?}",
+                error
+            );
+            return;
         }
     }
-
 
     /// Restore the last state from a previous session
     /// The state is stored as json in the log directory
@@ -230,7 +234,10 @@ impl State {
 
         // Ignore if the file doesn't exist. It doesn't have to.
         if !path.exists() {
-            info!("Couldn't find state from previous session at location: {:?}", path);
+            info!(
+                "Couldn't find state from previous session at location: {:?}",
+                path
+            );
             return;
         }
 
