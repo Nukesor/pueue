@@ -18,7 +18,7 @@ pub struct Daemon {
     pub pueue_directory: String,
     pub default_worker_count: usize,
     pub address: String,
-    pub port: u32,
+    pub port: String,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

@@ -154,6 +154,14 @@ pub struct Opt {
     #[structopt(name = "config", parse(from_os_str))]
     pub config_path: Option<PathBuf>,
 
+    /// The url for the daemon. Overwrites the address in the config file
+    #[structopt(short, long)]
+    pub address: Option<String>,
+
+    /// The port for the daemon. Overwrites the port in the config file
+    #[structopt(short, long)]
+    pub port: Option<String>,
+
     #[structopt(subcommand)]
     pub cmd: SubCommand,
 }

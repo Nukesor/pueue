@@ -20,7 +20,21 @@ pub struct Client {
 
 impl Client {
     pub fn new(settings: Settings, message: Message, opt: Opt) -> Result<Self> {
-        let address = format!("{}:{}", settings.daemon.address, settings.daemon.port);
+        // Commandline argument overwrites the configuration files values for address
+        let address = if let Some(address) = opt.address.clone() {
+            address
+        } else {
+            settings.daemon.address
+        };
+
+        // Commandline argument overwrites the configuration files values for port
+        let port = if let Some(port) = opt.port.clone() {
+            port
+        } else {
+            settings.daemon.port
+        };
+
+        let address = format!("{}:{}", address, port);
 
         Ok(Client {
             opt: opt,
