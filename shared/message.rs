@@ -45,74 +45,74 @@ pub struct AddMessage {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RemoveMessage {
-    pub task_ids: Vec<i32>,
+    pub task_ids: Vec<usize>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct SwitchMessage {
-    pub task_id_1: i32,
-    pub task_id_2: i32,
+    pub task_id_1: usize,
+    pub task_id_2: usize,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct StashMessage {
-    pub task_ids: Vec<i32>,
+    pub task_ids: Vec<usize>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct EnqueueMessage {
-    pub task_ids: Vec<i32>,
+    pub task_ids: Vec<usize>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct StartMessage {
-    pub task_ids: Option<Vec<i32>>,
+    pub task_ids: Option<Vec<usize>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RestartMessage {
-    pub task_ids: Vec<i32>,
+    pub task_ids: Vec<usize>,
     pub start_immediately: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct PauseMessage {
     pub wait: bool,
-    pub task_ids: Option<Vec<i32>>,
+    pub task_ids: Option<Vec<usize>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct KillMessage {
     pub all: bool,
-    pub task_ids: Vec<i32>,
+    pub task_ids: Vec<usize>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct SendMessage {
-    pub task_id: i32,
+    pub task_id: usize,
     pub input: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct EditMessage {
-    pub task_id: i32,
+    pub task_id: usize,
     pub command: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct EditRequestMessage {
-    pub task_id: i32,
+    pub task_id: usize,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct EditResponseMessage {
-    pub task_id: i32,
+    pub task_id: usize,
     pub command: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct StreamRequestMessage {
-    pub task_id: i32,
+    pub task_id: usize,
     pub follow: bool,
     pub err: bool,
 }

@@ -22,7 +22,7 @@ pub struct TaskHandler {
     state: SharedState,
     settings: Settings,
     receiver: Receiver<Message>,
-    pub children: BTreeMap<i32, Child>,
+    pub children: BTreeMap<usize, Child>,
     running: bool,
     reset: bool,
 }
@@ -48,7 +48,7 @@ impl TaskHandler {
 /// This is needed to prevent detached processes
 impl Drop for TaskHandler {
     fn drop(&mut self) {
-        let ids: Vec<i32> = self.children.keys().cloned().collect();
+        let ids: Vec<usize> = self.children.keys().cloned().collect();
         for id in ids {
             let mut child = self.children.remove(&id).expect("Failed killing children");
             info!("Killing child {}", id);
@@ -90,7 +90,7 @@ impl TaskHandler {
 
     /// Return the next task that's queued for execution.
     /// None if no new task could be found.
-    fn get_next(&mut self) -> Result<Option<(i32, Task)>> {
+    fn get_next(&mut self) -> Result<Option<(usize, Task)>> {
         let mut state = self.state.lock().unwrap();
         match state.get_next_task() {
             Some(id) => {
@@ -103,7 +103,7 @@ impl TaskHandler {
 
     /// Actually spawn a new sub process
     /// The output of subprocesses is piped into a seperate file for easier access
-    fn start_process(&mut self, task_id: i32, task: &Task) {
+    fn start_process(&mut self, task_id: usize, task: &Task) {
         // Already get the mutex here to ensure that the task won't be manipulated
         // or removed while we are starting it over here.
         let mut state = self.state.lock().unwrap();
@@ -202,7 +202,7 @@ impl TaskHandler {
 
     /// Gather all finished tasks and sort them by finished and errored.
     /// Returns two lists of task ids, namely finished_task_ids and errored _task_ids
-    fn get_finished(&mut self) -> (Vec<i32>, Vec<i32>) {
+    fn get_finished(&mut self) -> (Vec<usize>, Vec<usize>) {
         let mut finished = Vec::new();
         let mut errored = Vec::new();
         for (id, child) in self.children.iter_mut() {
@@ -250,7 +250,7 @@ impl TaskHandler {
     }
 
     /// Send a signal to a unix process
-    fn send_signal(&mut self, id: i32, signal: Signal) -> Result<bool, nix::Error> {
+    fn send_signal(&mut self, id: usize, signal: Signal) -> Result<bool, nix::Error> {
         if let Some(child) = self.children.get(&id) {
             debug!("Sending signal {} to {}", signal, id);
             let pid = Pid::from_raw(child.id() as i32);
@@ -291,7 +291,7 @@ impl TaskHandler {
         }
 
         // Start the daemon and all paused tasks
-        let keys: Vec<i32> = self.children.keys().cloned().collect();
+        let keys: Vec<usize> = self.children.keys().cloned().collect();
         for id in keys {
             self.continue_task(id);
         }
@@ -305,7 +305,7 @@ impl TaskHandler {
     }
 
     /// Send a start signal to a paused task to continue execution
-    fn continue_task(&mut self, id: i32) {
+    fn continue_task(&mut self, id: usize) {
         if !self.children.contains_key(&id) {
             return;
         }
@@ -333,7 +333,7 @@ impl TaskHandler {
         }
 
         // Pause the daemon and all tasks
-        let keys: Vec<i32> = self.children.keys().cloned().collect();
+        let keys: Vec<usize> = self.children.keys().cloned().collect();
         if !message.wait {
             for id in keys {
                 self.pause_task(id);
@@ -350,7 +350,7 @@ impl TaskHandler {
 
     /// Pause a specific task.
     /// Send a signal to the process to actually pause the OS process
-    fn pause_task(&mut self, id: i32) {
+    fn pause_task(&mut self, id: usize) {
         if !self.children.contains_key(&id) {
             return;
         }
@@ -379,7 +379,7 @@ impl TaskHandler {
 
         // Pause the daemon and all tasks
         info!("Killing all spawned children");
-        let keys: Vec<i32> = self.children.keys().cloned().collect();
+        let keys: Vec<usize> = self.children.keys().cloned().collect();
         for id in keys {
             self.kill_task(id);
         }
@@ -387,7 +387,7 @@ impl TaskHandler {
 
     /// Kill a specific task and handle it accordingly
     /// Triggered on `reset` and `kill`.
-    fn kill_task(&mut self, task_id: i32) {
+    fn kill_task(&mut self, task_id: usize) {
         if let Some(child) = self.children.get_mut(&task_id) {
             match child.kill() {
                 Err(_) => debug!("Task {} has already finished by itself", task_id),

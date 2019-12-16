@@ -16,10 +16,10 @@ pub type SharedState = Arc<Mutex<State>>;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct State {
-    max_id: i32,
+    max_id: usize,
     settings: Settings,
     pub running: bool,
-    pub tasks: BTreeMap<i32, Task>,
+    pub tasks: BTreeMap<usize, Task>,
 }
 
 impl State {
@@ -34,7 +34,7 @@ impl State {
         state
     }
 
-    pub fn add_task(&mut self, mut task: Task) -> i32 {
+    pub fn add_task(&mut self, mut task: Task) -> usize {
         task.id = self.max_id;
         self.tasks.insert(self.max_id, task);
         self.max_id += 1;
@@ -42,11 +42,11 @@ impl State {
         self.max_id - 1
     }
 
-    pub fn remove_task(&mut self, id: i32) -> Option<Task> {
+    pub fn remove_task(&mut self, id: usize) -> Option<Task> {
         self.tasks.remove(&id)
     }
 
-    pub fn get_task_clone(&mut self, id: i32) -> Option<Task> {
+    pub fn get_task_clone(&mut self, id: usize) -> Option<Task> {
         let task = self.tasks.remove(&id);
         let clone = task.clone();
         if let Some(task) = task {
@@ -56,7 +56,7 @@ impl State {
         return clone;
     }
 
-    pub fn get_next_task(&mut self) -> Option<i32> {
+    pub fn get_next_task(&mut self) -> Option<usize> {
         for (id, task) in self.tasks.iter() {
             if task.status == TaskStatus::Queued {
                 return Some(*id);
@@ -65,7 +65,7 @@ impl State {
         None
     }
 
-    pub fn change_status(&mut self, id: i32, new_status: TaskStatus) {
+    pub fn change_status(&mut self, id: usize, new_status: TaskStatus) {
         if let Some(ref mut task) = self.tasks.get_mut(&id) {
             if new_status == TaskStatus::Running {
                 if TaskStatus::Queued == task.status || TaskStatus::Stashed == task.status {
@@ -77,13 +77,13 @@ impl State {
         };
     }
 
-    pub fn add_error_message(&mut self, id: i32, message: String) {
+    pub fn add_error_message(&mut self, id: usize, message: String) {
         if let Some(ref mut task) = self.tasks.get_mut(&id) {
             task.stderr = Some(message);
         }
     }
 
-    pub fn get_task_status(&mut self, id: i32) -> Option<TaskStatus> {
+    pub fn get_task_status(&mut self, id: usize) -> Option<TaskStatus> {
         if let Some(ref task) = self.tasks.get(&id) {
             return Some(task.status.clone());
         };
@@ -97,9 +97,9 @@ impl State {
     /// Additionally, if no task_ids are specified, return ids of all tasks
     pub fn tasks_in_statuses(
         &mut self,
-        task_ids: Option<Vec<i32>>,
+        task_ids: Option<Vec<usize>>,
         statuses: Vec<TaskStatus>,
-    ) -> (Vec<i32>, Vec<i32>) {
+    ) -> (Vec<usize>, Vec<usize>) {
         let task_ids = match task_ids {
             Some(ids) => ids,
             None => self.tasks.keys().cloned().collect(),
@@ -132,9 +132,9 @@ impl State {
     /// The same as tasks_in_statuses, but with inverted statuses
     pub fn tasks_not_in_statuses(
         &mut self,
-        task_ids: Option<Vec<i32>>,
+        task_ids: Option<Vec<usize>>,
         excluded_statuses: Vec<TaskStatus>,
-    ) -> (Vec<i32>, Vec<i32>) {
+    ) -> (Vec<usize>, Vec<usize>) {
         let mut valid_statuses = Vec::new();
         // Create a list of all valid statuses
         // (statuses that aren't the exl

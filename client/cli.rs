@@ -22,25 +22,25 @@ pub enum SubCommand {
     /// You cannot remove running or paused tasks.
     Remove {
         /// The task ids to be removed
-        task_ids: Vec<i32>,
+        task_ids: Vec<usize>,
     },
     /// Switches the queue position two commands. Only works on queued or stashed commands
     Switch {
         /// The first task id
-        task_id_1: i32,
+        task_id_1: usize,
         /// The second task id
-        task_id_2: i32,
+        task_id_2: usize,
     },
     /// Stash some tasks. These tasks won't be automatically started.
     /// Afterwards either `enqueue` them, to be normally handled or forcefully `start` them.
     Stash {
         /// The id(s) of the tasks you want to stash
-        task_ids: Vec<i32>,
+        task_ids: Vec<usize>,
     },
     /// Enqueue stashed tasks. They'll be handled normally afterwards.
     Enqueue {
         /// The id(s) of the tasks you want to enqueue
-        task_ids: Vec<i32>,
+        task_ids: Vec<usize>,
     },
 
     /// Wake the daemon from its paused state, including continuing all paused tasks.
@@ -50,12 +50,12 @@ pub enum SubCommand {
         /// Doesn't affect the daemon or any other tasks.
         /// Works on a paused deamon.
         #[structopt(short, long)]
-        task_ids: Option<Vec<i32>>,
+        task_ids: Option<Vec<usize>>,
     },
     Restart {
         /// Restart the
         #[structopt()]
-        task_ids: Vec<i32>,
+        task_ids: Vec<usize>,
 
         /// Start the task(s) immediately
         #[structopt(name = "immediate", short, long)]
@@ -72,7 +72,7 @@ pub enum SubCommand {
         /// Enforce starting these tasks.
         /// Doesn't affect the daemon or any other tasks.
         #[structopt(short, long, group("pause"))]
-        task_ids: Option<Vec<i32>>,
+        task_ids: Option<Vec<usize>>,
     },
     /// Pause the daemon and all running tasks.
     /// A paused daemon won't start any new tasks.
@@ -85,13 +85,13 @@ pub enum SubCommand {
         /// Enforce starting these tasks.
         /// Doesn't affect the daemon or any other tasks.
         #[structopt(group("kill"), required_unless("all"))]
-        task_ids: Vec<i32>,
+        task_ids: Vec<usize>,
     },
 
     /// Send something to a task. For example, useful for sending confirmations ('y\n')
     Send {
         /// The id of the task
-        task_id: i32,
+        task_id: usize,
 
         /// The input that should be sent to the process
         input: String,
@@ -99,7 +99,7 @@ pub enum SubCommand {
     /// Edit the command of a stashed or queued task.
     Edit {
         /// The id of the task
-        task_id: i32,
+        task_id: usize,
     },
 
     /// Display the current status of all tasks
@@ -114,7 +114,7 @@ pub enum SubCommand {
     Log {
         /// Specify for which specific tasks you want to see the output
         #[structopt(short, long)]
-        task_ids: Option<Vec<i32>>,
+        task_ids: Option<Vec<usize>>,
         /// Print the current state as json
         /// Includes EVERYTHING
         #[structopt(short, long)]
@@ -124,7 +124,7 @@ pub enum SubCommand {
     /// This command allows following (like `tail -f`)
     Show {
         /// The id of the task
-        task_id: i32,
+        task_id: usize,
         /// Continuously print stdout (like `tail -f`)
         #[structopt(short, long)]
         follow: bool,

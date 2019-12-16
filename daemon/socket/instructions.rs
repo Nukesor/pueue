@@ -36,7 +36,7 @@ pub fn handle_message(message: Message, sender: &Sender<Message>, state: &Shared
 /// If the start_immediately flag is set, send a StartMessage to the task handler
 fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
     let task = Task::new(message.command, message.path);
-    let task_id: i32;
+    let task_id: usize;
     {
         let mut state = state.lock().unwrap();
         task_id = state.add_task(task);
@@ -336,7 +336,7 @@ fn set_parallel_tasks(amount: usize, sender: &Sender<Message>) -> Message {
 
 fn task_response_helper(
     message: &'static str,
-    task_ids: Vec<i32>,
+    task_ids: Vec<usize>,
     statuses: Vec<TaskStatus>,
     state: &SharedState,
 ) -> String {
@@ -354,8 +354,8 @@ fn task_response_helper(
 /// and possibly tasks for which the instruction cannot be executed.
 fn compile_task_response(
     message: &'static str,
-    matching: Vec<i32>,
-    mismatching: Vec<i32>,
+    matching: Vec<usize>,
+    mismatching: Vec<usize>,
 ) -> String {
     let matching: Vec<String> = matching.iter().map(|id| id.to_string()).collect();
     let mismatching: Vec<String> = mismatching.iter().map(|id| id.to_string()).collect();

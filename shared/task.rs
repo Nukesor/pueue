@@ -21,7 +21,7 @@ pub enum TaskStatus {
 /// Upon task completion, the output is read from the files and put into the struct.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Task {
-    pub id: i32,
+    pub id: usize,
     pub command: String,
     pub path: String,
     pub status: TaskStatus,

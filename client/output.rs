@@ -124,7 +124,7 @@ pub fn print_state(message: Message, json: bool) {
 /// Print the log ouput of finished tasks.
 /// Either print the logs of every task
 /// or only print the logs of the specified tasks.
-pub fn print_logs(message: Message, task_ids: Option<Vec<i32>>, json: bool) {
+pub fn print_logs(message: Message, task_ids: Option<Vec<usize>>, json: bool) {
     let state = match message {
         Message::StatusResponse(state) => state,
         _ => return,
@@ -149,7 +149,7 @@ pub fn print_logs(message: Message, task_ids: Option<Vec<i32>>, json: bool) {
 }
 
 /// Print the log of a single task.
-pub fn print_log(task_id: i32, state: &State) {
+pub fn print_log(task_id: usize, state: &State) {
     let task = match state.tasks.get(&task_id) {
         Some(task) => task,
         None => return,
