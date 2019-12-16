@@ -1,0 +1,14 @@
+# This is the service file for pueue
+# To enable the daemon type `systemctl --user enable pueue.service`
+# To start the daemon type `systemctl --user start pueue.service`
+
+[Unit]
+Description=Pueue Daemon
+
+[Service]
+Restart=no
+ExecStart=/usr/bin/pueuedaemon
+ExecReload=/usr/bin/pueuedaemon
+
+[Install]
+WantedBy=default.target
