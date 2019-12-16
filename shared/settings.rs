@@ -21,18 +21,12 @@ pub struct Daemon {
     pub port: String,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct Group {
-    pub name: String,
-    pub parallel_tasks: usize,
-}
 
 /// The struct representation of a full configuration.
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Settings {
     pub client: Client,
     pub daemon: Daemon,
-    //    pub groups: HashMap<String, Group>,
 }
 
 impl Settings {
@@ -52,8 +46,6 @@ impl Settings {
 
 //        config.set_default("client.daemon_address", "127.0.0.1")?;
         config.set_default("client.daemon_port", "6924")?;
-        //        let groups: HashMap<String, Group> = HashMap::new();
-        //        config.set_default("client.groups", groups)?;
 
         // Add in the home config file
         parse_config(&mut config)?;
