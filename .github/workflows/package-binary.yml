@@ -1,0 +1,66 @@
+name: Packaging
+
+on:
+  create:
+    tags:
+      -v*
+
+jobs:
+  publish:
+    name: Publish for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        # This should work with only the `include`s but it currently doesn't because of this bug:
+        # https://github.community/t5/How-to-use-Git-and-GitHub/GitHub-Actions-Matrix-options-dont-work-as-documented/td-p/29558
+        # os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            client_name: pueue
+            client_release_name: pueue-linux-amd64
+            daemon_name: pueuedaemon
+            daemon_release_name: pueuedaemon-linux-amd64
+            #          - os: windows-latest
+            #            client_name: pueue.exe
+            #            client_release_name: pueue-windows-amd64.exe
+            #            daemon_name: pueuedaemon.exe
+            #            daemon_release_name: pueuedaemon-windows-amd64.exe
+          - os: macos-latest
+            client_name: pueue
+            client_release_name: pueue-macos-amd64
+            daemon_name: pueuedaemon
+            daemon_release_name: pueuedaemon-macos-amd64
+
+    steps:
+    - uses: hecrj/setup-rust-action@v1
+      with:
+        rust-version: stable
+    - uses: actions/checkout@v1
+
+    - name: Run tests
+      run: cargo test --verbose
+
+    - name: Build the binary
+      run: cargo build --release --locked
+    - uses: svenstaro/upx-action@v1-release
+      with:
+        file: target/release/${{ matrix.client_name }}
+    - uses: svenstaro/upx-action@v1-release
+      with:
+        file: target/release/${{ matrix.daemon_name }}
+
+    - name: Upload client binaries to release
+      uses: svenstaro/upload-release-action@v1-release
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: target/release/${{ matrix.client_name }}
+        asset_name: ${{ matrix.client_release_name }}
+        tag: ${{ github.ref }}
+    - name: Upload daemon binaries to release
+      uses: svenstaro/upload-release-action@v1-release
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: target/release/${{ matrix.daemon_name }}
+        asset_name: ${{ matrix.daemon_release_name }}
+        tag: ${{ github.ref }}

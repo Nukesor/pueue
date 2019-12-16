@@ -17,7 +17,7 @@ name = "pueue"
 path = "client/main.rs"
 
 [[bin]]
-name = "pueue-daemon"
+name = "pueuedaemon"
 path = "daemon/main.rs"
 
 [lib]
@@ -30,7 +30,7 @@ async-std = { version = "1", features = ["attributes", "unstable"] }
 dirs = "2"
 users = "^0.9"
 chrono = { version = "^0.4", features = ["serde"] }
-nix = "0.15"
+nix = "0.16"
 strum = "0.16"
 strum_macros = "0.16"
 
@@ -42,7 +42,7 @@ serde_yaml = "0.8"
 serde_derive = "^1.0"
 
 log = "0.4"
-config = "^0.9"
+config = "^0.10"
 simplelog = "0.7"
 structopt = "0.3"
 prettytable-rs = "^0.8"

@@ -89,18 +89,20 @@ fn parse_config(settings: &mut Config) -> Result<()> {
     Ok(())
 }
 
+fn get_home_dir() -> Result<PathBuf> {
+    dirs::home_dir().ok_or(anyhow!("Couldn't resolve home dir"))
+}
+
 #[cfg(target_os = "linux")]
 fn default_config_path() -> Result<PathBuf> {
-    let home_dir = dirs::home_dir().ok_or(anyhow!("Couldn't resolve home dir"))?;
-    Ok(home_dir.join(".config/pueue.yml"))
+    Ok(get_home_dir()?.join(".config/pueue.yml"))
 }
 
 #[cfg(target_os = "linux")]
 fn get_config_paths() -> Result<Vec<PathBuf>> {
     let mut paths = Vec::new();
-    let home_dir = dirs::home_dir().ok_or(anyhow!("Couldn't resolve home dir"))?;
     paths.push(Path::new("/etc/pueue.yml").to_path_buf());
-    paths.push(home_dir.join(".config/pueue.yml"));
+    paths.push(default_config_path()?);
     paths.push(Path::new("./pueue.yml").to_path_buf());
 
     Ok(paths)
@@ -108,10 +110,56 @@ fn get_config_paths() -> Result<Vec<PathBuf>> {
 
 #[cfg(target_os = "linux")]
 fn default_pueue_path() -> Result<String> {
-    let home_dir = dirs::home_dir().ok_or(anyhow!("Couldn't resolve home dir"))?;
-    let path = home_dir.join(".local/share/pueue");
+    let path = get_home_dir()?.join(".local/share/pueue");
     path.to_str().map_or_else(
         || Err(anyhow!("Failed to parse log path (Weird characters?)")),
         |v| Ok(v.to_string()),
     )
 }
+
+#[cfg(target_os = "macos")]
+fn default_config_path() -> Result<PathBuf> {
+    Ok(get_home_dir()?.join("Library/Preferences/pueue.yml"))
+}
+
+#[cfg(target_os = "macos")]
+fn get_config_paths() -> Result<Vec<PathBuf>> {
+    let mut paths = Vec::new();
+    paths.push(default_config_path()?);
+    paths.push(Path::new("./pueue.yml").to_path_buf());
+
+    Ok(paths)
+}
+
+#[cfg(target_os = "macos")]
+fn default_pueue_path() -> Result<String> {
+    let path = get_home_dir()?.join(".local/share/pueue");
+    path.to_str().map_or_else(
+        || Err(anyhow!("Failed to parse log path (Weird characters?)")),
+        |v| Ok(v.to_string()),
+    )
+}
+
+#[cfg(target_os = "windows")]
+fn default_config_path() -> Result<PathBuf> {
+    Ok(get_home_dir()?.join("AppData\\Local\\Pueue\\pueue.yml"))
+}
+
+#[cfg(target_os = "windows")]
+fn get_config_paths() -> Result<Vec<PathBuf>> {
+    let mut paths = Vec::new();
+    paths.push(default_config_path()?);
+    paths.push(Path::new(".\\pueue.yml").to_path_buf());
+
+    Ok(paths)
+}
+
+#[cfg(target_os = "windows")]
+fn default_pueue_path() -> Result<String> {
+    let path = get_home_dir()?.join("AppData\\Local\\Pueue");
+    path.to_str().map_or_else(
+        || Err(anyhow!("Failed to parse log path (Weird characters?)")),
+        |v| Ok(v.to_string()),
+    )
+}
+
