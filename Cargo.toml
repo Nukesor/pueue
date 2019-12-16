@@ -36,6 +36,7 @@ async-std = { version = "1", features = ["attributes", "unstable"] }
 dirs = "2"
 users = "^0.9"
 chrono = { version = "^0.4", features = ["serde"] }
+rand = "^0.7"
 nix = "0.16"
 strum = "0.16"
 strum_macros = "0.16"

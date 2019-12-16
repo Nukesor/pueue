@@ -1,20 +1,8 @@
-# Attention!!!
-
-**This is not stable yet.**
-You are looking at the Rust rewrite of the program Pueue.
-The original repository is over [here](https://github.com/nukesor/pueue).
-Once everything is finished, this master will be pushed to the old repository.
-
-
-Until then, be aware, that everything is experimental and that the documentation might not be up-to-date.
-
-
 # Pueue
 
 [![GitHub release](https://img.shields.io/github/tag/nukesor/pueue.svg)](https://github.com/nukesor/pueue/releases/latest)
 [![Crates.io](https://img.shields.io/crates/v/pueue)](https://crates.io/crates/pueue)
 [![MIT Licence](https://img.shields.io/pypi/l/pueue.svg)](https://github.com/Nukesor/pueue/blob/master/LICENSE)
-[![Paypal](https://github.com/Nukesor/images/blob/master/paypal-donate-blue.svg)](https://www.paypal.me/arnebeer/)
 [![Patreon](https://github.com/Nukesor/images/blob/master/patreon-donate-blue.svg)](https://www.patreon.com/nukesor)
 
 
@@ -33,6 +21,7 @@ It provides functionality for:
 - Manipulation of the scheduled task order
 - Running multiple tasks at once (You can decide how many concurrent tasks you want to run)
 
+**Pueue has been rewritten in Rust!!** If you want the old version that's build with python, please install via pip.
 
 ## Why should I use it?
 
@@ -59,9 +48,9 @@ PRs are of course always welcome!
 
 There are three different ways to install Pueue.
 
-1. Use an Arch Linux AUR package manager e.g. Yay: `yaourt -S pueue` . This will deploy the service file automatically.
-2. Install by using cargo: `pip install pueue`.
-3. Clone the repository and execute `python setup.py install`.
+1. Use an Arch Linux AUR package manager e.g. yay: `yay -S pueue` . This will deploy the service file and completions automatically.
+2. Install by using cargo: `cargo install pueue`.
+3. Clone the repository and execute `cargo install --path .`.
 
 ## How to use it:
 
@@ -117,24 +106,23 @@ The configuration file of Pueue is located in `~/.config/pueue.yml`.
 ```
 ---
 client:
-  daemon_address: 127.0.0.1
   daemon_port: "6924"
+  secret: "your_secret"
 daemon:
   pueue_directory: /home/$USER/.local/share/pueue
   default_parallel_tasks: 1
-  address: 127.0.0.1
   port: "6924"
+  secret: "your_secret"
 ```
+**Client**: 
+- `daemon_port` The port the client tries to connect to.  
+- `secret` The secret, that's used for authentication
 
 **Daemon**: 
 - `pueue_directory` The location Pueue uses for it's intermediate files and logs.
 - `default_parallel_tasks` Determines how many tasks should be processed concurrently.  
-- `address` The address the daemon should listen to.  
 - `port` The port the daemon should listen to.  
-
-**Client**: 
-- `daemon_address` The address the client tries to connect to.  
-- `daemon_port` The port the client tries to connect to.  
+- `secret` The secret, that's used for authentication
 
 
 ## Logs 

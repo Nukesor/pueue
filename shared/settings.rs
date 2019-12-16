@@ -4,6 +4,7 @@ use ::serde_derive::{Deserialize, Serialize};
 use ::std::fs::File;
 use ::std::io::prelude::*;
 use ::std::path::{Path, PathBuf};
+use ::rand::Rng;
 
 use ::config::Config;
 
@@ -11,6 +12,7 @@ use ::config::Config;
 pub struct Client {
 //    pub daemon_address: String,
     pub daemon_port: String,
+    pub secret: String,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -19,6 +21,7 @@ pub struct Daemon {
     pub default_parallel_tasks: usize,
 //    pub address: String,
     pub port: String,
+    pub secret: String,
 }
 
 
@@ -38,14 +41,17 @@ impl Settings {
     pub fn new() -> Result<Settings> {
         let mut config = Config::new();
 
+        let random_secret = gen_random_secret();
         // Set pueue config defaults
         config.set_default("daemon.pueue_directory", default_pueue_path()?)?;
 //        config.set_default("daemon.address", "127.0.0.1")?;
         config.set_default("daemon.port", "6924")?;
         config.set_default("daemon.default_parallel_tasks", 1)?;
+        config.set_default("daemon.secret", random_secret.clone())?;
 
 //        config.set_default("client.daemon_address", "127.0.0.1")?;
         config.set_default("client.daemon_port", "6924")?;
+        config.set_default("client.secret", random_secret)?;
 
         // Add in the home config file
         parse_config(&mut config)?;
@@ -83,6 +89,23 @@ fn parse_config(settings: &mut Config) -> Result<()> {
 
 fn get_home_dir() -> Result<PathBuf> {
     dirs::home_dir().ok_or(anyhow!("Couldn't resolve home dir"))
+}
+
+fn gen_random_secret() -> String {
+    const CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ\
+                            abcdefghijklmnopqrstuvwxyz\
+                            0123456789)(*&^%$#@!~";
+    const PASSWORD_LEN: usize = 20;
+    let mut rng = rand::thread_rng();
+
+    let secret: String = (0..PASSWORD_LEN)
+        .map(|_| {
+            let idx = rng.gen_range(0, CHARSET.len());
+            CHARSET[idx] as char
+        })
+        .collect();
+
+    secret
 }
 
 #[cfg(target_os = "linux")]

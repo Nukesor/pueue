@@ -4,11 +4,8 @@ mod stream;
 
 use ::anyhow::Result;
 use ::async_std::net::{TcpListener, TcpStream};
-use ::async_std::prelude::*;
 use ::async_std::task;
-use ::byteorder::{BigEndian, ReadBytesExt};
-use ::log::info;
-use ::std::io::Cursor;
+use ::log::{info, warn};
 use ::std::sync::mpsc::Sender;
 
 use crate::socket::instructions::handle_message;
@@ -16,6 +13,7 @@ use crate::socket::send::send_message;
 use crate::socket::stream::handle_show;
 use crate::cli::Opt;
 use ::pueue::message::*;
+use ::pueue::protocol::*;
 use ::pueue::settings::Settings;
 use ::pueue::state::SharedState;
 
@@ -59,27 +57,24 @@ pub async fn accept_incoming(
 /// Continuously poll the existing incoming futures.
 /// In case we received an instruction, handle it and create a response future.
 /// The response future is added to unix_responses and handled in a separate function.
-pub async fn handle_incoming(
+async fn handle_incoming(
     mut socket: TcpStream,
     sender: Sender<Message>,
     state: SharedState,
     settings: Settings,
 ) -> Result<()> {
     loop {
-        // Receive the header with the size and type of the message
-        let mut header = vec![0; 8];
-        socket.read(&mut header).await?;
+        // Receive the secret and check, whether the client is allowed to connect
+        let payload_bytes = receive_bytes(&mut socket).await?;
+        let secret = String::from_utf8(payload_bytes)?;
+        if secret != settings.daemon.secret {
+            warn!("Received invalid secret: {}", secret);
+            return Ok(());
+        }
 
-        // Extract the instruction size from the header bytes
-        let mut header = Cursor::new(header);
-        let instruction_size = header.read_u64::<BigEndian>()? as usize;
-        let mut instruction_bytes = vec![0; instruction_size];
-        socket.read(&mut instruction_bytes).await?;
-
-        // Receive the message and deserialize it
-        let instruction = String::from_utf8(instruction_bytes)?;
-        let message: Message = serde_json::from_str(&instruction)?;
-        info!("Received instruction: {}", instruction);
+        // Receive the actual instruction from the client
+        let message = receive_message(&mut socket).await?;
+        info!("Received instruction: {:?}", message);
 
         let response = if let Message::StreamRequest(message) = message {
             // The client requested the output of a task
