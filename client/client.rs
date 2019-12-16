@@ -24,14 +24,14 @@ impl Client {
         let address = if let Some(address) = opt.address.clone() {
             address
         } else {
-            settings.daemon.address
+            settings.client.daemon_address
         };
 
         // Commandline argument overwrites the configuration files values for port
         let port = if let Some(port) = opt.port.clone() {
             port
         } else {
-            settings.daemon.port
+            settings.client.daemon_port
         };
 
         let address = format!("{}:{}", address, port);
