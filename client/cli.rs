@@ -8,7 +8,7 @@ use ::pueue::message::*;
 
 #[derive(StructOpt, Debug)]
 pub enum SubCommand {
-    /// Queue a task for execution
+    /// Enqueue a task for execution
     Add {
         /// The command that should be added
         #[structopt()]
@@ -18,21 +18,21 @@ pub enum SubCommand {
         #[structopt(name = "immediate", short, long)]
         start_immediately: bool,
     },
-    /// Remove tasks from the list.
-    /// You cannot remove running or paused tasks.
+    /// Remove a tasks from the list.
+    /// Running or paused tasks need to be killed first.
     Remove {
         /// The task ids to be removed
         task_ids: Vec<usize>,
     },
-    /// Switches the queue position two commands. Only works on queued or stashed commands
+    /// Switches the queue position of two commands. Only works on queued and stashed commands
     Switch {
         /// The first task id
         task_id_1: usize,
         /// The second task id
         task_id_2: usize,
     },
-    /// Stash some tasks. These tasks won't be automatically started.
-    /// Afterwards either `enqueue` them, to be normally handled or forcefully `start` them.
+    /// Stashed tasks won't be automatically started.
+    /// Either `enqueue` them, to be normally handled or explicitely `start` them.
     Stash {
         /// The id(s) of the tasks you want to stash
         task_ids: Vec<usize>,
@@ -43,17 +43,17 @@ pub enum SubCommand {
         task_ids: Vec<usize>,
     },
 
-    /// Wake the daemon from its paused state, including continuing all paused tasks.
-    /// Does nothing if the daemon isn't paused.
+    /// Wake the daemon from its paused state.
+    /// Also continues all paused tasks.
     Start {
         /// Enforce starting these tasks.
-        /// Doesn't affect the daemon or any other tasks.
-        /// Works on a paused deamon.
+        /// This doesn't affect the daemon or any other tasks and works on a paused deamon.
         #[structopt(short, long)]
         task_ids: Option<Vec<usize>>,
     },
+    /// Enqueue tasks again.
     Restart {
-        /// Restart the
+        /// The tasks you want to enqueue again.
         #[structopt()]
         task_ids: Vec<usize>,
 
@@ -74,21 +74,18 @@ pub enum SubCommand {
         #[structopt(short, long, group("pause"))]
         task_ids: Option<Vec<usize>>,
     },
-    /// Pause the daemon and all running tasks.
-    /// A paused daemon won't start any new tasks.
-    /// Daemon and tasks can be continued with `start`
+    /// Kill running tasks.
     Kill {
-        /// Pause the daemon, but let any running tasks finish by themselves.
+        /// Kill all running tasks, this also pauses the daemon.
         #[structopt(short, long, group("kill"), conflicts_with("task_ids"))]
         all: bool,
 
-        /// Enforce starting these tasks.
-        /// Doesn't affect the daemon or any other tasks.
+        /// The tasks that should be killed.
         #[structopt(group("kill"), required_unless("all"))]
         task_ids: Vec<usize>,
     },
 
-    /// Send something to a task. For example, useful for sending confirmations ('y\n')
+    /// Send something to a task. Useful for sending confirmations ('y\n')
     Send {
         /// The id of the task
         task_id: usize,

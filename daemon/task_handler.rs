@@ -378,10 +378,13 @@ impl TaskHandler {
         }
 
         // Pause the daemon and all tasks
-        info!("Killing all spawned children");
-        let keys: Vec<usize> = self.children.keys().cloned().collect();
-        for id in keys {
-            self.kill_task(id);
+        if message.all {
+            info!("Killing all spawned children");
+            self.running = false;
+            let keys: Vec<usize> = self.children.keys().cloned().collect();
+            for id in keys {
+                self.kill_task(id);
+            }
         }
     }
 
