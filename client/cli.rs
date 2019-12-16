@@ -152,9 +152,9 @@ pub struct Opt {
     #[structopt(short, long, parse(from_occurrences))]
     pub verbose: u8,
 
-    /// The url for the daemon. Overwrites the address in the config file
-    #[structopt(short, long)]
-    pub address: Option<String>,
+//    /// The url for the daemon. Overwrites the address in the config file
+//    #[structopt(short, long)]
+//    pub address: Option<String>,
 
     /// The port for the daemon. Overwrites the port in the config file
     #[structopt(short, long)]

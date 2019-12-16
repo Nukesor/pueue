@@ -27,12 +27,12 @@ pub async fn accept_incoming(
     state: SharedState,
     opt: Opt,
 ) -> Result<()> {
-    // Commandline argument overwrites the configuration files values for address
-    let address = if let Some(address) = opt.address.clone() {
-        address
-    } else {
-        settings.daemon.address.clone()
-    };
+//    // Commandline argument overwrites the configuration files values for address
+//    let address = if let Some(address) = opt.address.clone() {
+//        address
+//    } else {
+//        settings.daemon.address.clone()
+//    };
 
     // Commandline argument overwrites the configuration files values for port
     let port = if let Some(port) = opt.port.clone() {
@@ -40,7 +40,8 @@ pub async fn accept_incoming(
     } else {
         settings.daemon.port.clone()
     };
-    let address = format!("{}:{}", address, port);
+//    let address = format!("{}:{}", address, port);
+    let address = format!("127.0.0.1:{}", port);
     let listener = TcpListener::bind(address).await?;
 
     loop {
