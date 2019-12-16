@@ -16,7 +16,6 @@ use crate::client::Client;
 async fn main() -> Result<()> {
     let settings = Settings::new()?;
     let save_result = settings.save();
-
     if save_result.is_err() {
         println!("Failed saving config file.");
         println!("{:?}", save_result.err());

@@ -14,6 +14,7 @@ use ::std::sync::mpsc::Sender;
 use crate::socket::instructions::handle_message;
 use crate::socket::send::send_message;
 use crate::socket::stream::handle_show;
+use crate::cli::Opt;
 use ::pueue::message::*;
 use ::pueue::settings::Settings;
 use ::pueue::state::SharedState;
@@ -24,11 +25,22 @@ pub async fn accept_incoming(
     settings: Settings,
     sender: Sender<Message>,
     state: SharedState,
+    opt: Opt,
 ) -> Result<()> {
-    let address = format!(
-        "{}:{}",
-        settings.client.daemon_address, settings.client.daemon_port
-    );
+    // Commandline argument overwrites the configuration files values for address
+    let address = if let Some(address) = opt.address.clone() {
+        address
+    } else {
+        settings.daemon.address.clone()
+    };
+
+    // Commandline argument overwrites the configuration files values for port
+    let port = if let Some(port) = opt.port.clone() {
+        port
+    } else {
+        settings.daemon.port.clone()
+    };
+    let address = format!("{}:{}", address, port);
     let listener = TcpListener::bind(address).await?;
 
     loop {

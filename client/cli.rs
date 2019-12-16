@@ -1,5 +1,4 @@
 use ::std::env::current_dir;
-use ::std::path::PathBuf;
 
 use ::anyhow::{anyhow, Result};
 use ::structopt::StructOpt;
@@ -152,10 +151,6 @@ pub struct Opt {
     /// Verbose mode (-v, -vv, -vvv)
     #[structopt(short, long, parse(from_occurrences))]
     pub verbose: u8,
-
-    /// Optional custom config path
-    #[structopt(name = "config", parse(from_os_str))]
-    pub config_path: Option<PathBuf>,
 
     /// The url for the daemon. Overwrites the address in the config file
     #[structopt(short, long)]

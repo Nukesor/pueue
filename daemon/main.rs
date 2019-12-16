@@ -5,18 +5,20 @@ use ::std::path::Path;
 use ::std::sync::mpsc::channel;
 use ::std::sync::{Arc, Mutex};
 use ::std::thread;
+use ::structopt::StructOpt;
 
 use crate::socket::accept_incoming;
+use crate::cli::Opt;
 use crate::task_handler::TaskHandler;
 use ::pueue::settings::Settings;
 use ::pueue::state::State;
 
+pub mod cli;
 pub mod socket;
 pub mod task_handler;
 
 #[async_std::main]
 async fn main() -> Result<()> {
-    let _ = SimpleLogger::init(LevelFilter::Debug, Config::default());
     let settings = Settings::new()?;
     match settings.save() {
         Err(error) => {
@@ -25,6 +27,20 @@ async fn main() -> Result<()> {
         }
         Ok(()) => {}
     };
+
+    // Parse commandline options
+    let opt = Opt::from_args();
+
+    // Set the verbosity level for the client app
+    if opt.verbose >= 3 {
+        SimpleLogger::init(LevelFilter::Debug, Config::default())?;
+    } else if opt.verbose == 2 {
+        SimpleLogger::init(LevelFilter::Info, Config::default())?;
+    } else if opt.verbose == 1 {
+        SimpleLogger::init(LevelFilter::Warn, Config::default())?;
+    } else if opt.verbose == 0 {
+        SimpleLogger::init(LevelFilter::Error, Config::default())?;
+    }
 
     init_directories(&settings.daemon.pueue_directory);
 
@@ -38,7 +54,7 @@ async fn main() -> Result<()> {
         task_handler.run();
     });
 
-    accept_incoming(settings, sender, state.clone()).await?;
+    accept_incoming(settings, sender, state.clone(), opt).await?;
 
     Ok(())
 }
