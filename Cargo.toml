@@ -3,14 +3,15 @@ name = "pueue"
 description = "A cli tool for managing long running shell commands."
 version = "0.0.1"
 authors = ["Arne Beer <contact@arne.beer>"]
-homepage = "https://github.com/nukesor/pueue-rs"
-repository = "https://github.com/nukesor/pueue-rs"
+homepage = "https://github.com/nukesor/pueue"
+repository = "https://github.com/nukesor/pueue"
+documentation = "https://docs.rs/tectonic"
 license = "MIT"
 keywords = ["shell", "commandline", "parallel", "daemon", "queue", "scheduler"]
 edition = "2018"
 
 [badges]
-travis-ci = { repository = "nukesor/pueue-rs", branch = "master" }
+travis-ci = { repository = "nukesor/pueue", branch = "master" }
 maintenance = { status = "actively-developed" }
 
 [[bin]]
