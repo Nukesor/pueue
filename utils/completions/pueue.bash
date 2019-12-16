@@ -74,7 +74,7 @@ _pueue() {
 
     case "${cmd}" in
         pueue)
-            opts=" -v -h -V -a -p  --verbose --help --version --address --port  <config>  add remove switch stash enqueue start restart pause kill send edit status log show reset clean parallel help"
+            opts=" -v -h -V -a -p  --verbose --help --version --address --port   add remove switch stash enqueue start restart pause kill send edit status log show reset clean parallel help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0

@@ -12,9 +12,8 @@ Until then, be aware, that everything is experimental and that the documentation
 # Pueue
 
 [![GitHub release](https://img.shields.io/github/tag/nukesor/pueue.svg)](https://github.com/nukesor/pueue/releases/latest)
-[![Test status](https://travis-ci.org/Nukesor/pueue.svg?branch=master)](https://travis-ci.org/Nukesor/pueue)
+[![Crates.io](https://img.shields.io/crates/v/pueue)](https://crates.io/crates/pueue)
 [![MIT Licence](https://img.shields.io/pypi/l/pueue.svg)](https://github.com/Nukesor/pueue/blob/master/LICENSE)
-[![PyPI version](https://img.shields.io/pypi/v/pueue.svg)](https://pypi.python.org/pypi/pueue)
 [![Paypal](https://github.com/Nukesor/images/blob/master/paypal-donate-blue.svg)](https://www.paypal.me/arnebeer/)
 [![Patreon](https://github.com/Nukesor/images/blob/master/patreon-donate-blue.svg)](https://www.patreon.com/nukesor)
 
@@ -22,7 +21,8 @@ Until then, be aware, that everything is experimental and that the documentation
 ![Pueue](https://raw.githubusercontent.com/Nukesor/images/master/pueue.png)
 
 Pueue is a command-line task management tool for sequential and parallel execution of long running tasks.
-If you break it down, it's a queue of shell commands with a lot of convenience features and abstractions.
+If you break it down, it's a manager that processes a queue of shell commands.
+On top of that, there are a lot of convenience features and abstractions.
 
 Since it's not bound to any terminal, you can control your tasks from any terminal on the same machine and even remotely.
 The best part probably is, that the queue will be continuously processed, even if you no longer have any active ssh session.

@@ -1,8 +1,9 @@
 [package]
 name = "pueue"
-description = "A shell commandline parallel processing management tool."
-version = "0.1.0"
-authors = ["Arne Beer <arne@twobeer.de>"]
+description = "A cli tool for managing long running shell commands."
+version = "0.0.1"
+authors = ["Arne Beer <contact@arne.beer>"]
+homepage = "https://github.com/nukesor/pueue-rs"
 repository = "https://github.com/nukesor/pueue-rs"
 license = "MIT"
 keywords = ["shell", "commandline", "parallel", "daemon", "queue", "scheduler"]
@@ -21,7 +22,7 @@ name = "pueue"
 path = "client/main.rs"
 
 [[bin]]
-name = "pueuedaemon"
+name = "pueued"
 path = "daemon/main.rs"
 
 [lib]

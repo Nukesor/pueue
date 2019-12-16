@@ -19,18 +19,18 @@ jobs:
           - os: ubuntu-latest
             client_name: pueue
             client_release_name: pueue-linux-amd64
-            daemon_name: pueuedaemon
-            daemon_release_name: pueuedaemon-linux-amd64
+            daemon_name: pueued
+            daemon_release_name: pueued-linux-amd64
             #          - os: windows-latest
             #            client_name: pueue.exe
             #            client_release_name: pueue-windows-amd64.exe
-            #            daemon_name: pueuedaemon.exe
-            #            daemon_release_name: pueuedaemon-windows-amd64.exe
+            #            daemon_name: pueued.exe
+            #            daemon_release_name: pueued-windows-amd64.exe
           - os: macos-latest
             client_name: pueue
             client_release_name: pueue-macos-amd64
-            daemon_name: pueuedaemon
-            daemon_release_name: pueuedaemon-macos-amd64
+            daemon_name: pueued
+            daemon_release_name: pueued-macos-amd64
 
     steps:
     - uses: hecrj/setup-rust-action@v1
