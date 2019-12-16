@@ -78,7 +78,7 @@ impl TaskHandler {
     fn check_new(&mut self) -> Result<()> {
         // Check while there are still slots left
         // Break the loop if no next task is found
-        while self.children.len() < self.settings.daemon.default_worker_count {
+        while self.children.len() < self.settings.daemon.default_parallel_tasks {
             match self.get_next()? {
                 Some((id, task)) => self.start_process(id, &task),
                 None => break,
@@ -243,6 +243,7 @@ impl TaskHandler {
             Message::Start(message) => self.start(message),
             Message::Kill(message) => self.kill(message),
             Message::Send(message) => self.send(message),
+            Message::Parallel(amount) => self.allow_parallel_tasks(amount),
             Message::Reset => self.reset(),
             _ => info!("Received unhandled message {:?}", message),
         }
@@ -422,9 +423,9 @@ impl TaskHandler {
         }
     }
 
-    // Kill all children by reusing the `kill` function
-    // Set the `reset` flag, which will prevent new tasks from being spawned.
-    // If all children finished, the state will be completely reset.
+    /// Kill all children by reusing the `kill` function
+    /// Set the `reset` flag, which will prevent new tasks from being spawned.
+    /// If all children finished, the state will be completely reset.
     fn reset(&mut self) {
         let message = KillMessage {
             task_ids: Vec::new(),
@@ -433,5 +434,11 @@ impl TaskHandler {
         self.kill(message);
 
         self.reset = true;
+    }
+
+    /// Adjust the amount of allowed parallel tasks
+    /// This function also saves the new settings to the default config location
+    fn allow_parallel_tasks(&mut self, amount: usize) {
+        self.settings.daemon.default_parallel_tasks = amount;
     }
 }

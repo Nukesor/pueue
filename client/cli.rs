@@ -136,6 +136,12 @@ pub enum SubCommand {
     Reset,
     /// Remove all finished tasks from the list (also clears logs).
     Clean,
+
+    /// Set the amount of allowed parallel tasks
+    Parallel {
+        /// The amount of allowed paralel tasks
+        parallel_tasks: usize,
+    },
 }
 
 #[derive(StructOpt, Debug)]
@@ -274,5 +280,7 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
         }
         SubCommand::Clean => Ok(Message::Clean),
         SubCommand::Reset => Ok(Message::Reset),
+
+        SubCommand::Parallel{ parallel_tasks } => Ok(Message::Parallel(*parallel_tasks)),
     }
 }

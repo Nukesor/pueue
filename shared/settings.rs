@@ -16,7 +16,7 @@ pub struct Client {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Daemon {
     pub pueue_directory: String,
-    pub default_worker_count: usize,
+    pub default_parallel_tasks: usize,
     pub address: String,
     pub port: String,
 }
@@ -24,7 +24,7 @@ pub struct Daemon {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Group {
     pub name: String,
-    pub worker_count: u32,
+    pub parallel_tasks: usize,
 }
 
 /// The struct representation of a full configuration.
@@ -48,7 +48,7 @@ impl Settings {
         config.set_default("daemon.pueue_directory", default_pueue_path()?)?;
         config.set_default("daemon.address", "127.0.0.1")?;
         config.set_default("daemon.port", "6924")?;
-        config.set_default("daemon.default_worker_count", 1)?;
+        config.set_default("daemon.default_parallel_tasks", 1)?;
 
         config.set_default("client.daemon_address", "127.0.0.1")?;
         config.set_default("client.daemon_port", "6924")?;

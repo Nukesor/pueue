@@ -32,6 +32,8 @@ pub enum Message {
     StatusResponse(State),
     Success(String),
     Failure(String),
+
+    Parallel(usize),
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

@@ -27,6 +27,7 @@ pub fn handle_message(message: Message, sender: &Sender<Message>, state: &Shared
         Message::Reset => reset(sender),
         Message::SimpleStatus => get_simple_status(state),
         Message::Status => get_status(state),
+        Message::Parallel(amount) => set_parallel_tasks(amount, sender),
         _ => create_failure_message("Not implemented yet"),
     }
 }
@@ -326,6 +327,11 @@ fn get_simple_status(state: &SharedState) -> Message {
         task.stderr = None;
     }
     Message::StatusResponse(state)
+}
+
+fn set_parallel_tasks(amount: usize, sender: &Sender<Message>) -> Message {
+    sender.send(Message::Parallel(amount)).expect(SENDER_ERR);
+    return create_success_message("Parallel tasks setting adjusted");
 }
 
 fn task_response_helper(
