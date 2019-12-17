@@ -56,11 +56,13 @@ fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) 
 
 /// Remove tasks from the queue
 fn remove(message: RemoveMessage, state: &SharedState) -> Message {
-    let (matching, mismatching) = {
-        let statuses = vec![TaskStatus::Running, TaskStatus::Paused];
-        let mut state = state.lock().unwrap();
-        state.tasks_not_in_statuses(Some(message.task_ids), statuses)
-    };
+    let mut state = state.lock().unwrap();
+    let statuses = vec![TaskStatus::Running, TaskStatus::Paused];
+    let (matching, mismatching) = state.tasks_not_in_statuses(Some(message.task_ids), statuses);
+
+    for task_id in &matching {
+        state.tasks.remove(task_id);
+    }
 
     let message = "Tasks removed from list";
     let message = compile_task_response(message, matching, mismatching);
