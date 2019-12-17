@@ -13,9 +13,12 @@ use crate::task_handler::TaskHandler;
 use ::pueue::settings::Settings;
 use ::pueue::state::State;
 
-pub mod cli;
-pub mod socket;
-pub mod task_handler;
+mod cli;
+mod socket;
+mod streaming;
+mod instructions;
+mod task_handler;
+mod response_helper;
 
 #[async_std::main]
 async fn main() -> Result<()> {

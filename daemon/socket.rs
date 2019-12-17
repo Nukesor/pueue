@@ -1,14 +1,11 @@
-mod instructions;
-mod stream;
-
 use ::anyhow::Result;
 use ::async_std::net::{TcpListener, TcpStream};
 use ::async_std::task;
 use ::log::{info, warn};
 use ::std::sync::mpsc::Sender;
 
-use crate::socket::instructions::handle_message;
-use crate::socket::stream::handle_show;
+use crate::instructions::handle_message;
+use crate::streaming::handle_show;
 use crate::cli::Opt;
 use ::pueue::message::*;
 use ::pueue::protocol::*;
