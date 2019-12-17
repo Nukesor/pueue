@@ -8,14 +8,17 @@
 
 ![Pueue](https://raw.githubusercontent.com/Nukesor/images/master/pueue.gif)
 
-Pueue is a command-line task management tool for sequential and parallel execution of long-running tasks.
+Pueue is a command-line task management tool for sequential and parallel execution of long-running tasks.  
+
 If you break it down, it's a manager that processes a queue of shell commands.
 On top of that, there are a lot of convenience features and abstractions.
 
-Since it's not bound to any terminal, you can control your tasks from any terminal on the same machine and even remotely.
-The best part probably is, that the queue will be continuously processed, even if you no longer have any active ssh session.
+
+Since Pueue is not bound to any terminal, you can control your tasks from any terminal on the same machine.
+The queue will be continuously processed, even if you no longer have any active ssh session.
 
 It provides functionality for:
+- Scheduling commands that will be executed in their respective working directories
 - Easy output inspection.
 - Interaction with running processes
 - Manipulation of the scheduled task order
