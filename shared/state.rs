@@ -162,6 +162,7 @@ impl State {
 
     pub fn reset(&mut self) {
         self.backup();
+        self.running = true;
         self.max_id = 0;
         self.tasks = BTreeMap::new();
         self.save();

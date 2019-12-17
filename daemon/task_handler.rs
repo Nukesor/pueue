@@ -196,6 +196,7 @@ impl TaskHandler {
         if self.reset && self.children.is_empty() {
             let mut state = self.state.lock().unwrap();
             state.reset();
+            self.running = true;
             self.reset = false;
         }
     }
@@ -296,12 +297,7 @@ impl TaskHandler {
             self.continue_task(id);
         }
         info!("Resuming daemon (start)");
-        {
-            let mut state = self.state.lock().unwrap();
-            state.running = true;
-            self.running = true;
-            state.save();
-        }
+        self.change_running(true);
     }
 
     /// Send a start signal to a paused task to continue execution
@@ -340,12 +336,7 @@ impl TaskHandler {
             }
         }
         info!("Pausing daemon");
-        {
-            let mut state = self.state.lock().unwrap();
-            state.running = false;
-            self.running = false;
-            state.save();
-        }
+        self.change_running(true);
     }
 
     /// Pause a specific task.
@@ -380,7 +371,7 @@ impl TaskHandler {
         // Pause the daemon and all tasks
         if message.all {
             info!("Killing all spawned children");
-            self.running = false;
+            self.change_running(false);
             let keys: Vec<usize> = self.children.keys().cloned().collect();
             for id in keys {
                 self.kill_task(id);
@@ -443,5 +434,13 @@ impl TaskHandler {
     /// This function also saves the new settings to the default config location
     fn allow_parallel_tasks(&mut self, amount: usize) {
         self.settings.daemon.default_parallel_tasks = amount;
+    }
+
+    /// Change the running state consistently
+    fn change_running(&mut self, running: bool) {
+        let mut state = self.state.lock().unwrap();
+        state.running = running;
+        self.running = running;
+        state.save();
     }
 }
