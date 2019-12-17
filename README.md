@@ -6,7 +6,7 @@
 [![Patreon](https://github.com/Nukesor/images/blob/master/patreon-donate-blue.svg)](https://www.patreon.com/nukesor)
 
 
-![Pueue](https://raw.githubusercontent.com/Nukesor/images/master/pueue.png)
+![Pueue](https://raw.githubusercontent.com/Nukesor/images/master/pueue.gif)
 
 Pueue is a command-line task management tool for sequential and parallel execution of long running tasks.
 If you break it down, it's a manager that processes a queue of shell commands.
