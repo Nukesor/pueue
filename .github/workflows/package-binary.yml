@@ -13,7 +13,6 @@ jobs:
       matrix:
         # This should work with only the `include`s but it currently doesn't because of this bug:
         # https://github.community/t5/How-to-use-Git-and-GitHub/GitHub-Actions-Matrix-options-dont-work-as-documented/td-p/29558
-        # os: [ubuntu-latest, windows-latest, macos-latest]
         os: [ubuntu-latest, macos-latest]
         include:
           - os: ubuntu-latest
@@ -21,11 +20,6 @@ jobs:
             client_release_name: pueue-linux-amd64
             daemon_name: pueued
             daemon_release_name: pueued-linux-amd64
-            #          - os: windows-latest
-            #            client_name: pueue.exe
-            #            client_release_name: pueue-windows-amd64.exe
-            #            daemon_name: pueued.exe
-            #            daemon_release_name: pueued-windows-amd64.exe
           - os: macos-latest
             client_name: pueue
             client_release_name: pueue-macos-amd64

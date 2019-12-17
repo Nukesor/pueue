@@ -153,26 +153,3 @@ fn default_pueue_path() -> Result<String> {
         |v| Ok(v.to_string()),
     )
 }
-
-#[cfg(target_os = "windows")]
-fn default_config_path() -> Result<PathBuf> {
-    Ok(get_home_dir()?.join("AppData\\Local\\Pueue\\pueue.yml"))
-}
-
-#[cfg(target_os = "windows")]
-fn get_config_paths() -> Result<Vec<PathBuf>> {
-    let mut paths = Vec::new();
-    paths.push(default_config_path()?);
-    paths.push(Path::new(".\\pueue.yml").to_path_buf());
-
-    Ok(paths)
-}
-
-#[cfg(target_os = "windows")]
-fn default_pueue_path() -> Result<String> {
-    let path = get_home_dir()?.join("AppData\\Local\\Pueue");
-    path.to_str().map_or_else(
-        || Err(anyhow!("Failed to parse log path (Weird characters?)")),
-        |v| Ok(v.to_string()),
-    )
-}
