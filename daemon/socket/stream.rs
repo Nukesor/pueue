@@ -6,11 +6,10 @@ use ::std::fs::File;
 use ::std::io::Read;
 use ::std::time::Duration;
 
-use crate::socket::send::send_message;
-
 use ::pueue::log::*;
 use ::pueue::message::*;
 use ::pueue::settings::Settings;
+use ::pueue::protocol::send_message;
 
 /// Handle the continuous stream of a message
 pub async fn handle_show(
@@ -57,7 +56,7 @@ pub async fn handle_show(
 
             // Send the new chunk and wait for 1 second
             let response = Message::Stream(text);
-            send_message(socket, response).await?;
+            send_message(&response, socket).await?;
             let wait = future::ready(1).delay(Duration::from_millis(1000));
             wait.await;
         }

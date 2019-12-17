@@ -1,5 +1,4 @@
 mod instructions;
-mod send;
 mod stream;
 
 use ::anyhow::Result;
@@ -9,7 +8,6 @@ use ::log::{info, warn};
 use ::std::sync::mpsc::Sender;
 
 use crate::socket::instructions::handle_message;
-use crate::socket::send::send_message;
 use crate::socket::stream::handle_show;
 use crate::cli::Opt;
 use ::pueue::message::*;
@@ -86,6 +84,6 @@ async fn handle_incoming(
         };
 
         // Respond to the client
-        send_message(&mut socket, response).await?;
+        send_message(&response, &mut socket).await?;
     }
 }
