@@ -1,7 +1,6 @@
 use ::pueue::state::SharedState;
 use ::pueue::task::TaskStatus;
 
-
 pub fn task_response_helper(
     message: &'static str,
     task_ids: Vec<usize>,

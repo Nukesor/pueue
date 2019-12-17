@@ -7,8 +7,8 @@ use crate::cli::{Opt, SubCommand};
 use crate::instructions::*;
 use crate::output::*;
 use ::pueue::message::*;
-use ::pueue::settings::Settings;
 use ::pueue::protocol::*;
+use ::pueue::settings::Settings;
 
 /// The client
 pub struct Client {
@@ -20,12 +20,12 @@ pub struct Client {
 
 impl Client {
     pub fn new(settings: Settings, message: Message, opt: Opt) -> Result<Self> {
-//        // Commandline argument overwrites the configuration files values for address
-//        let address = if let Some(address) = opt.address.clone() {
-//            address
-//        } else {
-//            settings.client.daemon_address
-//        };
+        //        // Commandline argument overwrites the configuration files values for address
+        //        let address = if let Some(address) = opt.address.clone() {
+        //            address
+        //        } else {
+        //            settings.client.daemon_address
+        //        };
 
         // Commandline argument overwrites the configuration files values for port
         let port = if let Some(port) = opt.port.clone() {
@@ -34,7 +34,7 @@ impl Client {
             settings.client.daemon_port
         };
 
-//        let address = format!("{}:{}", address, port);
+        //        let address = format!("{}:{}", address, port);
         let address = format!("127.0.0.1:{}", port);
 
         Ok(Client {

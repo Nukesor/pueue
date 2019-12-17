@@ -7,18 +7,18 @@ use ::std::sync::{Arc, Mutex};
 use ::std::thread;
 use ::structopt::StructOpt;
 
-use crate::socket::accept_incoming;
 use crate::cli::Opt;
+use crate::socket::accept_incoming;
 use crate::task_handler::TaskHandler;
 use ::pueue::settings::Settings;
 use ::pueue::state::State;
 
 mod cli;
+mod instructions;
+mod response_helper;
 mod socket;
 mod streaming;
-mod instructions;
 mod task_handler;
-mod response_helper;
 
 #[async_std::main]
 async fn main() -> Result<()> {

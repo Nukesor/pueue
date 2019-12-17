@@ -1,16 +1,16 @@
 use ::anyhow::{anyhow, Result};
 use ::log::info;
+use ::rand::Rng;
 use ::serde_derive::{Deserialize, Serialize};
 use ::std::fs::File;
 use ::std::io::prelude::*;
 use ::std::path::{Path, PathBuf};
-use ::rand::Rng;
 
 use ::config::Config;
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Client {
-//    pub daemon_address: String,
+    //    pub daemon_address: String,
     pub daemon_port: String,
     pub secret: String,
 }
@@ -19,11 +19,10 @@ pub struct Client {
 pub struct Daemon {
     pub pueue_directory: String,
     pub default_parallel_tasks: usize,
-//    pub address: String,
+    //    pub address: String,
     pub port: String,
     pub secret: String,
 }
-
 
 /// The struct representation of a full configuration.
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -44,12 +43,12 @@ impl Settings {
         let random_secret = gen_random_secret();
         // Set pueue config defaults
         config.set_default("daemon.pueue_directory", default_pueue_path()?)?;
-//        config.set_default("daemon.address", "127.0.0.1")?;
+        //        config.set_default("daemon.address", "127.0.0.1")?;
         config.set_default("daemon.port", "6924")?;
         config.set_default("daemon.default_parallel_tasks", 1)?;
         config.set_default("daemon.secret", random_secret.clone())?;
 
-//        config.set_default("client.daemon_address", "127.0.0.1")?;
+        //        config.set_default("client.daemon_address", "127.0.0.1")?;
         config.set_default("client.daemon_port", "6924")?;
         config.set_default("client.secret", random_secret)?;
 
@@ -177,4 +176,3 @@ fn default_pueue_path() -> Result<String> {
         |v| Ok(v.to_string()),
     )
 }
-

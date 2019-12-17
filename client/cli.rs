@@ -152,10 +152,9 @@ pub struct Opt {
     #[structopt(short, long, parse(from_occurrences))]
     pub verbose: u8,
 
-//    /// The url for the daemon. Overwrites the address in the config file
-//    #[structopt(short, long)]
-//    pub address: Option<String>,
-
+    //    /// The url for the daemon. Overwrites the address in the config file
+    //    #[structopt(short, long)]
+    //    pub address: Option<String>,
     /// The port for the daemon. Overwrites the port in the config file
     #[structopt(short, long)]
     pub port: Option<String>,
@@ -273,6 +272,6 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
         SubCommand::Clean => Ok(Message::Clean),
         SubCommand::Reset => Ok(Message::Reset),
 
-        SubCommand::Parallel{ parallel_tasks } => Ok(Message::Parallel(*parallel_tasks)),
+        SubCommand::Parallel { parallel_tasks } => Ok(Message::Parallel(*parallel_tasks)),
     }
 }

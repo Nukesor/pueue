@@ -8,8 +8,8 @@ use ::std::time::Duration;
 
 use ::pueue::log::*;
 use ::pueue::message::*;
-use ::pueue::settings::Settings;
 use ::pueue::protocol::send_message;
+use ::pueue::settings::Settings;
 
 /// Handle the continuous stream of a message
 pub async fn handle_show(

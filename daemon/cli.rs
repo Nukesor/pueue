@@ -12,10 +12,9 @@ pub struct Opt {
     #[structopt(short, long, parse(from_occurrences))]
     pub verbose: u8,
 
-//    /// The ip the daemon listens on. Overwrites the address in the config file
-//    #[structopt(short, long)]
-//    pub address: Option<String>,
-
+    //    /// The ip the daemon listens on. Overwrites the address in the config file
+    //    #[structopt(short, long)]
+    //    pub address: Option<String>,
     /// The port the daemon listens on. Overwrites the port in the config file
     #[structopt(short, long)]
     pub port: Option<String>,

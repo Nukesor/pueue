@@ -1,11 +1,10 @@
 use ::anyhow::Result;
 use ::async_std::net::TcpStream;
 use ::async_std::prelude::*;
-use ::std::io::Cursor;
 use ::byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
+use ::std::io::Cursor;
 
 use crate::message::*;
-
 
 /// Convenience wrapper around send_bytes
 /// Deserialize a message and feed the bytes into send_bytes
@@ -17,7 +16,6 @@ pub async fn send_message(message: &Message, socket: &mut TcpStream) -> Result<(
 
     send_bytes(payload, socket).await
 }
-
 
 /// Send a Vec of bytes. Before the actual bytes are send, the size of the message
 /// is transmitted in an header of fixed size (u64).
@@ -34,7 +32,6 @@ pub async fn send_bytes(payload: Vec<u8>, socket: &mut TcpStream) -> Result<()> 
 
     Ok(())
 }
-
 
 /// Receive a byte stream depending on a given header
 /// This is the basic protocol beneath all pueue communication

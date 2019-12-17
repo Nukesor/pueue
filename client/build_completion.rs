@@ -1,5 +1,5 @@
-use ::structopt::StructOpt;
 use ::structopt::clap::Shell;
+use ::structopt::StructOpt;
 
 pub mod cli;
 
