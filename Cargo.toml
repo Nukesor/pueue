@@ -15,7 +15,7 @@ travis-ci = { repository = "nukesor/pueue", branch = "master" }
 maintenance = { status = "actively-developed" }
 
 [[bin]]
-name = "completion"
+name = "completions_pueue"
 path = "client/build_completion.rs"
 
 [[bin]]
