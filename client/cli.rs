@@ -17,7 +17,7 @@ pub enum SubCommand {
         #[structopt(name = "immediate", short, long)]
         start_immediately: bool,
     },
-    /// Remove a tasks from the list.
+    /// Remove tasks from the list.
     /// Running or paused tasks need to be killed first.
     Remove {
         /// The task ids to be removed
@@ -31,7 +31,7 @@ pub enum SubCommand {
         task_id_2: usize,
     },
     /// Stashed tasks won't be automatically started.
-    /// Either `enqueue` them, to be normally handled or explicitely `start` them.
+    /// Either `enqueue` them, to be normally handled or explicitly `start` them.
     Stash {
         /// The id(s) of the tasks you want to stash
         task_ids: Vec<usize>,

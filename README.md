@@ -8,7 +8,7 @@
 
 ![Pueue](https://raw.githubusercontent.com/Nukesor/images/master/pueue.gif)
 
-Pueue is a command-line task management tool for sequential and parallel execution of long running tasks.
+Pueue is a command-line task management tool for sequential and parallel execution of long-running tasks.
 If you break it down, it's a manager that processes a queue of shell commands.
 On top of that, there are a lot of convenience features and abstractions.
 
@@ -25,10 +25,10 @@ It provides functionality for:
 
 ## Why should I use it?
 
-I simply guess many of us know this situation, when one needs to unzip or transfer huge amounts of data into different directories.
-This normally ends with about 10 open terminals/tmux sessions and an overchallenged hard drive.
+I just assume that many of us know this situation when one needs to unzip or transfer huge amounts of data into different directories.
+This normally ends with about 10 open terminals/tmux sessions and an over-challenged hard drive.
 
-Pueue is specifically designed for these situations. It executes long running tasks in their respective directories, without being bound to any terminal.  
+Pueue is specifically designed for these situations. It executes long-running tasks in their respective directories, without being bound to any terminal.  
 
 *A few possible applications:*
 - Copying huge amounts of stuff
@@ -40,7 +40,7 @@ Give it a try, If I got your attention.
 Pueue made at least my life a lot easier on many occasions.
 
 If you like the project and feel like something is missing, feel free to create an issue suggesting improvements.  
-I'm always open to suggestions and already implemented a few user requested features.
+I'm always open to suggestions and already implemented a few users requested features.
 
 PRs are of course always welcome!
 
@@ -76,7 +76,7 @@ FLAGS:
     -v, --verbose    Verbose mode (-v, -vv, -vvv)
 
 OPTIONS:
-    -a, --address <address>    The url for the daemon. Overwrites the address in the config file
+    -a, --address <address>    The URL for the daemon. Overwrites the address in the config file
     -p, --port <port>          The port for the daemon. Overwrites the port in the config file
 
 ARGS:
@@ -93,14 +93,14 @@ SUBCOMMANDS:
     parallel    Set the amount of allowed parallel tasks
     pause       Pause the daemon and all running tasks. A paused daemon won't start any new tasks. Daemon and tasks
                 can be continued with `start`
-    remove      Remove a tasks from the list. Running or paused tasks need to be killed first.
+    remove      Remove tasks from the list. Running or paused tasks need to be killed first.
     reset       Kill all running tasks, remove all tasks and reset max_id.
     restart     Enqueue tasks again.
     send        Send something to a task. Useful for sending confirmations ('y\n')
     show        Show the output of a currently running task This command allows following (like `tail -f`)
     start       Wake the daemon from its paused state. Also continues all paused tasks.
     stash       Stashed tasks won't be automatically started. Either `enqueue` them, to be normally handled or
-                explicitely `start` them.
+                explicitly `start` them.
     status      Display the current status of all tasks
     switch      Switches the queue position of two commands. Only works on queued and stashed commands
 ```
@@ -125,7 +125,7 @@ daemon:
 - `secret` The secret, that's used for authentication
 
 **Daemon**: 
-- `pueue_directory` The location Pueue uses for it's intermediate files and logs.
+- `pueue_directory` The location Pueue uses for its intermediate files and logs.
 - `default_parallel_tasks` Determines how many tasks should be processed concurrently.  
 - `port` The port the daemon should listen to.  
 - `secret` The secret, that's used for authentication
@@ -145,13 +145,13 @@ This would help me a lot!
 ## Utilities
 
 ### Systemd
-If you use Systemd and don't install Pueue with Yay, place `pueuedaemon.service` in `/etc/systemd/user/`.  
-Afterwards every user can start/enable their own session with:  
+If you use Systemd and don't install Pueue with Yay, place `pueued.service` in `/etc/systemd/user/`.  
+Afterward, every user can start/enable their own session with:  
 
-        systemctl --user start pueuedaemon.service
-        systemctl --user enable pueuedaemon.service
+        systemctl --user start pueued.service
+        systemctl --user enable pueued.service
 
-### Json Support
+### JSON Support
 
 The Pueue client `status` and `log` commands support JSON output with the `-j` flag.
 This can be used to easily incorporate it into window manager bars, such as i3bar.
