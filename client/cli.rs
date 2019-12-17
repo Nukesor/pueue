@@ -11,7 +11,7 @@ pub enum SubCommand {
     Add {
         /// The command that should be added
         #[structopt()]
-        command: String,
+        command: Vec<String>,
 
         /// Start the task immediately
         #[structopt(name = "immediate", short, long)]
@@ -177,7 +177,7 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
                 "Cannot parse current working directory (Invalid utf8?)"
             ))?;
             Ok(Message::Add(AddMessage {
-                command: command.to_string(),
+                command: command.join(" "),
                 path: cwd.to_string(),
                 start_immediately: *start_immediately,
             }))

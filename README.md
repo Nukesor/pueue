@@ -54,8 +54,14 @@ There are three different ways to install Pueue.
 
 ## How to use it:
 
-There is a help option (-h) for all commands.
+For normal operation it's recommended to add an alias to your shell rc for `pueue add --`, e.g. `alias pad=pueue add --`
 
+To add a command just write: `pueue add -- ls -al`  
+The command will then be added and executed as if you executed it right now and then.
+
+To get the status of currently running commands, just type `pueue status`.
+
+There is a help option (-h) for all commands.
 ```
 Pueue client 0.1.0
 Arne Beer <contact@arne.beer>
