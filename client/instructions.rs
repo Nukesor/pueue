@@ -7,7 +7,9 @@ use ::tempfile::NamedTempFile;
 
 use ::pueue::message::*;
 
-/// Save the command tokjkjkjkjkj
+/// Save the received command to a temporary file, which is the edited with $EDITOR
+/// As soon as the editor is closed, read the file content and send a message
+/// with the updated command to the daemon
 pub fn edit(message: Message) -> Message {
     let message = match message {
         Message::EditResponse(message) => message,
