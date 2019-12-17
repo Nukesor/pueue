@@ -7,7 +7,7 @@ homepage = "https://github.com/nukesor/pueue"
 repository = "https://github.com/nukesor/pueue"
 documentation = "https://docs.rs/tectonic"
 license = "MIT"
-keywords = ["shell", "commandline", "parallel", "daemon", "queue", "scheduler"]
+keywords = ["shell", "command", "parallel", "task", "queue"]
 edition = "2018"
 
 [badges]
