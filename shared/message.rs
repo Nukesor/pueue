@@ -66,7 +66,7 @@ pub struct EnqueueMessage {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct StartMessage {
-    pub task_ids: Option<Vec<usize>>,
+    pub task_ids: Vec<usize>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -78,7 +78,7 @@ pub struct RestartMessage {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct PauseMessage {
     pub wait: bool,
-    pub task_ids: Option<Vec<usize>>,
+    pub task_ids: Vec<usize>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

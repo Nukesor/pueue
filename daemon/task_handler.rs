@@ -271,20 +271,20 @@ impl TaskHandler {
     /// 2. Or force the start of specific tasks.
     fn start(&mut self, message: StartMessage) {
         // Only start specific tasks
-        if let Some(task_ids) = message.task_ids {
-            for id in task_ids {
+        if !message.task_ids.is_empty() {
+            for id in &message.task_ids {
                 // Continue all children that are simply paused
-                if self.children.contains_key(&id) {
-                    self.continue_task(id);
+                if self.children.contains_key(id) {
+                    self.continue_task(*id);
                 } else {
                     // Start processes for all tasks that haven't been started yet
                     let task = {
                         let mut state = self.state.lock().unwrap();
-                        state.get_task_clone(id)
+                        state.get_task_clone(*id)
                     };
 
                     if let Some(task) = task {
-                        self.start_process(id, &task);
+                        self.start_process(*id, &task);
                     }
                 }
             }
@@ -321,9 +321,9 @@ impl TaskHandler {
     /// 2. Or only pause specific tasks.
     fn pause(&mut self, message: PauseMessage) {
         // Only pause specific tasks
-        if let Some(task_ids) = message.task_ids {
-            for id in task_ids {
-                self.pause_task(id);
+        if !message.task_ids.is_empty() {
+            for id in &message.task_ids {
+                self.pause_task(*id);
             }
             return;
         }
@@ -336,7 +336,7 @@ impl TaskHandler {
             }
         }
         info!("Pausing daemon");
-        self.change_running(true);
+        self.change_running(false);
     }
 
     /// Pause a specific task.

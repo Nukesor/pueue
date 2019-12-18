@@ -262,7 +262,7 @@ impl State {
         // While restoring the tasks, check for any invalid/broken stati
         for (task_id, task) in state.tasks.iter_mut() {
             // Handle ungraceful shutdowns while executing tasks
-            if task.status == TaskStatus::Running || task.status == TaskStatus::Failed {
+            if task.status == TaskStatus::Running || task.status == TaskStatus::Failed || task.status == TaskStatus::Paused {
                 task.status = TaskStatus::Failed;
             }
             // Crash during editing of the task command

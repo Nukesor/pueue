@@ -65,6 +65,7 @@ pub fn print_state(message: Message, json: bool) {
         let status_style = match task.status {
             TaskStatus::Running | TaskStatus::Done => Attr::ForegroundColor(color::GREEN),
             TaskStatus::Failed => Attr::ForegroundColor(color::RED),
+            TaskStatus::Paused => Attr::ForegroundColor(color::WHITE),
             _ => Attr::ForegroundColor(color::YELLOW),
         };
         row.add_cell(status_cell.with_style(status_style));
@@ -124,7 +125,7 @@ pub fn print_state(message: Message, json: bool) {
 /// Print the log ouput of finished tasks.
 /// Either print the logs of every task
 /// or only print the logs of the specified tasks.
-pub fn print_logs(message: Message, task_ids: Option<Vec<usize>>, json: bool) {
+pub fn print_logs(message: Message, task_ids: Vec<usize>, json: bool) {
     let state = match message {
         Message::StatusResponse(state) => state,
         _ => return,
@@ -134,16 +135,13 @@ pub fn print_logs(message: Message, task_ids: Option<Vec<usize>>, json: bool) {
         return;
     }
 
-    match task_ids {
-        Some(task_ids) => {
-            for task_id in task_ids {
-                print_log(task_id, &state);
-            }
+    if !task_ids.is_empty() {
+        for task_id in task_ids {
+            print_log(task_id, &state);
         }
-        None => {
-            for task_id in state.tasks.keys() {
-                print_log(*task_id, &state);
-            }
+    } else {
+        for task_id in state.tasks.keys() {
+            print_log(*task_id, &state);
         }
     }
 }

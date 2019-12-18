@@ -44,7 +44,7 @@ fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) 
     }
     if message.start_immediately {
         let start_message = StartMessage {
-            task_ids: Some(vec![task_id]),
+            task_ids: vec![task_id],
         };
         sender
             .send(Message::Start(start_message))
@@ -142,10 +142,10 @@ fn start(message: StartMessage, sender: &Sender<Message>, state: &SharedState) -
     sender
         .send(Message::Start(message.clone()))
         .expect(SENDER_ERR);
-    if let Some(task_ids) = message.task_ids {
+    if !message.task_ids.is_empty() {
         let response = task_response_helper(
             "Tasks are being started",
-            task_ids,
+            message.task_ids,
             vec![TaskStatus::Paused, TaskStatus::Queued, TaskStatus::Stashed],
             state,
         );
@@ -183,7 +183,7 @@ fn restart(message: RestartMessage, sender: &Sender<Message>, state: &SharedStat
     // with the new task ids to the task handler.
     if message.start_immediately {
         let start_message = StartMessage {
-            task_ids: Some(new_ids),
+            task_ids: new_ids,
         };
         sender
             .send(Message::Start(start_message))
@@ -198,10 +198,10 @@ fn pause(message: PauseMessage, sender: &Sender<Message>, state: &SharedState) -
     sender
         .send(Message::Pause(message.clone()))
         .expect(SENDER_ERR);
-    if let Some(task_ids) = message.task_ids {
+    if !message.task_ids.is_empty() {
         let response = task_response_helper(
             "Tasks are being paused",
-            task_ids,
+            message.task_ids,
             vec![TaskStatus::Running],
             state,
         );

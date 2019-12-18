@@ -47,8 +47,8 @@ pub enum SubCommand {
     Start {
         /// Enforce starting these tasks.
         /// This doesn't affect the daemon or any other tasks and works on a paused deamon.
-        #[structopt(short, long)]
-        task_ids: Option<Vec<usize>>,
+        #[structopt()]
+        task_ids: Vec<usize>,
     },
     /// Enqueue tasks again.
     Restart {
@@ -70,8 +70,8 @@ pub enum SubCommand {
 
         /// Enforce starting these tasks.
         /// Doesn't affect the daemon or any other tasks.
-        #[structopt(short, long, group("pause"))]
-        task_ids: Option<Vec<usize>>,
+        #[structopt(group("pause"))]
+        task_ids: Vec<usize>,
     },
     /// Kill running tasks.
     Kill {
@@ -80,7 +80,7 @@ pub enum SubCommand {
         all: bool,
 
         /// The tasks that should be killed.
-        #[structopt(group("kill"), required_unless("all"))]
+        #[structopt(group("kill"))]
         task_ids: Vec<usize>,
     },
 
@@ -109,8 +109,8 @@ pub enum SubCommand {
     /// Display the log output of finished tasks
     Log {
         /// Specify for which specific tasks you want to see the output
-        #[structopt(short, long)]
-        task_ids: Option<Vec<usize>>,
+        #[structopt()]
+        task_ids: Vec<usize>,
         /// Print the current state as json
         /// Includes EVERYTHING
         #[structopt(short, long)]
