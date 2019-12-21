@@ -27,7 +27,7 @@ It provides functionality for:
 
 **Pueue has been rewritten in Rust!!** If you want the old version that's build with python, please install via pip.
 
-**Pueue works on Linux and MacOS** MacOS is not officially tested though. I really appreciate any feedback!.
+**Pueue works on Linux and MacOS**. MacOS is not officially tested, though. I really appreciate any feedback!
 
 ## Why should I use it?
 
