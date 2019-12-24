@@ -60,10 +60,11 @@ There are three different ways to install Pueue.
 
 ## How to use it:
 
-For normal operation it's recommended to add an alias to your shell rc for `pueue add --`, e.g. `alias pad=pueue add --`
+To add a command just write: `pueue add sleep 60`  
+If you want to add flags to the command, you need to add `--`. E.g. `pueue add -- ls -al`  
+For normal operation it's thereby recommended to add an alias to your shell rc for `pueue add --`, e.g. `alias pad=pueue add --`.
 
-To add a command just write: `pueue add -- ls -al`  
-The command will then be added and executed as if you executed it right now and then.
+The command will then be added and scheduled for execution, as if you executed it right now and then.
 
 To get the status of currently running commands, just type `pueue status`.
 
