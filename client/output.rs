@@ -64,7 +64,7 @@ pub fn print_state(message: Message, json: bool) {
         let status_cell = Cell::new(&task.status.to_string());
         let status_style = match task.status {
             TaskStatus::Running | TaskStatus::Done => Attr::ForegroundColor(color::GREEN),
-            TaskStatus::Failed => Attr::ForegroundColor(color::RED),
+            TaskStatus::Failed | TaskStatus::Killed => Attr::ForegroundColor(color::RED),
             TaskStatus::Paused => Attr::ForegroundColor(color::WHITE),
             _ => Attr::ForegroundColor(color::YELLOW),
         };
@@ -87,11 +87,7 @@ pub fn print_state(message: Message, json: bool) {
                 }
             }
             None => {
-                if task.is_done() {
-                    row.add_cell(Cell::new("Killed").with_style(Attr::ForegroundColor(color::RED)));
-                } else {
-                    row.add_cell(Cell::new(""));
-                }
+                row.add_cell(Cell::new(""));
             }
         }
 

@@ -176,11 +176,18 @@ impl TaskHandler {
 
             let mut state = self.state.lock().unwrap();
             let mut task = state.tasks.get_mut(&task_id).unwrap();
-            task.status = TaskStatus::Done;
+            // Don't set to the status to Done, if the task has been killed by the daemon
+            if task.status != TaskStatus::Killed {
+                task.exit_code = Some(exit_code);
+                // Only processes with exit code 0 exited successfully
+                if task.exit_code == Some(0) {
+                    task.status = TaskStatus::Done;
+                } else {
+                    task.status = TaskStatus::Failed;
+                }
+            }
             task.stdout = stdout;
             task.stderr = stderr;
-
-            task.exit_code = Some(exit_code);
             task.end = Some(Local::now());
 
             state.save()
@@ -385,7 +392,12 @@ impl TaskHandler {
         if let Some(child) = self.children.get_mut(&task_id) {
             match child.kill() {
                 Err(_) => debug!("Task {} has already finished by itself", task_id),
-                _ => (),
+                _ => {
+                    // Already mark the task as killed over here.
+                    // It's hard to distinguish whether it's killed later on.
+                    let mut state = self.state.lock().unwrap();
+                    state.change_status(task_id, TaskStatus::Killed);
+                },
             };
         } else {
             warn!("Tried to kill non-existing child: {}", task_id);
