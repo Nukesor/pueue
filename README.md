@@ -149,6 +149,12 @@ If you want to dig right into it, you can compile and run it yourself with a deb
 This would help me a lot!
 
 
+## Scripting
+
+When calling pueue commands in a script, you might need to sleep for a short amount of time for now.
+The pueue server asynchronously processes requests, while the TaskManager (which handles everything related to starting, stopping and communicating with processes) runs it's own update loop with a small sleep.
+A sleep in scripts will probably become irrelevant, as soon as this bug in rust-lang is fixed: https://github.com/rust-lang/rust/issues/39364
+
 ## Utilities
 
 ### Systemd
