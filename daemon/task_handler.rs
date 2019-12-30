@@ -312,6 +312,13 @@ impl TaskHandler {
         if !self.children.contains_key(&id) {
             return;
         }
+        {
+            // Task is already done
+            let state = self.state.lock().unwrap();
+            if state.tasks.get(&id).unwrap().is_done() {
+                return;
+            }
+        }
         match self.send_signal(id, Signal::SIGCONT) {
             Err(err) => warn!("Failed starting task {}: {:?}", id, err),
             Ok(success) => {
