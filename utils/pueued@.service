@@ -3,9 +3,10 @@
 # To start the daemon type `systemctl --user start pueued.service`
 
 [Unit]
-Description=Pueue Daemon
+Description=Pueue Daemon - CLI process scheduler and manager for %I
 
 [Service]
+User=%i
 Restart=no
 ExecStart=/usr/bin/pueued
 ExecReload=/usr/bin/pueued
