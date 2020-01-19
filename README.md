@@ -86,12 +86,13 @@ To get the status of currently running commands, just type `pueue status`.
 
 There is a help option (-h) for all commands.
 ```
-Pueue client 0.1.0
+
+Pueue client 0.0.5
 Arne Beer <contact@arne.beer>
 Interact with the Pueue daemon
 
 USAGE:
-    pueue [FLAGS] [OPTIONS] [config] <SUBCOMMAND>
+    pueue [FLAGS] [OPTIONS] <SUBCOMMAND>
 
 FLAGS:
     -h, --help       Prints help information
@@ -99,31 +100,27 @@ FLAGS:
     -v, --verbose    Verbose mode (-v, -vv, -vvv)
 
 OPTIONS:
-    -a, --address <address>    The URL for the daemon. Overwrites the address in the config file
-    -p, --port <port>          The port for the daemon. Overwrites the port in the config file
-
-ARGS:
-    <config>    Optional custom config path
+    -p, --port <port>    The port for the daemon. Overwrites the port in the config file
 
 SUBCOMMANDS:
     add         Enqueue a task for execution
-    clean       Remove all finished tasks from the list (also clears logs).
-    edit        Edit the command of a stashed or queued task.
-    enqueue     Enqueue stashed tasks. They'll be handled normally afterwards.
+    clean       Remove all finished tasks from the list (also clears logs)
+    edit        Edit the command of a stashed or queued task
+    enqueue     Enqueue stashed tasks. They'll be handled normally afterwards
     help        Prints this message or the help of the given subcommand(s)
-    kill        Kill running tasks.
+    kill        Kill running tasks
     log         Display the log output of finished tasks
     parallel    Set the amount of allowed parallel tasks
     pause       Pause the daemon and all running tasks. A paused daemon won't start any new tasks. Daemon and tasks
                 can be continued with `start`
-    remove      Remove tasks from the list. Running or paused tasks need to be killed first.
-    reset       Kill all running tasks, remove all tasks and reset max_id.
-    restart     Enqueue tasks again.
+    remove      Remove tasks from the list. Running or paused tasks need to be killed first
+    reset       Kill all running tasks, remove all tasks and reset max_id
+    restart     Enqueue tasks again
     send        Send something to a task. Useful for sending confirmations ('y\n')
     show        Show the output of a currently running task This command allows following (like `tail -f`)
-    start       Wake the daemon from its paused state. Also continues all paused tasks.
+    start       Wake the daemon from its paused state. Also continues all paused tasks
     stash       Stashed tasks won't be automatically started. Either `enqueue` them, to be normally handled or
-                explicitly `start` them.
+                explicitly `start` them
     status      Display the current status of all tasks
     switch      Switches the queue position of two commands. Only works on queued and stashed commands
 ```
