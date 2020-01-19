@@ -54,16 +54,18 @@ PRs are of course always welcome!
 
 There are three different ways to install Pueue.
 
-**Arch Linux**
+**Arch Linux**  
 Use an Arch Linux AUR package manager e.g. yay: `yay -S pueue`.  
 This will deploy the service file and completions automatically.
 
-**Cargo**
+**Cargo**  
 You'll need Rust version `>=1.39`
-`cargo install pueue`.
+```
+cargo install pueue
+```
 This will install pueue to `~/.cargo/bin/pueue`
 
-**From Source**
+**From Source**  
 You'll need Rust version `>=1.39`
 ```
 git clone git@github.com:Nukesor/pueue
