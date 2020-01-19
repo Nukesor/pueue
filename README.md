@@ -36,7 +36,7 @@ This normally ends with about 10 open terminals/tmux sessions and an over-challe
 
 Pueue is specifically designed for these situations. It executes long-running tasks in their respective directories, without being bound to any terminal.  
 
-*A few possible applications:*
+**A few possible applications:**
 - Copying huge amounts of stuff
 - Compression tasks
 - Movie encoding
@@ -54,9 +54,23 @@ PRs are of course always welcome!
 
 There are three different ways to install Pueue.
 
-1. Use an Arch Linux AUR package manager e.g. yay: `yay -S pueue` . This will deploy the service file and completions automatically.
-2. Install by using cargo: `cargo install pueue`.
-3. Clone the repository and execute `cargo install --path .`.
+**Arch Linux**
+Use an Arch Linux AUR package manager e.g. yay: `yay -S pueue`.  
+This will deploy the service file and completions automatically.
+
+**Cargo**
+You'll need Rust version `>=1.39`
+`cargo install pueue`.
+This will install pueue to `~/.cargo/bin/pueue`
+
+**From Source**
+You'll need Rust version `>=1.39`
+```
+git clone git@github.com:Nukesor/pueue
+cd pueue
+cargo install --path .
+```
+This will install pueue to `~/.cargo/bin/pueue`
 
 ## How to use it:
 
