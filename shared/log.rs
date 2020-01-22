@@ -35,13 +35,16 @@ pub fn get_log_file_handles(task_id: usize, settings: &Settings) -> Result<(File
 /// Return the content of temporary stdout and stderr files for a task
 pub fn read_log_files(task_id: usize, settings: &Settings) -> Result<(String, String)> {
     let (mut stdout_handle, mut stderr_handle) = get_log_file_handles(task_id, settings)?;
-    let mut stdout = String::new();
-    let mut stderr = String::new();
+    let mut stdout_buffer = Vec::new();
+    let mut stderr_buffer = Vec::new();
 
-    stdout_handle.read_to_string(&mut stdout)?;
-    stderr_handle.read_to_string(&mut stderr)?;
+    stdout_handle.read_to_end(&mut stdout_buffer)?;
+    stderr_handle.read_to_end(&mut stderr_buffer)?;
 
-    Ok((stdout, stderr))
+    let stdout = String::from_utf8_lossy(&stdout_buffer);
+    let stderr = String::from_utf8_lossy(&stderr_buffer);
+
+    Ok((stdout.to_string(), stderr.to_string()))
 }
 
 /// Remove temporary stdout and stderr files for a task
