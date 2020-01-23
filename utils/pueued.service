@@ -1,13 +1,11 @@
 # This is the service file for the pueue daemon
-# To enable the daemon type `systemctl --user enable pueued@user.service`
-# To start the daemon type `systemctl --user start pueued@user.service`
+# To enable the daemon type `systemctl --user enable pueued.service`
+# To start the daemon type `systemctl --user start pueued.service`
 
 [Unit]
-Description=Pueue Daemon - CLI process scheduler and manager for %I
+Description=Pueue Daemon - CLI process scheduler and manager
 
 [Service]
-User=%i
-Group=%i
 Restart=no
 ExecStart=/usr/bin/pueued
 ExecReload=/usr/bin/pueued
