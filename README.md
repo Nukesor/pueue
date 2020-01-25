@@ -161,26 +161,33 @@ If the daemon crashes or something goes wrong, please set the debug level to `-v
 If you want to dig right into it, you can compile and run it yourself with a debug build.
 This would help me a lot!
 
-
-## Scripting
-
-When calling pueue commands in a script, you might need to sleep for a short amount of time for now.
-The pueue server asynchronously processes requests, while the TaskManager (which handles everything related to starting, stopping and communicating with processes) runs it's own update loop with a small sleep.
-A sleep in scripts will probably become irrelevant, as soon as this bug in rust-lang is fixed: https://github.com/rust-lang/rust/issues/39364
-
-## Utilities
+## Starting the Daemon
 
 ### Systemd
-If you use Systemd and don't install Pueue with Yay, place `pueued.service` in `/etc/systemd/user/`.  
+If you use Systemd and don't install Pueue with a package manager, place `pueued.service` in `/etc/systemd/user/`.  
 Afterward, every user can start/enable their own session with:  
 
         systemctl --user start pueued.service
         systemctl --user enable pueued.service
 
+### Local
+Just run `pueued` anywhere on your commandline. It'll exit if you close the terminal, though.
+
+
+## Utilities
+
 ### JSON Support
 
 The Pueue client `status` and `log` commands support JSON output with the `-j` flag.
 This can be used to easily incorporate it into window manager bars, such as i3bar.
+
+## Scripting
+
+When calling pueue commands in a script, you might need to sleep for a short amount of time for now.
+The pueue server processes requests asynchronously, whilst the TaskManager runs it's own update loop with a small sleep. 
+(The TaskManager handles everything related to starting, stopping and communicating with processes.)
+
+A sleep in scripts will probably become irrelevant, as soon as this bug in rust-lang is fixed: https://github.com/rust-lang/rust/issues/39364
 
 
 Copyright &copy; 2019 Arne Beer ([@Nukesor](https://github.com/Nukesor))
