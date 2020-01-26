@@ -1,6 +1,7 @@
-use ::prettytable::{color, format, Attr, Cell, Row, Table};
 use ::std::string::ToString;
-use ::termion::{color as t_color, style};
+use ::crossterm::style::{style, Color, Attribute};
+use ::comfy_table::prelude::*;
+use ::comfy_table::style::presets::UTF8_FULL;
 
 use ::pueue::message::*;
 use ::pueue::state::State;
@@ -11,7 +12,8 @@ pub fn print_success(message: String) {
 }
 
 pub fn print_error(message: String) {
-    println!("{}{}", t_color::Fg(t_color::Red), message);
+    let styled = style(message).with(Color::Red);
+    println!("{}", styled);
 }
 
 /// Print the current state of the daemon in a nicely formatted table
@@ -30,21 +32,23 @@ pub fn print_state(message: Message, json: bool) {
 
         return;
     }
-    let mut daemon_status = String::from("Daemon status: ");
-    if state.running {
-        daemon_status.push_str(&format!("{}", t_color::Fg(t_color::Green)));
-        daemon_status.push_str("running");
+    let mut daemon_status = if state.running {
+        style("Daemon status: running")
     } else {
-        daemon_status.push_str(&format!("{}", t_color::Fg(t_color::Yellow)));
-        daemon_status.push_str("paused");
-    }
-    daemon_status.push_str(&format!("{}", style::Reset));
+        style("Daemon status: ")
+    };
 
+    if state.running {
+        daemon_status = daemon_status.with(Color::Green);
+    } else {
+        daemon_status = daemon_status.with(Color::Yellow);
+    }
     println!("{}", daemon_status);
 
     let mut table = Table::new();
-    table.set_format(*format::consts::FORMAT_NO_COLSEP);
-    let header_row = Row::new(vec![
+    table.set_content_arrangement(ContentArrangement::Dynamic)
+        .load_preset(UTF8_FULL)
+        .set_header(vec![
         Cell::new("Index"),
         Cell::new("Status"),
         Cell::new("Exitcode"),
@@ -53,22 +57,21 @@ pub fn print_state(message: Message, json: bool) {
         Cell::new("Start"),
         Cell::new("End"),
     ]);
-    table.set_titles(header_row);
 
     for (id, task) in state.tasks {
-        let mut row = Row::new(vec![]);
+        let mut row = Row::new();
         // Add a row per time
         row.add_cell(Cell::new(&id.to_string()));
 
         // Add status cell and color depending on state
         let status_cell = Cell::new(&task.status.to_string());
-        let status_style = match task.status {
-            TaskStatus::Running | TaskStatus::Done => Attr::ForegroundColor(color::GREEN),
-            TaskStatus::Failed | TaskStatus::Killed => Attr::ForegroundColor(color::RED),
-            TaskStatus::Paused => Attr::ForegroundColor(color::WHITE),
-            _ => Attr::ForegroundColor(color::YELLOW),
+        let status_cell = match task.status {
+            TaskStatus::Running | TaskStatus::Done => status_cell.fg(Color::Green),
+            TaskStatus::Failed | TaskStatus::Killed => status_cell.fg(Color::Red),
+            TaskStatus::Paused => status_cell.fg(Color::White),
+            _ => status_cell.fg(Color::Yellow),
         };
-        row.add_cell(status_cell.with_style(status_style));
+        row.add_cell(status_cell);
 
         // Match the color of the exit code
         // If the exit_code is none, it has been killed by the task handler.
@@ -77,12 +80,11 @@ pub fn print_state(message: Message, json: bool) {
                 // Everything that's not 0, is failed task
                 if code == 0 {
                     row.add_cell(
-                        Cell::new(&code.to_string())
-                            .with_style(Attr::ForegroundColor(color::GREEN)),
+                        Cell::new(&code.to_string()).fg(Color::Green),
                     );
                 } else {
                     row.add_cell(
-                        Cell::new(&code.to_string()).with_style(Attr::ForegroundColor(color::RED)),
+                        Cell::new(&code.to_string()).fg(Color::Red)
                     );
                 }
             }
@@ -115,7 +117,7 @@ pub fn print_state(message: Message, json: bool) {
     }
 
     // Print the table
-    table.printstd();
+    println!("{}", table);
 }
 
 /// Print the log ouput of finished tasks.
@@ -156,35 +158,18 @@ pub fn print_log(task_id: usize, state: &State) {
 
     let exit_status = match task.exit_code {
         Some(code) => match code {
-            0 => format!(
-                "with exit code {}{}{}",
-                t_color::Fg(t_color::Green),
-                code,
-                style::Reset
-            ),
-            _ => format!(
-                "with exit code {}{}{}",
-                t_color::Fg(t_color::Red),
-                code,
-                style::Reset
-            ),
+            0 => style(format!("with exit code {}", code)).with(Color::Green),
+            _ => style(format!("with exit code {}", code)).with(Color::Red),
         },
-        None => format!(
-            "{}{}{}",
-            t_color::Fg(t_color::Red),
-            "failed to Spawn",
-            style::Reset
-        ),
+        None => style("failed to Spawn".to_string()).with(Color::Red),
     };
 
+    // Print task id and exit code
     println!("\n");
-    println!(
-        "{}Task {} {}{}",
-        style::Bold,
-        task.id,
-        exit_status,
-        style::Reset
-    );
+    print!("{}", style(format!("Task {} ", task.id)).attribute(Attribute::Bold));
+    println!("{}", exit_status);
+
+    // Print command and path
     println!("Command: {}", task.command);
     println!("Path: {}", task.path);
     if let Some(start) = task.start {
@@ -196,24 +181,14 @@ pub fn print_log(task_id: usize, state: &State) {
 
     if let Some(stdout) = &task.stdout {
         if !stdout.is_empty() {
-            println!(
-                "\n{}{}Std_out:{}",
-                style::Bold,
-                t_color::Fg(t_color::Green),
-                style::Reset
-            );
+            println!("{}", style("Std_out: ").with(Color::Green).attribute(Attribute::Bold));
             println!("{}", stdout);
         }
     }
 
     if let Some(stderr) = &task.stderr {
         if !stderr.is_empty() {
-            println!(
-                "\n{}{}Std_err:{}",
-                style::Bold,
-                t_color::Fg(t_color::Red),
-                style::Reset
-            );
+            println!("{}", style("Std_err: ").with(Color::Red).attribute(Attribute::Bold));
             println!("{}", stderr);
         }
     }
