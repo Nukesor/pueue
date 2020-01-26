@@ -1,7 +1,7 @@
-use ::std::string::ToString;
-use ::crossterm::style::{style, Color, Attribute};
 use ::comfy_table::prelude::*;
 use ::comfy_table::style::presets::UTF8_FULL;
+use ::crossterm::style::{style, Attribute, Color};
+use ::std::string::ToString;
 
 use ::pueue::message::*;
 use ::pueue::state::State;
@@ -46,17 +46,18 @@ pub fn print_state(message: Message, json: bool) {
     println!("{}", daemon_status);
 
     let mut table = Table::new();
-    table.set_content_arrangement(ContentArrangement::Dynamic)
+    table
+        .set_content_arrangement(ContentArrangement::Dynamic)
         .load_preset(UTF8_FULL)
         .set_header(vec![
-        Cell::new("Index"),
-        Cell::new("Status"),
-        Cell::new("Exitcode"),
-        Cell::new("Command"),
-        Cell::new("Path"),
-        Cell::new("Start"),
-        Cell::new("End"),
-    ]);
+            Cell::new("Index"),
+            Cell::new("Status"),
+            Cell::new("Exitcode"),
+            Cell::new("Command"),
+            Cell::new("Path"),
+            Cell::new("Start"),
+            Cell::new("End"),
+        ]);
 
     for (id, task) in state.tasks {
         let mut row = Row::new();
@@ -79,13 +80,9 @@ pub fn print_state(message: Message, json: bool) {
             Some(code) => {
                 // Everything that's not 0, is failed task
                 if code == 0 {
-                    row.add_cell(
-                        Cell::new(&code.to_string()).fg(Color::Green),
-                    );
+                    row.add_cell(Cell::new(&code.to_string()).fg(Color::Green));
                 } else {
-                    row.add_cell(
-                        Cell::new(&code.to_string()).fg(Color::Red)
-                    );
+                    row.add_cell(Cell::new(&code.to_string()).fg(Color::Red));
                 }
             }
             None => {
@@ -166,7 +163,10 @@ pub fn print_log(task_id: usize, state: &State) {
 
     // Print task id and exit code
     println!("\n");
-    print!("{}", style(format!("Task {} ", task.id)).attribute(Attribute::Bold));
+    print!(
+        "{}",
+        style(format!("Task {} ", task.id)).attribute(Attribute::Bold)
+    );
     println!("{}", exit_status);
 
     // Print command and path
@@ -181,14 +181,24 @@ pub fn print_log(task_id: usize, state: &State) {
 
     if let Some(stdout) = &task.stdout {
         if !stdout.is_empty() {
-            println!("{}", style("Std_out: ").with(Color::Green).attribute(Attribute::Bold));
+            println!(
+                "{}",
+                style("Std_out: ")
+                    .with(Color::Green)
+                    .attribute(Attribute::Bold)
+            );
             println!("{}", stdout);
         }
     }
 
     if let Some(stderr) = &task.stderr {
         if !stderr.is_empty() {
-            println!("{}", style("Std_err: ").with(Color::Red).attribute(Attribute::Bold));
+            println!(
+                "{}",
+                style("Std_err: ")
+                    .with(Color::Red)
+                    .attribute(Attribute::Bold)
+            );
             println!("{}", stderr);
         }
     }

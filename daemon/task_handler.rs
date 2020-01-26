@@ -404,7 +404,7 @@ impl TaskHandler {
                     // It's hard to distinguish whether it's killed later on.
                     let mut state = self.state.lock().unwrap();
                     state.change_status(task_id, TaskStatus::Killed);
-                },
+                }
             };
         } else {
             warn!("Tried to kill non-existing child: {}", task_id);

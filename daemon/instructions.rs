@@ -182,9 +182,7 @@ fn restart(message: RestartMessage, sender: &Sender<Message>, state: &SharedStat
     // If the restarted tasks should be started immediately, send a message
     // with the new task ids to the task handler.
     if message.start_immediately {
-        let start_message = StartMessage {
-            task_ids: new_ids,
-        };
+        let start_message = StartMessage { task_ids: new_ids };
         sender
             .send(Message::Start(start_message))
             .expect(SENDER_ERR);

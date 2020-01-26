@@ -70,7 +70,9 @@ impl Task {
     }
 
     pub fn is_done(&self) -> bool {
-        return self.status == TaskStatus::Done || self.status == TaskStatus::Failed || self.status == TaskStatus::Killed;
+        return self.status == TaskStatus::Done
+            || self.status == TaskStatus::Failed
+            || self.status == TaskStatus::Killed;
     }
 
     pub fn is_queued(&self) -> bool {
