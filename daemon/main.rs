@@ -1,5 +1,6 @@
 use ::anyhow::{bail, Error, Result};
 use ::simplelog::{Config, LevelFilter, SimpleLogger};
+use ::std::process::Command;
 use ::std::fs::create_dir_all;
 use ::std::path::Path;
 use ::std::sync::mpsc::channel;
@@ -34,6 +35,10 @@ async fn main() -> Result<()> {
     // Parse commandline options
     let opt = Opt::from_args();
 
+    if opt.daemonize {
+        fork_daemon(&opt)?;
+    }
+
     // Set the verbosity level for the client app
     if opt.verbose >= 3 {
         SimpleLogger::init(LevelFilter::Debug, Config::default())?;
@@ -63,7 +68,7 @@ async fn main() -> Result<()> {
 }
 
 /// Initialize all directories needed for normal operation
-pub fn init_directories(path: &String) {
+fn init_directories(path: &String) {
     let pueue_dir = Path::new(path);
     if !pueue_dir.exists() {
         if let Err(error) = create_dir_all(&pueue_dir) {
@@ -92,4 +97,26 @@ pub fn init_directories(path: &String) {
             );
         }
     }
+}
+
+/// This is a simple and cheap custom fork method
+/// Simply spawn a new child with identical arguments and exit right away
+fn fork_daemon(opt: &Opt) -> Result<()> {
+    let mut arguments = Vec::<String>::new();
+
+    if let Some(port) = &opt.port {
+        arguments.push("--port".to_string());
+        arguments.push(port.clone());
+    }
+
+    if opt.verbose > 0 {
+        arguments.push("-".to_string() + &" ".repeat(opt.verbose as usize));
+    }
+
+    Command::new("pueued")
+        .args(&arguments)
+        .spawn()?;
+
+    println!("Pueued is now running in the background");
+    std::process::exit(0);
 }

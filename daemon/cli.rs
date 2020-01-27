@@ -15,7 +15,7 @@ pub struct Opt {
     /// Closing the terminal won't kill the daemon any longer.
     /// This should be avoided and rather be properly done using a service manager.
     #[structopt(short, long)]
-    daemonize: bool,
+    pub daemonize: bool,
 
     //    /// The ip the daemon listens on. Overwrites the address in the config file
     //    #[structopt(short, long)]

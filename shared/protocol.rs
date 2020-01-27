@@ -1,6 +1,7 @@
 use ::anyhow::Result;
 use ::async_std::net::TcpStream;
 use ::async_std::prelude::*;
+use ::log::debug;
 use ::byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use ::std::io::Cursor;
 
@@ -9,6 +10,7 @@ use crate::message::*;
 /// Convenience wrapper around send_bytes
 /// Deserialize a message and feed the bytes into send_bytes
 pub async fn send_message(message: &Message, socket: &mut TcpStream) -> Result<()> {
+    debug!("Sending message: {:?}", message);
     // Prepare command for transfer and determine message byte size
     let payload = serde_json::to_string(message)
         .expect("Failed to serialize message.")
@@ -70,6 +72,7 @@ pub async fn receive_message(socket: &mut TcpStream) -> Result<Message> {
 
     // Deserialize the message
     let message = String::from_utf8(payload_bytes)?;
+    debug!("Received message: {:?}", message);
     let message: Message = serde_json::from_str(&message)?;
 
     Ok(message)

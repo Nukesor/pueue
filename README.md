@@ -163,16 +163,19 @@ This would help me a lot!
 
 ## Starting the Daemon
 
+### Local
+Just run `pueued` anywhere on your commandline. It'll exit if you close the terminal, though.
+
+### Background
+To fork `pueued` into the background, add the `-d` or `--daemonize` flag. E.g. `pueued -d`. \
+The daemon can be then shut down using the client: `pueue shutdown`
+
 ### Systemd
 If you use Systemd and don't install Pueue with a package manager, place `pueued.service` in `/etc/systemd/user/`.  
 Afterward, every user can start/enable their own session with:  
 
         systemctl --user start pueued.service
         systemctl --user enable pueued.service
-
-### Local
-Just run `pueued` anywhere on your commandline. It'll exit if you close the terminal, though.
-
 
 ## Utilities
 
