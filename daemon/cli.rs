@@ -7,10 +7,15 @@ use ::structopt::StructOpt;
     author = "Arne Beer <contact@arne.beer>"
 )]
 pub struct Opt {
-    // The number of occurrences of the `v/verbose` flag
     /// Verbose mode (-v, -vv, -vvv)
     #[structopt(short, long, parse(from_occurrences))]
     pub verbose: u8,
+
+    /// If this flag is set, the daemon will start and fork itself into the background
+    /// Closing the terminal won't kill the daemon any longer.
+    /// This should be avoided and rather be properly done using a service manager.
+    #[structopt(short, long)]
+    daemonize: bool,
 
     //    /// The ip the daemon listens on. Overwrites the address in the config file
     //    #[structopt(short, long)]

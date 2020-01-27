@@ -55,6 +55,9 @@ _pueue() {
             show)
                 cmd+="__show"
                 ;;
+            shutdown)
+                cmd+="__shutdown"
+                ;;
             start)
                 cmd+="__start"
                 ;;
@@ -74,21 +77,13 @@ _pueue() {
 
     case "${cmd}" in
         pueue)
-            opts=" -v -h -V -a -p  --verbose --help --version --address --port   add remove switch stash enqueue start restart pause kill send edit status log show reset clean parallel help"
+            opts=" -v -h -V -p  --verbose --help --version --port   add remove switch stash enqueue start restart pause kill send edit status log show clean reset shutdown parallel help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
             fi
             case "${prev}" in
                 
-                --address)
-                    COMPREPLY=($(compgen -f "${cur}"))
-                    return 0
-                    ;;
-                    -a)
-                    COMPREPLY=($(compgen -f "${cur}"))
-                    return 0
-                    ;;
                 --port)
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
@@ -106,7 +101,7 @@ _pueue() {
             ;;
         
         pueue__add)
-            opts=" -i -h -V  --immediate --help --version  <command> "
+            opts=" -i -h -V  --immediate --help --version  <command>... "
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -196,21 +191,13 @@ _pueue() {
             return 0
             ;;
         pueue__log)
-            opts=" -j -h -V -t  --json --help --version --task-ids  "
+            opts=" -j -h -V  --json --help --version  <task-ids>... "
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
             fi
             case "${prev}" in
                 
-                --task-ids)
-                    COMPREPLY=($(compgen -f "${cur}"))
-                    return 0
-                    ;;
-                    -t)
-                    COMPREPLY=($(compgen -f "${cur}"))
-                    return 0
-                    ;;
                 *)
                     COMPREPLY=()
                     ;;
@@ -234,21 +221,13 @@ _pueue() {
             return 0
             ;;
         pueue__pause)
-            opts=" -w -h -V -t  --wait --help --version --task-ids  "
+            opts=" -w -h -V  --wait --help --version  <task-ids>... "
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
             fi
             case "${prev}" in
                 
-                --task-ids)
-                    COMPREPLY=($(compgen -f "${cur}"))
-                    return 0
-                    ;;
-                    -t)
-                    COMPREPLY=($(compgen -f "${cur}"))
-                    return 0
-                    ;;
                 *)
                     COMPREPLY=()
                     ;;
@@ -331,22 +310,29 @@ _pueue() {
             COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
             return 0
             ;;
-        pueue__start)
-            opts=" -h -V -t  --help --version --task-ids  "
+        pueue__shutdown)
+            opts=" -h -V  --help --version  "
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
             fi
             case "${prev}" in
                 
-                --task-ids)
-                    COMPREPLY=($(compgen -f "${cur}"))
-                    return 0
+                *)
+                    COMPREPLY=()
                     ;;
-                    -t)
-                    COMPREPLY=($(compgen -f "${cur}"))
-                    return 0
-                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        pueue__start)
+            opts=" -h -V  --help --version  <task-ids>... "
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                
                 *)
                     COMPREPLY=()
                     ;;

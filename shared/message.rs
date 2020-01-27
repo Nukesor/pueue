@@ -28,6 +28,7 @@ pub enum Message {
     StreamRequest(StreamRequestMessage),
     Reset,
     Clean,
+    DaemonShutdown,
 
     StatusResponse(State),
     Success(String),

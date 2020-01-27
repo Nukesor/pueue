@@ -128,10 +128,12 @@ pub enum SubCommand {
         #[structopt(short, long)]
         err: bool,
     },
-    /// Kill all running tasks, remove all tasks and reset max_id.
-    Reset,
     /// Remove all finished tasks from the list (also clears logs).
     Clean,
+    /// Kill all running tasks, remove all tasks and reset max_id.
+    Reset,
+    /// Remotely shut down the daemon. Should only be used if the daemon isn't started by a service manager.
+    Shutdown,
 
     /// Set the amount of allowed parallel tasks
     Parallel {
@@ -271,6 +273,7 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
         }
         SubCommand::Clean => Ok(Message::Clean),
         SubCommand::Reset => Ok(Message::Reset),
+        SubCommand::Shutdown => Ok(Message::DaemonShutdown),
 
         SubCommand::Parallel { parallel_tasks } => Ok(Message::Parallel(*parallel_tasks)),
     }
