@@ -161,7 +161,7 @@ fn restart(message: RestartMessage, sender: &Sender<Message>, state: &SharedStat
     let response: String;
     let new_ids = {
         let mut state = state.lock().unwrap();
-        let statuses = vec![TaskStatus::Done, TaskStatus::Failed];
+        let statuses = vec![TaskStatus::Done, TaskStatus::Failed, TaskStatus::Killed];
         let (matching, mismatching) = state.tasks_in_statuses(Some(message.task_ids), statuses);
 
         let mut new_ids = Vec::new();
