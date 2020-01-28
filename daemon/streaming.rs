@@ -49,10 +49,12 @@ pub async fn handle_show(
                 ));
             }
             // Read the next chunk of text from the last position
-            let mut text = String::new();
-            if let Err(err) = handle.read_to_string(&mut text) {
+            let mut buffer = Vec::new();
+
+            if let Err(err) = handle.read_to_end(&mut buffer) {
                 return Ok(create_failure_message(format!("Error: {}", err)));
             };
+            let text = String::from_utf8_lossy(&buffer).to_string();
 
             // Send the new chunk and wait for 1 second
             let response = Message::Stream(text);
