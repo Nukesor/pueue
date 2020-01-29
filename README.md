@@ -1,8 +1,9 @@
 # Pueue
 
-[![GitHub release](https://img.shields.io/github/v/tag/nukesor/pueue.svg)](https://github.com/nukesor/pueue/releases/latest)
+[![GitHub Actions Workflow](https://github.com/nukesor/pueue/workflows/Test%20build/badge.svg)](https://github.com/Nukesor/comfy-table/actions)
 [![Crates.io](https://img.shields.io/crates/v/pueue)](https://crates.io/crates/pueue)
 [![MIT Licence](https://img.shields.io/pypi/l/pueue.svg)](https://github.com/Nukesor/pueue/blob/master/LICENSE)
+[![dependency status](https://deps.rs/repo/github/nukesor/pueue/status.svg)](https://deps.rs/repo/github/nukesor/pueue)
 [![Patreon](https://github.com/Nukesor/images/blob/master/patreon-donate-blue.svg)](https://www.patreon.com/nukesor)
 [![Paypal](https://github.com/Nukesor/images/blob/master/paypal-donate-blue.svg)](https://www.paypal.me/arnebeer/)
 
