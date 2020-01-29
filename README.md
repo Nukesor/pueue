@@ -31,8 +31,8 @@ It provides functionality for:
 
 ## Why should I use it?
 
-I just assume that many of us know this situation when one needs to unzip or transfer huge amounts of data into different directories.
-This normally ends with about 10 open terminals/tmux sessions and an over-challenged hard drive.
+Imagine having to unpack or transfer large amounts of data from different directories to other directories.
+Usually something like this ends with about 10 open terminals/tmux sessions and an over-challenged hard drive.
 
 Pueue is specifically designed for these situations. It executes long-running tasks in their respective directories, without being bound to any terminal.  
 
@@ -41,8 +41,8 @@ Pueue is specifically designed for these situations. It executes long-running ta
 - Compression tasks
 - Movie encoding
 - `rsync` tasks
+- Anything that takes longer than 5 minutes
 
-Give it a try, If I got your attention.
 Pueue made at least my life a lot easier on many occasions.
 
 If you like the project and feel like something is missing, please create an issue.  
