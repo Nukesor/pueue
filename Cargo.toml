@@ -1,7 +1,7 @@
 [package]
 name = "pueue"
 description = "A cli tool for managing long running shell commands."
-version = "0.1.2"
+version = "0.1.3"
 authors = ["Arne Beer <contact@arne.beer>"]
 homepage = "https://github.com/nukesor/pueue"
 repository = "https://github.com/nukesor/pueue"
@@ -54,5 +54,5 @@ config = "^0.10"
 simplelog = "0.7"
 structopt = "0.3"
 crossterm = "^0.14"
-comfy-table= "0.0.4"
+comfy-table= "0.0.5"
 tempfile = "^3"

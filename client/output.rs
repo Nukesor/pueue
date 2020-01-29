@@ -1,5 +1,5 @@
 use ::comfy_table::prelude::*;
-use ::comfy_table::style::presets::UTF8_FULL;
+use ::comfy_table::style::presets::UTF8_HORIZONTAL_BORDERS_ONLY;
 use ::crossterm::style::{style, Attribute, Color};
 use ::std::string::ToString;
 
@@ -48,7 +48,7 @@ pub fn print_state(message: Message, json: bool) {
     let mut table = Table::new();
     table
         .set_content_arrangement(ContentArrangement::Dynamic)
-        .load_preset(UTF8_FULL)
+        .load_preset(UTF8_HORIZONTAL_BORDERS_ONLY)
         .set_header(vec![
             Cell::new("Index"),
             Cell::new("Status"),

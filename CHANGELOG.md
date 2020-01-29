@@ -1,4 +1,7 @@
-# v0.1.1
+# v0.1.3
+- Change table design of `pueue status`
+
+# v0.1.2
 - Handle broken UTF8 in `show` with `-f` and `-e` flags.
 - Allow restart of `Killed` processes
 
