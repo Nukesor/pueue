@@ -12,7 +12,7 @@
 
 Pueue is a command-line task management tool for sequential and parallel execution of long-running tasks.  
 
-If you break it down, it's a manager that processes a queue of shell commands.
+Simply put, it's a tool that processes a queue of shell commands.
 On top of that, there are a lot of convenience features and abstractions.
 
 
@@ -25,10 +25,9 @@ It provides functionality for:
 - Interaction with running processes
 - Manipulation of the scheduled task order
 - Running multiple tasks at once (You can decide how many concurrent tasks you want to run)
+- Works on Linux and MacOs (Windows might work, but I need people for testing ;) )
 
 **Pueue has been rewritten in Rust!!** If you want the old version that's build with python, please install via pip.
-
-**Pueue works on Linux and MacOS**. MacOS is not officially tested, though. I really appreciate any feedback!
 
 ## Why should I use it?
 
@@ -46,10 +45,10 @@ Pueue is specifically designed for these situations. It executes long-running ta
 Give it a try, If I got your attention.
 Pueue made at least my life a lot easier on many occasions.
 
-If you like the project and feel like something is missing, feel free to create an issue suggesting improvements.  
+If you like the project and feel like something is missing, please create an issue.  
 I'm always open to suggestions and already implemented a few users requested features.
 
-PRs are of course always welcome!
+PRs are of course very welcome!
 
 ## Installation:
 
@@ -74,6 +73,23 @@ cd pueue
 cargo install --path .
 ```
 This will install pueue to `~/.cargo/bin/pueue`
+
+## Starting the Daemon
+
+### Local
+Just run `pueued` anywhere on your commandline. It'll exit if you close the terminal, though.
+
+### Background
+To fork `pueued` into the background, add the `-d` or `--daemonize` flag. E.g. `pueued -d`. \
+The daemon can be then shut down using the client: `pueue shutdown`
+
+### Systemd
+If you use Systemd and don't install Pueue with a package manager, place `pueued.service` in `/etc/systemd/user/`.  
+Afterward, every user can start/enable their own session with:  
+
+        systemctl --user start pueued.service
+        systemctl --user enable pueued.service
+
 
 ## How to use it:
 
@@ -161,22 +177,6 @@ If the daemon crashes or something goes wrong, please set the debug level to `-v
 
 If you want to dig right into it, you can compile and run it yourself with a debug build.
 This would help me a lot!
-
-## Starting the Daemon
-
-### Local
-Just run `pueued` anywhere on your commandline. It'll exit if you close the terminal, though.
-
-### Background
-To fork `pueued` into the background, add the `-d` or `--daemonize` flag. E.g. `pueued -d`. \
-The daemon can be then shut down using the client: `pueue shutdown`
-
-### Systemd
-If you use Systemd and don't install Pueue with a package manager, place `pueued.service` in `/etc/systemd/user/`.  
-Afterward, every user can start/enable their own session with:  
-
-        systemctl --user start pueued.service
-        systemctl --user enable pueued.service
 
 ## Utilities
 
