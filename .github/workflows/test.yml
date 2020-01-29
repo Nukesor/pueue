@@ -1,4 +1,4 @@
-name: Packaging
+name: Test build
 
 on:
   push:
