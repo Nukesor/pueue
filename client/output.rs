@@ -1,6 +1,6 @@
-use ::comfy_table::prelude::*;
-use ::comfy_table::style::presets::UTF8_HORIZONTAL_BORDERS_ONLY;
-use ::crossterm::style::{style, Attribute, Color};
+use ::comfy_table::*;
+use ::comfy_table::presets::UTF8_HORIZONTAL_BORDERS_ONLY;
+use ::crossterm::style::style;
 use ::std::string::ToString;
 
 use ::pueue::message::*;
