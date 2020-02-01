@@ -121,11 +121,26 @@ impl TaskHandler {
         };
 
         // Spawn the actual subprocess
-        let spawn_result = Command::new(if cfg!(windows) { "cmd" } else { "sh" })
-            // Windows: Tell cmd to output everything using unicode.
-            .args(if cfg!(windows) { Some("/U") } else { None })
-            .arg(if cfg!(windows) { "/C" } else { "-c" })
-            .arg(&task.command)
+        let mut spawn_command = Command::new(if cfg!(windows) { "powershell" } else { "sh" });
+
+        if cfg!(windows) {
+            spawn_command
+                .arg("-c")
+                // /U = Tell cmd to output everything using unicode.
+                // /S = Consistent behavior for quotes. Remove first and last quote and leave everything between them as is.
+                // /C = Preform the command specified by the string passed after this flag.
+                //
+                // Any quote signs inside the command will be escaped by the `Command::arg` method (" => \") and then unescaped by `powershell` (\" => ").
+                //
+                // The `'` quote signs ensures that the command is a powershell string and its content is escaped by replacing `'` with `''`.
+                // Powershell will then start `cmd` with a command like `cmd /U /S /C "command_here"` where the quotes around the command will 
+                // only be present if the command has a space (it should work regardless).
+                .arg(format!("cmd /U /S /C '{}'", task.command.replace('\'', "''")));
+        } else {
+            spawn_command.arg("-c").arg(&task.command);
+        }
+
+        let spawn_result = spawn_command
             .current_dir(&task.path)
             .stdin(Stdio::piped())
             .stdout(Stdio::from(stdout_log))
