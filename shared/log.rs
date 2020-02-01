@@ -1,7 +1,6 @@
 use ::anyhow::Result;
 use ::byteorder::{LittleEndian, ReadBytesExt};
 use ::log::error;
-use ::std::borrow::Cow;
 use ::std::fs::{remove_file, File};
 use ::std::io::prelude::*;
 use ::std::path::{Path, PathBuf};
@@ -34,7 +33,8 @@ pub fn get_log_file_handles(task_id: usize, settings: &Settings) -> Result<(File
     Ok((stdout, stderr))
 }
 
-fn command_data_to_text(mut data: &[u8]) -> Cow<str> {
+/// Convert stdout or stderr data from a spawned task to a string.
+pub fn process_output_to_text(mut data: &[u8]) -> String {
     if cfg!(windows) {
         // On windows we run the command using "cmd" with a flag that makes it output Unicode (UTF16).
 
@@ -52,9 +52,9 @@ fn command_data_to_text(mut data: &[u8]) -> Cow<str> {
             buffer.push(extra.read_u16::<CmdUtf16Endian>().unwrap());
         }
 
-        Cow::from(String::from_utf16_lossy(&buffer))
+        String::from_utf16_lossy(&buffer)
     } else {
-        String::from_utf8_lossy(data)
+        String::from_utf8_lossy(data).into_owned()
     }
 }
 
@@ -67,10 +67,10 @@ pub fn read_log_files(task_id: usize, settings: &Settings) -> Result<(String, St
     stdout_handle.read_to_end(&mut stdout_buffer)?;
     stderr_handle.read_to_end(&mut stderr_buffer)?;
 
-    let stdout = command_data_to_text(&stdout_buffer);
-    let stderr = command_data_to_text(&stderr_buffer);
+    let stdout = process_output_to_text(&stdout_buffer);
+    let stderr = process_output_to_text(&stderr_buffer);
 
-    Ok((stdout.to_string(), stderr.to_string()))
+    Ok((stdout, stderr))
 }
 
 /// Remove temporary stdout and stderr files for a task
