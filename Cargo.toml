@@ -34,10 +34,8 @@ path = "shared/lib.rs"
 anyhow = "1"
 async-std = { version = "1", features = ["attributes", "unstable"] }
 dirs = "2"
-users = "^0.9"
 chrono = { version = "^0.4", features = ["serde"] }
 rand = "^0.7"
-nix = "0.16"
 strum = "0.17"
 strum_macros = "0.17"
 
@@ -50,8 +48,12 @@ serde_derive = "^1.0"
 
 log = "0.4"
 config = "^0.10"
-simplelog = "0.7"
+simplelog = { version = "0.7", default-features = false }
 structopt = "0.3"
 crossterm = "^0.15"
 comfy-table= "0.0.6"
 tempfile = "^3"
+
+[target.'cfg(not(windows))'.dependencies]
+users = "^0.9"
+nix = "0.16"

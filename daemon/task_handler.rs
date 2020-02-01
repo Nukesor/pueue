@@ -8,9 +8,11 @@ use ::std::time::Duration;
 use ::anyhow::Result;
 use ::chrono::prelude::*;
 use ::log::{debug, error, info, warn};
-use ::nix::sys::signal;
-use ::nix::sys::signal::Signal;
-use ::nix::unistd::Pid;
+#[cfg(not(windows))]
+use ::nix::{
+    sys::signal::{self, Signal},
+    unistd::Pid,
+};
 
 use ::pueue::log::*;
 use ::pueue::message::*;
@@ -119,8 +121,10 @@ impl TaskHandler {
         };
 
         // Spawn the actual subprocess
-        let spawn_result = Command::new("sh")
-            .arg("-c")
+        let spawn_result = Command::new(if cfg!(windows) { "cmd" } else { "sh" })
+            // Windows: Tell cmd to output everything using unicode.
+            .args(if cfg!(windows) { Some("/U") } else { None })
+            .arg(if cfg!(windows) { "/C" } else { "-c" })
             .arg(&task.command)
             .current_dir(&task.path)
             .stdin(Stdio::piped())
@@ -258,6 +262,7 @@ impl TaskHandler {
     }
 
     /// Send a signal to a unix process
+    #[cfg(not(windows))]
     fn send_signal(&mut self, id: usize, signal: Signal) -> Result<bool, nix::Error> {
         if let Some(child) = self.children.get(&id) {
             debug!("Sending signal {} to {}", signal, id);
@@ -319,12 +324,19 @@ impl TaskHandler {
                 return;
             }
         }
-        match self.send_signal(id, Signal::SIGCONT) {
-            Err(err) => warn!("Failed starting task {}: {:?}", id, err),
-            Ok(success) => {
-                if success {
-                    let mut state = self.state.lock().unwrap();
-                    state.change_status(id, TaskStatus::Running);
+        #[cfg(windows)]
+        {
+            warn!("Failed starting task {}: not supported on windows.", id);
+        }
+        #[cfg(not(windows))]
+        {
+            match self.send_signal(id, Signal::SIGCONT) {
+                Err(err) => warn!("Failed starting task {}: {:?}", id, err),
+                Ok(success) => {
+                    if success {
+                        let mut state = self.state.lock().unwrap();
+                        state.change_status(id, TaskStatus::Running);
+                    }
                 }
             }
         }
@@ -359,12 +371,19 @@ impl TaskHandler {
         if !self.children.contains_key(&id) {
             return;
         }
-        match self.send_signal(id, Signal::SIGSTOP) {
-            Err(err) => info!("Failed pausing task {}: {:?}", id, err),
-            Ok(success) => {
-                if success {
-                    let mut state = self.state.lock().unwrap();
-                    state.change_status(id, TaskStatus::Paused);
+        #[cfg(windows)]
+        {
+            info!("Failed pausing task {}: not supported on windows.", id);
+        }
+        #[cfg(not(windows))]
+        {
+            match self.send_signal(id, Signal::SIGSTOP) {
+                Err(err) => info!("Failed pausing task {}: {:?}", id, err),
+                Ok(success) => {
+                    if success {
+                        let mut state = self.state.lock().unwrap();
+                        state.change_status(id, TaskStatus::Paused);
+                    }
                 }
             }
         }

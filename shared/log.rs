@@ -1,5 +1,7 @@
 use ::anyhow::Result;
+use ::byteorder::{LittleEndian, ReadBytesExt};
 use ::log::error;
+use ::std::borrow::Cow;
 use ::std::fs::{remove_file, File};
 use ::std::io::prelude::*;
 use ::std::path::{Path, PathBuf};
@@ -32,6 +34,30 @@ pub fn get_log_file_handles(task_id: usize, settings: &Settings) -> Result<(File
     Ok((stdout, stderr))
 }
 
+fn command_data_to_text(mut data: &[u8]) -> Cow<str> {
+    if cfg!(windows) {
+        // On windows we run the command using "cmd" with a flag that makes it output Unicode (UTF16).
+
+        let is_odd = data.len() % 2 == 1;
+        let mut buffer = Vec::with_capacity(data.len() / 2 + if is_odd { 1 } else { 0 });
+
+        type CmdUtf16Endian = LittleEndian;
+
+        while data.len() > 1 {
+            buffer.push(data.read_u16::<CmdUtf16Endian>().unwrap());
+        }
+        if is_odd {
+            let extra = [*data.last().unwrap(), 0];
+            let mut extra = &extra as &[u8];
+            buffer.push(extra.read_u16::<CmdUtf16Endian>().unwrap());
+        }
+
+        Cow::from(String::from_utf16_lossy(&buffer))
+    } else {
+        String::from_utf8_lossy(data)
+    }
+}
+
 /// Return the content of temporary stdout and stderr files for a task
 pub fn read_log_files(task_id: usize, settings: &Settings) -> Result<(String, String)> {
     let (mut stdout_handle, mut stderr_handle) = get_log_file_handles(task_id, settings)?;
@@ -41,8 +67,8 @@ pub fn read_log_files(task_id: usize, settings: &Settings) -> Result<(String, St
     stdout_handle.read_to_end(&mut stdout_buffer)?;
     stderr_handle.read_to_end(&mut stderr_buffer)?;
 
-    let stdout = String::from_utf8_lossy(&stdout_buffer);
-    let stderr = String::from_utf8_lossy(&stderr_buffer);
+    let stdout = command_data_to_text(&stdout_buffer);
+    let stderr = command_data_to_text(&stderr_buffer);
 
     Ok((stdout.to_string(), stderr.to_string()))
 }
