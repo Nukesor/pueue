@@ -10,17 +10,17 @@ If you have Rust version `>=1.39`, please file a bug report.
 
 ## A Command Doesn't Behave Like Expected
 
-**First thing to do:** Try to run the command without adding it to pueue. If this fails, it's not a problem with Pueue.
+**First thing to do:** Try to run the command without adding it to Pueue. If this fails, it's not a problem with Pueue.
 
 **Second thing** to do when debugging any problems with running/failing processes, is to look at the process output:
 
-This can be done via `pueue log $task_id` for finished processes or `pueue show $task_id` for running processes.\
-You can also get a live view of the output with `pueue show -f $task_id` for `stdout` and `-e` for `stderr`.
+    This can be done via `pueue log $task_id` for finished processes or `pueue show $task_id` for running processes.  
+    You can also get a live view of the output with `pueue show -f $task_id` for `stdout` and `-e` for `stderr`.
 
 
 ### The Command Formatting Seems To Be Broken:
 
-Pueue takes your input and uses it exactly as is to create a new `bash -c $command` in the background.\
+    Pueue takes your input and uses it exactly as is to create a new `bash -c $command` in the background.
 If your command contains spaces or characters that need escaping, you might need to encapsulate it into a string:
 
 ```
@@ -30,9 +30,16 @@ If your command contains spaces or characters that need escaping, you might need
 Without quotes, the character escaping won't be transferred to the `bash -c $command`, as it's already removed by calling it from the current shell.
 
 
+### Display not found | Unable to initialize Frontend
+
+All programs that require some kinde of display/window manager won't work, as the tasks are executed in the background.
+
+Don't use Pueue for commands that won't work in a non-visual environment.
+
+
 ### A Process Waits For Input:
 
-Sometimes some process waits for input. For instance, a package manager may wait for confirmation (`y/n`).\
+Sometimes some process waits for input. For instance, a package manager may wait for confirmation (`y/n`).
 
 In this case you can send the desired input to the process via:
 
@@ -41,20 +48,20 @@ pueue send "y
 "
 ```
 
-This can be also be avoided by issuing the command with something like a `-y` flag (if it allows something like this),
-you see that a process waits for input, you can 
+This can be also be avoided by issuing the command with something like a `-y` flag (if the program allows something like this).
+
 
 
 ### My Shell Aliases Don't Work:
 
 This is a known problem. 
-Since pueue calls a new shell session without any parameters, existing `.bashrc` won't be read.
+Since Pueue calls a new shell session without any parameters, your `.bashrc` won't be read.
 
 However, reading `.bashrc` files turns out to be problematic as well.
 Pueue might add a feature for custom shell commands somehwere in the future, but this isn't working for now.
 
 
-# What's The Advantage Over Using A Terminal Multiplexer
+## What's The Advantage Over Using A Terminal Multiplexer
 
 - The ability to queue commands and not start them all at once
 - You can specify how many parallel tasks you want
