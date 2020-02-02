@@ -98,9 +98,16 @@ Afterward, every user can start/enable their own session with:
 
 ## How to use it:
 
-To add a command just write: `pueue add sleep 60`  
-If you want to add flags to the command, you need to add `--`. E.g. `pueue add -- ls -al`  
-For normal operation it's thereby recommended to add an alias to your shell rc for `pueue add --`, e.g. `alias pad=pueue add --`.
+To add a command just write: `pueue add sleep 60`\
+If you want to add flags to the command, you can eithr:
+- add `--` => `pueue add -- ls -al`
+- surround the command with a string `pueue add 'ls -al'`
+
+For normal operation it's recommended to add an alias to your shell's rc.\
+E.g.: `alias pad='pueue add --'`.
+
+Surrounding a command with quotes is also required, if your command contains escaped characters.\
+For instance `pueue add ls /tmp/long\ path` will result in the execution of `sh -c ls /tmp/long path`, which will then break, as the escaping is not passed to Pueue.
 
 The command will then be added and scheduled for execution, as if you executed it right now and then.
 
