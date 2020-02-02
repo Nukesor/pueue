@@ -1,3 +1,10 @@
+# v0.1.5
+- Basic Windows support
+- Integrate completion script build in build.rs
+
+# v0.1.4
+- Dependency updates
+
 # v0.1.3
 - Change table design of `pueue status`
 
