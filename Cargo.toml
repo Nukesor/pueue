@@ -56,3 +56,4 @@ nix = "0.16"
 
 [build-dependencies]
 structopt = "0.3"
+version_check = "^0.9"
