@@ -23,9 +23,14 @@ It provides functionality for:
 - Scheduling commands that will be executed in their respective working directories
 - Easy output inspection.
 - Interaction with running processes
+- Pausing/Resuming tasks, when you need some processing power right NOW!
 - Manipulation of the scheduled task order
 - Running multiple tasks at once (You can decide how many concurrent tasks you want to run)
-- Works on Linux and MacOs (Windows might work, but I need people for testing ;) )
+- Works on Linux and MacOS and partially on Windows.
+
+**Disclaimer:** Windows support is highly experimental right now.
+Pueue uses `powershell` to execute commands, keep this in mind when writing commands.
+Starting/resuming commands doesn't work for now.
 
 **Pueue has been rewritten in Rust!!** If you want the old version that's build with python, please install via pip.
 
@@ -100,6 +105,8 @@ For normal operation it's thereby recommended to add an alias to your shell rc f
 The command will then be added and scheduled for execution, as if you executed it right now and then.
 
 To get the status of currently running commands, just type `pueue status`.
+
+To avoid common pitfalls, please read the [FAQ Section](https://github.com/Nukesor/pueue/blob/master/FAQ.md).
 
 There is a help option (-h) for all commands.
 ```
