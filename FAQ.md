@@ -14,13 +14,13 @@ If you have Rust version `>=1.39`, please file a bug report.
 
 **Second thing** to do when debugging any problems with running/failing processes, is to look at the process output:
 
-    This can be done via `pueue log $task_id` for finished processes or `pueue show $task_id` for running processes.  
-    You can also get a live view of the output with `pueue show -f $task_id` for `stdout` and `-e` for `stderr`.
+This can be done via `pueue log $task_id` for finished processes or `pueue show $task_id` for running processes.  
+You can also get a live view of the output with `pueue show -f $task_id` for `stdout` and `-e` for `stderr`.
 
 
 ### The Command Formatting Seems To Be Broken:
 
-    Pueue takes your input and uses it exactly as is to create a new `bash -c $command` in the background.
+Pueue takes your input and uses it exactly as is to create a new `bash -c $command` in the background.  
 If your command contains spaces or characters that need escaping, you might need to encapsulate it into a string:
 
 ```
