@@ -153,3 +153,32 @@ fn default_pueue_path() -> Result<String> {
         |v| Ok(v.to_string()),
     )
 }
+
+#[cfg(target_os = "windows")]
+fn default_config_path() -> Result<PathBuf> {
+    Ok(get_home_dir()?.join("pueue.yml"))
+}
+
+#[cfg(target_os = "windows")]
+fn get_config_paths() -> Result<Vec<PathBuf>> {
+    Ok(vec![
+        // Windows Terminal stores its config file in the "AppData/Local" directory.
+        dirs::data_local_dir()
+            .ok_or(anyhow!("Couldn't resolve app data directory"))?
+            .join("pueue/pueue.yml"),
+        default_config_path()?,
+        Path::new("./pueue.yml").to_path_buf(),
+    ])
+}
+
+#[cfg(target_os = "windows")]
+fn default_pueue_path() -> Result<String> {
+    // Use local data directory since this data doesn't need to be synced.
+    let path = dirs::data_local_dir()
+        .ok_or(anyhow!("Couldn't resolve app data directory"))?
+        .join("pueue");
+    path.to_str().map_or_else(
+        || Err(anyhow!("Failed to parse log path (Weird characters?)")),
+        |v| Ok(v.to_string()),
+    )
+}
