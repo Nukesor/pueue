@@ -15,10 +15,6 @@ edition = "2018"
 maintenance = { status = "actively-developed" }
 
 [[bin]]
-name = "completions_pueue"
-path = "client/build_completion.rs"
-
-[[bin]]
 name = "pueue"
 path = "client/main.rs"
 
@@ -57,3 +53,6 @@ tempfile = "^3"
 [target.'cfg(not(windows))'.dependencies]
 users = "^0.9"
 nix = "0.16"
+
+[build-dependencies]
+structopt = "0.3"

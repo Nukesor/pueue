@@ -1,9 +1,6 @@
 use ::structopt::clap::Shell;
-use ::structopt::StructOpt;
 
-pub mod cli;
-
-use crate::cli::Opt;
+include!("client/cli.rs");
 
 fn main() {
     let mut clap = Opt::clap();
@@ -14,5 +11,5 @@ fn main() {
     clap.gen_completions(bin_name, Shell::Fish, completion_dir);
     clap.gen_completions(bin_name, Shell::PowerShell, completion_dir);
     clap.gen_completions(bin_name, Shell::Elvish, completion_dir);
-    clap.gen_completions(bin_name, Shell::Zsh, completion_dir);
+//    clap.gen_completions(bin_name, Shell::Zsh, completion_dir);
 }
