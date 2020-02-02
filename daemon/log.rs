@@ -4,7 +4,7 @@ use ::std::fs::{remove_file, File};
 use ::std::io::prelude::*;
 use ::std::path::{Path, PathBuf};
 
-use crate::settings::Settings;
+use ::pueue::settings::Settings;
 
 /// Return the paths to temporary stdout and stderr files for a task
 pub fn get_log_paths(task_id: usize, settings: &Settings) -> (PathBuf, PathBuf) {

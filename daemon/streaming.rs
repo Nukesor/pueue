@@ -6,7 +6,7 @@ use ::std::fs::File;
 use ::std::io::Read;
 use ::std::time::Duration;
 
-use ::pueue::log::*;
+use crate::log::*;
 use ::pueue::message::*;
 use ::pueue::protocol::send_message;
 use ::pueue::settings::Settings;

@@ -15,6 +15,7 @@ use ::pueue::settings::Settings;
 use ::pueue::state::State;
 
 mod cli;
+mod log;
 mod instructions;
 mod response_helper;
 mod socket;

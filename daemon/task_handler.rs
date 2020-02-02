@@ -14,7 +14,7 @@ use ::nix::{
     unistd::Pid,
 };
 
-use ::pueue::log::*;
+use crate::log::*;
 use ::pueue::message::*;
 use ::pueue::settings::Settings;
 use ::pueue::state::SharedState;
