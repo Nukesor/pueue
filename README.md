@@ -115,11 +115,11 @@ For instance `pueue add ls /tmp/long\ path` will result in the execution of `sh 
 
 **See what's going on:**
 
-To get the status of currently running commands, just type `pueue status`.\
+To get the status of currently running commands, just type `pueue status`.
 
 To look at the output of a finished command use `pueue log` or `pueue log $task_id`.
 
-If you want to see output of a running command use `git show task_id`.
+If you want to see output of a running command use `git show $task_id`.
 You can also use the `-f` and `-e` flag to get a live view of the output.
 
 
