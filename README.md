@@ -98,10 +98,14 @@ Afterward, every user can start/enable their own session with:
 
 ## How to use it:
 
+**Adding Commands:**\
+
 To add a command just write: `pueue add sleep 60`\
 If you want to add flags to the command, you can either:
 - add `--` => `pueue add -- ls -al`
 - surround the command with a string `pueue add 'ls -al'`
+
+The command will then be added and scheduled for execution, as if you executed it right now and then.
 
 For normal operation it's recommended to add an alias to your shell's rc.\
 E.g.: `alias pad='pueue add --'`
@@ -109,9 +113,17 @@ E.g.: `alias pad='pueue add --'`
 Surrounding a command with quotes is also required, if your command contains escaped characters.\
 For instance `pueue add ls /tmp/long\ path` will result in the execution of `sh -c ls /tmp/long path`, which will then break, as the escaped space is not passed to Pueue.
 
-The command will then be added and scheduled for execution, as if you executed it right now and then.
+**See what's going on:**
 
-To get the status of currently running commands, just type `pueue status`.
+To get the status of currently running commands, just type `pueue status`.\
+
+To look at the output of a finished command use `pueue log` or `pueue log $task_id`.
+
+If you want to see output of a running command use `git show task_id`.
+You can also use the `-f` and `-e` flag to get a live view of the output.
+
+
+**Pitfalls:**\
 
 To avoid common pitfalls, please read the [FAQ Section](https://github.com/Nukesor/pueue/blob/master/FAQ.md).
 
