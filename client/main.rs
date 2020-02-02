@@ -8,8 +8,10 @@ pub mod cli;
 pub mod client;
 pub mod instructions;
 pub mod output;
+pub mod message;
 
-use crate::cli::{get_message_from_opt, Opt};
+use crate::cli::Opt;
+use crate::message::get_message_from_opt;
 use crate::client::Client;
 
 #[async_std::main]
