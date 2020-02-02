@@ -28,9 +28,9 @@ It provides functionality for:
 - Running multiple tasks at once (You can decide how many concurrent tasks you want to run)
 - Works on Linux and MacOS and partially on Windows.
 
-**Disclaimer:** Windows support is highly experimental right now.
-Pueue uses `powershell` to execute commands, keep this in mind when writing commands.
-Starting/resuming commands doesn't work for now.
+**Disclaimer:** Windows support is highly experimental right now. This means:
+- Pueue uses `powershell` to execute commands, keep this in mind when writing commands.
+- Starting/resuming commands doesn't work for now.
 
 **Pueue has been rewritten in Rust!!** If you want the old version that's build with python, please install via pip.
 
