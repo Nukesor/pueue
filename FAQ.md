@@ -10,11 +10,13 @@ If you have Rust version `>=1.39`, please file a bug report.
 
 ## A Command Doesn't Behave Like Expected
 
-Pueue only executes specified commands.
-First thing to do when debugging any problems with running/failing processes, is to look at the process output:
+**First thing to do:** Try to run the command without adding it to pueue. If this fails, it's not a problem with Pueue.
+
+**Second thing** to do when debugging any problems with running/failing processes, is to look at the process output:
 
 This can be done via `pueue log $task_id` for finished processes or `pueue show $task_id` for running processes.\
 You can also get a live view of the output with `pueue show -f $task_id` for `stdout` and `-e` for `stderr`.
+
 
 ### The Command Formatting Seems To Be Broken:
 
@@ -22,7 +24,7 @@ Pueue takes your input and uses it exactly as is to create a new `bash -c $comma
 If your command contains spaces or characters that need escaping, you might need to encapsulate it into a string:
 
 ```
-    pueue add "ls -al /tmp/this\ is\ a\ test\ directory"
+    pueue add -- ls -al "/tmp/this\ is\ a\ test\ directory"
 ```
 
 Without quotes, the character escaping won't be transferred to the `bash -c $command`, as it's already removed by calling it from the current shell.
