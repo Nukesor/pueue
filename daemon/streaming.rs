@@ -54,7 +54,7 @@ pub async fn handle_show(
             if let Err(err) = handle.read_to_end(&mut buffer) {
                 return Ok(create_failure_message(format!("Error: {}", err)));
             };
-            let text = process_output_to_text(&buffer);
+            let text = String::from_utf8_lossy(&buffer).to_string();
 
             // Send the new chunk and wait for 1 second
             let response = Message::Stream(text);
