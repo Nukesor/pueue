@@ -98,7 +98,7 @@ Afterward, every user can start/enable their own session with:
 
 ## How to use it:
 
-**Adding Commands:**\
+**Adding Commands:**
 
 To add a command just write: `pueue add sleep 60`\
 If you want to add flags to the command, you can either:
@@ -123,7 +123,7 @@ If you want to see output of a running command use `git show task_id`.
 You can also use the `-f` and `-e` flag to get a live view of the output.
 
 
-**Pitfalls:**\
+**Pitfalls:**
 
 To avoid common pitfalls, please read the [FAQ Section](https://github.com/Nukesor/pueue/blob/master/FAQ.md).
 
