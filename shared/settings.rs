@@ -107,12 +107,12 @@ fn gen_random_secret() -> String {
     secret
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "freebsd"))]
 fn default_config_path() -> Result<PathBuf> {
     Ok(get_home_dir()?.join(".config/pueue.yml"))
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "freebsd"))]
 fn get_config_paths() -> Result<Vec<PathBuf>> {
     let mut paths = Vec::new();
     paths.push(Path::new("/etc/pueue.yml").to_path_buf());
@@ -122,7 +122,7 @@ fn get_config_paths() -> Result<Vec<PathBuf>> {
     Ok(paths)
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "freebsd"))]
 fn default_pueue_path() -> Result<String> {
     let path = get_home_dir()?.join(".local/share/pueue");
     path.to_str().map_or_else(
