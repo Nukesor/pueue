@@ -4,7 +4,7 @@ use ::structopt::StructOpt;
 pub enum SubCommand {
     /// Enqueue a task for execution
     Add {
-        /// The command that should be added
+        /// The command that should be added.
         #[structopt()]
         command: Vec<String>,
 
@@ -18,7 +18,7 @@ pub enum SubCommand {
         /// The task ids to be removed
         task_ids: Vec<usize>,
     },
-    /// Switches the queue position of two commands. Only works on queued and stashed commands
+    /// Switches the queue position of two commands. Only works on queued and stashed commandse.
     Switch {
         /// The first task id
         task_id_1: usize,
@@ -37,8 +37,8 @@ pub enum SubCommand {
         task_ids: Vec<usize>,
     },
 
-    /// Wake the daemon from its paused state.
-    /// Also continues all paused tasks.
+    /// Wake the daemon from its paused state and continue all paused tasks.
+    /// Can be used to resume or start specific tasks.
     Start {
         /// Enforce starting these tasks.
         /// This doesn't affect the daemon or any other tasks and works on a paused deamon.
@@ -58,17 +58,18 @@ pub enum SubCommand {
     /// Pause the daemon and all running tasks.
     /// A paused daemon won't start any new tasks.
     /// Daemon and tasks can be continued with `start`
+    /// Can also be used to pause specific tasks.
     Pause {
         /// Pause the daemon, but let any running tasks finish by themselves.
         #[structopt(short, long, group("pause"), conflicts_with("task_ids"))]
         wait: bool,
 
-        /// Enforce starting these tasks.
+        /// Pause these tasks.
         /// Doesn't affect the daemon or any other tasks.
         #[structopt(group("pause"))]
         task_ids: Vec<usize>,
     },
-    /// Kill running tasks.
+    /// Kill either all or only specific running tasks.
     Kill {
         /// Kill all running tasks, this also pauses the daemon.
         #[structopt(short, long, group("kill"), conflicts_with("task_ids"))]
