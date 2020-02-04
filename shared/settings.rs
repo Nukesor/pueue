@@ -2,7 +2,7 @@ use ::anyhow::{anyhow, Result};
 use ::log::info;
 use ::rand::Rng;
 use ::serde_derive::{Deserialize, Serialize};
-use ::std::fs::File;
+use ::std::fs::{File, create_dir_all};
 use ::std::io::prelude::*;
 use ::std::path::{Path, PathBuf};
 
@@ -60,10 +60,18 @@ impl Settings {
     }
 
     /// Save the current configuration as a file to the configuration path.
-    /// The file is written to "~/.config/pueue.yml".
+    /// The file is written to the main configuration directory of the respective OS
     pub fn save(&self) -> Result<()> {
+        let config_path = default_config_path()?;
+        let config_dir = config_path.parent().ok_or(anyhow!("Couldn't resolve config dir"))?;
+
+        // Create the config dir, if it doesn't exist yet
+        if !config_dir.exists() {
+            create_dir_all(config_dir)?;
+        }
+
         let content = serde_yaml::to_string(self)?;
-        let mut file = File::create(default_config_path()?)?;
+        let mut file = File::create(config_path)?;
         file.write_all(content.as_bytes())?;
 
         Ok(())
