@@ -1,3 +1,8 @@
+# v0.1.6
+- [BUG] Fix wrong TCP receiving logic
+- Automatically create config directory
+- Fix and reword cli help texts
+
 # v0.1.5
 - Basic Windows support
 - Integrate completion script build in build.rs
