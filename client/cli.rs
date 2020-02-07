@@ -61,7 +61,7 @@ pub enum SubCommand {
     /// Can also be used to pause specific tasks.
     Pause {
         /// Pause the daemon, but let any running tasks finish by themselves.
-        #[structopt(short, long, group("pause"))]
+        #[structopt(short, long, group("pause"), conflicts_with("task_ids"))]
         wait: bool,
 
         /// Pause these tasks.
@@ -72,11 +72,11 @@ pub enum SubCommand {
     /// Kill either all or only specific running tasks.
     Kill {
         /// Kill all running tasks, this also pauses the daemon.
-        #[structopt(short, long, group("kill"))]
+        #[structopt(short, long, group("kill"), conflicts_with("task_ids"))]
         all: bool,
 
         /// The tasks that should be killed.
-        #[structopt(group("kill"), required_unless("all"))]
+        #[structopt(group("kill"))]
         task_ids: Vec<usize>,
     },
 
