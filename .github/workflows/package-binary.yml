@@ -98,11 +98,3 @@ jobs:
         asset_name: shell_completion_pueue.fish
         tag: ${{ github.ref }}
       if: matrix.os == 'ubuntu-latest'
-
-    - uses: svenstaro/upload-release-action@v1-release
-      with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: utils/completions/_pueue
-        asset_name: shell_completion_pueue.zsh
-        tag: ${{ github.ref }}
-      if: matrix.os == 'ubuntu-latest'
