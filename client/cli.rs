@@ -18,7 +18,7 @@ pub enum SubCommand {
         /// The task ids to be removed
         task_ids: Vec<usize>,
     },
-    /// Switches the queue position of two commands. Only works on queued and stashed commandse.
+    /// Switches the queue position of two commands. Only works on queued and stashed commands.
     Switch {
         /// The first task id
         task_id_1: usize,
