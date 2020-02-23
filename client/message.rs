@@ -13,6 +13,7 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
         SubCommand::Add {
             command,
             start_immediately,
+            create_stashed,
         } => {
             let cwd_pathbuf = current_dir()?;
             let cwd = cwd_pathbuf.to_str().ok_or(anyhow!(
@@ -22,6 +23,7 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
                 command: command.join(" "),
                 path: cwd.to_string(),
                 start_immediately: *start_immediately,
+                create_stashed: *create_stashed,
             }))
         }
         SubCommand::Remove { task_ids } => {

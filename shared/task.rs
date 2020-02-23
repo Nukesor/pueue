@@ -35,13 +35,13 @@ pub struct Task {
 }
 
 impl Task {
-    pub fn new(command: String, path: String) -> Task {
+    pub fn new(command: String, path: String, starting_status: TaskStatus) -> Task {
         Task {
             id: 0,
             command: command,
             path: path,
-            status: TaskStatus::Queued,
-            prev_status: TaskStatus::Queued,
+            status: starting_status.clone(),
+            prev_status: starting_status,
             exit_code: None,
             stdout: None,
             stderr: None,
