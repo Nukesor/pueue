@@ -36,7 +36,13 @@ pub fn handle_message(message: Message, sender: &Sender<Message>, state: &Shared
 /// Queues a new task to the state.
 /// If the start_immediately flag is set, send a StartMessage to the task handler
 fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
-    let task = Task::new(message.command, message.path);
+    let starting_status = if message.create_stashed {
+        TaskStatus::Stashed
+    } else {
+        TaskStatus::Queued
+    };
+
+    let task = Task::new(message.command, message.path, starting_status);
     let task_id: usize;
     {
         let mut state = state.lock().unwrap();

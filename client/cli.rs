@@ -9,8 +9,13 @@ pub enum SubCommand {
         command: Vec<String>,
 
         /// Start the task immediately
-        #[structopt(name = "immediate", short, long)]
+        #[structopt(name = "immediate", short, long, conflicts_with = "stash")]
         start_immediately: bool,
+
+        /// Create the task stashed.
+        /// Useful to avoid immediate execution if the queue is empty.
+        #[structopt(name = "stash", short, long, conflicts_with = "immediate")]
+        create_stashed: bool
     },
     /// Remove tasks from the list.
     /// Running or paused tasks need to be killed first.
@@ -18,7 +23,7 @@ pub enum SubCommand {
         /// The task ids to be removed
         task_ids: Vec<usize>,
     },
-    /// Switches the queue position of two commands. Only works on queued and stashed commandse.
+    /// Switches the queue position of two commands. Only works on queued and stashed commands.
     Switch {
         /// The first task id
         task_id_1: usize,

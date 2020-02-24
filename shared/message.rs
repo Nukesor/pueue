@@ -42,6 +42,7 @@ pub struct AddMessage {
     pub command: String,
     pub path: String,
     pub start_immediately: bool,
+    pub create_stashed: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
