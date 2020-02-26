@@ -15,7 +15,7 @@ pub enum SubCommand {
         /// Create the task stashed.
         /// Useful to avoid immediate execution if the queue is empty.
         #[structopt(name = "stash", short, long, conflicts_with = "immediate")]
-        create_stashed: bool
+        create_stashed: bool,
     },
     /// Remove tasks from the list.
     /// Running or paused tasks need to be killed first.

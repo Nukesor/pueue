@@ -1,10 +1,9 @@
-use ::std::env::current_dir;
 use ::anyhow::{anyhow, Result};
+use ::std::env::current_dir;
 
 use ::pueue::message::*;
 
-use crate::cli::{SubCommand, Opt};
-
+use crate::cli::{Opt, SubCommand};
 
 // Convert and pre-process the sub-command into a valid message
 // that can be understood by the daemon

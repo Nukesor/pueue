@@ -7,12 +7,12 @@ use ::pueue::settings::Settings;
 pub mod cli;
 pub mod client;
 pub mod instructions;
-pub mod output;
 pub mod message;
+pub mod output;
 
 use crate::cli::Opt;
-use crate::message::get_message_from_opt;
 use crate::client::Client;
+use crate::message::get_message_from_opt;
 
 #[async_std::main]
 async fn main() -> Result<()> {

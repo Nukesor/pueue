@@ -1,5 +1,5 @@
-use ::comfy_table::*;
 use ::comfy_table::presets::UTF8_HORIZONTAL_BORDERS_ONLY;
+use ::comfy_table::*;
 use ::crossterm::style::style;
 use ::std::string::ToString;
 
