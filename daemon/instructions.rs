@@ -136,14 +136,20 @@ fn enqueue(message: EnqueueMessage, state: &SharedState) -> Message {
             vec![TaskStatus::Stashed, TaskStatus::Locked],
         );
 
+
         for task_id in &matching {
+            state.set_enqueue_at(*task_id, message.enqueue_at);
             state.change_status(*task_id, TaskStatus::Queued);
         }
 
         (matching, mismatching)
     };
 
-    let message = "Tasks are enqueued";
+    let message = if message.enqueue_at.is_some() {
+        "Tasks enqueueing delayed"
+    } else {
+        "Tasks are enqueued"
+    };
     let response = compile_task_response(message, matching, mismatching);
     return create_success_message(response);
 }
