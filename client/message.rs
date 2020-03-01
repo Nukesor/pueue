@@ -49,10 +49,10 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
             };
             Ok(Message::Switch(message))
         }
-        SubCommand::Enqueue { task_ids } => {
+        SubCommand::Enqueue { task_ids, delay_until } => {
             let message = EnqueueMessage {
                 task_ids: task_ids.clone(),
-                enqueue_at: None,
+                enqueue_at: delay_until.clone(),
             };
             Ok(Message::Enqueue(message))
         }

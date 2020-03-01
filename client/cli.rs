@@ -1,3 +1,6 @@
+use ::chrono::prelude::*;
+use ::chrono::Duration;
+use ::chrono_english::*;
 use ::structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
@@ -37,9 +40,35 @@ pub enum SubCommand {
         task_ids: Vec<usize>,
     },
     /// Enqueue stashed tasks. They'll be handled normally afterwards.
+    #[structopt(after_help="DELAY FORMAT:
+
+    The --delay argument must be either a number of seconds or a \"date expression\" similar to GNU \
+    `date -d` with some extensions. It does not attempt to parse all natural language, but is \
+    incredibly flexible. Here are some supported examples.
+
+    2020-04-01T18:30:00   // RFC 3339 timestamp
+    2020-4-1 18:2:30      // Optional leading zeros
+    2020-4-1 5:30pm       // Informal am/pm time
+    2020-4-1 5pm          // Optional minutes and seconds
+    April 1 2020 18:30:00 // English months
+    1 Apr 8:30pm          // Implies current year
+    4/1                   // American form date
+    wednesday 10:30pm     // The closest wednesday in the future at 22:30
+    wednesday             // The closest wednesday in the future
+    4 months              // 4 months from today at 00:00:00
+    1 week                // 1 week at the current time
+    1days                 // 1 day from today at the current time
+    1d 03:00              // The closest 3:00 after 1 day (24 hours)
+    3h                    // 3 hours from now
+    3600s                 // 3600 seconds from now
+")]
     Enqueue {
         /// The id(s) of the tasks you want to enqueue
         task_ids: Vec<usize>,
+
+        /// Delay enqueuing the tasks until <delay> elapses. See DELAY FORMAT below
+        #[structopt(name = "delay", short, long, parse(try_from_str=parse_delay_until))]
+        delay_until: Option<DateTime<Local>>,
     },
 
     /// Wake the daemon from its paused state and continue all paused tasks.
@@ -164,4 +193,19 @@ pub struct Opt {
 
     #[structopt(subcommand)]
     pub cmd: SubCommand,
+}
+
+fn parse_delay_until(src: &str) -> Result<DateTime<Local>, String> {
+    let seconds = src.parse::<i64>();
+    if seconds.is_ok() {
+        let delay_until = Local::now() + Duration::seconds(seconds.unwrap());
+        return Ok(delay_until);
+    }
+
+    let date_time = parse_date_string(src, Local::now(), Dialect::Us);
+    if date_time.is_ok() {
+        return Ok(date_time.unwrap());
+    }
+
+    Err(String::from("could not parse as seconds or date expression"))
 }
