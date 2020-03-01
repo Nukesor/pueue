@@ -14,6 +14,7 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
             command,
             start_immediately,
             create_stashed,
+            delay_until,
         } => {
             let cwd_pathbuf = current_dir()?;
             let cwd = cwd_pathbuf.to_str().ok_or(anyhow!(
@@ -24,7 +25,7 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
                 path: cwd.to_string(),
                 start_immediately: *start_immediately,
                 create_stashed: *create_stashed,
-                enqueue_at: None,
+                enqueue_at: delay_until.clone(),
             }))
         }
         SubCommand::Remove { task_ids } => {
