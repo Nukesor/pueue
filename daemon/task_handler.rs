@@ -69,6 +69,7 @@ impl TaskHandler {
         loop {
             self.receive_commands();
             self.process_finished();
+            self.check_stashed();
             if self.running && !self.reset {
                 let _res = self.check_new();
             }
@@ -156,6 +157,27 @@ impl TaskHandler {
         info!("Started task: {}", task.command);
 
         state.change_status(task_id, TaskStatus::Running);
+    }
+
+    /// As time passes, some delayed tasks may need to be enqueued.
+    /// Gather all stashed tasks and enqueue them if it is after the task's enqueue_at
+    fn check_stashed(&mut self) {
+        let mut state = self.state.lock().unwrap();
+        let stashed_tasks = state.tasks_in_statuses(None, vec![TaskStatus::Stashed]).0;
+
+        for task_id in stashed_tasks {
+            // We can unwrap, since we got a mutex on the state and know, that the ids are valid.
+            let task = state.tasks.get_mut(&task_id).unwrap();
+
+            if let Some(time) = task.enqueue_at {
+                if time <= Local::now() {
+                    info!("Delayed task enqueued: {:?}", task);
+
+                    task.status = TaskStatus::Queued;
+                    task.enqueue_at = None;
+                }
+            }
+        }
     }
 
     /// Check whether there are any finished processes
