@@ -24,6 +24,7 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
                 path: cwd.to_string(),
                 start_immediately: *start_immediately,
                 create_stashed: *create_stashed,
+                enqueue_at: None,
             }))
         }
         SubCommand::Remove { task_ids } => {
@@ -51,6 +52,7 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
         SubCommand::Enqueue { task_ids } => {
             let message = EnqueueMessage {
                 task_ids: task_ids.clone(),
+                enqueue_at: None,
             };
             Ok(Message::Enqueue(message))
         }

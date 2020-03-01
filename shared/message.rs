@@ -1,3 +1,4 @@
+use ::chrono::prelude::*;
 use ::serde_derive::{Deserialize, Serialize};
 
 use crate::state::State;
@@ -43,6 +44,7 @@ pub struct AddMessage {
     pub path: String,
     pub start_immediately: bool,
     pub create_stashed: bool,
+    pub enqueue_at: Option<DateTime<Local>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -64,6 +66,7 @@ pub struct StashMessage {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct EnqueueMessage {
     pub task_ids: Vec<usize>,
+    pub enqueue_at: Option<DateTime<Local>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

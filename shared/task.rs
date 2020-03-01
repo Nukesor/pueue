@@ -36,12 +36,17 @@ pub struct Task {
 }
 
 impl Task {
-    pub fn new(command: String, path: String, starting_status: TaskStatus) -> Task {
+    pub fn new(
+        command: String,
+        path: String,
+        starting_status: TaskStatus,
+        enqueue_at: Option<DateTime<Local>>,
+    ) -> Task {
         Task {
             id: 0,
             command: command,
             path: path,
-            enqueue_at: None,
+            enqueue_at: enqueue_at,
             status: starting_status.clone(),
             prev_status: starting_status,
             exit_code: None,
@@ -57,7 +62,7 @@ impl Task {
             id: 0,
             command: task.command.clone(),
             path: task.path.clone(),
-            enqueue_at: task.enqueue_at,
+            enqueue_at: None,
             status: TaskStatus::Queued,
             prev_status: TaskStatus::Queued,
             exit_code: None,
