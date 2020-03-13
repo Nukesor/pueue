@@ -1,10 +1,9 @@
-use ::std::env::current_dir;
 use ::anyhow::{anyhow, Result};
+use ::std::env::current_dir;
 
 use ::pueue::message::*;
 
-use crate::cli::{SubCommand, Opt};
-
+use crate::cli::{Opt, SubCommand};
 
 // Convert and pre-process the sub-command into a valid message
 // that can be understood by the daemon
@@ -14,6 +13,7 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
             command,
             start_immediately,
             create_stashed,
+            delay_until,
         } => {
             let cwd_pathbuf = current_dir()?;
             let cwd = cwd_pathbuf.to_str().ok_or(anyhow!(
@@ -24,6 +24,7 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
                 path: cwd.to_string(),
                 start_immediately: *start_immediately,
                 create_stashed: *create_stashed,
+                enqueue_at: delay_until.clone(),
             }))
         }
         SubCommand::Remove { task_ids } => {
@@ -48,9 +49,13 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
             };
             Ok(Message::Switch(message))
         }
-        SubCommand::Enqueue { task_ids } => {
+        SubCommand::Enqueue {
+            task_ids,
+            delay_until,
+        } => {
             let message = EnqueueMessage {
                 task_ids: task_ids.clone(),
+                enqueue_at: delay_until.clone(),
             };
             Ok(Message::Enqueue(message))
         }

@@ -1,8 +1,8 @@
 use ::anyhow::{bail, Error, Result};
 use ::simplelog::{Config, LevelFilter, SimpleLogger};
-use ::std::process::Command;
 use ::std::fs::create_dir_all;
 use ::std::path::Path;
+use ::std::process::Command;
 use ::std::sync::mpsc::channel;
 use ::std::sync::{Arc, Mutex};
 use ::std::thread;
@@ -15,8 +15,8 @@ use ::pueue::settings::Settings;
 use ::pueue::state::State;
 
 mod cli;
-mod log;
 mod instructions;
+mod log;
 mod response_helper;
 mod socket;
 mod streaming;
@@ -114,9 +114,7 @@ fn fork_daemon(opt: &Opt) -> Result<()> {
         arguments.push("-".to_string() + &" ".repeat(opt.verbose as usize));
     }
 
-    Command::new("pueued")
-        .args(&arguments)
-        .spawn()?;
+    Command::new("pueued").args(&arguments).spawn()?;
 
     println!("Pueued is now running in the background");
     std::process::exit(0);

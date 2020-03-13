@@ -77,6 +77,12 @@ impl State {
         };
     }
 
+    pub fn set_enqueue_at(&mut self, id: usize, enqueue_at: Option<DateTime<Local>>) {
+        if let Some(ref mut task) = self.tasks.get_mut(&id) {
+            task.enqueue_at = enqueue_at;
+        }
+    }
+
     pub fn add_error_message(&mut self, id: usize, message: String) {
         if let Some(ref mut task) = self.tasks.get_mut(&id) {
             task.stderr = Some(message);

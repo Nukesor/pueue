@@ -31,6 +31,7 @@ anyhow = "1"
 async-std = { version = "1", features = ["attributes", "unstable"] }
 dirs = "2"
 chrono = { version = "^0.4", features = ["serde"] }
+chrono-english = "^0.1.0"
 rand = "^0.7"
 strum = "^0.17"
 strum_macros = "^0.17"
@@ -55,6 +56,8 @@ users = "^0.9"
 nix = "^0.17"
 
 [build-dependencies]
+chrono = { version = "^0.4", features = ["serde"] }
+chrono-english = "^0.1.0"
 structopt = "0.3"
 version_check = "^0.9"
 

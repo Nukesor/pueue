@@ -36,13 +36,18 @@ pub fn handle_message(message: Message, sender: &Sender<Message>, state: &Shared
 /// Queues a new task to the state.
 /// If the start_immediately flag is set, send a StartMessage to the task handler
 fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
-    let starting_status = if message.create_stashed {
+    let starting_status = if message.create_stashed || message.enqueue_at.is_some() {
         TaskStatus::Stashed
     } else {
         TaskStatus::Queued
     };
 
-    let task = Task::new(message.command, message.path, starting_status);
+    let task = Task::new(
+        message.command,
+        message.path,
+        starting_status,
+        message.enqueue_at,
+    );
     let task_id: usize;
     {
         let mut state = state.lock().unwrap();
@@ -57,7 +62,16 @@ fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) 
             .expect(SENDER_ERR);
     }
 
-    create_success_message("New task added.")
+    let message = if let Some(enqueue_at) = message.enqueue_at {
+        format!(
+            "New task added. It will be enqueued at {}",
+            enqueue_at.format("%Y-%m-%d %H:%M:%S")
+        )
+    } else {
+        String::from("New task added.")
+    };
+
+    create_success_message(message)
 }
 
 /// Remove tasks from the queue
@@ -132,14 +146,23 @@ fn enqueue(message: EnqueueMessage, state: &SharedState) -> Message {
         );
 
         for task_id in &matching {
+            state.set_enqueue_at(*task_id, message.enqueue_at);
             state.change_status(*task_id, TaskStatus::Queued);
         }
 
         (matching, mismatching)
     };
 
-    let message = "Tasks are enqueued";
-    let response = compile_task_response(message, matching, mismatching);
+    let message = if let Some(enqueue_at) = message.enqueue_at {
+        format!(
+            "Tasks will be enqueued at {}",
+            enqueue_at.format("%Y-%m-%d %H:%M:%S")
+        )
+    } else {
+        String::from("Tasks are enqueued")
+    };
+
+    let response = compile_task_response(message.as_str(), matching, mismatching);
     return create_success_message(response);
 }
 

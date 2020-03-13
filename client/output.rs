@@ -1,5 +1,5 @@
-use ::comfy_table::*;
 use ::comfy_table::presets::UTF8_HORIZONTAL_BORDERS_ONLY;
+use ::comfy_table::*;
 use ::crossterm::style::style;
 use ::std::string::ToString;
 
@@ -45,19 +45,29 @@ pub fn print_state(message: Message, json: bool) {
     }
     println!("{}", daemon_status);
 
+    let has_delayed_tasks = state
+        .tasks
+        .iter()
+        .find(|(_id, task)| task.enqueue_at.is_some())
+        .is_some();
+
+    let mut headers = vec![Cell::new("Index"), Cell::new("Status")];
+    if has_delayed_tasks {
+        headers.push(Cell::new("Enqueue At"));
+    }
+    headers.append(&mut vec![
+        Cell::new("Exitcode"),
+        Cell::new("Command"),
+        Cell::new("Path"),
+        Cell::new("Start"),
+        Cell::new("End"),
+    ]);
+
     let mut table = Table::new();
     table
         .set_content_arrangement(ContentArrangement::Dynamic)
         .load_preset(UTF8_HORIZONTAL_BORDERS_ONLY)
-        .set_header(vec![
-            Cell::new("Index"),
-            Cell::new("Status"),
-            Cell::new("Exitcode"),
-            Cell::new("Command"),
-            Cell::new("Path"),
-            Cell::new("Start"),
-            Cell::new("End"),
-        ]);
+        .set_header(headers);
 
     for (id, task) in state.tasks {
         let mut row = Row::new();
@@ -73,6 +83,14 @@ pub fn print_state(message: Message, json: bool) {
             _ => status_cell.fg(Color::Yellow),
         };
         row.add_cell(status_cell);
+
+        if has_delayed_tasks {
+            if let Some(enqueue_at) = task.enqueue_at {
+                row.add_cell(Cell::new(enqueue_at.format("%Y-%m-%d\n%H:%M:%S")));
+            } else {
+                row.add_cell(Cell::new(""));
+            }
+        }
 
         // Match the color of the exit code
         // If the exit_code is none, it has been killed by the task handler.
