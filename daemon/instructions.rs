@@ -78,7 +78,7 @@ fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) 
 fn remove(message: RemoveMessage, state: &SharedState) -> Message {
     let mut state = state.lock().unwrap();
     let statuses = vec![TaskStatus::Running, TaskStatus::Paused];
-    let (matching, mismatching) = state.tasks_not_in_statuses(Some(message.task_ids), statuses);
+    let (matching, mismatching) = state.tasks_not_in_statuses(statuses, Some(message.task_ids));
 
     for task_id in &matching {
         state.tasks.remove(task_id);
@@ -94,7 +94,7 @@ fn switch(message: SwitchMessage, state: &SharedState) -> Message {
     let task_ids = vec![message.task_id_1, message.task_id_2];
     let statuses = vec![TaskStatus::Queued, TaskStatus::Stashed];
     let mut state = state.lock().unwrap();
-    let (_, mismatching) = state.tasks_in_statuses(Some(task_ids.clone().to_vec()), statuses);
+    let (_, mismatching) = state.tasks_in_statuses(statuses, Some(task_ids.clone().to_vec()));
     if !mismatching.is_empty() {
         return create_failure_message("Tasks have to be either queued or stashed.");
     }
@@ -121,7 +121,7 @@ fn stash(message: StashMessage, state: &SharedState) -> Message {
     let (matching, mismatching) = {
         let mut state = state.lock().unwrap();
         let (matching, mismatching) =
-            state.tasks_in_statuses(Some(message.task_ids), vec![TaskStatus::Queued]);
+            state.tasks_in_statuses(vec![TaskStatus::Queued], Some(message.task_ids));
 
         for task_id in &matching {
             state.change_status(*task_id, TaskStatus::Stashed);
@@ -141,8 +141,8 @@ fn enqueue(message: EnqueueMessage, state: &SharedState) -> Message {
     let (matching, mismatching) = {
         let mut state = state.lock().unwrap();
         let (matching, mismatching) = state.tasks_in_statuses(
-            Some(message.task_ids),
             vec![TaskStatus::Stashed, TaskStatus::Locked],
+            Some(message.task_ids),
         );
 
         for task_id in &matching {
@@ -191,7 +191,7 @@ fn restart(message: RestartMessage, sender: &Sender<Message>, state: &SharedStat
     let new_ids = {
         let mut state = state.lock().unwrap();
         let statuses = vec![TaskStatus::Done, TaskStatus::Failed, TaskStatus::Killed];
-        let (matching, mismatching) = state.tasks_in_statuses(Some(message.task_ids), statuses);
+        let (matching, mismatching) = state.tasks_in_statuses(statuses, Some(message.task_ids));
 
         let mut new_ids = Vec::new();
         for task_id in &matching {

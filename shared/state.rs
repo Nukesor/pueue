@@ -42,21 +42,7 @@ impl State {
         self.max_id - 1
     }
 
-    pub fn remove_task(&mut self, id: usize) -> Option<Task> {
-        self.tasks.remove(&id)
-    }
-
-    pub fn get_task_clone(&mut self, id: usize) -> Option<Task> {
-        let task = self.tasks.remove(&id);
-        let clone = task.clone();
-        if let Some(task) = task {
-            self.tasks.insert(id, task);
-        }
-
-        return clone;
-    }
-
-    pub fn get_next_task(&mut self) -> Option<usize> {
+    pub fn get_next_task_id(&mut self) -> Option<usize> {
         for (id, task) in self.tasks.iter() {
             if task.status == TaskStatus::Queued {
                 return Some(*id);
@@ -83,28 +69,16 @@ impl State {
         }
     }
 
-    pub fn add_error_message(&mut self, id: usize, message: String) {
-        if let Some(ref mut task) = self.tasks.get_mut(&id) {
-            task.stderr = Some(message);
-        }
-    }
-
-    pub fn get_task_status(&mut self, id: usize) -> Option<TaskStatus> {
-        if let Some(ref task) = self.tasks.get(&id) {
-            return Some(task.status.clone());
-        };
-        None
-    }
-
     /// This checks, whether the given task_ids are in the specified statuses.
     /// The first result is the list of task_ids that match these statuses.
     /// The second result is the list of task_ids that don't match these statuses.
     ///
-    /// Additionally, if no task_ids are specified, return ids of all tasks
+    /// Additionally, a list of task_ids can be specified to only run the check
+    /// on a subset of all tasks.
     pub fn tasks_in_statuses(
         &mut self,
-        task_ids: Option<Vec<usize>>,
         statuses: Vec<TaskStatus>,
+        task_ids: Option<Vec<usize>>,
     ) -> (Vec<usize>, Vec<usize>) {
         let task_ids = match task_ids {
             Some(ids) => ids,
@@ -116,15 +90,16 @@ impl State {
 
         // Filter all task id's that match the provided statuses.
         for task_id in task_ids.iter() {
-            // We aren't interested in this task, continue
-            if !self.tasks.contains_key(&task_id) {
-                mismatching.push(*task_id);
-                continue;
-            }
+            // Check whether the task exists
+            let task = match self.tasks.get(&task_id) {
+                None => {
+                    mismatching.push(*task_id);
+                    continue;
+                }
+                Some(task) => task
+            };
 
-            // Unwrap, since we just checked, whether it exists.
-            let task = self.tasks.get(&task_id).unwrap();
-
+            // Check whether the task status matches the specified statuses
             if statuses.contains(&task.status) {
                 matching.push(*task_id);
             } else {
@@ -138,8 +113,8 @@ impl State {
     /// The same as tasks_in_statuses, but with inverted statuses
     pub fn tasks_not_in_statuses(
         &mut self,
-        task_ids: Option<Vec<usize>>,
         excluded_statuses: Vec<TaskStatus>,
+        task_ids: Option<Vec<usize>>,
     ) -> (Vec<usize>, Vec<usize>) {
         let mut valid_statuses = Vec::new();
         // Create a list of all valid statuses
@@ -150,14 +125,14 @@ impl State {
             }
         }
 
-        self.tasks_in_statuses(task_ids, valid_statuses)
+        self.tasks_in_statuses(valid_statuses, task_ids)
     }
 
     /// Remove all finished tasks (clean up the task queue)
     pub fn clean(&mut self) {
         self.backup();
         let statuses = vec![TaskStatus::Done, TaskStatus::Failed];
-        let (matching, _) = self.tasks_in_statuses(None, statuses);
+        let (matching, _) = self.tasks_in_statuses(statuses, None);
 
         for task_id in &matching {
             let _ = self.tasks.remove(task_id).unwrap();

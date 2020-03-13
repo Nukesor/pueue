@@ -18,7 +18,7 @@ use crate::log::*;
 use ::pueue::message::*;
 use ::pueue::settings::Settings;
 use ::pueue::state::SharedState;
-use ::pueue::task::{Task, TaskStatus};
+use ::pueue::task::TaskStatus;
 
 pub struct TaskHandler {
     state: SharedState,
@@ -82,8 +82,14 @@ impl TaskHandler {
         // Check while there are still slots left
         // Break the loop if no next task is found
         while self.children.len() < self.settings.daemon.default_parallel_tasks {
-            match self.get_next()? {
-                Some((id, task)) => self.start_process(id, &task),
+            let next_id = {
+                let mut state = self.state.lock().unwrap();
+                state.get_next_task_id()
+            };
+            match next_id {
+                Some(id) => {
+                    self.start_process(id);
+                },
                 None => break,
             }
         }
@@ -91,25 +97,30 @@ impl TaskHandler {
         Ok(())
     }
 
-    /// Return the next task that's queued for execution.
-    /// None if no new task could be found.
-    fn get_next(&mut self) -> Result<Option<(usize, Task)>> {
-        let mut state = self.state.lock().unwrap();
-        match state.get_next_task() {
-            Some(id) => {
-                let task = state.get_task_clone(id).unwrap();
-                Ok(Some((id, task)))
-            }
-            None => Ok(None),
-        }
-    }
-
     /// Actually spawn a new sub process
     /// The output of subprocesses is piped into a seperate file for easier access
-    fn start_process(&mut self, task_id: usize, task: &Task) {
-        // Already get the mutex here to ensure that the task won't be manipulated
-        // or removed while we are starting it over here.
+    fn start_process(&mut self, task_id: usize) {
+        // Already get the mutex here to ensure that the state won't be manipulated
+        // while we are looking for a task to start.
         let mut state = self.state.lock().unwrap();
+
+        let task = state.tasks.get_mut(&task_id);
+        let task = match task {
+            Some(task) => {
+                if !vec![TaskStatus::Running, TaskStatus::Paused].contains(&task.status) {
+                    info!("Tried to start task with status: {}", task.status);
+                    return
+                }
+                task
+            }
+            None => {
+                info!("Tried to start non-existing task: {}", task_id);
+                return
+            }
+        };
+        // In case a task that has been scheduled for enqueueing, is forcefully
+        // started by hand, set `enqueue_at` to `None`.
+        task.enqueue_at = None;
 
         // Try to get the log files to which the output of the process
         // Will be written. Error if this doesn't work!
@@ -148,22 +159,22 @@ impl TaskHandler {
                 let error = format!("Failed to spawn child {} with err: {:?}", task_id, err);
                 error!("{}", error);
                 clean_log_handles(task_id, &self.settings);
-                state.change_status(task_id, TaskStatus::Failed);
-                state.add_error_message(task_id, error);
+                task.status = TaskStatus::Failed;
+                task.stderr = Some(error);
                 return;
             }
         };
         self.children.insert(task_id, child);
         info!("Started task: {}", task.command);
 
-        state.change_status(task_id, TaskStatus::Running);
+        task.status = TaskStatus::Running;
     }
 
     /// As time passes, some delayed tasks may need to be enqueued.
     /// Gather all stashed tasks and enqueue them if it is after the task's enqueue_at
     fn check_stashed(&mut self) {
         let mut state = self.state.lock().unwrap();
-        let stashed_tasks = state.tasks_in_statuses(None, vec![TaskStatus::Stashed]).0;
+        let stashed_tasks = state.tasks_in_statuses(vec![TaskStatus::Stashed], None).0;
 
         for task_id in stashed_tasks {
             // We can unwrap, since we got a mutex on the state and know, that the ids are valid.
@@ -220,6 +231,7 @@ impl TaskHandler {
                     task.status = TaskStatus::Failed;
                 }
             }
+
             task.stdout = stdout;
             task.stderr = stderr;
             task.end = Some(Local::now());
@@ -320,14 +332,7 @@ impl TaskHandler {
                     self.continue_task(*id);
                 } else {
                     // Start processes for all tasks that haven't been started yet
-                    let task = {
-                        let mut state = self.state.lock().unwrap();
-                        state.get_task_clone(*id)
-                    };
-
-                    if let Some(task) = task {
-                        self.start_process(*id, &task);
-                    }
+                    self.start_process(*id);
                 }
             }
             return;
@@ -431,7 +436,7 @@ impl TaskHandler {
             return;
         }
 
-        // Pause the daemon and all tasks
+        // Pause the daemon and kill all tasks
         if message.all {
             info!("Killing all spawned children");
             self.change_running(false);

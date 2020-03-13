@@ -10,7 +10,7 @@ pub fn task_response_helper(
     // Get all matching/mismatching task_ids for all given ids and statuses
     let (matching, mismatching) = {
         let mut state = state.lock().unwrap();
-        state.tasks_in_statuses(Some(task_ids), statuses)
+        state.tasks_in_statuses(statuses, Some(task_ids))
     };
 
     compile_task_response(message, matching, mismatching)
