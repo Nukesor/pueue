@@ -62,7 +62,13 @@ fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) 
             .expect(SENDER_ERR);
     }
 
-    create_success_message("New task added.")
+    let message = if let Some(enqueue_at) = message.enqueue_at {
+        format!("New task added. It will be enqueued at {}", enqueue_at.format("%Y-%m-%d %H:%M:%S"))
+    } else {
+        String::from("New task added.")
+    };
+
+    create_success_message(message)
 }
 
 /// Remove tasks from the queue
@@ -145,12 +151,13 @@ fn enqueue(message: EnqueueMessage, state: &SharedState) -> Message {
         (matching, mismatching)
     };
 
-    let message = if message.enqueue_at.is_some() {
-        "Tasks enqueueing delayed"
+    let message = if let Some(enqueue_at) = message.enqueue_at {
+        format!("Tasks will be enqueued at {}", enqueue_at.format("%Y-%m-%d %H:%M:%S"))
     } else {
-        "Tasks are enqueued"
+        String::from("Tasks are enqueued")
     };
-    let response = compile_task_response(message, matching, mismatching);
+
+    let response = compile_task_response(message.as_str(), matching, mismatching);
     return create_success_message(response);
 }
 

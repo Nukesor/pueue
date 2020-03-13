@@ -2,7 +2,7 @@ use ::pueue::state::SharedState;
 use ::pueue::task::TaskStatus;
 
 pub fn task_response_helper(
-    message: &'static str,
+    message: &str,
     task_ids: Vec<usize>,
     statuses: Vec<TaskStatus>,
     state: &SharedState,
@@ -20,7 +20,7 @@ pub fn task_response_helper(
 /// A custom message will be combined with a text about all matching tasks
 /// and possibly tasks for which the instruction cannot be executed.
 pub fn compile_task_response(
-    message: &'static str,
+    message: &str,
     matching: Vec<usize>,
     mismatching: Vec<usize>,
 ) -> String {
