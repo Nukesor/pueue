@@ -26,5 +26,5 @@ fn main() {
     clap.gen_completions(bin_name, Shell::Fish, completion_path);
     clap.gen_completions(bin_name, Shell::PowerShell, completion_path);
     clap.gen_completions(bin_name, Shell::Elvish, completion_path);
-//    clap.gen_completions(bin_name, Shell::Zsh, completion_path);
+    //    clap.gen_completions(bin_name, Shell::Zsh, completion_path);
 }

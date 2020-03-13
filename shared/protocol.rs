@@ -1,8 +1,8 @@
 use ::anyhow::Result;
 use ::async_std::net::TcpStream;
 use ::async_std::prelude::*;
-use ::log::debug;
 use ::byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
+use ::log::debug;
 use ::std::io::Cursor;
 
 use crate::message::*;

@@ -46,7 +46,7 @@ fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) 
         message.command,
         message.path,
         starting_status,
-        message.enqueue_at
+        message.enqueue_at,
     );
     let task_id: usize;
     {
@@ -63,7 +63,10 @@ fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) 
     }
 
     let message = if let Some(enqueue_at) = message.enqueue_at {
-        format!("New task added. It will be enqueued at {}", enqueue_at.format("%Y-%m-%d %H:%M:%S"))
+        format!(
+            "New task added. It will be enqueued at {}",
+            enqueue_at.format("%Y-%m-%d %H:%M:%S")
+        )
     } else {
         String::from("New task added.")
     };
@@ -142,7 +145,6 @@ fn enqueue(message: EnqueueMessage, state: &SharedState) -> Message {
             vec![TaskStatus::Stashed, TaskStatus::Locked],
         );
 
-
         for task_id in &matching {
             state.set_enqueue_at(*task_id, message.enqueue_at);
             state.change_status(*task_id, TaskStatus::Queued);
@@ -152,7 +154,10 @@ fn enqueue(message: EnqueueMessage, state: &SharedState) -> Message {
     };
 
     let message = if let Some(enqueue_at) = message.enqueue_at {
-        format!("Tasks will be enqueued at {}", enqueue_at.format("%Y-%m-%d %H:%M:%S"))
+        format!(
+            "Tasks will be enqueued at {}",
+            enqueue_at.format("%Y-%m-%d %H:%M:%S")
+        )
     } else {
         String::from("Tasks are enqueued")
     };

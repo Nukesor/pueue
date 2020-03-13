@@ -81,7 +81,6 @@ impl State {
         if let Some(ref mut task) = self.tasks.get_mut(&id) {
             task.enqueue_at = enqueue_at;
         }
-
     }
 
     pub fn add_error_message(&mut self, id: usize, message: String) {

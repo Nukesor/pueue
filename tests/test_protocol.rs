@@ -1,11 +1,10 @@
 use ::anyhow::Result;
-use ::async_std::task;
-use ::async_std::prelude::*;
 use ::async_std::net::{TcpListener, TcpStream};
+use ::async_std::prelude::*;
+use ::async_std::task;
 
+use ::pueue::message::{create_success_message, Message};
 use ::pueue::protocol::*;
-use ::pueue::message::{Message, create_success_message};
-
 
 #[async_std::test]
 async fn test_single_huge_payload() -> Result<()> {

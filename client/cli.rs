@@ -44,7 +44,7 @@ pub enum SubCommand {
         task_ids: Vec<usize>,
     },
     /// Enqueue stashed tasks. They'll be handled normally afterwards.
-    #[structopt(after_help="DELAY FORMAT:
+    #[structopt(after_help = "DELAY FORMAT:
 
     The --delay argument must be either a number of seconds or a \"date expression\" similar to GNU \
     `date -d` with some extensions. It does not attempt to parse all natural language, but is \
@@ -211,5 +211,7 @@ fn parse_delay_until(src: &str) -> Result<DateTime<Local>, String> {
         return Ok(date_time.unwrap());
     }
 
-    Err(String::from("could not parse as seconds or date expression"))
+    Err(String::from(
+        "could not parse as seconds or date expression",
+    ))
 }

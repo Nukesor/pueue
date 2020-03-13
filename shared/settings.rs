@@ -2,7 +2,7 @@ use ::anyhow::{anyhow, Result};
 use ::log::info;
 use ::rand::Rng;
 use ::serde_derive::{Deserialize, Serialize};
-use ::std::fs::{File, create_dir_all};
+use ::std::fs::{create_dir_all, File};
 use ::std::io::prelude::*;
 use ::std::path::{Path, PathBuf};
 
@@ -63,7 +63,9 @@ impl Settings {
     /// The file is written to the main configuration directory of the respective OS
     pub fn save(&self) -> Result<()> {
         let config_path = default_config_path()?;
-        let config_dir = config_path.parent().ok_or(anyhow!("Couldn't resolve config dir"))?;
+        let config_dir = config_path
+            .parent()
+            .ok_or(anyhow!("Couldn't resolve config dir"))?;
 
         // Create the config dir, if it doesn't exist yet
         if !config_dir.exists() {

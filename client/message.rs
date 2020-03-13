@@ -1,10 +1,9 @@
-use ::std::env::current_dir;
 use ::anyhow::{anyhow, Result};
+use ::std::env::current_dir;
 
 use ::pueue::message::*;
 
-use crate::cli::{SubCommand, Opt};
-
+use crate::cli::{Opt, SubCommand};
 
 // Convert and pre-process the sub-command into a valid message
 // that can be understood by the daemon
@@ -50,7 +49,10 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
             };
             Ok(Message::Switch(message))
         }
-        SubCommand::Enqueue { task_ids, delay_until } => {
+        SubCommand::Enqueue {
+            task_ids,
+            delay_until,
+        } => {
             let message = EnqueueMessage {
                 task_ids: task_ids.clone(),
                 enqueue_at: delay_until.clone(),

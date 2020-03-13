@@ -1,5 +1,5 @@
-use ::comfy_table::*;
 use ::comfy_table::presets::UTF8_HORIZONTAL_BORDERS_ONLY;
+use ::comfy_table::*;
 use ::crossterm::style::style;
 use ::std::string::ToString;
 
@@ -56,11 +56,11 @@ pub fn print_state(message: Message, json: bool) {
         headers.push(Cell::new("Enqueue At"));
     }
     headers.append(&mut vec![
-      Cell::new("Exitcode"),
-      Cell::new("Command"),
-      Cell::new("Path"),
-      Cell::new("Start"),
-      Cell::new("End"),
+        Cell::new("Exitcode"),
+        Cell::new("Command"),
+        Cell::new("Path"),
+        Cell::new("Start"),
+        Cell::new("End"),
     ]);
 
     let mut table = Table::new();
