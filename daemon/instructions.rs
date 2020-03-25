@@ -121,7 +121,7 @@ fn stash(message: StashMessage, state: &SharedState) -> Message {
     let (matching, mismatching) = {
         let mut state = state.lock().unwrap();
         let (matching, mismatching) =
-            state.tasks_in_statuses(vec![TaskStatus::Queued], Some(message.task_ids));
+            state.tasks_in_statuses(vec![TaskStatus::Queued, TaskStatus::Locked], Some(message.task_ids));
 
         for task_id in &matching {
             state.change_status(*task_id, TaskStatus::Stashed);
