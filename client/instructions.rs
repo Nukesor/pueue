@@ -36,6 +36,11 @@ pub fn edit(message: Message) -> Message {
     file.read_to_string(&mut edited_command)
         .expect("Failed to read Command after editing");
 
+    // Remove any trailing newlines from the command
+    while edited_command.ends_with('\n') || edited_command.ends_with('\r') {
+        edited_command.pop();
+    }
+
     Message::Edit(EditMessage {
         task_id: message.task_id,
         command: edited_command,

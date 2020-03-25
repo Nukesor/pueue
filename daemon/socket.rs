@@ -58,21 +58,22 @@ async fn handle_incoming(
     state: SharedState,
     settings: Settings,
 ) -> Result<()> {
+    // Receive the secret once and check, whether the client is allowed to connect
+    let payload_bytes = receive_bytes(&mut socket).await?;
+
+    // Didn't receive any bytes. The client disconnected
+    if payload_bytes.len() == 0 {
+        info!("Client went away");
+        return Ok(());
+    }
+
+    let secret = String::from_utf8(payload_bytes)?;
+    if secret != settings.daemon.secret {
+        warn!("Received invalid secret: {}", secret);
+        return Err(anyhow!("Received invalid secret"));
+    }
+
     loop {
-        // Receive the secret and check, whether the client is allowed to connect
-        let payload_bytes = receive_bytes(&mut socket).await?;
-
-        // Didn't receive any bytes. The client disconnected
-        if payload_bytes.len() == 0 {
-            return Ok(());
-        }
-
-        let secret = String::from_utf8(payload_bytes)?;
-        if secret != settings.daemon.secret {
-            warn!("Received invalid secret: {}", secret);
-            return Err(anyhow!("Received invalid secret"));
-        }
-
         // Receive the actual instruction from the client
         let message = receive_message(&mut socket).await?;
         info!("Received instruction: {:?}", message);
