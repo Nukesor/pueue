@@ -96,7 +96,7 @@ impl State {
                     mismatching.push(*task_id);
                     continue;
                 }
-                Some(task) => task
+                Some(task) => task,
             };
 
             // Check whether the task status matches the specified statuses

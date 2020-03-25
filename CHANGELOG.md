@@ -1,3 +1,13 @@
+# v0.2.0
+**Features:**
+- New `--delay` flag, which delays enqueueing of a task. Can be used on `start` and `enqueue`.
+- `--stashed` flag for `pueue add` to add a task in stashed mode.
+
+**For Packager:**
+- Generating completion files moved away from build.rs to the new `pueue completions {shell} {output_dir}` subcommand.
+This seems to be the proper way to generate completion files with clap.
+There is a `build_completions.sh` script to build all completion files to the known location for your convenience.
+
 # v0.1.6
 - [BUG] Fix wrong TCP receiving logic
 - Automatically create config directory

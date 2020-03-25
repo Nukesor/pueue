@@ -10,7 +10,7 @@ pub mod instructions;
 pub mod message;
 pub mod output;
 
-use crate::cli::Opt;
+use crate::cli::{Opt, SubCommand};
 use crate::client::Client;
 use crate::message::get_message_from_opt;
 
@@ -35,6 +35,16 @@ async fn main() -> Result<()> {
         SimpleLogger::init(LevelFilter::Warn, Config::default())?;
     } else if opt.verbose == 0 {
         SimpleLogger::init(LevelFilter::Error, Config::default())?;
+    }
+
+    if let SubCommand::Completions {
+        shell,
+        output_directory,
+    } = &opt.cmd
+    {
+        let mut clap = Opt::clap();
+        clap.gen_completions("pueue", shell.clone(), output_directory);
+        return Ok(());
     }
 
     // Create the message that should be sent to the daemon

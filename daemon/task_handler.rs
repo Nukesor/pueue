@@ -89,7 +89,7 @@ impl TaskHandler {
             match next_id {
                 Some(id) => {
                     self.start_process(id);
-                },
+                }
                 None => break,
             }
         }
@@ -109,13 +109,13 @@ impl TaskHandler {
             Some(task) => {
                 if !vec![TaskStatus::Running, TaskStatus::Paused].contains(&task.status) {
                     info!("Tried to start task with status: {}", task.status);
-                    return
+                    return;
                 }
                 task
             }
             None => {
                 info!("Tried to start non-existing task: {}", task_id);
-                return
+                return;
             }
         };
         // In case a task that has been scheduled for enqueueing, is forcefully

@@ -124,5 +124,9 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
         SubCommand::Shutdown => Ok(Message::DaemonShutdown),
 
         SubCommand::Parallel { parallel_tasks } => Ok(Message::Parallel(*parallel_tasks)),
+        SubCommand::Completions {
+            shell: _,
+            output_directory: _,
+        } => Err(anyhow!("Completions have to be handled earlier")),
     }
 }

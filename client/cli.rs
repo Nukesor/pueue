@@ -1,6 +1,9 @@
+use std::path::PathBuf;
+
 use ::chrono::prelude::*;
 use ::chrono::Duration;
 use ::chrono_english::*;
+use ::structopt::clap::Shell;
 use ::structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
@@ -173,6 +176,14 @@ pub enum SubCommand {
     Parallel {
         /// The amount of allowed paralel tasks
         parallel_tasks: usize,
+    },
+    /// Generates shell completion files.
+    /// Ingore for normal operations
+    Completions {
+        /// The target shell. Can be `bash`, `fish`, `powershell`, `elvish` and `zsh`.
+        shell: Shell,
+        /// The output directory to which the file should be written
+        output_directory: PathBuf,
     },
 }
 
