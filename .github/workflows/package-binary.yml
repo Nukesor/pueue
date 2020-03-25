@@ -64,37 +64,10 @@ jobs:
         asset_name: ${{ matrix.daemon_release_name }}
         tag: ${{ github.ref }}
 
-
-    # Upload completion files
     - uses: svenstaro/upload-release-action@v1-release
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: utils/completions/_pueue.ps1
-        asset_name: shell_completion_pueue.ps1
-        tag: ${{ github.ref }}
-      if: matrix.os == 'ubuntu-latest'
-
-    - uses: svenstaro/upload-release-action@v1-release
-      with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: utils/completions/pueue.bash
-        asset_name: shell_completion_pueue.bash
-        tag: ${{ github.ref }}
-      if: matrix.os == 'ubuntu-latest'
-
-
-    - uses: svenstaro/upload-release-action@v1-release
-      with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: utils/completions/pueue.elv
-        asset_name: shell_completion_pueue.elv
-        tag: ${{ github.ref }}
-      if: matrix.os == 'ubuntu-latest'
-
-    - uses: svenstaro/upload-release-action@v1-release
-      with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: utils/completions/pueue.fish
-        asset_name: shell_completion_pueue.fish
+        file: utils/pueued.service
+        asset_name: systemd.pueued.service
         tag: ${{ github.ref }}
       if: matrix.os == 'ubuntu-latest'

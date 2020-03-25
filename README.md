@@ -211,6 +211,10 @@ This would help me a lot!
 
 ## Utilities
 
+### Shell completion files
+Shell completion files can be created on the fly with `pueue completions $shell $directory`.
+There's also a `build_completions.sh` script, which creates all completion files in the `utiles/completions` directory.
+
 ### JSON Support
 
 The Pueue client `status` and `log` commands support JSON output with the `-j` flag.
