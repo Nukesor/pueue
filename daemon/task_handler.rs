@@ -64,7 +64,8 @@ impl TaskHandler {
     /// In here a few things happen:
     /// 1. Propagated commands from socket communication is received and handled
     /// 2. Check whether any tasks just finished
-    /// 3. Check whether we can spawn new tasks
+    /// 3. Check if there are any stashed processes ready for being enqueued
+    /// 4. Check whether we can spawn new tasks
     pub fn run(&mut self) {
         loop {
             self.receive_commands();
@@ -107,7 +108,7 @@ impl TaskHandler {
         let task = state.tasks.get_mut(&task_id);
         let task = match task {
             Some(task) => {
-                if !vec![TaskStatus::Running, TaskStatus::Paused].contains(&task.status) {
+                if !vec![TaskStatus::Stashed, TaskStatus::Queued, TaskStatus::Paused].contains(&task.status) {
                     info!("Tried to start task with status: {}", task.status);
                     return;
                 }
@@ -168,26 +169,34 @@ impl TaskHandler {
         info!("Started task: {}", task.command);
 
         task.status = TaskStatus::Running;
+
+        state.save();
     }
 
     /// As time passes, some delayed tasks may need to be enqueued.
     /// Gather all stashed tasks and enqueue them if it is after the task's enqueue_at
     fn check_stashed(&mut self) {
         let mut state = self.state.lock().unwrap();
-        let stashed_tasks = state.tasks_in_statuses(vec![TaskStatus::Stashed], None).0;
 
-        for task_id in stashed_tasks {
-            // We can unwrap, since we got a mutex on the state and know, that the ids are valid.
-            let task = state.tasks.get_mut(&task_id).unwrap();
+        let mut changed = false;
+        for (_, task) in state.tasks.iter_mut() {
+            if task.status != TaskStatus::Stashed {
+                continue
+            }
 
             if let Some(time) = task.enqueue_at {
                 if time <= Local::now() {
-                    info!("Delayed task enqueued: {:?}", task);
+                    info!("Enqueuing delayed task : {}", task.id);
 
                     task.status = TaskStatus::Queued;
                     task.enqueue_at = None;
+                    changed = true;
                 }
             }
+        }
+        // Save the state if a task has been enqueued
+        if changed {
+            state.save();
         }
     }
 

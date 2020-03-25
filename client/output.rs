@@ -35,7 +35,7 @@ pub fn print_state(message: Message, json: bool) {
     let mut daemon_status = if state.running {
         style("Daemon status: running")
     } else {
-        style("Daemon status: ")
+        style("Daemon status: paused")
     };
 
     if state.running {

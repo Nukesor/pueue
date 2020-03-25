@@ -8,6 +8,9 @@
 This seems to be the proper way to generate completion files with clap.
 There is a `build_completions.sh` script to build all completion files to the known location for your convenience.
 
+**Bug fixes:**
+- Several wrong state restorations after restarting pueue
+
 # v0.1.6
 - [BUG] Fix wrong TCP receiving logic
 - Automatically create config directory

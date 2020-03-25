@@ -222,6 +222,7 @@ impl State {
             );
             return;
         }
+        info!("Start restoring state");
 
         // Try to load the file
         let data = fs::read_to_string(&path);
@@ -244,6 +245,7 @@ impl State {
         for (task_id, task) in state.tasks.iter_mut() {
             // Handle ungraceful shutdowns while executing tasks
             if task.status == TaskStatus::Running || task.status == TaskStatus::Paused {
+                info!("Setting task {} with previous status {:?} to new status {:?}", task.id, task.status, TaskStatus::Killed);
                 task.status = TaskStatus::Killed;
             }
             // Crash during editing of the task command
@@ -253,6 +255,7 @@ impl State {
             // If there are any queued tasks, pause the daemon
             // This should prevent any unwanted execution of tasks due to a system crash
             if task.status == TaskStatus::Queued {
+                info!("Pausing daemon to prevent unwanted execution of previous tasks");
                 state.running = false;
             }
 
