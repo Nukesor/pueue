@@ -1,6 +1,10 @@
 # v0.2.1
+**Features:**
+- `pause_on_failure` configuration flag. Set this to true to pause the daemon as soon as a task fails.
+
 **Fixes:**
 - Respect `Killed` tasks on `pueue clean`.
+- Show daemon status if no tasks exist
 
 
 # v0.2.0
