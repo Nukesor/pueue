@@ -27,23 +27,19 @@ pub fn print_state(message: Message, json: bool) {
         return;
     }
 
+    let daemon_status = if state.running {
+        style("Daemon status: running").with(Color::Green)
+    } else {
+        style("Daemon status: paused").with(Color::Yellow)
+    };
+
+    println!("{}", daemon_status);
+
     if state.tasks.len() == 0 {
-        println!("Task list is empty. Add tasks with `pueue add -- [cmd]`");
+        println!("\nTask list is empty. Add tasks with `pueue add -- [cmd]`");
 
         return;
     }
-    let mut daemon_status = if state.running {
-        style("Daemon status: running")
-    } else {
-        style("Daemon status: paused")
-    };
-
-    if state.running {
-        daemon_status = daemon_status.with(Color::Green);
-    } else {
-        daemon_status = daemon_status.with(Color::Yellow);
-    }
-    println!("{}", daemon_status);
 
     let has_delayed_tasks = state
         .tasks

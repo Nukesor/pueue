@@ -164,6 +164,13 @@ impl TaskHandler {
                 clean_log_handles(task_id, &self.settings);
                 task.status = TaskStatus::Failed;
                 task.stderr = Some(error);
+
+                // Pause the daemon, if the settings say so
+                if self.settings.daemon.pause_on_failure {
+                    self.running = false;
+                    state.running = false;
+                    state.save();
+                }
                 return;
             }
         };
@@ -206,6 +213,10 @@ impl TaskHandler {
     /// In case there are, handle them and update the shared state
     fn process_finished(&mut self) {
         let (finished, errored) = self.get_finished();
+        let mut state = self.state.lock().unwrap();
+        let mut failed_task_exists = false;
+        let mut should_save = false;
+
         for task_id in finished.iter() {
             let mut child = self.children.remove(task_id).expect("Child went missing");
             // Return 254, if the process has been killed by a signal
@@ -230,7 +241,6 @@ impl TaskHandler {
             // This is something the user must take care of.
             clean_log_handles(*task_id, &self.settings);
 
-            let mut state = self.state.lock().unwrap();
             let mut task = state.tasks.get_mut(&task_id).unwrap();
             // Don't set to the status to Done, if the task has been killed by the daemon
             if task.status != TaskStatus::Killed {
@@ -240,6 +250,7 @@ impl TaskHandler {
                     task.status = TaskStatus::Done;
                 } else {
                     task.status = TaskStatus::Failed;
+                    failed_task_exists = true;
                 }
             }
 
@@ -247,21 +258,34 @@ impl TaskHandler {
             task.stderr = stderr;
             task.end = Some(Local::now());
 
-            state.save()
+            should_save = true;
         }
 
+        // Handle errored tasks
         for task_id in errored.iter() {
             let _child = self.children.remove(task_id).expect("Child went missing");
-            let mut state = self.state.lock().unwrap();
             state.change_status(*task_id, TaskStatus::Failed);
+            failed_task_exists = true;
+            should_save = true;
         }
+
+        // Pause the daemon, if the settings say so and some process failed
+        if failed_task_exists && self.settings.daemon.pause_on_failure {
+            self.running = false;
+            state.running = false;
+        }
+
 
         // The daemon got a reset request and all children just finished
         if self.reset && self.children.is_empty() {
-            let mut state = self.state.lock().unwrap();
             state.reset();
             self.running = true;
             self.reset = false;
+            should_save = true;
+        }
+
+        if should_save {
+            state.save()
         }
     }
 
