@@ -108,7 +108,9 @@ impl TaskHandler {
         let task = state.tasks.get_mut(&task_id);
         let task = match task {
             Some(task) => {
-                if !vec![TaskStatus::Stashed, TaskStatus::Queued, TaskStatus::Paused].contains(&task.status) {
+                if !vec![TaskStatus::Stashed, TaskStatus::Queued, TaskStatus::Paused]
+                    .contains(&task.status)
+                {
                     info!("Tried to start task with status: {}", task.status);
                     return;
                 }
@@ -181,7 +183,7 @@ impl TaskHandler {
         let mut changed = false;
         for (_, task) in state.tasks.iter_mut() {
             if task.status != TaskStatus::Stashed {
-                continue
+                continue;
             }
 
             if let Some(time) = task.enqueue_at {

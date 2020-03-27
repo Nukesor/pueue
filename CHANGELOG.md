@@ -1,3 +1,8 @@
+# v0.2.1
+**Fixes:**
+- Respect `Killed` tasks on `pueue clean`.
+
+
 # v0.2.0
 **Features:**
 - New `--delay` flag, which delays enqueueing of a task. Can be used on `start` and `enqueue`.

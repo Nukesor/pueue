@@ -131,7 +131,7 @@ impl State {
     /// Remove all finished tasks (clean up the task queue)
     pub fn clean(&mut self) {
         self.backup();
-        let statuses = vec![TaskStatus::Done, TaskStatus::Failed];
+        let statuses = vec![TaskStatus::Done, TaskStatus::Failed, TaskStatus::Killed];
         let (matching, _) = self.tasks_in_statuses(statuses, None);
 
         for task_id in &matching {
@@ -245,7 +245,12 @@ impl State {
         for (task_id, task) in state.tasks.iter_mut() {
             // Handle ungraceful shutdowns while executing tasks
             if task.status == TaskStatus::Running || task.status == TaskStatus::Paused {
-                info!("Setting task {} with previous status {:?} to new status {:?}", task.id, task.status, TaskStatus::Killed);
+                info!(
+                    "Setting task {} with previous status {:?} to new status {:?}",
+                    task.id,
+                    task.status,
+                    TaskStatus::Killed
+                );
                 task.status = TaskStatus::Killed;
             }
             // Crash during editing of the task command
