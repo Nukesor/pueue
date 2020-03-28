@@ -103,6 +103,7 @@ pub struct SendMessage {
 pub struct EditMessage {
     pub task_id: usize,
     pub command: String,
+    pub path: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -114,6 +115,7 @@ pub struct EditRequestMessage {
 pub struct EditResponseMessage {
     pub task_id: usize,
     pub command: String,
+    pub path: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

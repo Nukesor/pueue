@@ -2,6 +2,7 @@
 **Features:**
 - `pause_on_failure` configuration flag. Set this to true to pause the daemon as soon as a task fails.
 - Add `--stashed` flag to `restart`
+- Add `-p/--path` flag to allow editing of a stashed/queued task's path
 
 **Fixes:**
 - Respect `Killed` tasks on `pueue clean`.

@@ -134,10 +134,14 @@ pub enum SubCommand {
         /// The input that should be sent to the process
         input: String,
     },
-    /// Edit the command of a stashed or queued task.
+    /// Edit the command or the path of a stashed or queued task.
     Edit {
         /// The id of the task
         task_id: usize,
+
+        /// Edit the path of the task
+        #[structopt(short, long)]
+        path: bool,
     },
 
     /// Display the current status of all tasks

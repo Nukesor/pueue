@@ -99,7 +99,7 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
             };
             Ok(Message::Send(message))
         }
-        SubCommand::Edit { task_id } => {
+        SubCommand::Edit { task_id, path: _} => {
             let message = EditRequestMessage { task_id: *task_id };
             Ok(Message::EditRequest(message))
         }

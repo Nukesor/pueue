@@ -305,6 +305,7 @@ fn edit_request(message: EditRequestMessage, state: &SharedState) -> Message {
             let message = EditResponseMessage {
                 task_id: task.id,
                 command: task.command.clone(),
+                path: task.path.clone(),
             };
             return Message::EditResponse(message);
         }
@@ -324,6 +325,7 @@ fn edit(message: EditMessage, state: &SharedState) -> Message {
 
             task.status = task.prev_status.clone();
             task.command = message.command.clone();
+            task.path = message.path.clone();
             state.save();
 
             return create_success_message("Command has been updated");

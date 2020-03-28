@@ -89,9 +89,9 @@ impl Client {
                     SubCommand::Log { task_ids, json } => {
                         print_logs(message, task_ids.clone(), *json)
                     }
-                    SubCommand::Edit { task_id: _ } => {
+                    SubCommand::Edit { task_id: _, path} => {
                         // Create a new message with the edited command
-                        let message = edit(message);
+                        let message = edit(message, *path);
                         send_message(&message, socket).await?;
                         return Ok(true);
                     }
