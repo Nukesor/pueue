@@ -36,7 +36,7 @@ pub fn handle_message(message: Message, sender: &Sender<Message>, state: &Shared
 /// Queues a new task to the state.
 /// If the start_immediately flag is set, send a StartMessage to the task handler
 fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
-    let starting_status = if message.create_stashed || message.enqueue_at.is_some() {
+    let starting_status = if message.stashed || message.enqueue_at.is_some() {
         TaskStatus::Stashed
     } else {
         TaskStatus::Queued
@@ -189,6 +189,12 @@ fn start(message: StartMessage, sender: &Sender<Message>, state: &SharedState) -
 /// Create and enqueue tasks from already finished tasks
 /// The user can specify to immediately start the newly created tasks.
 fn restart(message: RestartMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
+    let new_status = if message.stashed {
+        TaskStatus::Stashed
+    } else {
+        TaskStatus::Queued
+    };
+
     let response: String;
     let new_ids = {
         let mut state = state.lock().unwrap();
@@ -198,7 +204,8 @@ fn restart(message: RestartMessage, sender: &Sender<Message>, state: &SharedStat
         let mut new_ids = Vec::new();
         for task_id in &matching {
             let task = state.tasks.get(task_id).unwrap();
-            let new_task = Task::from_task(task);
+            let mut new_task = Task::from_task(task);
+            new_task.status = new_status.clone();
             new_ids.push(state.add_task(new_task));
         }
 

@@ -18,10 +18,10 @@ pub enum SubCommand {
         #[structopt(name = "immediate", short, long, conflicts_with = "stash")]
         start_immediately: bool,
 
-        /// Create the task stashed.
+        /// Create the task in stashed state.
         /// Useful to avoid immediate execution if the queue is empty.
-        #[structopt(name = "stash", short, long, conflicts_with = "immediate")]
-        create_stashed: bool,
+        #[structopt(name = "stashed", short, long, conflicts_with = "immediate")]
+        stashed: bool,
 
         /// Delays enqueueing the task until <delay> elapses. See enqueue for accepted formats.
         #[structopt(name = "delay", short, long, conflicts_with = "immediate", parse(try_from_str=parse_delay_until))]
@@ -95,6 +95,11 @@ pub enum SubCommand {
         /// Start the task(s) immediately
         #[structopt(name = "immediate", short, long)]
         start_immediately: bool,
+
+        /// Create the task in stashed state.
+        /// Useful to avoid immediate execution if the queue is empty.
+        #[structopt(name = "stashed", short, long, conflicts_with = "immediate")]
+        stashed: bool,
     },
     /// Pause the daemon and all running tasks.
     /// A paused daemon won't start any new tasks.

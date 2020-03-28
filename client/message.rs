@@ -12,7 +12,7 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
         SubCommand::Add {
             command,
             start_immediately,
-            create_stashed,
+            stashed,
             delay_until,
         } => {
             let cwd_pathbuf = current_dir()?;
@@ -23,7 +23,7 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
                 command: command.join(" "),
                 path: cwd.to_string(),
                 start_immediately: *start_immediately,
-                create_stashed: *create_stashed,
+                stashed: *stashed,
                 enqueue_at: delay_until.clone(),
             }))
         }
@@ -68,10 +68,12 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
         SubCommand::Restart {
             task_ids,
             start_immediately,
+            stashed,
         } => {
             let message = RestartMessage {
                 task_ids: task_ids.clone(),
                 start_immediately: *start_immediately,
+                stashed: *stashed,
             };
             Ok(Message::Restart(message))
         }

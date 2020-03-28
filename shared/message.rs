@@ -43,7 +43,7 @@ pub struct AddMessage {
     pub command: String,
     pub path: String,
     pub start_immediately: bool,
-    pub create_stashed: bool,
+    pub stashed: bool,
     pub enqueue_at: Option<DateTime<Local>>,
 }
 
@@ -78,6 +78,7 @@ pub struct StartMessage {
 pub struct RestartMessage {
     pub task_ids: Vec<usize>,
     pub start_immediately: bool,
+    pub stashed: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
