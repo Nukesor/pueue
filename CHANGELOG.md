@@ -8,7 +8,6 @@
 - Respect `Killed` tasks on `pueue clean`.
 - Show daemon status if no tasks exist
 
-
 # v0.2.0
 **Features:**
 - New `--delay` flag, which delays enqueueing of a task. Can be used on `start` and `enqueue`.
