@@ -48,11 +48,8 @@ fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) 
         starting_status,
         message.enqueue_at,
     );
-    let task_id: usize;
-    {
-        let mut state = state.lock().unwrap();
-        task_id = state.add_task(task);
-    }
+    let mut state = state.lock().unwrap();
+    let task_id = state.add_task(task);
     if message.start_immediately {
         let start_message = StartMessage {
             task_ids: vec![task_id],
@@ -70,6 +67,7 @@ fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) 
     } else {
         String::from("New task added.")
     };
+    state.save();
 
     create_success_message(message)
 }

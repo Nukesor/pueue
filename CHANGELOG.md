@@ -7,6 +7,7 @@
 **Fixes:**
 - Respect `Killed` tasks on `pueue clean`.
 - Show daemon status if no tasks exist
+- Better error messages when daemon isn't running
 
 # v0.2.0
 **Features:**
