@@ -156,15 +156,21 @@ pub fn print_logs(tasks: BTreeMap<usize, Task>, cli_command: &SubCommand) {
         return;
     }
 
-    for (_, task) in tasks.iter() {
+    let mut task_iter = tasks.iter().peekable();
+    while let Some((_, task)) = task_iter.next() {
         print_log(task);
+        if let Some((_, task)) = task_iter.peek() {
+            if vec![TaskStatus::Done, TaskStatus::Failed, TaskStatus::Killed].contains(&task.status) {
+                println!("");
+            }
+        }
     }
 }
 
 /// Print the log of a single task.
 pub fn print_log(task: &Task) {
     // We only show logs of finished tasks
-    if !vec![TaskStatus::Done, TaskStatus::Failed].contains(&task.status) {
+    if !vec![TaskStatus::Done, TaskStatus::Failed, TaskStatus::Killed].contains(&task.status) {
         return;
     }
 
@@ -177,7 +183,6 @@ pub fn print_log(task: &Task) {
     };
 
     // Print task id and exit code
-    println!("\n");
     print!(
         "{}",
         style(format!("Task {} ", task.id)).attribute(Attribute::Bold)

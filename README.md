@@ -175,7 +175,8 @@ SUBCOMMANDS:
 
 ## Configs
 
-The configuration file of Pueue is located in `~/.config/pueue.yml`.
+The configuration file of Pueue is located in `~/.config/pueue.yml`.  
+The default will be generated after starting pueue once.
 
 ```
 ---
@@ -185,6 +186,7 @@ client:
 daemon:
   pueue_directory: /home/$USER/.local/share/pueue
   default_parallel_tasks: 1
+  pause_on_failure: false
   port: "6924"
   secret: "your_secret"
 ```
@@ -195,6 +197,7 @@ daemon:
 **Daemon**: 
 - `pueue_directory` The location Pueue uses for its intermediate files and logs.
 - `default_parallel_tasks` Determines how many tasks should be processed concurrently.  
+- `pause_on_failure` If set to `true`, the daemon will pause and no longer start new task as soon as a single task fails.
 - `port` The port the daemon should listen to.  
 - `secret` The secret, that's used for authentication
 
