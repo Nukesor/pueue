@@ -135,7 +135,7 @@ To avoid common pitfalls, please read the [FAQ Section](https://github.com/Nukes
 There is a help option (-h) for all commands.
 ```
 
-Pueue client 0.0.5
+Pueue client 0.3.0
 Arne Beer <contact@arne.beer>
 Interact with the Pueue daemon
 
@@ -151,26 +151,30 @@ OPTIONS:
     -p, --port <port>    The port for the daemon. Overwrites the port in the config file
 
 SUBCOMMANDS:
-    add         Enqueue a task for execution
-    clean       Remove all finished tasks from the list (also clears logs)
-    edit        Edit the command of a stashed or queued task
-    enqueue     Enqueue stashed tasks. They'll be handled normally afterwards
-    help        Prints this message or the help of the given subcommand(s)
-    kill        Kill running tasks
-    log         Display the log output of finished tasks
-    parallel    Set the amount of allowed parallel tasks
-    pause       Pause the daemon and all running tasks. A paused daemon won't start any new tasks. Daemon and tasks
-                can be continued with `start`
-    remove      Remove tasks from the list. Running or paused tasks need to be killed first
-    reset       Kill all running tasks, remove all tasks and reset max_id
-    restart     Enqueue tasks again
-    send        Send something to a task. Useful for sending confirmations ('y\n')
-    show        Show the output of a currently running task This command allows following (like `tail -f`)
-    start       Wake the daemon from its paused state. Also continues all paused tasks
-    stash       Stashed tasks won't be automatically started. Either `enqueue` them, to be normally handled or
-                explicitly `start` them
-    status      Display the current status of all tasks
-    switch      Switches the queue position of two commands. Only works on queued and stashed commands
+    add            Enqueue a task for execution
+    clean          Remove all finished tasks from the list (also clears logs)
+    completions    Generates shell completion files. Ingore for normal operations
+    edit           Edit the command or the path of a stashed or queued task
+    enqueue        Enqueue stashed tasks. They'll be handled normally afterwards
+    help           Prints this message or the help of the given subcommand(s)
+    kill           Kill either all or only specific running tasks
+    log            Display the log output of finished tasks
+    parallel       Set the amount of allowed parallel tasks
+    pause          Pause the daemon and all running tasks. A paused daemon won't start any new tasks. Daemon and
+                   tasks can be continued with `start` Can also be used to pause specific tasks
+    remove         Remove tasks from the list. Running or paused tasks need to be killed first
+    reset          Kill all running tasks, remove all tasks and reset max_id
+    restart        Enqueue tasks again
+    send           Send something to a task. Useful for sending confirmations ('y\n')
+    show           Show the output of a currently running task This command allows following (like `tail -f`)
+    shutdown       Remotely shut down the daemon. Should only be used if the daemon isn't started by a service
+                   manager
+    start          Wake the daemon from its paused state and continue all paused tasks. Can be used to resume or
+                   start specific tasks
+    stash          Stashed tasks won't be automatically started. Either `enqueue` them, to be normally handled or
+                   explicitly `start` them
+    status         Display the current status of all tasks
+    switch         Switches the queue position of two commands. Only works on queued and stashed commands
 ```
 
 ## Configs
