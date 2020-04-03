@@ -6,7 +6,7 @@ use ::pueue::settings::Settings;
 
 pub mod cli;
 pub mod client;
-pub mod instructions;
+pub mod edit;
 pub mod message;
 pub mod output;
 

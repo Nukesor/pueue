@@ -1,7 +1,9 @@
 use ::chrono::prelude::*;
+use ::std::collections::BTreeMap;
 use ::serde_derive::{Deserialize, Serialize};
 
 use crate::state::State;
+use crate::task::Task;
 
 /// The Message used to add a new command to the daemon.
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -23,15 +25,15 @@ pub enum Message {
     Edit(EditMessage),
 
     Status,
+    StatusResponse(State),
     Log(Vec<usize>),
+    LogResponse(BTreeMap<usize, Task>),
     Stream(String),
-    // The boolean decides, whether the stream should be continuous or a oneshot
     StreamRequest(StreamRequestMessage),
     Reset,
     Clean,
     DaemonShutdown,
 
-    StatusResponse(State),
     Success(String),
     Failure(String),
 
@@ -98,6 +100,7 @@ pub struct EditResponseMessage {
     pub path: String,
 }
 
+// The booleans decides, whether the stream should be continuous or a oneshot
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct StreamRequestMessage {
     pub task_id: usize,

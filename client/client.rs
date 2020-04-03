@@ -3,8 +3,8 @@ use ::async_std::net::TcpStream;
 use ::log::error;
 use ::std::io::{self, Write};
 
-use crate::cli::{Opt, SubCommand};
-use crate::instructions::*;
+use crate::cli::Opt;
+use crate::edit::*;
 use crate::output::*;
 use ::pueue::message::*;
 use ::pueue::protocol::*;
@@ -77,27 +77,20 @@ impl Client {
         match message {
             Message::Success(text) => print_success(text),
             Message::Failure(text) => print_error(text),
+            Message::StatusResponse(state) => print_state(state, &self.opt.cmd),
+            Message::LogResponse(tasks) => print_logs(tasks, &self.opt.cmd),
+            Message::EditResponse(message) => {
+                // Create a new message with the edited command
+                let message = edit(message, &self.opt.cmd);
+                send_message(&message, socket).await?;
+                return Ok(true);
+            }
             Message::Stream(text) => {
                 print!("{}", text);
                 io::stdout().flush().unwrap();
                 return Ok(true);
             }
-            _ => {
-                // Other messages will be handled depending on the original cli-command
-                match &self.opt.cmd {
-                    SubCommand::Status { json } => print_state(message, *json),
-                    SubCommand::Log { task_ids, json } => {
-                        print_logs(message, task_ids.clone(), *json)
-                    }
-                    SubCommand::Edit { task_id: _, path} => {
-                        // Create a new message with the edited command
-                        let message = edit(message, *path);
-                        send_message(&message, socket).await?;
-                        return Ok(true);
-                    }
-                    _ => error!("Received unhandled response message"),
-                }
-            }
+            _ => error!("Received unhandled response message"),
         };
 
         Ok(false)

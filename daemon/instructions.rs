@@ -1,4 +1,5 @@
 use ::std::sync::mpsc::Sender;
+use ::std::collections::BTreeMap;
 
 use crate::response_helper::*;
 use ::pueue::message::*;
@@ -347,20 +348,34 @@ fn reset(sender: &Sender<Message>) -> Message {
     return create_success_message("Everything is being reset right now.");
 }
 
-/// Return the full current state to the client
-fn get_status(state: &SharedState) -> Message {
-    let state = state.lock().unwrap();
-    Message::StatusResponse(state.clone())
-}
-
 /// Return the current state without any stdou/stderr to the client
-fn get_log(task_ids: Vec<usize>, state: &SharedState) -> Message {
+/// Invoked when calling `pueue status`
+fn get_status(state: &SharedState) -> Message {
     let mut state = { state.lock().unwrap().clone() };
     for (_, task) in state.tasks.iter_mut() {
         task.stdout = None;
         task.stderr = None;
     }
     Message::StatusResponse(state)
+}
+
+/// Return the current state without any stdou/stderr to the client
+/// Invoked when calling `pueue log`
+fn get_log(task_ids: Vec<usize>, state: &SharedState) -> Message {
+    let state = state.lock().unwrap().clone();
+    // Return all logs, if no specific task id is specified
+    if task_ids.is_empty() {
+        return Message::LogResponse(state.tasks.clone());
+    }
+
+    let mut tasks = BTreeMap::new();
+    for task_id in task_ids.iter() {
+        match state.tasks.get(task_id) {
+            Some(task) => {tasks.insert(*task_id, task.clone());},
+            None => {}
+        }
+    }
+    Message::LogResponse(tasks)
 }
 
 fn set_parallel_tasks(amount: usize, sender: &Sender<Message>) -> Message {

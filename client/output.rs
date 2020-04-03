@@ -2,10 +2,12 @@ use ::comfy_table::presets::UTF8_HORIZONTAL_BORDERS_ONLY;
 use ::comfy_table::*;
 use ::crossterm::style::style;
 use ::std::string::ToString;
+use ::std::collections::BTreeMap;
 
-use ::pueue::message::*;
 use ::pueue::state::State;
-use ::pueue::task::TaskStatus;
+use ::pueue::task::{TaskStatus, Task};
+
+use crate::cli::SubCommand;
 
 pub fn print_success(message: String) {
     println!("{}", message);
@@ -17,10 +19,10 @@ pub fn print_error(message: String) {
 }
 
 /// Print the current state of the daemon in a nicely formatted table
-pub fn print_state(message: Message, json: bool) {
-    let state = match message {
-        Message::StatusResponse(state) => state,
-        _ => return,
+pub fn print_state(state: State, cli_command: &SubCommand) {
+    let json = match cli_command {
+        SubCommand::Status{json} => *json,
+        _ => panic!("Got wrong Subcommand {:?} in print_state. This shouldn't happen", cli_command),
     };
     if json {
         println!("{}", serde_json::to_string(&state).unwrap());
@@ -134,34 +136,33 @@ pub fn print_state(message: Message, json: bool) {
 /// Print the log ouput of finished tasks.
 /// Either print the logs of every task
 /// or only print the logs of the specified tasks.
-pub fn print_logs(message: Message, task_ids: Vec<usize>, json: bool) {
-    let state = match message {
-        Message::StatusResponse(state) => state,
-        _ => return,
+pub fn print_logs(tasks: BTreeMap<usize, Task>, cli_command: &SubCommand) {
+    let (json, task_ids) = match cli_command {
+        SubCommand::Log{json, task_ids} => (*json, task_ids.clone()),
+        _ => panic!("Got wrong Subcommand {:?} in print_log. This shouldn't happen", cli_command),
     };
     if json {
-        println!("{}", serde_json::to_string(&state).unwrap());
+        println!("{}", serde_json::to_string(&tasks).unwrap());
         return;
     }
 
-    if !task_ids.is_empty() {
-        for task_id in task_ids {
-            print_log(task_id, &state);
-        }
-    } else {
-        for task_id in state.tasks.keys() {
-            print_log(*task_id, &state);
-        }
+    if task_ids.is_empty() && tasks.is_empty() {
+        println!("There are no finished tasks");
+        return;
+    }
+
+    if !task_ids.is_empty() && tasks.is_empty() {
+        println!("There are no finished tasks for your specified ids");
+        return;
+    }
+
+    for (_, task) in tasks.iter() {
+        print_log(task);
     }
 }
 
 /// Print the log of a single task.
-pub fn print_log(task_id: usize, state: &State) {
-    let task = match state.tasks.get(&task_id) {
-        Some(task) => task,
-        None => return,
-    };
-
+pub fn print_log(task: &Task) {
     // We only show logs of finished tasks
     if !vec![TaskStatus::Done, TaskStatus::Failed].contains(&task.status) {
         return;

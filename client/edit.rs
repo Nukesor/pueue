@@ -1,23 +1,20 @@
-use ::log::error;
 use ::std::env;
 use ::std::io::{Read, Seek, SeekFrom, Write};
-use ::std::process::exit;
 use ::std::process::Command;
 use ::tempfile::NamedTempFile;
 
 use ::pueue::message::*;
 
+use crate::cli::SubCommand;
+
 /// This function allows the user to edit a task's command or path
 /// Save the string to a temporary file, which is the edited by the user with $EDITOR
 /// As soon as the editor is closed, read the file content and return the
 /// final edit message with the updated command to the daemon
-pub fn edit(message: Message, edit_path: bool) -> Message {
-    let message = match message {
-        Message::EditResponse(message) => message,
-        _ => {
-            error!("Should have received a EditResponseMessage");
-            exit(1);
-        }
+pub fn edit(message: EditResponseMessage, cli_command: &SubCommand) -> Message {
+    let edit_path = match cli_command {
+        SubCommand::Edit{task_id: _, path} => *path,
+        _ => panic!("Got wrong Subcommand {:?} in edit. This shouldn't happen", cli_command),
     };
 
     let mut command = message.command;
