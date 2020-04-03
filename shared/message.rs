@@ -7,23 +7,23 @@ use crate::state::State;
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum Message {
     Add(AddMessage),
-    Remove(RemoveMessage),
+    Remove(Vec<usize>),
     Switch(SwitchMessage),
-    Stash(StashMessage),
+    Stash(Vec<usize>),
     Enqueue(EnqueueMessage),
 
-    Start(StartMessage),
+    Start(Vec<usize>),
     Restart(RestartMessage),
     Pause(PauseMessage),
     Kill(KillMessage),
 
     Send(SendMessage),
-    EditRequest(EditRequestMessage),
+    EditRequest(usize),
     EditResponse(EditResponseMessage),
     Edit(EditMessage),
 
-    SimpleStatus,
     Status,
+    Log(Vec<usize>),
     Stream(String),
     // The boolean decides, whether the stream should be continuous or a oneshot
     StreamRequest(StreamRequestMessage),
@@ -48,30 +48,15 @@ pub struct AddMessage {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct RemoveMessage {
-    pub task_ids: Vec<usize>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct SwitchMessage {
     pub task_id_1: usize,
     pub task_id_2: usize,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct StashMessage {
-    pub task_ids: Vec<usize>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct EnqueueMessage {
     pub task_ids: Vec<usize>,
     pub enqueue_at: Option<DateTime<Local>>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct StartMessage {
-    pub task_ids: Vec<usize>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -107,11 +92,6 @@ pub struct EditMessage {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct EditRequestMessage {
-    pub task_id: usize,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct EditResponseMessage {
     pub task_id: usize,
     pub command: String,
@@ -123,11 +103,6 @@ pub struct StreamRequestMessage {
     pub task_id: usize,
     pub follow: bool,
     pub err: bool,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct TextMessage {
-    pub text: String,
 }
 
 pub fn create_success_message<T: ToString>(text: T) -> Message {

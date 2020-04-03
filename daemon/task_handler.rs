@@ -358,10 +358,10 @@ impl TaskHandler {
     /// Handle the start message:
     /// 1. Either start the daemon and all tasks.
     /// 2. Or force the start of specific tasks.
-    fn start(&mut self, message: StartMessage) {
+    fn start(&mut self, task_ids: Vec<usize>) {
         // Only start specific tasks
-        if !message.task_ids.is_empty() {
-            for id in &message.task_ids {
+        if !task_ids.is_empty() {
+            for id in &task_ids {
                 // Continue all children that are simply paused
                 if self.children.contains_key(id) {
                     self.continue_task(*id);

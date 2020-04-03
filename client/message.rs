@@ -28,16 +28,10 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
             }))
         }
         SubCommand::Remove { task_ids } => {
-            let message = RemoveMessage {
-                task_ids: task_ids.clone(),
-            };
-            Ok(Message::Remove(message))
+            Ok(Message::Remove(task_ids.clone()))
         }
         SubCommand::Stash { task_ids } => {
-            let message = StashMessage {
-                task_ids: task_ids.clone(),
-            };
-            Ok(Message::Stash(message))
+            Ok(Message::Stash(task_ids.clone()))
         }
         SubCommand::Switch {
             task_id_1,
@@ -60,10 +54,7 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
             Ok(Message::Enqueue(message))
         }
         SubCommand::Start { task_ids } => {
-            let message = StartMessage {
-                task_ids: task_ids.clone(),
-            };
-            Ok(Message::Start(message))
+            Ok(Message::Start(task_ids.clone()))
         }
         SubCommand::Restart {
             task_ids,
@@ -100,15 +91,14 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
             Ok(Message::Send(message))
         }
         SubCommand::Edit { task_id, path: _} => {
-            let message = EditRequestMessage { task_id: *task_id };
-            Ok(Message::EditRequest(message))
+            Ok(Message::EditRequest(*task_id))
         }
 
-        SubCommand::Status { json: _ } => Ok(Message::SimpleStatus),
+        SubCommand::Status { json: _ } => Ok(Message::Status),
         SubCommand::Log {
-            task_ids: _,
+            task_ids,
             json: _,
-        } => Ok(Message::Status),
+        } => Ok(Message::Log(task_ids.clone())),
         SubCommand::Show {
             task_id,
             follow,
