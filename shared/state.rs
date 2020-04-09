@@ -53,11 +53,6 @@ impl State {
 
     pub fn change_status(&mut self, id: usize, new_status: TaskStatus) {
         if let Some(ref mut task) = self.tasks.get_mut(&id) {
-            if new_status == TaskStatus::Running {
-                if TaskStatus::Queued == task.status || TaskStatus::Stashed == task.status {
-                    task.start = Some(Local::now());
-                }
-            }
             task.status = new_status;
             self.save();
         };

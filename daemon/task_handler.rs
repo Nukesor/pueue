@@ -177,6 +177,7 @@ impl TaskHandler {
         self.children.insert(task_id, child);
         info!("Started task: {}", task.command);
 
+        task.start = Some(Local::now());
         task.status = TaskStatus::Running;
 
         state.save();
