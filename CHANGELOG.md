@@ -1,4 +1,8 @@
 # v0.3.0
+**Fixes:**
+- Set `start` for processes. (Seems to have broken in 0.2.0)
+
+# v0.3.0
 **Features:**
 - `pause_on_failure` configuration flag. Set this to true to pause the daemon as soon as a task fails.
 - Add `--stashed` flag to `restart`
