@@ -33,6 +33,7 @@ pub struct Task {
     pub stderr: Option<String>,
     pub start: Option<DateTime<Local>>,
     pub end: Option<DateTime<Local>>,
+    pub dependencies: Vec<usize>,
 }
 
 impl Task {
@@ -41,6 +42,7 @@ impl Task {
         path: String,
         starting_status: TaskStatus,
         enqueue_at: Option<DateTime<Local>>,
+        dependencies: Vec<usize>,
     ) -> Task {
         Task {
             id: 0,
@@ -54,6 +56,7 @@ impl Task {
             stderr: None,
             start: None,
             end: None,
+            dependencies,
         }
     }
 
@@ -70,6 +73,7 @@ impl Task {
             stderr: None,
             start: None,
             end: None,
+            dependencies: task.dependencies.clone(),
         }
     }
 

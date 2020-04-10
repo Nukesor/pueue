@@ -43,13 +43,27 @@ fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) 
         TaskStatus::Queued
     };
 
+    let mut state = state.lock().unwrap();
+    
+    let not_found: Vec<_> = message
+        .dependencies
+        .iter()
+        .filter(|id| !state.tasks.contains_key(id))
+        .collect();
+
+    if !not_found.is_empty() {
+        return create_failure_message(format!(
+            "Unable to setup dependencies : task(s) {:?} not found",
+            not_found
+        ));
+    }
     let task = Task::new(
         message.command,
         message.path,
         starting_status,
         message.enqueue_at,
+        message.dependencies,
     );
-    let mut state = state.lock().unwrap();
     let task_id = state.add_task(task);
     if message.start_immediately {
         sender
@@ -59,11 +73,15 @@ fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) 
 
     let message = if let Some(enqueue_at) = message.enqueue_at {
         format!(
-            "New task added. It will be enqueued at {}",
+            "New task added (id {}). It will be enqueued at {}",
+            task_id,
             enqueue_at.format("%Y-%m-%d %H:%M:%S")
         )
     } else {
-        String::from("New task added.")
+        format!(
+            "New task added (id {}).",
+            task_id,
+        )
     };
     state.save();
 

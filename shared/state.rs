@@ -43,12 +43,18 @@ impl State {
     }
 
     pub fn get_next_task_id(&mut self) -> Option<usize> {
-        for (id, task) in self.tasks.iter() {
-            if task.status == TaskStatus::Queued {
-                return Some(*id);
-            }
-        }
-        None
+        return self
+            .tasks
+            .iter()
+            .filter(|(_, task)| task.status == TaskStatus::Queued)
+            .filter(|(_, task)| {
+                task.dependencies
+                    .iter()
+                    .flat_map(|id| self.tasks.get(id))
+                    .all(|task| task.status == TaskStatus::Done)
+            })
+            .next()
+            .map(|(id, _)| *id);
     }
 
     pub fn change_status(&mut self, id: usize, new_status: TaskStatus) {

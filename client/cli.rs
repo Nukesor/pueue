@@ -26,6 +26,10 @@ pub enum SubCommand {
         /// Delays enqueueing the task until <delay> elapses. See enqueue for accepted formats.
         #[structopt(name = "delay", short, long, conflicts_with = "immediate", parse(try_from_str=parse_delay_until))]
         delay_until: Option<DateTime<Local>>,
+
+        /// Only start the task after <after> task has finished
+        #[structopt(name = "after", long)]
+        dependencies: Vec<usize>,
     },
     /// Remove tasks from the list.
     /// Running or paused tasks need to be killed first.

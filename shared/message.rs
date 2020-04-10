@@ -47,6 +47,7 @@ pub struct AddMessage {
     pub start_immediately: bool,
     pub stashed: bool,
     pub enqueue_at: Option<DateTime<Local>>,
+    pub dependencies: Vec<usize>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
