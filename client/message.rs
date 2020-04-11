@@ -14,7 +14,7 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
             start_immediately,
             stashed,
             delay_until,
-            dependencies
+            dependencies,
         } => {
             let cwd_pathbuf = current_dir()?;
             let cwd = cwd_pathbuf.to_str().ok_or(anyhow!(

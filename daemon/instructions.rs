@@ -78,10 +78,7 @@ fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) 
             enqueue_at.format("%Y-%m-%d %H:%M:%S")
         )
     } else {
-        format!(
-            "New task added (id {}).",
-            task_id,
-        )
+        format!("New task added (id {}).", task_id)
     };
     state.save();
 

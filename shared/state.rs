@@ -43,6 +43,9 @@ impl State {
     }
 
     pub fn get_next_task_id(&mut self) -> Option<usize> {
+        // A runnable task:
+        // - is in Queued state
+        // - has all task in Done state
         return self
             .tasks
             .iter()
@@ -300,5 +303,32 @@ impl State {
         }
 
         Ok(())
+    }
+
+    /// Checkek that any Queued tasks dont have any failed dependencies, otherwise marked it as failed
+    pub fn update_dependencies(&mut self) {
+        let has_failed_deps: Vec<_> = self
+            .tasks
+            .iter()
+            .filter(|(_, task)| task.status == TaskStatus::Queued)
+            .filter_map(|(id, task)| {
+                let failed = task
+                    .dependencies
+                    .iter()
+                    .flat_map(|id| self.tasks.get(id))
+                    .filter(|task| task.is_errored())
+                    .map(|task| task.id)
+                    .next();
+
+                failed.map(|f| (*id, f))
+            })
+            .collect();
+
+        for (id, failed) in has_failed_deps {
+            if let Some(task) = self.tasks.get_mut(&id) {
+                task.status = TaskStatus::Failed;
+                task.stderr = Some(format!("Dependent task {:?} has failed", failed));
+            }
+        }
     }
 }

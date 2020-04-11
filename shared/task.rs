@@ -87,6 +87,11 @@ impl Task {
             || self.status == TaskStatus::Killed;
     }
 
+    pub fn is_errored(&self) -> bool {
+        return self.status == TaskStatus::Failed
+            || self.status == TaskStatus::Killed;
+    }
+
     pub fn is_queued(&self) -> bool {
         return self.status == TaskStatus::Queued || self.status == TaskStatus::Stashed;
     }
