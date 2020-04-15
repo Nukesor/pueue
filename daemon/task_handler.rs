@@ -71,7 +71,7 @@ impl TaskHandler {
             self.receive_commands();
             self.process_finished();
             self.check_stashed();
-            self.state.lock().unwrap().update_dependencies();
+            self.state.lock().unwrap().check_failed_dependencies();
             if self.running && !self.reset {
                 let _res = self.check_new();
             }

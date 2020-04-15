@@ -42,10 +42,11 @@ impl State {
         self.max_id - 1
     }
 
+    /// Search and return the next runnable task.
+    /// A runnable task:
+    /// - is in Queued state
+    /// - has all its dependencies in `Done` state
     pub fn get_next_task_id(&mut self) -> Option<usize> {
-        // A runnable task:
-        // - is in Queued state
-        // - has all task in Done state
         return self
             .tasks
             .iter()
@@ -305,8 +306,8 @@ impl State {
         Ok(())
     }
 
-    /// Checkek that any Queued tasks dont have any failed dependencies, otherwise marked it as failed
-    pub fn update_dependencies(&mut self) {
+    /// Ensure that no `Queued` tasks dont have any failed dependencies, otherwise set their status to `Failed`.
+    pub fn check_failed_dependencies(&mut self) {
         let has_failed_deps: Vec<_> = self
             .tasks
             .iter()
