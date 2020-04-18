@@ -37,17 +37,15 @@ pub fn print_state(state: State, cli_command: &SubCommand) {
 
     println!("{}", daemon_status);
 
-    if state.tasks.len() == 0 {
+    if state.tasks.is_empty() {
         println!("\nTask list is empty. Add tasks with `pueue add -- [cmd]`");
-
         return;
     }
 
     let has_delayed_tasks = state
         .tasks
         .iter()
-        .find(|(_id, task)| task.enqueue_at.is_some())
-        .is_some();
+        .any(|(_id, task)| task.enqueue_at.is_some());
 
     let mut headers = vec![Cell::new("Index"), Cell::new("Status")];
     if has_delayed_tasks {
@@ -161,7 +159,7 @@ pub fn print_logs(tasks: BTreeMap<usize, Task>, cli_command: &SubCommand) {
         print_log(task);
         if let Some((_, task)) = task_iter.peek() {
             if vec![TaskStatus::Done, TaskStatus::Failed, TaskStatus::Killed].contains(&task.status) {
-                println!("");
+                println!();
             }
         }
     }
