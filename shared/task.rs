@@ -1,5 +1,6 @@
 use ::chrono::prelude::*;
 use ::serde_derive::{Deserialize, Serialize};
+use ::std::sync::Arc;
 use ::strum_macros::{Display, EnumIter};
 
 #[derive(Clone, Display, Debug, Serialize, Deserialize, PartialEq, EnumIter)]
@@ -29,8 +30,11 @@ pub struct Task {
     pub status: TaskStatus,
     pub prev_status: TaskStatus,
     pub exit_code: Option<i32>,
-    pub stdout: Option<String>,
-    pub stderr: Option<String>,
+    // stdout and stderr are serialized with the serde `rc` flag. Serialization
+    // won't deduplicate shared pointers, but this is OK because we don't expect
+    // pointers to be shared across tasks.
+    pub stdout: Option<Arc<String>>,
+    pub stderr: Option<Arc<String>>,
     pub start: Option<DateTime<Local>>,
     pub end: Option<DateTime<Local>>,
 }

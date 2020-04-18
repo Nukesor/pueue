@@ -348,7 +348,7 @@ fn reset(sender: &Sender<Message>) -> Message {
     return create_success_message("Everything is being reset right now.");
 }
 
-/// Return the current state without any stdou/stderr to the client
+/// Return the current state without any stdout/stderr to the client
 /// Invoked when calling `pueue status`
 fn get_status(state: &SharedState) -> Message {
     let mut state = { state.lock().unwrap().clone() };

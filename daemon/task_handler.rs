@@ -2,6 +2,7 @@ use ::std::collections::BTreeMap;
 use ::std::io::Write;
 use ::std::process::Stdio;
 use ::std::process::{Child, Command};
+use ::std::sync::Arc;
 use ::std::sync::mpsc::Receiver;
 use ::std::time::Duration;
 
@@ -163,7 +164,7 @@ impl TaskHandler {
                 error!("{}", error);
                 clean_log_handles(task_id, &self.settings);
                 task.status = TaskStatus::Failed;
-                task.stderr = Some(error);
+                task.stderr = Some(Arc::new(error));
 
                 // Pause the daemon, if the settings say so
                 if self.settings.daemon.pause_on_failure {
@@ -229,7 +230,7 @@ impl TaskHandler {
 
             // Get the stdout and stderr of this task from the output files
             let (stdout, stderr) = match read_log_files(*task_id, &self.settings) {
-                Ok((stdout, stderr)) => (Some(stdout), Some(stderr)),
+                Ok((stdout, stderr)) => (Some(Arc::new(stdout)), Some(Arc::new(stderr))),
                 Err(err) => {
                     error!(
                         "Failed reading log files for task {} with error {:?}",
