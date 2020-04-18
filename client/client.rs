@@ -44,9 +44,9 @@ impl Client {
         let address = format!("127.0.0.1:{}", port);
 
         Ok(Client {
-            opt: opt,
+            opt,
             daemon_address: address,
-            message: message,
+            message,
             secret: settings.client.secret,
         })
     }
