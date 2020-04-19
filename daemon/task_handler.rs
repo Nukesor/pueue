@@ -6,7 +6,6 @@ use ::std::sync::mpsc::Receiver;
 use ::std::time::Duration;
 
 use ::anyhow::Result;
-use ::chrono::prelude::*;
 use ::log::{debug, error, info, warn};
 #[cfg(not(windows))]
 use ::nix::{
@@ -18,7 +17,7 @@ use crate::log::*;
 use ::pueue::message::*;
 use ::pueue::settings::Settings;
 use ::pueue::state::SharedState;
-use ::pueue::task::TaskStatus;
+use ::pueue::task::Finished;
 
 pub struct TaskHandler {
     state: SharedState,
@@ -70,8 +69,6 @@ impl TaskHandler {
         loop {
             self.receive_commands();
             self.process_finished();
-            self.check_stashed();
-            self.state.lock().unwrap().check_failed_dependencies();
             if self.running && !self.reset {
                 let _res = self.check_new();
             }
@@ -85,7 +82,7 @@ impl TaskHandler {
         // Break the loop if no next task is found
         while self.children.len() < self.settings.daemon.default_parallel_tasks {
             let next_id = {
-                let mut state = self.state.lock().unwrap();
+                let state = self.state.lock().unwrap();
                 state.get_next_task_id()
             };
             match next_id {
@@ -109,10 +106,8 @@ impl TaskHandler {
         let task = state.tasks.get_mut(&task_id);
         let task = match task {
             Some(task) => {
-                if !vec![TaskStatus::Stashed, TaskStatus::Queued, TaskStatus::Paused]
-                    .contains(&task.status)
-                {
-                    info!("Tried to start task with status: {}", task.status);
+                if !(task.is_waiting() || task.is_paused()) {
+                    info!("Tried to start task with status: {:?}", task.state());
                     return;
                 }
                 task
@@ -124,7 +119,7 @@ impl TaskHandler {
         };
         // In case a task that has been scheduled for enqueueing, is forcefully
         // started by hand, set `enqueue_at` to `None`.
-        task.enqueue_at = None;
+        task.set_enqueue_at(None);
 
         // Try to get the log files to which the output of the process
         // Will be written. Error if this doesn't work!
@@ -163,8 +158,7 @@ impl TaskHandler {
                 let error = format!("Failed to spawn child {} with err: {:?}", task_id, err);
                 error!("{}", error);
                 clean_log_handles(task_id, &self.settings);
-                task.status = TaskStatus::Failed;
-                task.stderr = Some(error);
+                task.terminate(Finished::UnableToSpawn(error), String::new(), String::new());
 
                 // Pause the daemon, if the settings say so
                 if self.settings.daemon.pause_on_failure {
@@ -178,37 +172,9 @@ impl TaskHandler {
         self.children.insert(task_id, child);
         info!("Started task: {}", task.command);
 
-        task.start = Some(Local::now());
-        task.status = TaskStatus::Running;
+        task.start();
 
         state.save();
-    }
-
-    /// As time passes, some delayed tasks may need to be enqueued.
-    /// Gather all stashed tasks and enqueue them if it is after the task's enqueue_at
-    fn check_stashed(&mut self) {
-        let mut state = self.state.lock().unwrap();
-
-        let mut changed = false;
-        for (_, task) in state.tasks.iter_mut() {
-            if task.status != TaskStatus::Stashed {
-                continue;
-            }
-
-            if let Some(time) = task.enqueue_at {
-                if time <= Local::now() {
-                    info!("Enqueuing delayed task : {}", task.id);
-
-                    task.status = TaskStatus::Queued;
-                    task.enqueue_at = None;
-                    changed = true;
-                }
-            }
-        }
-        // Save the state if a task has been enqueued
-        if changed {
-            state.save();
-        }
     }
 
     /// Check whether there are any finished processes
@@ -243,22 +209,20 @@ impl TaskHandler {
             // This is something the user must take care of.
             clean_log_handles(*task_id, &self.settings);
 
-            let mut task = state.tasks.get_mut(&task_id).unwrap();
+            let task = state.get_task_mut(*task_id).unwrap();
             // Don't set to the status to Done, if the task has been killed by the daemon
-            if task.status != TaskStatus::Killed {
-                task.exit_code = Some(exit_code);
-                // Only processes with exit code 0 exited successfully
-                if task.exit_code == Some(0) {
-                    task.status = TaskStatus::Done;
-                } else {
-                    task.status = TaskStatus::Failed;
-                    failed_task_exists = true;
-                }
+            if task.is_running() {
+                task.terminate(
+                    if exit_code == 0 {
+                        Finished::Done
+                    } else {
+                        failed_task_exists = true;
+                        Finished::Failed(exit_code)
+                    },
+                    stdout.unwrap_or_default(),
+                    stderr.unwrap_or_default(),
+                )
             }
-
-            task.stdout = stdout;
-            task.stderr = stderr;
-            task.end = Some(Local::now());
 
             should_save = true;
         }
@@ -266,7 +230,8 @@ impl TaskHandler {
         // Handle errored tasks
         for task_id in errored.iter() {
             let _child = self.children.remove(task_id).expect("Child went missing");
-            state.change_status(*task_id, TaskStatus::Failed);
+            let task = state.get_task_mut(*task_id).expect("Task disapeared");
+            task.terminate(Finished::Errored, String::new(), String::new());
             failed_task_exists = true;
             should_save = true;
         }
@@ -276,7 +241,6 @@ impl TaskHandler {
             self.running = false;
             state.running = false;
         }
-
 
         // The daemon got a reset request and all children just finished
         if self.reset && self.children.is_empty() {
@@ -407,7 +371,7 @@ impl TaskHandler {
                 Ok(success) => {
                     if success {
                         let mut state = self.state.lock().unwrap();
-                        state.change_status(id, TaskStatus::Running);
+                        state.get_task_mut(id).unwrap().unpause();
                     }
                 }
             }
@@ -454,7 +418,7 @@ impl TaskHandler {
                 Ok(success) => {
                     if success {
                         let mut state = self.state.lock().unwrap();
-                        state.change_status(id, TaskStatus::Paused);
+                        state.get_task_mut(id).unwrap().pause();
                     }
                 }
             }
@@ -494,7 +458,7 @@ impl TaskHandler {
                     // Already mark the task as killed over here.
                     // It's hard to distinguish whether it's killed later on.
                     let mut state = self.state.lock().unwrap();
-                    state.change_status(task_id, TaskStatus::Killed);
+                    state.get_task_mut(task_id).unwrap().kill();
                 }
             };
         } else {

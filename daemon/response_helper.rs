@@ -1,16 +1,16 @@
 use ::pueue::state::SharedState;
-use ::pueue::task::TaskStatus;
+use ::pueue::task::Task;
 
 pub fn task_response_helper(
     message: &str,
     task_ids: Vec<usize>,
-    statuses: Vec<TaskStatus>,
+    predicate: fn(&Task) -> bool,
     state: &SharedState,
 ) -> String {
     // Get all matching/mismatching task_ids for all given ids and statuses
     let (matching, mismatching) = {
         let mut state = state.lock().unwrap();
-        state.tasks_in_statuses(statuses, Some(task_ids))
+        state.tasks_in_statuses(predicate, Some(task_ids))
     };
 
     compile_task_response(message, matching, mismatching)

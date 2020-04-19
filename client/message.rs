@@ -29,12 +29,8 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
                 dependencies: dependencies.to_vec(),
             }))
         }
-        SubCommand::Remove { task_ids } => {
-            Ok(Message::Remove(task_ids.clone()))
-        }
-        SubCommand::Stash { task_ids } => {
-            Ok(Message::Stash(task_ids.clone()))
-        }
+        SubCommand::Remove { task_ids } => Ok(Message::Remove(task_ids.clone())),
+        SubCommand::Stash { task_ids } => Ok(Message::Stash(task_ids.clone())),
         SubCommand::Switch {
             task_id_1,
             task_id_2,
@@ -55,9 +51,7 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
             };
             Ok(Message::Enqueue(message))
         }
-        SubCommand::Start { task_ids } => {
-            Ok(Message::Start(task_ids.clone()))
-        }
+        SubCommand::Start { task_ids } => Ok(Message::Start(task_ids.clone())),
         SubCommand::Restart {
             task_ids,
             start_immediately,
@@ -92,15 +86,10 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
             };
             Ok(Message::Send(message))
         }
-        SubCommand::Edit { task_id, path: _} => {
-            Ok(Message::EditRequest(*task_id))
-        }
+        SubCommand::Edit { task_id, path: _ } => Ok(Message::EditRequest(*task_id)),
 
         SubCommand::Status { json: _ } => Ok(Message::Status),
-        SubCommand::Log {
-            task_ids,
-            json: _,
-        } => Ok(Message::Log(task_ids.clone())),
+        SubCommand::Log { task_ids, json: _ } => Ok(Message::Log(task_ids.clone())),
         SubCommand::Show {
             task_id,
             follow,

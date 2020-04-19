@@ -7,10 +7,9 @@ use ::std::fs;
 use ::std::path::{Path, PathBuf};
 use ::std::sync::{Arc, Mutex};
 use ::std::time::SystemTime;
-use ::strum::IntoEnumIterator;
 
 use crate::settings::Settings;
-use crate::task::{Task, TaskStatus};
+use crate::task::Task;
 
 pub type SharedState = Arc<Mutex<State>>;
 
@@ -42,36 +41,22 @@ impl State {
         self.max_id - 1
     }
 
+    pub fn get_task(&self, id: usize) -> Option<&Task> {
+        self.tasks.get(&id)
+    }
+
+    pub fn get_task_mut(&mut self, id: usize) -> Option<&mut Task> {
+        self.tasks.get_mut(&id)
+    }
+
     /// Search and return the next runnable task.
-    /// A runnable task:
-    /// - is in Queued state
-    /// - has all its dependencies in `Done` state
-    pub fn get_next_task_id(&mut self) -> Option<usize> {
+    pub fn get_next_task_id(&self) -> Option<usize> {
         return self
             .tasks
             .iter()
-            .filter(|(_, task)| task.status == TaskStatus::Queued)
-            .filter(|(_, task)| {
-                task.dependencies
-                    .iter()
-                    .flat_map(|id| self.tasks.get(id))
-                    .all(|task| task.status == TaskStatus::Done)
-            })
+            .filter(|(_, task)| task.can_be_started(self))
             .next()
             .map(|(id, _)| *id);
-    }
-
-    pub fn change_status(&mut self, id: usize, new_status: TaskStatus) {
-        if let Some(ref mut task) = self.tasks.get_mut(&id) {
-            task.status = new_status;
-            self.save();
-        };
-    }
-
-    pub fn set_enqueue_at(&mut self, id: usize, enqueue_at: Option<DateTime<Local>>) {
-        if let Some(ref mut task) = self.tasks.get_mut(&id) {
-            task.enqueue_at = enqueue_at;
-        }
     }
 
     /// This checks, whether the given task_ids are in the specified statuses.
@@ -82,7 +67,7 @@ impl State {
     /// on a subset of all tasks.
     pub fn tasks_in_statuses(
         &mut self,
-        statuses: Vec<TaskStatus>,
+        predicate: fn(&Task) -> bool,
         task_ids: Option<Vec<usize>>,
     ) -> (Vec<usize>, Vec<usize>) {
         let task_ids = match task_ids {
@@ -90,54 +75,13 @@ impl State {
             None => self.tasks.keys().cloned().collect(),
         };
 
-        let mut matching = Vec::new();
-        let mut mismatching = Vec::new();
-
-        // Filter all task id's that match the provided statuses.
-        for task_id in task_ids.iter() {
-            // Check whether the task exists
-            let task = match self.tasks.get(&task_id) {
-                None => {
-                    mismatching.push(*task_id);
-                    continue;
-                }
-                Some(task) => task,
-            };
-
-            // Check whether the task status matches the specified statuses
-            if statuses.contains(&task.status) {
-                matching.push(*task_id);
-            } else {
-                mismatching.push(*task_id);
-            }
-        }
-
-        (matching, mismatching)
-    }
-
-    /// The same as tasks_in_statuses, but with inverted statuses
-    pub fn tasks_not_in_statuses(
-        &mut self,
-        excluded_statuses: Vec<TaskStatus>,
-        task_ids: Option<Vec<usize>>,
-    ) -> (Vec<usize>, Vec<usize>) {
-        let mut valid_statuses = Vec::new();
-        // Create a list of all valid statuses
-        // (statuses that aren't the exl
-        for status in TaskStatus::iter() {
-            if !excluded_statuses.contains(&status) {
-                valid_statuses.push(status);
-            }
-        }
-
-        self.tasks_in_statuses(valid_statuses, task_ids)
+        task_ids.iter().partition(|id| predicate(&self.tasks[id]))
     }
 
     /// Remove all finished tasks (clean up the task queue)
     pub fn clean(&mut self) {
         self.backup();
-        let statuses = vec![TaskStatus::Done, TaskStatus::Failed, TaskStatus::Killed];
-        let (matching, _) = self.tasks_in_statuses(statuses, None);
+        let (matching, _) = self.tasks_in_statuses(Task::is_finished, None);
 
         for task_id in &matching {
             let _ = self.tasks.remove(task_id).unwrap();
@@ -249,22 +193,16 @@ impl State {
         // While restoring the tasks, check for any invalid/broken stati
         for (task_id, task) in state.tasks.iter_mut() {
             // Handle ungraceful shutdowns while executing tasks
-            if task.status == TaskStatus::Running || task.status == TaskStatus::Paused {
-                info!(
-                    "Setting task {} with previous status {:?} to new status {:?}",
-                    task.id,
-                    task.status,
-                    TaskStatus::Killed
-                );
-                task.status = TaskStatus::Killed;
+            if task.is_running() {
+                task.kill();
             }
             // Crash during editing of the task command
-            if task.status == TaskStatus::Locked {
-                task.status = TaskStatus::Stashed;
+            if task.is_locked() {
+                task.stash();
             }
             // If there are any queued tasks, pause the daemon
             // This should prevent any unwanted execution of tasks due to a system crash
-            if task.status == TaskStatus::Queued {
+            if task.is_queued() {
                 info!("Pausing daemon to prevent unwanted execution of previous tasks");
                 state.running = false;
             }
@@ -304,32 +242,5 @@ impl State {
         }
 
         Ok(())
-    }
-
-    /// Ensure that no `Queued` tasks dont have any failed dependencies, otherwise set their status to `Failed`.
-    pub fn check_failed_dependencies(&mut self) {
-        let has_failed_deps: Vec<_> = self
-            .tasks
-            .iter()
-            .filter(|(_, task)| task.status == TaskStatus::Queued)
-            .filter_map(|(id, task)| {
-                let failed = task
-                    .dependencies
-                    .iter()
-                    .flat_map(|id| self.tasks.get(id))
-                    .filter(|task| task.is_errored())
-                    .map(|task| task.id)
-                    .next();
-
-                failed.map(|f| (*id, f))
-            })
-            .collect();
-
-        for (id, failed) in has_failed_deps {
-            if let Some(task) = self.tasks.get_mut(&id) {
-                task.status = TaskStatus::Failed;
-                task.stderr = Some(format!("Dependent task {:?} has failed", failed));
-            }
-        }
     }
 }

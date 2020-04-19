@@ -1,10 +1,10 @@
-use ::std::sync::mpsc::Sender;
 use ::std::collections::BTreeMap;
+use ::std::sync::mpsc::Sender;
 
 use crate::response_helper::*;
 use ::pueue::message::*;
 use ::pueue::state::SharedState;
-use ::pueue::task::{Task, TaskStatus};
+use ::pueue::task::Task;
 
 static SENDER_ERR: &str = "Failed to send message to task handler thread";
 
@@ -37,14 +37,8 @@ pub fn handle_message(message: Message, sender: &Sender<Message>, state: &Shared
 /// Queues a new task to the state.
 /// If the start_immediately flag is set, send a StartMessage to the task handler
 fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
-    let starting_status = if message.stashed || message.enqueue_at.is_some() {
-        TaskStatus::Stashed
-    } else {
-        TaskStatus::Queued
-    };
-
     let mut state = state.lock().unwrap();
-    
+
     let not_found: Vec<_> = message
         .dependencies
         .iter()
@@ -57,13 +51,15 @@ fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) 
             not_found
         ));
     }
-    let task = Task::new(
+
+    let mut task = Task::new(
         message.command,
         message.path,
-        starting_status,
-        message.enqueue_at,
+        message.stashed,
         message.dependencies,
     );
+    task.set_enqueue_at(message.enqueue_at);
+
     let task_id = state.add_task(task);
     if message.start_immediately {
         sender
@@ -88,24 +84,23 @@ fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) 
 /// Remove tasks from the queue
 fn remove(task_ids: Vec<usize>, state: &SharedState) -> Message {
     let mut state = state.lock().unwrap();
-    let statuses = vec![TaskStatus::Running, TaskStatus::Paused];
-    let (matching, mismatching) = state.tasks_not_in_statuses(statuses, Some(task_ids));
+    let (running, not_running) = state.tasks_in_statuses(Task::is_running, Some(task_ids));
 
-    for task_id in &matching {
+    for task_id in &not_running {
         state.tasks.remove(task_id);
     }
 
     let text = "Tasks removed from list";
-    let response = compile_task_response(text, matching, mismatching);
+    let response = compile_task_response(text, not_running, running);
     create_success_message(response)
 }
 
 /// Switch the position of two tasks in the upcoming queue
 fn switch(message: SwitchMessage, state: &SharedState) -> Message {
     let task_ids = vec![message.task_id_1, message.task_id_2];
-    let statuses = vec![TaskStatus::Queued, TaskStatus::Stashed];
     let mut state = state.lock().unwrap();
-    let (_, mismatching) = state.tasks_in_statuses(statuses, Some(task_ids.clone().to_vec()));
+    let (_, mismatching) =
+        state.tasks_in_statuses(Task::is_waiting, Some(task_ids.clone().to_vec()));
     if !mismatching.is_empty() {
         return create_failure_message("Tasks have to be either queued or stashed.");
     }
@@ -131,13 +126,10 @@ fn switch(message: SwitchMessage, state: &SharedState) -> Message {
 fn stash(task_ids: Vec<usize>, state: &SharedState) -> Message {
     let (matching, mismatching) = {
         let mut state = state.lock().unwrap();
-        let (matching, mismatching) = state.tasks_in_statuses(
-            vec![TaskStatus::Queued, TaskStatus::Locked],
-            Some(task_ids),
-        );
+        let (matching, mismatching) = state.tasks_in_statuses(Task::is_waiting, Some(task_ids));
 
         for task_id in &matching {
-            state.change_status(*task_id, TaskStatus::Stashed);
+            state.get_task_mut(*task_id).unwrap().stash();
         }
 
         (matching, mismatching)
@@ -153,14 +145,13 @@ fn stash(task_ids: Vec<usize>, state: &SharedState) -> Message {
 fn enqueue(message: EnqueueMessage, state: &SharedState) -> Message {
     let (matching, mismatching) = {
         let mut state = state.lock().unwrap();
-        let (matching, mismatching) = state.tasks_in_statuses(
-            vec![TaskStatus::Stashed, TaskStatus::Locked],
-            Some(message.task_ids),
-        );
+        let (matching, mismatching) =
+            state.tasks_in_statuses(Task::is_waiting, Some(message.task_ids));
 
         for task_id in &matching {
-            state.set_enqueue_at(*task_id, message.enqueue_at);
-            state.change_status(*task_id, TaskStatus::Queued);
+            let task = state.get_task_mut(*task_id).unwrap();
+            task.set_enqueue_at(message.enqueue_at);
+            task.queue();
         }
 
         (matching, mismatching)
@@ -188,7 +179,7 @@ fn start(task_ids: Vec<usize>, sender: &Sender<Message>, state: &SharedState) ->
         let response = task_response_helper(
             "Tasks are being started",
             task_ids,
-            vec![TaskStatus::Paused, TaskStatus::Queued, TaskStatus::Stashed],
+            |task| task.is_waiting() || task.is_paused(),
             state,
         );
         return create_success_message(response);
@@ -200,23 +191,16 @@ fn start(task_ids: Vec<usize>, sender: &Sender<Message>, state: &SharedState) ->
 /// Create and enqueue tasks from already finished tasks
 /// The user can specify to immediately start the newly created tasks.
 fn restart(message: RestartMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
-    let new_status = if message.stashed {
-        TaskStatus::Stashed
-    } else {
-        TaskStatus::Queued
-    };
-
     let response: String;
     let new_ids = {
         let mut state = state.lock().unwrap();
-        let statuses = vec![TaskStatus::Done, TaskStatus::Failed, TaskStatus::Killed];
-        let (matching, mismatching) = state.tasks_in_statuses(statuses, Some(message.task_ids));
+        let (matching, mismatching) =
+            state.tasks_in_statuses(Task::is_finished, Some(message.task_ids));
 
         let mut new_ids = Vec::new();
         for task_id in &matching {
-            let task = state.tasks.get(task_id).unwrap();
-            let mut new_task = Task::from_task(task);
-            new_task.status = new_status.clone();
+            let task = state.get_task(*task_id).unwrap();
+            let new_task = Task::from_task(task, message.stashed);
             new_ids.push(state.add_task(new_task));
         }
 
@@ -230,9 +214,7 @@ fn restart(message: RestartMessage, sender: &Sender<Message>, state: &SharedStat
     // If the restarted tasks should be started immediately, send a message
     // with the new task ids to the task handler.
     if message.start_immediately {
-        sender
-            .send(Message::Start(new_ids))
-            .expect(SENDER_ERR);
+        sender.send(Message::Start(new_ids)).expect(SENDER_ERR);
     }
 
     return create_success_message(response);
@@ -247,7 +229,7 @@ fn pause(message: PauseMessage, sender: &Sender<Message>, state: &SharedState) -
         let response = task_response_helper(
             "Tasks are being paused",
             message.task_ids,
-            vec![TaskStatus::Running],
+            Task::is_running,
             state,
         );
         return create_success_message(response);
@@ -266,7 +248,7 @@ fn kill(message: KillMessage, sender: &Sender<Message>, state: &SharedState) -> 
         let response = task_response_helper(
             "Tasks are being killed",
             message.task_ids,
-            vec![TaskStatus::Running, TaskStatus::Paused],
+            Task::is_started,
             state,
         );
         return create_success_message(response);
@@ -284,7 +266,7 @@ fn send(message: SendMessage, sender: &Sender<Message>, state: &SharedState) -> 
         let state = state.lock().unwrap();
         match state.tasks.get(&message.task_id) {
             Some(task) => {
-                if task.status != TaskStatus::Running {
+                if !task.is_running() {
                     return create_failure_message("You can only send input to a running task");
                 }
             }
@@ -305,11 +287,10 @@ fn edit_request(task_id: usize, state: &SharedState) -> Message {
     let mut state = state.lock().unwrap();
     match state.tasks.get_mut(&task_id) {
         Some(task) => {
-            if !task.is_queued() {
+            if !task.is_waiting() {
                 return create_failure_message("You can only edit a queued/stashed task");
             }
-            task.prev_status = task.status.clone();
-            task.status = TaskStatus::Locked;
+            task.lock();
 
             let message = EditResponseMessage {
                 task_id: task.id,
@@ -328,13 +309,13 @@ fn edit(message: EditMessage, state: &SharedState) -> Message {
     let mut state = state.lock().unwrap();
     match state.tasks.get_mut(&message.task_id) {
         Some(task) => {
-            if !(task.status == TaskStatus::Locked) {
+            if !task.is_locked() {
                 return create_failure_message("Task is no longer locked.");
             }
 
-            task.status = task.prev_status.clone();
             task.command = message.command.clone();
             task.path = message.path.clone();
+            task.unlock();
             state.save();
 
             return create_success_message("Command has been updated");
@@ -363,13 +344,12 @@ fn reset(sender: &Sender<Message>) -> Message {
     return create_success_message("Everything is being reset right now.");
 }
 
-/// Return the current state without any stdou/stderr to the client
+/// Return the current state without any stdout/stderr to the client
 /// Invoked when calling `pueue status`
 fn get_status(state: &SharedState) -> Message {
     let mut state = { state.lock().unwrap().clone() };
     for (_, task) in state.tasks.iter_mut() {
-        task.stdout = None;
-        task.stderr = None;
+        task.clean_output();
     }
     Message::StatusResponse(state)
 }
@@ -386,7 +366,9 @@ fn get_log(task_ids: Vec<usize>, state: &SharedState) -> Message {
     let mut tasks = BTreeMap::new();
     for task_id in task_ids.iter() {
         match state.tasks.get(task_id) {
-            Some(task) => {tasks.insert(*task_id, task.clone());},
+            Some(task) => {
+                tasks.insert(*task_id, task.clone());
+            }
             None => {}
         }
     }
