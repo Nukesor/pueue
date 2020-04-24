@@ -1,4 +1,4 @@
-use ::anyhow::{anyhow, Result};
+use ::anyhow::{anyhow, Context, Result};
 use ::std::env::current_dir;
 
 use ::pueue::message::*;
@@ -17,15 +17,15 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
             dependencies,
         } => {
             let cwd_pathbuf = current_dir()?;
-            let cwd = cwd_pathbuf.to_str().ok_or(anyhow!(
+            let cwd = cwd_pathbuf.to_str().context(
                 "Cannot parse current working directory (Invalid utf8?)"
-            ))?;
+            )?;
             Ok(Message::Add(AddMessage {
                 command: command.join(" "),
                 path: cwd.to_string(),
                 start_immediately: *start_immediately,
                 stashed: *stashed,
-                enqueue_at: delay_until.clone(),
+                enqueue_at: *delay_until,
                 dependencies: dependencies.to_vec(),
             }))
         }
@@ -51,7 +51,7 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
         } => {
             let message = EnqueueMessage {
                 task_ids: task_ids.clone(),
-                enqueue_at: delay_until.clone(),
+                enqueue_at: *delay_until,
             };
             Ok(Message::Enqueue(message))
         }

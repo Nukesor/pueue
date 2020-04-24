@@ -30,7 +30,7 @@ pub fn edit(message: EditResponseMessage, cli_command: &SubCommand) -> Message {
     writeln!(file, "{}", to_edit).expect("Failed writing to temporary file");
 
     // Start the editor on this file
-    let editor = env::var("EDITOR").unwrap_or("vi".to_string());
+    let editor = &env::var("EDITOR").unwrap_or_else(|_e| "vi".to_string());
     Command::new(editor)
         .arg(file.path())
         .status()
@@ -57,7 +57,7 @@ pub fn edit(message: EditResponseMessage, cli_command: &SubCommand) -> Message {
 
     Message::Edit(EditMessage {
         task_id: message.task_id,
-        command: command,
-        path: path,
+        command,
+        path,
     })
 }

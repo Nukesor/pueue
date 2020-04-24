@@ -225,15 +225,13 @@ pub struct Opt {
 }
 
 fn parse_delay_until(src: &str) -> Result<DateTime<Local>, String> {
-    let seconds = src.parse::<i64>();
-    if seconds.is_ok() {
-        let delay_until = Local::now() + Duration::seconds(seconds.unwrap());
+    if let Ok(seconds) = src.parse::<i64>() {
+        let delay_until = Local::now() + Duration::seconds(seconds);
         return Ok(delay_until);
     }
 
-    let date_time = parse_date_string(src, Local::now(), Dialect::Us);
-    if date_time.is_ok() {
-        return Ok(date_time.unwrap());
+    if let Ok(date_time) = parse_date_string(src, Local::now(), Dialect::Us) {
+        return Ok(date_time);
     }
 
     Err(String::from(
