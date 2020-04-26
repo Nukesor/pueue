@@ -1,8 +1,10 @@
 use ::chrono::prelude::*;
 use ::serde_derive::{Deserialize, Serialize};
-use ::strum_macros::{Display, EnumIter};
+use ::strum_macros::Display;
 
-#[derive(Clone, Display, Debug, Serialize, Deserialize, PartialEq, EnumIter)]
+/// This enum represents the status of the internal task handling of Pueue.
+/// They basically represent the internal task life-cycle.
+#[derive(Clone, Display, Debug, Serialize, Deserialize, PartialEq)]
 pub enum TaskStatus {
     /// The task is queued and waiting for a free slot
     Queued,
@@ -14,14 +16,23 @@ pub enum TaskStatus {
     Paused,
     /// Task finished successfully
     Done,
+    /// Used while the command of a task is edited (to prevent starting the task)
+    Locked,
+}
+
+/// This enum represents the exit status of the actually spawned program.
+#[derive(Clone, Display, Debug, Serialize, Deserialize, PartialEq)]
+pub enum TaskResult {
+    /// Task exited with 0
+    Success,
     /// The task failed in some other kind of way (error code != 0)
-    Failed,
+    Failed(i32),
     /// The task couldn't be spawned. Probably a typo in the command
     FailedToSpawn,
     /// Task has been actively killed by either the user or the daemon on shutdown
     Killed,
-    /// Used while the command of a task is edited (to prevent starting the task)
-    Locked,
+    /// A dependency of the task failed.
+    DependencyFailed,
 }
 
 /// Representation of a task.
@@ -35,14 +46,14 @@ pub struct Task {
     pub command: String,
     pub path: String,
     pub enqueue_at: Option<DateTime<Local>>,
+    pub dependencies: Vec<usize>,
     pub status: TaskStatus,
     pub prev_status: TaskStatus,
-    pub exit_code: Option<i32>,
+    pub result: Option<TaskResult>,
     pub stdout: Option<String>,
     pub stderr: Option<String>,
     pub start: Option<DateTime<Local>>,
     pub end: Option<DateTime<Local>>,
-    pub dependencies: Vec<usize>,
 }
 
 impl Task {
@@ -58,14 +69,14 @@ impl Task {
             command: command,
             path: path,
             enqueue_at: enqueue_at,
+            dependencies: dependencies,
             status: starting_status.clone(),
             prev_status: starting_status,
-            exit_code: None,
+            result: None,
             stdout: None,
             stderr: None,
             start: None,
             end: None,
-            dependencies,
         }
     }
 
@@ -75,14 +86,14 @@ impl Task {
             command: task.command.clone(),
             path: task.path.clone(),
             enqueue_at: None,
+            dependencies: Vec::new(),
             status: TaskStatus::Queued,
             prev_status: TaskStatus::Queued,
-            exit_code: None,
+            result: None,
             stdout: None,
             stderr: None,
             start: None,
             end: None,
-            dependencies: task.dependencies.clone(),
         }
     }
 
@@ -91,13 +102,17 @@ impl Task {
     }
 
     pub fn is_done(&self) -> bool {
-        return self.status == TaskStatus::Done
-            || self.status == TaskStatus::Failed
-            || self.status == TaskStatus::Killed;
+        return self.status == TaskStatus::Done;
     }
 
-    pub fn is_errored(&self) -> bool {
-        return self.status == TaskStatus::Failed || self.status == TaskStatus::Killed;
+    // Check if the task errored
+    // The only case when it didn't error is if it didn't run yet or if the task exited successfully
+    pub fn failed(&self) -> bool {
+        match self.result {
+            None => false,
+            Some(TaskResult::Success) => false,
+            _ => true,
+        }
     }
 
     pub fn is_queued(&self) -> bool {

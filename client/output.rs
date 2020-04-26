@@ -5,7 +5,7 @@ use ::std::collections::BTreeMap;
 use ::std::string::ToString;
 
 use ::pueue::state::State;
-use ::pueue::task::{Task, TaskStatus};
+use ::pueue::task::{Task, TaskResult, TaskStatus};
 
 use crate::cli::SubCommand;
 
@@ -89,15 +89,21 @@ pub fn print_state(state: State, cli_command: &SubCommand) {
         let mut row = Row::new();
         row.add_cell(Cell::new(&id.to_string()));
 
-        // Add status cell and color depending on state
-        let status_cell = Cell::new(&task.status.to_string());
-        let status_cell = match task.status {
-            TaskStatus::Running | TaskStatus::Done => status_cell.fg(Color::Green),
-            TaskStatus::Failed | TaskStatus::Killed => status_cell.fg(Color::Red),
-            TaskStatus::Paused => status_cell.fg(Color::White),
-            _ => status_cell.fg(Color::Yellow),
+        // Determine the human readable task status representation and the respective color
+        let status_string = task.status.to_string();
+        let (status_text, color) = match task.status {
+            TaskStatus::Running => (status_string, Color::Green),
+            TaskStatus::Paused | TaskStatus::Locked => (status_string, Color::White),
+            TaskStatus::Done => match &task.result {
+                Some(TaskResult::Success) => (TaskResult::Success.to_string(), Color::Green),
+                Some(TaskResult::DependencyFailed) => ("Dependency failed".to_string(), Color::Red),
+                Some(TaskResult::FailedToSpawn) => ("Failed to spawn".to_string(), Color::Red),
+                Some(result) => (result.to_string(), Color::Red),
+                None => panic!("Got a 'Done' task without a task result. Please report this bug."),
+            },
+            _ => (status_string, Color::Yellow),
         };
-        row.add_cell(status_cell);
+        row.add_cell(Cell::new(status_text).fg(color));
 
         if has_delayed_tasks {
             if let Some(enqueue_at) = task.enqueue_at {
@@ -119,19 +125,12 @@ pub fn print_state(state: State, cli_command: &SubCommand) {
 
         // Match the color of the exit code
         // If the exit_code is none, it has been killed by the task handler.
-        match task.exit_code {
-            Some(code) => {
-                // Everything that's not 0, is failed task
-                if code == 0 {
-                    row.add_cell(Cell::new(&code.to_string()).fg(Color::Green));
-                } else {
-                    row.add_cell(Cell::new(&code.to_string()).fg(Color::Red));
-                }
-            }
-            None => {
-                row.add_cell(Cell::new(""));
-            }
-        }
+        let exit_code_cell = match task.result {
+            Some(TaskResult::Success) => Cell::new("0").fg(Color::Green),
+            Some(TaskResult::Failed(code)) => Cell::new(&code.to_string()).fg(Color::Red),
+            _ => Cell::new(""),
+        };
+        row.add_cell(exit_code_cell);
 
         // Add command and path
         row.add_cell(Cell::new(&task.command));
@@ -189,9 +188,10 @@ pub fn print_logs(tasks: BTreeMap<usize, Task>, cli_command: &SubCommand) {
     let mut task_iter = tasks.iter().peekable();
     while let Some((_, task)) = task_iter.next() {
         print_log(task);
+
+        // Add a newline if there is another task that's going to be printed
         if let Some((_, task)) = task_iter.peek() {
-            if vec![TaskStatus::Done, TaskStatus::Failed, TaskStatus::Killed].contains(&task.status)
-            {
+            if task.status == TaskStatus::Done {
                 println!();
             }
         }
@@ -201,24 +201,25 @@ pub fn print_logs(tasks: BTreeMap<usize, Task>, cli_command: &SubCommand) {
 /// Print the log of a single task.
 pub fn print_log(task: &Task) {
     // We only show logs of finished tasks
-    if !vec![TaskStatus::Done, TaskStatus::Failed, TaskStatus::Killed].contains(&task.status) {
+    if task.status != TaskStatus::Done {
         return;
     }
 
-    let exit_status = match task.exit_code {
-        Some(code) => match code {
-            0 => style(format!("with exit code {}", code)).with(Color::Green),
-            _ => style(format!("with exit code {}", code)).with(Color::Red),
-        },
-        None => style("failed to spawn".to_string()).with(Color::Red),
-    };
-
     // Print task id and exit code
-    print!(
-        "{}",
-        style(format!("Task {} ", task.id)).attribute(Attribute::Bold)
-    );
-    println!("{}", exit_status);
+    let task_text = style(format!("Task {} ", task.id)).attribute(Attribute::Bold);
+    let exit_status = match task.result {
+        Some(TaskResult::Success) => style(format!("with exit code 0")).with(Color::Green),
+        Some(TaskResult::Failed(exit_code)) => {
+            style(format!("with exit code {}", exit_code)).with(Color::Red)
+        }
+        Some(TaskResult::FailedToSpawn) => style("failed to spawn".to_string()).with(Color::Red),
+        Some(TaskResult::Killed) => style("killed by system or user".to_string()).with(Color::Red),
+        Some(TaskResult::DependencyFailed) => {
+            style("dependency failed".to_string()).with(Color::Red)
+        }
+        None => panic!("Got a 'Done' task without a task result. Please report this bug."),
+    };
+    print!("{} {}", task_text, exit_status);
 
     // Print command and path
     println!("Command: {}", task.command);

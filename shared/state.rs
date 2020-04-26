@@ -7,10 +7,9 @@ use ::std::fs;
 use ::std::path::{Path, PathBuf};
 use ::std::sync::{Arc, Mutex};
 use ::std::time::SystemTime;
-use ::strum::IntoEnumIterator;
 
 use crate::settings::Settings;
-use crate::task::{Task, TaskStatus};
+use crate::task::{Task, TaskResult, TaskStatus};
 
 pub type SharedState = Arc<Mutex<State>>;
 
@@ -42,8 +41,8 @@ impl State {
         self.max_id - 1
     }
 
-    /// Search and return the next runnable task.
-    /// A runnable task:
+    /// Search and return the next task to be started.
+    /// Precondition for a task to be started:
     /// - is in Queued state
     /// - has all its dependencies in `Done` state
     pub fn get_next_task_id(&mut self) -> Option<usize> {
@@ -118,8 +117,7 @@ impl State {
     /// Remove all finished tasks (clean up the task queue)
     pub fn clean(&mut self) {
         self.backup();
-        let statuses = vec![TaskStatus::Done, TaskStatus::Failed, TaskStatus::Killed];
-        let (matching, _) = self.tasks_in_statuses(statuses, None);
+        let (matching, _) = self.tasks_in_statuses(vec![TaskStatus::Done], None);
 
         for task_id in &matching {
             let _ = self.tasks.remove(task_id).unwrap();
@@ -236,9 +234,10 @@ impl State {
                     "Setting task {} with previous status {:?} to new status {:?}",
                     task.id,
                     task.status,
-                    TaskStatus::Killed
+                    TaskResult::Killed
                 );
-                task.status = TaskStatus::Killed;
+                task.status = TaskStatus::Done;
+                task.result = Some(TaskResult::Killed);
             }
             // Crash during editing of the task command
             if task.status == TaskStatus::Locked {
@@ -286,32 +285,5 @@ impl State {
         }
 
         Ok(())
-    }
-
-    /// Ensure that no `Queued` tasks dont have any failed dependencies, otherwise set their status to `Failed`.
-    pub fn check_failed_dependencies(&mut self) {
-        let has_failed_deps: Vec<_> = self
-            .tasks
-            .iter()
-            .filter(|(_, task)| task.status == TaskStatus::Queued)
-            .filter_map(|(id, task)| {
-                let failed = task
-                    .dependencies
-                    .iter()
-                    .flat_map(|id| self.tasks.get(id))
-                    .filter(|task| task.is_errored())
-                    .map(|task| task.id)
-                    .next();
-
-                failed.map(|f| (*id, f))
-            })
-            .collect();
-
-        for (id, failed) in has_failed_deps {
-            if let Some(task) = self.tasks.get_mut(&id) {
-                task.status = TaskStatus::Failed;
-                task.stderr = Some(format!("Dependent task {:?} has failed", failed));
-            }
-        }
     }
 }
