@@ -1,5 +1,5 @@
-use ::std::sync::mpsc::Sender;
 use ::std::collections::BTreeMap;
+use ::std::sync::mpsc::Sender;
 
 use crate::response_helper::*;
 use ::pueue::message::*;
@@ -44,7 +44,7 @@ fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) 
     };
 
     let mut state = state.lock().unwrap();
-    
+
     let not_found: Vec<_> = message
         .dependencies
         .iter()
@@ -89,14 +89,15 @@ fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) 
 fn remove(task_ids: Vec<usize>, state: &SharedState) -> Message {
     let mut state = state.lock().unwrap();
     let statuses = vec![TaskStatus::Running, TaskStatus::Paused];
-    let (matching, mismatching) = state.tasks_not_in_statuses(statuses, Some(task_ids));
+    let (running, not_running) = state.tasks_in_statuses(statuses, Some(task_ids));
+    println!("{:?}", not_running);
 
-    for task_id in &matching {
+    for task_id in &not_running {
         state.tasks.remove(task_id);
     }
 
     let text = "Tasks removed from list";
-    let response = compile_task_response(text, matching, mismatching);
+    let response = compile_task_response(text, not_running, running);
     create_success_message(response)
 }
 
@@ -131,10 +132,8 @@ fn switch(message: SwitchMessage, state: &SharedState) -> Message {
 fn stash(task_ids: Vec<usize>, state: &SharedState) -> Message {
     let (matching, mismatching) = {
         let mut state = state.lock().unwrap();
-        let (matching, mismatching) = state.tasks_in_statuses(
-            vec![TaskStatus::Queued, TaskStatus::Locked],
-            Some(task_ids),
-        );
+        let (matching, mismatching) =
+            state.tasks_in_statuses(vec![TaskStatus::Queued, TaskStatus::Locked], Some(task_ids));
 
         for task_id in &matching {
             state.change_status(*task_id, TaskStatus::Stashed);
@@ -230,9 +229,7 @@ fn restart(message: RestartMessage, sender: &Sender<Message>, state: &SharedStat
     // If the restarted tasks should be started immediately, send a message
     // with the new task ids to the task handler.
     if message.start_immediately {
-        sender
-            .send(Message::Start(new_ids))
-            .expect(SENDER_ERR);
+        sender.send(Message::Start(new_ids)).expect(SENDER_ERR);
     }
 
     return create_success_message(response);
@@ -386,7 +383,9 @@ fn get_log(task_ids: Vec<usize>, state: &SharedState) -> Message {
     let mut tasks = BTreeMap::new();
     for task_id in task_ids.iter() {
         match state.tasks.get(task_id) {
-            Some(task) => {tasks.insert(*task_id, task.clone());},
+            Some(task) => {
+                tasks.insert(*task_id, task.clone());
+            }
             None => {}
         }
     }

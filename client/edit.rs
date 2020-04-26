@@ -13,8 +13,11 @@ use crate::cli::SubCommand;
 /// final edit message with the updated command to the daemon
 pub fn edit(message: EditResponseMessage, cli_command: &SubCommand) -> Message {
     let edit_path = match cli_command {
-        SubCommand::Edit{task_id: _, path} => *path,
-        _ => panic!("Got wrong Subcommand {:?} in edit. This shouldn't happen", cli_command),
+        SubCommand::Edit { task_id: _, path } => *path,
+        _ => panic!(
+            "Got wrong Subcommand {:?} in edit. This shouldn't happen",
+            cli_command
+        ),
     };
 
     let mut command = message.command;

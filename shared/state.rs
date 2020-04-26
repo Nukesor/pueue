@@ -96,41 +96,23 @@ impl State {
         // Filter all task id's that match the provided statuses.
         for task_id in task_ids.iter() {
             // Check whether the task exists
-            let task = match self.tasks.get(&task_id) {
+            match self.tasks.get(&task_id) {
                 None => {
                     mismatching.push(*task_id);
                     continue;
                 }
-                Some(task) => task,
+                Some(task) => {
+                    // Check whether the task status matches the specified statuses
+                    if statuses.contains(&task.status) {
+                        matching.push(*task_id);
+                    } else {
+                        mismatching.push(*task_id);
+                    }
+                }
             };
-
-            // Check whether the task status matches the specified statuses
-            if statuses.contains(&task.status) {
-                matching.push(*task_id);
-            } else {
-                mismatching.push(*task_id);
-            }
         }
 
         (matching, mismatching)
-    }
-
-    /// The same as tasks_in_statuses, but with inverted statuses
-    pub fn tasks_not_in_statuses(
-        &mut self,
-        excluded_statuses: Vec<TaskStatus>,
-        task_ids: Option<Vec<usize>>,
-    ) -> (Vec<usize>, Vec<usize>) {
-        let mut valid_statuses = Vec::new();
-        // Create a list of all valid statuses
-        // (statuses that aren't the exl
-        for status in TaskStatus::iter() {
-            if !excluded_statuses.contains(&status) {
-                valid_statuses.push(status);
-            }
-        }
-
-        self.tasks_in_statuses(valid_statuses, task_ids)
     }
 
     /// Remove all finished tasks (clean up the task queue)

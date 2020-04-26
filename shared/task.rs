@@ -4,12 +4,21 @@ use ::strum_macros::{Display, EnumIter};
 
 #[derive(Clone, Display, Debug, Serialize, Deserialize, PartialEq, EnumIter)]
 pub enum TaskStatus {
+    /// The task is queued and waiting for a free slot
     Queued,
+    /// The task has been manually stashed. It won't be executed until it's manually enqueued
     Stashed,
+    /// The task is started and running
     Running,
+    /// A previously running task has been paused
     Paused,
+    /// Task finished successfully
     Done,
+    /// The task failed in some other kind of way (error code != 0)
     Failed,
+    /// The task couldn't be spawned. Probably a typo in the command
+    FailedToSpawn,
+    /// Task has been actively killed by either the user or the daemon on shutdown
     Killed,
     /// Used while the command of a task is edited (to prevent starting the task)
     Locked,
@@ -88,8 +97,7 @@ impl Task {
     }
 
     pub fn is_errored(&self) -> bool {
-        return self.status == TaskStatus::Failed
-            || self.status == TaskStatus::Killed;
+        return self.status == TaskStatus::Failed || self.status == TaskStatus::Killed;
     }
 
     pub fn is_queued(&self) -> bool {

@@ -28,8 +28,8 @@ pub enum SubCommand {
         delay_until: Option<DateTime<Local>>,
 
         /// Start the task once all specified tasks have successfully finished.
-        /// As soon as one of the dependencies fails, this task will be fail as well
-        #[structopt(name = "after", long)]
+        /// As soon as one of the dependencies fails, this task will fail as well
+        #[structopt(name = "after", short, long)]
         dependencies: Vec<usize>,
     },
     /// Remove tasks from the list.

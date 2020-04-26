@@ -1,6 +1,6 @@
 use ::chrono::prelude::*;
-use ::std::collections::BTreeMap;
 use ::serde_derive::{Deserialize, Serialize};
+use ::std::collections::BTreeMap;
 
 use crate::state::State;
 use crate::task::Task;

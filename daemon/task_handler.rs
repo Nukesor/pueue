@@ -277,7 +277,6 @@ impl TaskHandler {
             state.running = false;
         }
 
-
         // The daemon got a reset request and all children just finished
         if self.reset && self.children.is_empty() {
             state.reset();

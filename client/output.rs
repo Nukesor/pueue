@@ -1,11 +1,11 @@
 use ::comfy_table::presets::UTF8_HORIZONTAL_BORDERS_ONLY;
 use ::comfy_table::*;
 use ::crossterm::style::style;
-use ::std::string::ToString;
 use ::std::collections::BTreeMap;
+use ::std::string::ToString;
 
 use ::pueue::state::State;
-use ::pueue::task::{TaskStatus, Task};
+use ::pueue::task::{Task, TaskStatus};
 
 use crate::cli::SubCommand;
 
@@ -21,35 +21,53 @@ pub fn print_error(message: String) {
 /// Print the current state of the daemon in a nicely formatted table
 pub fn print_state(state: State, cli_command: &SubCommand) {
     let json = match cli_command {
-        SubCommand::Status{json} => *json,
-        _ => panic!("Got wrong Subcommand {:?} in print_state. This shouldn't happen", cli_command),
+        SubCommand::Status { json } => *json,
+        _ => panic!(
+            "Got wrong Subcommand {:?} in print_state. This shouldn't happen",
+            cli_command
+        ),
     };
+
+    // If the json flag is specified, print the state as json and exit
     if json {
         println!("{}", serde_json::to_string(&state).unwrap());
         return;
     }
 
-    let daemon_status = if state.running {
-        style("Daemon status: running").with(Color::Green)
+    // Print the current daemon state
+    if state.running {
+        println!("{}", style("Daemon status: running").with(Color::Green));
     } else {
-        style("Daemon status: paused").with(Color::Yellow)
+        println!("{}", style("Daemon status: paused").with(Color::Yellow));
     };
 
-    println!("{}", daemon_status);
-
+    // Early exit and hint if there are no tasks in the queue
     if state.tasks.is_empty() {
         println!("\nTask list is empty. Add tasks with `pueue add -- [cmd]`");
         return;
     }
 
+    // Check whether there are any delayed tasks.
+    // In case there are, we need to add another column to the table
     let has_delayed_tasks = state
         .tasks
         .iter()
         .any(|(_id, task)| task.enqueue_at.is_some());
 
+    // Check whether there are any tasks with dependencies.
+    // In case there are, we need to add another column to the table
+    let has_dependencies = state
+        .tasks
+        .iter()
+        .any(|(_id, task)| !task.dependencies.is_empty());
+
+    // Create table header row
     let mut headers = vec![Cell::new("Index"), Cell::new("Status")];
     if has_delayed_tasks {
         headers.push(Cell::new("Enqueue At"));
+    }
+    if has_dependencies {
+        headers.push(Cell::new("Deps"));
     }
     headers.append(&mut vec![
         Cell::new("Exitcode"),
@@ -59,15 +77,16 @@ pub fn print_state(state: State, cli_command: &SubCommand) {
         Cell::new("End"),
     ]);
 
+    // Initialize comfy table
     let mut table = Table::new();
     table
         .set_content_arrangement(ContentArrangement::Dynamic)
         .load_preset(UTF8_HORIZONTAL_BORDERS_ONLY)
         .set_header(headers);
 
+    // Add rows one by one
     for (id, task) in state.tasks {
         let mut row = Row::new();
-        // Add a row per time
         row.add_cell(Cell::new(&id.to_string()));
 
         // Add status cell and color depending on state
@@ -86,6 +105,16 @@ pub fn print_state(state: State, cli_command: &SubCommand) {
             } else {
                 row.add_cell(Cell::new(""));
             }
+        }
+
+        if has_dependencies {
+            let text = task
+                .dependencies
+                .iter()
+                .map(|id| id.to_string())
+                .collect::<Vec<String>>()
+                .join(", ");
+            row.add_cell(Cell::new(text));
         }
 
         // Match the color of the exit code
@@ -136,8 +165,11 @@ pub fn print_state(state: State, cli_command: &SubCommand) {
 /// or only print the logs of the specified tasks.
 pub fn print_logs(tasks: BTreeMap<usize, Task>, cli_command: &SubCommand) {
     let (json, task_ids) = match cli_command {
-        SubCommand::Log{json, task_ids} => (*json, task_ids.clone()),
-        _ => panic!("Got wrong Subcommand {:?} in print_log. This shouldn't happen", cli_command),
+        SubCommand::Log { json, task_ids } => (*json, task_ids.clone()),
+        _ => panic!(
+            "Got wrong Subcommand {:?} in print_log. This shouldn't happen",
+            cli_command
+        ),
     };
     if json {
         println!("{}", serde_json::to_string(&tasks).unwrap());
@@ -158,7 +190,8 @@ pub fn print_logs(tasks: BTreeMap<usize, Task>, cli_command: &SubCommand) {
     while let Some((_, task)) = task_iter.next() {
         print_log(task);
         if let Some((_, task)) = task_iter.peek() {
-            if vec![TaskStatus::Done, TaskStatus::Failed, TaskStatus::Killed].contains(&task.status) {
+            if vec![TaskStatus::Done, TaskStatus::Failed, TaskStatus::Killed].contains(&task.status)
+            {
                 println!();
             }
         }
@@ -177,7 +210,7 @@ pub fn print_log(task: &Task) {
             0 => style(format!("with exit code {}", code)).with(Color::Green),
             _ => style(format!("with exit code {}", code)).with(Color::Red),
         },
-        None => style("failed to Spawn".to_string()).with(Color::Red),
+        None => style("failed to spawn".to_string()).with(Color::Red),
     };
 
     // Print task id and exit code
@@ -190,6 +223,7 @@ pub fn print_log(task: &Task) {
     // Print command and path
     println!("Command: {}", task.command);
     println!("Path: {}", task.path);
+
     if let Some(start) = task.start {
         println!("Start: {}", start.to_rfc2822());
     }

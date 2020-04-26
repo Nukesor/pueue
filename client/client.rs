@@ -1,4 +1,4 @@
-use ::anyhow::{Result, Context};
+use ::anyhow::{Context, Result};
 use ::async_std::net::TcpStream;
 use ::log::error;
 use ::std::io::{self, Write};
@@ -53,7 +53,9 @@ impl Client {
 
     pub async fn run(&mut self) -> Result<()> {
         // Connect to socket
-        let mut socket = TcpStream::connect(&self.daemon_address).await.context("Failed to connect to the daemon. Did you start it?")?;
+        let mut socket = TcpStream::connect(&self.daemon_address)
+            .await
+            .context("Failed to connect to the daemon. Did you start it?")?;
 
         let secret = self.secret.clone().into_bytes();
         send_bytes(secret, &mut socket).await?;
