@@ -18,7 +18,7 @@ use crate::log::*;
 use ::pueue::message::*;
 use ::pueue::settings::Settings;
 use ::pueue::state::SharedState;
-use ::pueue::task::TaskStatus;
+use ::pueue::task::{TaskResult, TaskStatus};
 
 pub struct TaskHandler {
     state: SharedState,
@@ -71,7 +71,7 @@ impl TaskHandler {
             self.receive_commands();
             self.process_finished();
             self.check_stashed();
-            self.state.lock().unwrap().check_failed_dependencies();
+            self.check_failed_dependencies();
             if self.running && !self.reset {
                 let _res = self.check_new();
             }
@@ -97,6 +97,36 @@ impl TaskHandler {
         }
 
         Ok(())
+    }
+
+    /// Ensure that no `Queued` tasks have any failed dependencies.
+    /// Otherwise set their status to `Done` and result to `DependencyFailed`.
+    pub fn check_failed_dependencies(&mut self) {
+        let mut state = self.state.lock().unwrap();
+        let has_failed_deps: Vec<_> = state
+            .tasks
+            .iter()
+            .filter(|(_, task)| task.status == TaskStatus::Queued)
+            .filter_map(|(id, task)| {
+                let failed = task
+                    .dependencies
+                    .iter()
+                    .flat_map(|id| state.tasks.get(id))
+                    .filter(|task| task.failed())
+                    .map(|task| task.id)
+                    .next();
+
+                failed.map(|f| (*id, f))
+            })
+            .collect();
+
+        for (id, failed) in has_failed_deps {
+            if let Some(task) = state.tasks.get_mut(&id) {
+                task.status = TaskStatus::Done;
+                task.result = Some(TaskResult::DependencyFailed);
+                task.stderr = Some(format!("Dependent task {:?} has failed", failed));
+            }
+        }
     }
 
     /// Actually spawn a new sub process
@@ -156,14 +186,15 @@ impl TaskHandler {
             .stderr(Stdio::from(stderr_log))
             .spawn();
 
-        // The spawning
+        // Check if the task managed to spawn
         let child = match spawn_result {
             Ok(child) => child,
             Err(err) => {
                 let error = format!("Failed to spawn child {} with err: {:?}", task_id, err);
                 error!("{}", error);
                 clean_log_handles(task_id, &self.settings);
-                task.status = TaskStatus::Failed;
+                task.status = TaskStatus::Done;
+                task.result = Some(TaskResult::FailedToSpawn);
                 task.stderr = Some(error);
 
                 // Pause the daemon, if the settings say so
@@ -215,18 +246,18 @@ impl TaskHandler {
     /// In case there are, handle them and update the shared state
     fn process_finished(&mut self) {
         let (finished, errored) = self.get_finished();
+        // Nothing to do. Early return
+        if finished.is_empty() && errored.is_empty() {
+            return;
+        }
+
         let mut state = self.state.lock().unwrap();
+        // We need to know if there are any failed tasks,
+        // in case the user wants to stop the daemon if a tasks fails
         let mut failed_task_exists = false;
-        let mut should_save = false;
 
         for task_id in finished.iter() {
             let mut child = self.children.remove(task_id).expect("Child went missing");
-            // Return 254, if the process has been killed by a signal
-            // This is kind of dirty, but we work with it for now
-            let exit_code = match child.wait().unwrap().code() {
-                Some(code) => code,
-                None => 254,
-            };
 
             // Get the stdout and stderr of this task from the output files
             let (stdout, stderr) = match read_log_files(*task_id, &self.settings) {
@@ -239,36 +270,37 @@ impl TaskHandler {
                     (None, None)
                 }
             };
+
             // Now remove the output files. Don't do anything if this fails.
             // This is something the user must take care of.
             clean_log_handles(*task_id, &self.settings);
 
+            let exit_code = child.wait().unwrap().code();
             let mut task = state.tasks.get_mut(&task_id).unwrap();
-            // Don't set to the status to Done, if the task has been killed by the daemon
-            if task.status != TaskStatus::Killed {
-                task.exit_code = Some(exit_code);
-                // Only processes with exit code 0 exited successfully
-                if task.exit_code == Some(0) {
-                    task.status = TaskStatus::Done;
-                } else {
-                    task.status = TaskStatus::Failed;
-                    failed_task_exists = true;
-                }
+            // Only processes with exit code 0 exited successfully
+            if exit_code == Some(0) {
+                task.result = Some(TaskResult::Success);
+            // Tasks with an exit code != 0 did fail in some kind of way
+            } else if let Some(exit_code) = exit_code {
+                task.result = Some(TaskResult::Failed(exit_code));
+                failed_task_exists = true;
             }
 
+            task.status = TaskStatus::Done;
+            task.end = Some(Local::now());
             task.stdout = stdout;
             task.stderr = stderr;
-            task.end = Some(Local::now());
-
-            should_save = true;
         }
 
         // Handle errored tasks
+        // TODO: This could be be refactored. Let's try to combine finished and error handling.
+        // Right now, stdout/stderr of those tasks won't be logged
         for task_id in errored.iter() {
             let _child = self.children.remove(task_id).expect("Child went missing");
-            state.change_status(*task_id, TaskStatus::Failed);
+            let mut task = state.tasks.get_mut(&task_id).unwrap();
+            task.status = TaskStatus::Done;
+            task.result = Some(TaskResult::Killed);
             failed_task_exists = true;
-            should_save = true;
         }
 
         // Pause the daemon, if the settings say so and some process failed
@@ -282,12 +314,9 @@ impl TaskHandler {
             state.reset();
             self.running = true;
             self.reset = false;
-            should_save = true;
         }
 
-        if should_save {
-            state.save()
-        }
+        state.save()
     }
 
     /// Gather all finished tasks and sort them by finished and errored.
@@ -493,7 +522,9 @@ impl TaskHandler {
                     // Already mark the task as killed over here.
                     // It's hard to distinguish whether it's killed later on.
                     let mut state = self.state.lock().unwrap();
-                    state.change_status(task_id, TaskStatus::Killed);
+                    let mut task = state.tasks.get_mut(&task_id).unwrap();
+                    task.status = TaskStatus::Done;
+                    task.result = Some(TaskResult::Killed);
                 }
             };
         } else {
