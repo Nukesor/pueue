@@ -80,7 +80,7 @@ impl Client {
             Message::Success(text) => print_success(text),
             Message::Failure(text) => print_error(text),
             Message::StatusResponse(state) => print_state(state, &self.opt.cmd),
-            Message::LogResponse(tasks) => print_logs(tasks, &self.opt.cmd),
+            Message::LogResponse(task_logs) => print_logs(task_logs, &self.opt.cmd),
             Message::EditResponse(message) => {
                 // Create a new message with the edited command
                 let message = edit(message, &self.opt.cmd);

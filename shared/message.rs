@@ -3,7 +3,7 @@ use ::serde_derive::{Deserialize, Serialize};
 use ::std::collections::BTreeMap;
 
 use crate::state::State;
-use crate::task::Task;
+use crate::task::TaskLog;
 
 /// The Message used to add a new command to the daemon.
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -27,7 +27,7 @@ pub enum Message {
     Status,
     StatusResponse(State),
     Log(Vec<usize>),
-    LogResponse(BTreeMap<usize, Task>),
+    LogResponse(BTreeMap<usize, TaskLog>),
     Stream(String),
     StreamRequest(StreamRequestMessage),
     Reset,

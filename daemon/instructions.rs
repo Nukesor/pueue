@@ -1,10 +1,11 @@
 use ::std::collections::BTreeMap;
 use ::std::sync::mpsc::Sender;
 
+use crate::log::{clean_log_handles, read_log_files};
 use crate::response_helper::*;
 use ::pueue::message::*;
 use ::pueue::state::SharedState;
-use ::pueue::task::{Task, TaskStatus};
+use ::pueue::task::{Task, TaskStatus, TaskLog};
 
 static SENDER_ERR: &str = "Failed to send message to task handler thread";
 
@@ -348,43 +349,56 @@ fn edit(message: EditMessage, state: &SharedState) -> Message {
 /// Remove all failed or done tasks from the state
 fn clean(state: &SharedState) -> Message {
     let mut state = state.lock().unwrap();
-    state.clean();
+    state.backup();
+    let (matching, _) = state.tasks_in_statuses(vec![TaskStatus::Done], None);
+
+    for task_id in &matching {
+        let _ = state.tasks.remove(task_id).unwrap();
+        clean_log_handles(*task_id, &state.settings);
+    }
+
+    state.save();
 
     return create_success_message("All finished tasks have been removed");
 }
 
-// Forward the reset request to the task handler
-// The handler then kills all children and clears the task queue
+/// Forward the reset request to the task handler
+/// The handler then kills all children and clears the task queue
 fn reset(sender: &Sender<Message>) -> Message {
     sender.send(Message::Reset).expect(SENDER_ERR);
     return create_success_message("Everything is being reset right now.");
 }
 
-/// Return the current state without any stdou/stderr to the client
+/// Return the current state
 /// Invoked when calling `pueue status`
 fn get_status(state: &SharedState) -> Message {
-    let mut state = { state.lock().unwrap().clone() };
-    for (_, task) in state.tasks.iter_mut() {
-        task.stdout = None;
-        task.stderr = None;
-    }
+    let state = state.lock().unwrap().clone();
     Message::StatusResponse(state)
 }
 
-/// Return the current state without any stdou/stderr to the client
+/// Return the current state and the stdou/stderr of all tasks to the client
 /// Invoked when calling `pueue log`
-fn get_log(task_ids: Vec<usize>, state: &SharedState) -> Message {
+fn get_log(mut task_ids: Vec<usize>, state: &SharedState) -> Message {
     let state = state.lock().unwrap().clone();
     // Return all logs, if no specific task id is specified
     if task_ids.is_empty() {
-        return Message::LogResponse(state.tasks.clone());
+        task_ids = state.tasks.keys().cloned().collect();
     }
 
     let mut tasks = BTreeMap::new();
     for task_id in task_ids.iter() {
         match state.tasks.get(task_id) {
             Some(task) => {
-                tasks.insert(*task_id, task.clone());
+                let (stdout, stderr) = match read_log_files(*task_id, &state.settings) {
+                    Ok((stdout, stderr)) => (stdout, stderr),
+                    Err(err) => (String::new(), format!("Failed reading process output file: {:?}", err)),
+                };
+                let task_log = TaskLog {
+                    task: task.clone(),
+                    stdout,
+                    stderr,
+                };
+                tasks.insert(*task_id, task_log);
             }
             None => {}
         }

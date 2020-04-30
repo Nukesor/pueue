@@ -5,7 +5,7 @@ use ::std::collections::BTreeMap;
 use ::std::string::ToString;
 
 use ::pueue::state::State;
-use ::pueue::task::{Task, TaskResult, TaskStatus};
+use ::pueue::task::{TaskLog, TaskResult, TaskStatus};
 
 use crate::cli::SubCommand;
 
@@ -97,7 +97,7 @@ pub fn print_state(state: State, cli_command: &SubCommand) {
             TaskStatus::Done => match &task.result {
                 Some(TaskResult::Success) => (TaskResult::Success.to_string(), Color::Green),
                 Some(TaskResult::DependencyFailed) => ("Dependency failed".to_string(), Color::Red),
-                Some(TaskResult::FailedToSpawn) => ("Failed to spawn".to_string(), Color::Red),
+                Some(TaskResult::FailedToSpawn(_)) => ("Failed to spawn".to_string(), Color::Red),
                 Some(result) => (result.to_string(), Color::Red),
                 None => panic!("Got a 'Done' task without a task result. Please report this bug."),
             },
@@ -162,7 +162,7 @@ pub fn print_state(state: State, cli_command: &SubCommand) {
 /// Print the log ouput of finished tasks.
 /// Either print the logs of every task
 /// or only print the logs of the specified tasks.
-pub fn print_logs(tasks: BTreeMap<usize, Task>, cli_command: &SubCommand) {
+pub fn print_logs(task_logs: BTreeMap<usize, TaskLog>, cli_command: &SubCommand) {
     let (json, task_ids) = match cli_command {
         SubCommand::Log { json, task_ids } => (*json, task_ids.clone()),
         _ => panic!(
@@ -171,27 +171,27 @@ pub fn print_logs(tasks: BTreeMap<usize, Task>, cli_command: &SubCommand) {
         ),
     };
     if json {
-        println!("{}", serde_json::to_string(&tasks).unwrap());
+        println!("{}", serde_json::to_string(&task_logs).unwrap());
         return;
     }
 
-    if task_ids.is_empty() && tasks.is_empty() {
-        println!("There are no finished tasks");
+    if task_ids.is_empty() && task_logs.is_empty() {
+        println!("There are no finished task_logs");
         return;
     }
 
-    if !task_ids.is_empty() && tasks.is_empty() {
-        println!("There are no finished tasks for your specified ids");
+    if !task_ids.is_empty() && task_logs.is_empty() {
+        println!("There are no finished task_logs for your specified ids");
         return;
     }
 
-    let mut task_iter = tasks.iter().peekable();
-    while let Some((_, task)) = task_iter.next() {
-        print_log(task);
+    let mut task_iter = task_logs.iter().peekable();
+    while let Some((_, task_log)) = task_iter.next() {
+        print_log(task_log);
 
         // Add a newline if there is another task that's going to be printed
-        if let Some((_, task)) = task_iter.peek() {
-            if task.status == TaskStatus::Done {
+        if let Some((_, task_log)) = task_iter.peek() {
+            if task_log.task.status == TaskStatus::Done {
                 println!();
             }
         }
@@ -199,7 +199,8 @@ pub fn print_logs(tasks: BTreeMap<usize, Task>, cli_command: &SubCommand) {
 }
 
 /// Print the log of a single task.
-pub fn print_log(task: &Task) {
+pub fn print_log(task_log: &TaskLog) {
+    let task = &task_log.task;
     // We only show logs of finished tasks
     if task.status != TaskStatus::Done {
         return;
@@ -207,12 +208,14 @@ pub fn print_log(task: &Task) {
 
     // Print task id and exit code
     let task_text = style(format!("Task {} ", task.id)).attribute(Attribute::Bold);
-    let exit_status = match task.result {
+    let exit_status = match &task.result {
         Some(TaskResult::Success) => style(format!("with exit code 0")).with(Color::Green),
         Some(TaskResult::Failed(exit_code)) => {
             style(format!("with exit code {}", exit_code)).with(Color::Red)
         }
-        Some(TaskResult::FailedToSpawn) => style("failed to spawn".to_string()).with(Color::Red),
+        Some(TaskResult::FailedToSpawn(err)) => {
+            style(format!("failed to spawn: {}", err)).with(Color::Red)
+        }
         Some(TaskResult::Killed) => style("killed by system or user".to_string()).with(Color::Red),
         Some(TaskResult::DependencyFailed) => {
             style("dependency failed".to_string()).with(Color::Red)
@@ -232,27 +235,23 @@ pub fn print_log(task: &Task) {
         println!("End: {}", end.to_rfc2822());
     }
 
-    if let Some(stdout) = &task.stdout {
-        if !stdout.is_empty() {
-            println!(
-                "{}",
-                style("Std_out: ")
-                    .with(Color::Green)
-                    .attribute(Attribute::Bold)
-            );
-            println!("{}", stdout);
-        }
+    if !task_log.stdout.is_empty() {
+        println!(
+            "{}",
+            style("Std_out: ")
+                .with(Color::Green)
+                .attribute(Attribute::Bold)
+        );
+        println!("{}", task_log.stdout);
     }
 
-    if let Some(stderr) = &task.stderr {
-        if !stderr.is_empty() {
-            println!(
-                "{}",
-                style("Std_err: ")
-                    .with(Color::Red)
-                    .attribute(Attribute::Bold)
-            );
-            println!("{}", stderr);
-        }
+    if !task_log.stderr.is_empty() {
+        println!(
+            "{}",
+            style("Std_err: ")
+                .with(Color::Red)
+                .attribute(Attribute::Bold)
+        );
+        println!("{}", task_log.stderr);
     }
 }

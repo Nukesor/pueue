@@ -16,7 +16,7 @@ pub type SharedState = Arc<Mutex<State>>;
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct State {
     max_id: usize,
-    settings: Settings,
+    pub settings: Settings,
     pub running: bool,
     pub tasks: BTreeMap<usize, Task>,
 }
@@ -114,18 +114,6 @@ impl State {
         (matching, mismatching)
     }
 
-    /// Remove all finished tasks (clean up the task queue)
-    pub fn clean(&mut self) {
-        self.backup();
-        let (matching, _) = self.tasks_in_statuses(vec![TaskStatus::Done], None);
-
-        for task_id in &matching {
-            let _ = self.tasks.remove(task_id).unwrap();
-        }
-
-        self.save();
-    }
-
     pub fn reset(&mut self) {
         self.backup();
         self.running = true;
@@ -142,7 +130,7 @@ impl State {
     /// Save the current current state in a file with a timestamp
     /// At the same time remove old state logs from the log directory
     /// This function is called, when large changes to the state are applied, e.g. clean/reset
-    fn backup(&mut self) {
+    pub fn backup(&mut self) {
         self.save_to_file(true);
         if let Err(error) = self.rotate() {
             error!("Failed to rotate files: {:?}", error);
