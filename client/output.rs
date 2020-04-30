@@ -180,12 +180,12 @@ pub fn print_logs(mut task_logs: BTreeMap<usize, TaskLogMessage>, cli_command: &
     }
 
     if task_ids.is_empty() && task_logs.is_empty() {
-        println!("There are no finished task_logs");
+        println!("There are no finished tasks");
         return;
     }
 
     if !task_ids.is_empty() && task_logs.is_empty() {
-        println!("There are no finished task_logs for your specified ids");
+        println!("There are no finished tasks for your specified ids");
         return;
     }
 
