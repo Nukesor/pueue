@@ -1,8 +1,8 @@
-use ::anyhow::Result;
-use ::base64::write::EncoderWriter;
-use ::brotli::enc::{BrotliCompress, BrotliEncoderParams};
+use ::anyhow::{anyhow, Result};
+use ::snap::write::FrameEncoder;
 use ::log::error;
 use ::std::fs::{remove_file, File};
+use ::std::io;
 use ::std::io::prelude::*;
 use ::std::path::{Path, PathBuf};
 
@@ -68,33 +68,24 @@ pub fn clean_log_handles(task_id: usize, settings: &Settings) {
 
 /// Return stdout and stderr of a finished process
 /// Everything is compressed using Brotli and then encoded to Base64
-pub fn read_log_files_to_compressed_base64(
+pub fn read_and_compress_log_files(
     task_id: usize,
     settings: &Settings,
-) -> Result<(String, String)> {
+) -> Result<(Vec<u8>, Vec<u8>)> {
     let (mut stdout_handle, mut stderr_handle) = match get_log_file_handles(task_id, settings) {
         Ok((stdout, stderr)) => (stdout, stderr),
-        Err(err) => {
-            return Ok((String::new(), format!("Error while opening the output files: {}", err)));
-        },
+        Err(err) => return Err(anyhow!(format!("Error while opening the output files: {}", err))),
     };
 
-    let stdout_len = stdout_handle.metadata()?.len();
-    let stderr_len = stdout_handle.metadata()?.len();
     let mut stdout = Vec::new();
     let mut stderr = Vec::new();
     {
-        // Base64 encode for easier handling of compressed bytes
-        let mut stdout_base64 = EncoderWriter::new(&mut stdout, base64::STANDARD);
-        let mut stderr_base64 = EncoderWriter::new(&mut stderr, base64::STANDARD);
-
         // Compress log input and pipe it into the base64 encoder
-        let mut params = BrotliEncoderParams::default();
-        params.quality = 4;
-        params.quality = 4;
-        BrotliCompress(&mut stdout_handle, &mut stdout_base64, &params)?;
-        BrotliCompress(&mut stderr_handle, &mut stderr_base64, &params)?;
+        let mut stdout_compressor = FrameEncoder::new(&mut stdout);
+        io::copy(&mut stdout_handle, &mut stdout_compressor)?;
+        let mut stderr_compressor = FrameEncoder::new(&mut stderr);
+        io::copy(&mut stderr_handle, &mut stderr_compressor)?;
     }
 
-    Ok((String::from_utf8(stdout)?, String::from_utf8(stderr)?))
+    Ok((stdout, stderr))
 }

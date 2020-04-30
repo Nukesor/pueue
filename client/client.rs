@@ -61,7 +61,7 @@ impl Client {
         send_bytes(secret, &mut socket).await?;
 
         // Create the message payload and send it to the daemon.
-        send_message(&self.message, &mut socket).await?;
+        send_message(self.message.clone(), &mut socket).await?;
 
         // Check if we can receive the response from the daemon
         let mut message = receive_message(&mut socket).await?;
@@ -84,7 +84,7 @@ impl Client {
             Message::EditResponse(message) => {
                 // Create a new message with the edited command
                 let message = edit(message, &self.opt.cmd);
-                send_message(&message, socket).await?;
+                send_message(message, socket).await?;
                 return Ok(true);
             }
             Message::Stream(text) => {

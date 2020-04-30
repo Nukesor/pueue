@@ -244,6 +244,15 @@ impl TaskHandler {
     /// In case there are, handle them and update the shared state
     fn process_finished(&mut self) {
         let (finished, errored) = self.get_finished();
+
+        // The daemon got a reset request and all children already finished
+        if self.reset && self.children.is_empty() {
+            let mut state = self.state.lock().unwrap();
+            state.reset();
+            self.running = true;
+            self.reset = false;
+        }
+
         // Nothing to do. Early return
         if finished.is_empty() && errored.is_empty() {
             return;
@@ -291,13 +300,6 @@ impl TaskHandler {
         if failed_task_exists && self.settings.daemon.pause_on_failure {
             self.running = false;
             state.running = false;
-        }
-
-        // The daemon got a reset request and all children just finished
-        if self.reset && self.children.is_empty() {
-            state.reset();
-            self.running = true;
-            self.reset = false;
         }
 
         state.save()

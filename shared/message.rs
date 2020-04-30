@@ -113,8 +113,8 @@ pub struct StreamRequestMessage {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct TaskLogMessage {
     pub task: Task,
-    pub stdout: String,
-    pub stderr: String,
+    pub stdout: Vec<u8>,
+    pub stderr: Vec<u8>,
 }
 
 pub fn create_success_message<T: ToString>(text: T) -> Message {

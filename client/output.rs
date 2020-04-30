@@ -1,6 +1,5 @@
 use ::anyhow::Result;
-use ::base64::read::DecoderReader;
-use ::brotli::BrotliDecompress;
+use ::snap::read::FrameDecoder;
 use ::comfy_table::presets::UTF8_HORIZONTAL_BORDERS_ONLY;
 use ::comfy_table::*;
 use ::crossterm::style::style;
@@ -241,13 +240,13 @@ pub fn print_log(task_log: &mut TaskLogMessage) {
     }
 
     if !task_log.stdout.is_empty() {
-        if let Err(err) = print_task_stdout(task_log) {
+        if let Err(err) = print_task_output(&task_log, true) {
             println!("Error while parsing stdout: {}", err);
         }
     }
 
     if !task_log.stderr.is_empty() {
-        if let Err(err) = print_task_stderr(task_log) {
+        if let Err(err) = print_task_output(&task_log, false) {
             println!("Error while parsing stderr: {}", err);
         };
     }
@@ -255,42 +254,25 @@ pub fn print_log(task_log: &mut TaskLogMessage) {
 
 /// Pritn the stdout of a finished process
 /// The logs are compressed using Brotli and then encoded to Base64
-pub fn print_task_stdout(task_log: &mut TaskLogMessage) -> Result<()> {
-    let mut bytes = task_log.stdout.as_bytes();
-    // Minimum empty base64 encoded message length
-    if bytes.len() <= 4 {
-        return Ok(());
-    }
+pub fn print_task_output(task_log: &TaskLogMessage, stdout: bool) -> Result<()> {
+    let (pre_text, bytes) = if stdout {
+        ("stdout: ", &task_log.stdout)
+    } else {
+        ("stderr: ", &task_log.stderr)
+    };
 
     println!(
         "{}",
-        style("Std_out: ")
+        style(pre_text)
             .with(Color::Green)
             .attribute(Attribute::Bold)
     );
-    let mut stderr_base64_decoder = DecoderReader::new(&mut bytes, base64::STANDARD);
-    BrotliDecompress(&mut stderr_base64_decoder, &mut io::stdout())?;
 
-    Ok(())
-}
+    let mut decompressor = FrameDecoder::new(bytes.as_slice());
 
-/// Print the stderr of a finished process
-/// The logs are compressed using Brotli and then encoded to Base64
-pub fn print_task_stderr(task_log: &mut TaskLogMessage) -> Result<()> {
-    let mut bytes = task_log.stderr.as_bytes();
-    // Minimum empty base64 encoded message length
-    if bytes.len() <= 4 {
-        return Ok(());
-    }
-
-    println!(
-        "{}",
-        style("Std_err: ")
-            .with(Color::Red)
-            .attribute(Attribute::Bold)
-    );
-    let mut stderr_base64_decoder = DecoderReader::new(&mut bytes, base64::STANDARD);
-    BrotliDecompress(&mut stderr_base64_decoder, &mut io::stdout())?;
+    let stdout = io::stdout();
+    let mut write = stdout.lock();
+    io::copy(&mut decompressor, &mut write)?;
 
     Ok(())
 }

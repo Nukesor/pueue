@@ -1,7 +1,7 @@
 use ::std::collections::BTreeMap;
 use ::std::sync::mpsc::Sender;
 
-use crate::log::{clean_log_handles, read_log_files_to_compressed_base64};
+use crate::log::{clean_log_handles, read_and_compress_log_files};
 use crate::response_helper::*;
 use ::pueue::message::*;
 use ::pueue::state::SharedState;
@@ -394,12 +394,12 @@ fn get_log(mut task_ids: Vec<usize>, state: &SharedState) -> Message {
                 // This isn't as efficient as sending the raw compressed data directly,
                 // but it's a lot more convenient for now.
                 let (stdout, stderr) =
-                    match read_log_files_to_compressed_base64(*task_id, &state.settings) {
+                    match read_and_compress_log_files(*task_id, &state.settings) {
                         Ok((stdout, stderr)) => (stdout, stderr),
-                        Err(err) => (
-                            String::new(),
-                            format!("Failed reading process output file: {:?}", err),
-                        ),
+                        Err(err) => {
+                            return create_failure_message(
+                                format!("Failed reading process output file: {:?}", err));
+                        },
                     };
                 let task_log = TaskLogMessage {
                     task: task.clone(),

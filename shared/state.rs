@@ -140,6 +140,9 @@ impl State {
     /// Save the current state to disk.
     /// We do this to restore in case of a crash
     /// If log == true, the file will be saved with a time stamp
+    ///
+    /// In comparison to the daemon -> client communication, the state is saved
+    /// as JSON for better readability and debug purposes
     fn save_to_file(&mut self, log: bool) {
         let serialized = serde_json::to_string(&self);
         if let Err(error) = serialized {
@@ -205,7 +208,7 @@ impl State {
         }
         let data = data.unwrap();
 
-        // Try to deserialize it into a state
+        // Try to deserialize the state file
         let deserialized: Result<State, serde_json::error::Error> = serde_json::from_str(&data);
         if let Err(error) = deserialized {
             error!("Failed to deserialize previous state log: {:?}", error);

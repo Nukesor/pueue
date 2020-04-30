@@ -85,7 +85,7 @@ async fn handle_incoming(
         } else if let Message::DaemonShutdown = message {
             // Simply shut down the daemon right after sending a success response
             let response = create_success_message("Daemon is shutting down");
-            send_message(&response, &mut socket).await?;
+            send_message(response, &mut socket).await?;
             std::process::exit(0);
         } else {
             // Process a normal message
@@ -93,6 +93,6 @@ async fn handle_incoming(
         };
 
         // Respond to the client
-        send_message(&response, &mut socket).await?;
+        send_message(response, &mut socket).await?;
     }
 }
