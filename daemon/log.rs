@@ -1,4 +1,6 @@
 use ::anyhow::Result;
+use ::base64::write::EncoderWriter;
+use ::brotli::enc::{BrotliCompress, BrotliEncoderParams};
 use ::log::error;
 use ::std::fs::{remove_file, File};
 use ::std::io::prelude::*;
@@ -62,4 +64,37 @@ pub fn clean_log_handles(task_id: usize, settings: &Settings) {
             task_id, err
         );
     };
+}
+
+/// Return stdout and stderr of a finished process
+/// Everything is compressed using Brotli and then encoded to Base64
+pub fn read_log_files_to_compressed_base64(
+    task_id: usize,
+    settings: &Settings,
+) -> Result<(String, String)> {
+    let (mut stdout_handle, mut stderr_handle) = match get_log_file_handles(task_id, settings) {
+        Ok((stdout, stderr)) => (stdout, stderr),
+        Err(err) => {
+            return Ok((String::new(), format!("Error while opening the output files: {}", err)));
+        },
+    };
+
+    let stdout_len = stdout_handle.metadata()?.len();
+    let stderr_len = stdout_handle.metadata()?.len();
+    let mut stdout = Vec::new();
+    let mut stderr = Vec::new();
+    {
+        // Base64 encode for easier handling of compressed bytes
+        let mut stdout_base64 = EncoderWriter::new(&mut stdout, base64::STANDARD);
+        let mut stderr_base64 = EncoderWriter::new(&mut stderr, base64::STANDARD);
+
+        // Compress log input and pipe it into the base64 encoder
+        let mut params = BrotliEncoderParams::default();
+        params.quality = 4;
+        params.quality = 4;
+        BrotliCompress(&mut stdout_handle, &mut stdout_base64, &params)?;
+        BrotliCompress(&mut stderr_handle, &mut stderr_base64, &params)?;
+    }
+
+    Ok((String::from_utf8(stdout)?, String::from_utf8(stderr)?))
 }

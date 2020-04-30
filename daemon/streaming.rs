@@ -65,19 +65,14 @@ pub async fn handle_show(
     } else {
         // The client requested a one-shot execution
         // Simply read the file and send the current stdout/stderr once
-        let stdout: String;
-        let stderr: String;
-        match read_log_files(message.task_id, &settings) {
+        let (stdout, stderr) = match read_log_files(message.task_id, &settings) {
             Err(_) => {
                 return Ok(create_failure_message(
                     "Couldn't find output files for task. Maybe it finished? Try `log`",
                 ))
             }
-            Ok((stdout_text, stderr_text)) => {
-                stdout = stdout_text;
-                stderr = stderr_text;
-            }
-        }
+            Ok((stdout, stderr)) => (stdout, stderr),
+        };
 
         let response = format!("Stdout:\n{}\n\nStderr:\n{}", stdout, stderr);
 

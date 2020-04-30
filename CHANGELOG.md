@@ -1,4 +1,18 @@
-# v0.3.0
+# v0.4.0
+**Features:**
+- Add `--after [ids]` flag. Task with this flag will only start once all specified dependencies finished successfully
+    Tasks with failed dependencies will fail as well.
+- New state `FailedToStart`. Used if the process cannot be started
+- New state `DependencyFailed`. Used if any dependency of a task fails.
+
+**Improvements:**
+- Process log output is no longer stored in memory. This significantly reduced RAM usage for large log outputs.
+- Process log output is compressed in-memory on read from disk. This leads to reduced bandwidth and RAM usage.
+
+**Changes:**
+- Pueue no longer stores log output in it's backup files
+
+# v0.3.1
 **Fixes:**
 - Set `start` for processes. (Seems to have broken in 0.2.0)
 

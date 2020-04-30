@@ -113,13 +113,3 @@ impl Task {
         return self.status == TaskStatus::Queued || self.status == TaskStatus::Stashed;
     }
 }
-
-
-/// Helper struct for sending tasks and their log output to the client
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct TaskLog {
-    pub task: Task,
-    pub stdout: String,
-    pub stderr: String,
-}
-

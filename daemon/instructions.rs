@@ -1,11 +1,11 @@
 use ::std::collections::BTreeMap;
 use ::std::sync::mpsc::Sender;
 
-use crate::log::{clean_log_handles, read_log_files};
+use crate::log::{clean_log_handles, read_log_files_to_compressed_base64};
 use crate::response_helper::*;
 use ::pueue::message::*;
 use ::pueue::state::SharedState;
-use ::pueue::task::{Task, TaskStatus, TaskLog};
+use ::pueue::task::{Task, TaskStatus};
 
 static SENDER_ERR: &str = "Failed to send message to task handler thread";
 
@@ -27,7 +27,7 @@ pub fn handle_message(message: Message, sender: &Sender<Message>, state: &Shared
         Message::Edit(message) => edit(message, state),
 
         Message::Clean => clean(state),
-        Message::Reset => reset(sender),
+        Message::Reset => reset(sender, state),
         Message::Status => get_status(state),
         Message::Log(task_ids) => get_log(task_ids, state),
         Message::Parallel(amount) => set_parallel_tasks(amount, sender),
@@ -364,8 +364,9 @@ fn clean(state: &SharedState) -> Message {
 
 /// Forward the reset request to the task handler
 /// The handler then kills all children and clears the task queue
-fn reset(sender: &Sender<Message>) -> Message {
+fn reset(sender: &Sender<Message>, state: &SharedState) -> Message {
     sender.send(Message::Reset).expect(SENDER_ERR);
+    clean(state);
     return create_success_message("Everything is being reset right now.");
 }
 
@@ -389,11 +390,18 @@ fn get_log(mut task_ids: Vec<usize>, state: &SharedState) -> Message {
     for task_id in task_ids.iter() {
         match state.tasks.get(task_id) {
             Some(task) => {
-                let (stdout, stderr) = match read_log_files(*task_id, &state.settings) {
-                    Ok((stdout, stderr)) => (stdout, stderr),
-                    Err(err) => (String::new(), format!("Failed reading process output file: {:?}", err)),
-                };
-                let task_log = TaskLog {
+                // We send log output and the task at the same time
+                // This isn't as efficient as sending the raw compressed data directly,
+                // but it's a lot more convenient for now.
+                let (stdout, stderr) =
+                    match read_log_files_to_compressed_base64(*task_id, &state.settings) {
+                        Ok((stdout, stderr)) => (stdout, stderr),
+                        Err(err) => (
+                            String::new(),
+                            format!("Failed reading process output file: {:?}", err),
+                        ),
+                    };
+                let task_log = TaskLogMessage {
                     task: task.clone(),
                     stdout,
                     stderr,

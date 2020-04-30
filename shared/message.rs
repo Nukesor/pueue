@@ -3,7 +3,7 @@ use ::serde_derive::{Deserialize, Serialize};
 use ::std::collections::BTreeMap;
 
 use crate::state::State;
-use crate::task::TaskLog;
+use crate::task::Task;
 
 /// The Message used to add a new command to the daemon.
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -27,7 +27,7 @@ pub enum Message {
     Status,
     StatusResponse(State),
     Log(Vec<usize>),
-    LogResponse(BTreeMap<usize, TaskLog>),
+    LogResponse(BTreeMap<usize, TaskLogMessage>),
     Stream(String),
     StreamRequest(StreamRequestMessage),
     Reset,
@@ -107,6 +107,14 @@ pub struct StreamRequestMessage {
     pub task_id: usize,
     pub follow: bool,
     pub err: bool,
+}
+
+/// Helper struct for sending tasks and their log output to the client
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct TaskLogMessage {
+    pub task: Task,
+    pub stdout: String,
+    pub stderr: String,
 }
 
 pub fn create_success_message<T: ToString>(text: T) -> Message {

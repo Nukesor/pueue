@@ -1,11 +1,16 @@
+use ::anyhow::Result;
+use ::base64::read::DecoderReader;
+use ::brotli::BrotliDecompress;
 use ::comfy_table::presets::UTF8_HORIZONTAL_BORDERS_ONLY;
 use ::comfy_table::*;
 use ::crossterm::style::style;
 use ::std::collections::BTreeMap;
+use ::std::io;
 use ::std::string::ToString;
 
+use ::pueue::message::TaskLogMessage;
 use ::pueue::state::State;
-use ::pueue::task::{TaskLog, TaskResult, TaskStatus};
+use ::pueue::task::{TaskResult, TaskStatus};
 
 use crate::cli::SubCommand;
 
@@ -162,7 +167,7 @@ pub fn print_state(state: State, cli_command: &SubCommand) {
 /// Print the log ouput of finished tasks.
 /// Either print the logs of every task
 /// or only print the logs of the specified tasks.
-pub fn print_logs(task_logs: BTreeMap<usize, TaskLog>, cli_command: &SubCommand) {
+pub fn print_logs(mut task_logs: BTreeMap<usize, TaskLogMessage>, cli_command: &SubCommand) {
     let (json, task_ids) = match cli_command {
         SubCommand::Log { json, task_ids } => (*json, task_ids.clone()),
         _ => panic!(
@@ -185,9 +190,9 @@ pub fn print_logs(task_logs: BTreeMap<usize, TaskLog>, cli_command: &SubCommand)
         return;
     }
 
-    let mut task_iter = task_logs.iter().peekable();
-    while let Some((_, task_log)) = task_iter.next() {
-        print_log(task_log);
+    let mut task_iter = task_logs.iter_mut().peekable();
+    while let Some((_, mut task_log)) = task_iter.next() {
+        print_log(&mut task_log);
 
         // Add a newline if there is another task that's going to be printed
         if let Some((_, task_log)) = task_iter.peek() {
@@ -199,7 +204,7 @@ pub fn print_logs(task_logs: BTreeMap<usize, TaskLog>, cli_command: &SubCommand)
 }
 
 /// Print the log of a single task.
-pub fn print_log(task_log: &TaskLog) {
+pub fn print_log(task_log: &mut TaskLogMessage) {
     let task = &task_log.task;
     // We only show logs of finished tasks
     if task.status != TaskStatus::Done {
@@ -236,22 +241,56 @@ pub fn print_log(task_log: &TaskLog) {
     }
 
     if !task_log.stdout.is_empty() {
-        println!(
-            "{}",
-            style("Std_out: ")
-                .with(Color::Green)
-                .attribute(Attribute::Bold)
-        );
-        println!("{}", task_log.stdout);
+        if let Err(err) = print_task_stdout(task_log) {
+            println!("Error while parsing stdout: {}", err);
+        }
     }
 
     if !task_log.stderr.is_empty() {
-        println!(
-            "{}",
-            style("Std_err: ")
-                .with(Color::Red)
-                .attribute(Attribute::Bold)
-        );
-        println!("{}", task_log.stderr);
+        if let Err(err) = print_task_stderr(task_log) {
+            println!("Error while parsing stderr: {}", err);
+        };
     }
+}
+
+/// Pritn the stdout of a finished process
+/// The logs are compressed using Brotli and then encoded to Base64
+pub fn print_task_stdout(task_log: &mut TaskLogMessage) -> Result<()> {
+    let mut bytes = task_log.stdout.as_bytes();
+    // Minimum empty base64 encoded message length
+    if bytes.len() <= 4 {
+        return Ok(());
+    }
+
+    println!(
+        "{}",
+        style("Std_out: ")
+            .with(Color::Green)
+            .attribute(Attribute::Bold)
+    );
+    let mut stderr_base64_decoder = DecoderReader::new(&mut bytes, base64::STANDARD);
+    BrotliDecompress(&mut stderr_base64_decoder, &mut io::stdout())?;
+
+    Ok(())
+}
+
+/// Print the stderr of a finished process
+/// The logs are compressed using Brotli and then encoded to Base64
+pub fn print_task_stderr(task_log: &mut TaskLogMessage) -> Result<()> {
+    let mut bytes = task_log.stderr.as_bytes();
+    // Minimum empty base64 encoded message length
+    if bytes.len() <= 4 {
+        return Ok(());
+    }
+
+    println!(
+        "{}",
+        style("Std_err: ")
+            .with(Color::Red)
+            .attribute(Attribute::Bold)
+    );
+    let mut stderr_base64_decoder = DecoderReader::new(&mut bytes, base64::STANDARD);
+    BrotliDecompress(&mut stderr_base64_decoder, &mut io::stdout())?;
+
+    Ok(())
 }
