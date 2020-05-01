@@ -1,16 +1,16 @@
 # v0.4.0
 **Features:**
-- Add `--after [ids]` flag. Task with this flag will only start once all specified dependencies finished successfully
+- Add `--after [ids]` flag. Task with this flag will only start once all specified dependencies finished successfully.
     Tasks with failed dependencies will fail as well.
-- New state `FailedToStart`. Used if the process cannot be started
+- New state `FailedToStart`. Used if the process cannot be started.
 - New state `DependencyFailed`. Used if any dependency of a task fails.
 
 **Improvements:**
-- Process log output is no longer stored in memory. This significantly reduced RAM usage for large log outputs.
+- Process log output is no longer permanently stored in memory. This significantly reduced RAM usage for large log outputs.
 - Process log output is compressed in-memory on read from disk. This leads to reduced bandwidth and RAM usage.
 
 **Changes:**
-- Pueue no longer stores log output in it's backup files
+- Pueue no longer stores log output in its backup files.
 
 # v0.3.1
 **Fixes:**
@@ -19,16 +19,16 @@
 # v0.3.0
 **Features:**
 - `pause_on_failure` configuration flag. Set this to true to pause the daemon as soon as a task fails.
-- Add `--stashed` flag to `restart`
-- Add `-p/--path` flag to allow editing of a stashed/queued task's path
-- Better network utilization for `pueue log`
+- Add `--stashed` flag to `restart`.
+- Add `-p/--path` flag to allow editing of a stashed/queued task's path.
+- Better network utilization for `pueue log`.
 
 **Fixes:**
 - Respect `Killed` tasks on `pueue clean`.
 - Show `Killed` status in `pueue log`.
 - Fix `pueue log` formatting.
-- Show daemon status if no tasks exist
-- Better error messages when daemon isn't running
+- Show daemon status if no tasks exist.
+- Better error messages when daemon isn't running.
 
 # v0.2.0
 **Features:**
@@ -41,31 +41,31 @@ This seems to be the proper way to generate completion files with clap.
 There is a `build_completions.sh` script to build all completion files to the known location for your convenience.
 
 **Bug fixes:**
-- Fix `edit` command
-- Several wrong state restorations after restarting pueue
+- Fix `edit` command.
+- Several wrong state restorations after restarting pueue.
 
 # v0.1.6
-- [BUG] Fix wrong TCP receiving logic
-- Automatically create config directory
-- Fix and reword cli help texts
+- [BUG] Fix wrong TCP receiving logic.
+- Automatically create config directory.
+- Fix and reword cli help texts.
 
 # v0.1.5
-- Basic Windows support
-- Integrate completion script build in build.rs
+- Basic Windows support.
+- Integrate completion script build in `build.rs`.
 
 # v0.1.4
 - Dependency updates
 
 # v0.1.3
-- Change table design of `pueue status`
+- Change table design of `pueue status`.
 
 # v0.1.2
 - Handle broken UTF8 in `show` with `-f` and `-e` flags.
-- Allow restart of `Killed` processes
+- Allow restart of `Killed` processes.
 
 # v0.1.1
 
-- Replace prettytables-rs with comfy-table
-- Replace termion with crossterm
-- Add --daemonize flag for daemon to daemonize pueued without using a service manager
+- Replace prettytables-rs with comfy-table.
+- Replace termion with crossterm.
+- Add --daemonize flag for daemon to daemonize pueued without using a service manager.
 - Add daemon-shutdown subcommand for client for killing a manually daemonized pueued.

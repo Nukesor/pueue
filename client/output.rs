@@ -252,8 +252,7 @@ pub fn print_log(task_log: &mut TaskLogMessage) {
     }
 }
 
-/// Pritn the stdout of a finished process
-/// The logs are compressed using Brotli and then encoded to Base64
+/// Print log output of a finished process.
 pub fn print_task_output(task_log: &TaskLogMessage, stdout: bool) -> Result<()> {
     let (pre_text, bytes) = if stdout {
         ("stdout: ", &task_log.stdout)
