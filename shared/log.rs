@@ -10,7 +10,7 @@ use crate::settings::Settings;
 
 /// Return the paths to temporary stdout and stderr files for a task
 pub fn get_log_paths(task_id: usize, settings: &Settings) -> (PathBuf, PathBuf) {
-    let pueue_dir = Path::new(&settings.daemon.pueue_directory).join("temp");
+    let pueue_dir = Path::new(&settings.daemon.pueue_directory).join("task_logs");
     let out_path = pueue_dir.join(format!("{}_stdout.log", task_id));
     let err_path = pueue_dir.join(format!("{}_stderr.log", task_id));
     (out_path, err_path)

@@ -88,12 +88,12 @@ fn init_directories(path: &String) {
         }
     }
 
-    let temp_dir = pueue_dir.join("temp");
-    if !temp_dir.exists() {
-        if let Err(error) = create_dir_all(&temp_dir) {
+    let logs_dir = pueue_dir.join("task_logs");
+    if !logs_dir.exists() {
+        if let Err(error) = create_dir_all(&logs_dir) {
             panic!(
-                "Failed to create temp directory at {:?} error: {:?}",
-                temp_dir, error
+                "Failed to create task logs directory at {:?} error: {:?}",
+                logs_dir, error
             );
         }
     }
