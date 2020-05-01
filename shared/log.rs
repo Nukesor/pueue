@@ -75,9 +75,7 @@ pub fn read_and_compress_log_files(
     let (mut stdout_handle, mut stderr_handle) = match get_log_file_handles(task_id, settings) {
         Ok((stdout, stderr)) => (stdout, stderr),
         Err(err) => {
-            bail!("Error while opening the output files: {}",
-                err
-            );
+            bail!("Error while opening the output files: {}", err);
         }
     };
 
