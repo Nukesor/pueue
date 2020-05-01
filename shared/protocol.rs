@@ -1,4 +1,4 @@
-use ::anyhow::Result;
+use ::anyhow::{Context, Result};
 use ::async_std::net::TcpStream;
 use ::async_std::prelude::*;
 use ::byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
@@ -80,7 +80,8 @@ pub async fn receive_message(socket: &mut TcpStream) -> Result<Message> {
     let payload_bytes = receive_bytes(socket).await?;
 
     // Deserialize the message
-    let message: Message = bincode::deserialize(&payload_bytes)?;
+    let message: Message = bincode::deserialize(&payload_bytes)
+        .context("In case you updated Pueue, try restarting the daemon. Otherwise please report this")?;
     debug!("Received message: {:?}", message);
 
     Ok(message)
