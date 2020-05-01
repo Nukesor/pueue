@@ -109,10 +109,10 @@ pub struct StreamRequestMessage {
     pub err: bool,
 }
 
-// Request logs for specific tasks
-// An empty task_id vector will return logs of all tasks
+// Request logs for specific tasks.
+// An empty task_id vector will return logs of all tasks.
 // If send_logs is false, the daemon won't send the logs
-// and client will read logs from the local disk
+// and the client will read logs from the local disk.
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct LogRequestMessage {
     pub task_ids: Vec<usize>,

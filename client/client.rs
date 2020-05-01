@@ -75,10 +75,10 @@ impl Client {
         Ok(())
     }
 
-    /// Most returned messages can be generically handled
-    /// However, some commands need some ping-pong or require continuous receiving of messages
+    /// Most returned messages can be handled in a generic fashion.
+    /// However, some commands need some ping-pong or require continuous receiving of messages.
     ///
-    /// If this function returns an `Ok(true)`, the parent function will continue to receive
+    /// If this function returns `Ok(true)`, the parent function will continue to receive
     /// and handle messages from the daemon. Otherwise the client will simply exit.
     async fn handle_message(&mut self, message: Message, socket: &mut TcpStream) -> Result<bool> {
         match message {

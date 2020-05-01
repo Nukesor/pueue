@@ -204,7 +204,7 @@ daemon:
 **Daemon**: 
 - `pueue_directory` The location Pueue uses for its intermediate files and logs.
 - `default_parallel_tasks` Determines how many tasks should be processed concurrently.  
-- `pause_on_failure` If set to `true`, the daemon no longer start new task as soon as a single task fails. Already running tasks will continue.
+- `pause_on_failure` If set to `true`, the daemon stops starting new task as soon as a single task fails. Already running tasks will continue.
 - `port` The port the daemon should listen to.  
 - `secret` The secret, that's used for authentication
 
