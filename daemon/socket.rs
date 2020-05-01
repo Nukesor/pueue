@@ -1,4 +1,4 @@
-use ::anyhow::{anyhow, Result};
+use ::anyhow::{bail, Result};
 use ::async_std::net::{TcpListener, TcpStream};
 use ::async_std::task;
 use ::log::{info, warn};
@@ -70,7 +70,7 @@ async fn handle_incoming(
     let secret = String::from_utf8(payload_bytes)?;
     if secret != settings.daemon.secret {
         warn!("Received invalid secret: {}", secret);
-        return Err(anyhow!("Received invalid secret"));
+        bail!("Received invalid secret");
     }
 
     loop {

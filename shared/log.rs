@@ -1,4 +1,4 @@
-use ::anyhow::{anyhow, Result};
+use ::anyhow::{bail, Result};
 use ::log::error;
 use ::snap::write::FrameEncoder;
 use ::std::fs::{remove_file, File};
@@ -75,10 +75,9 @@ pub fn read_and_compress_log_files(
     let (mut stdout_handle, mut stderr_handle) = match get_log_file_handles(task_id, settings) {
         Ok((stdout, stderr)) => (stdout, stderr),
         Err(err) => {
-            return Err(anyhow!(format!(
-                "Error while opening the output files: {}",
+            bail!("Error while opening the output files: {}",
                 err
-            )))
+            );
         }
     };
 
