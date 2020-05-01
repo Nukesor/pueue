@@ -4,6 +4,10 @@
     Tasks with failed dependencies will fail as well.
 - New state `FailedToStart`. Used if the process cannot be started.
 - New state `DependencyFailed`. Used if any dependency of a task fails.
+- New config option `read_local_logs`. Default: `true`
+    We assume that the daemon and client run on the same machine by default.
+    This removes the need to send logs via socket, since the client can directly read the log files.  
+    Set to `false` if you, for instance, use Pueue in combination with SSH port forwarding.
 
 **Improvements:**
 - Process log output is no longer permanently stored in memory. This significantly reduced RAM usage for large log outputs.

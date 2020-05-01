@@ -13,6 +13,7 @@ pub struct Client {
     //    pub daemon_address: String,
     pub daemon_port: String,
     pub secret: String,
+    pub read_local_logs: bool,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -58,6 +59,7 @@ impl Settings {
         //        config.set_default("client.daemon_address", "127.0.0.1")?;
         config.set_default("client.daemon_port", "6924")?;
         config.set_default("client.secret", random_secret)?;
+        config.set_default("client.read_local_logs", true)?;
 
         // Add in the home config file
         parse_config(&mut config)?;

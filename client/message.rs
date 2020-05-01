@@ -2,12 +2,13 @@ use ::anyhow::{anyhow, Context, Result};
 use ::std::env::current_dir;
 
 use ::pueue::message::*;
+use ::pueue::settings::Settings;
 
 use crate::cli::{Opt, SubCommand};
 
 // Convert and pre-process the sub-command into a valid message
 // that can be understood by the daemon
-pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
+pub fn get_message_from_opt(opt: &Opt, settings: &Settings) -> Result<Message> {
     match &opt.cmd {
         SubCommand::Add {
             command,
@@ -89,7 +90,13 @@ pub fn get_message_from_opt(opt: &Opt) -> Result<Message> {
         SubCommand::Edit { task_id, path: _ } => Ok(Message::EditRequest(*task_id)),
 
         SubCommand::Status { json: _ } => Ok(Message::Status),
-        SubCommand::Log { task_ids, json: _ } => Ok(Message::Log(task_ids.clone())),
+        SubCommand::Log { task_ids, json: _ } => {
+            let message = LogRequestMessage {
+                task_ids: task_ids.clone(),
+                send_logs: !settings.client.read_local_logs,
+            };
+            Ok(Message::Log(message))
+        }
         SubCommand::Show {
             task_id,
             follow,

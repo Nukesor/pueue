@@ -12,8 +12,7 @@ use crate::message::*;
 pub async fn send_message(message: Message, socket: &mut TcpStream) -> Result<()> {
     debug!("Sending message: {:?}", message);
     // Prepare command for transfer and determine message byte size
-    let payload = bincode::serialize(&message)
-        .expect("Failed to serialize message.");
+    let payload = bincode::serialize(&message).expect("Failed to serialize message.");
 
     send_bytes(payload, socket).await
 }

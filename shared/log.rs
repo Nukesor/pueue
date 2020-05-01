@@ -1,12 +1,12 @@
 use ::anyhow::{anyhow, Result};
-use ::snap::write::FrameEncoder;
 use ::log::error;
+use ::snap::write::FrameEncoder;
 use ::std::fs::{remove_file, File};
 use ::std::io;
 use ::std::io::prelude::*;
 use ::std::path::{Path, PathBuf};
 
-use ::pueue::settings::Settings;
+use crate::settings::Settings;
 
 /// Return the paths to temporary stdout and stderr files for a task
 pub fn get_log_paths(task_id: usize, settings: &Settings) -> (PathBuf, PathBuf) {
@@ -74,7 +74,12 @@ pub fn read_and_compress_log_files(
 ) -> Result<(Vec<u8>, Vec<u8>)> {
     let (mut stdout_handle, mut stderr_handle) = match get_log_file_handles(task_id, settings) {
         Ok((stdout, stderr)) => (stdout, stderr),
-        Err(err) => return Err(anyhow!(format!("Error while opening the output files: {}", err))),
+        Err(err) => {
+            return Err(anyhow!(format!(
+                "Error while opening the output files: {}",
+                err
+            )))
+        }
     };
 
     let mut stdout = Vec::new();

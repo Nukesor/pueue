@@ -1,13 +1,15 @@
 use ::anyhow::Result;
-use ::snap::read::FrameDecoder;
 use ::comfy_table::presets::UTF8_HORIZONTAL_BORDERS_ONLY;
 use ::comfy_table::*;
 use ::crossterm::style::style;
+use ::snap::read::FrameDecoder;
 use ::std::collections::BTreeMap;
 use ::std::io;
 use ::std::string::ToString;
 
+use ::pueue::log::get_log_file_handles;
 use ::pueue::message::TaskLogMessage;
+use ::pueue::settings::Settings;
 use ::pueue::state::State;
 use ::pueue::task::{TaskResult, TaskStatus};
 
@@ -166,7 +168,11 @@ pub fn print_state(state: State, cli_command: &SubCommand) {
 /// Print the log ouput of finished tasks.
 /// Either print the logs of every task
 /// or only print the logs of the specified tasks.
-pub fn print_logs(mut task_logs: BTreeMap<usize, TaskLogMessage>, cli_command: &SubCommand) {
+pub fn print_logs(
+    mut task_logs: BTreeMap<usize, TaskLogMessage>,
+    cli_command: &SubCommand,
+    settings: &Settings,
+) {
     let (json, task_ids) = match cli_command {
         SubCommand::Log { json, task_ids } => (*json, task_ids.clone()),
         _ => panic!(
@@ -191,7 +197,7 @@ pub fn print_logs(mut task_logs: BTreeMap<usize, TaskLogMessage>, cli_command: &
 
     let mut task_iter = task_logs.iter_mut().peekable();
     while let Some((_, mut task_log)) = task_iter.next() {
-        print_log(&mut task_log);
+        print_log(&mut task_log, settings);
 
         // Add a newline if there is another task that's going to be printed
         if let Some((_, task_log)) = task_iter.peek() {
@@ -203,7 +209,7 @@ pub fn print_logs(mut task_logs: BTreeMap<usize, TaskLogMessage>, cli_command: &
 }
 
 /// Print the log of a single task.
-pub fn print_log(task_log: &mut TaskLogMessage) {
+pub fn print_log(task_log: &mut TaskLogMessage, settings: &Settings) {
     let task = &task_log.task;
     // We only show logs of finished tasks
     if task.status != TaskStatus::Done {
@@ -239,25 +245,83 @@ pub fn print_log(task_log: &mut TaskLogMessage) {
         println!("End: {}", end.to_rfc2822());
     }
 
-    if !task_log.stdout.is_empty() {
-        if let Err(err) = print_task_output(&task_log, true) {
+    if settings.client.read_local_logs {
+        print_local_log_output(task_log.task.id, settings);
+    } else if task_log.stdout.is_some() && task_log.stderr.is_some() {
+        print_task_output_from_daemon(task_log);
+    } else {
+        println!("Logs requested from pueue daemon, but none received. Please report this bug.");
+    }
+}
+
+/// The daemon didn't send any log output, thereby we didn't request any.
+/// If that's the case, read the log files from the local pueue directory
+pub fn print_local_log_output(task_id: usize, settings: &Settings) {
+    let (mut stdout_log, mut stderr_log) = match get_log_file_handles(task_id, settings) {
+        Ok((stdout, stderr)) => (stdout, stderr),
+        Err(err) => {
+            println!("Failed to get log file handles: {}", err);
+            return;
+        }
+    };
+    // Stdout handler to directly write log file output to io::stdout
+    // without having to load anything into memory
+    let mut stdout = io::stdout();
+
+    if let Ok(metadata) = stdout_log.metadata() {
+        if metadata.len() != 0 {
+            println!(
+                "{}",
+                style("stdout:")
+                    .with(Color::Green)
+                    .attribute(Attribute::Bold)
+            );
+
+            if let Err(err) = io::copy(&mut stdout_log, &mut stdout) {
+                println!("Failed reading local stdout log file: {}", err);
+            };
+        }
+    }
+
+    if let Ok(metadata) = stderr_log.metadata() {
+        println!(
+            "{}",
+            style("stderr:")
+                .with(Color::Green)
+                .attribute(Attribute::Bold)
+        );
+
+        if metadata.len() != 0 {
+            if let Err(err) = io::copy(&mut stderr_log, &mut stdout) {
+                println!("Failed reading local stderr log file: {}", err);
+            };
+        }
+    }
+}
+
+/// Prints log output received from the daemon
+/// We can safely call .unwrap() on stdout and stderr in here, since this
+/// branch is always called after ensuring that both are `Some`
+pub fn print_task_output_from_daemon(task_log: &TaskLogMessage) {
+    if !task_log.stdout.as_ref().unwrap().is_empty() {
+        if let Err(err) = print_remote_task_output(&task_log, true) {
             println!("Error while parsing stdout: {}", err);
         }
     }
 
-    if !task_log.stderr.is_empty() {
-        if let Err(err) = print_task_output(&task_log, false) {
+    if !task_log.stderr.as_ref().unwrap().is_empty() {
+        if let Err(err) = print_remote_task_output(&task_log, false) {
             println!("Error while parsing stderr: {}", err);
         };
     }
 }
 
 /// Print log output of a finished process.
-pub fn print_task_output(task_log: &TaskLogMessage, stdout: bool) -> Result<()> {
+pub fn print_remote_task_output(task_log: &TaskLogMessage, stdout: bool) -> Result<()> {
     let (pre_text, bytes) = if stdout {
-        ("stdout: ", &task_log.stdout)
+        ("stdout: ", task_log.stdout.as_ref().unwrap())
     } else {
-        ("stderr: ", &task_log.stderr)
+        ("stderr: ", task_log.stderr.as_ref().unwrap())
     };
 
     println!(

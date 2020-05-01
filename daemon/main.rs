@@ -16,7 +16,6 @@ use ::pueue::state::State;
 
 mod cli;
 mod instructions;
-mod log;
 mod response_helper;
 mod socket;
 mod streaming;

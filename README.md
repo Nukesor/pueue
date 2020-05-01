@@ -187,6 +187,8 @@ The default will be generated after starting pueue once.
 client:
   daemon_port: "6924"
   secret: "your_secret"
+  read_local_logs: true
+
 daemon:
   pueue_directory: /home/$USER/.local/share/pueue
   default_parallel_tasks: 1
@@ -197,11 +199,12 @@ daemon:
 **Client**: 
 - `daemon_port` The port the client tries to connect to.  
 - `secret` The secret, that's used for authentication
+- `read_local_logs` If the client runs as the same user (and on the same machine) as the daemon, logs don't have to be sent via the socket but rather read directly.
 
 **Daemon**: 
 - `pueue_directory` The location Pueue uses for its intermediate files and logs.
 - `default_parallel_tasks` Determines how many tasks should be processed concurrently.  
-- `pause_on_failure` If set to `true`, the daemon will pause and no longer start new task as soon as a single task fails.
+- `pause_on_failure` If set to `true`, the daemon no longer start new task as soon as a single task fails. Already running tasks will continue.
 - `port` The port the daemon should listen to.  
 - `secret` The secret, that's used for authentication
 

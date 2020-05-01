@@ -1,8 +1,8 @@
 use ::std::collections::BTreeMap;
 use ::std::sync::mpsc::Sender;
 
-use crate::log::{clean_log_handles, read_and_compress_log_files};
 use crate::response_helper::*;
+use ::pueue::log::{clean_log_handles, read_and_compress_log_files};
 use ::pueue::message::*;
 use ::pueue::state::SharedState;
 use ::pueue::task::{Task, TaskStatus};
@@ -29,7 +29,7 @@ pub fn handle_message(message: Message, sender: &Sender<Message>, state: &Shared
         Message::Clean => clean(state),
         Message::Reset => reset(sender, state),
         Message::Status => get_status(state),
-        Message::Log(task_ids) => get_log(task_ids, state),
+        Message::Log(message) => get_log(message, state),
         Message::Parallel(amount) => set_parallel_tasks(amount, sender),
         _ => create_failure_message("Not implemented yet"),
     }
@@ -379,12 +379,14 @@ fn get_status(state: &SharedState) -> Message {
 
 /// Return the current state and the stdou/stderr of all tasks to the client
 /// Invoked when calling `pueue log`
-fn get_log(mut task_ids: Vec<usize>, state: &SharedState) -> Message {
+fn get_log(message: LogRequestMessage, state: &SharedState) -> Message {
     let state = state.lock().unwrap().clone();
     // Return all logs, if no specific task id is specified
-    if task_ids.is_empty() {
-        task_ids = state.tasks.keys().cloned().collect();
-    }
+    let task_ids = if message.task_ids.is_empty() {
+        state.tasks.keys().cloned().collect()
+    } else {
+        message.task_ids
+    };
 
     let mut tasks = BTreeMap::new();
     for task_id in task_ids.iter() {
@@ -393,14 +395,20 @@ fn get_log(mut task_ids: Vec<usize>, state: &SharedState) -> Message {
                 // We send log output and the task at the same time
                 // This isn't as efficient as sending the raw compressed data directly,
                 // but it's a lot more convenient for now.
-                let (stdout, stderr) =
+                let (stdout, stderr) = if message.send_logs {
                     match read_and_compress_log_files(*task_id, &state.settings) {
-                        Ok((stdout, stderr)) => (stdout, stderr),
+                        Ok((stdout, stderr)) => (Some(stdout), Some(stderr)),
                         Err(err) => {
-                            return create_failure_message(
-                                format!("Failed reading process output file: {:?}", err));
-                        },
-                    };
+                            return create_failure_message(format!(
+                                "Failed reading process output file: {:?}",
+                                err
+                            ));
+                        }
+                    }
+                } else {
+                    (None, None)
+                };
+
                 let task_log = TaskLogMessage {
                     task: task.clone(),
                     stdout,

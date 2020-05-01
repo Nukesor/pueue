@@ -21,33 +21,34 @@ pub struct Client {
     opt: Opt,
     daemon_address: String,
     message: Message,
-    secret: String,
+    settings: Settings,
 }
 
 impl Client {
     pub fn new(settings: Settings, message: Message, opt: Opt) -> Result<Self> {
-        //        // Commandline argument overwrites the configuration files values for address
-        //        let address = if let Some(address) = opt.address.clone() {
-        //            address
-        //        } else {
-        //            settings.client.daemon_address
-        //        };
+        // // Commandline argument overwrites the configuration files values for address
+        // let address = if let Some(address) = opt.address.clone() {
+        //     address
+        // } else {
+        //     settings.client.daemon_address
+        // };
 
         // Commandline argument overwrites the configuration files values for port
         let port = if let Some(port) = opt.port.clone() {
             port
         } else {
-            settings.client.daemon_port
+            settings.client.daemon_port.clone()
         };
 
-        //        let address = format!("{}:{}", address, port);
+        // Don't allow anything else than loopback until we have proper crypto
+        // let address = format!("{}:{}", address, port);
         let address = format!("127.0.0.1:{}", port);
 
         Ok(Client {
             opt,
             daemon_address: address,
             message,
-            secret: settings.client.secret,
+            settings: settings,
         })
     }
 
@@ -57,7 +58,7 @@ impl Client {
             .await
             .context("Failed to connect to the daemon. Did you start it?")?;
 
-        let secret = self.secret.clone().into_bytes();
+        let secret = self.settings.client.secret.clone().into_bytes();
         send_bytes(secret, &mut socket).await?;
 
         // Create the message payload and send it to the daemon.
@@ -74,13 +75,17 @@ impl Client {
         Ok(())
     }
 
+    /// Most returned messages can be generically handled
+    /// However, some commands need some ping-pong or require continuous receiving of messages
+    ///
+    /// If this function returns an `Ok(true)`, the parent function will continue to receive
+    /// and handle messages from the daemon. Otherwise the client will simply exit.
     async fn handle_message(&mut self, message: Message, socket: &mut TcpStream) -> Result<bool> {
-        // Handle some messages directly
         match message {
             Message::Success(text) => print_success(text),
             Message::Failure(text) => print_error(text),
             Message::StatusResponse(state) => print_state(state, &self.opt.cmd),
-            Message::LogResponse(task_logs) => print_logs(task_logs, &self.opt.cmd),
+            Message::LogResponse(task_logs) => print_logs(task_logs, &self.opt.cmd, &self.settings),
             Message::EditResponse(message) => {
                 // Create a new message with the edited command
                 let message = edit(message, &self.opt.cmd);
