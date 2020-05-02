@@ -26,8 +26,8 @@ pub enum Message {
 
     Status,
     StatusResponse(State),
-    Log(Vec<usize>),
-    LogResponse(BTreeMap<usize, Task>),
+    Log(LogRequestMessage),
+    LogResponse(BTreeMap<usize, TaskLogMessage>),
     Stream(String),
     StreamRequest(StreamRequestMessage),
     Reset,
@@ -107,6 +107,24 @@ pub struct StreamRequestMessage {
     pub task_id: usize,
     pub follow: bool,
     pub err: bool,
+}
+
+// Request logs for specific tasks.
+// An empty task_id vector will return logs of all tasks.
+// If send_logs is false, the daemon won't send the logs
+// and the client will read logs from the local disk.
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct LogRequestMessage {
+    pub task_ids: Vec<usize>,
+    pub send_logs: bool,
+}
+
+/// Helper struct for sending tasks and their log output to the client
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct TaskLogMessage {
+    pub task: Task,
+    pub stdout: Option<Vec<u8>>,
+    pub stderr: Option<Vec<u8>>,
 }
 
 pub fn create_success_message<T: ToString>(text: T) -> Message {

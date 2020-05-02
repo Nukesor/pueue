@@ -1,11 +1,17 @@
+use ::anyhow::Result;
 use ::comfy_table::presets::UTF8_HORIZONTAL_BORDERS_ONLY;
 use ::comfy_table::*;
 use ::crossterm::style::style;
+use ::snap::read::FrameDecoder;
 use ::std::collections::BTreeMap;
+use ::std::io;
 use ::std::string::ToString;
 
+use ::pueue::log::get_log_file_handles;
+use ::pueue::message::TaskLogMessage;
+use ::pueue::settings::Settings;
 use ::pueue::state::State;
-use ::pueue::task::{Task, TaskResult, TaskStatus};
+use ::pueue::task::{TaskResult, TaskStatus};
 
 use crate::cli::SubCommand;
 
@@ -97,7 +103,7 @@ pub fn print_state(state: State, cli_command: &SubCommand) {
             TaskStatus::Done => match &task.result {
                 Some(TaskResult::Success) => (TaskResult::Success.to_string(), Color::Green),
                 Some(TaskResult::DependencyFailed) => ("Dependency failed".to_string(), Color::Red),
-                Some(TaskResult::FailedToSpawn) => ("Failed to spawn".to_string(), Color::Red),
+                Some(TaskResult::FailedToSpawn(_)) => ("Failed to spawn".to_string(), Color::Red),
                 Some(result) => (result.to_string(), Color::Red),
                 None => panic!("Got a 'Done' task without a task result. Please report this bug."),
             },
@@ -162,7 +168,11 @@ pub fn print_state(state: State, cli_command: &SubCommand) {
 /// Print the log ouput of finished tasks.
 /// Either print the logs of every task
 /// or only print the logs of the specified tasks.
-pub fn print_logs(tasks: BTreeMap<usize, Task>, cli_command: &SubCommand) {
+pub fn print_logs(
+    mut task_logs: BTreeMap<usize, TaskLogMessage>,
+    cli_command: &SubCommand,
+    settings: &Settings,
+) {
     let (json, task_ids) = match cli_command {
         SubCommand::Log { json, task_ids } => (*json, task_ids.clone()),
         _ => panic!(
@@ -171,27 +181,27 @@ pub fn print_logs(tasks: BTreeMap<usize, Task>, cli_command: &SubCommand) {
         ),
     };
     if json {
-        println!("{}", serde_json::to_string(&tasks).unwrap());
+        println!("{}", serde_json::to_string(&task_logs).unwrap());
         return;
     }
 
-    if task_ids.is_empty() && tasks.is_empty() {
+    if task_ids.is_empty() && task_logs.is_empty() {
         println!("There are no finished tasks");
         return;
     }
 
-    if !task_ids.is_empty() && tasks.is_empty() {
+    if !task_ids.is_empty() && task_logs.is_empty() {
         println!("There are no finished tasks for your specified ids");
         return;
     }
 
-    let mut task_iter = tasks.iter().peekable();
-    while let Some((_, task)) = task_iter.next() {
-        print_log(task);
+    let mut task_iter = task_logs.iter_mut().peekable();
+    while let Some((_, mut task_log)) = task_iter.next() {
+        print_log(&mut task_log, settings);
 
         // Add a newline if there is another task that's going to be printed
-        if let Some((_, task)) = task_iter.peek() {
-            if task.status == TaskStatus::Done {
+        if let Some((_, task_log)) = task_iter.peek() {
+            if task_log.task.status == TaskStatus::Done {
                 println!();
             }
         }
@@ -199,7 +209,8 @@ pub fn print_logs(tasks: BTreeMap<usize, Task>, cli_command: &SubCommand) {
 }
 
 /// Print the log of a single task.
-pub fn print_log(task: &Task) {
+pub fn print_log(task_log: &mut TaskLogMessage, settings: &Settings) {
+    let task = &task_log.task;
     // We only show logs of finished tasks
     if task.status != TaskStatus::Done {
         return;
@@ -207,12 +218,14 @@ pub fn print_log(task: &Task) {
 
     // Print task id and exit code
     let task_text = style(format!("Task {} ", task.id)).attribute(Attribute::Bold);
-    let exit_status = match task.result {
+    let exit_status = match &task.result {
         Some(TaskResult::Success) => style(format!("with exit code 0")).with(Color::Green),
         Some(TaskResult::Failed(exit_code)) => {
             style(format!("with exit code {}", exit_code)).with(Color::Red)
         }
-        Some(TaskResult::FailedToSpawn) => style("failed to spawn".to_string()).with(Color::Red),
+        Some(TaskResult::FailedToSpawn(err)) => {
+            style(format!("failed to spawn: {}", err)).with(Color::Red)
+        }
         Some(TaskResult::Killed) => style("killed by system or user".to_string()).with(Color::Red),
         Some(TaskResult::DependencyFailed) => {
             style("dependency failed".to_string()).with(Color::Red)
@@ -232,27 +245,97 @@ pub fn print_log(task: &Task) {
         println!("End: {}", end.to_rfc2822());
     }
 
-    if let Some(stdout) = &task.stdout {
-        if !stdout.is_empty() {
+    if settings.client.read_local_logs {
+        print_local_log_output(task_log.task.id, settings);
+    } else if task_log.stdout.is_some() && task_log.stderr.is_some() {
+        print_task_output_from_daemon(task_log);
+    } else {
+        println!("Logs requested from pueue daemon, but none received. Please report this bug.");
+    }
+}
+
+/// The daemon didn't send any log output, thereby we didn't request any.
+/// If that's the case, read the log files from the local pueue directory
+pub fn print_local_log_output(task_id: usize, settings: &Settings) {
+    let (mut stdout_log, mut stderr_log) = match get_log_file_handles(task_id, settings) {
+        Ok((stdout, stderr)) => (stdout, stderr),
+        Err(err) => {
+            println!("Failed to get log file handles: {}", err);
+            return;
+        }
+    };
+    // Stdout handler to directly write log file output to io::stdout
+    // without having to load anything into memory
+    let mut stdout = io::stdout();
+
+    if let Ok(metadata) = stdout_log.metadata() {
+        if metadata.len() != 0 {
             println!(
                 "{}",
-                style("Std_out: ")
+                style("stdout:")
                     .with(Color::Green)
                     .attribute(Attribute::Bold)
             );
-            println!("{}", stdout);
+
+            if let Err(err) = io::copy(&mut stdout_log, &mut stdout) {
+                println!("Failed reading local stdout log file: {}", err);
+            };
         }
     }
 
-    if let Some(stderr) = &task.stderr {
-        if !stderr.is_empty() {
-            println!(
-                "{}",
-                style("Std_err: ")
-                    .with(Color::Red)
-                    .attribute(Attribute::Bold)
-            );
-            println!("{}", stderr);
+    if let Ok(metadata) = stderr_log.metadata() {
+        println!(
+            "{}",
+            style("stderr:")
+                .with(Color::Green)
+                .attribute(Attribute::Bold)
+        );
+
+        if metadata.len() != 0 {
+            if let Err(err) = io::copy(&mut stderr_log, &mut stdout) {
+                println!("Failed reading local stderr log file: {}", err);
+            };
         }
     }
+}
+
+/// Prints log output received from the daemon
+/// We can safely call .unwrap() on stdout and stderr in here, since this
+/// branch is always called after ensuring that both are `Some`
+pub fn print_task_output_from_daemon(task_log: &TaskLogMessage) {
+    if !task_log.stdout.as_ref().unwrap().is_empty() {
+        if let Err(err) = print_remote_task_output(&task_log, true) {
+            println!("Error while parsing stdout: {}", err);
+        }
+    }
+
+    if !task_log.stderr.as_ref().unwrap().is_empty() {
+        if let Err(err) = print_remote_task_output(&task_log, false) {
+            println!("Error while parsing stderr: {}", err);
+        };
+    }
+}
+
+/// Print log output of a finished process.
+pub fn print_remote_task_output(task_log: &TaskLogMessage, stdout: bool) -> Result<()> {
+    let (pre_text, bytes) = if stdout {
+        ("stdout: ", task_log.stdout.as_ref().unwrap())
+    } else {
+        ("stderr: ", task_log.stderr.as_ref().unwrap())
+    };
+
+    println!(
+        "{}",
+        style(pre_text)
+            .with(Color::Green)
+            .attribute(Attribute::Bold)
+    );
+
+    let mut decompressor = FrameDecoder::new(bytes.as_slice());
+
+    let stdout = io::stdout();
+    let mut write = stdout.lock();
+    io::copy(&mut decompressor, &mut write)?;
+
+    Ok(())
 }

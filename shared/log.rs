@@ -1,14 +1,16 @@
-use ::anyhow::Result;
+use ::anyhow::{bail, Result};
 use ::log::error;
+use ::snap::write::FrameEncoder;
 use ::std::fs::{remove_file, File};
+use ::std::io;
 use ::std::io::prelude::*;
 use ::std::path::{Path, PathBuf};
 
-use ::pueue::settings::Settings;
+use crate::settings::Settings;
 
 /// Return the paths to temporary stdout and stderr files for a task
 pub fn get_log_paths(task_id: usize, settings: &Settings) -> (PathBuf, PathBuf) {
-    let pueue_dir = Path::new(&settings.daemon.pueue_directory).join("temp");
+    let pueue_dir = Path::new(&settings.daemon.pueue_directory).join("task_logs");
     let out_path = pueue_dir.join(format!("{}_stdout.log", task_id));
     let err_path = pueue_dir.join(format!("{}_stderr.log", task_id));
     (out_path, err_path)
@@ -62,4 +64,30 @@ pub fn clean_log_handles(task_id: usize, settings: &Settings) {
             task_id, err
         );
     };
+}
+
+/// Return stdout and stderr of a finished process
+/// Everything is compressed using Brotli and then encoded to Base64
+pub fn read_and_compress_log_files(
+    task_id: usize,
+    settings: &Settings,
+) -> Result<(Vec<u8>, Vec<u8>)> {
+    let (mut stdout_handle, mut stderr_handle) = match get_log_file_handles(task_id, settings) {
+        Ok((stdout, stderr)) => (stdout, stderr),
+        Err(err) => {
+            bail!("Error while opening the output files: {}", err);
+        }
+    };
+
+    let mut stdout = Vec::new();
+    let mut stderr = Vec::new();
+    {
+        // Compress log input and pipe it into the base64 encoder
+        let mut stdout_compressor = FrameEncoder::new(&mut stdout);
+        io::copy(&mut stdout_handle, &mut stdout_compressor)?;
+        let mut stderr_compressor = FrameEncoder::new(&mut stderr);
+        io::copy(&mut stderr_handle, &mut stderr_compressor)?;
+    }
+
+    Ok((stdout, stderr))
 }

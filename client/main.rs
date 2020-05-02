@@ -49,7 +49,7 @@ async fn main() -> Result<()> {
 
     // Create the message that should be sent to the daemon
     // depending on the given commandline options
-    let message = get_message_from_opt(&opt)?;
+    let message = get_message_from_opt(&opt, &settings)?;
     let mut client = Client::new(settings, message, opt)?;
     client.run().await?;
 

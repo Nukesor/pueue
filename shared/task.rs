@@ -28,7 +28,7 @@ pub enum TaskResult {
     /// The task failed in some other kind of way (error code != 0)
     Failed(i32),
     /// The task couldn't be spawned. Probably a typo in the command
-    FailedToSpawn,
+    FailedToSpawn(String),
     /// Task has been actively killed by either the user or the daemon on shutdown
     Killed,
     /// A dependency of the task failed.
@@ -50,8 +50,6 @@ pub struct Task {
     pub status: TaskStatus,
     pub prev_status: TaskStatus,
     pub result: Option<TaskResult>,
-    pub stdout: Option<String>,
-    pub stderr: Option<String>,
     pub start: Option<DateTime<Local>>,
     pub end: Option<DateTime<Local>>,
 }
@@ -66,15 +64,13 @@ impl Task {
     ) -> Task {
         Task {
             id: 0,
-            command: command,
-            path: path,
-            enqueue_at: enqueue_at,
-            dependencies: dependencies,
+            command,
+            path,
+            enqueue_at,
+            dependencies,
             status: starting_status.clone(),
             prev_status: starting_status,
             result: None,
-            stdout: None,
-            stderr: None,
             start: None,
             end: None,
         }
@@ -90,8 +86,6 @@ impl Task {
             status: TaskStatus::Queued,
             prev_status: TaskStatus::Queued,
             result: None,
-            stdout: None,
-            stderr: None,
             start: None,
             end: None,
         }

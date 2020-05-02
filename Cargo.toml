@@ -38,7 +38,9 @@ strum_macros = "^0.18"
 
 bytes = "^0.5"
 byteorder = "^1"
+snap = "1"
 serde = "^1.0"
+bincode = "^1.2"
 serde_json = "^1.0"
 serde_yaml = "^0.8"
 serde_derive = "^1.0"
@@ -52,7 +54,7 @@ comfy-table= "0.1.0"
 tempfile = "^3"
 
 [target.'cfg(not(windows))'.dependencies]
-users = "^0.9"
+users = "^0.10"
 nix = "^0.17"
 
 [build-dependencies]

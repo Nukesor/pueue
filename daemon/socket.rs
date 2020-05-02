@@ -1,4 +1,4 @@
-use ::anyhow::{anyhow, Result};
+use ::anyhow::{bail, Result};
 use ::async_std::net::{TcpListener, TcpStream};
 use ::async_std::task;
 use ::log::{info, warn};
@@ -70,7 +70,7 @@ async fn handle_incoming(
     let secret = String::from_utf8(payload_bytes)?;
     if secret != settings.daemon.secret {
         warn!("Received invalid secret: {}", secret);
-        return Err(anyhow!("Received invalid secret"));
+        bail!("Received invalid secret");
     }
 
     loop {
@@ -85,7 +85,7 @@ async fn handle_incoming(
         } else if let Message::DaemonShutdown = message {
             // Simply shut down the daemon right after sending a success response
             let response = create_success_message("Daemon is shutting down");
-            send_message(&response, &mut socket).await?;
+            send_message(response, &mut socket).await?;
             std::process::exit(0);
         } else {
             // Process a normal message
@@ -93,6 +93,6 @@ async fn handle_incoming(
         };
 
         // Respond to the client
-        send_message(&response, &mut socket).await?;
+        send_message(response, &mut socket).await?;
     }
 }

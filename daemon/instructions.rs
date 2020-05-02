@@ -2,6 +2,7 @@ use ::std::collections::BTreeMap;
 use ::std::sync::mpsc::Sender;
 
 use crate::response_helper::*;
+use ::pueue::log::{clean_log_handles, read_and_compress_log_files};
 use ::pueue::message::*;
 use ::pueue::state::SharedState;
 use ::pueue::task::{Task, TaskStatus};
@@ -26,9 +27,9 @@ pub fn handle_message(message: Message, sender: &Sender<Message>, state: &Shared
         Message::Edit(message) => edit(message, state),
 
         Message::Clean => clean(state),
-        Message::Reset => reset(sender),
+        Message::Reset => reset(sender, state),
         Message::Status => get_status(state),
-        Message::Log(task_ids) => get_log(task_ids, state),
+        Message::Log(message) => get_log(message, state),
         Message::Parallel(amount) => set_parallel_tasks(amount, sender),
         _ => create_failure_message("Not implemented yet"),
     }
@@ -348,43 +349,72 @@ fn edit(message: EditMessage, state: &SharedState) -> Message {
 /// Remove all failed or done tasks from the state
 fn clean(state: &SharedState) -> Message {
     let mut state = state.lock().unwrap();
-    state.clean();
+    state.backup();
+    let (matching, _) = state.tasks_in_statuses(vec![TaskStatus::Done], None);
+
+    for task_id in &matching {
+        let _ = state.tasks.remove(task_id).unwrap();
+        clean_log_handles(*task_id, &state.settings);
+    }
+
+    state.save();
 
     return create_success_message("All finished tasks have been removed");
 }
 
-// Forward the reset request to the task handler
-// The handler then kills all children and clears the task queue
-fn reset(sender: &Sender<Message>) -> Message {
+/// Forward the reset request to the task handler
+/// The handler then kills all children and clears the task queue
+fn reset(sender: &Sender<Message>, state: &SharedState) -> Message {
     sender.send(Message::Reset).expect(SENDER_ERR);
+    clean(state);
     return create_success_message("Everything is being reset right now.");
 }
 
-/// Return the current state without any stdou/stderr to the client
+/// Return the current state
 /// Invoked when calling `pueue status`
 fn get_status(state: &SharedState) -> Message {
-    let mut state = { state.lock().unwrap().clone() };
-    for (_, task) in state.tasks.iter_mut() {
-        task.stdout = None;
-        task.stderr = None;
-    }
+    let state = state.lock().unwrap().clone();
     Message::StatusResponse(state)
 }
 
-/// Return the current state without any stdou/stderr to the client
+/// Return the current state and the stdou/stderr of all tasks to the client
 /// Invoked when calling `pueue log`
-fn get_log(task_ids: Vec<usize>, state: &SharedState) -> Message {
+fn get_log(message: LogRequestMessage, state: &SharedState) -> Message {
     let state = state.lock().unwrap().clone();
     // Return all logs, if no specific task id is specified
-    if task_ids.is_empty() {
-        return Message::LogResponse(state.tasks.clone());
-    }
+    let task_ids = if message.task_ids.is_empty() {
+        state.tasks.keys().cloned().collect()
+    } else {
+        message.task_ids
+    };
 
     let mut tasks = BTreeMap::new();
     for task_id in task_ids.iter() {
         match state.tasks.get(task_id) {
             Some(task) => {
-                tasks.insert(*task_id, task.clone());
+                // We send log output and the task at the same time
+                // This isn't as efficient as sending the raw compressed data directly,
+                // but it's a lot more convenient for now.
+                let (stdout, stderr) = if message.send_logs {
+                    match read_and_compress_log_files(*task_id, &state.settings) {
+                        Ok((stdout, stderr)) => (Some(stdout), Some(stderr)),
+                        Err(err) => {
+                            return create_failure_message(format!(
+                                "Failed reading process output file: {:?}",
+                                err
+                            ));
+                        }
+                    }
+                } else {
+                    (None, None)
+                };
+
+                let task_log = TaskLogMessage {
+                    task: task.clone(),
+                    stdout,
+                    stderr,
+                };
+                tasks.insert(*task_id, task_log);
             }
             None => {}
         }

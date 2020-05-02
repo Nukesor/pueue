@@ -16,7 +16,7 @@ pub type SharedState = Arc<Mutex<State>>;
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct State {
     max_id: usize,
-    settings: Settings,
+    pub settings: Settings,
     pub running: bool,
     pub tasks: BTreeMap<usize, Task>,
 }
@@ -114,18 +114,6 @@ impl State {
         (matching, mismatching)
     }
 
-    /// Remove all finished tasks (clean up the task queue)
-    pub fn clean(&mut self) {
-        self.backup();
-        let (matching, _) = self.tasks_in_statuses(vec![TaskStatus::Done], None);
-
-        for task_id in &matching {
-            let _ = self.tasks.remove(task_id).unwrap();
-        }
-
-        self.save();
-    }
-
     pub fn reset(&mut self) {
         self.backup();
         self.running = true;
@@ -142,7 +130,7 @@ impl State {
     /// Save the current current state in a file with a timestamp
     /// At the same time remove old state logs from the log directory
     /// This function is called, when large changes to the state are applied, e.g. clean/reset
-    fn backup(&mut self) {
+    pub fn backup(&mut self) {
         self.save_to_file(true);
         if let Err(error) = self.rotate() {
             error!("Failed to rotate files: {:?}", error);
@@ -152,6 +140,9 @@ impl State {
     /// Save the current state to disk.
     /// We do this to restore in case of a crash
     /// If log == true, the file will be saved with a time stamp
+    ///
+    /// In comparison to the daemon -> client communication, the state is saved
+    /// as JSON for better readability and debug purposes
     fn save_to_file(&mut self, log: bool) {
         let serialized = serde_json::to_string(&self);
         if let Err(error) = serialized {
@@ -217,7 +208,7 @@ impl State {
         }
         let data = data.unwrap();
 
-        // Try to deserialize it into a state
+        // Try to deserialize the state file
         let deserialized: Result<State, serde_json::error::Error> = serde_json::from_str(&data);
         if let Err(error) = deserialized {
             error!("Failed to deserialize previous state log: {:?}", error);

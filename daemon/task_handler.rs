@@ -14,7 +14,7 @@ use ::nix::{
     unistd::Pid,
 };
 
-use crate::log::*;
+use ::pueue::log::*;
 use ::pueue::message::*;
 use ::pueue::settings::Settings;
 use ::pueue::state::SharedState;
@@ -36,11 +36,11 @@ impl TaskHandler {
             state.running
         };
         TaskHandler {
-            state: state,
-            settings: settings,
-            receiver: receiver,
+            state,
+            settings,
+            receiver,
             children: BTreeMap::new(),
-            running: running,
+            running,
             reset: false,
         }
     }
@@ -120,11 +120,10 @@ impl TaskHandler {
             })
             .collect();
 
-        for (id, failed) in has_failed_deps {
+        for (id, _) in has_failed_deps {
             if let Some(task) = state.tasks.get_mut(&id) {
                 task.status = TaskStatus::Done;
                 task.result = Some(TaskResult::DependencyFailed);
-                task.stderr = Some(format!("Dependent task {:?} has failed", failed));
             }
         }
     }
@@ -194,8 +193,7 @@ impl TaskHandler {
                 error!("{}", error);
                 clean_log_handles(task_id, &self.settings);
                 task.status = TaskStatus::Done;
-                task.result = Some(TaskResult::FailedToSpawn);
-                task.stderr = Some(error);
+                task.result = Some(TaskResult::FailedToSpawn(error));
 
                 // Pause the daemon, if the settings say so
                 if self.settings.daemon.pause_on_failure {
@@ -246,6 +244,15 @@ impl TaskHandler {
     /// In case there are, handle them and update the shared state
     fn process_finished(&mut self) {
         let (finished, errored) = self.get_finished();
+
+        // The daemon got a reset request and all children already finished
+        if self.reset && self.children.is_empty() {
+            let mut state = self.state.lock().unwrap();
+            state.reset();
+            self.running = true;
+            self.reset = false;
+        }
+
         // Nothing to do. Early return
         if finished.is_empty() && errored.is_empty() {
             return;
@@ -258,22 +265,6 @@ impl TaskHandler {
 
         for task_id in finished.iter() {
             let mut child = self.children.remove(task_id).expect("Child went missing");
-
-            // Get the stdout and stderr of this task from the output files
-            let (stdout, stderr) = match read_log_files(*task_id, &self.settings) {
-                Ok((stdout, stderr)) => (Some(stdout), Some(stderr)),
-                Err(err) => {
-                    error!(
-                        "Failed reading log files for task {} with error {:?}",
-                        task_id, err
-                    );
-                    (None, None)
-                }
-            };
-
-            // Now remove the output files. Don't do anything if this fails.
-            // This is something the user must take care of.
-            clean_log_handles(*task_id, &self.settings);
 
             let exit_code = child.wait().unwrap().code();
             let mut task = state.tasks.get_mut(&task_id).unwrap();
@@ -288,13 +279,15 @@ impl TaskHandler {
 
             task.status = TaskStatus::Done;
             task.end = Some(Local::now());
-            task.stdout = stdout;
-            task.stderr = stderr;
+
+            // Already remove the output files, if the daemon is being reset anyway
+            if self.reset {
+                clean_log_handles(*task_id, &self.settings);
+            }
         }
 
         // Handle errored tasks
         // TODO: This could be be refactored. Let's try to combine finished and error handling.
-        // Right now, stdout/stderr of those tasks won't be logged
         for task_id in errored.iter() {
             let _child = self.children.remove(task_id).expect("Child went missing");
             let mut task = state.tasks.get_mut(&task_id).unwrap();
@@ -307,13 +300,6 @@ impl TaskHandler {
         if failed_task_exists && self.settings.daemon.pause_on_failure {
             self.running = false;
             state.running = false;
-        }
-
-        // The daemon got a reset request and all children just finished
-        if self.reset && self.children.is_empty() {
-            state.reset();
-            self.running = true;
-            self.reset = false;
         }
 
         state.save()
