@@ -28,11 +28,10 @@ It provides functionality for:
 - Running multiple tasks at once (You can decide how many concurrent tasks you want to run)
 - Works on Linux and MacOS and partially on Windows.
 
-**Disclaimer:** Windows support is highly experimental right now. This means:
-- Pueue uses `powershell` to execute commands, keep this in mind when writing commands.
-- Starting/resuming commands doesn't work for now.
+**Disclaimer:** Windows support isn't fully there yet. This means:
+- Pausing/resuming commands doesn't work for now.
+- Pueue only supports `powershell` for executing commands, keep this in mind when writing commands.
 
-**Pueue has been rewritten in Rust!!** If you want the old version that's build with python, please install via pip.
 
 ## Why should I use it?
 
@@ -134,8 +133,7 @@ To avoid common pitfalls, please read the [FAQ Section](https://github.com/Nukes
 
 There is a help option (-h) for all commands.
 ```
-
-Pueue client 0.3.0
+Pueue client 0.4.0
 Arne Beer <contact@arne.beer>
 Interact with the Pueue daemon
 
@@ -175,6 +173,7 @@ SUBCOMMANDS:
                    explicitly `start` them
     status         Display the current status of all tasks
     switch         Switches the queue position of two commands. Only works on queued and stashed commands
+
 ```
 
 ## Configs
