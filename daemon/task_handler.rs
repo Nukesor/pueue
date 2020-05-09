@@ -643,13 +643,13 @@ impl TaskHandler {
             match child.try_wait() {
                 // Handle a child error.
                 Err(error) => {
-                    info!("Callback failed with error {:?}", error);
+                    error!("Callback failed with error {:?}", error);
                     finished.push(id);
                 }
                 // Child process did not exit yet
                 Ok(None) => continue,
                 Ok(exit_status) => {
-                    info!("Callback finished with exit code {:?}", exit_status);
+                    error!("Callback finished with exit code {:?}", exit_status);
                     finished.push(id);
                 }
             }
