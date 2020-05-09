@@ -35,6 +35,7 @@ chrono-english = "^0.1.0"
 rand = "^0.7"
 strum = "^0.18"
 strum_macros = "^0.18"
+handlebars = "3"
 
 bytes = "^0.5"
 byteorder = "^1"

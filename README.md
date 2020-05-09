@@ -220,6 +220,21 @@ This would help me a lot!
 
 ## Utilities
 
+### Callbacks 
+
+You can specify a callback that should be called every time a task finishes.
+The callback can be parameterized with some variables.  
+For now there are:
+- `{{ id }}`
+- `{{ command }}`
+- `{{ path }}`
+- `{{ result }}` (Success, Killed, etc.)
+
+Example callback:
+```
+    notify-send "Task {{ id }}" "Command: {{ command }} finished with {{ result }}"
+```
+
 ### Shell completion files
 Shell completion files can be created on the fly with `pueue completions $shell $directory`.
 There's also a `build_completions.sh` script, which creates all completion files in the `utiles/completions` directory.

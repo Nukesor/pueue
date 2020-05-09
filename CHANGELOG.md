@@ -1,6 +1,10 @@
+# v0.5.0
+**Features:**
+- Add callback notifications on finished tasks.
+
 # v0.4.0
 **Features:**
-- Add `--after [ids]` option. Task with this option will only start once all specified dependencies finished successfully.
+- Add `--after [ids]` option. Task with this option will only be started, if all specified dependencies successfully finish.
     Tasks with failed dependencies will fail as well.
 - New state `FailedToStart`. Used if the process cannot be started.
 - New state `DependencyFailed`. Used if any dependency of a task fails.

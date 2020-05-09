@@ -19,12 +19,13 @@ pub struct Client {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Daemon {
     pub pueue_directory: String,
-    pub default_parallel_tasks: usize,
-    #[serde(default = "pause_on_failure_default")]
-    pub pause_on_failure: bool,
     //    pub address: String,
     pub port: String,
     pub secret: String,
+    pub default_parallel_tasks: usize,
+    #[serde(default = "pause_on_failure_default")]
+    pub pause_on_failure: bool,
+    pub callback: Option<String>,
 }
 
 fn pause_on_failure_default() -> bool {
@@ -55,6 +56,7 @@ impl Settings {
         config.set_default("daemon.default_parallel_tasks", 1)?;
         config.set_default("daemon.pause_on_failure", false)?;
         config.set_default("daemon.secret", random_secret.clone())?;
+        config.set_default("daemon.callback", None::<String>)?;
 
         //        config.set_default("client.daemon_address", "127.0.0.1")?;
         config.set_default("client.daemon_port", "6924")?;
