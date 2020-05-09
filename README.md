@@ -222,9 +222,10 @@ This would help me a lot!
 
 ### Callbacks 
 
-You can specify a callback that should be called every time a task finishes.
+You can specify a callback that will be called every time a task finishes.
 The callback can be parameterized with some variables.  
-For now there are:
+
+These are the available variables that can be used to create a command:
 - `{{ id }}`
 - `{{ command }}`
 - `{{ path }}`
