@@ -264,6 +264,16 @@ impl State {
             }
         }
 
+        // Go trough all tasks and set all groups that are no longer
+        // listed in the configuration file to the default.
+        for (_, task) in self.tasks.iter_mut() {
+            if let Some(group) = &task.group {
+                if !self.groups.contains_key(group) {
+                    task.group = None;
+                }
+            }
+        }
+
         self.running = state.running;
         self.max_id = state.max_id;
     }
