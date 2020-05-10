@@ -79,7 +79,7 @@ impl TaskHandler {
             std::thread::sleep(timeout);
 
             self.receive_commands();
-            self.process_finished();
+            self.handle_finished_tasks();
             self.check_callbacks();
             self.check_stashed();
             self.check_failed_dependencies();
@@ -253,7 +253,7 @@ impl TaskHandler {
 
     /// Check whether there are any finished processes
     /// In case there are, handle them and update the shared state
-    fn process_finished(&mut self) {
+    fn handle_finished_tasks(&mut self) {
         let (finished, errored) = self.get_finished();
 
         // The daemon got a reset request and all children already finished
@@ -645,7 +645,7 @@ impl TaskHandler {
                 // Child process did not exit yet
                 Ok(None) => continue,
                 Ok(exit_status) => {
-                    error!("Callback finished with exit code {:?}", exit_status);
+                    info!("Callback finished with exit code {:?}", exit_status);
                     finished.push(id);
                 }
             }
