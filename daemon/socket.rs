@@ -11,17 +11,16 @@ use ::pueue::message::*;
 use ::pueue::protocol::*;
 use ::pueue::state::SharedState;
 
-/// Poll the unix listener and accept new incoming connections
-/// Create a new future to handle the message and spawn it
+/// Poll the unix listener and accept new incoming connections.
+/// Create a new future to handle the message and spawn it.
 pub async fn accept_incoming(sender: Sender<Message>, state: SharedState, opt: Opt) -> Result<()> {
-    // Commandline argument overwrites the configuration files values for port
+    // Commandline argument overwrites the configuration files values for port.
     let port = if let Some(port) = opt.port.clone() {
         port
     } else {
         let state = state.lock().unwrap();
         state.settings.daemon.port.clone()
     };
-    //    let address = format!("{}:{}", address, port);
     let address = format!("127.0.0.1:{}", port);
     let listener = TcpListener::bind(address).await?;
 
@@ -47,7 +46,7 @@ async fn handle_incoming(
     // Receive the secret once and check, whether the client is allowed to connect
     let payload_bytes = receive_bytes(&mut socket).await?;
 
-    // Didn't receive any bytes. The client disconnected
+    // Didn't receive any bytes. The client disconnected.
     if payload_bytes.len() == 0 {
         info!("Client went away");
         return Ok(());
@@ -55,7 +54,7 @@ async fn handle_incoming(
 
     let secret = String::from_utf8(payload_bytes)?;
 
-    // Return immediately, if we got a wrong secret from the client
+    // Return immediately, if we got a wrong secret from the client.
     {
         let state = state.lock().unwrap();
         if secret != state.settings.daemon.secret {
@@ -77,20 +76,20 @@ async fn handle_incoming(
         info!("Received instruction: {:?}", message);
 
         let response = if let Message::StreamRequest(message) = message {
-            // The client requested the output of a task
-            // Since we allow streaming, this needs to be handled seperately
+            // The client requested the output of a task.
+            // Since we allow streaming, this needs to be handled seperately.
             handle_show(&pueue_directory, &mut socket, message).await?
         } else if let Message::DaemonShutdown = message {
-            // Simply shut down the daemon right after sending a success response
+            // Simply shut down the daemon right after sending a success response.
             let response = create_success_message("Daemon is shutting down");
             send_message(response, &mut socket).await?;
             std::process::exit(0);
         } else {
-            // Process a normal message
+            // Process a normal message.
             handle_message(message, &sender, &state)
         };
 
-        // Respond to the client
+        // Respond to the client.
         send_message(response, &mut socket).await?;
     }
 }

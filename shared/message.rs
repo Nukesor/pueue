@@ -102,7 +102,7 @@ pub struct EditResponseMessage {
     pub path: String,
 }
 
-// The booleans decides, whether the stream should be continuous or a oneshot
+// The booleans decides, whether the stream should be continuous or a oneshot.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct StreamRequestMessage {
     pub task_id: usize,
@@ -120,7 +120,7 @@ pub struct LogRequestMessage {
     pub send_logs: bool,
 }
 
-/// Helper struct for sending tasks and their log output to the client
+/// Helper struct for sending tasks and their log output to the client.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct TaskLogMessage {
     pub task: Task,

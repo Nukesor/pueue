@@ -26,7 +26,7 @@ pub struct State {
 
 impl State {
     pub fn new(settings: &Settings) -> State {
-        // Create a default group state
+        // Create a default group state.
         let mut groups = HashMap::new();
         for group in settings.daemon.groups.keys() {
             groups.insert(group.into(), true);
@@ -65,11 +65,14 @@ impl State {
         }
     }
 
-    /// Check if the given group already exists
-    /// If it doesn't exist yet, create a state entry and a new settings entry
+    /// Check if the given group already exists.
+    /// If it doesn't exist yet, create a state entry and a new settings entry.
     pub fn create_group(&mut self, group: &String) {
         if let None = self.settings.daemon.groups.get(group) {
-            self.settings.daemon.groups.insert(group.into(), self.settings.daemon.default_parallel_tasks);
+            self.settings
+                .daemon
+                .groups
+                .insert(group.into(), self.settings.daemon.default_parallel_tasks);
         }
         if let None = self.groups.get(group) {
             self.groups.insert(group.into(), true);
@@ -97,14 +100,14 @@ impl State {
 
         // Filter all task id's that match the provided statuses.
         for task_id in task_ids.iter() {
-            // Check whether the task exists
+            // Check whether the task exists and save all non-existing task ids.
             match self.tasks.get(&task_id) {
                 None => {
                     mismatching.push(*task_id);
                     continue;
                 }
                 Some(task) => {
-                    // Check whether the task status matches the specified statuses
+                    // Check whether the task status matches the specified statuses.
                     if statuses.contains(&task.status) {
                         matching.push(*task_id);
                     } else {
@@ -125,14 +128,14 @@ impl State {
         self.save();
     }
 
-    /// Convenience wrapper around save_to_file
+    /// Convenience wrapper around save_to_file.
     pub fn save(&mut self) {
         self.save_to_file(false);
     }
 
-    /// Save the current current state in a file with a timestamp
-    /// At the same time remove old state logs from the log directory
-    /// This function is called, when large changes to the state are applied, e.g. clean/reset
+    /// Save the current current state in a file with a timestamp.
+    /// At the same time remove old state logs from the log directory.
+    /// This function is called, when large changes to the state are applied, e.g. clean/reset.
     pub fn backup(&mut self) {
         self.save_to_file(true);
         if let Err(error) = self.rotate() {
@@ -141,11 +144,11 @@ impl State {
     }
 
     /// Save the current state to disk.
-    /// We do this to restore in case of a crash
-    /// If log == true, the file will be saved with a time stamp
+    /// We do this to restore in case of a crash.
+    /// If log == true, the file will be saved with a time stamp.
     ///
     /// In comparison to the daemon -> client communication, the state is saved
-    /// as JSON for better readability and debug purposes
+    /// as JSON for better readability and debug purposes.
     fn save_to_file(&mut self, log: bool) {
         let serialized = serde_json::to_string(&self);
         if let Err(error) = serialized {
@@ -169,7 +172,7 @@ impl State {
             real = path.join("state.json");
         }
 
-        // Write to temporary log file first, to prevent loss due to crashes
+        // Write to temporary log file first, to prevent loss due to crashes.
         if let Err(error) = fs::write(&temp, serialized) {
             error!(
                 "Failed to write log to directory. File permissions? Error: {:?}",
@@ -178,7 +181,7 @@ impl State {
             return;
         }
 
-        // Overwrite the original with the temp file, if everything went fine
+        // Overwrite the original with the temp file, if everything went fine.
         if let Err(error) = fs::rename(&temp, real) {
             error!(
                 "Failed to overwrite old log file. File permissions? Error: {:?}",
@@ -188,8 +191,8 @@ impl State {
         }
     }
 
-    /// Restore the last state from a previous session
-    /// The state is stored as json in the log directory
+    /// Restore the last state from a previous session.
+    /// The state is stored as json in the log directory.
     fn restore(&mut self) {
         let path = Path::new(&self.settings.daemon.pueue_directory).join("state.json");
 
@@ -203,7 +206,7 @@ impl State {
         }
         info!("Start restoring state");
 
-        // Try to load the file
+        // Try to load the file.
         let data = fs::read_to_string(&path);
         if let Err(error) = data {
             error!("Failed to read previous state log: {:?}", error);
@@ -211,7 +214,7 @@ impl State {
         }
         let data = data.unwrap();
 
-        // Try to deserialize the state file
+        // Try to deserialize the state file.
         let deserialized: Result<State, serde_json::error::Error> = serde_json::from_str(&data);
         if let Err(error) = deserialized {
             error!("Failed to deserialize previous state log: {:?}", error);
@@ -265,7 +268,7 @@ impl State {
         self.max_id = state.max_id;
     }
 
-    /// Remove old logs that aren't needed any longer
+    /// Remove old logs that aren't needed any longer.
     fn rotate(&mut self) -> Result<()> {
         let path = Path::new(&self.settings.daemon.pueue_directory);
         let path = path.join("log");

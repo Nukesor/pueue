@@ -69,7 +69,7 @@ impl Settings {
     }
 
     /// Save the current configuration as a file to the configuration path.
-    /// The file is written to the main configuration directory of the respective OS
+    /// The file is written to the main configuration directory of the respective OS.
     pub fn save(&self) -> Result<()> {
         let config_path = default_config_path()?;
         let config_dir = config_path

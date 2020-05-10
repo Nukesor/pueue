@@ -8,13 +8,13 @@ use ::structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
 pub enum SubCommand {
-    /// Enqueue a task for execution
+    /// Enqueue a task for execution.
     Add {
         /// The command that should be added.
         #[structopt()]
         command: Vec<String>,
 
-        /// Start the task immediately
+        /// Start the task immediately.
         #[structopt(name = "immediate", short, long, conflicts_with = "stash")]
         start_immediately: bool,
 
@@ -28,33 +28,33 @@ pub enum SubCommand {
         delay_until: Option<DateTime<Local>>,
 
         /// Assign the task to a group. Groups kind of act as separate queues.
-        /// I.e. all groups run in parallel and you can specify the amount of parallel tasks for each group
+        /// I.e. all groups run in parallel and you can specify the amount of parallel tasks for each group.
         /// If no group is specified, the default group will be used.
         #[structopt(name = "group", short, long)]
         group: Option<String>,
 
         /// Start the task once all specified tasks have successfully finished.
-        /// As soon as one of the dependencies fails, this task will fail as well
+        /// As soon as one of the dependencies fails, this task will fail as well.
         #[structopt(name = "after", short, long)]
         dependencies: Vec<usize>,
     },
     /// Remove tasks from the list.
     /// Running or paused tasks need to be killed first.
     Remove {
-        /// The task ids to be removed
+        /// The task ids to be removed.
         task_ids: Vec<usize>,
     },
     /// Switches the queue position of two commands. Only works on queued and stashed commands.
     Switch {
-        /// The first task id
+        /// The first task id.
         task_id_1: usize,
-        /// The second task id
+        /// The second task id.
         task_id_2: usize,
     },
     /// Stashed tasks won't be automatically started.
     /// Either `enqueue` them, to be normally handled or explicitly `start` them.
     Stash {
-        /// The id(s) of the tasks you want to stash
+        /// The id(s) of the tasks you want to stash.
         task_ids: Vec<usize>,
     },
     /// Enqueue stashed tasks. They'll be handled normally afterwards.
@@ -81,10 +81,10 @@ pub enum SubCommand {
     3600s                 // 3600 seconds from now
 ")]
     Enqueue {
-        /// The id(s) of the tasks you want to enqueue
+        /// The id(s) of the tasks you want to enqueue.
         task_ids: Vec<usize>,
 
-        /// Delay enqueuing the tasks until <delay> elapses. See DELAY FORMAT below
+        /// Delay enqueuing the tasks until <delay> elapses. See DELAY FORMAT below.
         #[structopt(name = "delay", short, long, parse(try_from_str=parse_delay_until))]
         delay_until: Option<DateTime<Local>>,
     },
@@ -103,7 +103,7 @@ pub enum SubCommand {
         #[structopt()]
         task_ids: Vec<usize>,
 
-        /// Start the task(s) immediately
+        /// Start the task(s) immediately.
         #[structopt(name = "immediate", short, long)]
         start_immediately: bool,
 
@@ -137,51 +137,51 @@ pub enum SubCommand {
         task_ids: Vec<usize>,
     },
 
-    /// Send something to a task. Useful for sending confirmations ('y\n')
+    /// Send something to a task. Useful for sending confirmations ('y\n').
     Send {
-        /// The id of the task
+        /// The id of the task.
         task_id: usize,
 
-        /// The input that should be sent to the process
+        /// The input that should be sent to the process.
         input: String,
     },
     /// Edit the command or the path of a stashed or queued task.
     Edit {
-        /// The id of the task
+        /// The id of the task.
         task_id: usize,
 
-        /// Edit the path of the task
+        /// Edit the path of the task.
         #[structopt(short, long)]
         path: bool,
     },
 
-    /// Display the current status of all tasks
+    /// Display the current status of all tasks.
     Status {
-        /// Print the current state as json to stdout
+        /// Print the current state as json to stdout.
         /// This doesn't include stdout/stderr of tasks.
-        /// Use `log -j` if you want everything
+        /// Use `log -j` if you want everything.
         #[structopt(short, long)]
         json: bool,
     },
-    /// Display the log output of finished tasks
+    /// Display the log output of finished tasks.
     Log {
-        /// Specify for which specific tasks you want to see the output
+        /// Specify for which specific tasks you want to see the output.
         #[structopt()]
         task_ids: Vec<usize>,
-        /// Print the current state as json
-        /// Includes EVERYTHING
+        /// Print the current state as json.
+        /// Includes EVERYTHING.
         #[structopt(short, long)]
         json: bool,
     },
-    /// Show the output of a currently running task
-    /// This command allows following (like `tail -f`)
+    /// Show the output of a currently running task.
+    /// This command allows following (like `tail -f`).
     Show {
-        /// The id of the task
+        /// The id of the task.
         task_id: usize,
-        /// Continuously print stdout (like `tail -f`)
+        /// Continuously print stdout (like `tail -f`).
         #[structopt(short, long)]
         follow: bool,
-        /// Like -f, but shows stderr instead of stdeout.
+        /// Like -f, but shows stderr instead of stdout.
         #[structopt(short, long)]
         err: bool,
     },
@@ -192,22 +192,22 @@ pub enum SubCommand {
     /// Remotely shut down the daemon. Should only be used if the daemon isn't started by a service manager.
     Shutdown,
 
-    /// Set the amount of allowed parallel tasks
+    /// Set the amount of allowed parallel tasks.
     Parallel {
-        /// The amount of allowed parallel tasks
+        /// The amount of allowed parallel tasks.
         #[structopt(validator=min_one)]
         parallel_tasks: usize,
 
-        /// Specify the amount of parallel tasks for this group
+        /// Specify the amount of parallel tasks for this group.
         #[structopt(name = "group", short, long)]
         group: Option<String>,
     },
     /// Generates shell completion files.
-    /// Ingore for normal operations
+    /// Ingore for normal operations.
     Completions {
         /// The target shell. Can be `bash`, `fish`, `powershell`, `elvish` and `zsh`.
         shell: Shell,
-        /// The output directory to which the file should be written
+        /// The output directory to which the file should be written.
         output_directory: PathBuf,
     },
 }
@@ -219,7 +219,7 @@ pub enum SubCommand {
     author = "Arne Beer <contact@arne.beer>"
 )]
 pub struct Opt {
-    // The number of occurrences of the `v/verbose` flag
+    // The number of occurrences of the `v/verbose` flag.
     /// Verbose mode (-v, -vv, -vvv)
     #[structopt(short, long, parse(from_occurrences))]
     pub verbose: u8,
@@ -227,7 +227,7 @@ pub struct Opt {
     //    /// The url for the daemon. Overwrites the address in the config file
     //    #[structopt(short, long)]
     //    pub address: Option<String>,
-    /// The port for the daemon. Overwrites the port in the config file
+    /// The port for the daemon. Overwrites the port in the config file.
     #[structopt(short, long)]
     pub port: Option<String>,
 
@@ -250,17 +250,17 @@ fn parse_delay_until(src: &str) -> Result<DateTime<Local>, String> {
     ))
 }
 
-
+/// Validator function. The input string has to be parsable as int and bigger than 0
 fn min_one(value: String) -> Result<(), String> {
-    match value.parse::<i32>() {
+    match value.parse::<usize>() {
         Ok(value) => {
             if value < 1 {
-                return Err("You must provide a value thats bigger than 1".into());
+                return Err("You must provide a value that's bigger than 0".into());
             }
-            return Ok(())
-        },
+            return Ok(());
+        }
         Err(_) => {
             return Err("Failed to parse integer".into());
-        },
+        }
     }
 }

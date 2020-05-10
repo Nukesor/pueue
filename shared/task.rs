@@ -103,8 +103,8 @@ impl Task {
         return self.status == TaskStatus::Done;
     }
 
-    // Check if the task errored
-    // The only case when it didn't error is if it didn't run yet or if the task exited successfully
+    // Check if the task errored.
+    // The only case when it didn't error is if it didn't run yet or if the task exited successfully.
     pub fn failed(&self) -> bool {
         match self.result {
             None => false,

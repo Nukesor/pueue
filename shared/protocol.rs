@@ -7,8 +7,8 @@ use ::std::io::Cursor;
 
 use crate::message::*;
 
-/// Convenience wrapper around send_bytes
-/// Deserialize a message and feed the bytes into send_bytes
+/// Convenience wrapper around send_bytes.
+/// Deserialize a message and feed the bytes into send_bytes.
 pub async fn send_message(message: Message, socket: &mut TcpStream) -> Result<()> {
     debug!("Sending message: {:?}", message);
     // Prepare command for transfer and determine message byte size
@@ -38,8 +38,8 @@ pub async fn send_bytes(payload: Vec<u8>, socket: &mut TcpStream) -> Result<()> 
     Ok(())
 }
 
-/// Receive a byte stream depending on a given header
-/// This is the basic protocol beneath all pueue communication
+/// Receive a byte stream depending on a given header.
+/// This is the basic protocol beneath all pueue communication.
 pub async fn receive_bytes(socket: &mut TcpStream) -> Result<Vec<u8>> {
     // Receive the header with the overall message size
     let mut header = vec![0; 8];
@@ -75,11 +75,11 @@ pub async fn receive_bytes(socket: &mut TcpStream) -> Result<Vec<u8>> {
     Ok(payload_bytes)
 }
 
-/// Convenience wrapper that receives a message and converts it into a Message
+/// Convenience wrapper that receives a message and converts it into a Message.
 pub async fn receive_message(socket: &mut TcpStream) -> Result<Message> {
     let payload_bytes = receive_bytes(socket).await?;
 
-    // Deserialize the message
+    // Deserialize the message.
     let message: Message = bincode::deserialize(&payload_bytes).context(
         "In case you updated Pueue, try restarting the daemon. Otherwise please report this",
     )?;

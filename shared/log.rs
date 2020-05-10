@@ -6,7 +6,7 @@ use ::std::io;
 use ::std::io::prelude::*;
 use ::std::path::{Path, PathBuf};
 
-/// Return the paths to temporary stdout and stderr files for a task
+/// Return the paths to temporary stdout and stderr files for a task.
 pub fn get_log_paths(task_id: usize, path: &String) -> (PathBuf, PathBuf) {
     let pueue_dir = Path::new(path).join("task_logs");
     let out_path = pueue_dir.join(format!("{}_stdout.log", task_id));
@@ -14,7 +14,7 @@ pub fn get_log_paths(task_id: usize, path: &String) -> (PathBuf, PathBuf) {
     (out_path, err_path)
 }
 
-/// Create and return the file handle for temporary stdout and stderr files for a task
+/// Create and return the file handle for temporary stdout and stderr files for a task.
 pub fn create_log_file_handles(task_id: usize, path: &String) -> Result<(File, File)> {
     let (out_path, err_path) = get_log_paths(task_id, path);
     let stdout = File::create(out_path)?;
@@ -23,7 +23,7 @@ pub fn create_log_file_handles(task_id: usize, path: &String) -> Result<(File, F
     Ok((stdout, stderr))
 }
 
-/// Return the file handle for temporary stdout and stderr files for a task
+/// Return the file handle for temporary stdout and stderr files for a task.
 pub fn get_log_file_handles(task_id: usize, path: &String) -> Result<(File, File)> {
     let (out_path, err_path) = get_log_paths(task_id, path);
     let stdout = File::open(out_path)?;
@@ -32,7 +32,7 @@ pub fn get_log_file_handles(task_id: usize, path: &String) -> Result<(File, File
     Ok((stdout, stderr))
 }
 
-/// Return the content of temporary stdout and stderr files for a task
+/// Return the content of temporary stdout and stderr files for a task.
 pub fn read_log_files(task_id: usize, path: &String) -> Result<(String, String)> {
     let (mut stdout_handle, mut stderr_handle) = get_log_file_handles(task_id, path)?;
     let mut stdout_buffer = Vec::new();
@@ -47,7 +47,7 @@ pub fn read_log_files(task_id: usize, path: &String) -> Result<(String, String)>
     Ok((stdout.to_string(), stderr.to_string()))
 }
 
-/// Remove temporary stdout and stderr files for a task
+/// Remove temporary stdout and stderr files for a task.
 pub fn clean_log_handles(task_id: usize, path: &String) {
     let (out_path, err_path) = get_log_paths(task_id, path);
     if let Err(err) = remove_file(out_path) {
@@ -64,8 +64,8 @@ pub fn clean_log_handles(task_id: usize, path: &String) {
     };
 }
 
-/// Return stdout and stderr of a finished process
-/// Everything is compressed using Brotli and then encoded to Base64
+/// Return stdout and stderr of a finished process.
+/// Task output is compressed using snap to save some memory and bandwidth.
 pub fn read_and_compress_log_files(task_id: usize, path: &String) -> Result<(Vec<u8>, Vec<u8>)> {
     let (mut stdout_handle, mut stderr_handle) = match get_log_file_handles(task_id, path) {
         Ok((stdout, stderr)) => (stdout, stderr),

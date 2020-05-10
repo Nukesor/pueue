@@ -27,8 +27,7 @@ pub struct TaskHandler {
     callbacks: Vec<Child>,
     running: bool,
     reset: bool,
-    // Some static settings that are extracted from `state.settings`
-    // for convenience purposes.
+    // Some static settings that are extracted from `state.settings` for convenience purposes.
     pueue_directory: String,
     callback: Option<String>,
     pause_on_failure: bool,
@@ -60,8 +59,8 @@ impl TaskHandler {
     }
 }
 
-/// The task handler needs to kill all child processes as soon, as the program exits
-/// This is needed to prevent detached processes
+/// The task handler needs to kill all child processes as soon, as the program exits.
+/// This is needed to prevent detached processes.
 impl Drop for TaskHandler {
     fn drop(&mut self) {
         let ids: Vec<usize> = self.children.keys().cloned().collect();
@@ -74,21 +73,14 @@ impl Drop for TaskHandler {
 }
 
 impl TaskHandler {
-    /// Main loop of the task handler
+    /// Main loop of the task handler.
     /// In here a few things happen:
-    /// 1. Propagated commands from socket communication is received and handled
-    /// 2. Check whether any tasks just finished
-    /// 3. Check if there are any stashed processes ready for being enqueued
-    /// 4. Check whether we can spawn new tasks
+    /// 1. Propagated commands from socket communication is received and handled.
+    /// 2. Check whether any tasks just finished.
+    /// 3. Check if there are any stashed processes ready for being enqueued.
+    /// 4. Check whether we can spawn new tasks.
     pub fn run(&mut self) {
         loop {
-            // Sleep for a few milliseconds. We don't want to hurt the CPU
-            let timeout = Duration::from_millis(100);
-            // Don't use recv_timeout for now, until this bug get's fixed
-            // https://github.com/rust-lang/rust/issues/39364
-            //match self.receiver.recv_timeout(timeout) {
-            std::thread::sleep(timeout);
-
             self.receive_commands();
             self.handle_finished_tasks();
             self.check_callbacks();
@@ -424,8 +416,14 @@ impl TaskHandler {
     }
 
     /// Some client instructions require immediate action by the task handler
-    /// These commands are
     fn receive_commands(&mut self) {
+        // Sleep for a few milliseconds. We don't want to hurt the CPU.
+        let timeout = Duration::from_millis(100);
+        // Don't use recv_timeout for now, until this bug get's fixed.
+        // https://github.com/rust-lang/rust/issues/39364
+        //match self.receiver.recv_timeout(timeout) {
+        std::thread::sleep(timeout);
+
         match self.receiver.try_recv() {
             Ok(message) => self.handle_message(message),
             Err(_) => {}
@@ -443,7 +441,7 @@ impl TaskHandler {
         }
     }
 
-    /// Send a signal to a unix process
+    /// Send a signal to a unix process.
     #[cfg(not(windows))]
     fn send_signal(&mut self, id: usize, signal: Signal) -> Result<bool, nix::Error> {
         if let Some(child) = self.children.get(&id) {
@@ -487,7 +485,7 @@ impl TaskHandler {
         self.change_running(true);
     }
 
-    /// Send a start signal to a paused task to continue execution
+    /// Send a start signal to a paused task to continue execution.
     fn continue_task(&mut self, id: usize) {
         if !self.children.contains_key(&id) {
             return;
@@ -541,7 +539,7 @@ impl TaskHandler {
     }
 
     /// Pause a specific task.
-    /// Send a signal to the process to actually pause the OS process
+    /// Send a signal to the process to actually pause the OS process.
     fn pause_task(&mut self, id: usize) {
         if !self.children.contains_key(&id) {
             return;
@@ -576,7 +574,7 @@ impl TaskHandler {
             return;
         }
 
-        // Pause the daemon and kill all tasks
+        // Pause the daemon and kill all tasks.
         if message.all {
             info!("Killing all spawned children");
             self.change_running(false);
@@ -587,7 +585,7 @@ impl TaskHandler {
         }
     }
 
-    /// Kill a specific task and handle it accordingly
+    /// Kill a specific task and handle it accordingly.
     /// Triggered on `reset` and `kill`.
     fn kill_task(&mut self, task_id: usize) {
         if let Some(child) = self.children.get_mut(&task_id) {
@@ -607,7 +605,7 @@ impl TaskHandler {
         }
     }
 
-    /// Send some input to a child process
+    /// Send some input to a child process.
     fn send(&mut self, message: SendMessage) {
         let task_id = message.task_id;
         let input = message.input;
@@ -632,7 +630,7 @@ impl TaskHandler {
         }
     }
 
-    /// Kill all children by reusing the `kill` function
+    /// Kill all children by reusing the `kill` function.
     /// Set the `reset` flag, which will prevent new tasks from being spawned.
     /// If all children finished, the state will be completely reset.
     fn reset(&mut self) {
@@ -645,7 +643,7 @@ impl TaskHandler {
         self.reset = true;
     }
 
-    /// Change the running state consistently
+    /// Change the running state consistently.
     fn change_running(&mut self, running: bool) {
         let mut state = self.state.lock().unwrap();
         state.running = running;
@@ -653,7 +651,7 @@ impl TaskHandler {
         state.save();
     }
 
-    /// Users can specify a callback that's fired whenever a task finishes
+    /// Users can specify a callback that's fired whenever a task finishes.
     /// Execute the callback by spawning a new subprocess.
     fn spawn_callback(&mut self, task: &Task) {
         // Return early, if there's no callback specified
@@ -663,10 +661,10 @@ impl TaskHandler {
             return;
         };
 
-        // Build the callback command from the given template
+        // Build the callback command from the given template.
         let mut handlebars = Handlebars::new();
         handlebars.set_strict_mode(true);
-        // Build templating variables
+        // Build templating variables.
         let mut parameters = HashMap::new();
         parameters.insert("id", task.id.to_string());
         parameters.insert("command", task.command.clone());
@@ -708,8 +706,8 @@ impl TaskHandler {
         self.callbacks.push(child);
     }
 
-    /// Look at all running callbacks and log any errors
-    /// If everything went smoothly, simply remove them from the list
+    /// Look at all running callbacks and log any errors.
+    /// If everything went smoothly, simply remove them from the list.
     fn check_callbacks(&mut self) {
         let mut finished = Vec::new();
         for (id, child) in self.callbacks.iter_mut().enumerate() {
@@ -719,7 +717,7 @@ impl TaskHandler {
                     error!("Callback failed with error {:?}", error);
                     finished.push(id);
                 }
-                // Child process did not exit yet
+                // Child process did not exit yet.
                 Ok(None) => continue,
                 Ok(exit_status) => {
                     info!("Callback finished with exit code {:?}", exit_status);

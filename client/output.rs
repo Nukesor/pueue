@@ -24,7 +24,7 @@ pub fn print_error(message: String) {
     println!("{}", styled);
 }
 
-/// Print the current state of the daemon in a nicely formatted table
+/// Print the current state of the daemon in a nicely formatted table.
 pub fn print_state(state: State, cli_command: &SubCommand) {
     let json = match cli_command {
         SubCommand::Status { json } => *json,
@@ -34,13 +34,13 @@ pub fn print_state(state: State, cli_command: &SubCommand) {
         ),
     };
 
-    // If the json flag is specified, print the state as json and exit
+    // If the json flag is specified, print the state as json and exit.
     if json {
         println!("{}", serde_json::to_string(&state).unwrap());
         return;
     }
 
-    // Print the current daemon state
+    // Print the current daemon state.
     if state.running {
         println!("{}", style("Daemon status: running").with(Color::Green));
     } else {
@@ -54,21 +54,21 @@ pub fn print_state(state: State, cli_command: &SubCommand) {
     }
 
     // Check whether there are any delayed tasks.
-    // In case there are, we need to add another column to the table
+    // In case there are, we need to add another column to the table.
     let has_delayed_tasks = state
         .tasks
         .iter()
         .any(|(_id, task)| task.enqueue_at.is_some());
 
     // Check whether there are any tasks with dependencies.
-    // In case there are, we need to add another column to the table
+    // In case there are, we need to add another column to the table.
     let has_dependencies = state
         .tasks
         .iter()
         .any(|(_id, task)| !task.dependencies.is_empty());
 
-    // Check whether there are any tasks with dependencies.
-    // In case there are, we need to add another column to the table
+    // Check whether there are any tasks with a custom group.
+    // In case there are, we need to add another column to the table.
     let has_group = state.tasks.iter().any(|(_id, task)| task.group.is_some());
 
     // Create table header row
@@ -90,19 +90,19 @@ pub fn print_state(state: State, cli_command: &SubCommand) {
         Cell::new("End"),
     ]);
 
-    // Initialize comfy table
+    // Initialize comfy table.
     let mut table = Table::new();
     table
         .set_content_arrangement(ContentArrangement::Dynamic)
         .load_preset(UTF8_HORIZONTAL_BORDERS_ONLY)
         .set_header(headers);
 
-    // Add rows one by one
+    // Add rows one by one.
     for (id, task) in state.tasks {
         let mut row = Row::new();
         row.add_cell(Cell::new(&id.to_string()));
 
-        // Determine the human readable task status representation and the respective color
+        // Determine the human readable task status representation and the respective color.
         let status_string = task.status.to_string();
         let (status_text, color) = match task.status {
             TaskStatus::Running => (status_string, Color::Green),
@@ -144,7 +144,7 @@ pub fn print_state(state: State, cli_command: &SubCommand) {
             }
         }
 
-        // Match the color of the exit code
+        // Match the color of the exit code.
         // If the exit_code is none, it has been killed by the task handler.
         let exit_code_cell = match task.result {
             Some(TaskResult::Success) => Cell::new("0").fg(Color::Green),
@@ -153,11 +153,11 @@ pub fn print_state(state: State, cli_command: &SubCommand) {
         };
         row.add_cell(exit_code_cell);
 
-        // Add command and path
+        // Add command and path.
         row.add_cell(Cell::new(&task.command));
         row.add_cell(Cell::new(&task.path));
 
-        // Add start time, if already set
+        // Add start time, if already set.
         if let Some(start) = task.start {
             let formatted = start.format("%H:%M").to_string();
             row.add_cell(Cell::new(&formatted));
@@ -165,7 +165,7 @@ pub fn print_state(state: State, cli_command: &SubCommand) {
             row.add_cell(Cell::new(""));
         }
 
-        // Add finish time, if already set
+        // Add finish time, if already set.
         if let Some(end) = task.end {
             let formatted = end.format("%H:%M").to_string();
             row.add_cell(Cell::new(&formatted));
@@ -176,7 +176,7 @@ pub fn print_state(state: State, cli_command: &SubCommand) {
         table.add_row(row);
     }
 
-    // Print the table
+    // Print the table.
     println!("{}", table);
 }
 
@@ -214,7 +214,7 @@ pub fn print_logs(
     while let Some((_, mut task_log)) = task_iter.next() {
         print_log(&mut task_log, settings);
 
-        // Add a newline if there is another task that's going to be printed
+        // Add a newline if there is another task that's going to be printed.
         if let Some((_, task_log)) = task_iter.peek() {
             if task_log.task.status == TaskStatus::Done {
                 println!();
@@ -226,12 +226,12 @@ pub fn print_logs(
 /// Print the log of a single task.
 pub fn print_log(task_log: &mut TaskLogMessage, settings: &Settings) {
     let task = &task_log.task;
-    // We only show logs of finished tasks
+    // We only show logs of finished tasks.
     if task.status != TaskStatus::Done {
         return;
     }
 
-    // Print task id and exit code
+    // Print task id and exit code.
     let task_text = style(format!("Task {} ", task.id)).attribute(Attribute::Bold);
     let exit_status = match &task.result {
         Some(TaskResult::Success) => style(format!("with exit code 0")).with(Color::Green),
@@ -249,7 +249,7 @@ pub fn print_log(task_log: &mut TaskLogMessage, settings: &Settings) {
     };
     print!("{} {}", task_text, exit_status);
 
-    // Print command and path
+    // Print command and path.
     println!("Command: {}", task.command);
     println!("Path: {}", task.path);
 
@@ -281,7 +281,7 @@ pub fn print_local_log_output(task_id: usize, settings: &Settings) {
             }
         };
     // Stdout handler to directly write log file output to io::stdout
-    // without having to load anything into memory
+    // without having to load anything into memory.
     let mut stdout = io::stdout();
 
     if let Ok(metadata) = stdout_log.metadata() {
@@ -315,9 +315,9 @@ pub fn print_local_log_output(task_id: usize, settings: &Settings) {
     }
 }
 
-/// Prints log output received from the daemon
+/// Prints log output received from the daemon.
 /// We can safely call .unwrap() on stdout and stderr in here, since this
-/// branch is always called after ensuring that both are `Some`
+/// branch is always called after ensuring that both are `Some`.
 pub fn print_task_output_from_daemon(task_log: &TaskLogMessage) {
     if !task_log.stdout.as_ref().unwrap().is_empty() {
         if let Err(err) = print_remote_task_output(&task_log, true) {

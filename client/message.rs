@@ -7,7 +7,7 @@ use ::pueue::settings::Settings;
 use crate::cli::{Opt, SubCommand};
 
 // Convert and pre-process the sub-command into a valid message
-// that can be understood by the daemon
+// that can be understood by the daemon.
 pub fn get_message_from_opt(opt: &Opt, settings: &Settings) -> Result<Message> {
     match &opt.cmd {
         SubCommand::Add {
@@ -114,13 +114,16 @@ pub fn get_message_from_opt(opt: &Opt, settings: &Settings) -> Result<Message> {
         SubCommand::Clean => Ok(Message::Clean),
         SubCommand::Reset => Ok(Message::Reset),
         SubCommand::Shutdown => Ok(Message::DaemonShutdown),
-        SubCommand::Parallel { parallel_tasks, group } => {
+        SubCommand::Parallel {
+            parallel_tasks,
+            group,
+        } => {
             let message = ParallelMessage {
                 parallel_tasks: *parallel_tasks,
                 group: group.clone(),
             };
             Ok(Message::Parallel(message))
-        },
+        }
         SubCommand::Completions {
             shell: _,
             output_directory: _,

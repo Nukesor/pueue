@@ -32,14 +32,14 @@ async fn main() -> Result<()> {
         Ok(()) => {}
     };
 
-    // Parse commandline options
+    // Parse commandline options.
     let opt = Opt::from_args();
 
     if opt.daemonize {
         fork_daemon(&opt)?;
     }
 
-    // Set the verbosity level for the client app
+    // Set the verbosity level for the client app.
     if opt.verbose >= 3 {
         SimpleLogger::init(LevelFilter::Debug, Config::default())?;
     } else if opt.verbose == 2 {
@@ -67,7 +67,7 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-/// Initialize all directories needed for normal operation
+/// Initialize all directories needed for normal operation.
 fn init_directories(path: &String) {
     let pueue_dir = Path::new(path);
     if !pueue_dir.exists() {
@@ -99,8 +99,8 @@ fn init_directories(path: &String) {
     }
 }
 
-/// This is a simple and cheap custom fork method
-/// Simply spawn a new child with identical arguments and exit right away
+/// This is a simple and cheap custom fork method.
+/// Simply spawn a new child with identical arguments and exit right away.
 fn fork_daemon(opt: &Opt) -> Result<()> {
     let mut arguments = Vec::<String>::new();
 
