@@ -1,9 +1,9 @@
 name: Packaging
 
 on:
-  create:
+  push:
     tags:
-      -v*
+      - 'v*'
 
 jobs:
   publish:
