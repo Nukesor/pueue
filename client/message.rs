@@ -14,6 +14,7 @@ pub fn get_message_from_opt(opt: &Opt, settings: &Settings) -> Result<Message> {
             command,
             start_immediately,
             stashed,
+            group,
             delay_until,
             dependencies,
         } => {
@@ -26,6 +27,7 @@ pub fn get_message_from_opt(opt: &Opt, settings: &Settings) -> Result<Message> {
                 path: cwd.to_string(),
                 start_immediately: *start_immediately,
                 stashed: *stashed,
+                group: group.clone(),
                 enqueue_at: *delay_until,
                 dependencies: dependencies.to_vec(),
             }))
@@ -112,8 +114,13 @@ pub fn get_message_from_opt(opt: &Opt, settings: &Settings) -> Result<Message> {
         SubCommand::Clean => Ok(Message::Clean),
         SubCommand::Reset => Ok(Message::Reset),
         SubCommand::Shutdown => Ok(Message::DaemonShutdown),
-
-        SubCommand::Parallel { parallel_tasks } => Ok(Message::Parallel(*parallel_tasks)),
+        SubCommand::Parallel { parallel_tasks, group } => {
+            let message = ParallelMessage {
+                parallel_tasks: *parallel_tasks,
+                group: group.clone(),
+            };
+            Ok(Message::Parallel(message))
+        },
         SubCommand::Completions {
             shell: _,
             output_directory: _,

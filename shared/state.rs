@@ -3,6 +3,7 @@ use ::chrono::prelude::*;
 use ::log::{error, info};
 use ::serde_derive::{Deserialize, Serialize};
 use ::std::collections::BTreeMap;
+use ::std::collections::HashMap;
 use ::std::fs;
 use ::std::path::{Path, PathBuf};
 use ::std::sync::{Arc, Mutex};
@@ -13,23 +14,33 @@ use crate::task::{Task, TaskResult, TaskStatus};
 
 pub type SharedState = Arc<Mutex<State>>;
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct State {
     max_id: usize,
     pub settings: Settings,
     pub running: bool,
     pub tasks: BTreeMap<usize, Task>,
+    /// Represents whether the group is currently paused or running
+    pub groups: HashMap<String, bool>,
 }
 
 impl State {
     pub fn new(settings: &Settings) -> State {
+        // Create a default group state
+        let mut groups = HashMap::new();
+        for group in settings.daemon.groups.keys() {
+            groups.insert(group.into(), true);
+        }
+
         let mut state = State {
             max_id: 0,
             settings: settings.clone(),
             running: true,
             tasks: BTreeMap::new(),
+            groups: groups,
         };
         state.restore();
+        state.save();
         state
     }
 
@@ -39,25 +50,6 @@ impl State {
         self.max_id += 1;
         self.save();
         self.max_id - 1
-    }
-
-    /// Search and return the next task to be started.
-    /// Precondition for a task to be started:
-    /// - is in Queued state
-    /// - has all its dependencies in `Done` state
-    pub fn get_next_task_id(&mut self) -> Option<usize> {
-        return self
-            .tasks
-            .iter()
-            .filter(|(_, task)| task.status == TaskStatus::Queued)
-            .filter(|(_, task)| {
-                task.dependencies
-                    .iter()
-                    .flat_map(|id| self.tasks.get(id))
-                    .all(|task| task.status == TaskStatus::Done)
-            })
-            .next()
-            .map(|(id, _)| *id);
     }
 
     pub fn change_status(&mut self, id: usize, new_status: TaskStatus) {
@@ -70,6 +62,17 @@ impl State {
     pub fn set_enqueue_at(&mut self, id: usize, enqueue_at: Option<DateTime<Local>>) {
         if let Some(ref mut task) = self.tasks.get_mut(&id) {
             task.enqueue_at = enqueue_at;
+        }
+    }
+
+    /// Check if the given group already exists
+    /// If it doesn't exist yet, create a state entry and a new settings entry
+    pub fn create_group(&mut self, group: &String) {
+        if let None = self.settings.daemon.groups.get(group) {
+            self.settings.daemon.groups.insert(group.into(), self.settings.daemon.default_parallel_tasks);
+        }
+        if let None = self.groups.get(group) {
+            self.groups.insert(group.into(), true);
         }
     }
 
@@ -216,10 +219,10 @@ impl State {
         }
         let mut state = deserialized.unwrap();
 
-        // Restore the state from the file
-        // While restoring the tasks, check for any invalid/broken stati
+        // Restore the state from the file.
+        // While restoring the tasks, check for any invalid/broken stati.
         for (task_id, task) in state.tasks.iter_mut() {
-            // Handle ungraceful shutdowns while executing tasks
+            // Handle ungraceful shutdowns while executing tasks.
             if task.status == TaskStatus::Running || task.status == TaskStatus::Paused {
                 info!(
                     "Setting task {} with previous status {:?} to new status {:?}",
@@ -230,18 +233,32 @@ impl State {
                 task.status = TaskStatus::Done;
                 task.result = Some(TaskResult::Killed);
             }
-            // Crash during editing of the task command
+            // Crash during editing of the task command.
             if task.status == TaskStatus::Locked {
                 task.status = TaskStatus::Stashed;
             }
-            // If there are any queued tasks, pause the daemon
-            // This should prevent any unwanted execution of tasks due to a system crash
+            // If there are any queued tasks, pause the daemon.
+            // This should prevent any unwanted execution of tasks due to a system crash.
             if task.status == TaskStatus::Queued {
                 info!("Pausing daemon to prevent unwanted execution of previous tasks");
                 state.running = false;
             }
 
             self.tasks.insert(*task_id, task.clone());
+        }
+
+        if !self.running {
+            // If the daemon isn't running, stop all groups.
+            for group in self.settings.daemon.groups.keys() {
+                self.groups.insert(group.into(), false);
+            }
+        } else {
+            // If the daemon running, apply all running group states from the previous state.
+            for (group, running) in state.groups.iter() {
+                if self.groups.contains_key(group) {
+                    self.groups.insert(group.into(), *running);
+                }
+            }
         }
 
         self.running = state.running;
@@ -253,7 +270,7 @@ impl State {
         let path = Path::new(&self.settings.daemon.pueue_directory);
         let path = path.join("log");
 
-        // Get all log files in the directory with their respective system time
+        // Get all log files in the directory with their respective system time.
         let mut entries: BTreeMap<SystemTime, PathBuf> = BTreeMap::new();
         let mut directory_list = fs::read_dir(path)?;
         while let Some(Ok(entry)) = directory_list.next() {
@@ -264,8 +281,8 @@ impl State {
             entries.insert(time, path);
         }
 
-        // Remove all files aove the threshold
-        // Old files are removed first (implictly by the BTree order)
+        // Remove all files above the threshold.
+        // Old files are removed first (implictly by the BTree order).
         let mut number_entries = entries.len();
         let mut iter = entries.iter();
         while number_entries > 10 {

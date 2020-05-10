@@ -67,6 +67,10 @@ pub fn print_state(state: State, cli_command: &SubCommand) {
         .iter()
         .any(|(_id, task)| !task.dependencies.is_empty());
 
+    // Check whether there are any tasks with dependencies.
+    // In case there are, we need to add another column to the table
+    let has_group = state.tasks.iter().any(|(_id, task)| task.group.is_some());
+
     // Create table header row
     let mut headers = vec![Cell::new("Index"), Cell::new("Status")];
     if has_delayed_tasks {
@@ -74,6 +78,9 @@ pub fn print_state(state: State, cli_command: &SubCommand) {
     }
     if has_dependencies {
         headers.push(Cell::new("Deps"));
+    }
+    if has_group {
+        headers.push(Cell::new("Group"));
     }
     headers.append(&mut vec![
         Cell::new("Exitcode"),
@@ -127,6 +134,14 @@ pub fn print_state(state: State, cli_command: &SubCommand) {
                 .collect::<Vec<String>>()
                 .join(", ");
             row.add_cell(Cell::new(text));
+        }
+
+        if has_group {
+            if let Some(group) = task.group {
+                row.add_cell(Cell::new(group));
+            } else {
+                row.add_cell(Cell::new(""));
+            }
         }
 
         // Match the color of the exit code
@@ -257,13 +272,14 @@ pub fn print_log(task_log: &mut TaskLogMessage, settings: &Settings) {
 /// The daemon didn't send any log output, thereby we didn't request any.
 /// If that's the case, read the log files from the local pueue directory
 pub fn print_local_log_output(task_id: usize, settings: &Settings) {
-    let (mut stdout_log, mut stderr_log) = match get_log_file_handles(task_id, settings) {
-        Ok((stdout, stderr)) => (stdout, stderr),
-        Err(err) => {
-            println!("Failed to get log file handles: {}", err);
-            return;
-        }
-    };
+    let (mut stdout_log, mut stderr_log) =
+        match get_log_file_handles(task_id, &settings.daemon.pueue_directory) {
+            Ok((stdout, stderr)) => (stdout, stderr),
+            Err(err) => {
+                println!("Failed to get log file handles: {}", err);
+                return;
+            }
+        };
     // Stdout handler to directly write log file output to io::stdout
     // without having to load anything into memory
     let mut stdout = io::stdout();

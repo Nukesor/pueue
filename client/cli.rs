@@ -27,6 +27,12 @@ pub enum SubCommand {
         #[structopt(name = "delay", short, long, conflicts_with = "immediate", parse(try_from_str=parse_delay_until))]
         delay_until: Option<DateTime<Local>>,
 
+        /// Assign the task to a group. Groups kind of act as separate queues.
+        /// I.e. all groups run in parallel and you can specify the amount of parallel tasks for each group
+        /// If no group is specified, the default group will be used.
+        #[structopt(name = "group", short, long)]
+        group: Option<String>,
+
         /// Start the task once all specified tasks have successfully finished.
         /// As soon as one of the dependencies fails, this task will fail as well
         #[structopt(name = "after", short, long)]
@@ -188,8 +194,13 @@ pub enum SubCommand {
 
     /// Set the amount of allowed parallel tasks
     Parallel {
-        /// The amount of allowed paralel tasks
+        /// The amount of allowed parallel tasks
+        #[structopt(validator=min_one)]
         parallel_tasks: usize,
+
+        /// Specify the amount of parallel tasks for this group
+        #[structopt(name = "group", short, long)]
+        group: Option<String>,
     },
     /// Generates shell completion files.
     /// Ingore for normal operations
@@ -237,4 +248,19 @@ fn parse_delay_until(src: &str) -> Result<DateTime<Local>, String> {
     Err(String::from(
         "could not parse as seconds or date expression",
     ))
+}
+
+
+fn min_one(value: String) -> Result<(), String> {
+    match value.parse::<i32>() {
+        Ok(value) => {
+            if value < 1 {
+                return Err("You must provide a value thats bigger than 1".into());
+            }
+            return Ok(())
+        },
+        Err(_) => {
+            return Err("Failed to parse integer".into());
+        },
+    }
 }

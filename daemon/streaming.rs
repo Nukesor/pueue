@@ -9,18 +9,17 @@ use ::std::time::Duration;
 use ::pueue::log::*;
 use ::pueue::message::*;
 use ::pueue::protocol::send_message;
-use ::pueue::settings::Settings;
 
 /// Handle the continuous stream of a message
 pub async fn handle_show(
-    settings: &Settings,
+    pueue_directory: &String,
     socket: &mut TcpStream,
     message: StreamRequestMessage,
 ) -> Result<Message> {
     if message.follow || message.err {
         // The client requested streaming of stdout
         let mut handle: File;
-        match get_log_file_handles(message.task_id, &settings) {
+        match get_log_file_handles(message.task_id, pueue_directory) {
             Err(_) => {
                 return Ok(create_failure_message(
                     "Couldn't find output files for task. Maybe it finished? Try `log`",
@@ -38,7 +37,7 @@ pub async fn handle_show(
         // Get the stdout/stderr path
         // We need to check continuously, whether the file still exists,
         // since the file can go away (e.g. due to finishing a task)
-        let (out_path, err_path) = get_log_paths(message.task_id, settings);
+        let (out_path, err_path) = get_log_paths(message.task_id, pueue_directory);
         let handle_path = if message.err { err_path } else { out_path };
 
         loop {
@@ -65,7 +64,7 @@ pub async fn handle_show(
     } else {
         // The client requested a one-shot execution
         // Simply read the file and send the current stdout/stderr once
-        let (stdout, stderr) = match read_log_files(message.task_id, &settings) {
+        let (stdout, stderr) = match read_log_files(message.task_id, pueue_directory) {
             Err(_) => {
                 return Ok(create_failure_message(
                     "Couldn't find output files for task. Maybe it finished? Try `log`",

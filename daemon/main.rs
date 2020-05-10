@@ -56,13 +56,13 @@ async fn main() -> Result<()> {
     let state = Arc::new(Mutex::new(state));
 
     let (sender, receiver) = channel();
-    let mut task_handler = TaskHandler::new(settings.clone(), state.clone(), receiver);
+    let mut task_handler = TaskHandler::new(state.clone(), receiver);
 
     thread::spawn(move || {
         task_handler.run();
     });
 
-    accept_incoming(settings, sender, state.clone(), opt).await?;
+    accept_incoming(sender, state.clone(), opt).await?;
 
     Ok(())
 }

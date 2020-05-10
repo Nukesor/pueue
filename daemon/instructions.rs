@@ -30,7 +30,7 @@ pub fn handle_message(message: Message, sender: &Sender<Message>, state: &Shared
         Message::Reset => reset(sender, state),
         Message::Status => get_status(state),
         Message::Log(message) => get_log(message, state),
-        Message::Parallel(amount) => set_parallel_tasks(amount, sender),
+        Message::Parallel(message) => set_parallel_tasks(message, state),
         _ => create_failure_message("Not implemented yet"),
     }
 }
@@ -46,32 +46,48 @@ fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) 
 
     let mut state = state.lock().unwrap();
 
+    // Ensure that specified dependencies actually exist.
     let not_found: Vec<_> = message
         .dependencies
         .iter()
         .filter(|id| !state.tasks.contains_key(id))
         .collect();
-
     if !not_found.is_empty() {
         return create_failure_message(format!(
             "Unable to setup dependencies : task(s) {:?} not found",
             not_found
         ));
     }
+
+    // Create a new task and add it to the state
     let task = Task::new(
         message.command,
         message.path,
+        message.group,
         starting_status,
         message.enqueue_at,
         message.dependencies,
     );
+
+    // Create a new group in case the user used a unknown group
+    if let Some(group) = &task.group {
+        if let None = state.groups.get(group) {
+            return create_failure_message(format!(
+                "Tried to create task with unknown group '{}'",
+                group
+            ));
+        }
+    }
+
     let task_id = state.add_task(task);
+
+    // Notify the task handler, in case the client wants to start the task immediately.
     if message.start_immediately {
         sender
             .send(Message::Start(vec![task_id]))
             .expect(SENDER_ERR);
     }
-
+    // Create the customized response for the client
     let message = if let Some(enqueue_at) = message.enqueue_at {
         format!(
             "New task added (id {}). It will be enqueued at {}",
@@ -354,7 +370,7 @@ fn clean(state: &SharedState) -> Message {
 
     for task_id in &matching {
         let _ = state.tasks.remove(task_id).unwrap();
-        clean_log_handles(*task_id, &state.settings);
+        clean_log_handles(*task_id, &state.settings.daemon.pueue_directory);
     }
 
     state.save();
@@ -392,11 +408,14 @@ fn get_log(message: LogRequestMessage, state: &SharedState) -> Message {
     for task_id in task_ids.iter() {
         match state.tasks.get(task_id) {
             Some(task) => {
-                // We send log output and the task at the same time
+                // We send log output and the task at the same time.
                 // This isn't as efficient as sending the raw compressed data directly,
                 // but it's a lot more convenient for now.
                 let (stdout, stderr) = if message.send_logs {
-                    match read_and_compress_log_files(*task_id, &state.settings) {
+                    match read_and_compress_log_files(
+                        *task_id,
+                        &state.settings.daemon.pueue_directory,
+                    ) {
                         Ok((stdout, stderr)) => (Some(stdout), Some(stderr)),
                         Err(err) => {
                             return create_failure_message(format!(
@@ -422,7 +441,23 @@ fn get_log(message: LogRequestMessage, state: &SharedState) -> Message {
     Message::LogResponse(tasks)
 }
 
-fn set_parallel_tasks(amount: usize, sender: &Sender<Message>) -> Message {
-    sender.send(Message::Parallel(amount)).expect(SENDER_ERR);
-    return create_success_message("Parallel tasks setting adjusted");
+/// Set the parallel tasks for either a specific group or the global default.
+fn set_parallel_tasks(message: ParallelMessage, state: &SharedState) -> Message {
+    let mut state = state.lock().unwrap();
+
+    // Set the global default if no group is specified
+    if let None = message.group {
+        state.settings.daemon.default_parallel_tasks = message.parallel_tasks;
+        return create_success_message("Parallel tasks setting adjusted");
+    }
+
+    // We can safely unwrap, since we handled the None case above
+    let group = &message.group.unwrap();
+    // Check if the given group exists.
+    if !state.groups.contains_key(group) {
+        return create_failure_message(format!("Unknown group. Use one of these: {:?}", state.groups.keys()));
+    }
+
+    state.settings.daemon.groups.insert(group.into(), message.parallel_tasks);
+    return create_success_message(format!("Parallel tasks setting for group {} adjusted", group));
 }

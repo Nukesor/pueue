@@ -1,31 +1,30 @@
 use ::anyhow::{anyhow, Result};
+use ::config::Config;
 use ::log::info;
 use ::rand::Rng;
 use ::serde_derive::{Deserialize, Serialize};
+use ::std::collections::HashMap;
 use ::std::fs::{create_dir_all, File};
 use ::std::io::prelude::*;
 use ::std::path::{Path, PathBuf};
 
-use ::config::Config;
-
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Client {
-    //    pub daemon_address: String,
     pub daemon_port: String,
     pub secret: String,
     pub read_local_logs: bool,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Daemon {
     pub pueue_directory: String,
-    //    pub address: String,
     pub port: String,
     pub secret: String,
     pub default_parallel_tasks: usize,
     #[serde(default = "pause_on_failure_default")]
     pub pause_on_failure: bool,
     pub callback: Option<String>,
+    pub groups: HashMap<String, usize>,
 }
 
 fn pause_on_failure_default() -> bool {
@@ -33,7 +32,7 @@ fn pause_on_failure_default() -> bool {
 }
 
 /// The struct representation of a full configuration.
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Settings {
     pub client: Client,
     pub daemon: Daemon,
@@ -47,21 +46,20 @@ impl Settings {
     /// The local config is located at "~/.config/pueue.yml".
     pub fn new() -> Result<Settings> {
         let mut config = Config::new();
-
         let random_secret = gen_random_secret();
+
+        config.set_default("client.daemon_port", "6924")?;
+        config.set_default("client.secret", random_secret.clone())?;
+        config.set_default("client.read_local_logs", true)?;
+
         // Set pueue config defaults
         config.set_default("daemon.pueue_directory", default_pueue_path()?)?;
-        //        config.set_default("daemon.address", "127.0.0.1")?;
         config.set_default("daemon.port", "6924")?;
         config.set_default("daemon.default_parallel_tasks", 1)?;
         config.set_default("daemon.pause_on_failure", false)?;
-        config.set_default("daemon.secret", random_secret.clone())?;
+        config.set_default("daemon.secret", random_secret)?;
         config.set_default("daemon.callback", None::<String>)?;
-
-        //        config.set_default("client.daemon_address", "127.0.0.1")?;
-        config.set_default("client.daemon_port", "6924")?;
-        config.set_default("client.secret", random_secret)?;
-        config.set_default("client.read_local_logs", true)?;
+        config.set_default("daemon.groups", HashMap::<String, i64>::new())?;
 
         // Add in the home config file
         parse_config(&mut config)?;
