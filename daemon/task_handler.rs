@@ -6,8 +6,8 @@ use ::std::sync::mpsc::Receiver;
 use ::std::time::Duration;
 
 use ::anyhow::Result;
-use ::chrono::prelude::*;
 use ::handlebars::Handlebars;
+use ::chrono::prelude::*;
 use ::log::{debug, error, info, warn};
 #[cfg(not(windows))]
 use ::nix::{
@@ -22,22 +22,28 @@ use ::pueue::state::SharedState;
 use ::pueue::task::{TaskResult, TaskStatus, Task};
 
 pub struct TaskHandler {
+    state: SharedState,
     settings: Settings,
     receiver: Receiver<Message>,
-    pub children: BTreeMap<usize, Child>,
-    pub callbacks: Vec<Child>,
+    children: BTreeMap<usize, Child>,
+    callbacks: Vec<Child>,
     running: bool,
     reset: bool,
 }
 
 impl TaskHandler {
-    pub fn new(settings: Settings, receiver: Receiver<Message>) -> Self {
+    pub fn new(settings: Settings, state: SharedState, receiver: Receiver<Message>) -> Self {
+        let running = {
+            let state = state.lock().unwrap();
+            state.running
+        };
         TaskHandler {
+            state,
             settings,
             receiver,
             children: BTreeMap::new(),
             callbacks: Vec::new(),
-            running: true,
+            running,
             reset: false,
         }
     }
@@ -63,46 +69,39 @@ impl TaskHandler {
     /// 2. Check whether any tasks just finished
     /// 3. Check if there are any stashed processes ready for being enqueued
     /// 4. Check whether we can spawn new tasks
-    pub fn run(&mut self, state: SharedState) {
-        // Check what's the current status of the state
-        // and set the own running state accordingly
-        self.running = {
-            let state = state.lock().unwrap();
-            state.running
-        };
-
+    pub fn run(&mut self) {
         loop {
-            // Sleep for a short amount of time. We don't want to hurt the CPU
+            // Sleep for a few milliseconds. We don't want to hurt the CPU
             let timeout = Duration::from_millis(100);
             // Don't use recv_timeout for now, until this bug get's fixed
             // https://github.com/rust-lang/rust/issues/39364
             //match self.receiver.recv_timeout(timeout) {
             std::thread::sleep(timeout);
 
-            self.receive_commands(&state);
-            self.handle_finished(&state);
+            self.receive_commands();
+            self.process_finished();
             self.check_callbacks();
-            self.check_stashed(&state);
-            self.check_failed_dependencies(&state);
+            self.check_stashed();
+            self.check_failed_dependencies();
             if self.running && !self.reset {
-                let _res = self.check_new(&state);
+                let _res = self.check_new();
             }
         }
     }
 
     /// See if the task manager has a free slot and a queued task.
     /// If that's the case, start a new process.
-    fn check_new(&mut self, state: &SharedState) -> Result<()> {
+    fn check_new(&mut self) -> Result<()> {
         // Check while there are still slots left
         // Break the loop if no next task is found
         while self.children.len() < self.settings.daemon.default_parallel_tasks {
             let next_id = {
-                let mut state = state.lock().unwrap();
+                let mut state = self.state.lock().unwrap();
                 state.get_next_task_id()
             };
             match next_id {
                 Some(id) => {
-                    self.start_process(state, id);
+                    self.start_process(id);
                 }
                 None => break,
             }
@@ -113,8 +112,8 @@ impl TaskHandler {
 
     /// Ensure that no `Queued` tasks have any failed dependencies.
     /// Otherwise set their status to `Done` and result to `DependencyFailed`.
-    pub fn check_failed_dependencies(&mut self, state: &SharedState) {
-        let mut state = state.lock().unwrap();
+    pub fn check_failed_dependencies(&mut self) {
+        let mut state = self.state.lock().unwrap();
         let has_failed_deps: Vec<_> = state
             .tasks
             .iter()
@@ -142,10 +141,10 @@ impl TaskHandler {
 
     /// Actually spawn a new sub process
     /// The output of subprocesses is piped into a seperate file for easier access
-    fn start_process(&mut self, state: &SharedState, task_id: usize) {
+    fn start_process(&mut self, task_id: usize) {
         // Already get the mutex here to ensure that the state won't be manipulated
         // while we are looking for a task to start.
-        let mut state = state.lock().unwrap();
+        let mut state = self.state.lock().unwrap();
 
         let task = state.tasks.get_mut(&task_id);
         let task = match task {
@@ -226,9 +225,9 @@ impl TaskHandler {
     }
 
     /// As time passes, some delayed tasks may need to be enqueued.
-    /// Check all stashed tasks and enqueue them if it is past the task's enqueue_at
-    fn check_stashed(&mut self, state: &SharedState) {
-        let mut state = state.lock().unwrap();
+    /// Gather all stashed tasks and enqueue them if it is after the task's enqueue_at
+    fn check_stashed(&mut self) {
+        let mut state = self.state.lock().unwrap();
 
         let mut changed = false;
         for (_, task) in state.tasks.iter_mut() {
@@ -254,12 +253,12 @@ impl TaskHandler {
 
     /// Check whether there are any finished processes
     /// In case there are, handle them and update the shared state
-    fn handle_finished(&mut self, state: &SharedState) {
+    fn process_finished(&mut self) {
         let (finished, errored) = self.get_finished();
 
         // The daemon got a reset request and all children already finished
         if self.reset && self.children.is_empty() {
-            let mut state = state.lock().unwrap();
+            let mut state = self.state.lock().unwrap();
             state.reset();
             self.running = true;
             self.reset = false;
@@ -270,7 +269,8 @@ impl TaskHandler {
             return;
         }
 
-        let mut state = state.lock().unwrap();
+        let state_ref = self.state.clone();
+        let mut state = state_ref.lock().unwrap();
         // We need to know if there are any failed tasks,
         // in case the user wants to stop the daemon if a tasks fails
         let mut failed_task_exists = false;
@@ -296,7 +296,6 @@ impl TaskHandler {
             if self.reset {
                 clean_log_handles(*task_id, &self.settings);
             }
-
             self.spawn_callback(&task);
         }
 
@@ -308,7 +307,6 @@ impl TaskHandler {
             task.status = TaskStatus::Done;
             task.result = Some(TaskResult::Killed);
             failed_task_exists = true;
-
             self.spawn_callback(&task);
         }
 
@@ -345,23 +343,22 @@ impl TaskHandler {
     }
 
     /// Some client instructions require immediate action by the task handler
-    /// This functions receives those messages from the mpsc channel and
-    /// handles them accordingly
-    fn receive_commands(&mut self, state: &SharedState) {
+    /// These commands are
+    fn receive_commands(&mut self) {
         match self.receiver.try_recv() {
-            Ok(message) => self.handle_message(message, state),
+            Ok(message) => self.handle_message(message),
             Err(_) => {}
         };
     }
 
-    fn handle_message(&mut self, message: Message, state: &SharedState) {
+    fn handle_message(&mut self, message: Message) {
         match message {
-            Message::Pause(message) => self.pause(state, message),
-            Message::Start(message) => self.start(state, message),
-            Message::Kill(message) => self.kill(state, message),
+            Message::Pause(message) => self.pause(message),
+            Message::Start(message) => self.start(message),
+            Message::Kill(message) => self.kill(message),
             Message::Send(message) => self.send(message),
             Message::Parallel(amount) => self.allow_parallel_tasks(amount),
-            Message::Reset => self.reset(state),
+            Message::Reset => self.reset(),
             _ => info!("Received unhandled message {:?}", message),
         }
     }
@@ -386,16 +383,16 @@ impl TaskHandler {
     /// Handle the start message:
     /// 1. Either start the daemon and all tasks.
     /// 2. Or force the start of specific tasks.
-    fn start(&mut self, state: &SharedState, task_ids: Vec<usize>) {
+    fn start(&mut self, task_ids: Vec<usize>) {
         // Only start specific tasks
         if !task_ids.is_empty() {
             for id in &task_ids {
                 // Continue all children that are simply paused
                 if self.children.contains_key(id) {
-                    self.continue_task(state, *id);
+                    self.continue_task(*id);
                 } else {
                     // Start processes for all tasks that haven't been started yet
-                    self.start_process(state, *id);
+                    self.start_process(*id);
                 }
             }
             return;
@@ -404,20 +401,20 @@ impl TaskHandler {
         // Start the daemon and all paused tasks
         let keys: Vec<usize> = self.children.keys().cloned().collect();
         for id in keys {
-            self.continue_task(state, id);
+            self.continue_task(id);
         }
         info!("Resuming daemon (start)");
-        self.change_running(state, true);
+        self.change_running(true);
     }
 
     /// Send a start signal to a paused task to continue execution
-    fn continue_task(&mut self, state: &SharedState, id: usize) {
+    fn continue_task(&mut self, id: usize) {
         if !self.children.contains_key(&id) {
             return;
         }
         {
             // Task is already done
-            let state = state.lock().unwrap();
+            let state = self.state.lock().unwrap();
             if state.tasks.get(&id).unwrap().is_done() {
                 return;
             }
@@ -432,7 +429,7 @@ impl TaskHandler {
                 Err(err) => warn!("Failed starting task {}: {:?}", id, err),
                 Ok(success) => {
                     if success {
-                        let mut state = state.lock().unwrap();
+                        let mut state = self.state.lock().unwrap();
                         state.change_status(id, TaskStatus::Running);
                     }
                 }
@@ -443,11 +440,11 @@ impl TaskHandler {
     /// Handle the pause message:
     /// 1. Either pause the daemon and all tasks.
     /// 2. Or only pause specific tasks.
-    fn pause(&mut self, state: &SharedState, message: PauseMessage) {
+    fn pause(&mut self, message: PauseMessage) {
         // Only pause specific tasks
         if !message.task_ids.is_empty() {
             for id in &message.task_ids {
-                self.pause_task(state, *id);
+                self.pause_task(*id);
             }
             return;
         }
@@ -456,16 +453,16 @@ impl TaskHandler {
         let keys: Vec<usize> = self.children.keys().cloned().collect();
         if !message.wait {
             for id in keys {
-                self.pause_task(state, id);
+                self.pause_task(id);
             }
         }
         info!("Pausing daemon");
-        self.change_running(state, false);
+        self.change_running(false);
     }
 
     /// Pause a specific task.
     /// Send a signal to the process to actually pause the OS process
-    fn pause_task(&mut self, state: &SharedState, id: usize) {
+    fn pause_task(&mut self, id: usize) {
         if !self.children.contains_key(&id) {
             return;
         }
@@ -479,7 +476,7 @@ impl TaskHandler {
                 Err(err) => info!("Failed pausing task {}: {:?}", id, err),
                 Ok(success) => {
                     if success {
-                        let mut state = state.lock().unwrap();
+                        let mut state = self.state.lock().unwrap();
                         state.change_status(id, TaskStatus::Paused);
                     }
                 }
@@ -490,11 +487,11 @@ impl TaskHandler {
     /// Handle the pause message:
     /// 1. Either kill all tasks.
     /// 2. Or only kill specific tasks.
-    fn kill(&mut self, state: &SharedState, message: KillMessage) {
+    fn kill(&mut self, message: KillMessage) {
         // Only pause specific tasks
         if !message.task_ids.is_empty() {
             for id in message.task_ids {
-                self.kill_task(state, id);
+                self.kill_task(id);
             }
             return;
         }
@@ -502,24 +499,24 @@ impl TaskHandler {
         // Pause the daemon and kill all tasks
         if message.all {
             info!("Killing all spawned children");
-            self.change_running(state, false);
+            self.change_running(false);
             let keys: Vec<usize> = self.children.keys().cloned().collect();
             for id in keys {
-                self.kill_task(state, id);
+                self.kill_task(id);
             }
         }
     }
 
     /// Kill a specific task and handle it accordingly
     /// Triggered on `reset` and `kill`.
-    fn kill_task(&mut self, state: &SharedState, task_id: usize) {
+    fn kill_task(&mut self, task_id: usize) {
         if let Some(child) = self.children.get_mut(&task_id) {
             match child.kill() {
                 Err(_) => debug!("Task {} has already finished by itself", task_id),
                 _ => {
                     // Already mark the task as killed over here.
                     // It's hard to distinguish whether it's killed later on.
-                    let mut state = state.lock().unwrap();
+                    let mut state = self.state.lock().unwrap();
                     let mut task = state.tasks.get_mut(&task_id).unwrap();
                     task.status = TaskStatus::Done;
                     task.result = Some(TaskResult::Killed);
@@ -558,12 +555,12 @@ impl TaskHandler {
     /// Kill all children by reusing the `kill` function
     /// Set the `reset` flag, which will prevent new tasks from being spawned.
     /// If all children finished, the state will be completely reset.
-    fn reset(&mut self, state: &SharedState) {
+    fn reset(&mut self) {
         let message = KillMessage {
             task_ids: Vec::new(),
             all: true,
         };
-        self.kill(state, message);
+        self.kill(message);
 
         self.reset = true;
     }
@@ -575,13 +572,12 @@ impl TaskHandler {
     }
 
     /// Change the running state consistently
-    fn change_running(&mut self, state: &SharedState, running: bool) {
-        let mut state = state.lock().unwrap();
+    fn change_running(&mut self, running: bool) {
+        let mut state = self.state.lock().unwrap();
         state.running = running;
         self.running = running;
         state.save();
     }
-
 
     /// Users can specify a callback that's fired whenever a task finishes
     /// Execute the callback by spawning a new subprocess.
@@ -660,4 +656,5 @@ impl TaskHandler {
             self.callbacks.remove(*id);
         }
     }
+
 }
