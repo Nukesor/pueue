@@ -270,8 +270,6 @@ fn min_one(value: String) -> Result<(), String> {
             }
             Ok(())
         }
-        Err(_) => {
-            Err("Failed to parse integer".into())
-        }
+        Err(_) => Err("Failed to parse integer".into()),
     }
 }

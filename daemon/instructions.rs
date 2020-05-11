@@ -366,12 +366,7 @@ fn edit(message: EditMessage, state: &SharedState) -> Message {
 
             create_success_message("Command has been updated")
         }
-        None => {
-            create_failure_message(format!(
-                "Task to edit has gone away: {}",
-                message.task_id
-            ))
-        }
+        None => create_failure_message(format!("Task to edit has gone away: {}", message.task_id)),
     }
 }
 
@@ -467,10 +462,8 @@ fn get_log(message: LogRequestMessage, state: &SharedState) -> Message {
             // This isn't as efficient as sending the raw compressed data directly,
             // but it's a lot more convenient for now.
             let (stdout, stderr) = if message.send_logs {
-                match read_and_compress_log_files(
-                    *task_id,
-                    &state.settings.daemon.pueue_directory,
-                ) {
+                match read_and_compress_log_files(*task_id, &state.settings.daemon.pueue_directory)
+                {
                     Ok((stdout, stderr)) => (Some(stdout), Some(stderr)),
                     Err(err) => {
                         return create_failure_message(format!(

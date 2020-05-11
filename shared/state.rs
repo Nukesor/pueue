@@ -182,7 +182,10 @@ impl State {
             let path = path.join("log");
             let now: DateTime<Utc> = Utc::now();
             let time = now.format("%Y-%m-%d_%H-%M-%S");
-            (path.join(format!("{}_backup.json.partial", time)), path.join(format!("{}_state.json", time)))
+            (
+                path.join(format!("{}_backup.json.partial", time)),
+                path.join(format!("{}_state.json", time)),
+            )
         } else {
             (path.join("state.json.partial"), path.join("state.json"))
         };
