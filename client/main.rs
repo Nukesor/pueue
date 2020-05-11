@@ -23,10 +23,10 @@ async fn main() -> Result<()> {
         println!("{:?}", save_result.err());
     }
 
-    // Parse commandline options
+    // Parse commandline options.
     let opt = Opt::from_args();
 
-    // Set the verbosity level for the client app
+    // Set the verbosity level for the client app.
     if opt.verbose >= 3 {
         SimpleLogger::init(LevelFilter::Debug, Config::default())?;
     } else if opt.verbose == 2 {
@@ -48,7 +48,7 @@ async fn main() -> Result<()> {
     }
 
     // Create the message that should be sent to the daemon
-    // depending on the given commandline options
+    // depending on the given commandline options.
     let message = get_message_from_opt(&opt, &settings)?;
     let mut client = Client::new(settings, message, opt)?;
     client.run().await?;

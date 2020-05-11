@@ -4,7 +4,7 @@ use ::strum_macros::Display;
 
 /// This enum represents the status of the internal task handling of Pueue.
 /// They basically represent the internal task life-cycle.
-#[derive(Clone, Display, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Display, PartialEq, Serialize, Deserialize)]
 pub enum TaskStatus {
     /// The task is queued and waiting for a free slot
     Queued,
@@ -21,7 +21,7 @@ pub enum TaskStatus {
 }
 
 /// This enum represents the exit status of the actually spawned program.
-#[derive(Clone, Display, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Display, PartialEq, Serialize, Deserialize)]
 pub enum TaskResult {
     /// Task exited with 0
     Success,
@@ -40,11 +40,12 @@ pub enum TaskResult {
 /// exit_code, output and end won't be initialized, until the task has finished.
 /// The output of the task is written into seperate files.
 /// Upon task completion, the output is read from the files and put into the struct.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Task {
     pub id: usize,
     pub command: String,
     pub path: String,
+    pub group: Option<String>,
     pub enqueue_at: Option<DateTime<Local>>,
     pub dependencies: Vec<usize>,
     pub status: TaskStatus,
@@ -58,6 +59,7 @@ impl Task {
     pub fn new(
         command: String,
         path: String,
+        group: Option<String>,
         starting_status: TaskStatus,
         enqueue_at: Option<DateTime<Local>>,
         dependencies: Vec<usize>,
@@ -66,6 +68,7 @@ impl Task {
             id: 0,
             command,
             path,
+            group,
             enqueue_at,
             dependencies,
             status: starting_status.clone(),
@@ -81,6 +84,7 @@ impl Task {
             id: 0,
             command: task.command.clone(),
             path: task.path.clone(),
+            group: None,
             enqueue_at: None,
             dependencies: Vec::new(),
             status: TaskStatus::Queued,
@@ -92,15 +96,15 @@ impl Task {
     }
 
     pub fn is_running(&self) -> bool {
-        return self.status == TaskStatus::Running || self.status == TaskStatus::Paused;
+        self.status == TaskStatus::Running || self.status == TaskStatus::Paused
     }
 
     pub fn is_done(&self) -> bool {
-        return self.status == TaskStatus::Done;
+        self.status == TaskStatus::Done
     }
 
-    // Check if the task errored
-    // The only case when it didn't error is if it didn't run yet or if the task exited successfully
+    // Check if the task errored.
+    // The only case when it didn't error is if it didn't run yet or if the task exited successfully.
     pub fn failed(&self) -> bool {
         match self.result {
             None => false,
@@ -110,6 +114,6 @@ impl Task {
     }
 
     pub fn is_queued(&self) -> bool {
-        return self.status == TaskStatus::Queued || self.status == TaskStatus::Stashed;
+        self.status == TaskStatus::Queued || self.status == TaskStatus::Stashed
     }
 }

@@ -1,4 +1,4 @@
-use ::anyhow::{bail, Error, Result};
+use ::anyhow::{bail, Result};
 use ::simplelog::{Config, LevelFilter, SimpleLogger};
 use ::std::fs::create_dir_all;
 use ::std::path::Path;
@@ -26,20 +26,19 @@ async fn main() -> Result<()> {
     let settings = Settings::new()?;
     match settings.save() {
         Err(error) => {
-            let error: Error = From::from(error);
             bail!(error.context("Failed saving the config file"));
         }
         Ok(()) => {}
     };
 
-    // Parse commandline options
+    // Parse commandline options.
     let opt = Opt::from_args();
 
     if opt.daemonize {
         fork_daemon(&opt)?;
     }
 
-    // Set the verbosity level for the client app
+    // Set the verbosity level for the client app.
     if opt.verbose >= 3 {
         SimpleLogger::init(LevelFilter::Debug, Config::default())?;
     } else if opt.verbose == 2 {
@@ -56,19 +55,19 @@ async fn main() -> Result<()> {
     let state = Arc::new(Mutex::new(state));
 
     let (sender, receiver) = channel();
-    let mut task_handler = TaskHandler::new(settings.clone(), state.clone(), receiver);
+    let mut task_handler = TaskHandler::new(state.clone(), receiver);
 
     thread::spawn(move || {
         task_handler.run();
     });
 
-    accept_incoming(settings, sender, state.clone(), opt).await?;
+    accept_incoming(sender, state.clone(), opt).await?;
 
     Ok(())
 }
 
-/// Initialize all directories needed for normal operation
-fn init_directories(path: &String) {
+/// Initialize all directories needed for normal operation.
+fn init_directories(path: &str) {
     let pueue_dir = Path::new(path);
     if !pueue_dir.exists() {
         if let Err(error) = create_dir_all(&pueue_dir) {
@@ -99,8 +98,8 @@ fn init_directories(path: &String) {
     }
 }
 
-/// This is a simple and cheap custom fork method
-/// Simply spawn a new child with identical arguments and exit right away
+/// This is a simple and cheap custom fork method.
+/// Simply spawn a new child with identical arguments and exit right away.
 fn fork_daemon(opt: &Opt) -> Result<()> {
     let mut arguments = Vec::<String>::new();
 

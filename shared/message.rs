@@ -6,7 +6,7 @@ use crate::state::State;
 use crate::task::Task;
 
 /// The Message used to add a new command to the daemon.
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum Message {
     Add(AddMessage),
     Remove(Vec<usize>),
@@ -23,6 +23,7 @@ pub enum Message {
     EditRequest(usize),
     EditResponse(EditResponseMessage),
     Edit(EditMessage),
+    Group(GroupMessage),
 
     Status,
     StatusResponse(State),
@@ -37,94 +38,107 @@ pub enum Message {
     Success(String),
     Failure(String),
 
-    Parallel(usize),
+    Parallel(ParallelMessage),
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct AddMessage {
     pub command: String,
     pub path: String,
     pub start_immediately: bool,
     pub stashed: bool,
+    pub group: Option<String>,
     pub enqueue_at: Option<DateTime<Local>>,
     pub dependencies: Vec<usize>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct SwitchMessage {
     pub task_id_1: usize,
     pub task_id_2: usize,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct EnqueueMessage {
     pub task_ids: Vec<usize>,
     pub enqueue_at: Option<DateTime<Local>>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct RestartMessage {
     pub task_ids: Vec<usize>,
     pub start_immediately: bool,
     pub stashed: bool,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct PauseMessage {
     pub wait: bool,
     pub task_ids: Vec<usize>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct KillMessage {
     pub all: bool,
     pub task_ids: Vec<usize>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct SendMessage {
     pub task_id: usize,
     pub input: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct EditMessage {
     pub task_id: usize,
     pub command: String,
     pub path: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct EditResponseMessage {
     pub task_id: usize,
     pub command: String,
     pub path: String,
 }
 
-// The booleans decides, whether the stream should be continuous or a oneshot
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct GroupMessage {
+    pub add: Option<String>,
+    pub remove: Option<String>,
+}
+
+// The booleans decides, whether the stream should be continuous or a oneshot.
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct StreamRequestMessage {
     pub task_id: usize,
     pub follow: bool,
     pub err: bool,
 }
 
-// Request logs for specific tasks.
-// An empty task_id vector will return logs of all tasks.
-// If send_logs is false, the daemon won't send the logs
-// and the client will read logs from the local disk.
-#[derive(Serialize, Deserialize, Debug, Clone)]
+/// Request logs for specific tasks.
+/// An empty task_id vector will return logs of all tasks.
+/// If send_logs is false, the daemon won't send the logs
+/// and the client will read logs from the local disk.
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct LogRequestMessage {
     pub task_ids: Vec<usize>,
     pub send_logs: bool,
 }
 
-/// Helper struct for sending tasks and their log output to the client
-#[derive(Serialize, Deserialize, Clone, Debug)]
+/// Helper struct for sending tasks and their log output to the client.
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct TaskLogMessage {
     pub task: Task,
     pub stdout: Option<Vec<u8>>,
     pub stderr: Option<Vec<u8>>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct ParallelMessage {
+    pub parallel_tasks: usize,
+    pub group: Option<String>,
 }
 
 pub fn create_success_message<T: ToString>(text: T) -> Message {

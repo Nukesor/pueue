@@ -7,13 +7,14 @@ use ::pueue::settings::Settings;
 use crate::cli::{Opt, SubCommand};
 
 // Convert and pre-process the sub-command into a valid message
-// that can be understood by the daemon
+// that can be understood by the daemon.
 pub fn get_message_from_opt(opt: &Opt, settings: &Settings) -> Result<Message> {
     match &opt.cmd {
         SubCommand::Add {
             command,
             start_immediately,
             stashed,
+            group,
             delay_until,
             dependencies,
         } => {
@@ -26,6 +27,7 @@ pub fn get_message_from_opt(opt: &Opt, settings: &Settings) -> Result<Message> {
                 path: cwd.to_string(),
                 start_immediately: *start_immediately,
                 stashed: *stashed,
+                group: group.clone(),
                 enqueue_at: *delay_until,
                 dependencies: dependencies.to_vec(),
             }))
@@ -87,10 +89,16 @@ pub fn get_message_from_opt(opt: &Opt, settings: &Settings) -> Result<Message> {
             };
             Ok(Message::Send(message))
         }
-        SubCommand::Edit { task_id, path: _ } => Ok(Message::EditRequest(*task_id)),
-
-        SubCommand::Status { json: _ } => Ok(Message::Status),
-        SubCommand::Log { task_ids, json: _ } => {
+        SubCommand::Edit { task_id, .. } => Ok(Message::EditRequest(*task_id)),
+        SubCommand::Group { add, remove } => {
+            let message = GroupMessage {
+                add: add.clone(),
+                remove: remove.clone(),
+            };
+            Ok(Message::Group(message))
+        }
+        SubCommand::Status { .. } => Ok(Message::Status),
+        SubCommand::Log { task_ids, .. } => {
             let message = LogRequestMessage {
                 task_ids: task_ids.clone(),
                 send_logs: !settings.client.read_local_logs,
@@ -112,11 +120,16 @@ pub fn get_message_from_opt(opt: &Opt, settings: &Settings) -> Result<Message> {
         SubCommand::Clean => Ok(Message::Clean),
         SubCommand::Reset => Ok(Message::Reset),
         SubCommand::Shutdown => Ok(Message::DaemonShutdown),
-
-        SubCommand::Parallel { parallel_tasks } => Ok(Message::Parallel(*parallel_tasks)),
-        SubCommand::Completions {
-            shell: _,
-            output_directory: _,
-        } => Err(anyhow!("Completions have to be handled earlier")),
+        SubCommand::Parallel {
+            parallel_tasks,
+            group,
+        } => {
+            let message = ParallelMessage {
+                parallel_tasks: *parallel_tasks,
+                group: group.clone(),
+            };
+            Ok(Message::Parallel(message))
+        }
+        SubCommand::Completions { .. } => Err(anyhow!("Completions have to be handled earlier")),
     }
 }

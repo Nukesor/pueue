@@ -6,8 +6,8 @@ use ::std::sync::mpsc::Receiver;
 use ::std::time::Duration;
 
 use ::anyhow::Result;
-use ::handlebars::Handlebars;
 use ::chrono::prelude::*;
+use ::handlebars::Handlebars;
 use ::log::{debug, error, info, warn};
 #[cfg(not(windows))]
 use ::nix::{
@@ -17,40 +17,50 @@ use ::nix::{
 
 use ::pueue::log::*;
 use ::pueue::message::*;
-use ::pueue::settings::Settings;
 use ::pueue::state::SharedState;
-use ::pueue::task::{TaskResult, TaskStatus, Task};
+use ::pueue::task::{Task, TaskResult, TaskStatus};
 
 pub struct TaskHandler {
     state: SharedState,
-    settings: Settings,
     receiver: Receiver<Message>,
     children: BTreeMap<usize, Child>,
     callbacks: Vec<Child>,
     running: bool,
     reset: bool,
+    // Some static settings that are extracted from `state.settings` for convenience purposes.
+    pueue_directory: String,
+    callback: Option<String>,
+    pause_on_failure: bool,
 }
 
 impl TaskHandler {
-    pub fn new(settings: Settings, state: SharedState, receiver: Receiver<Message>) -> Self {
-        let running = {
+    pub fn new(state: SharedState, receiver: Receiver<Message>) -> Self {
+        let (running, pueue_directory, callback, pause_on_failure) = {
             let state = state.lock().unwrap();
-            state.running
+            let settings = &state.settings.daemon;
+            (
+                state.running,
+                settings.pueue_directory.clone(),
+                settings.callback.clone(),
+                settings.pause_on_failure,
+            )
         };
         TaskHandler {
             state,
-            settings,
             receiver,
             children: BTreeMap::new(),
             callbacks: Vec::new(),
             running,
             reset: false,
+            pueue_directory,
+            callback,
+            pause_on_failure,
         }
     }
 }
 
-/// The task handler needs to kill all child processes as soon, as the program exits
-/// This is needed to prevent detached processes
+/// The task handler needs to kill all child processes as soon, as the program exits.
+/// This is needed to prevent detached processes.
 impl Drop for TaskHandler {
     fn drop(&mut self) {
         let ids: Vec<usize> = self.children.keys().cloned().collect();
@@ -63,21 +73,14 @@ impl Drop for TaskHandler {
 }
 
 impl TaskHandler {
-    /// Main loop of the task handler
+    /// Main loop of the task handler.
     /// In here a few things happen:
-    /// 1. Propagated commands from socket communication is received and handled
-    /// 2. Check whether any tasks just finished
-    /// 3. Check if there are any stashed processes ready for being enqueued
-    /// 4. Check whether we can spawn new tasks
+    /// 1. Propagated commands from socket communication is received and handled.
+    /// 2. Check whether any tasks just finished.
+    /// 3. Check if there are any stashed processes ready for being enqueued.
+    /// 4. Check whether we can spawn new tasks.
     pub fn run(&mut self) {
         loop {
-            // Sleep for a few milliseconds. We don't want to hurt the CPU
-            let timeout = Duration::from_millis(100);
-            // Don't use recv_timeout for now, until this bug get's fixed
-            // https://github.com/rust-lang/rust/issues/39364
-            //match self.receiver.recv_timeout(timeout) {
-            std::thread::sleep(timeout);
-
             self.receive_commands();
             self.handle_finished_tasks();
             self.check_callbacks();
@@ -89,22 +92,90 @@ impl TaskHandler {
         }
     }
 
-    /// See if the task manager has a free slot and a queued task.
-    /// If that's the case, start a new process.
-    fn check_new(&mut self) -> Result<()> {
-        // Check while there are still slots left
-        // Break the loop if no next task is found
-        while self.children.len() < self.settings.daemon.default_parallel_tasks {
-            let next_id = {
-                let mut state = self.state.lock().unwrap();
-                state.get_next_task_id()
-            };
-            match next_id {
-                Some(id) => {
-                    self.start_process(id);
-                }
-                None => break,
+    /// Search and return the next task that can be started.
+    /// Precondition for a task to be started:
+    /// - is in Queued state
+    /// - There are free slots in the task's group
+    /// - has all its dependencies in `Done` state
+    pub fn get_next_task_id(&mut self) -> Option<usize> {
+        let state = self.state.lock().unwrap();
+
+        // Check how many tasks are running in each group
+        let mut running_tasks_per_group: HashMap<String, usize> = HashMap::new();
+        // Create a default group for tasks without an explicit group
+        running_tasks_per_group.insert("default".into(), 0);
+
+        for (_, task) in state.tasks.iter() {
+            // We are only interested in currently running tasks.
+            if ![TaskStatus::Running, TaskStatus::Paused].contains(&task.status) {
+                continue;
             }
+
+            // Get the group of the task or the default key
+            let group = if let Some(group) = &task.group {
+                group
+            } else {
+                "default"
+            };
+
+            match running_tasks_per_group.get(group) {
+                Some(&count) => {
+                    running_tasks_per_group.insert(group.into(), count + 1);
+                }
+                None => {
+                    running_tasks_per_group.insert(group.into(), 1);
+                }
+            }
+        }
+
+        state
+            .tasks
+            .iter()
+            .filter(|(_, task)| task.status == TaskStatus::Queued)
+            .filter(|(_, task)| {
+                if let Some(group) = &task.group {
+                    // The task is assigned to a group.
+                    //
+                    // If there's no entry, we can safely return true, since there's no running
+                    // task for this group yet.
+                    //
+                    // If there's a group, we have to ensure that there are fewer running tasks than
+                    // allowed for this group.
+                    match running_tasks_per_group.get(group) {
+                        Some(count) => match state.settings.daemon.groups.get(group) {
+                            Some(allowed) => count < allowed,
+                            None => {
+                                error!(
+                                    "Got task with unknown group {}. Please report this!",
+                                    group
+                                );
+                                false
+                            }
+                        },
+                        None => true,
+                    }
+                } else {
+                    // We can unwrap safely, since default is always created.
+                    let running = running_tasks_per_group.get("default").unwrap();
+
+                    running < &state.settings.daemon.default_parallel_tasks
+                }
+            })
+            .find(|(_, task)| {
+                // Check whether all dependencies for this task are fulfilled.
+                task.dependencies
+                    .iter()
+                    .flat_map(|id| state.tasks.get(id))
+                    .all(|task| task.status == TaskStatus::Done)
+            })
+            .map(|(id, _)| *id)
+    }
+
+    /// See if we can start a new queued task.
+    fn check_new(&mut self) -> Result<()> {
+        // Get the next task id that can be started
+        if let Some(id) = self.get_next_task_id() {
+            self.start_process(id);
         }
 
         Ok(())
@@ -168,7 +239,8 @@ impl TaskHandler {
 
         // Try to get the log files to which the output of the process
         // Will be written. Error if this doesn't work!
-        let (stdout_log, stderr_log) = match create_log_file_handles(task_id, &self.settings) {
+        let (stdout_log, stderr_log) = match create_log_file_handles(task_id, &self.pueue_directory)
+        {
             Ok((out, err)) => (out, err),
             Err(err) => {
                 error!("Failed to create child log files: {:?}", err);
@@ -202,12 +274,12 @@ impl TaskHandler {
             Err(err) => {
                 let error = format!("Failed to spawn child {} with err: {:?}", task_id, err);
                 error!("{}", error);
-                clean_log_handles(task_id, &self.settings);
+                clean_log_handles(task_id, &self.pueue_directory);
                 task.status = TaskStatus::Done;
                 task.result = Some(TaskResult::FailedToSpawn(error));
 
                 // Pause the daemon, if the settings say so
-                if self.settings.daemon.pause_on_failure {
+                if self.pause_on_failure {
                     self.running = false;
                     state.running = false;
                     state.save();
@@ -294,7 +366,7 @@ impl TaskHandler {
 
             // Already remove the output files, if the daemon is being reset anyway
             if self.reset {
-                clean_log_handles(*task_id, &self.settings);
+                clean_log_handles(*task_id, &self.pueue_directory);
             }
             self.spawn_callback(&task);
         }
@@ -311,7 +383,7 @@ impl TaskHandler {
         }
 
         // Pause the daemon, if the settings say so and some process failed
-        if failed_task_exists && self.settings.daemon.pause_on_failure {
+        if failed_task_exists && self.pause_on_failure {
             self.running = false;
             state.running = false;
         }
@@ -343,11 +415,16 @@ impl TaskHandler {
     }
 
     /// Some client instructions require immediate action by the task handler
-    /// These commands are
     fn receive_commands(&mut self) {
-        match self.receiver.try_recv() {
-            Ok(message) => self.handle_message(message),
-            Err(_) => {}
+        // Sleep for a few milliseconds. We don't want to hurt the CPU.
+        let timeout = Duration::from_millis(100);
+        // Don't use recv_timeout for now, until this bug get's fixed.
+        // https://github.com/rust-lang/rust/issues/39364
+        //match self.receiver.recv_timeout(timeout) {
+        std::thread::sleep(timeout);
+
+        if let Ok(message) = self.receiver.try_recv() {
+            self.handle_message(message);
         };
     }
 
@@ -357,13 +434,12 @@ impl TaskHandler {
             Message::Start(message) => self.start(message),
             Message::Kill(message) => self.kill(message),
             Message::Send(message) => self.send(message),
-            Message::Parallel(amount) => self.allow_parallel_tasks(amount),
             Message::Reset => self.reset(),
             _ => info!("Received unhandled message {:?}", message),
         }
     }
 
-    /// Send a signal to a unix process
+    /// Send a signal to a unix process.
     #[cfg(not(windows))]
     fn send_signal(&mut self, id: usize, signal: Signal) -> Result<bool, nix::Error> {
         if let Some(child) = self.children.get(&id) {
@@ -407,7 +483,7 @@ impl TaskHandler {
         self.change_running(true);
     }
 
-    /// Send a start signal to a paused task to continue execution
+    /// Send a start signal to a paused task to continue execution.
     fn continue_task(&mut self, id: usize) {
         if !self.children.contains_key(&id) {
             return;
@@ -461,7 +537,7 @@ impl TaskHandler {
     }
 
     /// Pause a specific task.
-    /// Send a signal to the process to actually pause the OS process
+    /// Send a signal to the process to actually pause the OS process.
     fn pause_task(&mut self, id: usize) {
         if !self.children.contains_key(&id) {
             return;
@@ -496,7 +572,7 @@ impl TaskHandler {
             return;
         }
 
-        // Pause the daemon and kill all tasks
+        // Pause the daemon and kill all tasks.
         if message.all {
             info!("Killing all spawned children");
             self.change_running(false);
@@ -507,7 +583,7 @@ impl TaskHandler {
         }
     }
 
-    /// Kill a specific task and handle it accordingly
+    /// Kill a specific task and handle it accordingly.
     /// Triggered on `reset` and `kill`.
     fn kill_task(&mut self, task_id: usize) {
         if let Some(child) = self.children.get_mut(&task_id) {
@@ -527,7 +603,7 @@ impl TaskHandler {
         }
     }
 
-    /// Send some input to a child process
+    /// Send some input to a child process.
     fn send(&mut self, message: SendMessage) {
         let task_id = message.task_id;
         let input = message.input;
@@ -552,7 +628,7 @@ impl TaskHandler {
         }
     }
 
-    /// Kill all children by reusing the `kill` function
+    /// Kill all children by reusing the `kill` function.
     /// Set the `reset` flag, which will prevent new tasks from being spawned.
     /// If all children finished, the state will be completely reset.
     fn reset(&mut self) {
@@ -565,13 +641,7 @@ impl TaskHandler {
         self.reset = true;
     }
 
-    /// Adjust the amount of allowed parallel tasks
-    /// This function also saves the new settings to the default config location
-    fn allow_parallel_tasks(&mut self, amount: usize) {
-        self.settings.daemon.default_parallel_tasks = amount;
-    }
-
-    /// Change the running state consistently
+    /// Change the running state consistently.
     fn change_running(&mut self, running: bool) {
         let mut state = self.state.lock().unwrap();
         state.running = running;
@@ -579,29 +649,37 @@ impl TaskHandler {
         state.save();
     }
 
-    /// Users can specify a callback that's fired whenever a task finishes
+    /// Users can specify a callback that's fired whenever a task finishes.
     /// Execute the callback by spawning a new subprocess.
     fn spawn_callback(&mut self, task: &Task) {
         // Return early, if there's no callback specified
-        let callback = if let Some(callback) = &self.settings.daemon.callback {
+        let callback = if let Some(callback) = &self.callback {
             callback
         } else {
             return;
         };
 
-        // Build the callback command from the given template
+        // Build the callback command from the given template.
         let mut handlebars = Handlebars::new();
         handlebars.set_strict_mode(true);
-        // Build templating variables
+        // Build templating variables.
         let mut parameters = HashMap::new();
         parameters.insert("id", task.id.to_string());
         parameters.insert("command", task.command.clone());
         parameters.insert("path", task.path.clone());
         parameters.insert("result", task.result.clone().unwrap().to_string());
+        if let Some(group) = &task.group {
+            parameters.insert("group", group.clone());
+        } else {
+            parameters.insert("group", "default".into());
+        }
         let callback_command = match handlebars.render_template(&callback, &parameters) {
             Ok(command) => command,
             Err(err) => {
-                error!("Failed to create callback command from template with error: {}", err);
+                error!(
+                    "Failed to create callback command from template with error: {}",
+                    err
+                );
                 return;
             }
         };
@@ -623,7 +701,7 @@ impl TaskHandler {
             Err(error) => {
                 error!("Failed to spawn callback with error: {}", error);
                 return;
-            },
+            }
             Ok(child) => child,
         };
 
@@ -631,8 +709,8 @@ impl TaskHandler {
         self.callbacks.push(child);
     }
 
-    /// Look at all running callbacks and log any errors
-    /// If everything went smoothly, simply remove them from the list
+    /// Look at all running callbacks and log any errors.
+    /// If everything went smoothly, simply remove them from the list.
     fn check_callbacks(&mut self) {
         let mut finished = Vec::new();
         for (id, child) in self.callbacks.iter_mut().enumerate() {
@@ -642,7 +720,7 @@ impl TaskHandler {
                     error!("Callback failed with error {:?}", error);
                     finished.push(id);
                 }
-                // Child process did not exit yet
+                // Child process did not exit yet.
                 Ok(None) => continue,
                 Ok(exit_status) => {
                     info!("Callback finished with exit code {:?}", exit_status);
@@ -656,5 +734,4 @@ impl TaskHandler {
             self.callbacks.remove(*id);
         }
     }
-
 }

@@ -25,18 +25,20 @@ pub fn handle_message(message: Message, sender: &Sender<Message>, state: &Shared
         Message::Send(message) => send(message, sender, state),
         Message::EditRequest(task_id) => edit_request(task_id, state),
         Message::Edit(message) => edit(message, state),
+        Message::Group(message) => group(message, state),
 
         Message::Clean => clean(state),
         Message::Reset => reset(sender, state),
         Message::Status => get_status(state),
         Message::Log(message) => get_log(message, state),
-        Message::Parallel(amount) => set_parallel_tasks(amount, sender),
+        Message::Parallel(message) => set_parallel_tasks(message, state),
         _ => create_failure_message("Not implemented yet"),
     }
 }
 
 /// Queues a new task to the state.
-/// If the start_immediately flag is set, send a StartMessage to the task handler
+/// If the start_immediately flag is set, send a StartMessage to the task handler.
+/// Invoked when calling `pueue add`.
 fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
     let starting_status = if message.stashed || message.enqueue_at.is_some() {
         TaskStatus::Stashed
@@ -46,32 +48,48 @@ fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) 
 
     let mut state = state.lock().unwrap();
 
+    // Ensure that specified dependencies actually exist.
     let not_found: Vec<_> = message
         .dependencies
         .iter()
         .filter(|id| !state.tasks.contains_key(id))
         .collect();
-
     if !not_found.is_empty() {
         return create_failure_message(format!(
             "Unable to setup dependencies : task(s) {:?} not found",
             not_found
         ));
     }
+
+    // Create a new task and add it to the state.
     let task = Task::new(
         message.command,
         message.path,
+        message.group,
         starting_status,
         message.enqueue_at,
         message.dependencies,
     );
+
+    // Create a new group in case the user used a unknown group.
+    if let Some(group) = &task.group {
+        if state.groups.get(group).is_none() {
+            return create_failure_message(format!(
+                "Tried to create task with unknown group '{}'",
+                group
+            ));
+        }
+    }
+
     let task_id = state.add_task(task);
+
+    // Notify the task handler, in case the client wants to start the task immediately.
     if message.start_immediately {
         sender
             .send(Message::Start(vec![task_id]))
             .expect(SENDER_ERR);
     }
-
+    // Create the customized response for the client.
     let message = if let Some(enqueue_at) = message.enqueue_at {
         format!(
             "New task added (id {}). It will be enqueued at {}",
@@ -86,7 +104,9 @@ fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) 
     create_success_message(message)
 }
 
-/// Remove tasks from the queue
+/// Remove tasks from the queue.
+/// We have to ensure that those tasks aren't running!
+/// Invoked when calling `pueue remove`.
 fn remove(task_ids: Vec<usize>, state: &SharedState) -> Message {
     let mut state = state.lock().unwrap();
     let statuses = vec![TaskStatus::Running, TaskStatus::Paused];
@@ -102,7 +122,9 @@ fn remove(task_ids: Vec<usize>, state: &SharedState) -> Message {
     create_success_message(response)
 }
 
-/// Switch the position of two tasks in the upcoming queue
+/// Switch the position of two tasks in the upcoming queue.
+/// We have to ensure that those tasks are either `Queued` or `Stashed`
+/// Invoked when calling `pueue switch`.
 fn switch(message: SwitchMessage, state: &SharedState) -> Message {
     let task_ids = vec![message.task_id_1, message.task_id_2];
     let statuses = vec![TaskStatus::Queued, TaskStatus::Stashed];
@@ -129,7 +151,8 @@ fn switch(message: SwitchMessage, state: &SharedState) -> Message {
 }
 
 /// Stash specific queued tasks.
-/// They won't be executed until enqueued again or explicitely started
+/// They won't be executed until they're enqueued or explicitely started.
+/// Invoked when calling `pueue stash`.
 fn stash(task_ids: Vec<usize>, state: &SharedState) -> Message {
     let (matching, mismatching) = {
         let mut state = state.lock().unwrap();
@@ -145,11 +168,11 @@ fn stash(task_ids: Vec<usize>, state: &SharedState) -> Message {
 
     let text = "Tasks are stashed";
     let response = compile_task_response(text, matching, mismatching);
-    return create_success_message(response);
+    create_success_message(response)
 }
 
 /// Enqueue specific stashed tasks.
-/// They will be normally handled afterwards.
+/// Invoked when calling `pueue enqueue`.
 fn enqueue(message: EnqueueMessage, state: &SharedState) -> Message {
     let (matching, mismatching) = {
         let mut state = state.lock().unwrap();
@@ -176,10 +199,11 @@ fn enqueue(message: EnqueueMessage, state: &SharedState) -> Message {
     };
 
     let response = compile_task_response(text.as_str(), matching, mismatching);
-    return create_success_message(response);
+    create_success_message(response)
 }
 
-/// Forward the start message to the task handler and respond to the client
+/// Forward the start message to the task handler, which then starts the process(es).
+/// Invoked when calling `pueue start`.
 fn start(task_ids: Vec<usize>, sender: &Sender<Message>, state: &SharedState) -> Message {
     sender
         .send(Message::Start(task_ids.clone()))
@@ -194,11 +218,12 @@ fn start(task_ids: Vec<usize>, sender: &Sender<Message>, state: &SharedState) ->
         return create_success_message(response);
     }
 
-    return create_success_message("Daemon and all tasks are being resumed.");
+    create_success_message("Daemon and all tasks are being resumed.")
 }
 
-/// Create and enqueue tasks from already finished tasks
+/// Create and enqueue tasks from already finished tasks.
 /// The user can specify to immediately start the newly created tasks.
+/// Invoked when calling `pueue restart`.
 fn restart(message: RestartMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
     let new_status = if message.stashed {
         TaskStatus::Stashed
@@ -220,8 +245,8 @@ fn restart(message: RestartMessage, sender: &Sender<Message>, state: &SharedStat
             new_ids.push(state.add_task(new_task));
         }
 
-        // Already create the response string in here. Otherwise we would
-        // need to get matching/mismatching out of this scope
+        // Already create the response string in here.
+        // Otherwise we would need to get matching/mismatching out of this scope.
         response = compile_task_response("Restarted tasks", matching, mismatching);
 
         new_ids
@@ -233,10 +258,11 @@ fn restart(message: RestartMessage, sender: &Sender<Message>, state: &SharedStat
         sender.send(Message::Start(new_ids)).expect(SENDER_ERR);
     }
 
-    return create_success_message(response);
+    create_success_message(response)
 }
 
-/// Forward the pause message to the task handler and respond to the client
+/// Forward the pause message to the task handler, which then pauses the process(es).
+/// Invoked when calling `pueue pause`.
 fn pause(message: PauseMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
     sender
         .send(Message::Pause(message.clone()))
@@ -251,10 +277,11 @@ fn pause(message: PauseMessage, sender: &Sender<Message>, state: &SharedState) -
         return create_success_message(response);
     }
 
-    return create_success_message("Daemon and all tasks are being paused.");
+    create_success_message("Daemon and all tasks are being paused.")
 }
 
-/// Forward the kill message to the task handler and respond to the client
+/// Forward the kill message to the task handler, which then kills the process.
+/// Invoked when calling `pueue kill`.
 fn kill(message: KillMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
     sender
         .send(Message::Kill(message.clone()))
@@ -270,14 +297,14 @@ fn kill(message: KillMessage, sender: &Sender<Message>, state: &SharedState) -> 
         return create_success_message(response);
     }
 
-    return create_success_message("All tasks are being killed.");
+    create_success_message("All tasks are being killed.")
 }
 
-// Send some user defined input to a process
-// The message will be forwarded to the task handler.
-// In here we only do some error handling.
+/// The message will be forwarded to the task handler, which then sends the user input to the process.
+/// In here we only do some error handling.
+/// Invoked when calling `pueue send`.
 fn send(message: SendMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
-    // Check whether the task exists and is running, abort if that's not the case
+    // Check whether the task exists and is running. Abort if that's not the case.
     {
         let state = state.lock().unwrap();
         match state.tasks.get(&message.task_id) {
@@ -290,16 +317,17 @@ fn send(message: SendMessage, sender: &Sender<Message>, state: &SharedState) -> 
         }
     }
 
-    // Check whether the task exists and is running, abort if that's not the case
+    // Check whether the task exists and is running, abort if that's not the case.
     sender.send(Message::Send(message)).expect(SENDER_ERR);
 
-    return create_success_message("Message is being send to the process.");
+    create_success_message("Message is being send to the process.")
 }
 
-// If a user wants to edit a message, we need to send him the current command
-// and lock the task to prevent execution, before the user has finished editing the command
+/// If a user wants to edit a message, we need to send him the current command.
+/// Lock the task to prevent execution, before the user has finished editing the command.
+/// Invoked when calling `pueue edit`.
 fn edit_request(task_id: usize, state: &SharedState) -> Message {
-    // Check whether the task exists and is queued/stashed, abort if that's not the case
+    // Check whether the task exists and is queued/stashed. Abort if that's not the case.
     let mut state = state.lock().unwrap();
     match state.tasks.get_mut(&task_id) {
         Some(task) => {
@@ -314,15 +342,16 @@ fn edit_request(task_id: usize, state: &SharedState) -> Message {
                 command: task.command.clone(),
                 path: task.path.clone(),
             };
-            return Message::EditResponse(message);
+            Message::EditResponse(message)
         }
-        None => return create_failure_message("No task with this id."),
+        None => create_failure_message("No task with this id."),
     }
 }
 
-// Handle the actual updated command
+/// Now we actually update the message with the updated command from the client.
+/// Invoked after closing the editor on `pueue edit`.
 fn edit(message: EditMessage, state: &SharedState) -> Message {
-    // Check whether the task exists and is queued/stashed, abort if that's not the case
+    // Check whether the task exists and is locked. Abort if that's not the case
     let mut state = state.lock().unwrap();
     match state.tasks.get_mut(&message.task_id) {
         Some(task) => {
@@ -335,10 +364,10 @@ fn edit(message: EditMessage, state: &SharedState) -> Message {
             task.path = message.path.clone();
             state.save();
 
-            return create_success_message("Command has been updated");
+            create_success_message("Command has been updated")
         }
         None => {
-            return create_failure_message(format!(
+            create_failure_message(format!(
                 "Task to edit has gone away: {}",
                 message.task_id
             ))
@@ -346,7 +375,49 @@ fn edit(message: EditMessage, state: &SharedState) -> Message {
     }
 }
 
-/// Remove all failed or done tasks from the state
+/// Manage groups.
+/// - Show groups
+/// - Add group
+/// - Remove group
+/// Invoked on `pueue groups`.
+fn group(message: GroupMessage, state: &SharedState) -> Message {
+    let mut state = state.lock().unwrap();
+
+    // Create a new group
+    if let Some(group) = message.add {
+        if state.groups.contains_key(&group) {
+            return create_failure_message(format!("Group {} already exists", group));
+        }
+        if let Err(error) = state.create_group(&group) {
+            return create_failure_message(format!(
+                "Failed while saving the config file: {}",
+                error
+            ));
+        }
+
+        return create_success_message(format!("Group {} created", group));
+    }
+
+    // Remove a new group
+    if let Some(group) = message.remove {
+        if !state.groups.contains_key(&group) {
+            return create_failure_message(format!("Group {} doesn't exists", group));
+        }
+        if let Err(error) = state.remove_group(&group) {
+            return create_failure_message(format!(
+                "Failed while saving the config file: {}",
+                error
+            ));
+        }
+        return create_success_message(format!("Group {} removed", group));
+    }
+
+    // Print all groups
+    create_success_message(format!("Groups: {:?}", state.groups.keys()))
+}
+
+/// Remove all failed or done tasks from the state.
+/// Invoked when calling `pueue clean`.
 fn clean(state: &SharedState) -> Message {
     let mut state = state.lock().unwrap();
     state.backup();
@@ -354,31 +425,32 @@ fn clean(state: &SharedState) -> Message {
 
     for task_id in &matching {
         let _ = state.tasks.remove(task_id).unwrap();
-        clean_log_handles(*task_id, &state.settings);
+        clean_log_handles(*task_id, &state.settings.daemon.pueue_directory);
     }
 
     state.save();
 
-    return create_success_message("All finished tasks have been removed");
+    create_success_message("All finished tasks have been removed")
 }
 
-/// Forward the reset request to the task handler
-/// The handler then kills all children and clears the task queue
+/// Forward the reset request to the task handler.
+/// The handler then kills all children and clears the task queue.
+/// Invoked when calling `pueue reset`.
 fn reset(sender: &Sender<Message>, state: &SharedState) -> Message {
     sender.send(Message::Reset).expect(SENDER_ERR);
     clean(state);
-    return create_success_message("Everything is being reset right now.");
+    create_success_message("Everything is being reset right now.")
 }
 
-/// Return the current state
-/// Invoked when calling `pueue status`
+/// Return the current state.
+/// Invoked when calling `pueue status`.
 fn get_status(state: &SharedState) -> Message {
     let state = state.lock().unwrap().clone();
     Message::StatusResponse(state)
 }
 
-/// Return the current state and the stdou/stderr of all tasks to the client
-/// Invoked when calling `pueue log`
+/// Return the current state and the stdou/stderr of all tasks to the client.
+/// Invoked when calling `pueue log`.
 fn get_log(message: LogRequestMessage, state: &SharedState) -> Message {
     let state = state.lock().unwrap().clone();
     // Return all logs, if no specific task id is specified
@@ -390,39 +462,70 @@ fn get_log(message: LogRequestMessage, state: &SharedState) -> Message {
 
     let mut tasks = BTreeMap::new();
     for task_id in task_ids.iter() {
-        match state.tasks.get(task_id) {
-            Some(task) => {
-                // We send log output and the task at the same time
-                // This isn't as efficient as sending the raw compressed data directly,
-                // but it's a lot more convenient for now.
-                let (stdout, stderr) = if message.send_logs {
-                    match read_and_compress_log_files(*task_id, &state.settings) {
-                        Ok((stdout, stderr)) => (Some(stdout), Some(stderr)),
-                        Err(err) => {
-                            return create_failure_message(format!(
-                                "Failed reading process output file: {:?}",
-                                err
-                            ));
-                        }
+        if let Some(task) = state.tasks.get(task_id) {
+            // We send log output and the task at the same time.
+            // This isn't as efficient as sending the raw compressed data directly,
+            // but it's a lot more convenient for now.
+            let (stdout, stderr) = if message.send_logs {
+                match read_and_compress_log_files(
+                    *task_id,
+                    &state.settings.daemon.pueue_directory,
+                ) {
+                    Ok((stdout, stderr)) => (Some(stdout), Some(stderr)),
+                    Err(err) => {
+                        return create_failure_message(format!(
+                            "Failed reading process output file: {:?}",
+                            err
+                        ));
                     }
-                } else {
-                    (None, None)
-                };
+                }
+            } else {
+                (None, None)
+            };
 
-                let task_log = TaskLogMessage {
-                    task: task.clone(),
-                    stdout,
-                    stderr,
-                };
-                tasks.insert(*task_id, task_log);
-            }
-            None => {}
+            let task_log = TaskLogMessage {
+                task: task.clone(),
+                stdout,
+                stderr,
+            };
+            tasks.insert(*task_id, task_log);
         }
     }
     Message::LogResponse(tasks)
 }
 
-fn set_parallel_tasks(amount: usize, sender: &Sender<Message>) -> Message {
-    sender.send(Message::Parallel(amount)).expect(SENDER_ERR);
-    return create_success_message("Parallel tasks setting adjusted");
+/// Set the parallel tasks for either a specific group or the global default.
+fn set_parallel_tasks(message: ParallelMessage, state: &SharedState) -> Message {
+    let mut state = state.lock().unwrap();
+
+    // Set the default parallel tasks if no group is specified.
+    if message.group.is_none() {
+        state.settings.daemon.default_parallel_tasks = message.parallel_tasks;
+        return create_success_message("Parallel tasks setting adjusted");
+    }
+
+    // We can safely unwrap, since we handled the `None` case above.
+    let group = &message.group.unwrap();
+    // Check if the given group exists.
+    if !state.groups.contains_key(group) {
+        return create_failure_message(format!(
+            "Unknown group. Use one of these: {:?}",
+            state.groups.keys()
+        ));
+    }
+
+    state
+        .settings
+        .daemon
+        .groups
+        .insert(group.into(), message.parallel_tasks);
+
+    if let Err(error) = state.settings.save() {
+        return create_failure_message(format!("Failed while saving the config file: {}", error));
+    }
+
+    create_success_message(format!(
+        "Parallel tasks setting for group {} adjusted",
+        group
+    ))
 }

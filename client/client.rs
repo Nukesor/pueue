@@ -10,13 +10,13 @@ use ::pueue::message::*;
 use ::pueue::protocol::*;
 use ::pueue::settings::Settings;
 
-/// Representation of a client
-/// For convenience purposes this logic has been wrapped in a struct
+/// Representation of a client.
+/// For convenience purposes this logic has been wrapped in a struct.
 /// The client is responsible for connecting to the daemon, sending an instruction
-/// and interpreting the response
+/// and interpreting the response.
 ///
 /// Most commands are a simple ping-pong. Though, some commands require a more complex
-/// communication pattern (e.g. `show -f`, which contiuously streams the output of a task)
+/// communication pattern (e.g. `show -f`, which contiuously streams the output of a task).
 pub struct Client {
     opt: Opt,
     daemon_address: String,
@@ -48,7 +48,7 @@ impl Client {
             opt,
             daemon_address: address,
             message,
-            settings: settings,
+            settings,
         })
     }
 

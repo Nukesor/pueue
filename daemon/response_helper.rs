@@ -7,7 +7,7 @@ pub fn task_response_helper(
     statuses: Vec<TaskStatus>,
     state: &SharedState,
 ) -> String {
-    // Get all matching/mismatching task_ids for all given ids and statuses
+    // Get all matching/mismatching task_ids for all given ids and statuses.
     let (matching, mismatching) = {
         let mut state = state.lock().unwrap();
         state.tasks_in_statuses(statuses, Some(task_ids))
@@ -28,7 +28,7 @@ pub fn compile_task_response(
     let mismatching: Vec<String> = mismatching.iter().map(|id| id.to_string()).collect();
     let matching_string = matching.join(", ");
 
-    // We don't have any mismatching ids, return the simple message
+    // We don't have any mismatching ids, return the simple message.
     if mismatching.is_empty() {
         return format!("{}: {}", message, matching_string);
     }
@@ -36,12 +36,12 @@ pub fn compile_task_response(
     let mismatched_message = "The command couldn't be executed for these tasks";
     let mismatching_string = mismatching.join(", ");
 
-    // All given ids are invalid
+    // All given ids are invalid.
     if matching.is_empty() {
         return format!("{}: {}", mismatched_message, mismatching_string);
     }
 
-    // Some ids were valid, some were invalid
+    // Some ids were valid, some were invalid.
     format!(
         "{}: {}\n{}: {}",
         message, matching_string, mismatched_message, mismatching_string

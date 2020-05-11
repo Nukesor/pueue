@@ -3,6 +3,7 @@ use ::chrono::prelude::*;
 use ::log::{error, info};
 use ::serde_derive::{Deserialize, Serialize};
 use ::std::collections::BTreeMap;
+use ::std::collections::HashMap;
 use ::std::fs;
 use ::std::path::{Path, PathBuf};
 use ::std::sync::{Arc, Mutex};
@@ -13,23 +14,33 @@ use crate::task::{Task, TaskResult, TaskStatus};
 
 pub type SharedState = Arc<Mutex<State>>;
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct State {
     max_id: usize,
     pub settings: Settings,
     pub running: bool,
     pub tasks: BTreeMap<usize, Task>,
+    /// Represents whether the group is currently paused or running
+    pub groups: HashMap<String, bool>,
 }
 
 impl State {
     pub fn new(settings: &Settings) -> State {
+        // Create a default group state.
+        let mut groups = HashMap::new();
+        for group in settings.daemon.groups.keys() {
+            groups.insert(group.into(), true);
+        }
+
         let mut state = State {
             max_id: 0,
             settings: settings.clone(),
             running: true,
             tasks: BTreeMap::new(),
+            groups,
         };
         state.restore();
+        state.save();
         state
     }
 
@@ -39,25 +50,6 @@ impl State {
         self.max_id += 1;
         self.save();
         self.max_id - 1
-    }
-
-    /// Search and return the next task to be started.
-    /// Precondition for a task to be started:
-    /// - is in Queued state
-    /// - has all its dependencies in `Done` state
-    pub fn get_next_task_id(&mut self) -> Option<usize> {
-        return self
-            .tasks
-            .iter()
-            .filter(|(_, task)| task.status == TaskStatus::Queued)
-            .filter(|(_, task)| {
-                task.dependencies
-                    .iter()
-                    .flat_map(|id| self.tasks.get(id))
-                    .all(|task| task.status == TaskStatus::Done)
-            })
-            .next()
-            .map(|(id, _)| *id);
     }
 
     pub fn change_status(&mut self, id: usize, new_status: TaskStatus) {
@@ -71,6 +63,39 @@ impl State {
         if let Some(ref mut task) = self.tasks.get_mut(&id) {
             task.enqueue_at = enqueue_at;
         }
+    }
+
+    /// Check if the given group already exists.
+    /// If it doesn't exist yet, create a state entry and a new settings entry.
+    pub fn create_group(&mut self, group: &str) -> Result<()> {
+        if self.settings.daemon.groups.get(group).is_none() {
+            self.settings.daemon.groups.insert(group.into(), 1);
+        }
+        if self.groups.get(group).is_none() {
+            self.groups.insert(group.into(), true);
+        }
+
+        self.save();
+        self.settings.save()
+    }
+
+    /// Remove a group.
+    /// Also go through all tasks and set the removed group to `None`.
+    pub fn remove_group(&mut self, group: &str) -> Result<()> {
+        self.settings.daemon.groups.remove(group);
+        self.groups.remove(group);
+
+        // Reset all tasks with removed group to the default
+        for (_, task) in self.tasks.iter_mut() {
+            if let Some(group_name) = &task.group {
+                if group_name == group {
+                    task.group = None;
+                }
+            }
+        }
+
+        self.save();
+        self.settings.save()
     }
 
     /// This checks, whether the given task_ids are in the specified statuses.
@@ -94,14 +119,14 @@ impl State {
 
         // Filter all task id's that match the provided statuses.
         for task_id in task_ids.iter() {
-            // Check whether the task exists
+            // Check whether the task exists and save all non-existing task ids.
             match self.tasks.get(&task_id) {
                 None => {
                     mismatching.push(*task_id);
                     continue;
                 }
                 Some(task) => {
-                    // Check whether the task status matches the specified statuses
+                    // Check whether the task status matches the specified statuses.
                     if statuses.contains(&task.status) {
                         matching.push(*task_id);
                     } else {
@@ -122,14 +147,14 @@ impl State {
         self.save();
     }
 
-    /// Convenience wrapper around save_to_file
+    /// Convenience wrapper around save_to_file.
     pub fn save(&mut self) {
         self.save_to_file(false);
     }
 
-    /// Save the current current state in a file with a timestamp
-    /// At the same time remove old state logs from the log directory
-    /// This function is called, when large changes to the state are applied, e.g. clean/reset
+    /// Save the current current state in a file with a timestamp.
+    /// At the same time remove old state logs from the log directory.
+    /// This function is called, when large changes to the state are applied, e.g. clean/reset.
     pub fn backup(&mut self) {
         self.save_to_file(true);
         if let Err(error) = self.rotate() {
@@ -138,11 +163,11 @@ impl State {
     }
 
     /// Save the current state to disk.
-    /// We do this to restore in case of a crash
-    /// If log == true, the file will be saved with a time stamp
+    /// We do this to restore in case of a crash.
+    /// If log == true, the file will be saved with a time stamp.
     ///
     /// In comparison to the daemon -> client communication, the state is saved
-    /// as JSON for better readability and debug purposes
+    /// as JSON for better readability and debug purposes.
     fn save_to_file(&mut self, log: bool) {
         let serialized = serde_json::to_string(&self);
         if let Err(error) = serialized {
@@ -153,20 +178,16 @@ impl State {
         let serialized = serialized.unwrap();
 
         let path = Path::new(&self.settings.daemon.pueue_directory);
-        let temp: PathBuf;
-        let real: PathBuf;
-        if log {
+        let (temp, real) = if log {
             let path = path.join("log");
             let now: DateTime<Utc> = Utc::now();
             let time = now.format("%Y-%m-%d_%H-%M-%S");
-            temp = path.join(format!("{}_backup.json.partial", time));
-            real = path.join(format!("{}_state.json", time));
+            (path.join(format!("{}_backup.json.partial", time)), path.join(format!("{}_state.json", time)))
         } else {
-            temp = path.join("state.json.partial");
-            real = path.join("state.json");
-        }
+            (path.join("state.json.partial"), path.join("state.json"))
+        };
 
-        // Write to temporary log file first, to prevent loss due to crashes
+        // Write to temporary log file first, to prevent loss due to crashes.
         if let Err(error) = fs::write(&temp, serialized) {
             error!(
                 "Failed to write log to directory. File permissions? Error: {:?}",
@@ -175,7 +196,7 @@ impl State {
             return;
         }
 
-        // Overwrite the original with the temp file, if everything went fine
+        // Overwrite the original with the temp file, if everything went fine.
         if let Err(error) = fs::rename(&temp, real) {
             error!(
                 "Failed to overwrite old log file. File permissions? Error: {:?}",
@@ -185,8 +206,8 @@ impl State {
         }
     }
 
-    /// Restore the last state from a previous session
-    /// The state is stored as json in the log directory
+    /// Restore the last state from a previous session.
+    /// The state is stored as json in the log directory.
     fn restore(&mut self) {
         let path = Path::new(&self.settings.daemon.pueue_directory).join("state.json");
 
@@ -200,7 +221,7 @@ impl State {
         }
         info!("Start restoring state");
 
-        // Try to load the file
+        // Try to load the file.
         let data = fs::read_to_string(&path);
         if let Err(error) = data {
             error!("Failed to read previous state log: {:?}", error);
@@ -208,7 +229,7 @@ impl State {
         }
         let data = data.unwrap();
 
-        // Try to deserialize the state file
+        // Try to deserialize the state file.
         let deserialized: Result<State, serde_json::error::Error> = serde_json::from_str(&data);
         if let Err(error) = deserialized {
             error!("Failed to deserialize previous state log: {:?}", error);
@@ -216,10 +237,10 @@ impl State {
         }
         let mut state = deserialized.unwrap();
 
-        // Restore the state from the file
-        // While restoring the tasks, check for any invalid/broken stati
+        // Restore the state from the file.
+        // While restoring the tasks, check for any invalid/broken stati.
         for (task_id, task) in state.tasks.iter_mut() {
-            // Handle ungraceful shutdowns while executing tasks
+            // Handle ungraceful shutdowns while executing tasks.
             if task.status == TaskStatus::Running || task.status == TaskStatus::Paused {
                 info!(
                     "Setting task {} with previous status {:?} to new status {:?}",
@@ -230,12 +251,12 @@ impl State {
                 task.status = TaskStatus::Done;
                 task.result = Some(TaskResult::Killed);
             }
-            // Crash during editing of the task command
+            // Crash during editing of the task command.
             if task.status == TaskStatus::Locked {
                 task.status = TaskStatus::Stashed;
             }
-            // If there are any queued tasks, pause the daemon
-            // This should prevent any unwanted execution of tasks due to a system crash
+            // If there are any queued tasks, pause the daemon.
+            // This should prevent any unwanted execution of tasks due to a system crash.
             if task.status == TaskStatus::Queued {
                 info!("Pausing daemon to prevent unwanted execution of previous tasks");
                 state.running = false;
@@ -244,16 +265,40 @@ impl State {
             self.tasks.insert(*task_id, task.clone());
         }
 
+        if !self.running {
+            // If the daemon isn't running, stop all groups.
+            for group in self.settings.daemon.groups.keys() {
+                self.groups.insert(group.into(), false);
+            }
+        } else {
+            // If the daemon running, apply all running group states from the previous state.
+            for (group, running) in state.groups.iter() {
+                if self.groups.contains_key(group) {
+                    self.groups.insert(group.into(), *running);
+                }
+            }
+        }
+
+        // Go trough all tasks and set all groups that are no longer
+        // listed in the configuration file to the default.
+        for (_, task) in self.tasks.iter_mut() {
+            if let Some(group) = &task.group {
+                if !self.groups.contains_key(group) {
+                    task.group = None;
+                }
+            }
+        }
+
         self.running = state.running;
         self.max_id = state.max_id;
     }
 
-    /// Remove old logs that aren't needed any longer
+    /// Remove old logs that aren't needed any longer.
     fn rotate(&mut self) -> Result<()> {
         let path = Path::new(&self.settings.daemon.pueue_directory);
         let path = path.join("log");
 
-        // Get all log files in the directory with their respective system time
+        // Get all log files in the directory with their respective system time.
         let mut entries: BTreeMap<SystemTime, PathBuf> = BTreeMap::new();
         let mut directory_list = fs::read_dir(path)?;
         while let Some(Ok(entry)) = directory_list.next() {
@@ -264,8 +309,8 @@ impl State {
             entries.insert(time, path);
         }
 
-        // Remove all files aove the threshold
-        // Old files are removed first (implictly by the BTree order)
+        // Remove all files above the threshold.
+        // Old files are removed first (implictly by the BTree order).
         let mut number_entries = entries.len();
         let mut iter = entries.iter();
         while number_entries > 10 {
