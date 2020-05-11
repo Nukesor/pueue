@@ -670,6 +670,11 @@ impl TaskHandler {
         parameters.insert("command", task.command.clone());
         parameters.insert("path", task.path.clone());
         parameters.insert("result", task.result.clone().unwrap().to_string());
+        if let Some(group) = &task.group {
+            parameters.insert("group", group.clone());
+        } else {
+            parameters.insert("group", "default".into());
+        }
         let callback_command = match handlebars.render_template(&callback, &parameters) {
             Ok(command) => command,
             Err(err) => {

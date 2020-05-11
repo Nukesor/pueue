@@ -242,6 +242,7 @@ These are the available variables that can be used to create a command:
 - `{{ command }}`
 - `{{ path }}`
 - `{{ result }}` (Success, Killed, etc.)
+- `{{ group }}`
 
 Example callback:
 ```
