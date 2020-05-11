@@ -156,7 +156,7 @@ pub enum SubCommand {
     },
     /// Manage groups.
     /// Without any flags, this will simply display all known groups.
-    Groups {
+    Group {
         /// Add a group
         #[structopt(short, long)]
         add: Option<String>,

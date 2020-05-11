@@ -90,7 +90,7 @@ pub fn get_message_from_opt(opt: &Opt, settings: &Settings) -> Result<Message> {
             Ok(Message::Send(message))
         }
         SubCommand::Edit { task_id, path: _ } => Ok(Message::EditRequest(*task_id)),
-        SubCommand::Groups { add, remove } => {
+        SubCommand::Group { add, remove } => {
             let message = GroupMessage {
                 add: add.clone(),
                 remove: remove.clone(),
