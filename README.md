@@ -26,7 +26,7 @@ It provides functionality for:
 - Pause/Resume resume tasks, when you need some processing power right NOW!
 - Manipulation of the scheduled task order
 - Running multiple tasks at once (You can decide how many concurrent tasks you want to run)
-- Group. Each group acts as their own queue.
+- Grouping tasks. Each group acts as their own queue and can have several tasks running in parallel.
 - Works on Linux and MacOS and partially on Windows.
 
 **Disclaimer:** Windows support isn't fully there yet. This means:
@@ -224,7 +224,7 @@ This would help me a lot!
 ### Groups
 
 Grouping tasks can be useful, whenever your tasks utilize different system resources.  
-For example, it could be very useful to have an `io` group for tasks that copy large files, while your cpu-heavy reencoding tasks are in group `cpu`.
+A possible scenario would be to have an `io` group for tasks that copy large files, while your cpu-heavy (e.g. reencoding) tasks are in a `cpu` group.
 The parallelism setting of `io` could then be set to `1` and `cpu` be set to `2`.  
 
 As a result, there'll always be a single task that copies stuff, while two tasks try to utilize your cpu as good as possible.
