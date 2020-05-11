@@ -67,16 +67,35 @@ impl State {
 
     /// Check if the given group already exists.
     /// If it doesn't exist yet, create a state entry and a new settings entry.
-    pub fn create_group(&mut self, group: &String) {
+    pub fn create_group(&mut self, group: &String) -> Result<()> {
         if let None = self.settings.daemon.groups.get(group) {
-            self.settings
-                .daemon
-                .groups
-                .insert(group.into(), self.settings.daemon.default_parallel_tasks);
+            self.settings.daemon.groups.insert(group.into(), 1);
         }
         if let None = self.groups.get(group) {
             self.groups.insert(group.into(), true);
         }
+
+        self.save();
+        self.settings.save()
+    }
+
+    /// Remove a group.
+    /// Also go through all tasks and set the removed group to `None`.
+    pub fn remove_group(&mut self, group: &String) -> Result<()> {
+        self.settings.daemon.groups.remove(group);
+        self.groups.remove(group);
+
+        // Reset all tasks with removed group to the default
+        for (_, task) in self.tasks.iter_mut() {
+            if let Some(group_name) = &task.group {
+                if group_name == group {
+                    task.group = None;
+                }
+            }
+        }
+
+        self.save();
+        self.settings.save()
     }
 
     /// This checks, whether the given task_ids are in the specified statuses.

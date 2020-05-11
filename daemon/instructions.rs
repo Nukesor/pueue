@@ -25,6 +25,7 @@ pub fn handle_message(message: Message, sender: &Sender<Message>, state: &Shared
         Message::Send(message) => send(message, sender, state),
         Message::EditRequest(task_id) => edit_request(task_id, state),
         Message::Edit(message) => edit(message, state),
+        Message::Group(message) => group(message, state),
 
         Message::Clean => clean(state),
         Message::Reset => reset(sender, state),
@@ -374,6 +375,47 @@ fn edit(message: EditMessage, state: &SharedState) -> Message {
     }
 }
 
+/// Manage groups.
+/// - Show groups
+/// - Add group
+/// - Remove group
+/// Invoked on `pueue groups`.
+fn group(message: GroupMessage, state: &SharedState) -> Message {
+    let mut state = state.lock().unwrap();
+
+    // Create a new group
+    if let Some(group) = message.add {
+        if state.groups.contains_key(&group) {
+            return create_failure_message(format!("Group {} already exists", group));
+        }
+        if let Err(error) = state.create_group(&group) {
+            return create_failure_message(format!(
+                "Failed while saving the config file: {}",
+                error
+            ));
+        }
+
+        return create_success_message(format!("Group {} created", group));
+    }
+
+    // Remove a new group
+    if let Some(group) = message.remove {
+        if !state.groups.contains_key(&group) {
+            return create_failure_message(format!("Group {} doesn't exists", group));
+        }
+        if let Err(error) = state.remove_group(&group) {
+            return create_failure_message(format!(
+                "Failed while saving the config file: {}",
+                error
+            ));
+        }
+        return create_success_message(format!("Group {} removed", group));
+    }
+
+    // Print all groups
+    create_success_message(format!("Groups: {:?}", state.groups.keys()))
+}
+
 /// Remove all failed or done tasks from the state.
 /// Invoked when calling `pueue clean`.
 fn clean(state: &SharedState) -> Message {
@@ -480,6 +522,11 @@ fn set_parallel_tasks(message: ParallelMessage, state: &SharedState) -> Message 
         .daemon
         .groups
         .insert(group.into(), message.parallel_tasks);
+
+    if let Err(error) = state.settings.save() {
+        return create_failure_message(format!("Failed while saving the config file: {}", error));
+    }
+
     return create_success_message(format!(
         "Parallel tasks setting for group {} adjusted",
         group

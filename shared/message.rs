@@ -23,6 +23,7 @@ pub enum Message {
     EditRequest(usize),
     EditResponse(EditResponseMessage),
     Edit(EditMessage),
+    Group(GroupMessage),
 
     Status,
     StatusResponse(State),
@@ -100,6 +101,12 @@ pub struct EditResponseMessage {
     pub task_id: usize,
     pub command: String,
     pub path: String,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct GroupMessage {
+    pub add: Option<String>,
+    pub remove: Option<String>,
 }
 
 // The booleans decides, whether the stream should be continuous or a oneshot.

@@ -154,6 +154,17 @@ pub enum SubCommand {
         #[structopt(short, long)]
         path: bool,
     },
+    /// Manage groups.
+    /// Without any flags, this will simply display all known groups.
+    Groups {
+        /// Add a group
+        #[structopt(short, long)]
+        add: Option<String>,
+        /// Remove a group.
+        /// This will move all tasks in this group to the default group!
+        #[structopt(short, long)]
+        remove: Option<String>,
+    },
 
     /// Display the current status of all tasks.
     Status {
