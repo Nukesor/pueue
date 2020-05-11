@@ -12,7 +12,7 @@ use ::pueue::protocol::send_message;
 
 /// Handle the continuous stream of a message.
 pub async fn handle_show(
-    pueue_directory: &String,
+    pueue_directory: &str,
     socket: &mut TcpStream,
     message: StreamRequestMessage,
 ) -> Result<Message> {

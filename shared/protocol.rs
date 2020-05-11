@@ -30,8 +30,7 @@ pub async fn send_bytes(payload: Vec<u8>, socket: &mut TcpStream) -> Result<()> 
     socket.write_all(&header).await?;
 
     // Split the payload into 1.5kbyte chunks (MUT for TCP)
-    let mut iter = payload.chunks(1500);
-    while let Some(chunk) = iter.next() {
+    for chunk in payload.chunks(1500) {
         socket.write_all(chunk).await?;
     }
 

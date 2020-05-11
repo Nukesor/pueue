@@ -48,7 +48,7 @@ impl Client {
             opt,
             daemon_address: address,
             message,
-            settings: settings,
+            settings,
         })
     }
 

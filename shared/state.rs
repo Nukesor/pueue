@@ -37,7 +37,7 @@ impl State {
             settings: settings.clone(),
             running: true,
             tasks: BTreeMap::new(),
-            groups: groups,
+            groups,
         };
         state.restore();
         state.save();
@@ -67,11 +67,11 @@ impl State {
 
     /// Check if the given group already exists.
     /// If it doesn't exist yet, create a state entry and a new settings entry.
-    pub fn create_group(&mut self, group: &String) -> Result<()> {
-        if let None = self.settings.daemon.groups.get(group) {
+    pub fn create_group(&mut self, group: &str) -> Result<()> {
+        if self.settings.daemon.groups.get(group).is_none() {
             self.settings.daemon.groups.insert(group.into(), 1);
         }
-        if let None = self.groups.get(group) {
+        if self.groups.get(group).is_none() {
             self.groups.insert(group.into(), true);
         }
 
@@ -81,7 +81,7 @@ impl State {
 
     /// Remove a group.
     /// Also go through all tasks and set the removed group to `None`.
-    pub fn remove_group(&mut self, group: &String) -> Result<()> {
+    pub fn remove_group(&mut self, group: &str) -> Result<()> {
         self.settings.daemon.groups.remove(group);
         self.groups.remove(group);
 
@@ -178,18 +178,14 @@ impl State {
         let serialized = serialized.unwrap();
 
         let path = Path::new(&self.settings.daemon.pueue_directory);
-        let temp: PathBuf;
-        let real: PathBuf;
-        if log {
+        let (temp, real) = if log {
             let path = path.join("log");
             let now: DateTime<Utc> = Utc::now();
             let time = now.format("%Y-%m-%d_%H-%M-%S");
-            temp = path.join(format!("{}_backup.json.partial", time));
-            real = path.join(format!("{}_state.json", time));
+            (path.join(format!("{}_backup.json.partial", time)), path.join(format!("{}_state.json", time)))
         } else {
-            temp = path.join("state.json.partial");
-            real = path.join("state.json");
-        }
+            (path.join("state.json.partial"), path.join("state.json"))
+        };
 
         // Write to temporary log file first, to prevent loss due to crashes.
         if let Err(error) = fs::write(&temp, serialized) {

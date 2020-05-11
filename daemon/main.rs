@@ -1,4 +1,4 @@
-use ::anyhow::{bail, Error, Result};
+use ::anyhow::{bail, Result};
 use ::simplelog::{Config, LevelFilter, SimpleLogger};
 use ::std::fs::create_dir_all;
 use ::std::path::Path;
@@ -26,7 +26,6 @@ async fn main() -> Result<()> {
     let settings = Settings::new()?;
     match settings.save() {
         Err(error) => {
-            let error: Error = From::from(error);
             bail!(error.context("Failed saving the config file"));
         }
         Ok(()) => {}
@@ -68,7 +67,7 @@ async fn main() -> Result<()> {
 }
 
 /// Initialize all directories needed for normal operation.
-fn init_directories(path: &String) {
+fn init_directories(path: &str) {
     let pueue_dir = Path::new(path);
     if !pueue_dir.exists() {
         if let Err(error) = create_dir_all(&pueue_dir) {

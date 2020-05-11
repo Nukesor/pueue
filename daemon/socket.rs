@@ -47,7 +47,7 @@ async fn handle_incoming(
     let payload_bytes = receive_bytes(&mut socket).await?;
 
     // Didn't receive any bytes. The client disconnected.
-    if payload_bytes.len() == 0 {
+    if payload_bytes.is_empty() {
         info!("Client went away");
         return Ok(());
     }

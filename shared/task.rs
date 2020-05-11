@@ -68,7 +68,7 @@ impl Task {
             id: 0,
             command,
             path,
-            group: group,
+            group,
             enqueue_at,
             dependencies,
             status: starting_status.clone(),
@@ -96,11 +96,11 @@ impl Task {
     }
 
     pub fn is_running(&self) -> bool {
-        return self.status == TaskStatus::Running || self.status == TaskStatus::Paused;
+        self.status == TaskStatus::Running || self.status == TaskStatus::Paused
     }
 
     pub fn is_done(&self) -> bool {
-        return self.status == TaskStatus::Done;
+        self.status == TaskStatus::Done
     }
 
     // Check if the task errored.
@@ -114,6 +114,6 @@ impl Task {
     }
 
     pub fn is_queued(&self) -> bool {
-        return self.status == TaskStatus::Queued || self.status == TaskStatus::Stashed;
+        self.status == TaskStatus::Queued || self.status == TaskStatus::Stashed
     }
 }

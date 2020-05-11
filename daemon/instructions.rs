@@ -73,7 +73,7 @@ fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) 
 
     // Create a new group in case the user used a unknown group.
     if let Some(group) = &task.group {
-        if let None = state.groups.get(group) {
+        if state.groups.get(group).is_none() {
             return create_failure_message(format!(
                 "Tried to create task with unknown group '{}'",
                 group
@@ -168,7 +168,7 @@ fn stash(task_ids: Vec<usize>, state: &SharedState) -> Message {
 
     let text = "Tasks are stashed";
     let response = compile_task_response(text, matching, mismatching);
-    return create_success_message(response);
+    create_success_message(response)
 }
 
 /// Enqueue specific stashed tasks.
@@ -199,7 +199,7 @@ fn enqueue(message: EnqueueMessage, state: &SharedState) -> Message {
     };
 
     let response = compile_task_response(text.as_str(), matching, mismatching);
-    return create_success_message(response);
+    create_success_message(response)
 }
 
 /// Forward the start message to the task handler, which then starts the process(es).
@@ -218,7 +218,7 @@ fn start(task_ids: Vec<usize>, sender: &Sender<Message>, state: &SharedState) ->
         return create_success_message(response);
     }
 
-    return create_success_message("Daemon and all tasks are being resumed.");
+    create_success_message("Daemon and all tasks are being resumed.")
 }
 
 /// Create and enqueue tasks from already finished tasks.
@@ -258,7 +258,7 @@ fn restart(message: RestartMessage, sender: &Sender<Message>, state: &SharedStat
         sender.send(Message::Start(new_ids)).expect(SENDER_ERR);
     }
 
-    return create_success_message(response);
+    create_success_message(response)
 }
 
 /// Forward the pause message to the task handler, which then pauses the process(es).
@@ -277,7 +277,7 @@ fn pause(message: PauseMessage, sender: &Sender<Message>, state: &SharedState) -
         return create_success_message(response);
     }
 
-    return create_success_message("Daemon and all tasks are being paused.");
+    create_success_message("Daemon and all tasks are being paused.")
 }
 
 /// Forward the kill message to the task handler, which then kills the process.
@@ -297,7 +297,7 @@ fn kill(message: KillMessage, sender: &Sender<Message>, state: &SharedState) -> 
         return create_success_message(response);
     }
 
-    return create_success_message("All tasks are being killed.");
+    create_success_message("All tasks are being killed.")
 }
 
 /// The message will be forwarded to the task handler, which then sends the user input to the process.
@@ -320,7 +320,7 @@ fn send(message: SendMessage, sender: &Sender<Message>, state: &SharedState) -> 
     // Check whether the task exists and is running, abort if that's not the case.
     sender.send(Message::Send(message)).expect(SENDER_ERR);
 
-    return create_success_message("Message is being send to the process.");
+    create_success_message("Message is being send to the process.")
 }
 
 /// If a user wants to edit a message, we need to send him the current command.
@@ -342,9 +342,9 @@ fn edit_request(task_id: usize, state: &SharedState) -> Message {
                 command: task.command.clone(),
                 path: task.path.clone(),
             };
-            return Message::EditResponse(message);
+            Message::EditResponse(message)
         }
-        None => return create_failure_message("No task with this id."),
+        None => create_failure_message("No task with this id."),
     }
 }
 
@@ -364,10 +364,10 @@ fn edit(message: EditMessage, state: &SharedState) -> Message {
             task.path = message.path.clone();
             state.save();
 
-            return create_success_message("Command has been updated");
+            create_success_message("Command has been updated")
         }
         None => {
-            return create_failure_message(format!(
+            create_failure_message(format!(
                 "Task to edit has gone away: {}",
                 message.task_id
             ))
@@ -430,7 +430,7 @@ fn clean(state: &SharedState) -> Message {
 
     state.save();
 
-    return create_success_message("All finished tasks have been removed");
+    create_success_message("All finished tasks have been removed")
 }
 
 /// Forward the reset request to the task handler.
@@ -439,7 +439,7 @@ fn clean(state: &SharedState) -> Message {
 fn reset(sender: &Sender<Message>, state: &SharedState) -> Message {
     sender.send(Message::Reset).expect(SENDER_ERR);
     clean(state);
-    return create_success_message("Everything is being reset right now.");
+    create_success_message("Everything is being reset right now.")
 }
 
 /// Return the current state.
@@ -462,36 +462,33 @@ fn get_log(message: LogRequestMessage, state: &SharedState) -> Message {
 
     let mut tasks = BTreeMap::new();
     for task_id in task_ids.iter() {
-        match state.tasks.get(task_id) {
-            Some(task) => {
-                // We send log output and the task at the same time.
-                // This isn't as efficient as sending the raw compressed data directly,
-                // but it's a lot more convenient for now.
-                let (stdout, stderr) = if message.send_logs {
-                    match read_and_compress_log_files(
-                        *task_id,
-                        &state.settings.daemon.pueue_directory,
-                    ) {
-                        Ok((stdout, stderr)) => (Some(stdout), Some(stderr)),
-                        Err(err) => {
-                            return create_failure_message(format!(
-                                "Failed reading process output file: {:?}",
-                                err
-                            ));
-                        }
+        if let Some(task) = state.tasks.get(task_id) {
+            // We send log output and the task at the same time.
+            // This isn't as efficient as sending the raw compressed data directly,
+            // but it's a lot more convenient for now.
+            let (stdout, stderr) = if message.send_logs {
+                match read_and_compress_log_files(
+                    *task_id,
+                    &state.settings.daemon.pueue_directory,
+                ) {
+                    Ok((stdout, stderr)) => (Some(stdout), Some(stderr)),
+                    Err(err) => {
+                        return create_failure_message(format!(
+                            "Failed reading process output file: {:?}",
+                            err
+                        ));
                     }
-                } else {
-                    (None, None)
-                };
+                }
+            } else {
+                (None, None)
+            };
 
-                let task_log = TaskLogMessage {
-                    task: task.clone(),
-                    stdout,
-                    stderr,
-                };
-                tasks.insert(*task_id, task_log);
-            }
-            None => {}
+            let task_log = TaskLogMessage {
+                task: task.clone(),
+                stdout,
+                stderr,
+            };
+            tasks.insert(*task_id, task_log);
         }
     }
     Message::LogResponse(tasks)
@@ -502,7 +499,7 @@ fn set_parallel_tasks(message: ParallelMessage, state: &SharedState) -> Message 
     let mut state = state.lock().unwrap();
 
     // Set the default parallel tasks if no group is specified.
-    if let None = message.group {
+    if message.group.is_none() {
         state.settings.daemon.default_parallel_tasks = message.parallel_tasks;
         return create_success_message("Parallel tasks setting adjusted");
     }
@@ -527,8 +524,8 @@ fn set_parallel_tasks(message: ParallelMessage, state: &SharedState) -> Message 
         return create_failure_message(format!("Failed while saving the config file: {}", error));
     }
 
-    return create_success_message(format!(
+    create_success_message(format!(
         "Parallel tasks setting for group {} adjusted",
         group
-    ));
+    ))
 }

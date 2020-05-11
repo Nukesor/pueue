@@ -234,7 +234,7 @@ pub fn print_log(task_log: &mut TaskLogMessage, settings: &Settings) {
     // Print task id and exit code.
     let task_text = style(format!("Task {} ", task.id)).attribute(Attribute::Bold);
     let exit_status = match &task.result {
-        Some(TaskResult::Success) => style(format!("with exit code 0")).with(Color::Green),
+        Some(TaskResult::Success) => style("with exit code 0".into()).with(Color::Green),
         Some(TaskResult::Failed(exit_code)) => {
             style(format!("with exit code {}", exit_code)).with(Color::Red)
         }

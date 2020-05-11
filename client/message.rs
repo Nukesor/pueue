@@ -89,7 +89,7 @@ pub fn get_message_from_opt(opt: &Opt, settings: &Settings) -> Result<Message> {
             };
             Ok(Message::Send(message))
         }
-        SubCommand::Edit { task_id, path: _ } => Ok(Message::EditRequest(*task_id)),
+        SubCommand::Edit { task_id, .. } => Ok(Message::EditRequest(*task_id)),
         SubCommand::Group { add, remove } => {
             let message = GroupMessage {
                 add: add.clone(),
@@ -97,8 +97,8 @@ pub fn get_message_from_opt(opt: &Opt, settings: &Settings) -> Result<Message> {
             };
             Ok(Message::Group(message))
         }
-        SubCommand::Status { json: _ } => Ok(Message::Status),
-        SubCommand::Log { task_ids, json: _ } => {
+        SubCommand::Status { .. } => Ok(Message::Status),
+        SubCommand::Log { task_ids, .. } => {
             let message = LogRequestMessage {
                 task_ids: task_ids.clone(),
                 send_logs: !settings.client.read_local_logs,
@@ -130,9 +130,6 @@ pub fn get_message_from_opt(opt: &Opt, settings: &Settings) -> Result<Message> {
             };
             Ok(Message::Parallel(message))
         }
-        SubCommand::Completions {
-            shell: _,
-            output_directory: _,
-        } => Err(anyhow!("Completions have to be handled earlier")),
+        SubCommand::Completions { .. } => Err(anyhow!("Completions have to be handled earlier")),
     }
 }

@@ -128,7 +128,7 @@ impl TaskHandler {
             }
         }
 
-        return state
+        state
             .tasks
             .iter()
             .filter(|(_, task)| task.status == TaskStatus::Queued)
@@ -161,15 +161,14 @@ impl TaskHandler {
                     running < &state.settings.daemon.default_parallel_tasks
                 }
             })
-            .filter(|(_, task)| {
+            .find(|(_, task)| {
                 // Check whether all dependencies for this task are fulfilled.
                 task.dependencies
                     .iter()
                     .flat_map(|id| state.tasks.get(id))
                     .all(|task| task.status == TaskStatus::Done)
             })
-            .next()
-            .map(|(id, _)| *id);
+            .map(|(id, _)| *id)
     }
 
     /// See if we can start a new queued task.
@@ -424,9 +423,8 @@ impl TaskHandler {
         //match self.receiver.recv_timeout(timeout) {
         std::thread::sleep(timeout);
 
-        match self.receiver.try_recv() {
-            Ok(message) => self.handle_message(message),
-            Err(_) => {}
+        if let Ok(message) = self.receiver.try_recv() {
+            self.handle_message(message);
         };
     }
 

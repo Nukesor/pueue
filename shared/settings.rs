@@ -74,7 +74,7 @@ impl Settings {
         let config_path = default_config_path()?;
         let config_dir = config_path
             .parent()
-            .ok_or(anyhow!("Couldn't resolve config dir"))?;
+            .ok_or_else(|| anyhow!("Couldn't resolve config dir"))?;
 
         // Create the config dir, if it doesn't exist yet
         if !config_dir.exists() {
@@ -106,7 +106,7 @@ fn parse_config(settings: &mut Config) -> Result<()> {
 }
 
 fn get_home_dir() -> Result<PathBuf> {
-    dirs::home_dir().ok_or(anyhow!("Couldn't resolve home dir"))
+    dirs::home_dir().ok_or_else(|| anyhow!("Couldn't resolve home dir"))
 }
 
 fn gen_random_secret() -> String {

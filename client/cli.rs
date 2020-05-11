@@ -268,10 +268,10 @@ fn min_one(value: String) -> Result<(), String> {
             if value < 1 {
                 return Err("You must provide a value that's bigger than 0".into());
             }
-            return Ok(());
+            Ok(())
         }
         Err(_) => {
-            return Err("Failed to parse integer".into());
+            Err("Failed to parse integer".into())
         }
     }
 }
