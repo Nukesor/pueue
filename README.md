@@ -23,9 +23,10 @@ It provides functionality for:
 - Scheduling commands that will be executed in their respective working directories
 - Easy output inspection.
 - Interaction with running processes
-- Pausing/Resuming tasks, when you need some processing power right NOW!
+- Pause/Resume resume tasks, when you need some processing power right NOW!
 - Manipulation of the scheduled task order
 - Running multiple tasks at once (You can decide how many concurrent tasks you want to run)
+- Group. Each group acts as their own queue.
 - Works on Linux and MacOS and partially on Windows.
 
 **Disclaimer:** Windows support isn't fully there yet. This means:
@@ -219,6 +220,17 @@ If you want to dig right into it, you can compile and run it yourself with a deb
 This would help me a lot!
 
 ## Utilities
+
+### Groups
+
+Grouping tasks can be useful, whenever your tasks utilize different system resources.  
+For example, it could be very useful to have an `io` group for tasks that copy large files, while your cpu-heavy reencoding tasks are in group `cpu`.
+The parallelism setting of `io` could then be set to `1` and `cpu` be set to `2`.  
+
+As a result, there'll always be a single task that copies stuff, while two tasks try to utilize your cpu as good as possible.
+
+This removes the problem of scheduling tasks in a way that the system might get slow.
+At the same time, you're able to maximize resource utilization.
 
 ### Callbacks 
 
