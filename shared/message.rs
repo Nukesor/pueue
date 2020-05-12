@@ -1,6 +1,6 @@
 use ::chrono::prelude::*;
 use ::serde_derive::{Deserialize, Serialize};
-use ::std::collections::BTreeMap;
+use ::std::collections::{BTreeMap, HashMap};
 
 use crate::state::State;
 use crate::task::Task;
@@ -45,6 +45,7 @@ pub enum Message {
 pub struct AddMessage {
     pub command: String,
     pub path: String,
+    pub envs: HashMap<String, String>,
     pub start_immediately: bool,
     pub stashed: bool,
     pub group: Option<String>,

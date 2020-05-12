@@ -1,10 +1,14 @@
 # v0.5.0
 **Features:**
-- Add callback notifications on finished tasks.
+- Groups! Tasks can now be assigned to a group.
+    Each group acts as their own queue and each group has their own setting for parallel task execution.
+- Environment variable capture. Tasks will now start with the variables of the `pueue add` environment.
+- Add a custom callback that's triggered whenever tasks finish.
 
 # v0.4.0
 **Features:**
-- Add `--after [ids]` option. Task with this option will only be started, if all specified dependencies successfully finish.
+- Dependencies! This adds the `--after [ids]` option.
+    Task with this option will only be started, if all specified dependencies successfully finish.
     Tasks with failed dependencies will fail as well.
 - New state `FailedToStart`. Used if the process cannot be started.
 - New state `DependencyFailed`. Used if any dependency of a task fails.

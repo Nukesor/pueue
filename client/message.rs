@@ -1,5 +1,6 @@
 use ::anyhow::{anyhow, Context, Result};
-use ::std::env::current_dir;
+use ::std::env::{current_dir, vars};
+use ::std::collections::HashMap;
 
 use ::pueue::message::*;
 use ::pueue::settings::Settings;
@@ -22,9 +23,17 @@ pub fn get_message_from_opt(opt: &Opt, settings: &Settings) -> Result<Message> {
             let cwd = cwd_pathbuf
                 .to_str()
                 .context("Cannot parse current working directory (Invalid utf8?)")?;
+
+            let mut envs = HashMap::new();
+            // Save all environment variables for later injection into the started task
+            for (key, value) in vars() {
+                envs.insert(key, value);
+            }
+
             Ok(Message::Add(AddMessage {
                 command: command.join(" "),
                 path: cwd.to_string(),
+                envs: envs,
                 start_immediately: *start_immediately,
                 stashed: *stashed,
                 group: group.clone(),

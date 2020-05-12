@@ -65,6 +65,7 @@ fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) 
     let task = Task::new(
         message.command,
         message.path,
+        message.envs,
         message.group,
         starting_status,
         message.enqueue_at,

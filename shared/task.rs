@@ -1,4 +1,5 @@
 use ::chrono::prelude::*;
+use ::std::collections::HashMap;
 use ::serde_derive::{Deserialize, Serialize};
 use ::strum_macros::Display;
 
@@ -45,6 +46,7 @@ pub struct Task {
     pub id: usize,
     pub command: String,
     pub path: String,
+    pub envs: HashMap<String, String>,
     pub group: Option<String>,
     pub enqueue_at: Option<DateTime<Local>>,
     pub dependencies: Vec<usize>,
@@ -59,6 +61,7 @@ impl Task {
     pub fn new(
         command: String,
         path: String,
+        envs: HashMap<String, String>,
         group: Option<String>,
         starting_status: TaskStatus,
         enqueue_at: Option<DateTime<Local>>,
@@ -68,6 +71,7 @@ impl Task {
             id: 0,
             command,
             path,
+            envs,
             group,
             enqueue_at,
             dependencies,
@@ -84,6 +88,7 @@ impl Task {
             id: 0,
             command: task.command.clone(),
             path: task.path.clone(),
+            envs: task.envs.clone(),
             group: None,
             enqueue_at: None,
             dependencies: Vec::new(),

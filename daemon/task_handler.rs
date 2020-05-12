@@ -264,6 +264,7 @@ impl TaskHandler {
         let spawn_result = spawn_command
             .current_dir(&task.path)
             .stdin(Stdio::piped())
+            .envs(&task.envs)
             .stdout(Stdio::from(stdout_log))
             .stderr(Stdio::from(stderr_log))
             .spawn();
