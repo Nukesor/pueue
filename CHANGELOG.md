@@ -3,14 +3,14 @@
 - Groups! Tasks can now be assigned to a group.
     Each group acts as their own queue and each group has their own setting for parallel task execution.
     Groups can also be paused/resumed individually.
-- Environment variable capture. Tasks will now start with the variables of the environment `pueue add` is being called in.
-- Add the option for specifying a custom callback that'll be called whenever tasks finish.
+- Users can now specify a custom callback that'll be called whenever tasks finish.
 
 **Changes:**
 - `log` now also works on running and paused tasks. It thereby replaces some of `show`'s functionality.
 - Rename `show` to `follow`. The `follow` is now only for actually following the output of a single command.
 
 **Improvements:**
+- Environment variable capture. Tasks will now start with the variables of the environment `pueue add` is being called in.
 - `follow` (previously `show`) now also reads directly from disk, if `read_local_logs` is set to `true`.
 
 # v0.4.0
