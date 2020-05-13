@@ -64,7 +64,7 @@ Heck, you can even set up desktop notifications to get notified or execute param
 Pueue made at least my life a lot easier on many occasions.
 
 If you like the project, feel free to give it at try!  
-If feel like something is missing, please create an issue.
+If you feel like something is missing, please create an issue :).
 
 PRs are of course very welcome!
 
