@@ -11,7 +11,6 @@ pub enum SubCommand {
     /// Enqueue a task for execution.
     Add {
         /// The command that should be added.
-        #[structopt()]
         command: Vec<String>,
 
         /// Start the task immediately.
@@ -105,7 +104,6 @@ pub enum SubCommand {
     /// Identical tasks will be created and instantly queued (unless specified otherwise).
     Restart {
         /// The tasks you want to restart.
-        #[structopt()]
         task_ids: Vec<usize>,
 
         /// Immediately start the task(s).
@@ -193,7 +191,6 @@ pub enum SubCommand {
     /// Display the log output of finished tasks.
     Log {
         /// Specify for which specific tasks you want to see the output.
-        #[structopt()]
         task_ids: Vec<usize>,
         /// Print the current state as json.
         /// Includes EVERYTHING.
@@ -201,15 +198,13 @@ pub enum SubCommand {
         json: bool,
     },
 
-    /// Show the output of a currently running task.
-    /// This command allows following (like `tail -f`).
-    Show {
+    /// Follow the output of a currently running task.
+    /// This command works like `tail -f`.
+    Follow {
         /// The id of the task.
         task_id: usize,
-        /// Continuously print stdout (like `tail -f`).
-        #[structopt(short, long)]
-        follow: bool,
-        /// Like -f, but shows stderr instead of stdout.
+
+        /// Show stderr instead of stdout.
         #[structopt(short, long)]
         err: bool,
     },

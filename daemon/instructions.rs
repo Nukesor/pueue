@@ -468,6 +468,7 @@ fn group(message: GroupMessage, state: &SharedState) -> Message {
         return create_success_message(format!("Group {} removed", group));
     }
 
+    // Compile a small minimalistic text with all important information about all known groups
     let mut group_status = String::new();
     let mut group_iter = state.groups.iter().peekable();
     while let Some((group, running)) = group_iter.next() {
@@ -481,7 +482,6 @@ fn group(message: GroupMessage, state: &SharedState) -> Message {
             group_status.push('\n');
         }
     }
-    // Print all groups
     create_success_message(group_status)
 }
 

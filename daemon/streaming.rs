@@ -16,65 +16,48 @@ pub async fn handle_show(
     socket: &mut TcpStream,
     message: StreamRequestMessage,
 ) -> Result<Message> {
-    if message.follow || message.err {
-        // The client requested streaming of stdout.
-        let mut handle: File;
-        match get_log_file_handles(message.task_id, pueue_directory) {
-            Err(_) => {
-                return Ok(create_failure_message(
-                    "Couldn't find output files for task. Maybe it finished? Try `log`",
-                ))
-            }
-            Ok((stdout_handle, stderr_handle)) => {
-                handle = if message.err {
-                    stderr_handle
-                } else {
-                    stdout_handle
-                };
-            }
+    // The client requested streaming of stdout.
+    let mut handle: File;
+    match get_log_file_handles(message.task_id, pueue_directory) {
+        Err(_) => {
+            return Ok(create_failure_message(
+                "Couldn't find output files for task. Maybe it finished? Try `log`",
+            ))
         }
-
-        // Get the stdout/stderr path.
-        // We need to check continuously, whether the file still exists,
-        // since the file can go away (e.g. due to finishing a task).
-        let (out_path, err_path) = get_log_paths(message.task_id, pueue_directory);
-        let handle_path = if message.err { err_path } else { out_path };
-
-        loop {
-            // Check whether the file still exists. Exit if it doesn't.
-            if !handle_path.exists() {
-                return Ok(create_success_message(
-                    "File has gone away. The task probably just finished",
-                ));
-            }
-            // Read the next chunk of text from the last position.
-            let mut buffer = Vec::new();
-
-            if let Err(err) = handle.read_to_end(&mut buffer) {
-                return Ok(create_failure_message(format!("Error: {}", err)));
+        Ok((stdout_handle, stderr_handle)) => {
+            handle = if message.err {
+                stderr_handle
+            } else {
+                stdout_handle
             };
-            let text = String::from_utf8_lossy(&buffer).to_string();
-
-            // Send the new chunk and wait for 1 second.
-            let response = Message::Stream(text);
-            send_message(response, socket).await?;
-            let wait = future::ready(1).delay(Duration::from_millis(1000));
-            wait.await;
         }
-    } else {
-        // The client requested a one-shot execution.
-        // Simply read the file and send the current stdout/stderr once.
-        let (stdout, stderr) = match read_log_files(message.task_id, pueue_directory) {
-            Err(_) => {
-                return Ok(create_failure_message(
-                    "Couldn't find output files for task. Maybe it finished? Try `log`",
-                ))
-            }
-            Ok((stdout, stderr)) => (stdout, stderr),
+    }
+
+    // Get the stdout/stderr path.
+    // We need to check continuously, whether the file still exists,
+    // since the file can go away (e.g. due to finishing a task).
+    let (out_path, err_path) = get_log_paths(message.task_id, pueue_directory);
+    let handle_path = if message.err { err_path } else { out_path };
+
+    loop {
+        // Check whether the file still exists. Exit if it doesn't.
+        if !handle_path.exists() {
+            return Ok(create_success_message(
+                "File has gone away. Did somebody remove the task?",
+            ));
+        }
+        // Read the next chunk of text from the last position.
+        let mut buffer = Vec::new();
+
+        if let Err(err) = handle.read_to_end(&mut buffer) {
+            return Ok(create_failure_message(format!("Error: {}", err)));
         };
+        let text = String::from_utf8_lossy(&buffer).to_string();
 
-        let response = format!("Stdout:\n{}\n\nStderr:\n{}", stdout, stderr);
-
-        Ok(create_success_message(response))
+        // Send the new chunk and wait for 1 second.
+        let response = Message::Stream(text);
+        send_message(response, socket).await?;
+        let wait = future::ready(1).delay(Duration::from_millis(1000));
+        wait.await;
     }
 }

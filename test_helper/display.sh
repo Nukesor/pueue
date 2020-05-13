@@ -1,5 +1,5 @@
 pueue reset
-sleep 0.5
+sleep 1
 pueue add ls
 pueue add failing
 pueue add sleep 6000

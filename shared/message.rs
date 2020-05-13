@@ -117,11 +117,10 @@ pub struct GroupMessage {
     pub remove: Option<String>,
 }
 
-// The booleans decides, whether the stream should be continuous or a oneshot.
+/// `err` decides, whether you should stream stderr or stdout.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct StreamRequestMessage {
     pub task_id: usize,
-    pub follow: bool,
     pub err: bool,
 }
 

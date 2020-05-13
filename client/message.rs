@@ -125,17 +125,12 @@ pub fn get_message_from_opt(opt: &Opt, settings: &Settings) -> Result<Message> {
             };
             Ok(Message::Log(message))
         }
-        SubCommand::Show {
-            task_id,
-            follow,
-            err,
-        } => {
+        SubCommand::Follow { task_id, err } => {
             let message = StreamRequestMessage {
                 task_id: *task_id,
-                follow: *follow,
                 err: *err,
             };
-            Ok(Message::StreamRequest(message))
+            return Ok(Message::StreamRequest(message));
         }
         SubCommand::Clean => Ok(Message::Clean),
         SubCommand::Reset => Ok(Message::Reset),

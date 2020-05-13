@@ -6,6 +6,13 @@
 - Environment variable capture. Tasks will now start with the variables of the environment `pueue add` is being called in.
 - Add the option for specifying a custom callback that'll be called whenever tasks finish.
 
+**Changes:**
+- `log` now also works on running and paused tasks. It thereby replaces some of `show`'s functionality.
+- Rename `show` to `follow`. The `follow` is now only for actually following the output of a single command.
+
+**Improvements:**
+- `follow` (previously `show`) now also reads directly from disk, if `read_local_logs` is set to `true`.
+
 # v0.4.0
 **Features:**
 - Dependencies! This adds the `--after [ids]` option.

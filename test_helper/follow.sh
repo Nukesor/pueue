@@ -1,4 +1,4 @@
-counter = 1
+counter=1
 
 while true; do
     echo "nice ${counter}"

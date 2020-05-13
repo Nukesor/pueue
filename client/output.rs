@@ -7,7 +7,7 @@ use ::std::collections::BTreeMap;
 use ::std::io;
 use ::std::string::ToString;
 
-use ::pueue::log::get_log_file_handles;
+use ::pueue::log::{get_log_file_handles, get_log_paths};
 use ::pueue::message::TaskLogMessage;
 use ::pueue::settings::Settings;
 use ::pueue::state::State;
@@ -173,6 +173,7 @@ pub fn print_logs(
 ) {
     let (json, task_ids) = match cli_command {
         SubCommand::Log { json, task_ids } => (*json, task_ids.clone()),
+        SubCommand::Follow { task_id, .. } => (false, vec![*task_id]),
         _ => panic!(
             "Got wrong Subcommand {:?} in print_log. This shouldn't happen",
             cli_command
@@ -199,7 +200,9 @@ pub fn print_logs(
 
         // Add a newline if there is another task that's going to be printed.
         if let Some((_, task_log)) = task_iter.peek() {
-            if task_log.task.status == TaskStatus::Done {
+            if !vec![TaskStatus::Done, TaskStatus::Running, TaskStatus::Paused]
+                .contains(&task_log.task.status)
+            {
                 println!();
             }
         }
@@ -209,8 +212,8 @@ pub fn print_logs(
 /// Print the log of a single task.
 pub fn print_log(task_log: &mut TaskLogMessage, settings: &Settings) {
     let task = &task_log.task;
-    // We only show logs of finished tasks.
-    if task.status != TaskStatus::Done {
+    // We only show logs of finished or running tasks.
+    if !vec![TaskStatus::Done, TaskStatus::Running, TaskStatus::Paused].contains(&task.status) {
         return;
     }
 
@@ -228,7 +231,7 @@ pub fn print_log(task_log: &mut TaskLogMessage, settings: &Settings) {
         Some(TaskResult::DependencyFailed) => {
             style("dependency failed".to_string()).with(Color::Red)
         }
-        None => panic!("Got a 'Done' task without a task result. Please report this bug."),
+        None => style("running".to_string()),
     };
     print!("{} {}", task_text, exit_status);
 
@@ -337,4 +340,37 @@ pub fn print_remote_task_output(task_log: &TaskLogMessage, stdout: bool) -> Resu
     io::copy(&mut decompressor, &mut write)?;
 
     Ok(())
+}
+
+/// Print the log ouput of finished tasks.
+/// Either print the logs of every task
+/// or only print the logs of the specified tasks.
+pub fn follow_task_logs(pueue_directory: String, task_id: usize, stderr: bool) {
+    let (stdout_handle, stderr_handle) = match get_log_file_handles(task_id, &pueue_directory) {
+        Ok((stdout, stderr)) => (stdout, stderr),
+        Err(err) => {
+            println!("Failed to get log file handles: {}", err);
+            return;
+        }
+    };
+    let mut handle = if stderr { stderr_handle } else { stdout_handle };
+
+    let (out_path, err_path) = get_log_paths(task_id, &pueue_directory);
+    let handle_path = if stderr { err_path } else { out_path };
+
+    // Stdout handler to directly write log file output to io::stdout
+    // without having to load anything into memory.
+    let mut stdout = io::stdout();
+    loop {
+        // Check whether the file still exists. Exit if it doesn't.
+        if !handle_path.exists() {
+            println!("File has gone away. Did somebody remove the task?");
+            return;
+        }
+        // Read the next chunk of text from the last position.
+        if let Err(err) = io::copy(&mut handle, &mut stdout) {
+            println!("Error while reading file: {}", err);
+            return;
+        };
+    }
 }
