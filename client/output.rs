@@ -11,9 +11,10 @@ use ::pueue::log::get_log_file_handles;
 use ::pueue::message::TaskLogMessage;
 use ::pueue::settings::Settings;
 use ::pueue::state::State;
-use ::pueue::task::{TaskResult, TaskStatus};
+use ::pueue::task::{Task, TaskResult, TaskStatus};
 
 use crate::cli::SubCommand;
+use crate::output_helper::*;
 
 pub fn print_success(message: String) {
     println!("{}", message);
@@ -40,12 +41,7 @@ pub fn print_state(state: State, cli_command: &SubCommand) {
         return;
     }
 
-    // Print the current daemon state.
-    if state.running {
-        println!("{}", style("Daemon status: running").with(Color::Green));
-    } else {
-        println!("{}", style("Daemon status: paused").with(Color::Yellow));
-    };
+    println!("{}", get_daemon_headline(&state));
 
     // Early exit and hint if there are no tasks in the queue
     if state.tasks.is_empty() {
@@ -53,23 +49,21 @@ pub fn print_state(state: State, cli_command: &SubCommand) {
         return;
     }
 
-    // Check whether there are any delayed tasks.
-    // In case there are, we need to add another column to the table.
-    let has_delayed_tasks = state
-        .tasks
-        .iter()
-        .any(|(_id, task)| task.enqueue_at.is_some());
+    let default_tasks = get_default_tasks(&state.tasks);
+    if !default_tasks.is_empty() {
+        print_table(&default_tasks);
+    }
 
-    // Check whether there are any tasks with dependencies.
-    // In case there are, we need to add another column to the table.
-    let has_dependencies = state
-        .tasks
-        .iter()
-        .any(|(_id, task)| !task.dependencies.is_empty());
+    // Print new table for each group
+    for (group, tasks) in sort_tasks_by_group(&state.tasks) {
+        println!("{}", get_group_headline(&group, &state));
+        print_table(&tasks);
+    }
+}
 
-    // Check whether there are any tasks with a custom group.
-    // In case there are, we need to add another column to the table.
-    let has_group = state.tasks.iter().any(|(_id, task)| task.group.is_some());
+/// Print some tasks into a nicely formatted table
+fn print_table(tasks: &BTreeMap<usize, Task>) {
+    let (has_delayed_tasks, has_dependencies) = has_special_columns(tasks);
 
     // Create table header row
     let mut headers = vec![Cell::new("Index"), Cell::new("Status")];
@@ -78,9 +72,6 @@ pub fn print_state(state: State, cli_command: &SubCommand) {
     }
     if has_dependencies {
         headers.push(Cell::new("Deps"));
-    }
-    if has_group {
-        headers.push(Cell::new("Group"));
     }
     headers.append(&mut vec![
         Cell::new("Exitcode"),
@@ -98,7 +89,7 @@ pub fn print_state(state: State, cli_command: &SubCommand) {
         .set_header(headers);
 
     // Add rows one by one.
-    for (id, task) in state.tasks {
+    for (id, task) in tasks {
         let mut row = Row::new();
         row.add_cell(Cell::new(&id.to_string()));
 
@@ -134,14 +125,6 @@ pub fn print_state(state: State, cli_command: &SubCommand) {
                 .collect::<Vec<String>>()
                 .join(", ");
             row.add_cell(Cell::new(text));
-        }
-
-        if has_group {
-            if let Some(group) = task.group {
-                row.add_cell(Cell::new(group));
-            } else {
-                row.add_cell(Cell::new(""));
-            }
         }
 
         // Match the color of the exit code.

@@ -9,6 +9,7 @@ pub mod client;
 pub mod edit;
 pub mod message;
 pub mod output;
+pub mod output_helper;
 
 use crate::cli::{Opt, SubCommand};
 use crate::client::Client;
