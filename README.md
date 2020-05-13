@@ -29,19 +29,30 @@ It provides functionality for:
 - Manipulation of the scheduled task order
 - Running multiple tasks at once (You can decide how many concurrent tasks you want to run)
 - Grouping tasks. Each group acts as their own queue and can have several tasks running in parallel.
-- Works on Linux and MacOS and partially on Windows.
+- A callback hook to, for instance, set up desktop notifications.
+- Works on Linux, MacOS and partially on Windows.
 
-**Disclaimer:** Windows support isn't fully there yet. This means:
+**Disclaimer:** Windows isn't fully supported yet. This means:
 - Pausing/resuming commands doesn't work for now.
 - Pueue only supports `powershell` for executing commands, keep this in mind when writing commands.
 
 
 ## Why should I use it?
 
-Imagine having to unpack or transfer large amounts of data from different directories to other directories.
+Imagine having to unpack or move large amounts of data to various directories.
 Usually something like this ends with about 10 open terminals/tmux sessions and an over-challenged hard drive.
 
-Pueue is specifically designed for these situations. It executes long-running tasks in their respective directories, without being bound to any terminal.  
+A similar scenario would occur, if you want to, for instance, re-encode 10 movies and each re-encode takes 12 hours.
+Creating a chained command with 10 `&&` isn't ergonomic at all and running 10 re-encodes in parallel will break your CPU.  
+
+Pueue is specifically designed for these situations.
+
+You can schedule your task and continue on the same shell without waiting.
+You can specify how many tasks should run in parallel and even group tasks to maximize system resource utilization.
+You could log off your server and come back later to check on your tasks' progress.
+
+Heck, you can even set up desktop notifications to get notified or execute parameterized commands as soon as a tasks finishes. 
+
 
 **A few possible applications:**
 - Copying huge amounts of stuff
@@ -52,8 +63,8 @@ Pueue is specifically designed for these situations. It executes long-running ta
 
 Pueue made at least my life a lot easier on many occasions.
 
-If you like the project and feel like something is missing, please create an issue.  
-I'm always open to suggestions and already implemented a few users requested features.
+If you like the project, feel free to give it at try!  
+If feel like something is missing, please create an issue.
 
 PRs are of course very welcome!
 
