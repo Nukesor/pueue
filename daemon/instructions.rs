@@ -471,7 +471,12 @@ fn group(message: GroupMessage, state: &SharedState) -> Message {
     let mut group_status = String::new();
     let mut group_iter = state.groups.iter().peekable();
     while let Some((group, running)) = group_iter.next() {
-        group_status.push_str(&format!("Group {}, running: {}", group, running));
+        group_status.push_str(&format!(
+            "Group {} ({} parallel), running: {}",
+            group,
+            state.settings.daemon.groups.get(group).unwrap(),
+            running
+        ));
         if group_iter.peek().is_some() {
             group_status.push('\n');
         }

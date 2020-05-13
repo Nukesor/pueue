@@ -90,49 +90,53 @@ pub enum SubCommand {
     },
 
     /// Wake the daemon from its paused state and continue all paused tasks.
-    /// Can be used to resume or start specific tasks.
+    /// Can also be used to resume or start specific tasks or groups.
     Start {
         /// Enforce starting these tasks.
-        /// This doesn't affect the daemon or any other tasks and works on a paused deamon.
+        /// This doesn't affect any other tasks and can be on a paused daemon or group.
         task_ids: Vec<usize>,
 
-        /// Start a specific group. Specific task_ids will be ignored when using this flag
+        /// Start a specific group. Any task_ids will be ignored when using this flag.
         #[structopt(name = "group", short, long)]
         group: Option<String>,
     },
-    /// Enqueue tasks again.
+
+    /// Restart task(s).
+    /// Identical tasks will be created and instantly queued (unless specified otherwise).
     Restart {
-        /// The tasks you want to enqueue again.
+        /// The tasks you want to restart.
         #[structopt()]
         task_ids: Vec<usize>,
 
-        /// Start the task(s) immediately.
+        /// Immediately start the task(s).
         #[structopt(name = "immediate", short, long)]
         start_immediately: bool,
 
         /// Create the task in stashed state.
-        /// Useful to avoid immediate execution if the queue is empty.
+        /// Useful to avoid immediate execution.
         #[structopt(name = "stashed", short, long, conflicts_with = "immediate")]
         stashed: bool,
     },
-    /// Pause the daemon and all running tasks. Groups will also be paused!
+
+    /// Pause the daemon and all running tasks.
     /// A paused daemon won't start any new tasks.
-    /// Daemon and tasks can be continued with `start`
-    /// Can also be used to pause specific tasks.
+    /// Daemon, groups and tasks can be resumed with `start`
+    /// Can also be used to pause a specific group or specific tasks.
     Pause {
-        /// Pause the daemon, but let any running tasks finish by themselves.
+        /// Let any running tasks finish by themselves, when pausing the daemon or a group.
         #[structopt(short, long, group("pause"), conflicts_with("task_ids"))]
         wait: bool,
 
-        /// Pause these tasks.
-        /// Doesn't affect the daemon or any other tasks.
+        /// Pause these specific tasks.
+        /// Doesn't affect the daemon, groups or any other tasks.
         #[structopt(group("pause"))]
         task_ids: Vec<usize>,
 
-        /// Pause a specific group. Specific task_ids will be ignored when using this flag
+        /// Pause a specific group. Any task_ids will be ignored when using this flag.
         #[structopt(name = "group", short, long)]
         group: Option<String>,
     },
+
     /// Kill either all or only specific running tasks.
     Kill {
         /// Kill all running tasks, this also pauses the daemon.
@@ -152,7 +156,9 @@ pub enum SubCommand {
         /// The input that should be sent to the process.
         input: String,
     },
-    /// Edit the command or the path of a stashed or queued task.
+
+    /// Edit the command or path of a stashed or queued task.
+    /// By default this edits the command of the task
     Edit {
         /// The id of the task.
         task_id: usize,
@@ -161,6 +167,7 @@ pub enum SubCommand {
         #[structopt(short, long)]
         path: bool,
     },
+
     /// Manage groups.
     /// Without any flags, this will simply display all known groups.
     Group {
@@ -182,6 +189,7 @@ pub enum SubCommand {
         #[structopt(short, long)]
         json: bool,
     },
+
     /// Display the log output of finished tasks.
     Log {
         /// Specify for which specific tasks you want to see the output.
@@ -192,6 +200,7 @@ pub enum SubCommand {
         #[structopt(short, long)]
         json: bool,
     },
+
     /// Show the output of a currently running task.
     /// This command allows following (like `tail -f`).
     Show {
@@ -204,10 +213,13 @@ pub enum SubCommand {
         #[structopt(short, long)]
         err: bool,
     },
+
     /// Remove all finished tasks from the list (also clears logs).
     Clean,
-    /// Kill all running tasks, remove all tasks and reset max_id.
+
+    /// Kill all running tasks, remove all tasks and reset max_task_id.
     Reset,
+
     /// Remotely shut down the daemon. Should only be used if the daemon isn't started by a service manager.
     Shutdown,
 
@@ -217,12 +229,13 @@ pub enum SubCommand {
         #[structopt(validator=min_one)]
         parallel_tasks: usize,
 
-        /// Specify the amount of parallel tasks for this group.
+        /// Specify the amount of parallel tasks for a group.
         #[structopt(name = "group", short, long)]
         group: Option<String>,
     },
+
     /// Generates shell completion files.
-    /// Ingore for normal operations.
+    /// This can be ignored during normal operations.
     Completions {
         /// The target shell. Can be `bash`, `fish`, `powershell`, `elvish` and `zsh`.
         shell: Shell,

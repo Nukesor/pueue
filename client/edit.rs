@@ -37,7 +37,7 @@ pub fn edit(message: EditResponseMessage, cli_command: &SubCommand) -> Message {
     Command::new(editor)
         .arg(file.path())
         .status()
-        .expect("Failed to start editor");
+        .expect("Failed to start editor. Do you have the $EDITOR environment variable set?");
 
     // Read the file.
     let mut file = file.into_file();
