@@ -135,13 +135,17 @@ impl TaskHandler {
             .filter(|(_, task)| {
                 if let Some(group) = &task.group {
                     // The task is assigned to a group.
+                    // First let's check if the group is paused. If it is, simply return false.
+                    if !state.groups.get(group).unwrap() {
+                        return false;
+                    }
+
+                    // If there's no running task for the group yet, we can safely return true
                     //
-                    // If there's no entry, we can safely return true, since there's no running
-                    // task for this group yet.
-                    //
-                    // If there's a group, we have to ensure that there are fewer running tasks than
-                    // allowed for this group.
+                    // If there are running tasks for this group, we have to ensure that there are
+                    // fewer running tasks than allowed for this group.
                     match running_tasks_per_group.get(group) {
+                        None => true,
                         Some(count) => match state.settings.daemon.groups.get(group) {
                             Some(allowed) => count < allowed,
                             None => {
@@ -152,7 +156,6 @@ impl TaskHandler {
                                 false
                             }
                         },
-                        None => true,
                     }
                 } else {
                     // We can unwrap safely, since default is always created.
@@ -460,10 +463,10 @@ impl TaskHandler {
     /// Handle the start message:
     /// 1. Either start the daemon and all tasks.
     /// 2. Or force the start of specific tasks.
-    fn start(&mut self, task_ids: Vec<usize>) {
+    fn start(&mut self, message: StartMessage) {
         // Only start specific tasks
-        if !task_ids.is_empty() {
-            for id in &task_ids {
+        if !message.task_ids.is_empty() {
+            for id in &message.task_ids {
                 // Continue all children that are simply paused
                 if self.children.contains_key(id) {
                     self.continue_task(*id);

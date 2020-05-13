@@ -1,6 +1,6 @@
 use ::anyhow::{anyhow, Context, Result};
-use ::std::env::{current_dir, vars};
 use ::std::collections::HashMap;
+use ::std::env::{current_dir, vars};
 
 use ::pueue::message::*;
 use ::pueue::settings::Settings;
@@ -63,7 +63,13 @@ pub fn get_message_from_opt(opt: &Opt, settings: &Settings) -> Result<Message> {
             };
             Ok(Message::Enqueue(message))
         }
-        SubCommand::Start { task_ids } => Ok(Message::Start(task_ids.clone())),
+        SubCommand::Start { task_ids, group } => {
+            let message = StartMessage {
+                task_ids: task_ids.clone(),
+                group: group.clone(),
+            };
+            Ok(Message::Start(message))
+        }
         SubCommand::Restart {
             task_ids,
             start_immediately,
@@ -76,10 +82,15 @@ pub fn get_message_from_opt(opt: &Opt, settings: &Settings) -> Result<Message> {
             };
             Ok(Message::Restart(message))
         }
-        SubCommand::Pause { wait, task_ids } => {
+        SubCommand::Pause {
+            wait,
+            task_ids,
+            group,
+        } => {
             let message = PauseMessage {
                 wait: *wait,
                 task_ids: task_ids.clone(),
+                group: group.clone(),
             };
             Ok(Message::Pause(message))
         }

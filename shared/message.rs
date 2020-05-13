@@ -14,7 +14,7 @@ pub enum Message {
     Stash(Vec<usize>),
     Enqueue(EnqueueMessage),
 
-    Start(Vec<usize>),
+    Start(StartMessage),
     Restart(RestartMessage),
     Pause(PauseMessage),
     Kill(KillMessage),
@@ -73,9 +73,16 @@ pub struct RestartMessage {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct PauseMessage {
-    pub wait: bool,
+pub struct StartMessage {
     pub task_ids: Vec<usize>,
+    pub group: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct PauseMessage {
+    pub task_ids: Vec<usize>,
+    pub wait: bool,
+    pub group: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

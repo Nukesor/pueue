@@ -1,6 +1,6 @@
 use ::chrono::prelude::*;
-use ::std::collections::HashMap;
 use ::serde_derive::{Deserialize, Serialize};
+use ::std::collections::HashMap;
 use ::strum_macros::Display;
 
 /// This enum represents the status of the internal task handling of Pueue.

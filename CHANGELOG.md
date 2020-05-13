@@ -2,6 +2,7 @@
 **Features:**
 - Groups! Tasks can now be assigned to a group.
     Each group acts as their own queue and each group has their own setting for parallel task execution.
+    Groups can also be paused/resumed individually
 - Environment variable capture. Tasks will now start with the variables of the `pueue add` environment.
 - Add a custom callback that's triggered whenever tasks finish.
 

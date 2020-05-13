@@ -17,7 +17,7 @@ pub fn handle_message(message: Message, sender: &Sender<Message>, state: &Shared
         Message::Stash(task_ids) => stash(task_ids, state),
         Message::Enqueue(message) => enqueue(message, state),
 
-        Message::Start(task_ids) => start(task_ids, sender, state),
+        Message::Start(message) => start(message, sender, state),
         Message::Restart(message) => restart(message, sender, state),
         Message::Pause(message) => pause(message, sender, state),
         Message::Kill(message) => kill(message, sender, state),
@@ -87,7 +87,10 @@ fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) 
     // Notify the task handler, in case the client wants to start the task immediately.
     if message.start_immediately {
         sender
-            .send(Message::Start(vec![task_id]))
+            .send(Message::Start(StartMessage {
+                task_ids: vec![task_id],
+                group: None,
+            }))
             .expect(SENDER_ERR);
     }
     // Create the customized response for the client.
@@ -205,14 +208,40 @@ fn enqueue(message: EnqueueMessage, state: &SharedState) -> Message {
 
 /// Forward the start message to the task handler, which then starts the process(es).
 /// Invoked when calling `pueue start`.
-fn start(task_ids: Vec<usize>, sender: &Sender<Message>, state: &SharedState) -> Message {
+fn start(message: StartMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
+    // Start a group
+    if let Some(group) = message.group {
+        let mut state = state.lock().unwrap();
+        if !state.groups.contains_key(&group) {
+            return create_failure_message(format!("Group {} doesn't exists", group));
+        }
+
+        // Set the group to paused.
+        state.groups.insert(group.clone(), true);
+        state.save();
+
+        // Notify the task handler to start all (if any) paused tasks in that group.
+        let paused_tasks = state.task_ids_in_group_with_status(&group, TaskStatus::Paused);
+        if !paused_tasks.is_empty() {
+            let start_message = StartMessage {
+                task_ids: paused_tasks,
+                group: None,
+            };
+            sender
+                .send(Message::Start(start_message))
+                .expect(SENDER_ERR);
+        }
+
+        return create_success_message(format!("Group {} started", group));
+    }
+
     sender
-        .send(Message::Start(task_ids.clone()))
+        .send(Message::Start(message.clone()))
         .expect(SENDER_ERR);
-    if !task_ids.is_empty() {
+    if !message.task_ids.is_empty() {
         let response = task_response_helper(
             "Tasks are being started",
-            task_ids,
+            message.task_ids,
             vec![TaskStatus::Paused, TaskStatus::Queued, TaskStatus::Stashed],
             state,
         );
@@ -256,7 +285,11 @@ fn restart(message: RestartMessage, sender: &Sender<Message>, state: &SharedStat
     // If the restarted tasks should be started immediately, send a message
     // with the new task ids to the task handler.
     if message.start_immediately {
-        sender.send(Message::Start(new_ids)).expect(SENDER_ERR);
+        let message = StartMessage {
+            task_ids: new_ids,
+            group: None,
+        };
+        sender.send(Message::Start(message)).expect(SENDER_ERR);
     }
 
     create_success_message(response)
@@ -265,6 +298,33 @@ fn restart(message: RestartMessage, sender: &Sender<Message>, state: &SharedStat
 /// Forward the pause message to the task handler, which then pauses the process(es).
 /// Invoked when calling `pueue pause`.
 fn pause(message: PauseMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
+    // Pause a specific group
+    if let Some(group) = message.group {
+        let mut state = state.lock().unwrap();
+        if !state.groups.contains_key(&group) {
+            return create_failure_message(format!("Group {} doesn't exists", group));
+        }
+        // Set the group to paused.
+        state.groups.insert(group.clone(), false);
+        state.save();
+
+        // Notify the task handler to pause all (if any) running tasks in that group.
+        let running_tasks = state.task_ids_in_group_with_status(&group, TaskStatus::Running);
+        if !message.wait && !running_tasks.is_empty() {
+            let pause_message = PauseMessage {
+                task_ids: running_tasks,
+                wait: false,
+                group: Some(group.clone()),
+            };
+            sender
+                .send(Message::Pause(pause_message))
+                .expect(SENDER_ERR);
+        }
+
+        return create_success_message(format!("Group {} paused", group));
+    }
+
+    // Forward the pause message to the TaskHandler
     sender
         .send(Message::Pause(message.clone()))
         .expect(SENDER_ERR);
@@ -408,8 +468,16 @@ fn group(message: GroupMessage, state: &SharedState) -> Message {
         return create_success_message(format!("Group {} removed", group));
     }
 
+    let mut group_status = String::new();
+    let mut group_iter = state.groups.iter().peekable();
+    while let Some((group, running)) = group_iter.next() {
+        group_status.push_str(&format!("Group {}, running: {}", group, running));
+        if group_iter.peek().is_some() {
+            group_status.push('\n');
+        }
+    }
     // Print all groups
-    create_success_message(format!("Groups: {:?}", state.groups.keys()))
+    create_success_message(group_status)
 }
 
 /// Remove all failed or done tasks from the state.

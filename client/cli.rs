@@ -94,8 +94,11 @@ pub enum SubCommand {
     Start {
         /// Enforce starting these tasks.
         /// This doesn't affect the daemon or any other tasks and works on a paused deamon.
-        #[structopt()]
         task_ids: Vec<usize>,
+
+        /// Start a specific group. Specific task_ids will be ignored when using this flag
+        #[structopt(name = "group", short, long)]
+        group: Option<String>,
     },
     /// Enqueue tasks again.
     Restart {
@@ -112,7 +115,7 @@ pub enum SubCommand {
         #[structopt(name = "stashed", short, long, conflicts_with = "immediate")]
         stashed: bool,
     },
-    /// Pause the daemon and all running tasks.
+    /// Pause the daemon and all running tasks. Groups will also be paused!
     /// A paused daemon won't start any new tasks.
     /// Daemon and tasks can be continued with `start`
     /// Can also be used to pause specific tasks.
@@ -125,6 +128,10 @@ pub enum SubCommand {
         /// Doesn't affect the daemon or any other tasks.
         #[structopt(group("pause"))]
         task_ids: Vec<usize>,
+
+        /// Pause a specific group. Specific task_ids will be ignored when using this flag
+        #[structopt(name = "group", short, long)]
+        group: Option<String>,
     },
     /// Kill either all or only specific running tasks.
     Kill {
@@ -160,6 +167,7 @@ pub enum SubCommand {
         /// Add a group
         #[structopt(short, long)]
         add: Option<String>,
+
         /// Remove a group.
         /// This will move all tasks in this group to the default group!
         #[structopt(short, long)]

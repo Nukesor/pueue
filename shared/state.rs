@@ -98,6 +98,26 @@ impl State {
         self.settings.save()
     }
 
+    /// Get all task ids of a specific group
+    pub fn task_ids_in_group_with_status(
+        &mut self,
+        group: &String,
+        status: TaskStatus,
+    ) -> Vec<usize> {
+        self.tasks
+            .iter()
+            .filter(|(_, task)| task.status == status)
+            .filter(|(_, task)| {
+                if let Some(task_group) = &task.group {
+                    return task_group == group;
+                }
+
+                false
+            })
+            .map(|(id, _)| *id)
+            .collect()
+    }
+
     /// This checks, whether the given task_ids are in the specified statuses.
     /// The first result is the list of task_ids that match these statuses.
     /// The second result is the list of task_ids that don't match these statuses.
