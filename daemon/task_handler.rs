@@ -493,11 +493,11 @@ impl TaskHandler {
             state.set_status_for_all_groups(true);
 
             self.children.keys().cloned().collect()
-        } else if let Some(group) = &message.group  {
+        } else if let Some(group) = &message.group {
             let mut state = self.state.lock().unwrap();
             // Ensure that a given group exists. (Might not happen due to concurrency)
             if !state.groups.contains_key(group) {
-                return
+                return;
             }
             // Set the group to running.
             state.groups.insert(group.clone(), true);
@@ -573,7 +573,7 @@ impl TaskHandler {
             // Ensure that a given group exists. (Might not happen due to concurrency)
             let mut state = self.state.lock().unwrap();
             if !state.groups.contains_key(group) {
-                return
+                return;
             }
             // Pause a specific group.
             state.groups.insert(group.clone(), false);
@@ -647,13 +647,16 @@ impl TaskHandler {
             // Ensure that a given group exists. (Might not happen due to concurrency)
             let mut state = self.state.lock().unwrap();
             if !state.groups.contains_key(group) {
-                return
+                return;
             }
             // Pause a specific group.
             state.groups.insert(group.clone(), false);
             info!("Killing tasks of group {}", group);
 
-            state.task_ids_in_group_with_stati(&message.group, vec![TaskStatus::Running, TaskStatus::Paused])
+            state.task_ids_in_group_with_stati(
+                &message.group,
+                vec![TaskStatus::Running, TaskStatus::Paused],
+            )
         } else {
             // Pause the default queue
             let mut state = self.state.lock().unwrap();

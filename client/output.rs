@@ -65,7 +65,7 @@ pub fn print_state(state: State, cli_command: &SubCommand) {
         // Skip unwanted groups, if a single group is requested
         if let Some(group_only) = &group_only {
             if group_only != &group {
-                continue
+                continue;
             }
         }
         println!("{}", get_group_headline(&group, &state));

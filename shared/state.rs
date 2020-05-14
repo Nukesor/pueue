@@ -117,9 +117,7 @@ impl State {
         self.tasks
             .iter()
             .filter(|(_, task)| stati.contains(&task.status))
-            .filter(|(_, task)| {
-                group == &task.group
-            })
+            .filter(|(_, task)| group == &task.group)
             .map(|(id, _)| *id)
             .collect()
     }

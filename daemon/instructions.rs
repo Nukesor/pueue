@@ -286,7 +286,7 @@ fn restart(message: RestartMessage, sender: &Sender<Message>, state: &SharedStat
 /// Invoked when calling `pueue pause`.
 /// Forward the pause message to the task handler, which then pauses groups/tasks/everything.
 fn pause(message: PauseMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
-        // Check whether a given group exists
+    // Check whether a given group exists
     if let Some(group) = &message.group {
         let state = state.lock().unwrap();
         if !state.groups.contains_key(group) {
