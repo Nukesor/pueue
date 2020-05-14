@@ -72,23 +72,27 @@ pub struct RestartMessage {
     pub stashed: bool,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct StartMessage {
     pub task_ids: Vec<usize>,
     pub group: Option<String>,
+    pub all: bool,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct PauseMessage {
     pub task_ids: Vec<usize>,
-    pub wait: bool,
     pub group: Option<String>,
+    pub wait: bool,
+    pub all: bool,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct KillMessage {
-    pub all: bool,
     pub task_ids: Vec<usize>,
+    pub group: Option<String>,
+    pub default: bool,
+    pub all: bool,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

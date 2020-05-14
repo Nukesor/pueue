@@ -36,9 +36,9 @@ pub fn handle_message(message: Message, sender: &Sender<Message>, state: &Shared
     }
 }
 
+/// Invoked when calling `pueue add`.
 /// Queues a new task to the state.
 /// If the start_immediately flag is set, send a StartMessage to the task handler.
-/// Invoked when calling `pueue add`.
 fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
     let starting_status = if message.stashed || message.enqueue_at.is_some() {
         TaskStatus::Stashed
@@ -89,7 +89,7 @@ fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) 
         sender
             .send(Message::Start(StartMessage {
                 task_ids: vec![task_id],
-                group: None,
+                ..Default::default()
             }))
             .expect(SENDER_ERR);
     }
@@ -108,9 +108,9 @@ fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) 
     create_success_message(message)
 }
 
+/// Invoked when calling `pueue remove`.
 /// Remove tasks from the queue.
 /// We have to ensure that those tasks aren't running!
-/// Invoked when calling `pueue remove`.
 fn remove(task_ids: Vec<usize>, state: &SharedState) -> Message {
     let mut state = state.lock().unwrap();
     let statuses = vec![TaskStatus::Running, TaskStatus::Paused];
@@ -126,9 +126,9 @@ fn remove(task_ids: Vec<usize>, state: &SharedState) -> Message {
     create_success_message(response)
 }
 
+/// Invoked when calling `pueue switch`.
 /// Switch the position of two tasks in the upcoming queue.
 /// We have to ensure that those tasks are either `Queued` or `Stashed`
-/// Invoked when calling `pueue switch`.
 fn switch(message: SwitchMessage, state: &SharedState) -> Message {
     let task_ids = vec![message.task_id_1, message.task_id_2];
     let statuses = vec![TaskStatus::Queued, TaskStatus::Stashed];
@@ -154,9 +154,9 @@ fn switch(message: SwitchMessage, state: &SharedState) -> Message {
     create_success_message("Tasks have been switched")
 }
 
+/// Invoked when calling `pueue stash`.
 /// Stash specific queued tasks.
 /// They won't be executed until they're enqueued or explicitely started.
-/// Invoked when calling `pueue stash`.
 fn stash(task_ids: Vec<usize>, state: &SharedState) -> Message {
     let (matching, mismatching) = {
         let mut state = state.lock().unwrap();
@@ -175,8 +175,8 @@ fn stash(task_ids: Vec<usize>, state: &SharedState) -> Message {
     create_success_message(response)
 }
 
-/// Enqueue specific stashed tasks.
 /// Invoked when calling `pueue enqueue`.
+/// Enqueue specific stashed tasks.
 fn enqueue(message: EnqueueMessage, state: &SharedState) -> Message {
     let (matching, mismatching) = {
         let mut state = state.lock().unwrap();
@@ -206,33 +206,15 @@ fn enqueue(message: EnqueueMessage, state: &SharedState) -> Message {
     create_success_message(response)
 }
 
-/// Forward the start message to the task handler, which then starts the process(es).
 /// Invoked when calling `pueue start`.
+/// Forward the start message to the task handler, which then starts the process(es).
 fn start(message: StartMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
-    // Start a group
-    if let Some(group) = message.group {
-        let mut state = state.lock().unwrap();
-        if !state.groups.contains_key(&group) {
+    // Check whether a given group exists
+    if let Some(group) = &message.group {
+        let state = state.lock().unwrap();
+        if !state.groups.contains_key(group) {
             return create_failure_message(format!("Group {} doesn't exists", group));
         }
-
-        // Set the group to paused.
-        state.groups.insert(group.clone(), true);
-        state.save();
-
-        // Notify the task handler to start all (if any) paused tasks in that group.
-        let paused_tasks = state.task_ids_in_group_with_status(&group, TaskStatus::Paused);
-        if !paused_tasks.is_empty() {
-            let start_message = StartMessage {
-                task_ids: paused_tasks,
-                group: None,
-            };
-            sender
-                .send(Message::Start(start_message))
-                .expect(SENDER_ERR);
-        }
-
-        return create_success_message(format!("Group {} started", group));
     }
 
     sender
@@ -248,12 +230,18 @@ fn start(message: StartMessage, sender: &Sender<Message>, state: &SharedState) -
         return create_success_message(response);
     }
 
-    create_success_message("Daemon and all tasks are being resumed.")
+    if let Some(group) = &message.group {
+        create_success_message(format!("Group {} is being resumed.", group))
+    } else if message.all {
+        create_success_message("All queues are being resumed.")
+    } else {
+        create_success_message("Default queue is being resumed.")
+    }
 }
 
+/// Invoked when calling `pueue restart`.
 /// Create and enqueue tasks from already finished tasks.
 /// The user can specify to immediately start the newly created tasks.
-/// Invoked when calling `pueue restart`.
 fn restart(message: RestartMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
     let new_status = if message.stashed {
         TaskStatus::Stashed
@@ -287,7 +275,7 @@ fn restart(message: RestartMessage, sender: &Sender<Message>, state: &SharedStat
     if message.start_immediately {
         let message = StartMessage {
             task_ids: new_ids,
-            group: None,
+            ..Default::default()
         };
         sender.send(Message::Start(message)).expect(SENDER_ERR);
     }
@@ -295,36 +283,17 @@ fn restart(message: RestartMessage, sender: &Sender<Message>, state: &SharedStat
     create_success_message(response)
 }
 
-/// Forward the pause message to the task handler, which then pauses the process(es).
 /// Invoked when calling `pueue pause`.
+/// Forward the pause message to the task handler, which then pauses groups/tasks/everything.
 fn pause(message: PauseMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
-    // Pause a specific group
-    if let Some(group) = message.group {
-        let mut state = state.lock().unwrap();
-        if !state.groups.contains_key(&group) {
+        // Check whether a given group exists
+    if let Some(group) = &message.group {
+        let state = state.lock().unwrap();
+        if !state.groups.contains_key(group) {
             return create_failure_message(format!("Group {} doesn't exists", group));
         }
-        // Set the group to paused.
-        state.groups.insert(group.clone(), false);
-        state.save();
-
-        // Notify the task handler to pause all (if any) running tasks in that group.
-        let running_tasks = state.task_ids_in_group_with_status(&group, TaskStatus::Running);
-        if !message.wait && !running_tasks.is_empty() {
-            let pause_message = PauseMessage {
-                task_ids: running_tasks,
-                wait: false,
-                group: Some(group.clone()),
-            };
-            sender
-                .send(Message::Pause(pause_message))
-                .expect(SENDER_ERR);
-        }
-
-        return create_success_message(format!("Group {} paused", group));
     }
 
-    // Forward the pause message to the TaskHandler
     sender
         .send(Message::Pause(message.clone()))
         .expect(SENDER_ERR);
@@ -337,12 +306,17 @@ fn pause(message: PauseMessage, sender: &Sender<Message>, state: &SharedState) -
         );
         return create_success_message(response);
     }
-
-    create_success_message("Daemon and all tasks are being paused.")
+    if let Some(group) = &message.group {
+        create_success_message(format!("Group {} is being paused.", group))
+    } else if message.all {
+        create_success_message("All queues are being paused.")
+    } else {
+        create_success_message("Default queue is being paused.")
+    }
 }
 
-/// Forward the kill message to the task handler, which then kills the process.
 /// Invoked when calling `pueue kill`.
+/// Forward the kill message to the task handler, which then kills the process.
 fn kill(message: KillMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
     sender
         .send(Message::Kill(message.clone()))
@@ -358,12 +332,18 @@ fn kill(message: KillMessage, sender: &Sender<Message>, state: &SharedState) -> 
         return create_success_message(response);
     }
 
-    create_success_message("All tasks are being killed.")
+    if let Some(group) = &message.group {
+        create_success_message(format!("All tasks of Group {} is being killed.", group))
+    } else if message.all {
+        create_success_message("All tasks are being killed.")
+    } else {
+        create_success_message("All tasks of the default queue are being paused.")
+    }
 }
 
+/// Invoked when calling `pueue send`.
 /// The message will be forwarded to the task handler, which then sends the user input to the process.
 /// In here we only do some error handling.
-/// Invoked when calling `pueue send`.
 fn send(message: SendMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
     // Check whether the task exists and is running. Abort if that's not the case.
     {
@@ -384,9 +364,9 @@ fn send(message: SendMessage, sender: &Sender<Message>, state: &SharedState) -> 
     create_success_message("Message is being send to the process.")
 }
 
+/// Invoked when calling `pueue edit`.
 /// If a user wants to edit a message, we need to send him the current command.
 /// Lock the task to prevent execution, before the user has finished editing the command.
-/// Invoked when calling `pueue edit`.
 fn edit_request(task_id: usize, state: &SharedState) -> Message {
     // Check whether the task exists and is queued/stashed. Abort if that's not the case.
     let mut state = state.lock().unwrap();
@@ -409,8 +389,8 @@ fn edit_request(task_id: usize, state: &SharedState) -> Message {
     }
 }
 
-/// Now we actually update the message with the updated command from the client.
 /// Invoked after closing the editor on `pueue edit`.
+/// Now we actually update the message with the updated command from the client.
 fn edit(message: EditMessage, state: &SharedState) -> Message {
     // Check whether the task exists and is locked. Abort if that's not the case
     let mut state = state.lock().unwrap();
@@ -431,11 +411,11 @@ fn edit(message: EditMessage, state: &SharedState) -> Message {
     }
 }
 
+/// Invoked on `pueue groups`.
 /// Manage groups.
 /// - Show groups
 /// - Add group
 /// - Remove group
-/// Invoked on `pueue groups`.
 fn group(message: GroupMessage, state: &SharedState) -> Message {
     let mut state = state.lock().unwrap();
 
@@ -485,8 +465,8 @@ fn group(message: GroupMessage, state: &SharedState) -> Message {
     create_success_message(group_status)
 }
 
-/// Remove all failed or done tasks from the state.
 /// Invoked when calling `pueue clean`.
+/// Remove all failed or done tasks from the state.
 fn clean(state: &SharedState) -> Message {
     let mut state = state.lock().unwrap();
     state.backup();
@@ -502,24 +482,24 @@ fn clean(state: &SharedState) -> Message {
     create_success_message("All finished tasks have been removed")
 }
 
+/// Invoked when calling `pueue reset`.
 /// Forward the reset request to the task handler.
 /// The handler then kills all children and clears the task queue.
-/// Invoked when calling `pueue reset`.
 fn reset(sender: &Sender<Message>, state: &SharedState) -> Message {
     sender.send(Message::Reset).expect(SENDER_ERR);
     clean(state);
     create_success_message("Everything is being reset right now.")
 }
 
-/// Return the current state.
 /// Invoked when calling `pueue status`.
+/// Return the current state.
 fn get_status(state: &SharedState) -> Message {
     let state = state.lock().unwrap().clone();
     Message::StatusResponse(state)
 }
 
-/// Return the current state and the stdou/stderr of all tasks to the client.
 /// Invoked when calling `pueue log`.
+/// Return the current state and the stdou/stderr of all tasks to the client.
 fn get_log(message: LogRequestMessage, state: &SharedState) -> Message {
     let state = state.lock().unwrap().clone();
     // Return all logs, if no specific task id is specified

@@ -20,7 +20,7 @@ pub fn has_special_columns(tasks: &BTreeMap<usize, Task>) -> (bool, bool) {
 }
 
 /// Return a nicely formatted headline that's displayed at the start of `pueue status`
-pub fn get_daemon_headline(state: &State) -> String {
+pub fn get_default_headline(state: &State) -> String {
     // Print the current daemon state.
     let daemon_status_text = if state.running {
         style("running").with(Color::Green)
@@ -30,7 +30,7 @@ pub fn get_daemon_headline(state: &State) -> String {
     let parallel = state.settings.daemon.default_parallel_tasks;
     format!(
         "{} ({} parallel): {}",
-        style("Daemon status").attribute(Attribute::Bold),
+        style("Default queue").attribute(Attribute::Bold),
         parallel,
         daemon_status_text
     )

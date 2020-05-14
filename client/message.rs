@@ -63,10 +63,11 @@ pub fn get_message_from_opt(opt: &Opt, settings: &Settings) -> Result<Message> {
             };
             Ok(Message::Enqueue(message))
         }
-        SubCommand::Start { task_ids, group } => {
+        SubCommand::Start { task_ids, group, all } => {
             let message = StartMessage {
                 task_ids: task_ids.clone(),
                 group: group.clone(),
+                all: *all,
             };
             Ok(Message::Start(message))
         }
@@ -83,21 +84,25 @@ pub fn get_message_from_opt(opt: &Opt, settings: &Settings) -> Result<Message> {
             Ok(Message::Restart(message))
         }
         SubCommand::Pause {
-            wait,
             task_ids,
             group,
+            wait,
+            all,
         } => {
             let message = PauseMessage {
-                wait: *wait,
                 task_ids: task_ids.clone(),
                 group: group.clone(),
+                wait: *wait,
+                all: *all,
             };
             Ok(Message::Pause(message))
         }
-        SubCommand::Kill { all, task_ids } => {
+        SubCommand::Kill { task_ids, group, default, all} => {
             let message = KillMessage {
-                all: *all,
                 task_ids: task_ids.clone(),
+                group: group.clone(),
+                default: *default,
+                all: *all,
             };
             Ok(Message::Kill(message))
         }

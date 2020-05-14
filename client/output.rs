@@ -41,7 +41,7 @@ pub fn print_state(state: State, cli_command: &SubCommand) {
         return;
     }
 
-    println!("{}", get_daemon_headline(&state));
+    println!("{}", get_default_headline(&state));
 
     // Early exit and hint if there are no tasks in the queue
     if state.tasks.is_empty() {

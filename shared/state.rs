@@ -98,21 +98,27 @@ impl State {
         self.settings.save()
     }
 
+    /// Set the running status for all groups including the default queue
+    pub fn set_status_for_all_groups(&mut self, status: bool) {
+        self.running = status;
+        let keys = self.groups.keys().cloned().collect::<Vec<String>>();
+        for key in keys {
+            self.groups.insert(key.into(), status);
+        }
+        self.save()
+    }
+
     /// Get all task ids of a specific group
-    pub fn task_ids_in_group_with_status(
+    pub fn task_ids_in_group_with_stati(
         &mut self,
-        group: &String,
-        status: TaskStatus,
+        group: &Option<String>,
+        stati: Vec<TaskStatus>,
     ) -> Vec<usize> {
         self.tasks
             .iter()
-            .filter(|(_, task)| task.status == status)
+            .filter(|(_, task)| stati.contains(&task.status))
             .filter(|(_, task)| {
-                if let Some(task_group) = &task.group {
-                    return task_group == group;
-                }
-
-                false
+                group == &task.group
             })
             .map(|(id, _)| *id)
             .collect()
@@ -161,7 +167,7 @@ impl State {
 
     pub fn reset(&mut self) {
         self.backup();
-        self.running = true;
+        self.set_status_for_all_groups(true);
         self.max_id = 0;
         self.tasks = BTreeMap::new();
         self.save();

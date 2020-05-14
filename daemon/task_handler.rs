@@ -25,7 +25,6 @@ pub struct TaskHandler {
     receiver: Receiver<Message>,
     children: BTreeMap<usize, Child>,
     callbacks: Vec<Child>,
-    running: bool,
     reset: bool,
     // Some static settings that are extracted from `state.settings` for convenience purposes.
     pueue_directory: String,
@@ -35,11 +34,12 @@ pub struct TaskHandler {
 
 impl TaskHandler {
     pub fn new(state: SharedState, receiver: Receiver<Message>) -> Self {
-        let (running, pueue_directory, callback, pause_on_failure) = {
+        // Extract some static settings we often need.
+        // This prevents locking the State all the time.
+        let (pueue_directory, callback, pause_on_failure) = {
             let state = state.lock().unwrap();
             let settings = &state.settings.daemon;
             (
-                state.running,
                 settings.pueue_directory.clone(),
                 settings.callback.clone(),
                 settings.pause_on_failure,
@@ -50,7 +50,6 @@ impl TaskHandler {
             receiver,
             children: BTreeMap::new(),
             callbacks: Vec::new(),
-            running,
             reset: false,
             pueue_directory,
             callback,
@@ -86,7 +85,7 @@ impl TaskHandler {
             self.check_callbacks();
             self.check_stashed();
             self.check_failed_dependencies();
-            if self.running && !self.reset {
+            if !self.reset {
                 let _res = self.check_new();
             }
         }
@@ -96,15 +95,17 @@ impl TaskHandler {
     /// Precondition for a task to be started:
     /// - is in Queued state
     /// - There are free slots in the task's group
+    /// - The group is running
     /// - has all its dependencies in `Done` state
     pub fn get_next_task_id(&mut self) -> Option<usize> {
         let state = self.state.lock().unwrap();
-
         // Check how many tasks are running in each group
         let mut running_tasks_per_group: HashMap<String, usize> = HashMap::new();
+
         // Create a default group for tasks without an explicit group
         running_tasks_per_group.insert("default".into(), 0);
 
+        // Walk through all tasks and save the number of running tasks by group
         for (_, task) in state.tasks.iter() {
             // We are only interested in currently running tasks.
             if ![TaskStatus::Running, TaskStatus::Paused].contains(&task.status) {
@@ -158,9 +159,14 @@ impl TaskHandler {
                         },
                     }
                 } else {
+                    // The task is assigned to the default queue.
+                    // Check if the default queue is paused and return false if it's not.
+                    if !state.running {
+                        return false;
+                    }
+
                     // We can unwrap safely, since default is always created.
                     let running = running_tasks_per_group.get("default").unwrap();
-
                     running < &state.settings.daemon.default_parallel_tasks
                 }
             })
@@ -284,9 +290,7 @@ impl TaskHandler {
 
                 // Pause the daemon, if the settings say so
                 if self.pause_on_failure {
-                    self.running = false;
-                    state.running = false;
-                    state.save();
+                    state.running = false
                 }
                 return;
             }
@@ -336,7 +340,6 @@ impl TaskHandler {
         if self.reset && self.children.is_empty() {
             let mut state = self.state.lock().unwrap();
             state.reset();
-            self.running = true;
             self.reset = false;
         }
 
@@ -388,8 +391,7 @@ impl TaskHandler {
 
         // Pause the daemon, if the settings say so and some process failed
         if failed_task_exists && self.pause_on_failure {
-            self.running = false;
-            state.running = false;
+            self.change_running(false);
         }
 
         state.save()
@@ -465,6 +467,7 @@ impl TaskHandler {
     /// 2. Or force the start of specific tasks.
     fn start(&mut self, message: StartMessage) {
         // Only start specific tasks
+        // This is handled separately, since this can also force-spawn processes
         if !message.task_ids.is_empty() {
             for id in &message.task_ids {
                 // Continue all children that are simply paused
@@ -478,13 +481,42 @@ impl TaskHandler {
             return;
         }
 
-        // Start the daemon and all paused tasks
-        let keys: Vec<usize> = self.children.keys().cloned().collect();
+        // Get the keys of all tasks that should be resumed
+        // These can either be
+        // - All running tasks
+        // - The paused tasks of a specific group
+        // - The paused tasks of the default queue
+        let keys: Vec<usize> = if message.all {
+            // Resume all groups and the default queue
+            info!("Resuming everything");
+            let mut state = self.state.lock().unwrap();
+            state.set_status_for_all_groups(true);
+
+            self.children.keys().cloned().collect()
+        } else if let Some(group) = &message.group  {
+            let mut state = self.state.lock().unwrap();
+            // Ensure that a given group exists. (Might not happen due to concurrency)
+            if !state.groups.contains_key(group) {
+                return
+            }
+            // Set the group to running.
+            state.groups.insert(group.clone(), true);
+            info!("Resuming group {}", group);
+
+            state.task_ids_in_group_with_stati(&message.group, vec![TaskStatus::Paused])
+        } else {
+            let mut state = self.state.lock().unwrap();
+            state.running = true;
+            info!("Resuming default queue");
+
+            state.save();
+            state.task_ids_in_group_with_stati(&None, vec![TaskStatus::Paused])
+        };
+
+        // Resume all specified paused tasks
         for id in keys {
             self.continue_task(id);
         }
-        info!("Resuming daemon (start)");
-        self.change_running(true);
     }
 
     /// Send a start signal to a paused task to continue execution.
@@ -521,23 +553,48 @@ impl TaskHandler {
     /// 1. Either pause the daemon and all tasks.
     /// 2. Or only pause specific tasks.
     fn pause(&mut self, message: PauseMessage) {
+        // Get the keys of all tasks that should be resumed
+        // These can either be
+        // - Specific tasks
+        // - All running tasks
+        // - The paused tasks of a group
+        // - The paused tasks of the default queue
         // Only pause specific tasks
-        if !message.task_ids.is_empty() {
-            for id in &message.task_ids {
-                self.pause_task(*id);
-            }
-            return;
-        }
+        let keys: Vec<usize> = if !message.task_ids.is_empty() {
+            message.task_ids
+        } else if message.all {
+            // Pause all running tasks
+            let mut state = self.state.lock().unwrap();
+            state.set_status_for_all_groups(false);
 
-        // Pause the daemon and all tasks
-        let keys: Vec<usize> = self.children.keys().cloned().collect();
+            info!("Pausing everything");
+            self.children.keys().cloned().collect()
+        } else if let Some(group) = &message.group {
+            // Ensure that a given group exists. (Might not happen due to concurrency)
+            let mut state = self.state.lock().unwrap();
+            if !state.groups.contains_key(group) {
+                return
+            }
+            // Pause a specific group.
+            state.groups.insert(group.clone(), false);
+            info!("Pausing group {}", group);
+
+            state.task_ids_in_group_with_stati(&message.group, vec![TaskStatus::Running])
+        } else {
+            // Pause the default queue
+            let mut state = self.state.lock().unwrap();
+            state.running = false;
+            info!("Pausing default queue");
+
+            state.task_ids_in_group_with_stati(&None, vec![TaskStatus::Running])
+        };
+
+        // Pause all specified tasks
         if !message.wait {
             for id in keys {
                 self.pause_task(id);
             }
         }
-        info!("Pausing daemon");
-        self.change_running(false);
     }
 
     /// Pause a specific task.
@@ -564,26 +621,50 @@ impl TaskHandler {
         }
     }
 
-    /// Handle the pause message:
-    /// 1. Either kill all tasks.
-    /// 2. Or only kill specific tasks.
+    /// Handle the kill message:
+    /// 1. Kill specific tasks.
+    /// 2. Kill all tasks.
+    /// 3. Kill all tasks of a specific group.
+    /// 4. Kill all tasks of the default queue.
     fn kill(&mut self, message: KillMessage) {
+        // Get the keys of all tasks that should be resumed
+        // These can either be
+        // - Specific tasks
+        // - All running tasks
+        // - The paused tasks of a group
+        // - The paused tasks of the default queue
         // Only pause specific tasks
-        if !message.task_ids.is_empty() {
-            for id in message.task_ids {
-                self.kill_task(id);
-            }
-            return;
-        }
+        let task_ids: Vec<usize> = if !message.task_ids.is_empty() {
+            message.task_ids
+        } else if message.all {
+            // Pause all running tasks
+            let mut state = self.state.lock().unwrap();
+            state.set_status_for_all_groups(false);
 
-        // Pause the daemon and kill all tasks.
-        if message.all {
-            info!("Killing all spawned children");
-            self.change_running(false);
-            let keys: Vec<usize> = self.children.keys().cloned().collect();
-            for id in keys {
-                self.kill_task(id);
+            info!("Killing all running tasks");
+            self.children.keys().cloned().collect()
+        } else if let Some(group) = &message.group {
+            // Ensure that a given group exists. (Might not happen due to concurrency)
+            let mut state = self.state.lock().unwrap();
+            if !state.groups.contains_key(group) {
+                return
             }
+            // Pause a specific group.
+            state.groups.insert(group.clone(), false);
+            info!("Killing tasks of group {}", group);
+
+            state.task_ids_in_group_with_stati(&message.group, vec![TaskStatus::Running, TaskStatus::Paused])
+        } else {
+            // Pause the default queue
+            let mut state = self.state.lock().unwrap();
+            state.running = false;
+            info!("Killing tasks of the default queue");
+
+            state.task_ids_in_group_with_stati(&None, vec![TaskStatus::Running, TaskStatus::Paused])
+        };
+
+        for task_id in task_ids {
+            self.kill_task(task_id);
         }
     }
 
@@ -637,8 +718,8 @@ impl TaskHandler {
     /// If all children finished, the state will be completely reset.
     fn reset(&mut self) {
         let message = KillMessage {
-            task_ids: Vec::new(),
             all: true,
+            ..Default::default()
         };
         self.kill(message);
 
@@ -649,7 +730,6 @@ impl TaskHandler {
     fn change_running(&mut self, running: bool) {
         let mut state = self.state.lock().unwrap();
         state.running = running;
-        self.running = running;
         state.save();
     }
 

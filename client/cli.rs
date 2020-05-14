@@ -88,16 +88,23 @@ pub enum SubCommand {
         delay_until: Option<DateTime<Local>>,
     },
 
-    /// Wake the daemon from its paused state and continue all paused tasks.
-    /// Can also be used to resume or start specific tasks or groups.
+    /// Resume operation of specific tasks or groups of tasks.
+    /// Without any parameters, resumes the default queue and all it's tasks.
+    /// Can also be used force specific tasks to start.
+    #[structopt(verbatim_doc_comment)]
     Start {
-        /// Enforce starting these tasks.
-        /// This doesn't affect any other tasks and can be on a paused daemon or group.
+        /// Enforce starting these tasks. Paused tasks will be started again.
+        /// This doesn't affect anything other than these tasks.
         task_ids: Vec<usize>,
 
-        /// Start a specific group. Any task_ids will be ignored when using this flag.
-        #[structopt(name = "group", short, long)]
+        /// Start a specific group and all paused tasks in it.
+        #[structopt(short, long, group("start"))]
         group: Option<String>,
+
+        /// Start a everything (Default queue and all groups)!
+        /// All groups will be set to `running` and all paused tasks will be resumed.
+        #[structopt(short, long, group("start"))]
+        all: bool,
     },
 
     /// Restart task(s).
@@ -116,34 +123,46 @@ pub enum SubCommand {
         stashed: bool,
     },
 
-    /// Pause the daemon and all running tasks.
-    /// A paused daemon won't start any new tasks.
-    /// Daemon, groups and tasks can be resumed with `start`
-    /// Can also be used to pause a specific group or specific tasks.
+    /// Pause either running tasks or specific groups of tasks.
+    /// Without any parameters, pauses the default queue and all it's tasks.
+    /// A paused queue (group) won't start any new tasks.
+    /// Everything can be resumed with `start`.
+    #[structopt(verbatim_doc_comment)]
     Pause {
-        /// Let any running tasks finish by themselves, when pausing the daemon or a group.
-        #[structopt(short, long, group("pause"), conflicts_with("task_ids"))]
-        wait: bool,
-
         /// Pause these specific tasks.
-        /// Doesn't affect the daemon, groups or any other tasks.
-        #[structopt(group("pause"))]
+        /// Doesn't affect the default queue, groups or any other tasks.
         task_ids: Vec<usize>,
 
-        /// Pause a specific group. Any task_ids will be ignored when using this flag.
-        #[structopt(name = "group", short, long)]
+        /// Pause a specific group.
+        #[structopt(short, long, group("pause"))]
         group: Option<String>,
-    },
 
-    /// Kill either all or only specific running tasks.
-    Kill {
-        /// Kill all running tasks, this also pauses the daemon.
-        #[structopt(short, long, group("kill"), conflicts_with("task_ids"))]
+        /// Pause everything (Default queue and all groups)!
+        #[structopt(short, long, group("pause"))]
         all: bool,
 
+        /// Don't pause already running tasks and let them finish by themselves,
+        ///  when pausing with `default`, `all` or `group`.
+        #[structopt(short, long, group("pause"))]
+        wait: bool,
+    },
+
+    /// Kill specific running tasks or various groups of tasks.
+    Kill {
         /// The tasks that should be killed.
-        #[structopt(group("kill"))]
         task_ids: Vec<usize>,
+
+        /// Kill all running tasks in the default queue. Pause the default queue.
+        #[structopt(short, long, group("kill"))]
+        default: bool,
+
+        /// Kill all running in a group. Pauses the group.
+        #[structopt(short, long, group("kill"))]
+        group: Option<String>,
+
+        /// Kill ALL running tasks. This also pauses everything
+        #[structopt(short, long, group("kill"))]
+        all: bool,
     },
 
     /// Send something to a task. Useful for sending confirmations ('y\n').
@@ -156,7 +175,8 @@ pub enum SubCommand {
     },
 
     /// Edit the command or path of a stashed or queued task.
-    /// By default this edits the command of the task
+    /// This edits the command of the task by default.
+    #[structopt(verbatim_doc_comment)]
     Edit {
         /// The id of the task.
         task_id: usize,
