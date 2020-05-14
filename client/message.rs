@@ -33,7 +33,7 @@ pub fn get_message_from_opt(opt: &Opt, settings: &Settings) -> Result<Message> {
             Ok(Message::Add(AddMessage {
                 command: command.join(" "),
                 path: cwd.to_string(),
-                envs: envs,
+                envs,
                 start_immediately: *start_immediately,
                 stashed: *stashed,
                 group: group.clone(),
@@ -144,7 +144,7 @@ pub fn get_message_from_opt(opt: &Opt, settings: &Settings) -> Result<Message> {
                 task_id: *task_id,
                 err: *err,
             };
-            return Ok(Message::StreamRequest(message));
+            Ok(Message::StreamRequest(message))
         }
         SubCommand::Clean => Ok(Message::Clean),
         SubCommand::Reset => Ok(Message::Reset),

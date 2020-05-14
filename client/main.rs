@@ -57,15 +57,12 @@ async fn main() -> Result<()> {
     // Some special command handling.
     // Simple log output follows for local logs don't need any communication with the daemon.
     // Thereby we handle this separately over here.
-    match &message {
-        Message::StreamRequest(message) => {
-            if settings.client.read_local_logs {
-                let pueue_directory = settings.daemon.pueue_directory.clone();
-                follow_task_logs(pueue_directory, message.task_id, message.err);
-                return Ok(());
-            }
+    if let Message::StreamRequest(message) = &message {
+        if settings.client.read_local_logs {
+            let pueue_directory = settings.daemon.pueue_directory.clone();
+            follow_task_logs(pueue_directory, message.task_id, message.err);
+            return Ok(());
         }
-        _ => (),
     }
 
     let mut client = Client::new(settings, message, opt)?;

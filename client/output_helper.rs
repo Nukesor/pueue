@@ -16,7 +16,7 @@ pub fn has_special_columns(tasks: &BTreeMap<usize, Task>) -> (bool, bool) {
         .iter()
         .any(|(_id, task)| !task.dependencies.is_empty());
 
-    return (has_delayed_tasks, has_dependencies);
+    (has_delayed_tasks, has_dependencies)
 }
 
 /// Return a nicely formatted headline that's displayed at the start of `pueue status`
@@ -37,7 +37,7 @@ pub fn get_default_headline(state: &State) -> String {
 }
 
 /// Return a nicely formatted headline that's displayed above group tables
-pub fn get_group_headline(group: &String, state: &State) -> String {
+pub fn get_group_headline(group: &str, state: &State) -> String {
     // Group name
     let group_text = style(format!("Group \"{}\"", group)).attribute(Attribute::Bold);
 

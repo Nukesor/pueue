@@ -103,7 +103,7 @@ impl State {
         self.running = status;
         let keys = self.groups.keys().cloned().collect::<Vec<String>>();
         for key in keys {
-            self.groups.insert(key.into(), status);
+            self.groups.insert(key, status);
         }
         self.save()
     }
