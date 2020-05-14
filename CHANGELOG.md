@@ -12,9 +12,9 @@
 **Improvements:**
 - Environment variable capture. Tasks will now start with the variables of the environment `pueue add` is being called in.
 - `follow` (previously `show`) now also reads directly from disk, if `read_local_logs` is set to `true`.
-- Add new flags `--default` to `kill`, `start` and `pause`. With this flag only tasks in the default queue will be affected
 - The `--all` flag now affects all groups AND the default queue for `kill`, `start` and `pause`.
 - Added `--group` flag for `status`. This will only print tasks of a specific group
+- Add new flags `--default` to `kill`. With this flag only tasks in the default queue will be affected.
 
 # v0.4.0
 **Features:**

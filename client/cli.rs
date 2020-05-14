@@ -206,6 +206,10 @@ pub enum SubCommand {
         /// Use `log -j` if you want everything.
         #[structopt(short, long)]
         json: bool,
+
+        #[structopt(short, long)]
+        /// Only show tasks of a specific group
+        group: Option<String>,
     },
 
     /// Display the log output of finished tasks.

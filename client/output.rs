@@ -27,8 +27,8 @@ pub fn print_error(message: String) {
 
 /// Print the current state of the daemon in a nicely formatted table.
 pub fn print_state(state: State, cli_command: &SubCommand) {
-    let json = match cli_command {
-        SubCommand::Status { json } => *json,
+    let (json, group_only) = match cli_command {
+        SubCommand::Status { json, group } => (*json, group.clone()),
         _ => panic!(
             "Got wrong Subcommand {:?} in print_state. This shouldn't happen",
             cli_command
@@ -41,7 +41,10 @@ pub fn print_state(state: State, cli_command: &SubCommand) {
         return;
     }
 
-    println!("{}", get_default_headline(&state));
+    // Don't show default queue headline if a single group is requested
+    if group_only.is_none() {
+        println!("{}", get_default_headline(&state));
+    }
 
     // Early exit and hint if there are no tasks in the queue
     if state.tasks.is_empty() {
@@ -49,13 +52,22 @@ pub fn print_state(state: State, cli_command: &SubCommand) {
         return;
     }
 
-    let default_tasks = get_default_tasks(&state.tasks);
-    if !default_tasks.is_empty() {
-        print_table(&default_tasks);
+    // Skip default queue, if a single group is requested
+    if group_only.is_none() {
+        let default_tasks = get_default_tasks(&state.tasks);
+        if !default_tasks.is_empty() {
+            print_table(&default_tasks);
+        }
     }
 
     // Print new table for each group
     for (group, tasks) in sort_tasks_by_group(&state.tasks) {
+        // Skip unwanted groups, if a single group is requested
+        if let Some(group_only) = &group_only {
+            if group_only != &group {
+                continue
+            }
+        }
         println!("{}", get_group_headline(&group, &state));
         print_table(&tasks);
     }
