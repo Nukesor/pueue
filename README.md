@@ -259,7 +259,7 @@ These are the available variables that can be used to create a command:
 
 Example callback:
 ```
-    notify-send "Task {{ id }}" "Command: {{ command }} finished with {{ result }}"
+    callback: "notify-send \"Task {{ id }}\nCommand: {{ command }}\nPath: {{ path }}\nFinished with status '{{ result }}'\""
 ```
 
 ### Shell completion files
