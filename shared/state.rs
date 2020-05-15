@@ -1,6 +1,6 @@
 use ::anyhow::Result;
 use ::chrono::prelude::*;
-use ::log::{error, info};
+use ::log::{error, info, debug};
 use ::serde_derive::{Deserialize, Serialize};
 use ::std::collections::BTreeMap;
 use ::std::collections::HashMap;
@@ -165,10 +165,9 @@ impl State {
 
     pub fn reset(&mut self) {
         self.backup();
-        self.set_status_for_all_groups(true);
         self.max_id = 0;
         self.tasks = BTreeMap::new();
-        self.save();
+        self.set_status_for_all_groups(true);
     }
 
     /// Convenience wrapper around save_to_file.
@@ -207,7 +206,7 @@ impl State {
             let now: DateTime<Utc> = Utc::now();
             let time = now.format("%Y-%m-%d_%H-%M-%S");
             (
-                path.join(format!("{}_backup.json.partial", time)),
+                path.join(format!("{}_state.json.partial", time)),
                 path.join(format!("{}_state.json", time)),
             )
         } else {
@@ -224,12 +223,18 @@ impl State {
         }
 
         // Overwrite the original with the temp file, if everything went fine.
-        if let Err(error) = fs::rename(&temp, real) {
+        if let Err(error) = fs::rename(&temp, &real) {
             error!(
                 "Failed to overwrite old log file. File permissions? Error: {:?}",
                 error
             );
             return;
+        }
+
+        if log {
+            debug!("State backup created at: {:?}", real);
+        } else {
+            debug!("State saved at: {:?}", real);
         }
     }
 

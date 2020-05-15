@@ -68,6 +68,7 @@ async fn main() -> Result<()> {
 
 /// Initialize all directories needed for normal operation.
 fn init_directories(path: &str) {
+    // Pueue base path
     let pueue_dir = Path::new(path);
     if !pueue_dir.exists() {
         if let Err(error) = create_dir_all(&pueue_dir) {
@@ -77,6 +78,8 @@ fn init_directories(path: &str) {
             );
         }
     }
+
+    // Task log dir
     let log_dir = pueue_dir.join("log");
     if !log_dir.exists() {
         if let Err(error) = create_dir_all(&log_dir) {
@@ -87,6 +90,7 @@ fn init_directories(path: &str) {
         }
     }
 
+    // Task log dir
     let logs_dir = pueue_dir.join("task_logs");
     if !logs_dir.exists() {
         if let Err(error) = create_dir_all(&logs_dir) {

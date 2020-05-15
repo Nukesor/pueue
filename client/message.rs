@@ -7,8 +7,8 @@ use ::pueue::settings::Settings;
 
 use crate::cli::{Opt, SubCommand};
 
-// Convert and pre-process the sub-command into a valid message
-// that can be understood by the daemon.
+/// Convert the cli command into the message that's being sent to the server,
+/// so it can be understood by the daemon.
 pub fn get_message_from_opt(opt: &Opt, settings: &Settings) -> Result<Message> {
     match &opt.cmd {
         SubCommand::Add {

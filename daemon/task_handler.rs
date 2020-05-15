@@ -82,6 +82,7 @@ impl TaskHandler {
         loop {
             self.receive_commands();
             self.handle_finished_tasks();
+            self.handle_reset();
             self.check_callbacks();
             self.check_stashed();
             self.check_failed_dependencies();
@@ -178,6 +179,20 @@ impl TaskHandler {
                     .all(|task| task.status == TaskStatus::Done)
             })
             .map(|(id, _)| *id)
+    }
+
+    /// Users can issue to reset the daemon.
+    /// If that's the case, the `self.reset` flag is set to true, all children are killed
+    /// and no new tasks will be spawned.
+    /// This function checks, if all killed children have been handled.
+    /// If that's the case, completely reset the state
+    fn handle_reset(&mut self) {
+        // The daemon got a reset request and all children already finished
+        if self.reset && self.children.is_empty() {
+            let mut state = self.state.lock().unwrap();
+            state.reset();
+            self.reset = false;
+        }
     }
 
     /// See if we can start a new queued task.
@@ -336,13 +351,6 @@ impl TaskHandler {
     fn handle_finished_tasks(&mut self) {
         let (finished, errored) = self.get_finished();
 
-        // The daemon got a reset request and all children already finished
-        if self.reset && self.children.is_empty() {
-            let mut state = self.state.lock().unwrap();
-            state.reset();
-            self.reset = false;
-        }
-
         // Nothing to do. Early return
         if finished.is_empty() && errored.is_empty() {
             return;
@@ -391,7 +399,7 @@ impl TaskHandler {
 
         // Pause the daemon, if the settings say so and some process failed
         if failed_task_exists && self.pause_on_failure {
-            self.change_running(false);
+            state.running = false;
         }
 
         state.save()
@@ -421,6 +429,7 @@ impl TaskHandler {
     }
 
     /// Some client instructions require immediate action by the task handler
+    /// This function is also responsible for waiting
     fn receive_commands(&mut self) {
         // Sleep for a few milliseconds. We don't want to hurt the CPU.
         let timeout = Duration::from_millis(100);
@@ -727,13 +736,6 @@ impl TaskHandler {
         self.kill(message);
 
         self.reset = true;
-    }
-
-    /// Change the running state consistently.
-    fn change_running(&mut self, running: bool) {
-        let mut state = self.state.lock().unwrap();
-        state.running = running;
-        state.save();
     }
 
     /// Users can specify a callback that's fired whenever a task finishes.
