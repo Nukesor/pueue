@@ -137,7 +137,7 @@ To get the status of currently running commands, just type `pueue status`.
 
 To look at the output of a finished command use `pueue log` or `pueue log $task_id`.
 
-If you want to see output of a running command use `git show $task_id`.
+If you want to see output of a running command use `git follow $task_id`.
 You can also use the `-f` and `-e` flag to get a live view of the output.
 
 
