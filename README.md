@@ -135,10 +135,10 @@ For instance `pueue add ls /tmp/long\ path` will result in the execution of `sh 
 
 To get the status of currently running commands, just type `pueue status`.
 
-To look at the output of a finished command use `pueue log` or `pueue log $task_id`.
+To look at the current output of a command use `pueue log` or `pueue log $task_id`.
 
-If you want to see output of a running command use `git follow $task_id`.
-You can also use the `-f` and `-e` flag to get a live view of the output.
+If you want to follow the output of a running command use `git follow $task_id`.
+To follow stderr, use the `-e` flag.
 
 
 **Pitfalls:**
@@ -213,6 +213,9 @@ daemon:
   pause_on_failure: false
   port: "6924"
   secret: "your_secret"
+  callback: ""Task {{ id }}\nCommand: {{ command }}\nPath: {{ path }}\nFinished with status '{{ result }}'\""
+  groups:
+    cpu: 1
 ```
 **Client**: 
 - `daemon_port` The port the client tries to connect to.  
@@ -225,6 +228,8 @@ daemon:
 - `pause_on_failure` If set to `true`, the daemon stops starting new task as soon as a single task fails. Already running tasks will continue.
 - `port` The port the daemon should listen to.  
 - `secret` The secret, that's used for authentication
+- `callback` The command that will be called after a task finishes. Can be parameterized
+- `groups` This is a list of the groups with their amount of allowed parallel tasks. It's advised to not manipulate this manually, but rather use the `group` subcommand to create and remove groups.
 
 
 ## Logs 

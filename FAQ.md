@@ -58,7 +58,7 @@ This is a known problem.
 Since Pueue calls a new shell session without any parameters, your `.bashrc` won't be read.
 
 However, reading `.bashrc` files turns out to be problematic as well.
-Pueue might add a feature for custom shell commands somehwere in the future, but this isn't working for now.
+Pueue might add a feature for custom shell commands somewhere in the future, but this isn't working for now.
 
 
 ## What's The Advantage Over Using A Terminal Multiplexer
@@ -67,11 +67,10 @@ Pueue might add a feature for custom shell commands somehwere in the future, but
 - You can specify how many parallel tasks you want
 - Easy pausing/resuming of tasks
 - A very pretty printed table with a good overview
-- You don't need to attach to a tmux session or anything similar, if operating on a server and not wanting to have an open session all the time.
+- You don't need to attach to a multiple tmux sessions, just check your tasks' status via pueue.
 
 Additionally the long term plan is:
 
-- to add groups (You can specify the amount of parallel tasks per groups)
 - to allow remote connection to servers. No need to ssh onto a server, you can manipulate and check the status directly on your local machine.
 
 A lot of its functionality is convenience. Using your shell's tools is possible, but IMO, having something that's specifically designed for this task is more efficient and definitely more convenient.
