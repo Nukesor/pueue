@@ -48,9 +48,9 @@ serde_derive = "^1.0"
 
 log = "0.4"
 config = "^0.10"
-simplelog = { version = "0.7", default-features = false }
+simplelog = { version = "0.8", default-features = false }
 structopt = "0.3"
-crossterm = "^0.16"
+crossterm = "^0.17"
 comfy-table= "0.1.0"
 tempfile = "^3"
 
