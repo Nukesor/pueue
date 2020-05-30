@@ -8,6 +8,7 @@ It's purpose is to explain the project structure, so you understand where you ca
 # Structure
 
 This project is divided into three modules. `client`, `daemon` and `shared`.
+
 `client` and `daemon` contain everything that's specific to the respective binaries of `pueue` and `pueued`.
 
 `shared` however contains everything that's used by both sides.
@@ -25,35 +26,35 @@ The daemon is composed of two main components.
 Both components own a `Arc<Mutex<State>>`, so we can guarantee a single source of truth.
 
 It's also important to know, that there's a `mpsc` channel, with the TaskHandler being the consumer.
-This allows to notify the TaskHandler of any special tasks that need to be done.
+This allows notifying the TaskHandler of any special tasks that need to be done.
 
 **1. The TcpListener**
 
-The `daemon.socket` module contains the logic for accepting and low-level handle client connections.
+The `daemon.socket` module contains the logic for accepting client connections and receiving payloads.
 
-These are then interpreted and handled by a respective function.
+The payload is then deserialized to `Message` and handled by the matching function.
 All functions used for handling these messages can be found in `daemon.instructions`.
 
-Many messages can be handled directly, by modifying the state.
-However, sometimes we need to notify the TaskHandler, in case we need something special.
+Many messages can be instantly handled by simply modifying the state.
+However, we sometimes need to notify the TaskHandler if we need do something that involves actual system processes.
 
 A few examples:
 - Instant starting of tasks
-- Pausing/resuming of tasks
+- Pausing/resuming
 - Resetting the daemon
 
 
 **2. The TaskHandler**
 
-The TaskHandler is responsible for actually starting and handling the processes as specified in a `Task`.
+The TaskHandler is responsible for actually starting and handling system processes.
 It's further important to note, that it runs in it's own thread.
 
 Handling tasks include:
 - Starting/killing tasks
 - Pausing/resuming tasks
 - Handling finished tasks
-- Handling dependencies
-- Handling scheduled tasks
+- Waiting for dependencies
+- Enqueueing delayed tasks 
 
 There's a lot of rather complicated code in this file.
 
