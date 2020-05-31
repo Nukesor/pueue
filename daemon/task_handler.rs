@@ -15,7 +15,7 @@ use ::nix::{
     unistd::Pid,
 };
 
-#[cfg(not(windows))]
+#[cfg(any(target_os = "linux", target_os = "freebsd"))]
 use crate::process_helper::send_signal_to_children;
 
 use ::pueue::log::*;
@@ -471,8 +471,11 @@ impl TaskHandler {
             let pid = Pid::from_raw(child.id() as i32);
 
             // Send the signal to all children, if that's what the user wants.
-            if children {
-                send_signal_to_children(child.id() as i32, signal);
+            #[cfg(any(target_os = "linux", target_os = "freebsd"))]
+            {
+                if children {
+                    send_signal_to_children(child.id() as i32, signal);
+                }
             }
 
             signal::kill(pid, signal)?;

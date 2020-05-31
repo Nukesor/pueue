@@ -16,7 +16,7 @@ use ::pueue::state::State;
 
 mod cli;
 mod instructions;
-#[cfg(not(windows))]
+#[cfg(any(target_os = "linux", target_os = "freebsd"))]
 mod process_helper;
 mod response_helper;
 mod socket;
