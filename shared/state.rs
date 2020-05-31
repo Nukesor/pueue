@@ -1,6 +1,6 @@
 use ::anyhow::Result;
 use ::chrono::prelude::*;
-use ::log::{error, info, debug};
+use ::log::{debug, error, info};
 use ::serde_derive::{Deserialize, Serialize};
 use ::std::collections::BTreeMap;
 use ::std::collections::HashMap;

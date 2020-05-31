@@ -67,11 +67,13 @@ pub fn get_message_from_opt(opt: &Opt, settings: &Settings) -> Result<Message> {
             task_ids,
             group,
             all,
+            children,
         } => {
             let message = StartMessage {
                 task_ids: task_ids.clone(),
                 group: group.clone(),
                 all: *all,
+                children: *children,
             };
             Ok(Message::Start(message))
         }
@@ -92,12 +94,14 @@ pub fn get_message_from_opt(opt: &Opt, settings: &Settings) -> Result<Message> {
             group,
             wait,
             all,
+            children,
         } => {
             let message = PauseMessage {
                 task_ids: task_ids.clone(),
                 group: group.clone(),
                 wait: *wait,
                 all: *all,
+                children: *children,
             };
             Ok(Message::Pause(message))
         }

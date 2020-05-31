@@ -105,6 +105,11 @@ pub enum SubCommand {
         /// All groups will be set to `running` and all paused tasks will be resumed.
         #[structopt(short, long, group("start"))]
         all: bool,
+
+        /// Also resume direct child processes of your paused tasks.
+        /// By default only the main process will get a SIGSTART.
+        #[structopt(short, long, group("start"))]
+        children: bool,
     },
 
     /// Restart task(s).
@@ -145,6 +150,13 @@ pub enum SubCommand {
         ///  when pausing with `default`, `all` or `group`.
         #[structopt(short, long, group("pause"))]
         wait: bool,
+
+        /// Also pause direct child processes of a task's main process.
+        /// By default only the main process will get a SIGSTOP.
+        /// This is useful when calling bash scripts, which start other processes themselves.
+        /// This operation is not recursive!
+        #[structopt(short, long, group("pause"))]
+        children: bool,
     },
 
     /// Kill specific running tasks or various groups of tasks.

@@ -77,6 +77,7 @@ pub struct StartMessage {
     pub task_ids: Vec<usize>,
     pub group: Option<String>,
     pub all: bool,
+    pub children: bool,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
@@ -85,6 +86,7 @@ pub struct PauseMessage {
     pub group: Option<String>,
     pub wait: bool,
     pub all: bool,
+    pub children: bool,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]

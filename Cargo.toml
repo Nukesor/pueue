@@ -57,6 +57,7 @@ tempfile = "^3"
 [target.'cfg(not(windows))'.dependencies]
 users = "^0.10"
 nix = "^0.17"
+procfs = "^0.7"
 
 [build-dependencies]
 chrono = { version = "^0.4", features = ["serde"] }

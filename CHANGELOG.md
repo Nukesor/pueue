@@ -1,3 +1,11 @@
+# v0.5.1
+**Features:**
+- `--children/-c` flag for `start` and `stop`.
+    This sends the `SIGSTOP`/`SIGSTART` signal not only to the main process of a task, but also to direct children.
+    This is, for instance, useful if you're starting tasks via a shell script.
+**Fixes:**
+- Fixed formatting bug in `pueue log`. Fixed by [sourcefrog](https://github.com/sourcefrog).
+
 # v0.5.0
 **Features:**
 - Groups! Tasks can now be assigned to a group.
@@ -18,7 +26,7 @@
 
 # v0.4.0
 **Features:**
-- Dependencies! This adds the `--after [ids]` option.
+- Dependencies! This adds the `--after [ids]` option. Implemented by [tinou98](https://github.com/tinou98).
     Task with this option will only be started, if all specified dependencies successfully finish.
     Tasks with failed dependencies will fail as well.
 - New state `FailedToStart`. Used if the process cannot be started.
@@ -29,7 +37,7 @@
     Set to `false` if you, for instance, use Pueue in combination with SSH port forwarding.
 
 **Improvements:**
-- Process log output is no longer permanently stored in memory. This significantly reduced RAM usage for large log outputs.
+- Process log output is no longer permanently stored in memory. This significantly reduced RAM usage for large log outputs. Huge thanks for helping with this to [sourcefrog](https://github.com/sourcefrog)!
 - Process log output is compressed in-memory on read from disk. This leads to reduced bandwidth and RAM usage.
 
 **Changes:**
@@ -55,8 +63,8 @@
 
 # v0.2.0
 **Features:**
-- New `--delay` flag, which delays enqueueing of a task. Can be used on `start` and `enqueue`.
-- `--stashed` flag for `pueue add` to add a task in stashed mode.
+- New `--delay` flag, which delays enqueueing of a task. Can be used on `start` and `enqueue`. Implemented by [taylor1791](https://github.com/taylor1791).
+- `--stashed` flag for `pueue add` to add a task in stashed mode.  Implemented by [taylor1791](https://github.com/taylor1791).
 
 **For Packager:**
 - Generating completion files moved away from build.rs to the new `pueue completions {shell} {output_dir}` subcommand.
@@ -73,7 +81,7 @@ There is a `build_completions.sh` script to build all completion files to the kn
 - Fix and reword cli help texts.
 
 # v0.1.5
-- Basic Windows support.
+- Basic Windows support. Huge thanks to [Lej77](https://github.com/Lej77) for implementing this!
 - Integrate completion script build in `build.rs`.
 
 # v0.1.4

@@ -15,6 +15,9 @@ use ::nix::{
     unistd::Pid,
 };
 
+#[cfg(not(windows))]
+use crate::process_helper::send_signal_to_children;
+
 use ::pueue::log::*;
 use ::pueue::message::*;
 use ::pueue::state::SharedState;
@@ -456,10 +459,22 @@ impl TaskHandler {
 
     /// Send a signal to a unix process.
     #[cfg(not(windows))]
-    fn send_signal(&mut self, id: usize, signal: Signal) -> Result<bool, nix::Error> {
+    fn send_signal(
+        &mut self,
+        id: usize,
+        signal: Signal,
+        children: bool,
+    ) -> Result<bool, nix::Error> {
         if let Some(child) = self.children.get(&id) {
             debug!("Sending signal {} to {}", signal, id);
+
             let pid = Pid::from_raw(child.id() as i32);
+
+            // Send the signal to all children, if that's what the user wants.
+            if children {
+                send_signal_to_children(child.id() as i32, signal);
+            }
+
             signal::kill(pid, signal)?;
             return Ok(true);
         };
@@ -481,7 +496,7 @@ impl TaskHandler {
             for id in &message.task_ids {
                 // Continue all children that are simply paused
                 if self.children.contains_key(id) {
-                    self.continue_task(*id);
+                    self.continue_task(*id, message.children);
                 } else {
                     // Start processes for all tasks that haven't been started yet
                     self.start_process(*id);
@@ -524,12 +539,12 @@ impl TaskHandler {
 
         // Resume all specified paused tasks
         for id in keys {
-            self.continue_task(id);
+            self.continue_task(id, message.children);
         }
     }
 
     /// Send a start signal to a paused task to continue execution.
-    fn continue_task(&mut self, id: usize) {
+    fn continue_task(&mut self, id: usize, children: bool) {
         if !self.children.contains_key(&id) {
             return;
         }
@@ -542,11 +557,11 @@ impl TaskHandler {
         }
         #[cfg(windows)]
         {
-            warn!("Failed starting task {}: not supported on windows.", id);
+            info!("Failed resuming task {}: not supported on windows.", id);
         }
         #[cfg(not(windows))]
         {
-            match self.send_signal(id, Signal::SIGCONT) {
+            match self.send_signal(id, Signal::SIGCONT, children) {
                 Err(err) => warn!("Failed starting task {}: {:?}", id, err),
                 Ok(success) => {
                     if success {
@@ -601,24 +616,21 @@ impl TaskHandler {
         // Pause all specified tasks
         if !message.wait {
             for id in keys {
-                self.pause_task(id);
+                self.pause_task(id, message.children);
             }
         }
     }
 
     /// Pause a specific task.
     /// Send a signal to the process to actually pause the OS process.
-    fn pause_task(&mut self, id: usize) {
-        if !self.children.contains_key(&id) {
-            return;
-        }
+    fn pause_task(&mut self, id: usize, children: bool) {
         #[cfg(windows)]
         {
             info!("Failed pausing task {}: not supported on windows.", id);
         }
         #[cfg(not(windows))]
         {
-            match self.send_signal(id, Signal::SIGSTOP) {
+            match self.send_signal(id, Signal::SIGSTOP, children) {
                 Err(err) => info!("Failed pausing task {}: {:?}", id, err),
                 Ok(success) => {
                     if success {

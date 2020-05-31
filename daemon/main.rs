@@ -16,6 +16,8 @@ use ::pueue::state::State;
 
 mod cli;
 mod instructions;
+#[cfg(not(windows))]
+mod process_helper;
 mod response_helper;
 mod socket;
 mod streaming;
