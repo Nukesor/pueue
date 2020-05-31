@@ -57,6 +57,8 @@ tempfile = "^3"
 [target.'cfg(not(windows))'.dependencies]
 users = "^0.10"
 nix = "^0.17"
+
+[target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]
 procfs = "^0.7"
 
 [build-dependencies]
