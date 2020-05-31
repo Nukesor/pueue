@@ -18,7 +18,14 @@ pub fn send_signal_to_children(pid: i32, signal: Signal) {
         .into_iter()
         .filter(|result| result.is_ok())
         .map(|result| result.unwrap())
-        .filter(|process| process.ppid() as i32 == pid);
+        .filter(|process| {
+            if let Ok(ppid) = process.ppid() {
+                if Some(ppid) = ppid {
+                    return ppid as i32 == pid;
+                }
+            }
+            false
+        });
 
     for child in children {
         let pid = Pid::from_raw(child.pid() as i32);
