@@ -3,6 +3,7 @@
 - `--children/-c` flag for `start` and `stop`.
     This sends the `SIGSTOP`/`SIGSTART` signal not only to the main process of a task, but also to direct children.
     This is, for instance, useful if you're starting tasks via a shell script.
+
 **Fixes:**
 - Fixed formatting bug in `pueue log`. Fixed by [sourcefrog](https://github.com/sourcefrog).
 
@@ -26,7 +27,7 @@
 
 # v0.4.0
 **Features:**
-- Dependencies! This adds the `--after [ids]` option. Implemented by [tinou98](https://github.com/tinou98).
+- Dependencies! This adds the `--after [ids]` option. Implemented by [tinou98](https://github.com/tinou98).  
     Task with this option will only be started, if all specified dependencies successfully finish.
     Tasks with failed dependencies will fail as well.
 - New state `FailedToStart`. Used if the process cannot be started.
