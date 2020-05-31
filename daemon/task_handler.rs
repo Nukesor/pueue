@@ -16,7 +16,10 @@ use ::nix::{
 };
 
 #[cfg(any(target_os = "linux", target_os = "freebsd"))]
-use crate::process_helper::send_signal_to_children;
+use crate::linux::process_helper::send_signal_to_children;
+
+#[cfg(target_os = "macos")]
+use crate::macos::process_helper::send_signal_to_children;
 
 use ::pueue::log::*;
 use ::pueue::message::*;
@@ -471,11 +474,8 @@ impl TaskHandler {
             let pid = Pid::from_raw(child.id() as i32);
 
             // Send the signal to all children, if that's what the user wants.
-            #[cfg(any(target_os = "linux", target_os = "freebsd"))]
-            {
-                if children {
-                    send_signal_to_children(child.id() as i32, signal);
-                }
+            if children {
+                send_signal_to_children(child.id() as i32, signal);
             }
 
             signal::kill(pid, signal)?;

@@ -17,7 +17,9 @@ use ::pueue::state::State;
 mod cli;
 mod instructions;
 #[cfg(any(target_os = "linux", target_os = "freebsd"))]
-mod process_helper;
+mod linux;
+#[cfg(any(target_os = "macos"))]
+mod macos;
 mod response_helper;
 mod socket;
 mod streaming;

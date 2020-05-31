@@ -10,7 +10,7 @@ pub fn send_signal_to_children(pid: i32, signal: Signal) {
     let children = all_processes()
         .unwrap()
         .into_iter()
-        .filter(|p| p.stat.ppid == pid);
+        .filter(|process| process.stat.ppid == pid);
 
     for child in children {
         let pid = Pid::from_raw(child.pid);
