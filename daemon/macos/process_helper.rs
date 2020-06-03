@@ -26,6 +26,7 @@ pub fn get_children(pid: i32) -> Vec<Process> {
             }
             false
         })
+        .collect()
 }
 
 /// Send a signal to a list of processes
@@ -34,7 +35,7 @@ pub fn send_signal_to_processes(processes: Vec<Process>, signal: Signal) {
         let pid = Pid::from_raw(process.pid() as i32);
 
         // Process is no longer alive, skip this.
-        if !process.is_running {
+        if !process.is_running() {
             continue;
         }
 
