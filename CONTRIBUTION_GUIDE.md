@@ -35,10 +35,11 @@ The `daemon.socket` module contains the logic for accepting client connections a
 The payload is then deserialized to `Message` and handled by the matching function.
 All functions used for handling these messages can be found in `daemon.instructions`.
 
-Many messages can be instantly handled by simply modifying the state.
-However, we sometimes need to notify the TaskHandler if we need do something that involves actual system processes.
+Many messages can be instantly handled by simply modifying or reading the state.  
 
-A few examples:
+However, sometimes one needs to notify the TaskHandler if one wants do something that involves actual system processes.
+
+A few examples for such actions are:
 - Instant starting of tasks
 - Pausing/resuming
 - Resetting the daemon
@@ -60,4 +61,4 @@ There's a lot of rather complicated code in this file.
 
 Whenever you're editing in here, please make sure to be conservative with your `state.lock()` calls.
 `state.lock()` blocks everything else!
-You should always lock as late as possible and **only** use it if absolutely necessary.
+You should always lock as late as possible and **only** if absolutely necessary.

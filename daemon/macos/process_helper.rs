@@ -3,11 +3,10 @@ use ::nix::{
     sys::signal::{self, Signal},
     unistd::Pid,
 };
-use psutil::process::processes;
+use psutil::process::{Process, processes};
 
-/// A small helper to send a signal to all direct child processes of a specific task.
-/// `pid` is the process id of the main task id. I.e the parent pid of the child processes.
-pub fn send_signal_to_children(pid: i32, signal: Signal) {
+/// Get all children of a specific process
+pub fn get_children(pid: i32) -> Vec<Process> {
     let all_processes = match processes() {
         Err(error) => {
             warn!("Failed to get full process list: {}", error);
@@ -15,7 +14,7 @@ pub fn send_signal_to_children(pid: i32, signal: Signal) {
         }
         Ok(processes) => processes,
     };
-    let children = all_processes
+    all_processes
         .into_iter()
         .filter(|result| result.is_ok())
         .map(|result| result.unwrap())
@@ -26,18 +25,33 @@ pub fn send_signal_to_children(pid: i32, signal: Signal) {
                 }
             }
             false
-        });
+        })
+}
 
-    for child in children {
-        let pid = Pid::from_raw(child.pid() as i32);
+
+/// Send a signal to a list of processes
+pub fn send_signal_to_processes(processes: Vec<Process>, signal: Signal) {
+    for process in processes {
+        let pid = Pid::from_raw(process.pid() as i32);
+
+        // Process is no longer alive, skip this.
+        if !process.is_running {
+            continue
+        }
 
         if let Err(error) = signal::kill(pid, signal) {
             warn!(
                 "Failed send signal {:?} to Pid {}: {:?}",
                 signal,
-                child.pid(),
+                process.pid(),
                 error
             );
         }
     }
+}
+
+
+/// A small helper to send a signal to all direct child processes of a specific task.
+pub fn send_signal_to_children(pid: i32, signal: Signal) {
+    send_signal_to_processes(get_children(pid), signal);
 }

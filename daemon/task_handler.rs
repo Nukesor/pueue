@@ -16,10 +16,10 @@ use ::nix::{
 };
 
 #[cfg(any(target_os = "linux", target_os = "freebsd"))]
-use crate::linux::process_helper::send_signal_to_children;
+use crate::linux::process_helper::*;
 
 #[cfg(target_os = "macos")]
-use crate::macos::process_helper::send_signal_to_children;
+use crate::macos::process_helper::*;
 
 use ::pueue::log::*;
 use ::pueue::message::*;
@@ -699,9 +699,19 @@ impl TaskHandler {
     /// Triggered on `reset` and `kill`.
     fn kill_task(&mut self, task_id: usize) {
         if let Some(child) = self.children.get_mut(&task_id) {
+            // Get the list of processes first.
+            // Otherwise the process gets killed and the parent might spawn a new one, before
+            // we get the chance to kill the parent.
+            #[cfg(not(windows))]
+            let children = get_children(child.id() as i32);
+
             match child.kill() {
                 Err(_) => debug!("Task {} has already finished by itself", task_id),
                 _ => {
+                    // Now kill all remaining children, after the parent has been killed.
+                    #[cfg(not(windows))]
+                    send_signal_to_processes(children, Signal::SIGTERM);
+
                     // Already mark the task as killed over here.
                     // It's hard to distinguish whether it's killed later on.
                     let mut state = self.state.lock().unwrap();
