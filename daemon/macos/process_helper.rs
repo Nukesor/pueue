@@ -10,7 +10,7 @@ pub fn get_children(pid: i32) -> Vec<Process> {
     let all_processes = match processes() {
         Err(error) => {
             warn!("Failed to get full process list: {}", error);
-            return;
+            return Vec::new();
         }
         Ok(processes) => processes,
     };
