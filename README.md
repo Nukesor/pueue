@@ -255,6 +255,23 @@ As a result, there'll always be a single task that copies stuff, while two tasks
 This removes the problem of scheduling tasks in a way that the system might get slow.
 At the same time, you're able to maximize resource utilization.
 
+
+### Aliases
+
+To get basic aliasing, simply put a `pueue_aliases.yml` besides your `pueue.yml`.
+Its contents should look something like this:
+
+```
+ls: "ls -ahl"
+rsync: "rsync --recursive --partial --perms --progress"
+```
+
+When adding a command to pueue, the **first** word will then be checked for the alias.
+This means, that for instance `ls ~/ && ls /` will result in `ls -al ~/ && ls /`.
+
+If you want something like this, it's probably best to either create a task for each command or to write a custom script.
+
+
 ### Callbacks 
 
 You can specify a callback that will be called every time a task finishes.

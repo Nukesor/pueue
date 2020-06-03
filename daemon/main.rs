@@ -14,6 +14,7 @@ use crate::task_handler::TaskHandler;
 use ::pueue::settings::Settings;
 use ::pueue::state::State;
 
+mod aliasing;
 mod cli;
 mod instructions;
 #[cfg(any(target_os = "linux", target_os = "freebsd"))]

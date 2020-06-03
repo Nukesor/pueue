@@ -1,7 +1,7 @@
 use ::std::collections::BTreeMap;
 use ::std::sync::mpsc::Sender;
 
-use crate::response_helper::*;
+use crate::{aliasing::insert_alias, response_helper::*};
 use ::pueue::log::{clean_log_handles, read_and_compress_log_files};
 use ::pueue::message::*;
 use ::pueue::state::SharedState;
@@ -61,9 +61,12 @@ fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) 
         ));
     }
 
+    // Check if there exists an alias for the given command
+    let command = insert_alias(message.command);
+
     // Create a new task and add it to the state.
     let task = Task::new(
-        message.command,
+        command,
         message.path,
         message.envs,
         message.group,

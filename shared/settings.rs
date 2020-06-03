@@ -6,7 +6,15 @@ use ::serde_derive::{Deserialize, Serialize};
 use ::std::collections::HashMap;
 use ::std::fs::{create_dir_all, File};
 use ::std::io::prelude::*;
-use ::std::path::{Path, PathBuf};
+
+#[cfg(any(target_os = "linux", target_os = "freebsd"))]
+use crate::linux::directories::*;
+
+#[cfg(target_os = "macos")]
+use crate::macos::directories::*;
+
+#[cfg(target_os = "windows")]
+use crate::windows::directories::*;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Client {
@@ -71,7 +79,7 @@ impl Settings {
     /// Save the current configuration as a file to the configuration path.
     /// The file is written to the main configuration directory of the respective OS.
     pub fn save(&self) -> Result<()> {
-        let config_path = default_config_path()?;
+        let config_path = default_config_directory()?.join("pueue.yml");
         let config_dir = config_path
             .parent()
             .ok_or_else(|| anyhow!("Couldn't resolve config dir"))?;
@@ -91,9 +99,10 @@ impl Settings {
 
 fn parse_config(settings: &mut Config) -> Result<()> {
     info!("Parsing config files");
-    let config_paths = get_config_paths()?;
+    let config_directories = get_config_directories()?;
 
-    for path in config_paths.into_iter() {
+    for directory in config_directories.into_iter() {
+        let path = directory.join("pueue.yml");
         info!("Checking path: {:?}", &path);
         if path.exists() {
             info!("Parsing config file at: {:?}", path);
@@ -103,10 +112,6 @@ fn parse_config(settings: &mut Config) -> Result<()> {
     }
 
     Ok(())
-}
-
-fn get_home_dir() -> Result<PathBuf> {
-    dirs::home_dir().ok_or_else(|| anyhow!("Couldn't resolve home dir"))
 }
 
 fn gen_random_secret() -> String {
@@ -124,80 +129,4 @@ fn gen_random_secret() -> String {
         .collect();
 
     secret
-}
-
-#[cfg(any(target_os = "linux", target_os = "freebsd"))]
-fn default_config_path() -> Result<PathBuf> {
-    Ok(get_home_dir()?.join(".config/pueue.yml"))
-}
-
-#[cfg(any(target_os = "linux", target_os = "freebsd"))]
-fn get_config_paths() -> Result<Vec<PathBuf>> {
-    let mut paths = Vec::new();
-    paths.push(Path::new("/etc/pueue.yml").to_path_buf());
-    paths.push(default_config_path()?);
-    paths.push(Path::new("./pueue.yml").to_path_buf());
-
-    Ok(paths)
-}
-
-#[cfg(any(target_os = "linux", target_os = "freebsd"))]
-fn default_pueue_path() -> Result<String> {
-    let path = get_home_dir()?.join(".local/share/pueue");
-    path.to_str().map_or_else(
-        || Err(anyhow!("Failed to parse log path (Weird characters?)")),
-        |v| Ok(v.to_string()),
-    )
-}
-
-#[cfg(target_os = "macos")]
-fn default_config_path() -> Result<PathBuf> {
-    Ok(get_home_dir()?.join("Library/Preferences/pueue.yml"))
-}
-
-#[cfg(target_os = "macos")]
-fn get_config_paths() -> Result<Vec<PathBuf>> {
-    let mut paths = Vec::new();
-    paths.push(default_config_path()?);
-    paths.push(Path::new("./pueue.yml").to_path_buf());
-
-    Ok(paths)
-}
-
-#[cfg(target_os = "macos")]
-fn default_pueue_path() -> Result<String> {
-    let path = get_home_dir()?.join(".local/share/pueue");
-    path.to_str().map_or_else(
-        || Err(anyhow!("Failed to parse log path (Weird characters?)")),
-        |v| Ok(v.to_string()),
-    )
-}
-
-#[cfg(target_os = "windows")]
-fn default_config_path() -> Result<PathBuf> {
-    Ok(get_home_dir()?.join("pueue.yml"))
-}
-
-#[cfg(target_os = "windows")]
-fn get_config_paths() -> Result<Vec<PathBuf>> {
-    Ok(vec![
-        // Windows Terminal stores its config file in the "AppData/Local" directory.
-        dirs::data_local_dir()
-            .ok_or(anyhow!("Couldn't resolve app data directory"))?
-            .join("pueue/pueue.yml"),
-        default_config_path()?,
-        Path::new("./pueue.yml").to_path_buf(),
-    ])
-}
-
-#[cfg(target_os = "windows")]
-fn default_pueue_path() -> Result<String> {
-    // Use local data directory since this data doesn't need to be synced.
-    let path = dirs::data_local_dir()
-        .ok_or(anyhow!("Couldn't resolve app data directory"))?
-        .join("pueue");
-    path.to_str().map_or_else(
-        || Err(anyhow!("Failed to parse log path (Weird characters?)")),
-        |v| Ok(v.to_string()),
-    )
 }
