@@ -19,7 +19,7 @@ pub fn send_signal_to_processes(processes: Vec<Process>, signal: Signal) {
     for process in processes {
         // Process is no longer alive, skip this.
         if !process.is_alive() {
-            continue
+            continue;
         }
 
         let pid = Pid::from_raw(process.pid);
