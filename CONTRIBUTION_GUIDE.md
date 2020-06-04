@@ -1,11 +1,10 @@
-# Hi!
+# Hi
 
 This document is supposed to give you a short introduction to the project.
 
 It's purpose is to explain the project structure, so you understand where you can find the parts of code you're looking for.
 
-
-# Structure
+## Structure
 
 This project is divided into three modules. `client`, `daemon` and `shared`.
 
@@ -19,8 +18,7 @@ This includes:
 - All data objects, namely `state`, `task` and `message`
 - Logging
 
-
-# Daemon
+## Daemon
 
 The daemon is composed of two main components.
 Both components own a `Arc<Mutex<State>>`, so we can guarantee a single source of truth.
@@ -28,7 +26,7 @@ Both components own a `Arc<Mutex<State>>`, so we can guarantee a single source o
 It's also important to know, that there's a `mpsc` channel, with the TaskHandler being the consumer.
 This allows notifying the TaskHandler of any special tasks that need to be done.
 
-**1. The TcpListener**
+### The TcpListener
 
 The `daemon.socket` module contains the logic for accepting client connections and receiving payloads.
 
@@ -40,22 +38,23 @@ Many messages can be instantly handled by simply modifying or reading the state.
 However, sometimes one needs to notify the TaskHandler if one wants do something that involves actual system processes.
 
 A few examples for such actions are:
+
 - Instant starting of tasks
 - Pausing/resuming
 - Resetting the daemon
 
-
-**2. The TaskHandler**
+### The TaskHandler
 
 The TaskHandler is responsible for actually starting and handling system processes.
 It's further important to note, that it runs in it's own thread.
 
 Handling tasks include:
+
 - Starting/killing tasks
 - Pausing/resuming tasks
 - Handling finished tasks
 - Waiting for dependencies
-- Enqueueing delayed tasks 
+- Enqueueing delayed tasks
 
 There's a lot of rather complicated code in this file.
 
