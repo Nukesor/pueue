@@ -99,9 +99,7 @@ impl Settings {
 
 fn parse_config(settings: &mut Config) -> Result<()> {
     info!("Parsing config files");
-    let config_directories = get_config_directories()?;
-
-    for directory in config_directories.into_iter() {
+    for directory in get_config_directories()?.into_iter() {
         let path = directory.join("pueue.yml");
         info!("Checking path: {:?}", &path);
         if path.exists() {
