@@ -455,7 +455,7 @@ impl TaskHandler {
             Message::Start(message) => self.start(message),
             Message::Kill(message) => self.kill(message),
             Message::Send(message) => self.send(message),
-            Message::Reset => self.reset(),
+            Message::Reset(children) => self.reset(children),
             _ => info!("Received unhandled message {:?}", message),
         }
     }
@@ -691,26 +691,37 @@ impl TaskHandler {
         };
 
         for task_id in task_ids {
-            self.kill_task(task_id);
+            self.kill_task(task_id, message.children);
         }
     }
 
     /// Kill a specific task and handle it accordingly.
     /// Triggered on `reset` and `kill`.
-    fn kill_task(&mut self, task_id: usize) {
+    fn kill_task(&mut self, task_id: usize, kill_children: bool) {
         if let Some(child) = self.children.get_mut(&task_id) {
             // Get the list of processes first.
             // Otherwise the process gets killed and the parent might spawn a new one, before
             // we get the chance to kill the parent.
             #[cfg(not(windows))]
-            let children = get_children(child.id() as i32);
+            let mut children = None;
+            #[cfg(not(windows))]
+            {
+                if kill_children {
+                    children = Some(get_children(child.id() as i32));
+                }
+            }
+
 
             match child.kill() {
                 Err(_) => debug!("Task {} has already finished by itself", task_id),
                 _ => {
                     // Now kill all remaining children, after the parent has been killed.
                     #[cfg(not(windows))]
-                    send_signal_to_processes(children, Signal::SIGTERM);
+                    {
+                        if let Some(children) = children {
+                            send_signal_to_processes(children, Signal::SIGTERM);
+                        }
+                    }
 
                     // Already mark the task as killed over here.
                     // It's hard to distinguish whether it's killed later on.
@@ -753,9 +764,10 @@ impl TaskHandler {
     /// Kill all children by reusing the `kill` function.
     /// Set the `reset` flag, which will prevent new tasks from being spawned.
     /// If all children finished, the state will be completely reset.
-    fn reset(&mut self) {
+    fn reset(&mut self, children: bool) {
         let message = KillMessage {
             all: true,
+            children,
             ..Default::default()
         };
         self.kill(message);

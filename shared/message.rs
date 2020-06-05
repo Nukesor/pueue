@@ -31,7 +31,8 @@ pub enum Message {
     LogResponse(BTreeMap<usize, TaskLogMessage>),
     Stream(String),
     StreamRequest(StreamRequestMessage),
-    Reset,
+    /// The boolean decides, whether the children should be get a SIGTERM as well.
+    Reset(bool),
     Clean,
     DaemonShutdown,
 
@@ -95,6 +96,7 @@ pub struct KillMessage {
     pub group: Option<String>,
     pub default: bool,
     pub all: bool,
+    pub children: bool,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

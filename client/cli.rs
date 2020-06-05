@@ -175,6 +175,11 @@ pub enum SubCommand {
         /// Kill ALL running tasks. This also pauses everything
         #[structopt(short, long, group("kill"))]
         all: bool,
+
+        /// Send the SIGTERM signal to all children as well.
+        /// Useful when working with shell scripts.
+        #[structopt(short, long, group("kill"))]
+        children: bool,
     },
 
     /// Send something to a task. Useful for sending confirmations ('y\n').
@@ -249,7 +254,12 @@ pub enum SubCommand {
     Clean,
 
     /// Kill all running tasks, remove all tasks and reset max_task_id.
-    Reset,
+    Reset {
+        /// Send the SIGTERM signal to all children as well.
+        /// Useful when working with shell scripts.
+        #[structopt(short, long)]
+        children: bool,
+    },
 
     /// Remotely shut down the daemon. Should only be used if the daemon isn't started by a service manager.
     Shutdown,

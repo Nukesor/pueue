@@ -110,12 +110,14 @@ pub fn get_message_from_opt(opt: &Opt, settings: &Settings) -> Result<Message> {
             group,
             default,
             all,
+            children,
         } => {
             let message = KillMessage {
                 task_ids: task_ids.clone(),
                 group: group.clone(),
                 default: *default,
                 all: *all,
+                children: *children,
             };
             Ok(Message::Kill(message))
         }
@@ -151,7 +153,9 @@ pub fn get_message_from_opt(opt: &Opt, settings: &Settings) -> Result<Message> {
             Ok(Message::StreamRequest(message))
         }
         SubCommand::Clean => Ok(Message::Clean),
-        SubCommand::Reset => Ok(Message::Reset),
+        SubCommand::Reset {children} => {
+            Ok(Message::Reset(*children))
+        },
         SubCommand::Shutdown => Ok(Message::DaemonShutdown),
         SubCommand::Parallel {
             parallel_tasks,

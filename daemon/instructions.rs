@@ -28,7 +28,7 @@ pub fn handle_message(message: Message, sender: &Sender<Message>, state: &Shared
         Message::Group(message) => group(message, state),
 
         Message::Clean => clean(state),
-        Message::Reset => reset(sender),
+        Message::Reset(children) => reset(sender, children),
         Message::Status => get_status(state),
         Message::Log(message) => get_log(message, state),
         Message::Parallel(message) => set_parallel_tasks(message, state),
@@ -488,8 +488,8 @@ fn clean(state: &SharedState) -> Message {
 /// Invoked when calling `pueue reset`.
 /// Forward the reset request to the task handler.
 /// The handler then kills all children and clears the task queue.
-fn reset(sender: &Sender<Message>) -> Message {
-    sender.send(Message::Reset).expect(SENDER_ERR);
+fn reset(sender: &Sender<Message>, children: bool) -> Message {
+    sender.send(Message::Reset(children)).expect(SENDER_ERR);
     create_success_message("Everything is being reset right now.")
 }
 
