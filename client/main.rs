@@ -8,13 +8,11 @@ use ::pueue::settings::Settings;
 pub mod cli;
 pub mod client;
 pub mod edit;
-pub mod message;
 pub mod output;
 pub mod output_helper;
 
 use crate::cli::{Opt, SubCommand};
 use crate::client::Client;
-use crate::message::get_message_from_opt;
 use crate::output::follow_task_logs;
 
 #[async_std::main]
@@ -50,9 +48,13 @@ async fn main() -> Result<()> {
         return Ok(());
     }
 
+    // Create client to talk with the daemon and connect.
+    let client = Client::new(settings, opt)?;
+    let mut socket = client.connect().await?;
+
     // Create the message that should be sent to the daemon
     // depending on the given commandline options.
-    let message = get_message_from_opt(&opt, &settings)?;
+    let message = client.get_message_from_opt(&mut socket).await?;
 
     // Some special command handling.
     // Simple log output follows for local logs don't need any communication with the daemon.
@@ -65,8 +67,7 @@ async fn main() -> Result<()> {
         }
     }
 
-    let mut client = Client::new(settings, message, opt)?;
-    client.run().await?;
+    client.send(message, &mut socket).await?;
 
     Ok(())
 }
