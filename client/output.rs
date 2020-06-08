@@ -185,7 +185,8 @@ pub fn print_logs(
 ) {
     let (json, task_ids) = match cli_command {
         SubCommand::Log { json, task_ids } => (*json, task_ids.clone()),
-        SubCommand::Follow { task_id, .. } => (false, vec![*task_id]),
+        // TODO: Check that SubCommand::Follow is also unreachable.
+        // SubCommand::Follow { task_id, .. } => (false, vec![*task_id]),
         _ => panic!(
             "Got wrong Subcommand {:?} in print_log. This shouldn't happen",
             cli_command
@@ -354,9 +355,13 @@ pub fn print_remote_task_output(task_log: &TaskLogMessage, stdout: bool) -> Resu
     Ok(())
 }
 
-/// Print the log ouput of finished tasks.
-/// Either print the logs of every task
-/// or only print the logs of the specified tasks.
+/// Follow the log ouput of running task.
+///
+/// If no task is specified, this wil check for the following cases:
+///
+/// - No running task: Print an error that there are no running tasks
+/// - Single running task: Follow the output of that task
+/// - Multiple running tasks: Print out the list of possible tasks to follow.
 pub fn follow_task_logs(pueue_directory: String, task_id: usize, stderr: bool) {
     let (stdout_handle, stderr_handle) = match get_log_file_handles(task_id, &pueue_directory) {
         Ok((stdout, stderr)) => (stdout, stderr),

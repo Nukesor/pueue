@@ -80,6 +80,19 @@ impl Client {
         Ok(())
     }
 
+    pub async fn get_state(&self, socket: &mut TcpStream) -> Result<State> {
+        // Create the message payload and send it to the daemon.
+        send_message(Message::Status, socket).await?;
+
+        // Check if we can receive the response from the daemon
+        let message = receive_message(socket).await?;
+
+        match message {
+            Message::StatusResponse(state) => return Ok(state),
+            _ => unreachable!(),
+        };
+    }
+
     /// Most returned messages can be handled in a generic fashion.
     /// However, some commands need some ping-pong or require continuous receiving of messages.
     ///
@@ -246,9 +259,32 @@ impl Client {
                 };
                 Ok(Message::Log(message))
             }
-            SubCommand::Follow { task_id, err } => {
+            SubCommand::Follow { mut task_id, err } => {
+                // If no message, set it to the default (if applicable)
+                if task_id.is_none() {
+                    let state = self.get_state(socket).await?;
+                    let running_ids: Vec<_> = state
+                        .tasks
+                        .iter()
+                        .filter_map(|(&id, t)| if t.is_running() { Some(id) } else { None })
+                        .collect();
+
+                    match running_ids.len() {
+                        0 => {
+                            return Err(anyhow!("There are no running tasks."));
+                        }
+                        1 => task_id = Some(running_ids[0]),
+                        _ => {
+                            return Err(anyhow!(
+                                "Multiple tasks are running, please select one of the following: {}",
+                                running_ids.iter().map(|id| format!("{}", id)).collect::<Vec<_>>().join(", ")
+                            ));
+                        }
+                    }
+                }
+
                 let message = StreamRequestMessage {
-                    task_id: task_id,
+                    task_id: task_id.unwrap(),
                     err: *err,
                 };
                 Ok(Message::StreamRequest(message))
