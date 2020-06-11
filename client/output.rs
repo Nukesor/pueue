@@ -357,7 +357,7 @@ pub fn print_remote_task_output(task_log: &TaskLogMessage, stdout: bool) -> Resu
 
 /// Follow the log ouput of running task.
 ///
-/// If no task is specified, this wil check for the following cases:
+/// If no task is specified, this will check for the following cases:
 ///
 /// - No running task: Print an error that there are no running tasks
 /// - Single running task: Follow the output of that task
