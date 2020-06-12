@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.6.1
+**Enhancements:**
+- New default behavior for `follow`. Implemented by [JP-Ellis](https://github.com/JP-Ellis)
+
 ## v0.6.0
 
 **Features:**
