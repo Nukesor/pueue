@@ -185,8 +185,6 @@ pub fn print_logs(
 ) {
     let (json, task_ids) = match cli_command {
         SubCommand::Log { json, task_ids } => (*json, task_ids.clone()),
-        // TODO: Check that SubCommand::Follow is also unreachable.
-        // SubCommand::Follow { task_id, .. } => (false, vec![*task_id]),
         _ => panic!(
             "Got wrong Subcommand {:?} in print_log. This shouldn't happen",
             cli_command
