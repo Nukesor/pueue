@@ -197,6 +197,7 @@ impl TaskHandler {
         if self.reset && self.children.is_empty() {
             let mut state = self.state.lock().unwrap();
             state.reset();
+            reset_task_log_directory(&self.pueue_directory);
             self.reset = false;
         }
     }

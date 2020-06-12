@@ -1,8 +1,11 @@
 # Changelog
 
 ## v0.6.1
+
 **Enhancements:**
-- New default behavior for `follow`. Implemented by [JP-Ellis](https://github.com/JP-Ellis)
+
+- New default behavior for `follow`. Implemented by [JP-Ellis](https://github.com/JP-Ellis).
+- Delete everything in Pueue's `task_logs` folder on `reset`.
 
 ## v0.6.0
 
@@ -20,6 +23,7 @@
     This is, for instance, useful if you're starting tasks via a shell script.
 
 **Fixes:**
+
 - Fixed formatting bug in `pueue log`. Fixed by [sourcefrog](https://github.com/sourcefrog).
 
 ## v0.5.0

@@ -1,16 +1,16 @@
 use ::anyhow::{bail, Result};
 use ::log::error;
 use ::snap::write::FrameEncoder;
-use ::std::fs::{remove_file, File};
+use ::std::fs::{remove_file, File, read_dir};
 use ::std::io;
 use ::std::io::prelude::*;
 use ::std::path::{Path, PathBuf};
 
 /// Return the paths to temporary stdout and stderr files for a task.
 pub fn get_log_paths(task_id: usize, path: &str) -> (PathBuf, PathBuf) {
-    let pueue_dir = Path::new(path).join("task_logs");
-    let out_path = pueue_dir.join(format!("{}_stdout.log", task_id));
-    let err_path = pueue_dir.join(format!("{}_stderr.log", task_id));
+    let task_log_dir = Path::new(path).join("task_logs");
+    let out_path = task_log_dir.join(format!("{}_stdout.log", task_id));
+    let err_path = task_log_dir.join(format!("{}_stderr.log", task_id));
     (out_path, err_path)
 }
 
@@ -85,4 +85,20 @@ pub fn read_and_compress_log_files(task_id: usize, path: &str) -> Result<(Vec<u8
     }
 
     Ok((stdout, stderr))
+}
+
+
+/// Remove temporary stdout and stderr files for a task.
+pub fn reset_task_log_directory(path: &str) {
+    let task_log_dir = Path::new(path).join("task_logs");
+
+    let files = read_dir(task_log_dir).expect("Failed to open pueue's task_logs directory");
+
+    for file in files {
+        if let Ok(file) = file {
+            if let Err(err) = remove_file(file.path()) {
+                error!("Failed to delete log file: {}", err);
+            }
+        }
+    }
 }
