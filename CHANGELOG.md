@@ -12,7 +12,7 @@
 **Features:**
 
 - `pueue_aliases.yml`, which allows some shell-like aliasing.
-- Automatically send a `SIGTERM` to children of running tasks on `kill` or `reset`.
+- `-c` flag for `kill` and `reset`.
 
 ## v0.5.1
 
