@@ -206,7 +206,7 @@ SUBCOMMANDS:
 
 ## Configs
 
-The configuration file of Pueue is located in `~/.config/pueue.yml`.  
+The configuration file of Pueue is located in `$CARGO_HOME/pueue.yml`.  
 The default will be generated after starting pueue once.
 
 ```yaml
@@ -277,9 +277,9 @@ rsync: "rsync --recursive --partial --perms --progress"
 ```
 
 When adding a command to pueue, the **first** word will then be checked for the alias.
-This means, that for instance `ls ~/ && ls /` will result in `ls -al ~/ && ls /`.
+This means, that for instance `ls ~/ && ls /` will result in `ls -ahl ~/ && ls /`.
 
-If you want something like this, it's probably best to either create a task for each command or to write a custom script.
+If you want multiple aliases in a single task, it's probably best to either create a task for each command or to write a custom script.
 
 ### Callbacks
 
@@ -303,7 +303,7 @@ Example callback:
 ### Shell completion files
 
 Shell completion files can be created on the fly with `pueue completions $shell $directory`.
-There's also a `build_completions.sh` script, which creates all completion files in the `utiles/completions` directory.
+There's also a `build_completions.sh` script, which creates all completion files in the `utils/completions` directory.
 
 ### JSON Support
 
