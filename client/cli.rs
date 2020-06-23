@@ -89,7 +89,7 @@ pub enum SubCommand {
     },
 
     /// Resume operation of specific tasks or groups of tasks.
-    /// Without any parameters, resumes the default queue and all it's tasks.
+    /// By default, this resumes the default queue and all it's tasks.
     /// Can also be used force specific tasks to start.
     #[structopt(verbatim_doc_comment)]
     Start {
@@ -113,7 +113,7 @@ pub enum SubCommand {
     },
 
     /// Restart task(s).
-    /// Identical tasks will be created and instantly queued (unless specified otherwise).
+    /// Identical tasks will be created and by defualt enqueued.
     Restart {
         /// The tasks you want to restart.
         task_ids: Vec<usize>,
@@ -129,7 +129,7 @@ pub enum SubCommand {
     },
 
     /// Pause either running tasks or specific groups of tasks.
-    /// Without any parameters, pauses the default queue and all it's tasks.
+    /// By default, pauses the default queue and all it's tasks.
     /// A paused queue (group) won't start any new tasks.
     /// Everything can be resumed with `start`.
     #[structopt(verbatim_doc_comment)]
@@ -182,7 +182,7 @@ pub enum SubCommand {
         children: bool,
     },
 
-    /// Send something to a task. Useful for sending confirmations ('y\n').
+    /// Send something to a task. Useful for sending confirmations such as 'y\n'.
     Send {
         /// The id of the task.
         task_id: usize,
@@ -204,7 +204,7 @@ pub enum SubCommand {
     },
 
     /// Manage groups.
-    /// Without any flags, this will simply display all known groups.
+    /// By default, this will simply display all known groups.
     Group {
         /// Add a group
         #[structopt(short, long)]
