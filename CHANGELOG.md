@@ -1,4 +1,6 @@
 # Changelog
+## v0.6.2
+- Fix local `stderr` formatting for `log`.
 
 ## v0.6.1
 

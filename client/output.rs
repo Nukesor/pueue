@@ -280,9 +280,11 @@ pub fn print_local_log_output(task_id: usize, settings: &Settings) {
     // Stdout handler to directly write log file output to io::stdout
     // without having to load anything into memory.
     let mut stdout = io::stdout();
+    let mut stdout_printed = false;
 
     if let Ok(metadata) = stdout_log.metadata() {
         if metadata.len() != 0 {
+            stdout_printed = true;
             println!(
                 "{}",
                 style("stdout:")
@@ -297,14 +299,19 @@ pub fn print_local_log_output(task_id: usize, settings: &Settings) {
     }
 
     if let Ok(metadata) = stderr_log.metadata() {
-        println!(
-            "{}",
-            style("stderr:")
-                .with(Color::Green)
-                .attribute(Attribute::Bold)
-        );
-
         if metadata.len() != 0 {
+            // Add a spacer line between stdout and stderr
+            if stdout_printed {
+                println!("");
+            }
+
+            println!(
+                "{}",
+                style("stderr:")
+                    .with(Color::Red)
+                    .attribute(Attribute::Bold)
+            );
+
             if let Err(err) = io::copy(&mut stderr_log, &mut stdout) {
                 println!("Failed reading local stderr log file: {}", err);
             };
