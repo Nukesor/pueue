@@ -29,7 +29,7 @@ path = "shared/lib.rs"
 [dependencies]
 anyhow = "1"
 async-std = { version = "1", features = ["attributes", "unstable"] }
-dirs = "2"
+dirs = "3"
 chrono = { version = "^0.4", features = ["serde"] }
 chrono-english = "^0.1.0"
 rand = "^0.7"
@@ -71,4 +71,4 @@ structopt = "0.3"
 version_check = "^0.9"
 
 [dev-dependencies]
-proptest = "^0.9"
+proptest = "^0.10"

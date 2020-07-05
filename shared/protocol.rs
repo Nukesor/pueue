@@ -65,7 +65,7 @@ pub async fn receive_bytes(socket: &mut TcpStream) -> Result<Vec<u8>> {
         // If we received less bytes than the chunk buffer size,
         // split the unneeded bytes, since they are filled with zeros
         if received_bytes < chunk_size {
-            chunk.split_off(received_bytes);
+            let _ = chunk.split_off(received_bytes);
         }
 
         payload_bytes.append(&mut chunk);
