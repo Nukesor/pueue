@@ -15,7 +15,7 @@ If you have Rust version `>=1.39`, please file a bug report.
 **Second thing** to do when debugging any problems with running/failing processes, is to look at the process output:
 
 This can be done via `pueue log $task_id` for finished processes or `pueue show $task_id` for running processes.  
-You can also get a live view of the output with `pueue show -f $task_id` for `stdout` and `-e` for `stderr`.
+You can also get a live view of the output with `pueue follow $task_id`. Add the `-e` flag, if you want to see the error output.
 
 
 ### The Command Formatting Seems To Be Broken:
@@ -30,7 +30,7 @@ If your command contains spaces or characters that need escaping, you might need
 Without quotes, the character escaping won't be transferred to the `bash -c $command`, as it's already removed by calling it from the current shell.
 
 
-### Display not found | Unable to initialize Frontend
+### Display not found | Unable to Initialize frontend
 
 All programs that require some kinde of display/window manager won't work, as the tasks are executed in the background.
 
@@ -54,12 +54,9 @@ This can be also be avoided by issuing the command with something like a `-y` fl
 
 ### My Shell Aliases Don't Work:
 
-This is a known problem. 
-Since Pueue calls a new shell session without any parameters, your `.bashrc` won't be read.
-
-However, reading `.bashrc` files turns out to be problematic as well.
-Pueue might add a feature for custom shell commands somewhere in the future, but this isn't working for now.
-
+Pueue doesn't support aliases in shell's `.*rc` files, since that's pretty tricky.
+That's why Pueue brings it's own aliasing.
+Check the Readme on how to use it.
 
 ## What's The Advantage Over Using A Terminal Multiplexer
 
