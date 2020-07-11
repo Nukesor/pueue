@@ -1,7 +1,7 @@
 use ::anyhow::Result;
 use ::comfy_table::presets::UTF8_HORIZONTAL_BORDERS_ONLY;
 use ::comfy_table::*;
-use ::crossterm::style::style;
+use ::crossterm::tty::IsTty;
 use ::snap::read::FrameDecoder;
 use ::std::collections::BTreeMap;
 use ::std::io;
@@ -23,7 +23,8 @@ pub fn print_success(message: String) {
 }
 
 pub fn print_error(message: String) {
-    let styled = style(message).with(Color::Red);
+    let is_tty = io::stdout().is_tty();
+    let styled = style_text(message, is_tty, Some(Color::Red), None);
     println!("{}", styled);
 }
 
@@ -43,9 +44,11 @@ pub fn print_state(state: State, cli_command: &SubCommand) {
         return;
     }
 
+    let is_tty = io::stdout().is_tty();
+
     // Don't show default queue headline if a single group is requested
     if group_only.is_none() {
-        println!("{}", get_default_headline(&state));
+        println!("{}", get_default_headline(&state, is_tty));
     }
 
     // Early exit and hint if there are no tasks in the queue
@@ -70,7 +73,7 @@ pub fn print_state(state: State, cli_command: &SubCommand) {
                 continue;
             }
         }
-        println!("{}", get_group_headline(&group, &state));
+        println!("{}", get_group_headline(&group, &state, is_tty));
         print_table(&tasks);
     }
 }
@@ -230,23 +233,21 @@ pub fn print_log(task_log: &mut TaskLogMessage, settings: &Settings) {
         return;
     }
 
+    // Check whether we're on a tty
+    let is_tty = io::stdout().is_tty();
+
     // Print task id and exit code.
-    let task_text = style(format!("Task {}", task.id)).attribute(Attribute::Bold);
-    let exit_status = match &task.result {
-        Some(TaskResult::Success) => style("completed successfully".into()).with(Color::Green),
-        Some(TaskResult::Failed(exit_code)) => {
-            style(format!("failed with exit code {}", exit_code)).with(Color::Red)
-        }
-        Some(TaskResult::FailedToSpawn(err)) => {
-            style(format!("failed to spawn: {}", err)).with(Color::Red)
-        }
-        Some(TaskResult::Killed) => style("killed by system or user".to_string()).with(Color::Red),
-        Some(TaskResult::DependencyFailed) => {
-            style("dependency failed".to_string()).with(Color::Red)
-        }
-        None => style("running".to_string()),
+    let task_text = style_text(format!("Task {}", task.id), is_tty, None, Some(Attribute::Bold));
+    let (exit_status, color) = match &task.result {
+        Some(TaskResult::Success) => ("completed successfully".into(), Color::Green),
+        Some(TaskResult::Failed(exit_code)) => (format!("failed with exit code {}", exit_code), Color::Red),
+        Some(TaskResult::FailedToSpawn(err)) => (format!("failed to spawn: {}", err), Color::Red),
+        Some(TaskResult::Killed) => ("killed by system or user".into(), Color::Red),
+        Some(TaskResult::DependencyFailed) => ("dependency failed".into(), Color::Red),
+        None => ("running".into(), Color::White),
     };
-    println!("{} {}", task_text, exit_status);
+    let status_text = style_text(exit_status, is_tty, Some(color), None);
+    println!("{} {}", task_text, status_text);
 
     // Print command and path.
     println!("Command: {}", task.command);
@@ -260,9 +261,9 @@ pub fn print_log(task_log: &mut TaskLogMessage, settings: &Settings) {
     }
 
     if settings.client.read_local_logs {
-        print_local_log_output(task_log.task.id, settings);
+        print_local_log_output(task_log.task.id, settings, is_tty);
     } else if task_log.stdout.is_some() && task_log.stderr.is_some() {
-        print_task_output_from_daemon(task_log);
+        print_task_output_from_daemon(task_log, is_tty);
     } else {
         println!("Logs requested from pueue daemon, but none received. Please report this bug.");
     }
@@ -270,7 +271,7 @@ pub fn print_log(task_log: &mut TaskLogMessage, settings: &Settings) {
 
 /// The daemon didn't send any log output, thereby we didn't request any.
 /// If that's the case, read the log files from the local pueue directory
-pub fn print_local_log_output(task_id: usize, settings: &Settings) {
+pub fn print_local_log_output(task_id: usize, settings: &Settings, is_tty: bool) {
     let (mut stdout_log, mut stderr_log) =
         match get_log_file_handles(task_id, &settings.daemon.pueue_directory) {
             Ok((stdout, stderr)) => (stdout, stderr),
@@ -282,17 +283,11 @@ pub fn print_local_log_output(task_id: usize, settings: &Settings) {
     // Stdout handler to directly write log file output to io::stdout
     // without having to load anything into memory.
     let mut stdout = io::stdout();
-    let mut stdout_printed = false;
+    let is_tty = stdout.is_tty();
 
     if let Ok(metadata) = stdout_log.metadata() {
         if metadata.len() != 0 {
-            stdout_printed = true;
-            println!(
-                "{}",
-                style("stdout:")
-                    .with(Color::Green)
-                    .attribute(Attribute::Bold)
-            );
+            println!("\n{}", style_text("stdout:", is_tty, Some(Color::Green), Some(Attribute::Bold)));
 
             if let Err(err) = io::copy(&mut stdout_log, &mut stdout) {
                 println!("Failed reading local stdout log file: {}", err);
@@ -303,14 +298,7 @@ pub fn print_local_log_output(task_id: usize, settings: &Settings) {
     if let Ok(metadata) = stderr_log.metadata() {
         if metadata.len() != 0 {
             // Add a spacer line between stdout and stderr
-            if stdout_printed {
-                println!("");
-            }
-
-            println!(
-                "{}",
-                style("stderr:").with(Color::Red).attribute(Attribute::Bold)
-            );
+            println!("\n{}", style_text("stderr:", is_tty, Some(Color::Red), Some(Attribute::Bold)));
 
             if let Err(err) = io::copy(&mut stderr_log, &mut stdout) {
                 println!("Failed reading local stderr log file: {}", err);
@@ -322,34 +310,30 @@ pub fn print_local_log_output(task_id: usize, settings: &Settings) {
 /// Prints log output received from the daemon.
 /// We can safely call .unwrap() on stdout and stderr in here, since this
 /// branch is always called after ensuring that both are `Some`.
-pub fn print_task_output_from_daemon(task_log: &TaskLogMessage) {
+pub fn print_task_output_from_daemon(task_log: &TaskLogMessage, is_tty: bool) {
+    // Save whether stdout was printed, so we can add a newline between outputs.
     if !task_log.stdout.as_ref().unwrap().is_empty() {
-        if let Err(err) = print_remote_task_output(&task_log, true) {
+        if let Err(err) = print_remote_task_output(&task_log, is_tty, true) {
             println!("Error while parsing stdout: {}", err);
         }
     }
 
     if !task_log.stderr.as_ref().unwrap().is_empty() {
-        if let Err(err) = print_remote_task_output(&task_log, false) {
+        if let Err(err) = print_remote_task_output(&task_log, is_tty, false) {
             println!("Error while parsing stderr: {}", err);
         };
     }
 }
 
 /// Print log output of a finished process.
-pub fn print_remote_task_output(task_log: &TaskLogMessage, stdout: bool) -> Result<()> {
-    let (pre_text, bytes) = if stdout {
-        ("stdout: ", task_log.stdout.as_ref().unwrap())
+pub fn print_remote_task_output(task_log: &TaskLogMessage, is_tty: bool, stdout: bool) -> Result<()> {
+    let (pre_text, color, bytes) = if stdout {
+        ("stdout: ", Color::Green, task_log.stdout.as_ref().unwrap())
     } else {
-        ("stderr: ", task_log.stderr.as_ref().unwrap())
+        ("stderr: ", Color::Red, task_log.stderr.as_ref().unwrap())
     };
 
-    println!(
-        "{}",
-        style(pre_text)
-            .with(Color::Green)
-            .attribute(Attribute::Bold)
-    );
+    println!("\n{}", style_text(pre_text, is_tty, Some(color), Some(Attribute::Bold)));
 
     let mut decompressor = FrameDecoder::new(bytes.as_slice());
 

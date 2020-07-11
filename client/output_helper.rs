@@ -1,9 +1,28 @@
-use ::comfy_table::*;
-use ::crossterm::style::style;
+use ::crossterm::style::{Color, Attribute, style};
 use ::std::collections::BTreeMap;
 
 use ::pueue::state::State;
 use ::pueue::task::Task;
+
+
+/// This is a simple small helper function with the purpose of easily styling text,
+/// while also prevent styling if we're printing to a non-tty output.
+/// If there's any kind of styling in the code, it should be done with the help of this function.
+pub fn style_text<T: ToString>(text: T, is_tty: bool, color: Option<Color>, attribute: Option<Attribute>) -> String {
+    if is_tty {
+        let mut styled = style(text.to_string());
+        if let Some(color) = color {
+            styled = styled.with(color);
+        }
+        if let Some(attribute) = attribute {
+            styled = styled.attribute(attribute);
+        }
+
+        return styled.to_string();
+    }
+
+    return text.to_string();
+}
 
 pub fn has_special_columns(tasks: &BTreeMap<usize, Task>) -> (bool, bool) {
     // Check whether there are any delayed tasks.
@@ -20,24 +39,24 @@ pub fn has_special_columns(tasks: &BTreeMap<usize, Task>) -> (bool, bool) {
 }
 
 /// Return a nicely formatted headline that's displayed at the start of `pueue status`
-pub fn get_default_headline(state: &State) -> String {
+pub fn get_default_headline(state: &State, is_tty: bool) -> String {
     // Print the current daemon state.
     let daemon_status_text = if state.running {
-        style("running").with(Color::Green)
+        style_text("running", is_tty, Some(Color::Green), None)
     } else {
-        style("paused").with(Color::Yellow)
+        style_text("paused", is_tty, Some(Color::Yellow), None)
     };
     let parallel = state.settings.daemon.default_parallel_tasks;
     format!(
         "{} ({} parallel): {}",
-        style("Default queue").attribute(Attribute::Bold),
+        style_text("Default queue", is_tty, None, Some(Attribute::Bold)),
         parallel,
         daemon_status_text
     )
 }
 
 /// Return a nicely formatted headline that's displayed above group tables
-pub fn get_group_headline(group: &str, state: &State) -> String {
+pub fn get_group_headline(group: &str, state: &State, is_tty: bool) -> String {
     // Group name
     let group_text = style(format!("Group \"{}\"", group)).attribute(Attribute::Bold);
 
@@ -49,14 +68,14 @@ pub fn get_group_headline(group: &str, state: &State) -> String {
             "{} ({} parallel): {}",
             group_text,
             parallel,
-            style("running").with(Color::Green)
+            style_text("running", is_tty, Some(Color::Green), None),
         )
     } else {
         format!(
             "{} ({} parallel): {}",
             group_text,
             parallel,
-            style("paused").with(Color::Yellow)
+            style_text("paused", is_tty, Some(Color::Yellow), None),
         )
     }
 }
