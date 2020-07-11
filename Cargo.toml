@@ -51,7 +51,7 @@ config = "^0.10"
 simplelog = { version = "0.8", default-features = false }
 structopt = "0.3"
 crossterm = "^0.17"
-comfy-table= "0.1.0"
+comfy-table= "^1"
 tempfile = "^3"
 
 [target.'cfg(not(windows))'.dependencies]
