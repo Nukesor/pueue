@@ -13,19 +13,20 @@ pub fn style_text<T: ToString>(
     color: Option<Color>,
     attribute: Option<Attribute>,
 ) -> String {
-    if is_tty {
-        let mut styled = style(text.to_string());
-        if let Some(color) = color {
-            styled = styled.with(color);
-        }
-        if let Some(attribute) = attribute {
-            styled = styled.attribute(attribute);
-        }
-
-        return styled.to_string();
+    // No tty, we aren't allowed to do any styling
+    if !is_tty {
+        return text.to_string();
     }
 
-    return text.to_string();
+    let mut styled = style(text.to_string());
+    if let Some(color) = color {
+        styled = styled.with(color);
+    }
+    if let Some(attribute) = attribute {
+        styled = styled.attribute(attribute);
+    }
+
+    styled.to_string()
 }
 
 pub fn has_special_columns(tasks: &BTreeMap<usize, Task>) -> (bool, bool) {

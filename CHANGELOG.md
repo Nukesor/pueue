@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Fixed
 - Fix local `stderr` formatting for `log`.
 - Fix missing sleep in local `follow` loop, resulting in single core 100% CPU usage.
+- Don't do any code styling, if `stdout` is no tty.
 
 ## [0.6.1] - 2020-06-14
 
