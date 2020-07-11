@@ -56,6 +56,7 @@ jobs:
         file: target/release/${{ matrix.client_name }}
         asset_name: ${{ matrix.client_release_name }}
         tag: ${{ github.ref }}
+
     - name: Upload daemon binaries to release
       uses: svenstaro/upload-release-action@v1-release
       with:
@@ -64,10 +65,18 @@ jobs:
         asset_name: ${{ matrix.daemon_release_name }}
         tag: ${{ github.ref }}
 
+    - name: Get CHANGELOG.md entry
+      id: changelog_reader
+      uses: mindsers/changelog-reader-action@v1.2.0
+      with:
+        version: ${{ steps.tag.outputs.current_version }}
+        path: ./CHANGELOG.md
+
     - uses: svenstaro/upload-release-action@v1-release
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         file: utils/pueued.service
         asset_name: systemd.pueued.service
         tag: ${{ github.ref }}
+        body: ${{ steps.changelog_reader.outputs.log_entry }}
       if: matrix.os == 'ubuntu-latest'
