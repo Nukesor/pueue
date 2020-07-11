@@ -1062,7 +1062,7 @@ dependencies = [
 
 [[package]]
 name = "pueue"
-version = "0.6.2-alpha.0"
+version = "0.6.2"
 dependencies = [
  "anyhow 1.0.31 (registry+https://github.com/rust-lang/crates.io-index)",
  "async-std 1.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
