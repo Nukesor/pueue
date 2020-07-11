@@ -1,7 +1,7 @@
 use ::anyhow::{bail, Result};
 use ::log::error;
 use ::snap::write::FrameEncoder;
-use ::std::fs::{remove_file, File, read_dir};
+use ::std::fs::{read_dir, remove_file, File};
 use ::std::io;
 use ::std::io::prelude::*;
 use ::std::path::{Path, PathBuf};
@@ -86,7 +86,6 @@ pub fn read_and_compress_log_files(task_id: usize, path: &str) -> Result<(Vec<u8
 
     Ok((stdout, stderr))
 }
-
 
 /// Remove temporary stdout and stderr files for a task.
 pub fn reset_task_log_directory(path: &str) {

@@ -3,6 +3,7 @@ use ::std::io::Write;
 use ::std::process::Stdio;
 use ::std::process::{Child, Command};
 use ::std::sync::mpsc::Receiver;
+use ::std::thread::sleep;
 use ::std::time::Duration;
 
 use ::anyhow::Result;
@@ -443,7 +444,7 @@ impl TaskHandler {
         // Don't use recv_timeout for now, until this bug get's fixed.
         // https://github.com/rust-lang/rust/issues/39364
         //match self.receiver.recv_timeout(timeout) {
-        std::thread::sleep(timeout);
+        sleep(timeout);
 
         if let Ok(message) = self.receiver.try_recv() {
             self.handle_message(message);
@@ -711,7 +712,6 @@ impl TaskHandler {
                     children = Some(get_children(child.id() as i32));
                 }
             }
-
 
             match child.kill() {
                 Err(_) => debug!("Task {} has already finished by itself", task_id),

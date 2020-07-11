@@ -6,6 +6,8 @@ use ::snap::read::FrameDecoder;
 use ::std::collections::BTreeMap;
 use ::std::io;
 use ::std::string::ToString;
+use ::std::thread::sleep;
+use ::std::time::Duration;
 
 use ::pueue::log::{get_log_file_handles, get_log_paths};
 use ::pueue::message::TaskLogMessage;
@@ -307,9 +309,7 @@ pub fn print_local_log_output(task_id: usize, settings: &Settings) {
 
             println!(
                 "{}",
-                style("stderr:")
-                    .with(Color::Red)
-                    .attribute(Attribute::Bold)
+                style("stderr:").with(Color::Red).attribute(Attribute::Bold)
             );
 
             if let Err(err) = io::copy(&mut stderr_log, &mut stdout) {
@@ -394,5 +394,7 @@ pub fn follow_task_logs(pueue_directory: String, task_id: usize, stderr: bool) {
             println!("Error while reading file: {}", err);
             return;
         };
+        let timeout = Duration::from_millis(100);
+        sleep(timeout);
     }
 }
