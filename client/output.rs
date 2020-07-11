@@ -237,10 +237,17 @@ pub fn print_log(task_log: &mut TaskLogMessage, settings: &Settings) {
     let is_tty = io::stdout().is_tty();
 
     // Print task id and exit code.
-    let task_text = style_text(format!("Task {}", task.id), is_tty, None, Some(Attribute::Bold));
+    let task_text = style_text(
+        format!("Task {}", task.id),
+        is_tty,
+        None,
+        Some(Attribute::Bold),
+    );
     let (exit_status, color) = match &task.result {
         Some(TaskResult::Success) => ("completed successfully".into(), Color::Green),
-        Some(TaskResult::Failed(exit_code)) => (format!("failed with exit code {}", exit_code), Color::Red),
+        Some(TaskResult::Failed(exit_code)) => {
+            (format!("failed with exit code {}", exit_code), Color::Red)
+        }
         Some(TaskResult::FailedToSpawn(err)) => (format!("failed to spawn: {}", err), Color::Red),
         Some(TaskResult::Killed) => ("killed by system or user".into(), Color::Red),
         Some(TaskResult::DependencyFailed) => ("dependency failed".into(), Color::Red),
@@ -283,11 +290,13 @@ pub fn print_local_log_output(task_id: usize, settings: &Settings, is_tty: bool)
     // Stdout handler to directly write log file output to io::stdout
     // without having to load anything into memory.
     let mut stdout = io::stdout();
-    let is_tty = stdout.is_tty();
 
     if let Ok(metadata) = stdout_log.metadata() {
         if metadata.len() != 0 {
-            println!("\n{}", style_text("stdout:", is_tty, Some(Color::Green), Some(Attribute::Bold)));
+            println!(
+                "\n{}",
+                style_text("stdout:", is_tty, Some(Color::Green), Some(Attribute::Bold))
+            );
 
             if let Err(err) = io::copy(&mut stdout_log, &mut stdout) {
                 println!("Failed reading local stdout log file: {}", err);
@@ -298,7 +307,10 @@ pub fn print_local_log_output(task_id: usize, settings: &Settings, is_tty: bool)
     if let Ok(metadata) = stderr_log.metadata() {
         if metadata.len() != 0 {
             // Add a spacer line between stdout and stderr
-            println!("\n{}", style_text("stderr:", is_tty, Some(Color::Red), Some(Attribute::Bold)));
+            println!(
+                "\n{}",
+                style_text("stderr:", is_tty, Some(Color::Red), Some(Attribute::Bold))
+            );
 
             if let Err(err) = io::copy(&mut stderr_log, &mut stdout) {
                 println!("Failed reading local stderr log file: {}", err);
@@ -326,14 +338,21 @@ pub fn print_task_output_from_daemon(task_log: &TaskLogMessage, is_tty: bool) {
 }
 
 /// Print log output of a finished process.
-pub fn print_remote_task_output(task_log: &TaskLogMessage, is_tty: bool, stdout: bool) -> Result<()> {
+pub fn print_remote_task_output(
+    task_log: &TaskLogMessage,
+    is_tty: bool,
+    stdout: bool,
+) -> Result<()> {
     let (pre_text, color, bytes) = if stdout {
         ("stdout: ", Color::Green, task_log.stdout.as_ref().unwrap())
     } else {
         ("stderr: ", Color::Red, task_log.stderr.as_ref().unwrap())
     };
 
-    println!("\n{}", style_text(pre_text, is_tty, Some(color), Some(Attribute::Bold)));
+    println!(
+        "\n{}",
+        style_text(pre_text, is_tty, Some(color), Some(Attribute::Bold))
+    );
 
     let mut decompressor = FrameDecoder::new(bytes.as_slice());
 
