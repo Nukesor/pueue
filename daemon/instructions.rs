@@ -18,7 +18,6 @@ pub fn handle_message(message: Message, sender: &Sender<Message>, state: &Shared
         Message::Enqueue(message) => enqueue(message, state),
 
         Message::Start(message) => start(message, sender, state),
-        Message::Restart(message) => restart(message, sender, state),
         Message::Pause(message) => pause(message, sender, state),
         Message::Kill(message) => kill(message, sender, state),
 
@@ -240,50 +239,6 @@ fn start(message: StartMessage, sender: &Sender<Message>, state: &SharedState) -
     } else {
         create_success_message("Default queue is being resumed.")
     }
-}
-
-/// Invoked when calling `pueue restart`.
-/// Create and enqueue tasks from already finished tasks.
-/// The user can specify to immediately start the newly created tasks.
-fn restart(message: RestartMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
-    let new_status = if message.stashed {
-        TaskStatus::Stashed
-    } else {
-        TaskStatus::Queued
-    };
-
-    let response: String;
-    let new_ids = {
-        let mut state = state.lock().unwrap();
-        let (matching, mismatching) =
-            state.tasks_in_statuses(vec![TaskStatus::Done], Some(message.task_ids));
-
-        let mut new_ids = Vec::new();
-        for task_id in &matching {
-            let task = state.tasks.get(task_id).unwrap();
-            let mut new_task = Task::from_task(task);
-            new_task.status = new_status.clone();
-            new_ids.push(state.add_task(new_task));
-        }
-
-        // Already create the response string in here.
-        // Otherwise we would need to get matching/mismatching out of this scope.
-        response = compile_task_response("Restarted tasks", matching, mismatching);
-
-        new_ids
-    };
-
-    // If the restarted tasks should be started immediately, send a message
-    // with the new task ids to the task handler.
-    if message.start_immediately {
-        let message = StartMessage {
-            task_ids: new_ids,
-            ..Default::default()
-        };
-        sender.send(Message::Start(message)).expect(SENDER_ERR);
-    }
-
-    create_success_message(response)
 }
 
 /// Invoked when calling `pueue pause`.

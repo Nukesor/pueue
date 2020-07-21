@@ -15,7 +15,6 @@ pub enum Message {
     Enqueue(EnqueueMessage),
 
     Start(StartMessage),
-    Restart(RestartMessage),
     Pause(PauseMessage),
     Kill(KillMessage),
 
@@ -64,13 +63,6 @@ pub struct SwitchMessage {
 pub struct EnqueueMessage {
     pub task_ids: Vec<usize>,
     pub enqueue_at: Option<DateTime<Local>>,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct RestartMessage {
-    pub task_ids: Vec<usize>,
-    pub start_immediately: bool,
-    pub stashed: bool,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
@@ -128,7 +120,7 @@ pub struct GroupMessage {
 /// `err` decides, whether you should stream stderr or stdout.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct StreamRequestMessage {
-    pub task_id: usize,
+    pub task_id: Option<usize>,
     pub err: bool,
 }
 

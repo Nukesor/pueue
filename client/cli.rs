@@ -124,8 +124,16 @@ pub enum SubCommand {
 
         /// Create the task in stashed state.
         /// Useful to avoid immediate execution.
-        #[structopt(name = "stashed", short, long, conflicts_with = "immediate")]
+        #[structopt(short, long, conflicts_with = "immediate")]
         stashed: bool,
+
+        /// Edit the command of the task before restarting
+        #[structopt(short, long)]
+        edit: bool,
+
+        /// Edit the path of the task before restarting
+        #[structopt(short, long)]
+        path: bool,
     },
 
     /// Pause either running tasks or specific groups of tasks.

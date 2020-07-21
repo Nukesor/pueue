@@ -1,4 +1,4 @@
-use ::anyhow::{anyhow, Context, Result};
+use ::anyhow::{bail, Context, Result};
 use ::async_std::net::TcpStream;
 use ::log::error;
 use ::std::collections::HashMap;
@@ -6,28 +6,28 @@ use ::std::env::{current_dir, vars};
 use ::std::io::{self, Write};
 
 use crate::cli::{Opt, SubCommand};
-use crate::edit::*;
+use crate::commands::edit::*;
+use crate::commands::local_follow::*;
+use crate::commands::restart::*;
 use crate::output::*;
 use ::pueue::message::*;
 use ::pueue::protocol::*;
 use ::pueue::settings::Settings;
-use ::pueue::state::State;
 
-/// Representation of a client.
-/// For convenience purposes this logic has been wrapped in a struct.
-/// The client is responsible for connecting to the daemon, sending an instruction
-/// and interpreting the response.
+/// This struct contains the base logic for the client.
+/// The client is responsible for connecting to the daemon, sending instructions
+/// and interpreting their responses.
 ///
 /// Most commands are a simple ping-pong. Though, some commands require a more complex
-/// communication pattern (e.g. `show -f`, which contiuously streams the output of a task).
+/// communication pattern (e.g. `show -f`, which continuously streams the output of a task).
 pub struct Client {
     opt: Opt,
-    daemon_address: String,
-    pub settings: Settings,
+    settings: Settings,
+    socket: TcpStream,
 }
 
 impl Client {
-    pub fn new(settings: Settings, opt: Opt) -> Result<Self> {
+    pub async fn new(settings: Settings, opt: Opt) -> Result<Self> {
         // // Commandline argument overwrites the configuration files values for address
         // let address = if let Some(address) = opt.address.clone() {
         //     address
@@ -46,51 +46,96 @@ impl Client {
         // let address = format!("{}:{}", address, port);
         let address = format!("127.0.0.1:{}", port);
 
+        // Connect to socket
+        let mut socket = TcpStream::connect(&address)
+            .await
+            .context("Failed to connect to the daemon. Did you start it?")?;
+        let secret = settings.client.secret.clone().into_bytes();
+        send_bytes(secret, &mut socket).await?;
+
         Ok(Client {
             opt,
-            daemon_address: address,
             settings,
+            socket,
         })
     }
 
-    pub async fn connect(&self) -> Result<TcpStream> {
-        // Connect to socket
-        let mut socket = TcpStream::connect(&self.daemon_address)
-            .await
-            .context("Failed to connect to the daemon. Did you start it?")?;
-
-        let secret = self.settings.client.secret.clone().into_bytes();
-        send_bytes(secret, &mut socket).await?;
-
-        Ok(socket)
-    }
-
-    pub async fn send(&self, message: Message, socket: &mut TcpStream) -> Result<()> {
-        // Create the message payload and send it to the daemon.
-        send_message(message, socket).await?;
-
-        // Check if we can receive the response from the daemon
-        let mut message = receive_message(socket).await?;
-
-        while self.handle_message(message, socket).await? {
-            // Check if we can receive the response from the daemon
-            message = receive_message(socket).await?;
+    /// This is the function where the actual communication and logic starts.
+    /// At this point everything is initialized, the connection is up and
+    /// we can finally start doing stuff.
+    ///
+    /// In general, we're differentiating between "generic" and "complex" functionalities.
+    ///
+    /// Simple generic stuff is usually a singular ping-pong.
+    /// One message to the daemon, one response, Done.
+    ///
+    /// Complex functionalities however need some special handling and are contained
+    /// in their own functions with their own communication code.
+    /// Special handling includes reading local files, data streaming
+    /// and sending multiple messages
+    pub async fn start(&self) -> Result<()> {
+        // This match handles all "complex" commands.
+        match &self.opt.cmd {
+            SubCommand::Restart {
+                task_ids,
+                start_immediately,
+                stashed,
+                edit,
+                path,
+            } => {
+                restart(
+                    &mut self.socket.clone(),
+                    task_ids.clone(),
+                    *start_immediately,
+                    *stashed,
+                    *edit,
+                    *path,
+                )
+                .await?;
+                return Ok(());
+            }
+            SubCommand::Follow { task_id, err } => {
+                // Simple log output follows for local logs don't need any communication with the daemon.
+                // Thereby we handle this separately over here.
+                if self.settings.client.read_local_logs {
+                    local_follow(
+                        &mut self.socket.clone(),
+                        self.settings.daemon.pueue_directory.clone(),
+                        task_id,
+                        *err,
+                    )
+                    .await?;
+                    return Ok(());
+                }
+            }
+            _ => {}
         }
+
+        // The handling of "generic" commands is encapsulated in this function.
+        self.handle_generic_message().await?;
 
         Ok(())
     }
 
-    pub async fn get_state(&self, socket: &mut TcpStream) -> Result<State> {
+    async fn handle_generic_message(&self) -> Result<()> {
+        let mut socket = self.socket.clone();
+
+        // Create the message that should be sent to the daemon
+        // depending on the given commandline options.
+        let message = self.get_message_from_opt()?;
+
         // Create the message payload and send it to the daemon.
-        send_message(Message::Status, socket).await?;
+        send_message(message, &mut socket).await?;
 
         // Check if we can receive the response from the daemon
-        let message = receive_message(socket).await?;
+        let mut response = receive_message(&mut socket).await?;
 
-        match message {
-            Message::StatusResponse(state) => return Ok(state),
-            _ => unreachable!(),
-        };
+        // Check if we can receive the response from the daemon
+        while self.handle_response(response, &mut socket).await? {
+            response = receive_message(&mut socket).await?;
+        }
+
+        Ok(())
     }
 
     /// Most returned messages can be handled in a generic fashion.
@@ -98,7 +143,7 @@ impl Client {
     ///
     /// If this function returns `Ok(true)`, the parent function will continue to receive
     /// and handle messages from the daemon. Otherwise the client will simply exit.
-    async fn handle_message(&self, message: Message, socket: &mut TcpStream) -> Result<bool> {
+    async fn handle_response(&self, message: Message, socket: &mut TcpStream) -> Result<bool> {
         match message {
             Message::Success(text) => print_success(text),
             Message::Failure(text) => print_error(text),
@@ -123,7 +168,7 @@ impl Client {
 
     /// Convert the cli command into the message that's being sent to the server,
     /// so it can be understood by the daemon.
-    pub async fn get_message_from_opt(&self, socket: &mut TcpStream) -> Result<Message> {
+    fn get_message_from_opt(&self) -> Result<Message> {
         match &self.opt.cmd {
             SubCommand::Add {
                 command,
@@ -191,18 +236,6 @@ impl Client {
                 };
                 Ok(Message::Start(message))
             }
-            SubCommand::Restart {
-                task_ids,
-                start_immediately,
-                stashed,
-            } => {
-                let message = RestartMessage {
-                    task_ids: task_ids.clone(),
-                    start_immediately: *start_immediately,
-                    stashed: *stashed,
-                };
-                Ok(Message::Restart(message))
-            }
             SubCommand::Pause {
                 task_ids,
                 group,
@@ -235,7 +268,6 @@ impl Client {
                 };
                 Ok(Message::Kill(message))
             }
-
             SubCommand::Send { task_id, input } => {
                 let message = SendMessage {
                     task_id: *task_id,
@@ -259,32 +291,9 @@ impl Client {
                 };
                 Ok(Message::Log(message))
             }
-            SubCommand::Follow { mut task_id, err } => {
-                // If no message, set it to the default (if applicable)
-                if task_id.is_none() {
-                    let state = self.get_state(socket).await?;
-                    let running_ids: Vec<_> = state
-                        .tasks
-                        .iter()
-                        .filter_map(|(&id, t)| if t.is_running() { Some(id) } else { None })
-                        .collect();
-
-                    match running_ids.len() {
-                        0 => {
-                            return Err(anyhow!("There are no running tasks."));
-                        }
-                        1 => task_id = Some(running_ids[0]),
-                        _ => {
-                            return Err(anyhow!(
-                                "Multiple tasks are running, please select one of the following: {}",
-                                running_ids.iter().map(|id| format!("{}", id)).collect::<Vec<_>>().join(", ")
-                            ));
-                        }
-                    }
-                }
-
+            SubCommand::Follow { task_id, err } => {
                 let message = StreamRequestMessage {
-                    task_id: task_id.unwrap(),
+                    task_id: task_id.clone(),
                     err: *err,
                 };
                 Ok(Message::StreamRequest(message))
@@ -303,8 +312,9 @@ impl Client {
                 Ok(Message::Parallel(message))
             }
             SubCommand::Completions { .. } => {
-                Err(anyhow!("Completions have to be handled earlier"))
+                bail!("Completions have to be handled earlier")
             }
+            SubCommand::Restart { .. } => bail!("Restarts have to be handled earlier"),
         }
     }
 }

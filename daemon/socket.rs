@@ -6,7 +6,7 @@ use ::std::sync::mpsc::Sender;
 
 use crate::cli::Opt;
 use crate::instructions::handle_message;
-use crate::streaming::handle_show;
+use crate::streaming::handle_follow;
 use ::pueue::message::*;
 use ::pueue::protocol::*;
 use ::pueue::state::SharedState;
@@ -78,7 +78,7 @@ async fn handle_incoming(
         let response = if let Message::StreamRequest(message) = message {
             // The client requested the output of a task.
             // Since we allow streaming, this needs to be handled seperately.
-            handle_show(&pueue_directory, &mut socket, message).await?
+            handle_follow(&pueue_directory, &mut socket, &state, message).await?
         } else if let Message::DaemonShutdown = message {
             // Simply shut down the daemon right after sending a success response.
             let response = create_success_message("Daemon is shutting down");

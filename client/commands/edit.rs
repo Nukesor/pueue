@@ -20,17 +20,26 @@ pub fn edit(message: EditResponseMessage, cli_command: &SubCommand) -> Message {
         ),
     };
 
+    // Edit either the path or the command, depending on the `path` flag.
     let mut command = message.command;
     let mut path = message.path;
-    let mut to_edit = if edit_path {
-        path.clone()
+    if edit_path {
+        path = edit_line(&path);
     } else {
-        command.clone()
+        command = edit_line(&command)
     };
 
+    Message::Edit(EditMessage {
+        task_id: message.task_id,
+        command,
+        path,
+    })
+}
+
+pub fn edit_line(line: &String) -> String {
     // Create a temporary file with the command so we can edit it with the editor.
     let mut file = NamedTempFile::new().expect("Failed to create a temporary file");
-    writeln!(file, "{}", to_edit).expect("Failed writing to temporary file");
+    writeln!(file, "{}", line).expect("Failed writing to temporary file");
 
     // Start the editor on this file.
     let editor = &env::var("EDITOR").unwrap_or_else(|_e| "vi".to_string());
@@ -43,24 +52,15 @@ pub fn edit(message: EditResponseMessage, cli_command: &SubCommand) -> Message {
     let mut file = file.into_file();
     file.seek(SeekFrom::Start(0))
         .expect("Couldn't seek to start of file. Aborting.");
-    to_edit = String::new();
-    file.read_to_string(&mut to_edit)
+
+    let mut line = String::new();
+    file.read_to_string(&mut line)
         .expect("Failed to read Command after editing");
 
     // Remove any trailing newlines from the command.
-    while to_edit.ends_with('\n') || to_edit.ends_with('\r') {
-        to_edit.pop();
+    while line.ends_with('\n') || line.ends_with('\r') {
+        line.pop();
     }
 
-    if edit_path {
-        path = to_edit
-    } else {
-        command = to_edit
-    }
-
-    Message::Edit(EditMessage {
-        task_id: message.task_id,
-        command,
-        path,
-    })
+    line
 }
