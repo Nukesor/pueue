@@ -39,10 +39,10 @@ pub async fn restart(
         let mut command = task.command.clone();
         let mut path = task.path.clone();
         if edit_command {
-            command = edit_line(&command)
+            command = edit_line(&command)?
         };
         if edit_path {
-            path = edit_line(&path);
+            path = edit_line(&path)?;
         }
 
         // Create a AddMessage to add the task to the daemon from the

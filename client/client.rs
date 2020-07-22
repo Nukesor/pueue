@@ -76,6 +76,15 @@ impl Client {
     pub async fn start(&self) -> Result<()> {
         // This match handles all "complex" commands.
         match &self.opt.cmd {
+            SubCommand::Edit { task_id, path } => {
+                let message = edit(
+                    &mut self.socket.clone(),
+                    *task_id,
+                    *path
+                ).await?;
+                self.handle_response(message);
+                return Ok(());
+            },
             SubCommand::Restart {
                 task_ids,
                 start_immediately,
@@ -131,7 +140,7 @@ impl Client {
         let mut response = receive_message(&mut socket).await?;
 
         // Check if we can receive the response from the daemon
-        while self.handle_response(response, &mut socket).await? {
+        while self.handle_response(response) {
             response = receive_message(&mut socket).await?;
         }
 
@@ -143,27 +152,21 @@ impl Client {
     ///
     /// If this function returns `Ok(true)`, the parent function will continue to receive
     /// and handle messages from the daemon. Otherwise the client will simply exit.
-    async fn handle_response(&self, message: Message, socket: &mut TcpStream) -> Result<bool> {
+    fn handle_response(&self, message: Message) -> bool {
         match message {
             Message::Success(text) => print_success(text),
             Message::Failure(text) => print_error(text),
             Message::StatusResponse(state) => print_state(state, &self.opt.cmd),
             Message::LogResponse(task_logs) => print_logs(task_logs, &self.opt.cmd, &self.settings),
-            Message::EditResponse(message) => {
-                // Create a new message with the edited command
-                let message = edit(message, &self.opt.cmd);
-                send_message(message, socket).await?;
-                return Ok(true);
-            }
             Message::Stream(text) => {
                 print!("{}", text);
                 io::stdout().flush().unwrap();
-                return Ok(true);
+                return true;
             }
             _ => error!("Received unhandled response message"),
         };
 
-        Ok(false)
+        false
     }
 
     /// Convert the cli command into the message that's being sent to the server,
@@ -275,7 +278,6 @@ impl Client {
                 };
                 Ok(Message::Send(message))
             }
-            SubCommand::Edit { task_id, .. } => Ok(Message::EditRequest(*task_id)),
             SubCommand::Group { add, remove } => {
                 let message = GroupMessage {
                     add: add.clone(),
@@ -315,6 +317,7 @@ impl Client {
                 bail!("Completions have to be handled earlier")
             }
             SubCommand::Restart { .. } => bail!("Restarts have to be handled earlier"),
+            SubCommand::Edit { .. } => bail!("Edits have to be handled earlier"),
         }
     }
 }
