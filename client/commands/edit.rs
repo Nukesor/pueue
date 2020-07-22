@@ -8,7 +8,6 @@ use ::tempfile::NamedTempFile;
 use ::pueue::message::*;
 use ::pueue::protocol::*;
 
-
 /// This function handles the logic for editing tasks.
 /// At first, we request the daemon to send us the task to edit.
 /// This also results in the task being `Locked` on the daemon side, preventing it from being
@@ -43,7 +42,7 @@ pub async fn edit(socket: &mut TcpStream, task_id: usize, edit_path: bool) -> Re
 
     // Create a new message with the edited command.
     let edit_message = Message::Edit(EditMessage {
-        task_id: task_id,
+        task_id,
         command,
         path,
     });

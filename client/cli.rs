@@ -41,7 +41,7 @@ pub enum SubCommand {
     /// Running or paused tasks need to be killed first.
     Remove {
         /// The task ids to be removed.
-        #[structopt(required=true)]
+        #[structopt(required = true)]
         task_ids: Vec<usize>,
     },
     /// Switches the queue position of two commands. Only works on queued and stashed commands.
@@ -55,7 +55,7 @@ pub enum SubCommand {
     /// Either `enqueue` them, to be normally handled or explicitly `start` them.
     Stash {
         /// The id(s) of the tasks you want to stash.
-        #[structopt(required=true)]
+        #[structopt(required = true)]
         task_ids: Vec<usize>,
     },
     /// Enqueue stashed tasks. They'll be handled normally afterwards.
@@ -118,7 +118,7 @@ pub enum SubCommand {
     /// Identical tasks will be created and by defualt enqueued.
     Restart {
         /// The tasks you want to restart.
-        #[structopt(required=true)]
+        #[structopt(required = true)]
         task_ids: Vec<usize>,
 
         /// Immediately start the task(s).

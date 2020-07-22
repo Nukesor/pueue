@@ -77,14 +77,10 @@ impl Client {
         // This match handles all "complex" commands.
         match &self.opt.cmd {
             SubCommand::Edit { task_id, path } => {
-                let message = edit(
-                    &mut self.socket.clone(),
-                    *task_id,
-                    *path
-                ).await?;
+                let message = edit(&mut self.socket.clone(), *task_id, *path).await?;
                 self.handle_response(message);
                 return Ok(());
-            },
+            }
             SubCommand::Restart {
                 task_ids,
                 start_immediately,
@@ -313,9 +309,7 @@ impl Client {
                 };
                 Ok(Message::Parallel(message))
             }
-            SubCommand::Completions { .. } => {
-                bail!("Completions have to be handled earlier")
-            }
+            SubCommand::Completions { .. } => bail!("Completions have to be handled earlier"),
             SubCommand::Restart { .. } => bail!("Restarts have to be handled earlier"),
             SubCommand::Edit { .. } => bail!("Edits have to be handled earlier"),
         }
