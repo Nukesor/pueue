@@ -41,6 +41,7 @@ pub enum SubCommand {
     /// Running or paused tasks need to be killed first.
     Remove {
         /// The task ids to be removed.
+        #[structopt(required=true)]
         task_ids: Vec<usize>,
     },
     /// Switches the queue position of two commands. Only works on queued and stashed commands.
@@ -54,6 +55,7 @@ pub enum SubCommand {
     /// Either `enqueue` them, to be normally handled or explicitly `start` them.
     Stash {
         /// The id(s) of the tasks you want to stash.
+        #[structopt(required=true)]
         task_ids: Vec<usize>,
     },
     /// Enqueue stashed tasks. They'll be handled normally afterwards.
@@ -116,6 +118,7 @@ pub enum SubCommand {
     /// Identical tasks will be created and by defualt enqueued.
     Restart {
         /// The tasks you want to restart.
+        #[structopt(required=true)]
         task_ids: Vec<usize>,
 
         /// Immediately start the task(s).
@@ -238,6 +241,7 @@ pub enum SubCommand {
     },
 
     /// Display the log output of finished tasks.
+    /// Prints either all logs or only the logs of specified tasks.
     Log {
         /// Specify for which specific tasks you want to see the output.
         task_ids: Vec<usize>,
@@ -250,9 +254,9 @@ pub enum SubCommand {
     /// Follow the output of a currently running task.
     /// This command works like `tail -f`.
     Follow {
-        /// The id of the task.  If None, it will default to the running task if
-        /// only one is running.  If no or multiple tasks are running, a message
-        /// will be displayed.
+        /// The id of the task you want to watch.
+        /// If no or multiple tasks are running, you have to specify the id.
+        /// If only a single task is running, you can omit the id.
         task_id: Option<usize>,
 
         /// Show stderr instead of stdout.
