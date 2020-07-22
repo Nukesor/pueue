@@ -56,6 +56,7 @@ pub async fn restart(
             group: task.group.clone(),
             enqueue_at: None,
             dependencies: Vec::new(),
+            ignore_aliases: true,
         });
 
         // Send the cloned task to the daemon and abort on any Failure messages.

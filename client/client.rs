@@ -197,6 +197,7 @@ impl Client {
                     group: group.clone(),
                     enqueue_at: *delay_until,
                     dependencies: dependencies.to_vec(),
+                    ignore_aliases: false,
                 }))
             }
             SubCommand::Remove { task_ids } => Ok(Message::Remove(task_ids.clone())),

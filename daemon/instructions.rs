@@ -60,8 +60,11 @@ fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) 
         ));
     }
 
-    // Check if there exists an alias for the given command
-    let command = insert_alias(message.command);
+    let mut command = message.command.clone();
+    if !message.ignore_aliases {
+        // Check if there exists an alias for the given command
+        command = insert_alias(message.command);
+    }
 
     // Create a new task and add it to the state.
     let task = Task::new(
