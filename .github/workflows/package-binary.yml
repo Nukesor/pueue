@@ -129,4 +129,4 @@ jobs:
         tag: ${{ github.ref }}
         asset_name: systemd.pueued.service
         body: ${{ steps.changelog_reader.outputs.log_entry }}
-      if: matrix.os == 'ubuntu-latest'
+      if: matrix.target == 'x86_64-unknown-linux-musl'
