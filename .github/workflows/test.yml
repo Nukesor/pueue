@@ -8,22 +8,42 @@ on:
 
 jobs:
   publish:
-    name: Test building for ${{ matrix.os }}
+    name: Test on ${{ matrix.os }} for ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        # This should work with only the `include`s but it currently doesn't because of this bug:
-        # https://github.community/t5/How-to-use-Git-and-GitHub/GitHub-Actions-Matrix-options-dont-work-as-documented/td-p/29558
         os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
-    - uses: hecrj/setup-rust-action@v1
-      with:
-        rust-version: stable
-    - uses: actions/checkout@v1
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Run tests
-      run: cargo test --verbose
+      - name: Setup Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          components: rustfmt, clippy
 
-    - name: Build the binary
-      run: cargo build --all
+      - name: cargo build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+
+      - name: cargo test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+
+      - name: cargo fmt
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+
+      - name: cargo clippy
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: -- -D warnings
