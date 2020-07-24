@@ -292,7 +292,7 @@ impl Client {
             }
             SubCommand::Follow { task_id, err } => {
                 let message = StreamRequestMessage {
-                    task_id: task_id.clone(),
+                    task_id: *task_id,
                     err: *err,
                 };
                 Ok(Message::StreamRequest(message))

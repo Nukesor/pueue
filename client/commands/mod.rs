@@ -19,7 +19,7 @@ pub async fn get_state(socket: &mut TcpStream) -> Result<State> {
     let message = receive_message(socket).await?;
 
     match message {
-        Message::StatusResponse(state) => return Ok(state),
+        Message::StatusResponse(state) => Ok(state),
         _ => unreachable!(),
-    };
+    }
 }

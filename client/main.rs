@@ -42,7 +42,7 @@ async fn main() -> Result<()> {
     } = &opt.cmd
     {
         let mut clap = Opt::clap();
-        clap.gen_completions("pueue", shell.clone(), output_directory);
+        clap.gen_completions("pueue", *shell, output_directory);
         return Ok(());
     }
 

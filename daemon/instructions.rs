@@ -60,11 +60,12 @@ fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) 
         ));
     }
 
-    let mut command = message.command.clone();
-    if !message.ignore_aliases {
+    let command = if !message.ignore_aliases {
         // Check if there exists an alias for the given command
-        command = insert_alias(message.command);
-    }
+        insert_alias(message.command)
+    } else {
+        message.command.clone()
+    };
 
     // Create a new task and add it to the state.
     let task = Task::new(
@@ -138,7 +139,7 @@ fn switch(message: SwitchMessage, state: &SharedState) -> Message {
     let task_ids = vec![message.task_id_1, message.task_id_2];
     let statuses = vec![TaskStatus::Queued, TaskStatus::Stashed];
     let mut state = state.lock().unwrap();
-    let (_, mismatching) = state.tasks_in_statuses(statuses, Some(task_ids.clone().to_vec()));
+    let (_, mismatching) = state.tasks_in_statuses(statuses, Some(task_ids.to_vec()));
     if !mismatching.is_empty() {
         return create_failure_message("Tasks have to be either queued or stashed.");
     }

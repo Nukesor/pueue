@@ -54,7 +54,7 @@ pub async fn edit(socket: &mut TcpStream, task_id: usize, edit_path: bool) -> Re
 /// This function allows the user to edit a task's command or path.
 /// Save the string to a temporary file, which is the edited by the user with $EDITOR.
 /// As soon as the editor is closed, read the file content and return the line
-pub fn edit_line(line: &String) -> Result<String> {
+pub fn edit_line(line: &str) -> Result<String> {
     // Create a temporary file with the command so we can edit it with the editor.
     let mut file = NamedTempFile::new().expect("Failed to create a temporary file");
     writeln!(file, "{}", line).expect("Failed writing to temporary file");
