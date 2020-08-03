@@ -64,22 +64,35 @@ impl Client {
     /// At this point everything is initialized, the connection is up and
     /// we can finally start doing stuff.
     ///
-    /// In general, we're differentiating between "generic" and "complex" functionalities.
-    ///
-    /// Simple generic stuff is usually a singular ping-pong.
-    /// One message to the daemon, one response, Done.
-    ///
-    /// Complex functionalities however need some special handling and are contained
-    /// in their own functions with their own communication code.
-    /// Special handling includes reading local files, data streaming
-    /// and sending multiple messages
+    /// The command handling is splitted into "simple" and "complex" commands.
     pub async fn start(&self) -> Result<()> {
+        // Return early, if the command has already been handled.
+        if self.handle_complex_command().await? {
+            return Ok(());
+        }
+
+        // The handling of "generic" commands is encapsulated in this function.
+        self.handle_simple_command().await?;
+
+        Ok(())
+    }
+
+    /// Handle all complex client-side functionalities.
+    /// Complex functionalities need some special handling and are contained
+    /// in their own functions with their own communication code.
+    /// Such functionalities includes reading local files, data streaming
+    /// and sending multiple messages.
+    ///
+    /// Returns `true`, if the current command has been handled by this function.
+    /// This indicates that the client can now shut down.
+    async fn handle_complex_command(&self) -> Result<bool> {
+        let mut socket = self.socket.clone();
         // This match handles all "complex" commands.
         match &self.opt.cmd {
             SubCommand::Edit { task_id, path } => {
-                let message = edit(&mut self.socket.clone(), *task_id, *path).await?;
+                let message = edit(&mut socket, *task_id, *path).await?;
                 self.handle_response(message);
-                return Ok(());
+                Ok(true)
             }
             SubCommand::Restart {
                 task_ids,
@@ -89,7 +102,7 @@ impl Client {
                 path,
             } => {
                 restart(
-                    &mut self.socket.clone(),
+                    &mut socket,
                     task_ids.clone(),
                     *start_immediately,
                     *stashed,
@@ -97,32 +110,31 @@ impl Client {
                     *path,
                 )
                 .await?;
-                return Ok(());
+                Ok(true)
             }
             SubCommand::Follow { task_id, err } => {
                 // Simple log output follows for local logs don't need any communication with the daemon.
                 // Thereby we handle this separately over here.
                 if self.settings.client.read_local_logs {
                     local_follow(
-                        &mut self.socket.clone(),
+                        &mut socket,
                         self.settings.daemon.pueue_directory.clone(),
                         task_id,
                         *err,
                     )
                     .await?;
-                    return Ok(());
+                    return Ok(true);
                 }
+                Ok(false)
             }
-            _ => {}
+            _ => Ok(false),
         }
-
-        // The handling of "generic" commands is encapsulated in this function.
-        self.handle_generic_message().await?;
-
-        Ok(())
     }
 
-    async fn handle_generic_message(&self) -> Result<()> {
+    /// Handle logic that's super generic on the client-side.
+    /// This always follows a singular ping-pong pattern.
+    /// One message to the daemon, one response, Done.
+    async fn handle_simple_command(&self) -> Result<()> {
         let mut socket = self.socket.clone();
 
         // Create the message that should be sent to the daemon
@@ -144,7 +156,7 @@ impl Client {
     }
 
     /// Most returned messages can be handled in a generic fashion.
-    /// However, some commands need some ping-pong or require continuous receiving of messages.
+    /// However, some commands require continuous receiving of messages (streaming).
     ///
     /// If this function returns `Ok(true)`, the parent function will continue to receive
     /// and handle messages from the daemon. Otherwise the client will simply exit.
