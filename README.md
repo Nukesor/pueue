@@ -155,6 +155,14 @@ To look at the current output of a command use `pueue log` or `pueue log $task_i
 If you want to follow the output of a running command use `git follow $task_id`.
 To follow stderr, use the `-e` flag.
 
+**Manipulate multiple tasks at once:**
+
+Most commands can be executed on multiple tasks.
+For instance, you can look at specific logs like this `pueue log 0 1 2 3 15 19`.
+
+This also works with your shell's range parameter, e.g. `pueue log {0..3} 15 19`.
+
+
 **Pitfalls:**
 
 To avoid common pitfalls, please read the [FAQ Section](https://github.com/Nukesor/pueue/blob/master/FAQ.md).
