@@ -115,7 +115,7 @@ pub enum SubCommand {
     },
 
     /// Restart task(s).
-    /// Identical tasks will be created and by defualt enqueued.
+    /// Identical tasks will be created and by default enqueued.
     Restart {
         /// The tasks you want to restart.
         #[structopt(required = true)]
