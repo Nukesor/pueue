@@ -3,11 +3,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.2] -
+
+### Fixed
+
+- Non-existing tasks were displayed as successfully removed.
+
 ## [0.7.1] - 2020-07-24
 
 ### Added
 
-- Update workflow to build arm binaries
+- Update workflow to build arm binaries.
 
 ## [0.7.0] - 2020-07-23
 
@@ -17,7 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
-- Internal refactoring of the client code. Mostly structure
+- Internal refactoring of the client code. Mostly structure.
 
 ### Fixed
 

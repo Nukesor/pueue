@@ -33,7 +33,7 @@ pub fn compile_task_response(
         return format!("{}: {}", message, matching_string);
     }
 
-    let mismatched_message = "The command couldn't be executed for these tasks";
+    let mismatched_message = "The command failed for tasks";
     let mismatching_string = mismatching.join(", ");
 
     // All given ids are invalid.
