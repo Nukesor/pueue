@@ -119,7 +119,12 @@ fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) 
 /// We have to ensure that those tasks aren't running!
 fn remove(task_ids: Vec<usize>, state: &SharedState) -> Message {
     let mut state = state.lock().unwrap();
-    let statuses = vec![TaskStatus::Queued, TaskStatus::Stashed, TaskStatus::Done, TaskStatus::Locked];
+    let statuses = vec![
+        TaskStatus::Queued,
+        TaskStatus::Stashed,
+        TaskStatus::Done,
+        TaskStatus::Locked,
+    ];
     let (not_running, running) = state.tasks_in_statuses(statuses, Some(task_ids));
 
     for task_id in &not_running {
