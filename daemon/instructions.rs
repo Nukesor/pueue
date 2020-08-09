@@ -121,7 +121,6 @@ fn remove(task_ids: Vec<usize>, state: &SharedState) -> Message {
     let mut state = state.lock().unwrap();
     let statuses = vec![TaskStatus::Running, TaskStatus::Paused];
     let (running, not_running) = state.tasks_in_statuses(statuses, Some(task_ids));
-    println!("{:?}", not_running);
 
     for task_id in &not_running {
         state.tasks.remove(task_id);
