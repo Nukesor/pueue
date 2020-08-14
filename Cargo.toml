@@ -65,9 +65,6 @@ procfs = "^0.8"
 psutil = "^3"
 
 [build-dependencies]
-chrono = { version = "^0.4", features = ["serde"] }
-chrono-english = "^0.1.0"
-structopt = "0.3"
 version_check = "^0.9"
 
 [dev-dependencies]
