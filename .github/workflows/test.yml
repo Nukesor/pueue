@@ -47,4 +47,3 @@ jobs:
         with:
           command: clippy
           args: -- -D warnings
-        if: matrix.os != 'windows-latest'

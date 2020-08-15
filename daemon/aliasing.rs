@@ -1,8 +1,9 @@
-use ::anyhow::Result;
-use ::log::{info, warn};
 use ::std::collections::HashMap;
 use ::std::fs::File;
 use ::std::io::prelude::*;
+
+use ::anyhow::Result;
+use ::log::{info, warn};
 
 use ::pueue::platform::directories::get_config_directories;
 

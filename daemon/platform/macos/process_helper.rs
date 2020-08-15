@@ -1,9 +1,38 @@
-use ::log::warn;
-use ::nix::{
+use log::warn;
+use nix::{
     sys::signal::{self, Signal},
     unistd::Pid,
 };
 use psutil::process::{processes, Process};
+
+use crate::task_handler::ProcessAction;
+
+/// Send a signal to a unix process.
+pub fn send_signal(pid: u32, action: &ProcessAction, children: bool) -> Result<bool, nix::Error> {
+    let signal = get_signal_from_action(action);
+    debug!("Sending signal {} to {}", signal, pid);
+
+    // Send the signal to all children, if that's what the user wants.
+    if children {
+        send_signal_to_children(pid as i32, action);
+    }
+
+    signal::kill(Pid::from_raw(pid as i32), signal)?;
+    Ok(true)
+}
+
+/// A small helper to send a signal to all direct child processes of a specific task.
+pub fn send_signal_to_children(pid: i32, action: ProcessAction) {
+    send_signal_to_processes(get_children(pid), action);
+}
+
+fn get_signal_from_action(action: &ProcessAction) -> Signal {
+    match action {
+        ProcessAction::Kill => Signal::SIGKILL,
+        ProcessAction::Pause => Signal::SIGSTOP,
+        ProcessAction::Resume => Signal::SIGCONT,
+    }
+}
 
 /// Get all children of a specific process
 pub fn get_children(pid: i32) -> Vec<Process> {
@@ -30,7 +59,8 @@ pub fn get_children(pid: i32) -> Vec<Process> {
 }
 
 /// Send a signal to a list of processes
-pub fn send_signal_to_processes(processes: Vec<Process>, signal: Signal) {
+pub fn send_signal_to_processes(processes: Vec<Process>, action: ProcessAction) {
+    let signal = get_signal_from_action(action);
     for process in processes {
         let pid = Pid::from_raw(process.pid() as i32);
 
@@ -48,9 +78,4 @@ pub fn send_signal_to_processes(processes: Vec<Process>, signal: Signal) {
             );
         }
     }
-}
-
-/// A small helper to send a signal to all direct child processes of a specific task.
-pub fn send_signal_to_children(pid: i32, signal: Signal) {
-    send_signal_to_processes(get_children(pid), signal);
 }

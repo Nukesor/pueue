@@ -1,13 +1,14 @@
-use ::anyhow::Result;
-use ::comfy_table::presets::UTF8_HORIZONTAL_BORDERS_ONLY;
-use ::comfy_table::*;
-use ::crossterm::tty::IsTty;
-use ::snap::read::FrameDecoder;
 use ::std::collections::BTreeMap;
 use ::std::io;
 use ::std::string::ToString;
 use ::std::thread::sleep;
 use ::std::time::Duration;
+
+use ::anyhow::Result;
+use ::comfy_table::presets::UTF8_HORIZONTAL_BORDERS_ONLY;
+use ::comfy_table::*;
+use ::crossterm::tty::IsTty;
+use ::snap::read::FrameDecoder;
 
 use ::pueue::log::{get_log_file_handles, get_log_paths};
 use ::pueue::message::TaskLogMessage;

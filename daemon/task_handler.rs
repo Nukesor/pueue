@@ -10,19 +10,13 @@ use ::anyhow::Result;
 use ::chrono::prelude::*;
 use ::handlebars::Handlebars;
 use ::log::{debug, error, info, warn};
-#[cfg(not(windows))]
-use ::nix::{
-    sys::signal::{self, Signal},
-    unistd::Pid,
-};
-
-#[cfg(not(windows))]
-use crate::platform::process_helper::*;
 
 use ::pueue::log::*;
 use ::pueue::message::*;
 use ::pueue::state::SharedState;
 use ::pueue::task::{Task, TaskResult, TaskStatus};
+
+use crate::platform::process_helper::*;
 
 pub struct TaskHandler {
     state: SharedState,
@@ -34,6 +28,18 @@ pub struct TaskHandler {
     pueue_directory: String,
     callback: Option<String>,
     pause_on_failure: bool,
+}
+
+/// Pueue allows several direct interaction with processes.
+/// Since these interactions can vary depending on the current platform,
+/// this enum is introduced.
+/// The intend is to keep any platform specific code of this class and keep it clean.
+/// Even if that means to add some layer of abstraction.
+#[derive(Debug)]
+pub enum ProcessAction {
+    Pause,
+    Resume,
+    Kill,
 }
 
 impl TaskHandler {
@@ -459,33 +465,25 @@ impl TaskHandler {
         }
     }
 
-    /// Send a signal to a unix process.
+    /// This is a small wrapper around the real platform dependant process handling
+    /// handling logic. It only ensures, that the process we want to manipulate really exists.
     #[cfg(not(windows))]
-    fn send_signal(
-        &mut self,
-        id: usize,
-        signal: Signal,
-        children: bool,
-    ) -> Result<bool, nix::Error> {
-        if let Some(child) = self.children.get(&id) {
-            debug!("Sending signal {} to {}", signal, id);
+    fn perform_action(&mut self, id: usize, action: ProcessAction, children: bool) -> Result<bool> {
+        match self.children.get(&id) {
+            Some(child) => {
+                debug!("Executing action {:?} to {}", action, id);
+                send_signal(child.id(), &action, children)?;
 
-            let pid = Pid::from_raw(child.id() as i32);
-
-            // Send the signal to all children, if that's what the user wants.
-            if children {
-                send_signal_to_children(child.id() as i32, signal);
+                Ok(true)
             }
-
-            signal::kill(pid, signal)?;
-            return Ok(true);
-        };
-
-        error!(
-            "Tried to send signal {} to non existing child {}",
-            signal, id
-        );
-        Ok(false)
+            None => {
+                error!(
+                    "Tried to execute action {:?} to non existing task {}",
+                    action, id
+                );
+                Ok(false)
+            }
+        }
     }
 
     /// Handle the start message:
@@ -557,19 +555,12 @@ impl TaskHandler {
                 return;
             }
         }
-        #[cfg(windows)]
-        {
-            info!("Failed resuming task {}: not supported on windows.", id);
-        }
-        #[cfg(not(windows))]
-        {
-            match self.send_signal(id, Signal::SIGCONT, children) {
-                Err(err) => warn!("Failed starting task {}: {:?}", id, err),
-                Ok(success) => {
-                    if success {
-                        let mut state = self.state.lock().unwrap();
-                        state.change_status(id, TaskStatus::Running);
-                    }
+        match self.perform_action(id, ProcessAction::Resume, children) {
+            Err(err) => warn!("Failed resuming task {}: {:?}", id, err),
+            Ok(success) => {
+                if success {
+                    let mut state = self.state.lock().unwrap();
+                    state.change_status(id, TaskStatus::Running);
                 }
             }
         }
@@ -626,19 +617,12 @@ impl TaskHandler {
     /// Pause a specific task.
     /// Send a signal to the process to actually pause the OS process.
     fn pause_task(&mut self, id: usize, children: bool) {
-        #[cfg(windows)]
-        {
-            info!("Failed pausing task {}: not supported on windows.", id);
-        }
-        #[cfg(not(windows))]
-        {
-            match self.send_signal(id, Signal::SIGSTOP, children) {
-                Err(err) => info!("Failed pausing task {}: {:?}", id, err),
-                Ok(success) => {
-                    if success {
-                        let mut state = self.state.lock().unwrap();
-                        state.change_status(id, TaskStatus::Paused);
-                    }
+        match self.perform_action(id, ProcessAction::Pause, children) {
+            Err(err) => error!("Failed pausing task {}: {:?}", id, err),
+            Ok(success) => {
+                if success {
+                    let mut state = self.state.lock().unwrap();
+                    state.change_status(id, TaskStatus::Paused);
                 }
             }
         }
@@ -701,24 +685,17 @@ impl TaskHandler {
             // Get the list of processes first.
             // Otherwise the process gets killed and the parent might spawn a new one, before
             // we get the chance to kill the parent.
-            #[cfg(not(windows))]
             let mut children = None;
-            #[cfg(not(windows))]
-            {
-                if kill_children {
-                    children = Some(get_children(child.id() as i32));
-                }
+            if kill_children {
+                children = get_children(child.id() as i32);
             }
 
             match child.kill() {
                 Err(_) => debug!("Task {} has already finished by itself", task_id),
                 _ => {
                     // Now kill all remaining children, after the parent has been killed.
-                    #[cfg(not(windows))]
-                    {
-                        if let Some(children) = children {
-                            send_signal_to_processes(children, Signal::SIGTERM);
-                        }
+                    if let Some(children) = children {
+                        send_signal_to_processes(children, &ProcessAction::Kill);
                     }
 
                     // Already mark the task as killed over here.

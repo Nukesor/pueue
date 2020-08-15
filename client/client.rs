@@ -1,18 +1,20 @@
-use ::anyhow::{bail, Context, Result};
-use ::async_std::net::TcpStream;
-use ::log::error;
 use ::std::collections::HashMap;
 use ::std::env::{current_dir, vars};
 use ::std::io::{self, Write};
+
+use ::anyhow::{bail, Context, Result};
+use ::async_std::net::TcpStream;
+use ::log::error;
+
+use ::pueue::message::*;
+use ::pueue::protocol::*;
+use ::pueue::settings::Settings;
 
 use crate::cli::{Opt, SubCommand};
 use crate::commands::edit::*;
 use crate::commands::local_follow::*;
 use crate::commands::restart::*;
 use crate::output::*;
-use ::pueue::message::*;
-use ::pueue::protocol::*;
-use ::pueue::settings::Settings;
 
 /// This struct contains the base logic for the client.
 /// The client is responsible for connecting to the daemon, sending instructions

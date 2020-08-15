@@ -1,5 +1,6 @@
-use ::crossterm::style::{style, Attribute, Color};
 use ::std::collections::BTreeMap;
+
+use ::crossterm::style::{style, Attribute, Color};
 
 use ::pueue::state::State;
 use ::pueue::task::Task;

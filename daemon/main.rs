@@ -1,18 +1,20 @@
-use ::anyhow::{bail, Result};
-use ::simplelog::{Config, LevelFilter, SimpleLogger};
 use ::std::fs::create_dir_all;
 use ::std::path::Path;
 use ::std::process::Command;
 use ::std::sync::mpsc::channel;
 use ::std::sync::{Arc, Mutex};
 use ::std::thread;
+
+use ::anyhow::{bail, Result};
+use ::simplelog::{Config, LevelFilter, SimpleLogger};
 use ::structopt::StructOpt;
+
+use ::pueue::settings::Settings;
+use ::pueue::state::State;
 
 use crate::cli::Opt;
 use crate::socket::accept_incoming;
 use crate::task_handler::TaskHandler;
-use ::pueue::settings::Settings;
-use ::pueue::state::State;
 
 mod aliasing;
 mod cli;

@@ -1,15 +1,17 @@
+use ::std::sync::mpsc::Sender;
+
 use ::anyhow::{bail, Result};
 use ::async_std::net::{TcpListener, TcpStream};
 use ::async_std::task;
 use ::log::{info, warn};
-use ::std::sync::mpsc::Sender;
+
+use ::pueue::message::*;
+use ::pueue::protocol::*;
+use ::pueue::state::SharedState;
 
 use crate::cli::Opt;
 use crate::instructions::handle_message;
 use crate::streaming::handle_follow;
-use ::pueue::message::*;
-use ::pueue::protocol::*;
-use ::pueue::state::SharedState;
 
 /// Poll the unix listener and accept new incoming connections.
 /// Create a new future to handle the message and spawn it.

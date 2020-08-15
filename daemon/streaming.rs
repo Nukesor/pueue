@@ -1,10 +1,11 @@
+use ::std::fs::File;
+use ::std::io::Read;
+use ::std::time::Duration;
+
 use ::anyhow::Result;
 use ::async_std::future;
 use ::async_std::net::TcpStream;
 use ::async_std::prelude::*;
-use ::std::fs::File;
-use ::std::io::Read;
-use ::std::time::Duration;
 
 use ::pueue::log::*;
 use ::pueue::message::*;
