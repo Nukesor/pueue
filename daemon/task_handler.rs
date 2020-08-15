@@ -30,11 +30,10 @@ pub struct TaskHandler {
     pause_on_failure: bool,
 }
 
-/// Pueue allows several direct interaction with processes.
-/// Since these interactions can vary depending on the current platform,
-/// this enum is introduced.
-/// The intend is to keep any platform specific code of this class and keep it clean.
-/// Even if that means to add some layer of abstraction.
+/// Pueue directly interacts with processes.
+/// Since these interactions can vary depending on the current platform, this enum is introduced.
+/// The intend is to keep any platform specific code out of the top level code.
+/// Even if that implicates adding some layer of abstraction.
 #[derive(Debug)]
 pub enum ProcessAction {
     Pause,
@@ -465,8 +464,8 @@ impl TaskHandler {
         }
     }
 
-    /// This is a small wrapper around the real platform dependant process handling
-    /// handling logic. It only ensures, that the process we want to manipulate really exists.
+    /// This is a small wrapper around the real platform dependant process handling logic
+    /// It only ensures, that the process we want to manipulate really does exists.
     #[cfg(not(windows))]
     fn perform_action(&mut self, id: usize, action: ProcessAction, children: bool) -> Result<bool> {
         match self.children.get(&id) {
