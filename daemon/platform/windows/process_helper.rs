@@ -10,10 +10,5 @@ pub fn get_children(pid: i32) -> Option<Vec<i32>> {
     None
 }
 
-/// A small helper that sends a signal to all children of a specific process by id.
-pub fn send_signal_to_children(pid: i32, action: &ProcessAction) {
-    error!(
-        "Calling send_signal_to_children on task {} on windows. This shouldn't happen!",
-        task_id
-    )
-}
+/// Send a signal to multiple processes
+pub fn send_signal_to_processes(pid: i32, action: &ProcessAction) {}
