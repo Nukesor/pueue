@@ -1,4 +1,4 @@
-use log::warn;
+use log::{debug, warn};
 use nix::{
     sys::signal::{self, Signal},
     unistd::Pid,
@@ -39,11 +39,12 @@ pub fn get_children(pid: i32) -> Option<Vec<Process>> {
     let all_processes = match processes() {
         Err(error) => {
             warn!("Failed to get full process list: {}", error);
-            return Vec::new();
+            return Some(Vec::new());
         }
         Ok(processes) => processes,
     };
-    all_processes
+
+    let filtered: Vec<Process> = all_processes
         .into_iter()
         .filter(|result| result.is_ok())
         .map(|result| result.unwrap())
@@ -57,7 +58,7 @@ pub fn get_children(pid: i32) -> Option<Vec<Process>> {
         })
         .collect();
 
-    Some(all_processes)
+    Some(filtered)
 }
 
 /// Send a signal to a list of processes
