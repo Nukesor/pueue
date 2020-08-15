@@ -284,7 +284,6 @@ impl TaskHandler {
 
         // Spawn the actual subprocess
         let mut spawn_command = Command::new(if cfg!(windows) { "powershell" } else { "sh" });
-
         if cfg!(windows) {
             // Chain two `powershell` commands, one that sets the output encoding to utf8 and then the user provided one.
             spawn_command.arg("-c").arg(format!(
@@ -466,7 +465,6 @@ impl TaskHandler {
 
     /// This is a small wrapper around the real platform dependant process handling logic
     /// It only ensures, that the process we want to manipulate really does exists.
-    #[cfg(not(windows))]
     fn perform_action(&mut self, id: usize, action: ProcessAction, children: bool) -> Result<bool> {
         match self.children.get(&id) {
             Some(child) => {
