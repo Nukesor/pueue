@@ -22,8 +22,8 @@ pub fn send_signal(pid: u32, action: &ProcessAction, children: bool) -> Result<b
 }
 
 /// A small helper to send a signal to all direct child processes of a specific task.
-pub fn send_signal_to_children(pid: i32, action: ProcessAction) {
-    send_signal_to_processes(get_children(pid), action);
+pub fn send_signal_to_children(pid: i32, action: &ProcessAction) {
+    send_signal_to_processes(get_children(pid).unwrap(), action);
 }
 
 fn get_signal_from_action(action: &ProcessAction) -> Signal {
@@ -35,7 +35,7 @@ fn get_signal_from_action(action: &ProcessAction) -> Signal {
 }
 
 /// Get all children of a specific process
-pub fn get_children(pid: i32) -> Vec<Process> {
+pub fn get_children(pid: i32) -> Option<Vec<Process>> {
     let all_processes = match processes() {
         Err(error) => {
             warn!("Failed to get full process list: {}", error);
@@ -55,11 +55,13 @@ pub fn get_children(pid: i32) -> Vec<Process> {
             }
             false
         })
-        .collect()
+        .collect();
+
+    Some(all_processes)
 }
 
 /// Send a signal to a list of processes
-pub fn send_signal_to_processes(processes: Vec<Process>, action: ProcessAction) {
+pub fn send_signal_to_processes(processes: Vec<Process>, action: &ProcessAction) {
     let signal = get_signal_from_action(action);
     for process in processes {
         let pid = Pid::from_raw(process.pid() as i32);
