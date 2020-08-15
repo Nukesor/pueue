@@ -7,14 +7,7 @@ use ::std::collections::HashMap;
 use ::std::fs::{create_dir_all, File};
 use ::std::io::prelude::*;
 
-#[cfg(any(target_os = "linux", target_os = "freebsd"))]
-use crate::linux::directories::*;
-
-#[cfg(target_os = "macos")]
-use crate::macos::directories::*;
-
-#[cfg(target_os = "windows")]
-use crate::windows::directories::*;
+use crate::platform::directories::*;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Client {

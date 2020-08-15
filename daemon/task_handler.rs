@@ -16,11 +16,8 @@ use ::nix::{
     unistd::Pid,
 };
 
-#[cfg(any(target_os = "linux", target_os = "freebsd"))]
-use crate::linux::process_helper::*;
-
-#[cfg(target_os = "macos")]
-use crate::macos::process_helper::*;
+#[cfg(not(windows))]
+use crate::platform::process_helper::*;
 
 use ::pueue::log::*;
 use ::pueue::message::*;

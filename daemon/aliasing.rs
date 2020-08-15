@@ -4,14 +4,7 @@ use ::std::collections::HashMap;
 use ::std::fs::File;
 use ::std::io::prelude::*;
 
-#[cfg(any(target_os = "linux", target_os = "freebsd"))]
-use ::pueue::linux::directories::get_config_directories;
-
-#[cfg(target_os = "macos")]
-use ::pueue::macos::directories::get_config_directories;
-
-#[cfg(target_os = "windows")]
-use ::pueue::windows::directories::get_config_directories;
+use ::pueue::platform::directories::get_config_directories;
 
 /// Return the contents of the alias file, if it exists and can be parsed.
 /// The file should be located in `pueue_directory` and named `pueue_aliases`.
