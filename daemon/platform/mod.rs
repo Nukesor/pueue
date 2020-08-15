@@ -12,4 +12,4 @@ pub use self::linux::process_helper;
 pub use self::macos::process_helper;
 
 #[cfg(target_os = "windows")]
-pub use self::macos::process_helper;
+pub use self::windows::process_helper;
