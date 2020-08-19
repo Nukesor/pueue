@@ -72,6 +72,7 @@ PRs are of course very welcome!
 There are four different ways to install Pueue.
 
 #### Package Manager
+
 Use your system's package manager.  
 This will usually deploy service files and completions automatically.  
 Pueue has been packaged for:
@@ -89,6 +90,7 @@ You can download the binaries for the client and the daemon (`pueue` and `pueued
 Just download both binaries for your system, rename them to `pueue` and `pueued` and place them in your $PATH/program folder.
 
 #### Via Cargo
+
 You'll need Rust version `>=1.39`
 
 ```bash
@@ -98,6 +100,7 @@ cargo install pueue
 This will install pueue to `~/.cargo/bin/pueue`
 
 #### From Source
+
 You'll need Rust version `>=1.39`
 
 ```bash
