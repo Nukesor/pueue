@@ -71,7 +71,7 @@ PRs are of course very welcome!
 
 There are four different ways to install Pueue.
 
-**Package Manager**  
+#### Package Manager
 Use your system's package manager.  
 This will usually deploy service files and completions automatically.  
 Pueue has been packaged for:
@@ -80,13 +80,15 @@ Pueue has been packaged for:
 - NixOS
 - Homebrew
 
-**Prebuild Binaries**
+#### Prebuild Binaries
+
+Statically linked (if possible) binaries for Linux (incl. ARM), Mac OS and Windows are built on each release.
 
 You can download the binaries for the client and the daemon (`pueue` and `pueued`) for each release on the [release page](https://github.com/Nukesor/pueue/releases).
 
-There are binaries for Linux, Mac OS and Windows. Just download them, rename them to `pueue` and `pueued` and place them in your program/bin folder.
+Just download both binaries for your system, rename them to `pueue` and `pueued` and place them in your $PATH/program folder.
 
-**Via Cargo**  
+#### Via Cargo
 You'll need Rust version `>=1.39`
 
 ```bash
@@ -95,7 +97,7 @@ cargo install pueue
 
 This will install pueue to `~/.cargo/bin/pueue`
 
-**From Source**  
+#### From Source
 You'll need Rust version `>=1.39`
 
 ```bash
