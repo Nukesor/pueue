@@ -332,13 +332,13 @@ dependencies = [
 
 [[package]]
 name = "comfy-table"
-version = "1.1.0"
+version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fac017c7e42cdc6379ede1b2e84d6d8647fdc1ebb618bad582867fe6ec07ba67"
+checksum = "8f97a418f1dee79b100875499e272ea81882c1b931a9c8432e165b595b461752"
 dependencies = [
  "crossterm",
- "strum 0.18.0",
- "strum_macros 0.18.0",
+ "strum",
+ "strum_macros",
 ]
 
 [[package]]
@@ -1073,8 +1073,8 @@ dependencies = [
  "simplelog",
  "snap",
  "structopt",
- "strum 0.19.2",
- "strum_macros 0.19.2",
+ "strum",
+ "strum_macros",
  "tempfile",
  "users",
  "version_check",
@@ -1409,27 +1409,9 @@ dependencies = [
 
 [[package]]
 name = "strum"
-version = "0.18.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "57bd81eb48f4c437cadc685403cad539345bf703d78e63707418431cecd4522b"
-
-[[package]]
-name = "strum"
 version = "0.19.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3924a58d165da3b7b2922c667ab0673c7b5fd52b5c19ea3442747bcb3cd15abe"
-
-[[package]]
-name = "strum_macros"
-version = "0.18.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "87c85aa3f8ea653bfd3ddf25f7ee357ee4d204731f6aa9ad04002306f6e2774c"
-dependencies = [
- "heck",
- "proc-macro2",
- "quote",
- "syn",
-]
 
 [[package]]
 name = "strum_macros"

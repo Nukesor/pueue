@@ -8,9 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Fixed
 
 - Non-existing tasks were displayed as successfully removed.
-- Remove unneeded dependencies and reduce compile time by 10% by [LovecraftianHorror](https://github.com/LovecraftianHorror)
-- Remove futures-timers, effectively reducing compile time by 10+%.
-- Update to comfy-table v1.1.0, reducing compile time by another 10+%.
+- Remove unneeded `config` features and reduce compile time by ~10%. Contribution by [LovecraftianHorror](https://github.com/LovecraftianHorror)
+- Remove futures-timers, effectively reducing compile time by ~14%.
+- Update to comfy-table v1.1.0, reducing compile time by another ~10%.
 
 ### Added
 
