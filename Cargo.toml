@@ -47,7 +47,7 @@ serde_yaml = "^0.8"
 serde_derive = "^1.0"
 
 log = "0.4"
-config = "^0.10"
+config = { version = "^0.10", default-features = false, features = ["yaml"] }
 simplelog = { version = "0.8", default-features = false }
 structopt = "0.3"
 crossterm = "^0.17"
