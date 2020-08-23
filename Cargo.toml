@@ -28,13 +28,13 @@ path = "shared/lib.rs"
 
 [dependencies]
 anyhow = "1"
-async-std = { version = "1", features = ["attributes", "unstable"] }
+async-std = { version = "1", features = ["attributes", "std"] }
 dirs = "3"
 chrono = { version = "^0.4", features = ["serde"] }
 chrono-english = "^0.1.0"
 rand = "^0.7"
-strum = "^0.18"
-strum_macros = "^0.18"
+strum = "^0.19"
+strum_macros = "^0.19"
 handlebars = "3"
 
 bytes = "^0.5"
@@ -56,7 +56,7 @@ tempfile = "^3"
 
 [target.'cfg(not(windows))'.dependencies]
 users = "^0.10"
-nix = "^0.17"
+nix = "^0.18"
 
 [target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]
 procfs = "^0.8"

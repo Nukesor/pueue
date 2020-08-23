@@ -3,9 +3,8 @@ use ::std::io::Read;
 use ::std::time::Duration;
 
 use ::anyhow::Result;
-use ::async_std::future;
 use ::async_std::net::TcpStream;
-use ::async_std::prelude::*;
+use ::async_std::task::sleep;
 
 use ::pueue::log::*;
 use ::pueue::message::*;
@@ -94,7 +93,6 @@ pub async fn handle_follow(
         // Send the new chunk and wait for 1 second.
         let response = Message::Stream(text);
         send_message(response, socket).await?;
-        let wait = future::ready(1).delay(Duration::from_millis(1000));
-        wait.await;
+        sleep(Duration::from_millis(1000)).await;
     }
 }
