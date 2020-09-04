@@ -19,11 +19,11 @@ use ::pueue::task::{Task, TaskResult, TaskStatus};
 use crate::cli::SubCommand;
 use crate::output_helper::*;
 
-pub fn print_success(message: String) {
+pub fn print_success(message: &str) {
     println!("{}", message);
 }
 
-pub fn print_error(message: String) {
+pub fn print_error(message: &str) {
     let is_tty = io::stdout().is_tty();
     let styled = style_text(message, is_tty, Some(Color::Red), None);
     println!("{}", styled);
@@ -239,7 +239,7 @@ pub fn print_log(task_log: &mut TaskLogMessage, settings: &Settings) {
 
     // Print task id and exit code.
     let task_text = style_text(
-        format!("Task {}", task.id),
+        &format!("Task {}", task.id),
         is_tty,
         None,
         Some(Attribute::Bold),
@@ -254,7 +254,7 @@ pub fn print_log(task_log: &mut TaskLogMessage, settings: &Settings) {
         Some(TaskResult::DependencyFailed) => ("dependency failed".into(), Color::Red),
         None => ("running".into(), Color::White),
     };
-    let status_text = style_text(exit_status, is_tty, Some(color), None);
+    let status_text = style_text(&exit_status, is_tty, Some(color), None);
     println!("{} {}", task_text, status_text);
 
     // Print command and path.

@@ -8,8 +8,8 @@ use ::pueue::task::Task;
 /// This is a simple small helper function with the purpose of easily styling text,
 /// while also prevent styling if we're printing to a non-tty output.
 /// If there's any kind of styling in the code, it should be done with the help of this function.
-pub fn style_text<T: ToString>(
-    text: T,
+pub fn style_text(
+    text: &str,
     is_tty: bool,
     color: Option<Color>,
     attribute: Option<Attribute>,
@@ -19,7 +19,7 @@ pub fn style_text<T: ToString>(
         return text.to_string();
     }
 
-    let mut styled = style(text.to_string());
+    let mut styled = style(text);
     if let Some(color) = color {
         styled = styled.with(color);
     }

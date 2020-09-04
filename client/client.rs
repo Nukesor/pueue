@@ -164,8 +164,8 @@ impl Client {
     /// and handle messages from the daemon. Otherwise the client will simply exit.
     fn handle_response(&self, message: Message) -> bool {
         match message {
-            Message::Success(text) => print_success(text),
-            Message::Failure(text) => print_error(text),
+            Message::Success(text) => print_success(&text),
+            Message::Failure(text) => print_error(&text),
             Message::StatusResponse(state) => print_state(state, &self.opt.cmd),
             Message::LogResponse(task_logs) => print_logs(task_logs, &self.opt.cmd, &self.settings),
             Message::Stream(text) => {
