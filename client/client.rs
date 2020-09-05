@@ -20,8 +20,8 @@ use crate::output::*;
 /// The client is responsible for connecting to the daemon, sending instructions
 /// and interpreting their responses.
 ///
-/// Most commands are a simple ping-pong. Though, some commands require a more complex
-/// communication pattern (e.g. `show -f`, which continuously streams the output of a task).
+/// Most commands are a simple ping-pong. However, some commands require a more complex
+/// communication pattern, such as the `follow` command, which continuously streams the output of a task.
 pub struct Client {
     opt: Opt,
     settings: Settings,
@@ -29,6 +29,7 @@ pub struct Client {
 }
 
 impl Client {
+    /// Connect to the daemon, authorize via secret and return a new initialized Client.
     pub async fn new(settings: Settings, opt: Opt) -> Result<Self> {
         // // Commandline argument overwrites the configuration files values for address
         // let address = if let Some(address) = opt.address.clone() {

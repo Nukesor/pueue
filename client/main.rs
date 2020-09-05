@@ -15,11 +15,12 @@ use crate::client::Client;
 
 #[async_std::main]
 async fn main() -> Result<()> {
+    // Get settings from the configuration file and the program defaults.
     let settings = Settings::new()?;
-    let save_result = settings.save();
-    if save_result.is_err() {
+    // Immediately save it. This also creates the save file in case it didn't exist yet.
+    if let Err(error) = settings.save() {
         println!("Failed saving config file.");
-        println!("{:?}", save_result.err());
+        println!("{:?}", error);
     }
 
     // Parse commandline options.

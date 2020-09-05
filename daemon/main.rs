@@ -5,7 +5,7 @@ use ::std::sync::mpsc::channel;
 use ::std::sync::{Arc, Mutex};
 use ::std::thread;
 
-use ::anyhow::{bail, Result};
+use ::anyhow::Result;
 use ::simplelog::{Config, LevelFilter, SimpleLogger};
 use ::structopt::StructOpt;
 
@@ -27,13 +27,13 @@ mod task_handler;
 
 #[async_std::main]
 async fn main() -> Result<()> {
+    // Get settings from the configuration file and the program defaults.
     let settings = Settings::new()?;
-    match settings.save() {
-        Err(error) => {
-            bail!(error.context("Failed saving the config file"));
-        }
-        Ok(()) => {}
-    };
+    // Immediately save it. This also creates the save file in case it didn't exist yet.
+    if let Err(error) = settings.save() {
+        println!("Failed saving config file.");
+        println!("{:?}", error);
+    }
 
     // Parse commandline options.
     let opt = Opt::from_args();
