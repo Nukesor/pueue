@@ -19,42 +19,44 @@ On top of that, there are a lot of convenience features and abstractions.
 Since Pueue is not bound to any terminal, you can control your tasks from any terminal on the same machine.
 The queue will be continuously processed, even if you no longer have any active ssh session.
 
-It provides functionality for:
+**Features:**
 
-- Scheduling commands that will be executed in their respective working directories
+- Schedule commands that will be executed in their respective working directories.
 - Easy output inspection.
-- Interaction with running processes
-- Pause/Resume resume tasks, when you need some processing power right NOW!
-- Manipulation of the scheduled task order
-- Running multiple tasks at once (You can decide how many concurrent tasks you want to run)
+- Interaction with running processes.
+- Pause/resume tasks, when you need some processing power right NOW!
+- Manipulation of the scheduled task order.
+- Running multiple tasks at once (You can decide how many concurrent tasks you want to run).
 - Grouping tasks. Each group acts as their own queue and can have several tasks running in parallel.
 - A callback hook to, for instance, set up desktop notifications.
 - Works on Linux, MacOS and partially on Windows.
 
-**Disclaimer:** Windows isn't fully supported yet. This means:
+**Disclaimer:** Windows isn't fully supported yet:
 
 - Pausing/resuming commands doesn't work for now.
 - Pueue only supports `powershell` for executing commands, keep this in mind when writing commands.
 
 ## Why should I use it
 
-Imagine having to unpack or move large amounts of data to various directories.
-Usually something like this ends with about 10 open terminals/tmux sessions and an over-challenged hard drive.
+Consider this scenario: You have to unpack large amounts of data into various directories.
+Usually something like this ends with 10+ open terminals/tmux sessions and an over-challenged hard drive.
 
-A similar scenario would occur, if you want to, for instance, re-encode 10 movies and each re-encode takes 12 hours.
-Creating a chained command with 10 `&&` isn't ergonomic at all and running 10 re-encodes in parallel will break your CPU.  
+Another scenario might be, that you want to re-encode 10 movies and each re-encode takes 10+ hours.
+Creating a chained command with `&&`s isn't ergonomic at all and running that many re-encodes in parallel will break your CPU.  
 
 Pueue is specifically designed for these situations.
 
 You can schedule your task and continue on the same shell without waiting.
-You can specify how many tasks should run in parallel and even group tasks to maximize system resource utilization.
-You could log off your server and come back later to check on your tasks' progress.
+You can specify how many tasks should run in parallel and group tasks to maximize system resource utilization.
 
-Heck, you can even set up desktop notifications to get notified or execute parameterized commands as soon as a tasks finishes.
+Since everything is run by a daemon, you can simply log off your server and check on your tasks' progress whenever you want.
+
+Heck, you can even set up desktop notifications to get notified or execute parameterized commands every time a task finishes.
 
 **A few possible applications:**
 
-- Copying huge amounts of stuff
+- Copying large amounts of data
+- Machine learning
 - Compression tasks
 - Movie encoding
 - `rsync` tasks
