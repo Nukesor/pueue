@@ -29,7 +29,9 @@ The queue will be continuously processed, even if you no longer have any active 
 - Running multiple tasks at once (You can decide how many concurrent tasks you want to run).
 - Grouping tasks. Each group acts as their own queue and can have several tasks running in parallel.
 - A callback hook to, for instance, set up desktop notifications.
-- Works on Linux, MacOS and partially on Windows.
+- A lot more. Check the -h options for each subcommand for detailed options.
+
+Works on Linux, MacOS and partially on Windows.
 
 **Disclaimer:** Windows isn't fully supported yet:
 
