@@ -14,7 +14,7 @@ pub enum SubCommand {
         command: Vec<String>,
 
         /// Start the task immediately.
-        #[structopt(name = "immediate", short, long, conflicts_with = "stash")]
+        #[structopt(name = "immediate", short, long, conflicts_with = "stashed")]
         start_immediately: bool,
 
         /// Create the task in stashed state.
@@ -22,7 +22,7 @@ pub enum SubCommand {
         #[structopt(name = "stashed", short, long, conflicts_with = "immediate")]
         stashed: bool,
 
-        /// Delays enqueueing the task until <delay> elapses. See enqueue for accepted formats.
+        /// Delays enqueueing the task until <delay> elapses. See "enqueue" for accepted formats.
         #[structopt(name = "delay", short, long, conflicts_with = "immediate", parse(try_from_str=parse_delay_until))]
         delay_until: Option<DateTime<Local>>,
 
@@ -52,7 +52,7 @@ pub enum SubCommand {
         task_id_2: usize,
     },
     /// Stashed tasks won't be automatically started.
-    /// Either `enqueue` them, to be normally handled or explicitly `start` them.
+    /// Either enqueue them, to be normally handled or explicitly start them.
     Stash {
         /// The id(s) of the tasks you want to stash.
         #[structopt(required = true)]
@@ -96,7 +96,7 @@ pub enum SubCommand {
     #[structopt(verbatim_doc_comment)]
     Start {
         /// Enforce starting these tasks. Paused tasks will be started again.
-        /// This doesn't affect anything other than these tasks.
+        /// This does not affect anything other than these tasks.
         task_ids: Vec<usize>,
 
         /// Start a specific group and all paused tasks in it.
@@ -142,11 +142,11 @@ pub enum SubCommand {
     /// Pause either running tasks or specific groups of tasks.
     /// By default, pauses the default queue and all it's tasks.
     /// A paused queue (group) won't start any new tasks.
-    /// Everything can be resumed with `start`.
+    /// Everything can be resumed with 'start'.
     #[structopt(verbatim_doc_comment)]
     Pause {
         /// Pause these specific tasks.
-        /// Doesn't affect the default queue, groups or any other tasks.
+        /// Does not affect the default queue, groups or any other tasks.
         task_ids: Vec<usize>,
 
         /// Pause a specific group.
@@ -157,8 +157,8 @@ pub enum SubCommand {
         #[structopt(short, long, group("pause"))]
         all: bool,
 
-        /// Don't pause already running tasks and let them finish by themselves,
-        ///  when pausing with `default`, `all` or `group`.
+        /// Don not pause already running tasks and let them finish by themselves,
+        /// when pausing with `default`, `all` or `group`.
         #[structopt(short, long, group("pause"))]
         wait: bool,
 
@@ -230,7 +230,7 @@ pub enum SubCommand {
     /// Display the current status of all tasks.
     Status {
         /// Print the current state as json to stdout.
-        /// This doesn't include stdout/stderr of tasks.
+        /// This does not include stdout/stderr of tasks.
         /// Use `log -j` if you want everything.
         #[structopt(short, long)]
         json: bool,
