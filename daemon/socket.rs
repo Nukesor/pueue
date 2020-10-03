@@ -3,7 +3,7 @@ use ::std::sync::mpsc::Sender;
 use ::anyhow::{bail, Result};
 use ::async_std::net::{TcpListener, TcpStream};
 use ::async_std::task;
-use ::log::{info, warn};
+use ::log::{debug, info, warn};
 
 use ::pueue::message::*;
 use ::pueue::protocol::*;
@@ -75,7 +75,7 @@ async fn handle_incoming(
     loop {
         // Receive the actual instruction from the client
         let message = receive_message(&mut socket).await?;
-        info!("Received instruction: {:?}", message);
+        debug!("Received instruction: {:?}", message);
 
         let response = if let Message::StreamRequest(message) = message {
             // The client requested the output of a task.

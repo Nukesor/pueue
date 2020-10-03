@@ -469,7 +469,7 @@ impl TaskHandler {
         match self.children.get(&id) {
             Some(child) => {
                 debug!("Executing action {:?} to {}", action, id);
-                send_signal(child.id(), &action, children)?;
+                send_signal_to_child(child, &action, children)?;
 
                 Ok(true)
             }
@@ -684,7 +684,7 @@ impl TaskHandler {
             // we get the chance to kill the parent.
             let mut children = None;
             if kill_children {
-                children = get_children(child.id() as i32);
+                children = get_child_processes(child.id() as i32);
             }
 
             match child.kill() {
