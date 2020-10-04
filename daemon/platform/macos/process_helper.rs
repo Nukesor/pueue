@@ -2,12 +2,12 @@ use std::convert::TryInto;
 use std::process::{Child, Command};
 
 use anyhow::Result;
-use log::{debug, info, warn};
+use log::{debug, warn};
 use nix::{
     sys::signal::{self, Signal},
     unistd::Pid,
 };
-use procfs::process::{all_processes, Process};
+use psutil::process::{processes, Process};
 
 use crate::task_handler::ProcessAction;
 
@@ -19,18 +19,14 @@ pub fn compile_shell_command(command_string: &str) -> Command {
 }
 
 /// Send a signal to one of Pueue's child process handles.
-/// We need a special since there exists some inconsistent behavior.
+/// We need a special since we assume that there's also a `sh -c` around the actuall process.
 pub fn send_signal_to_child(
     child: &Child,
     action: &ProcessAction,
     send_to_children: bool,
 ) -> Result<bool> {
     let signal = get_signal_from_action(action);
-    let pid: i32 = child.id().try_into().unwrap();
-
-    // There might be multiple children, for instance, when users use the `&` operator.
-    // If the `send_to_children` flag is given, the
-
+    let pid = child.id();
     // Send the signal to the shell, don't propagate to it's children yet.
     send_signal_to_process(pid, action, false)?;
 
@@ -41,18 +37,14 @@ pub fn send_signal_to_child(
         send_signal_to_process(shell_child.pid(), action, send_to_children)?;
     }
 
-    signal::kill(Pid::from_raw(pid), signal)?;
+    signal::kill(Pid::from_raw(pid.try_into().unwrap()), signal)?;
     Ok(true)
 }
 
 /// This is a helper function to safely kill a child process.
 /// It's purpose is to properly kill all processes and prevent any dangling processes.
-///
-/// Sadly, this needs some extra handling. Check the docstring of `send_signal_to_child` for
-/// additional information on why this has to be done.
 pub fn kill_child(task_id: usize, child: &mut Child, kill_children: bool) -> bool {
-    let pid: i32 = child.id().try_into().unwrap();
-
+    let pid = child.id();
     // We have to kill the root process first, to prevent it from spawning new processes.
     // However, this prevents us from getting it's child processes afterwards.
     // That's why we have to get the list of child processes already now.
@@ -61,7 +53,7 @@ pub fn kill_child(task_id: usize, child: &mut Child, kill_children: bool) -> boo
     // Kill the parent first
     match child.kill() {
         Err(_) => {
-            info!("Task {} has already finished by itself", task_id);
+            debug!("Task {} has already finished by itself", task_id);
             false
         }
         _ => {
@@ -86,25 +78,20 @@ pub fn kill_child(task_id: usize, child: &mut Child, kill_children: bool) -> boo
 
 /// Send a signal to a unix process.
 fn send_signal_to_process(
-    pid: i32,
+    pid: u32,
     action: &ProcessAction,
-    send_to_children: bool,
+    children: bool,
 ) -> Result<bool, nix::Error> {
     let signal = get_signal_from_action(action);
     debug!("Sending signal {} to {}", signal, pid);
 
     // Send the signal to all children, if that's what the user wants.
-    if send_to_children {
-        send_signal_to_children(pid, action);
+    if children {
+        send_signal_to_processes(get_child_processes(pid), action);
     }
 
-    signal::kill(Pid::from_raw(pid), signal)?;
+    signal::kill(Pid::from_raw(pid.try_into().unwrap()), signal)?;
     Ok(true)
-}
-
-/// A small helper that sends a signal to all children of a specific process by id.
-fn send_signal_to_children(pid: i32, action: &ProcessAction) {
-    send_signal_to_processes(get_child_processes(pid), action);
 }
 
 /// Send a signal to a list of processes
@@ -112,23 +99,25 @@ fn send_signal_to_processes(processes: Vec<Process>, action: &ProcessAction) {
     let signal = get_signal_from_action(action);
     for process in processes {
         // Process is no longer alive, skip this one.
-        if !process.is_alive() {
+        if !process.is_running() {
             continue;
         }
 
-        let pid = Pid::from_raw(process.pid);
+        let pid = Pid::from_raw(process.pid().try_into().unwrap());
         if let Err(error) = signal::kill(pid, signal) {
             warn!(
                 "Failed send signal {:?} to Pid {}: {:?}",
-                signal, process.pid, error
+                signal,
+                process.pid(),
+                error
             );
         }
     }
 }
 
 /// Get all children of a specific process
-fn get_child_processes(pid: i32) -> Vec<Process> {
-    let all_processes = match all_processes() {
+fn get_child_processes(pid: u32) -> Vec<Process> {
+    let all_processes = match processes() {
         Err(error) => {
             warn!("Failed to get full process list: {}", error);
             return Vec::new();
@@ -138,7 +127,16 @@ fn get_child_processes(pid: i32) -> Vec<Process> {
 
     all_processes
         .into_iter()
-        .filter(|process| process.stat.ppid == pid)
+        .filter(|result| result.is_ok())
+        .map(|result| result.unwrap())
+        .filter(|process| {
+            if let Ok(ppid) = process.ppid() {
+                if let Some(ppid) = ppid {
+                    return ppid == pid;
+                }
+            }
+            false
+        })
         .collect()
 }
 
@@ -156,15 +154,20 @@ mod tests {
     use std::thread::sleep;
     use std::time::Duration;
 
+    /// THIS DOESN'T WORK YET
+    /// psutil doesn't really have a way to check whether a process is actually gone.
+    ///
     /// Assert that certain process id no longer exists
-    fn process_is_gone(pid: i32) -> bool {
-        match Process::new(pid) {
-            Ok(process) => !process.is_alive(),
-            Err(_) => true,
-        }
+    fn process_is_gone(_pid: u32) -> bool {
+        //match Process::new(pid) {
+        //    Ok(process) => !process.is_running(),
+        //    Err(_) => true,
+        //}
+        true
     }
 
     #[test]
+    /// Simply check, whether spawning of a shell command works
     fn test_spawn_command() {
         let mut child = compile_shell_command("echo 'this is a test'")
             .spawn()
@@ -181,7 +184,7 @@ mod tests {
         let mut child = compile_shell_command("sleep 60 & sleep 60 && echo 'this is a test'")
             .spawn()
             .expect("Failed to spawn echo");
-        let pid: i32 = child.id().try_into().unwrap();
+        let pid = child.id();
         // Sleep a little to give everything a chance to spawn.
         sleep(Duration::from_millis(500));
 
@@ -200,7 +203,7 @@ mod tests {
 
         // Assert that all child processes have been killed.
         for child_process in child_processes {
-            assert!(process_is_gone(child_process.stat.pid));
+            assert!(process_is_gone(child_process.pid()));
         }
     }
 
@@ -211,7 +214,7 @@ mod tests {
         let mut child = compile_shell_command("bash -c 'sleep 60 && sleep 60' && sleep 60")
             .spawn()
             .expect("Failed to spawn echo");
-        let pid: i32 = child.id().try_into().unwrap();
+        let pid = child.id();
         // Sleep a little to give everything a chance to spawn.
         sleep(Duration::from_millis(500));
 
@@ -221,7 +224,7 @@ mod tests {
         assert_eq!(child_processes.len(), 1);
         let mut childrens_children = Vec::new();
         for child_process in &child_processes {
-            childrens_children.extend(get_child_processes(child_process.stat.pid));
+            childrens_children.extend(get_child_processes(child_process.pid()));
         }
         assert_eq!(childrens_children.len(), 1);
 
@@ -234,14 +237,14 @@ mod tests {
         // Assert that the direct child (sh -c) has been killed.
         assert!(process_is_gone(pid));
 
-        // Assert that all child processes have been killed.
+        // Assert that all child processes have been killed..
         for child_process in child_processes {
-            assert!(process_is_gone(child_process.stat.pid));
+            assert!(process_is_gone(child_process.pid()));
         }
 
         // Assert that all children's child processes have been killed.
         for child_process in childrens_children {
-            assert!(process_is_gone(child_process.stat.pid));
+            assert!(process_is_gone(child_process.pid()));
         }
     }
 
@@ -252,7 +255,7 @@ mod tests {
             .arg("60")
             .spawn()
             .expect("Failed to spawn echo");
-        let pid: i32 = child.id().try_into().unwrap();
+        let pid = child.id();
         // Sleep a little to give everything a chance to spawn.
         sleep(Duration::from_millis(500));
 
@@ -278,7 +281,7 @@ mod tests {
             .arg("sleep 60 & sleep 60 && sleep 60")
             .spawn()
             .expect("Failed to spawn echo");
-        let pid: i32 = child.id().try_into().unwrap();
+        let pid = child.id();
         // Sleep a little to give everything a chance to spawn.
         sleep(Duration::from_millis(500));
 
@@ -297,7 +300,7 @@ mod tests {
 
         // Assert that all child processes have been killed.
         for child_process in child_processes {
-            assert!(process_is_gone(child_process.stat.pid));
+            assert!(process_is_gone(child_process.pid()));
         }
     }
 }
