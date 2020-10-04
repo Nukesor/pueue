@@ -1,9 +1,9 @@
-use ::anyhow::Result;
-use ::async_std::net::TcpStream;
+use anyhow::Result;
+use async_std::net::TcpStream;
 
-use ::pueue::message::Message;
-use ::pueue::protocol::*;
-use ::pueue::state::State;
+use pueue::message::Message;
+use pueue::protocol::*;
+use pueue::state::State;
 
 pub mod edit;
 pub mod local_follow;

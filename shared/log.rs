@@ -1,10 +1,11 @@
-use ::anyhow::{bail, Result};
-use ::log::error;
-use ::snap::write::FrameEncoder;
-use ::std::fs::{read_dir, remove_file, File};
-use ::std::io;
-use ::std::io::prelude::*;
-use ::std::path::{Path, PathBuf};
+use std::fs::{read_dir, remove_file, File};
+use std::io;
+use std::io::prelude::*;
+use std::path::{Path, PathBuf};
+
+use anyhow::{bail, Result};
+use log::error;
+use snap::write::FrameEncoder;
 
 /// Return the paths to temporary stdout and stderr files for a task.
 pub fn get_log_paths(task_id: usize, path: &str) -> (PathBuf, PathBuf) {

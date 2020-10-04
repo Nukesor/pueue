@@ -1,8 +1,8 @@
-use ::anyhow::Result;
-use ::simplelog::{Config, LevelFilter, SimpleLogger};
-use ::structopt::StructOpt;
+use anyhow::Result;
+use simplelog::{Config, LevelFilter, SimpleLogger};
+use structopt::StructOpt;
 
-use ::pueue::settings::Settings;
+use pueue::settings::Settings;
 
 pub mod cli;
 pub mod client;

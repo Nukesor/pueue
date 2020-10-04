@@ -1,8 +1,8 @@
-use ::std::process::{Child, Command};
+use std::process::{Child, Command};
 
-use ::anyhow::{bail, Result};
-use ::log::{debug, info, warn};
-use ::nix::{
+use anyhow::{bail, Result};
+use log::{debug, info, warn};
+use nix::{
     sys::signal::{self, Signal},
     unistd::Pid,
 };

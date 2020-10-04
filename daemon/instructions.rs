@@ -1,10 +1,10 @@
-use ::std::collections::BTreeMap;
-use ::std::sync::mpsc::Sender;
+use std::collections::BTreeMap;
+use std::sync::mpsc::Sender;
 
-use ::pueue::log::{clean_log_handles, read_and_compress_log_files};
-use ::pueue::message::*;
-use ::pueue::state::SharedState;
-use ::pueue::task::{Task, TaskStatus};
+use pueue::log::{clean_log_handles, read_and_compress_log_files};
+use pueue::message::*;
+use pueue::state::SharedState;
+use pueue::task::{Task, TaskStatus};
 
 use crate::{aliasing::insert_alias, response_helper::*};
 

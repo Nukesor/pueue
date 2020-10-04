@@ -1,5 +1,5 @@
-use ::anyhow::{bail, Result};
-use ::async_std::net::TcpStream;
+use anyhow::{bail, Result};
+use async_std::net::TcpStream;
 
 use crate::commands::get_state;
 use crate::output::follow_task_logs;

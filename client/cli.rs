@@ -1,10 +1,10 @@
 use std::path::PathBuf;
 
-use ::chrono::prelude::*;
-use ::chrono::Duration;
-use ::chrono_english::*;
-use ::structopt::clap::Shell;
-use ::structopt::StructOpt;
+use chrono::prelude::*;
+use chrono::Duration;
+use chrono_english::*;
+use structopt::clap::Shell;
+use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
 pub enum SubCommand {

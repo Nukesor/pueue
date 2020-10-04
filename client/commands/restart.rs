@@ -1,9 +1,9 @@
-use ::anyhow::{bail, Result};
-use ::async_std::net::TcpStream;
+use anyhow::{bail, Result};
+use async_std::net::TcpStream;
 
-use ::pueue::message::*;
-use ::pueue::protocol::*;
-use ::pueue::task::{Task, TaskStatus};
+use pueue::message::*;
+use pueue::protocol::*;
+use pueue::task::{Task, TaskStatus};
 
 use crate::commands::edit::edit_line;
 use crate::commands::get_state;

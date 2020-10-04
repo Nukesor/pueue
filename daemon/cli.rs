@@ -1,4 +1,4 @@
-use ::structopt::StructOpt;
+use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
 #[structopt(

@@ -1,15 +1,15 @@
-use ::std::fs::File;
-use ::std::io::Read;
-use ::std::time::Duration;
+use std::fs::File;
+use std::io::Read;
+use std::time::Duration;
 
-use ::anyhow::Result;
-use ::async_std::net::TcpStream;
-use ::async_std::task::sleep;
+use anyhow::Result;
+use async_std::net::TcpStream;
+use async_std::task::sleep;
 
-use ::pueue::log::*;
-use ::pueue::message::*;
-use ::pueue::protocol::send_message;
-use ::pueue::state::SharedState;
+use pueue::log::*;
+use pueue::message::*;
+use pueue::protocol::send_message;
+use pueue::state::SharedState;
 
 /// Handle the continuous stream of a message.
 pub async fn handle_follow(

@@ -1,11 +1,12 @@
-use ::anyhow::{anyhow, Result};
-use ::config::Config;
-use ::log::info;
-use ::rand::Rng;
-use ::serde_derive::{Deserialize, Serialize};
-use ::std::collections::HashMap;
-use ::std::fs::{create_dir_all, File};
-use ::std::io::prelude::*;
+use std::collections::HashMap;
+use std::fs::{create_dir_all, File};
+use std::io::prelude::*;
+
+use anyhow::{anyhow, Result};
+use config::Config;
+use log::info;
+use rand::Rng;
+use serde_derive::{Deserialize, Serialize};
 
 use crate::platform::directories::*;
 

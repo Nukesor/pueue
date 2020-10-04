@@ -1,13 +1,13 @@
-use ::std::env;
-use ::std::io::{Read, Seek, SeekFrom, Write};
-use ::std::process::Command;
+use std::env;
+use std::io::{Read, Seek, SeekFrom, Write};
+use std::process::Command;
 
-use ::anyhow::{Context, Result};
-use ::async_std::net::TcpStream;
-use ::tempfile::NamedTempFile;
+use anyhow::{Context, Result};
+use async_std::net::TcpStream;
+use tempfile::NamedTempFile;
 
-use ::pueue::message::*;
-use ::pueue::protocol::*;
+use pueue::message::*;
+use pueue::protocol::*;
 
 /// This function handles the logic for editing tasks.
 /// At first, we request the daemon to send us the task to edit.

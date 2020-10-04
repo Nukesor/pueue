@@ -1,9 +1,9 @@
-use ::std::collections::BTreeMap;
+use std::collections::BTreeMap;
 
-use ::crossterm::style::{style, Attribute, Color};
+use crossterm::style::{style, Attribute, Color};
 
-use ::pueue::state::State;
-use ::pueue::task::Task;
+use pueue::state::State;
+use pueue::task::Task;
 
 /// This is a simple small helper function with the purpose of easily styling text,
 /// while also prevent styling if we're printing to a non-tty output.

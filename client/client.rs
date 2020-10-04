@@ -1,14 +1,14 @@
-use ::std::collections::HashMap;
-use ::std::env::{current_dir, vars};
-use ::std::io::{self, Write};
+use std::collections::HashMap;
+use std::env::{current_dir, vars};
+use std::io::{self, Write};
 
-use ::anyhow::{bail, Context, Result};
-use ::async_std::net::TcpStream;
-use ::log::error;
+use anyhow::{bail, Context, Result};
+use async_std::net::TcpStream;
+use log::error;
 
-use ::pueue::message::*;
-use ::pueue::protocol::*;
-use ::pueue::settings::Settings;
+use pueue::message::*;
+use pueue::protocol::*;
+use pueue::settings::Settings;
 
 use crate::cli::{Opt, SubCommand};
 use crate::commands::edit::*;

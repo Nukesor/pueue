@@ -1,7 +1,8 @@
-use ::chrono::prelude::*;
-use ::serde_derive::{Deserialize, Serialize};
-use ::std::collections::HashMap;
-use ::strum_macros::Display;
+use std::collections::HashMap;
+
+use chrono::prelude::*;
+use serde_derive::{Deserialize, Serialize};
+use strum_macros::Display;
 
 /// This enum represents the status of the internal task handling of Pueue.
 /// They basically represent the internal task life-cycle.

@@ -1,6 +1,7 @@
-use ::chrono::prelude::*;
-use ::serde_derive::{Deserialize, Serialize};
-use ::std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, HashMap};
+
+use chrono::prelude::*;
+use serde_derive::{Deserialize, Serialize};
 
 use crate::state::State;
 use crate::task::Task;

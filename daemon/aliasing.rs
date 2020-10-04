@@ -1,11 +1,11 @@
-use ::std::collections::HashMap;
-use ::std::fs::File;
-use ::std::io::prelude::*;
+use std::collections::HashMap;
+use std::fs::File;
+use std::io::prelude::*;
 
-use ::anyhow::Result;
-use ::log::{info, warn};
+use anyhow::Result;
+use log::{info, warn};
 
-use ::pueue::platform::directories::get_config_directories;
+use pueue::platform::directories::get_config_directories;
 
 /// Return the contents of the alias file, if it exists and can be parsed.
 /// The file should be located in `pueue_directory` and named `pueue_aliases`.

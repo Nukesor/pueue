@@ -1,5 +1,5 @@
-use ::pueue::state::SharedState;
-use ::pueue::task::TaskStatus;
+use pueue::state::SharedState;
+use pueue::task::TaskStatus;
 
 pub fn task_response_helper(
     message: &str,

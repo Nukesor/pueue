@@ -1,13 +1,13 @@
-use ::std::sync::mpsc::Sender;
+use std::sync::mpsc::Sender;
 
-use ::anyhow::{bail, Result};
-use ::async_std::net::{TcpListener, TcpStream};
-use ::async_std::task;
-use ::log::{debug, info, warn};
+use anyhow::{bail, Result};
+use async_std::net::{TcpListener, TcpStream};
+use async_std::task;
+use log::{debug, info, warn};
 
-use ::pueue::message::*;
-use ::pueue::protocol::*;
-use ::pueue::state::SharedState;
+use pueue::message::*;
+use pueue::protocol::*;
+use pueue::state::SharedState;
 
 use crate::cli::Opt;
 use crate::instructions::handle_message;
