@@ -1,7 +1,7 @@
 use ::std::collections::{BTreeMap, HashMap};
 use ::std::io::Write;
+use ::std::process::Child;
 use ::std::process::Stdio;
-use ::std::process::{Child, Command};
 use ::std::sync::mpsc::Receiver;
 use ::std::thread::sleep;
 use ::std::time::Duration;
@@ -71,11 +71,14 @@ impl TaskHandler {
 /// This is needed to prevent detached processes.
 impl Drop for TaskHandler {
     fn drop(&mut self) {
-        let ids: Vec<usize> = self.children.keys().cloned().collect();
-        for id in ids {
-            let mut child = self.children.remove(&id).expect("Failed killing children");
-            info!("Killing child {}", id);
-            let _ = child.kill();
+        let task_ids: Vec<usize> = self.children.keys().cloned().collect();
+        for task_id in task_ids {
+            let mut child = self
+                .children
+                .remove(&task_id)
+                .expect("Failed killing children");
+            info!("Killing child {}", task_id);
+            kill_child(task_id, &mut child, true);
         }
     }
 }
@@ -283,18 +286,9 @@ impl TaskHandler {
         };
 
         // Spawn the actual subprocess
-        let mut spawn_command = Command::new(if cfg!(windows) { "powershell" } else { "sh" });
-        if cfg!(windows) {
-            // Chain two `powershell` commands, one that sets the output encoding to utf8 and then the user provided one.
-            spawn_command.arg("-c").arg(format!(
-                "[Console]::OutputEncoding = [Text.UTF8Encoding]::UTF8; {}",
-                task.command
-            ));
-        } else {
-            spawn_command.arg("-c").arg(&task.command);
-        }
+        let mut command = compile_shell_command(&task.command);
 
-        let spawn_result = spawn_command
+        let spawned_command = command
             .current_dir(&task.path)
             .stdin(Stdio::piped())
             .envs(&task.envs)
@@ -303,7 +297,7 @@ impl TaskHandler {
             .spawn();
 
         // Check if the task managed to spawn
-        let child = match spawn_result {
+        let child = match spawned_command {
             Ok(child) => child,
             Err(err) => {
                 let error = format!("Failed to spawn child {} with err: {:?}", task_id, err);
@@ -469,7 +463,7 @@ impl TaskHandler {
         match self.children.get(&id) {
             Some(child) => {
                 debug!("Executing action {:?} to {}", action, id);
-                send_signal(child.id(), &action, children)?;
+                send_signal_to_child(child, &action, children)?;
 
                 Ok(true)
             }
@@ -678,31 +672,15 @@ impl TaskHandler {
     /// Kill a specific task and handle it accordingly.
     /// Triggered on `reset` and `kill`.
     fn kill_task(&mut self, task_id: usize, kill_children: bool) {
-        if let Some(child) = self.children.get_mut(&task_id) {
-            // Get the list of processes first.
-            // Otherwise the process gets killed and the parent might spawn a new one, before
-            // we get the chance to kill the parent.
-            let mut children = None;
-            if kill_children {
-                children = get_children(child.id() as i32);
+        if let Some(mut child) = self.children.get_mut(&task_id) {
+            if kill_child(task_id, &mut child, kill_children) {
+                // Already mark the task as killed over here.
+                // It's hard to distinguish whether it's killed later on.
+                let mut state = self.state.lock().unwrap();
+                let mut task = state.tasks.get_mut(&task_id).unwrap();
+                task.status = TaskStatus::Done;
+                task.result = Some(TaskResult::Killed);
             }
-
-            match child.kill() {
-                Err(_) => debug!("Task {} has already finished by itself", task_id),
-                _ => {
-                    // Now kill all remaining children, after the parent has been killed.
-                    if let Some(children) = children {
-                        send_signal_to_processes(children, &ProcessAction::Kill);
-                    }
-
-                    // Already mark the task as killed over here.
-                    // It's hard to distinguish whether it's killed later on.
-                    let mut state = self.state.lock().unwrap();
-                    let mut task = state.tasks.get_mut(&task_id).unwrap();
-                    task.status = TaskStatus::Done;
-                    task.result = Some(TaskResult::Killed);
-                }
-            };
         } else {
             warn!("Tried to kill non-existing child: {}", task_id);
         }
@@ -772,7 +750,7 @@ impl TaskHandler {
             parameters.insert("group", "default".into());
         }
         let callback_command = match handlebars.render_template(&callback, &parameters) {
-            Ok(command) => command,
+            Ok(callback_command) => callback_command,
             Err(err) => {
                 error!(
                     "Failed to create callback command from template with error: {}",
@@ -782,19 +760,10 @@ impl TaskHandler {
             }
         };
 
-        let mut spawn_command = Command::new(if cfg!(windows) { "powershell" } else { "sh" });
-        if cfg!(windows) {
-            // Chain two `powershell` commands, one that sets the output encoding to utf8 and then the user provided one.
-            spawn_command.arg("-c").arg(format!(
-                "[Console]::OutputEncoding = [Text.UTF8Encoding]::UTF8; {}",
-                callback_command
-            ));
-        } else {
-            spawn_command.arg("-c").arg(&callback_command);
-        }
+        let mut command = compile_shell_command(&callback_command);
 
         // Spawn the callback subprocess and log if it fails.
-        let spawn_result = spawn_command.spawn();
+        let spawn_result = command.spawn();
         let child = match spawn_result {
             Err(error) => {
                 error!("Failed to spawn callback with error: {}", error);

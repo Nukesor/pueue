@@ -2,9 +2,9 @@ name: Test build
 
 on:
   push:
-    banches:
-      -master
+    banches: [master]
   pull_request:
+    branches: [master]
 
 jobs:
   publish:
@@ -13,6 +13,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
+        toolchain: [stable, nightly]
 
     steps:
       - name: Checkout code
@@ -22,7 +23,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: stable
+          toolchain: ${{ matrix.toolchain }}
           override: true
           components: rustfmt, clippy
 
@@ -44,6 +45,7 @@ jobs:
 
       - name: cargo clippy
         uses: actions-rs/cargo@v1
+        if: matrix.os != 'windows-latest'
         with:
           command: clippy
           args: -- -D warnings

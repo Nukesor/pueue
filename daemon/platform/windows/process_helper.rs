@@ -1,18 +1,36 @@
 use anyhow::{bail, Result};
+use std::process::{Child, Command};
 
 use crate::task_handler::ProcessAction;
+use log::info;
+
+pub fn compile_shell_command(command_string: &str) -> Command {
+    // Chain two `powershell` commands, one that sets the output encoding to utf8 and then the user provided one.
+    let mut command = Command::new("powershell");
+    command.arg("-c").arg(format!(
+        "[Console]::OutputEncoding = [Text.UTF8Encoding]::UTF8; {}",
+        command_string
+    ));
+
+    command
+}
 
 /// Send a signal to a windows process.
-pub fn send_signal(_pid: u32, _action: &ProcessAction, _children: bool) -> Result<bool> {
+pub fn send_signal_to_child(
+    _child: &Child,
+    _action: &ProcessAction,
+    _children: bool,
+) -> Result<bool> {
     bail!("not supported on windows.")
 }
 
-/// Get all children of a specific process.
-/// The Vec<i32> is just a placeholder.
-pub fn get_children(_pid: i32) -> Option<Vec<i32>> {
-    None
+/// Kill a child process
+pub fn kill_child(task_id: usize, child: &mut Child, _kill_children: bool) -> bool {
+    match child.kill() {
+        Err(_) => {
+            info!("Task {} has already finished by itself", task_id);
+            false
+        }
+        Ok(_) => true,
+    }
 }
-
-/// Send a signal to multiple processes.
-/// The Vec<i32> is just a placeholder.
-pub fn send_signal_to_processes(_processes: Vec<i32>, _action: &ProcessAction) {}
