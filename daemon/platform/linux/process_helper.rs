@@ -11,7 +11,7 @@ use procfs::process::{all_processes, Process};
 use crate::task_handler::ProcessAction;
 
 pub fn compile_shell_command(command_string: &str) -> Command {
-    let mut command = Command::new("powershell");
+    let mut command = Command::new("sh");
     command.arg("-c").arg(command_string);
 
     command
