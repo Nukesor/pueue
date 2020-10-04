@@ -33,10 +33,19 @@ The queue will be continuously processed, even if you no longer have any active 
 
 Works on Linux, MacOS and partially on Windows.
 
-**Disclaimer:** Windows isn't fully supported yet:
+**Disclaimer:** Windows and MacOS don't support the full feature set:
+
+**Windows**
 
 - Pausing/resuming commands doesn't work for now.
 - Pueue only supports `powershell` for executing commands, keep this in mind when writing commands.
+
+**MacOs**
+
+- Sending signals to processes' children doesn't work.
+- We cannot ensure that there aren't dangling processes on kill.
+- Both problems exist due to the completely messy `psutil` library.
+
 
 ## Why should I use it
 

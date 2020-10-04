@@ -45,7 +45,7 @@ jobs:
 
       - name: cargo clippy
         uses: actions-rs/cargo@v1
-        if: matrix.os != 'windows-latest'
+        if: matrix.os == 'ubuntu-latest'
         with:
           command: clippy
           args: -- -D warnings
