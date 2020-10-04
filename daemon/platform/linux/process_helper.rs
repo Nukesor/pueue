@@ -1,3 +1,4 @@
+use std::convert::TryInto;
 use std::process::{Child, Command};
 
 use anyhow::{bail, Result};
@@ -33,7 +34,7 @@ pub fn send_signal_to_child(
     send_to_children: bool,
 ) -> Result<bool> {
     let signal = get_signal_from_action(action);
-    let pid = child.id() as i32;
+    let pid: i32 = child.id().try_into().unwrap();
     // Check whether this process actually spawned a shell.
     let is_shell = if let Ok(is_shell) = did_process_spawn_shell(pid) {
         is_shell
@@ -71,7 +72,7 @@ pub fn send_signal_to_child(
 /// Sadly, this needs some extra handling. Check the docstring of `send_signal_to_child` for
 /// additional information on why this has to be done.
 pub fn kill_child(task_id: usize, child: &mut Child, kill_children: bool) -> bool {
-    let pid = child.id() as i32;
+    let pid: i32 = child.id().try_into().unwrap();
 
     // Check whether this process actually spawned a shell.
     let is_shell = if let Ok(is_shell) = did_process_spawn_shell(pid) {
@@ -224,5 +225,171 @@ fn get_signal_from_action(action: &ProcessAction) -> Signal {
         ProcessAction::Kill => Signal::SIGKILL,
         ProcessAction::Pause => Signal::SIGSTOP,
         ProcessAction::Resume => Signal::SIGCONT,
+    }
+}
+
+#[cfg(test)]
+#[cfg(any(target_os = "linux", target_os = "freebsd", target_os = "macos"))]
+mod tests {
+    use super::*;
+    use std::thread::sleep;
+    use std::time::Duration;
+
+    /// Assert that certain process id no longer exists
+    fn process_is_gone(pid: i32) -> bool {
+        match Process::new(pid) {
+            Ok(process) => !process.is_alive(),
+            Err(_) => true,
+        }
+    }
+
+    #[test]
+    fn test_spawn_command() {
+        let mut child = compile_shell_command("echo 'this is a test'")
+            .spawn()
+            .expect("Failed to spawn echo");
+
+        let ecode = child.wait().expect("failed to wait on echo");
+
+        assert!(ecode.success());
+    }
+
+    #[test]
+    /// Ensure a `sh -c` command will be properly killed without detached processes.
+    fn test_shell_command_is_killed() {
+        let mut child = compile_shell_command("sleep 60 & sleep 60 && echo 'this is a test'")
+            .spawn()
+            .expect("Failed to spawn echo");
+        let pid: i32 = child.id().try_into().unwrap();
+
+        // Make sure the process indeed spawned a shell.
+        assert!(did_process_spawn_shell(pid).unwrap());
+
+        // Sleep a little to give the shell time to spawn the sleep command
+        sleep(Duration::from_millis(500));
+
+        // Get all child processes, so we can make sure they no longer exist afterwards
+        let child_processes = get_child_processes(pid);
+        assert_eq!(child_processes.len(), 2);
+
+        // Kill the process and make sure it'll be killed
+        assert!(kill_child(0, &mut child, false));
+
+        // Sleep a little to give all processes time to shutdown.
+        sleep(Duration::from_millis(500));
+
+        // Assert that the direct child (sh -c) has been killed.
+        assert!(process_is_gone(pid));
+
+        // Assert that all child processes have been killed
+        for child_process in child_processes {
+            assert!(process_is_gone(child_process.stat.pid));
+        }
+    }
+
+    #[test]
+    /// Ensure that a `sh -c` process with a child process that has children of it's own
+    /// will properly kill all processes and their children's children without detached processes.
+    fn test_shell_command_children_are_killed() {
+        let mut child = compile_shell_command("bash -c 'sleep 60 && sleep 60' && sleep 60")
+            .spawn()
+            .expect("Failed to spawn echo");
+        let pid: i32 = child.id().try_into().unwrap();
+
+        // Make sure the process indeed spawned a shell.
+        assert!(did_process_spawn_shell(pid).unwrap());
+
+        // Sleep a little to give the shell time to spawn the sleep command
+        sleep(Duration::from_millis(500));
+
+        // Get all child processes and all childrens children,
+        // so we can make sure they no longer exist afterwards
+        let child_processes = get_child_processes(pid);
+        assert_eq!(child_processes.len(), 1);
+        let mut childrens_children = Vec::new();
+        for child_process in &child_processes {
+            childrens_children.extend(get_child_processes(child_process.stat.pid));
+        }
+        assert_eq!(childrens_children.len(), 1);
+
+        // Kill the process and make sure its childen will be killed
+        assert!(kill_child(0, &mut child, true));
+
+        // Sleep a little to give all processes time to shutdown.
+        sleep(Duration::from_millis(500));
+
+        // Assert that the direct child (sh -c) has been killed.
+        assert!(process_is_gone(pid));
+
+        // Assert that all child processes have been killed
+        for child_process in child_processes {
+            assert!(process_is_gone(child_process.stat.pid));
+        }
+
+        // Assert that all children's child processes have been killed
+        for child_process in childrens_children {
+            assert!(process_is_gone(child_process.stat.pid));
+        }
+    }
+
+    #[test]
+    /// Ensure a normal command without `sh -c` will be killed.
+    fn test_normal_command_is_killed() {
+        let mut child = Command::new("sleep")
+            .arg("60")
+            .spawn()
+            .expect("Failed to spawn echo");
+        let pid: i32 = child.id().try_into().unwrap();
+
+        // Make sure the process did not spawn a shell.
+        assert!(!did_process_spawn_shell(pid).unwrap());
+
+        // No childprocesses exist
+        let child_processes = get_child_processes(pid);
+        assert_eq!(child_processes.len(), 0);
+
+        // Kill the process and make sure it'll be killed
+        assert!(kill_child(0, &mut child, false));
+
+        // Sleep a little to give all processes time to shutdown.
+        sleep(Duration::from_millis(500));
+
+        assert!(process_is_gone(pid));
+    }
+
+    #[test]
+    /// Ensure a normal command and all it's children will be
+    /// properly killed without any detached processes.
+    fn test_normal_command_children_are_killed() {
+        let mut child = Command::new("bash")
+            .arg("-c")
+            .arg("sleep 60 & sleep 60 && sleep 60")
+            .spawn()
+            .expect("Failed to spawn echo");
+        let pid: i32 = child.id().try_into().unwrap();
+
+        // Make sure the process indeed spawned a shell.
+        assert!(!did_process_spawn_shell(pid).unwrap());
+
+        // Sleep a little to give the shell time to spawn the sleep command
+        sleep(Duration::from_millis(500));
+
+        // Get all child processes, so we can make sure they no longer exist afterwards
+        let child_processes = get_child_processes(pid);
+        assert_eq!(child_processes.len(), 2);
+
+        // Kill the process and make sure it'll be killed
+        assert!(kill_child(0, &mut child, true));
+
+        // Sleep a little to give all processes time to shutdown.
+        sleep(Duration::from_millis(500));
+
+        // Assert that the direct child (sh -c) has been killed.
+        assert!(process_is_gone(pid));
+
+        // Assert that all child processes have been killed
+        for child_process in child_processes {
+            assert!(process_is_gone(child_process.stat.pid));
+        }
     }
 }
