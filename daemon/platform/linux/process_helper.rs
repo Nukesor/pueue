@@ -260,18 +260,17 @@ mod tests {
             .spawn()
             .expect("Failed to spawn echo");
         let pid: i32 = child.id().try_into().unwrap();
+        // Sleep a little to give everything a chance to spawn.
+        sleep(Duration::from_millis(500));
 
         // Make sure the process indeed spawned a shell.
         assert!(did_process_spawn_shell(pid).unwrap());
 
-        // Sleep a little to give the shell time to spawn the sleep command
-        sleep(Duration::from_millis(500));
-
-        // Get all child processes, so we can make sure they no longer exist afterwards
+        // Get all child processes, so we can make sure they no longer exist afterwards.
         let child_processes = get_child_processes(pid);
         assert_eq!(child_processes.len(), 2);
 
-        // Kill the process and make sure it'll be killed
+        // Kill the process and make sure it'll be killed.
         assert!(kill_child(0, &mut child, false));
 
         // Sleep a little to give all processes time to shutdown.
@@ -280,7 +279,7 @@ mod tests {
         // Assert that the direct child (sh -c) has been killed.
         assert!(process_is_gone(pid));
 
-        // Assert that all child processes have been killed
+        // Assert that all child processes have been killed.
         for child_process in child_processes {
             assert!(process_is_gone(child_process.stat.pid));
         }
@@ -294,15 +293,14 @@ mod tests {
             .spawn()
             .expect("Failed to spawn echo");
         let pid: i32 = child.id().try_into().unwrap();
+        // Sleep a little to give everything a chance to spawn.
+        sleep(Duration::from_millis(500));
 
         // Make sure the process indeed spawned a shell.
         assert!(did_process_spawn_shell(pid).unwrap());
 
-        // Sleep a little to give the shell time to spawn the sleep command
-        sleep(Duration::from_millis(500));
-
         // Get all child processes and all childrens children,
-        // so we can make sure they no longer exist afterwards
+        // so we can make sure they no longer exist afterwards.
         let child_processes = get_child_processes(pid);
         assert_eq!(child_processes.len(), 1);
         let mut childrens_children = Vec::new();
@@ -311,7 +309,7 @@ mod tests {
         }
         assert_eq!(childrens_children.len(), 1);
 
-        // Kill the process and make sure its childen will be killed
+        // Kill the process and make sure its childen will be killed.
         assert!(kill_child(0, &mut child, true));
 
         // Sleep a little to give all processes time to shutdown.
@@ -320,12 +318,12 @@ mod tests {
         // Assert that the direct child (sh -c) has been killed.
         assert!(process_is_gone(pid));
 
-        // Assert that all child processes have been killed
+        // Assert that all child processes have been killed.
         for child_process in child_processes {
             assert!(process_is_gone(child_process.stat.pid));
         }
 
-        // Assert that all children's child processes have been killed
+        // Assert that all children's child processes have been killed.
         for child_process in childrens_children {
             assert!(process_is_gone(child_process.stat.pid));
         }
@@ -339,6 +337,8 @@ mod tests {
             .spawn()
             .expect("Failed to spawn echo");
         let pid: i32 = child.id().try_into().unwrap();
+        // Sleep a little to give everything a chance to spawn.
+        sleep(Duration::from_millis(500));
 
         // Make sure the process did not spawn a shell.
         assert!(!did_process_spawn_shell(pid).unwrap());
@@ -347,7 +347,7 @@ mod tests {
         let child_processes = get_child_processes(pid);
         assert_eq!(child_processes.len(), 0);
 
-        // Kill the process and make sure it'll be killed
+        // Kill the process and make sure it'll be killed.
         assert!(kill_child(0, &mut child, false));
 
         // Sleep a little to give all processes time to shutdown.
@@ -366,18 +366,17 @@ mod tests {
             .spawn()
             .expect("Failed to spawn echo");
         let pid: i32 = child.id().try_into().unwrap();
+        // Sleep a little to give everything a chance to spawn.
+        sleep(Duration::from_millis(500));
 
         // Make sure the process indeed spawned a shell.
         assert!(!did_process_spawn_shell(pid).unwrap());
 
-        // Sleep a little to give the shell time to spawn the sleep command
-        sleep(Duration::from_millis(500));
-
-        // Get all child processes, so we can make sure they no longer exist afterwards
+        // Get all child processes, so we can make sure they no longer exist afterwards.
         let child_processes = get_child_processes(pid);
         assert_eq!(child_processes.len(), 2);
 
-        // Kill the process and make sure it'll be killed
+        // Kill the process and make sure it'll be killed.
         assert!(kill_child(0, &mut child, true));
 
         // Sleep a little to give all processes time to shutdown.
@@ -386,7 +385,7 @@ mod tests {
         // Assert that the direct child (sh -c) has been killed.
         assert!(process_is_gone(pid));
 
-        // Assert that all child processes have been killed
+        // Assert that all child processes have been killed.
         for child_process in child_processes {
             assert!(process_is_gone(child_process.stat.pid));
         }
