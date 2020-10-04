@@ -229,7 +229,6 @@ fn get_signal_from_action(action: &ProcessAction) -> Signal {
 }
 
 #[cfg(test)]
-#[cfg(any(target_os = "linux", target_os = "freebsd", target_os = "macos"))]
 mod tests {
     use super::*;
     use std::thread::sleep;

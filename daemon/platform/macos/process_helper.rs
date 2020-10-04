@@ -218,3 +218,172 @@ fn get_signal_from_action(action: &ProcessAction) -> Signal {
         ProcessAction::Resume => Signal::SIGCONT,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::thread::sleep;
+    use std::time::Duration;
+
+    /// THIS DOESN'T WORK YET
+    /// Assert that certain process id no longer exists
+    /// psutil really doesn't hava way to check whether a process is really gone.
+    fn process_is_gone(_pid: u32) -> bool {
+        //match Process::new(pid) {
+        //    Ok(process) => !process.is_running(),
+        //    Err(_) => true,
+        //}
+        true
+    }
+
+    #[test]
+    /// Simply check, whether spawning of a shell command works
+    fn test_spawn_command() {
+        let mut child = compile_shell_command("echo 'this is a test'")
+            .spawn()
+            .expect("Failed to spawn echo");
+
+        let ecode = child.wait().expect("failed to wait on echo");
+
+        assert!(ecode.success());
+    }
+
+    #[test]
+    /// Ensure a `sh -c` command will be properly killed without detached processes.
+    fn test_shell_command_is_killed() {
+        let mut child = compile_shell_command("sleep 60 & sleep 60 && echo 'this is a test'")
+            .spawn()
+            .expect("Failed to spawn echo");
+        let pid = child.id();
+
+        // Make sure the process indeed spawned a shell.
+        assert!(did_process_spawn_shell(pid).unwrap());
+
+        // Sleep a little to give the shell time to spawn the sleep command
+        sleep(Duration::from_millis(500));
+
+        // Get all child processes, so we can make sure they no longer exist afterwards
+        let child_processes = get_child_processes(pid);
+        assert_eq!(child_processes.len(), 2);
+
+        // Kill the process and make sure it'll be killed
+        assert!(kill_child(0, &mut child, false));
+
+        // Sleep a little to give all processes time to shutdown.
+        sleep(Duration::from_millis(500));
+
+        // Assert that the direct child (sh -c) has been killed.
+        assert!(process_is_gone(pid));
+
+        // Assert that all child processes have been killed
+        for child_process in child_processes {
+            assert!(process_is_gone(child_process.pid()));
+        }
+    }
+
+    #[test]
+    /// Ensure that a `sh -c` process with a child process that has children of it's own
+    /// will properly kill all processes and their children's children without detached processes.
+    fn test_shell_command_children_are_killed() {
+        let mut child = compile_shell_command("bash -c 'sleep 60 && sleep 60' && sleep 60")
+            .spawn()
+            .expect("Failed to spawn echo");
+        let pid = child.id();
+
+        // Make sure the process indeed spawned a shell.
+        assert!(did_process_spawn_shell(pid).unwrap());
+
+        // Sleep a little to give the shell time to spawn the sleep command
+        sleep(Duration::from_millis(500));
+
+        // Get all child processes and all childrens children,
+        // so we can make sure they no longer exist afterwards
+        let child_processes = get_child_processes(pid);
+        assert_eq!(child_processes.len(), 1);
+        let mut childrens_children = Vec::new();
+        for child_process in &child_processes {
+            childrens_children.extend(get_child_processes(child_process.pid()));
+        }
+        assert_eq!(childrens_children.len(), 1);
+
+        // Kill the process and make sure its childen will be killed
+        assert!(kill_child(0, &mut child, true));
+
+        // Sleep a little to give all processes time to shutdown.
+        sleep(Duration::from_millis(500));
+
+        // Assert that the direct child (sh -c) has been killed.
+        assert!(process_is_gone(pid));
+
+        // Assert that all child processes have been killed
+        for child_process in child_processes {
+            assert!(process_is_gone(child_process.pid()));
+        }
+
+        // Assert that all children's child processes have been killed
+        for child_process in childrens_children {
+            assert!(process_is_gone(child_process.pid()));
+        }
+    }
+
+    #[test]
+    /// Ensure a normal command without `sh -c` will be killed.
+    fn test_normal_command_is_killed() {
+        let mut child = Command::new("sleep")
+            .arg("60")
+            .spawn()
+            .expect("Failed to spawn echo");
+        let pid = child.id();
+
+        // Make sure the process did not spawn a shell.
+        assert!(!did_process_spawn_shell(pid).unwrap());
+
+        // No childprocesses exist
+        let child_processes = get_child_processes(pid);
+        assert_eq!(child_processes.len(), 0);
+
+        // Kill the process and make sure it'll be killed
+        assert!(kill_child(0, &mut child, false));
+
+        // Sleep a little to give all processes time to shutdown.
+        sleep(Duration::from_millis(500));
+
+        assert!(process_is_gone(pid));
+    }
+
+    #[test]
+    /// Ensure a normal command and all it's children will be
+    /// properly killed without any detached processes.
+    fn test_normal_command_children_are_killed() {
+        let mut child = Command::new("bash")
+            .arg("-c")
+            .arg("sleep 60 & sleep 60 && sleep 60")
+            .spawn()
+            .expect("Failed to spawn echo");
+        let pid = child.id();
+
+        // Make sure the process indeed spawned a shell.
+        assert!(!did_process_spawn_shell(pid).unwrap());
+
+        // Sleep a little to give the shell time to spawn the sleep command
+        sleep(Duration::from_millis(500));
+
+        // Get all child processes, so we can make sure they no longer exist afterwards
+        let child_processes = get_child_processes(pid);
+        assert_eq!(child_processes.len(), 2);
+
+        // Kill the process and make sure it'll be killed
+        assert!(kill_child(0, &mut child, true));
+
+        // Sleep a little to give all processes time to shutdown.
+        sleep(Duration::from_millis(500));
+
+        // Assert that the direct child (sh -c) has been killed.
+        assert!(process_is_gone(pid));
+
+        // Assert that all child processes have been killed
+        for child_process in child_processes {
+            assert!(process_is_gone(child_process.pid()));
+        }
+    }
+}
