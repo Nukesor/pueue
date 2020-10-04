@@ -84,7 +84,7 @@ pub fn kill_child(task_id: usize, child: &mut Child, kill_children: bool) -> boo
     // Kill the parent first
     match child.kill() {
         Err(_) => {
-            debug!("Task {} has already finished by itself", task_id);
+            info!("Task {} has already finished by itself", task_id);
             false
         }
         _ => {
