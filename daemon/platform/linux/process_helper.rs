@@ -1,4 +1,4 @@
-use ::std::process::Child;
+use ::std::process::{Child, Command};
 
 use ::anyhow::{bail, Result};
 use ::log::{debug, info, warn};
@@ -9,6 +9,13 @@ use ::nix::{
 use procfs::process::{all_processes, Process};
 
 use crate::task_handler::ProcessAction;
+
+pub fn compile_shell_command(command_string: &str) -> Command {
+    let mut command = Command::new("powershell");
+    command.arg("-c").arg(command_string);
+
+    command
+}
 
 /// Send a signal to one of Pueue's child process handles.
 /// We need a special since there exists some inconsistent behavior.

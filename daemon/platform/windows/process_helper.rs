@@ -1,8 +1,19 @@
 use anyhow::{bail, Result};
-use std::process::Child;
+use std::process::{Child, Command};
 
 use crate::task_handler::ProcessAction;
 use log::info;
+
+pub fn compile_shell_command(command_string: &str) -> Command {
+    // Chain two `powershell` commands, one that sets the output encoding to utf8 and then the user provided one.
+    let mut command = Command::new("powershell");
+    command.arg("-c").arg(format!(
+        "[Console]::OutputEncoding = [Text.UTF8Encoding]::UTF8; {}",
+        command_string
+    ));
+
+    command
+}
 
 /// Send a signal to a windows process.
 pub fn send_signal_to_child(

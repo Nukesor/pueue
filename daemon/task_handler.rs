@@ -1,7 +1,7 @@
 use ::std::collections::{BTreeMap, HashMap};
 use ::std::io::Write;
+use ::std::process::Child;
 use ::std::process::Stdio;
-use ::std::process::{Child, Command};
 use ::std::sync::mpsc::Receiver;
 use ::std::thread::sleep;
 use ::std::time::Duration;
@@ -286,18 +286,9 @@ impl TaskHandler {
         };
 
         // Spawn the actual subprocess
-        let mut spawn_command = Command::new(if cfg!(windows) { "powershell" } else { "sh" });
-        if cfg!(windows) {
-            // Chain two `powershell` commands, one that sets the output encoding to utf8 and then the user provided one.
-            spawn_command.arg("-c").arg(format!(
-                "[Console]::OutputEncoding = [Text.UTF8Encoding]::UTF8; {}",
-                task.command
-            ));
-        } else {
-            spawn_command.arg("-c").arg(&task.command);
-        }
+        let mut command = compile_shell_command(&task.command);
 
-        let spawn_result = spawn_command
+        let spawned_command = command
             .current_dir(&task.path)
             .stdin(Stdio::piped())
             .envs(&task.envs)
@@ -306,7 +297,7 @@ impl TaskHandler {
             .spawn();
 
         // Check if the task managed to spawn
-        let child = match spawn_result {
+        let child = match spawned_command {
             Ok(child) => child,
             Err(err) => {
                 let error = format!("Failed to spawn child {} with err: {:?}", task_id, err);
@@ -759,7 +750,7 @@ impl TaskHandler {
             parameters.insert("group", "default".into());
         }
         let callback_command = match handlebars.render_template(&callback, &parameters) {
-            Ok(command) => command,
+            Ok(callback_command) => callback_command,
             Err(err) => {
                 error!(
                     "Failed to create callback command from template with error: {}",
@@ -769,19 +760,10 @@ impl TaskHandler {
             }
         };
 
-        let mut spawn_command = Command::new(if cfg!(windows) { "powershell" } else { "sh" });
-        if cfg!(windows) {
-            // Chain two `powershell` commands, one that sets the output encoding to utf8 and then the user provided one.
-            spawn_command.arg("-c").arg(format!(
-                "[Console]::OutputEncoding = [Text.UTF8Encoding]::UTF8; {}",
-                callback_command
-            ));
-        } else {
-            spawn_command.arg("-c").arg(&callback_command);
-        }
+        let mut command = compile_shell_command(&callback_command);
 
         // Spawn the callback subprocess and log if it fails.
-        let spawn_result = spawn_command.spawn();
+        let spawn_result = command.spawn();
         let child = match spawn_result {
             Err(error) => {
                 error!("Failed to spawn callback with error: {}", error);
