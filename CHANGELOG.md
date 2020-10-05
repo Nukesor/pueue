@@ -1,4 +1,5 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -8,9 +9,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Fixed
 
 - Non-existing tasks were displayed as successfully removed.
+- Remove child process handling logic for MacOs, since the library simply doesn't support this.
 - Remove unneeded `config` features and reduce compile time by ~10%. Contribution by [LovecraftianHorror](https://github.com/LovecraftianHorror)
 - Remove futures-timers, effectively reducing compile time by ~14%.
 - Update to comfy-table v1.1.0, reducing compile time by another ~10%.
+
+### Changed
+
+- Linux process handling now always sends signals to it's direct children, if the root process is a `sh -c` process.
+    Previously, this behavior was somewhat ambiguous and inconsistent.
 
 ### Added
 
