@@ -19,7 +19,7 @@ On top of that, there are a lot of convenience features and abstractions.
 Since Pueue is not bound to any terminal, you can control your tasks from any terminal on the same machine.
 The queue will be continuously processed, even if you no longer have any active ssh session.
 
-**Features:**
+### Features:
 
 - Schedule commands that will be executed in their respective working directories.
 - Easy output inspection.
@@ -33,19 +33,28 @@ The queue will be continuously processed, even if you no longer have any active 
 
 Works on Linux, MacOS and partially on Windows.
 
-**Disclaimer:** Windows and MacOS don't support the full feature set:
+**Disclaimer:** Windows and MacOS don't yet support the full feature set:
 
-**Windows**
+#### Windows
+
+The Windows version needs someone to implement process handling!
+Right now there's pretty much no Windows specific code which means:
 
 - Pausing/resuming commands doesn't work for now.
+- Sending signals to processes' children doesn't work.
+- We cannot ensure that there aren't dangling processes on `kill`.
 - Pueue only supports `powershell` for executing commands, keep this in mind when writing commands.
 
-**MacOs**
+#### MacOs
+
+The `psutil` library, which is used for MacOS is a horrible mess.
+It's missing a lot of missing features and has an extremely bad code style.
+
+Someone has to add a proper replacement and re-implement the MacOs specific process handling code.
+Until then:
 
 - Sending signals to processes' children doesn't work.
-- We cannot ensure that there aren't dangling processes on kill.
-- Both problems exist due to the completely messy `psutil` library.
-
+- We cannot ensure that there aren't dangling processes on `kill`.
 
 ## Why should I use it
 
