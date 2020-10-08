@@ -19,7 +19,7 @@ On top of that, there are a lot of convenience features and abstractions.
 Since Pueue is not bound to any terminal, you can control your tasks from any terminal on the same machine.
 The queue will be continuously processed, even if you no longer have any active ssh session.
 
-### Features:
+### Features
 
 - Schedule commands that will be executed in their respective working directories.
 - Easy output inspection.
@@ -31,7 +31,7 @@ The queue will be continuously processed, even if you no longer have any active 
 - A callback hook to, for instance, set up desktop notifications.
 - A lot more. Check the -h options for each subcommand for detailed options.
 
-Works on Linux, MacOS and partially on Windows.
+Works on Linux and partially on MacOS and Windows.
 
 **Disclaimer:** Windows and MacOS don't yet support the full feature set:
 
