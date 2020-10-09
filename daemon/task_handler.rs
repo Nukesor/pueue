@@ -275,7 +275,7 @@ impl TaskHandler {
         task.enqueue_at = None;
 
         // Try to get the log files to which the output of the process
-        // Will be written. Error if this doesn't work!
+        // will be written to. Error if this doesn't work!
         let (stdout_log, stderr_log) = match create_log_file_handles(task_id, &self.pueue_directory)
         {
             Ok((out, err)) => (out, err),

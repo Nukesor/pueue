@@ -11,6 +11,7 @@ pub enum SubCommand {
     /// Enqueue a task for execution.
     Add {
         /// The command that should be added.
+        #[structopt(required = true)]
         command: Vec<String>,
 
         /// Start the task immediately.
