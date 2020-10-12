@@ -8,7 +8,8 @@ use pueue::message::*;
 use pueue::state::SharedState;
 use pueue::task::{Task, TaskStatus};
 
-use crate::{aliasing::insert_alias, response_helper::*};
+use crate::aliasing::insert_alias;
+use crate::response_helper::*;
 
 static SENDER_ERR: &str = "Failed to send message to task handler thread";
 

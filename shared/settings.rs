@@ -73,7 +73,7 @@ impl Settings {
         // Add in the home config file
         parse_config(&mut config)?;
 
-        // You can deserialize (and thus freeze) the entire configuration
+        // Try to can deserialize the entire configuration
         Ok(config.try_into()?)
     }
 
