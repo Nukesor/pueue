@@ -1,4 +1,6 @@
-use anyhow::{Context, Result};
+use std::path::PathBuf;
+
+use anyhow::{bail, Context, Result};
 use async_std::io::{Read, Write};
 use async_std::net::{TcpListener, TcpStream};
 use async_std::os::unix::net::{UnixListener, UnixStream};
@@ -31,6 +33,9 @@ impl GenericListener for UnixListener {
 impl GenericSocket for TcpStream {}
 impl GenericSocket for UnixStream {}
 
+/// Get a new stream for the client.
+/// This can either be a UnixStream or a TCPStream,
+/// which depends on the parameters.
 pub async fn get_client(
     unix_socket_path: Option<String>,
     port: Option<String>,
@@ -52,11 +57,30 @@ pub async fn get_client(
     Ok(Box::new(socket))
 }
 
+/// Get a new listener for the daemon.
+/// This can either be a UnixListener or a TCPlistener,
+/// which depends on the parameters.
 pub async fn get_listener(
     unix_socket_path: Option<String>,
     port: Option<String>,
 ) -> Result<Box<dyn GenericListener>> {
     if let Some(socket_path) = unix_socket_path {
+        // Check, if the socket already exists
+        // In case it does, we have to check, if it's an active socket.
+        // If it is, we have to throw an error, because another daemon is already running.
+        // Otherwise, we can simply remove it.
+        if PathBuf::from(&socket_path).exists() {
+            if get_client(Some(socket_path.clone()), None).await.is_ok() {
+                bail!(
+                    "There seems to be an active pueue daemon.\n\
+                      If you're sure there isn't, please remove the socket by hand \
+                      inside the pueue_directory."
+                );
+            }
+
+            std::fs::remove_file(&socket_path)?;
+        }
+
         return Ok(Box::new(UnixListener::bind(socket_path).await?));
     }
 
