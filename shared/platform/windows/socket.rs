@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 use async_std::io::{Read, Write};
 use async_std::net::{TcpListener, TcpStream};
 use async_trait::async_trait;
@@ -21,8 +21,23 @@ impl GenericListener for TcpListener {
 
 impl GenericSocket for TcpStream {}
 
+pub async fn get_client(
+    _unix_socket_path: Option<String>,
+    port: Option<String>,
+) -> Result<Box<dyn GenericSocket>> {
+    // Don't allow anything else than loopback until we have proper crypto
+    let address = format!("127.0.0.1:{}", port.unwrap());
+
+    // Connect to socket
+    let socket = TcpStream::connect(&address)
+        .await
+        .context("Failed to connect to the daemon. Did you start it?")?;
+
+    Ok(Box::new(socket))
+}
+
 pub async fn get_listener(
-    unix_socket_path: Option<String>,
+    _unix_socket_path: Option<String>,
     port: Option<String>,
 ) -> Result<Box<dyn GenericListener>> {
     let port = port.unwrap();
