@@ -43,18 +43,26 @@ pub fn default_pueue_path() -> Result<String> {
 mod tests {
     use super::*;
 
-    use std::fs::File;
+    use std::fs::{remove_file, File};
     use std::io::prelude::*;
 
     use anyhow::Result;
 
     #[test]
-    fn test_spawn_command() -> Result<()> {
-        // Path can be found
+    fn test_create_unix_socket() -> Result<()> {
         let path = get_unix_socket_path()?;
 
-        let mut file = File::create(path)?;
-        file.write_all(b"Hello, world!")?;
+        // If pueue is currently running on the system,
+        // simply accept that we found the correct path
+        if PathBuf::from(&path).exists() {
+            return Ok(());
+        }
+
+        // Otherwise try to create it and write to it
+        let mut file = File::create(&path)?;
+        assert!(file.write_all(b"Hello, world!").is_ok());
+
+        remove_file(&path)?;
 
         Ok(())
     }

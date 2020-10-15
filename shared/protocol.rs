@@ -13,7 +13,7 @@ use log::debug;
 use crate::message::*;
 
 #[async_trait]
-pub trait GenericListener {
+pub trait GenericListener: Sync + Send {
     async fn accept<'a>(&'a self) -> Result<Box<dyn GenericSocket>>;
 }
 
