@@ -2,7 +2,7 @@ name: Test build
 
 on:
   push:
-    banches: [master]
+    branches: [master]
   pull_request:
     branches: [master]
 
