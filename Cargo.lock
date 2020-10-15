@@ -442,6 +442,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "ctrlc"
+version = "3.1.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b57a92e9749e10f25a171adcebfafe72991d45e7ec2dcb853e8f83d9dafaeb08"
+dependencies = [
+ "nix 0.18.0",
+ "winapi",
+]
+
+[[package]]
 name = "darwin-libproc"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1098,6 +1108,7 @@ dependencies = [
  "comfy-table",
  "config",
  "crossterm",
+ "ctrlc",
  "dirs",
  "handlebars",
  "log",

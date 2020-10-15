@@ -33,6 +33,7 @@ async-trait = "0.1"
 dirs = "3"
 chrono = { version = "^0.4", features = ["serde"] }
 chrono-english = "^0.1.0"
+ctrlc = "3"
 rand = "^0.7"
 strum = "^0.19"
 strum_macros = "^0.19"

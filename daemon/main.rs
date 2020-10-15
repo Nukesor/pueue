@@ -35,6 +35,21 @@ async fn main() -> Result<()> {
         println!("{:?}", error);
     }
 
+    // This is somewhat ugly. Right now this is the only place where we can
+    // do cleanup on shutdown. Thereby we do stuff in here, which doesn't have anything
+    // to do with the TaskHandler.
+    //
+    // 1. Remove any existing the unix sockets.
+    if settings.shared.use_unix_socket {
+        let unix_socket_path = settings.shared.unix_socket_path.clone();
+        ctrlc::set_handler(move || {
+            if std::path::PathBuf::from(&unix_socket_path).exists() {
+                std::fs::remove_file(&unix_socket_path)
+                    .expect("Failed to remove unix socket on shutdown");
+            }
+        })?;
+    }
+
     // Parse commandline options.
     let opt = Opt::from_args();
 
