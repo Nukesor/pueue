@@ -201,7 +201,7 @@ impl State {
 
         let serialized = serialized.unwrap();
 
-        let path = Path::new(&self.settings.daemon.pueue_directory);
+        let path = Path::new(&self.settings.shared.pueue_directory);
         let (temp, real) = if log {
             let path = path.join("log");
             let now: DateTime<Utc> = Utc::now();
@@ -242,7 +242,7 @@ impl State {
     /// Restore the last state from a previous session.
     /// The state is stored as json in the log directory.
     fn restore(&mut self) {
-        let path = Path::new(&self.settings.daemon.pueue_directory).join("state.json");
+        let path = Path::new(&self.settings.shared.pueue_directory).join("state.json");
 
         // Ignore if the file doesn't exist. It doesn't have to.
         if !path.exists() {
@@ -328,7 +328,7 @@ impl State {
 
     /// Remove old logs that aren't needed any longer.
     fn rotate(&mut self) -> Result<()> {
-        let path = Path::new(&self.settings.daemon.pueue_directory);
+        let path = Path::new(&self.settings.shared.pueue_directory);
         let path = path.join("log");
 
         // Get all log files in the directory with their respective system time.

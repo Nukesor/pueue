@@ -1,6 +1,19 @@
 use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, Result};
+use users::{get_current_uid, get_user_by_uid};
+
+/// Get the default unix socket path for the current user
+pub fn get_unix_socket_path() -> Result<String> {
+    // Get the user and their username
+    let user = get_user_by_uid(get_current_uid())
+        .ok_or(anyhow!("Couldn't find username for current user"))?;
+    let username = user.name().to_string_lossy();
+
+    // Create the socket in the default /tmp/ directory
+    let path = Path::new("/tmp/").join(format!("pueue_{}.socket", username));
+    Ok(path.to_string_lossy().into())
+}
 
 fn get_home_dir() -> Result<PathBuf> {
     dirs::home_dir().ok_or_else(|| anyhow!("Couldn't resolve home dir"))
@@ -25,4 +38,25 @@ pub fn default_pueue_path() -> Result<String> {
         || Err(anyhow!("Failed to parse log path (Weird characters?)")),
         |v| Ok(v.to_string()),
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use std::fs::File;
+    use std::io::prelude::*;
+
+    use anyhow::Result;
+
+    #[test]
+    fn test_spawn_command() -> Result<()> {
+        // Path can be found
+        let path = get_unix_socket_path()?;
+
+        let mut file = File::create(path)?;
+        file.write_all(b"Hello, world!")?;
+
+        Ok(())
+    }
 }

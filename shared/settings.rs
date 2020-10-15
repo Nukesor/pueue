@@ -11,17 +11,21 @@ use serde_derive::{Deserialize, Serialize};
 use crate::platform::directories::*;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct Client {
-    pub daemon_port: String,
+pub struct Shared {
+    pub port: String,
     pub secret: String,
+    pub pueue_directory: String,
+    pub use_unix_socket: bool,
+    pub unix_socket_path: String,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct Client {
     pub read_local_logs: bool,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Daemon {
-    pub pueue_directory: String,
-    pub port: String,
-    pub secret: String,
     pub default_parallel_tasks: usize,
     #[serde(default = "pause_on_failure_default")]
     pub pause_on_failure: bool,
@@ -36,6 +40,7 @@ fn pause_on_failure_default() -> bool {
 /// The struct representation of a full configuration.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Settings {
+    pub shared: Shared,
     pub client: Client,
     pub daemon: Daemon,
 }
@@ -48,18 +53,18 @@ impl Settings {
     /// The local config is located at "~/.config/pueue.yml".
     pub fn new() -> Result<Settings> {
         let mut config = Config::new();
-        let random_secret = gen_random_secret();
 
-        config.set_default("client.daemon_port", "6924")?;
-        config.set_default("client.secret", random_secret.clone())?;
+        config.set_default("shared.port", "6924")?;
+        config.set_default("shared.secret", gen_random_secret())?;
+        config.set_default("shared.use_unix_socket", false)?;
+        config.set_default("shared.unix_socket_path", get_unix_socket_path()?)?;
+
+        // Client specific config
         config.set_default("client.read_local_logs", true)?;
 
-        // Set pueue config defaults
-        config.set_default("daemon.pueue_directory", default_pueue_path()?)?;
-        config.set_default("daemon.port", "6924")?;
+        // Daemon specific config
         config.set_default("daemon.default_parallel_tasks", 1)?;
         config.set_default("daemon.pause_on_failure", false)?;
-        config.set_default("daemon.secret", random_secret)?;
         config.set_default("daemon.callback", None::<String>)?;
         config.set_default("daemon.groups", HashMap::<String, i64>::new())?;
 

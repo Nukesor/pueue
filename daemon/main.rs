@@ -53,7 +53,7 @@ async fn main() -> Result<()> {
         SimpleLogger::init(LevelFilter::Error, Config::default())?;
     }
 
-    init_directories(&settings.daemon.pueue_directory);
+    init_directories(&settings.shared.pueue_directory);
 
     let state = State::new(&settings);
     let state = Arc::new(Mutex::new(state));

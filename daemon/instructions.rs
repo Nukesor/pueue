@@ -441,7 +441,7 @@ fn clean(state: &SharedState) -> Message {
 
     for task_id in &matching {
         let _ = state.tasks.remove(task_id).unwrap();
-        clean_log_handles(*task_id, &state.settings.daemon.pueue_directory);
+        clean_log_handles(*task_id, &state.settings.shared.pueue_directory);
     }
 
     state.save();
@@ -482,7 +482,7 @@ fn get_log(message: LogRequestMessage, state: &SharedState) -> Message {
             // This isn't as efficient as sending the raw compressed data directly,
             // but it's a lot more convenient for now.
             let (stdout, stderr) = if message.send_logs {
-                match read_and_compress_log_files(*task_id, &state.settings.daemon.pueue_directory)
+                match read_and_compress_log_files(*task_id, &state.settings.shared.pueue_directory)
                 {
                     Ok((stdout, stderr)) => (Some(stdout), Some(stderr)),
                     Err(err) => {

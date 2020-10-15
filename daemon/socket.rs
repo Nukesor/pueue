@@ -21,7 +21,7 @@ pub async fn accept_incoming(sender: Sender<Message>, state: SharedState, opt: O
         port
     } else {
         let state = state.lock().unwrap();
-        state.settings.daemon.port.clone()
+        state.settings.shared.port.clone()
     };
     let address = format!("127.0.0.1:{}", port);
     let listener = TcpListener::bind(address).await?;
@@ -60,7 +60,7 @@ async fn handle_incoming(
     // Return immediately, if we got a wrong secret from the client.
     {
         let state = state.lock().unwrap();
-        if secret != state.settings.daemon.secret {
+        if secret != state.settings.shared.secret {
             warn!("Received invalid secret: {}", secret);
             bail!("Received invalid secret");
         }
@@ -70,7 +70,7 @@ async fn handle_incoming(
     // locking the state in the streaming loop.
     let pueue_directory = {
         let state = state.lock().unwrap();
-        state.settings.daemon.pueue_directory.clone()
+        state.settings.shared.pueue_directory.clone()
     };
 
     loop {

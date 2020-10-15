@@ -42,7 +42,7 @@ impl Client {
         let port = if let Some(port) = opt.port.clone() {
             port
         } else {
-            settings.client.daemon_port.clone()
+            settings.shared.port.clone()
         };
 
         // Don't allow anything else than loopback until we have proper crypto
@@ -53,7 +53,7 @@ impl Client {
         let socket = TcpStream::connect(&address)
             .await
             .context("Failed to connect to the daemon. Did you start it?")?;
-        let secret = settings.client.secret.clone().into_bytes();
+        let secret = settings.shared.secret.clone().into_bytes();
 
         let mut socket: SocketBox = Box::new(socket);
         send_bytes(secret, &mut socket).await?;
@@ -122,7 +122,7 @@ impl Client {
                 if self.settings.client.read_local_logs {
                     local_follow(
                         &mut self.socket,
-                        self.settings.daemon.pueue_directory.clone(),
+                        self.settings.shared.pueue_directory.clone(),
                         task_id,
                         *err,
                     )

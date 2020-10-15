@@ -47,11 +47,10 @@ impl TaskHandler {
         // This prevents locking the State all the time.
         let (pueue_directory, callback, pause_on_failure) = {
             let state = state.lock().unwrap();
-            let settings = &state.settings.daemon;
             (
-                settings.pueue_directory.clone(),
-                settings.callback.clone(),
-                settings.pause_on_failure,
+                state.settings.shared.pueue_directory.clone(),
+                state.settings.daemon.callback.clone(),
+                state.settings.daemon.pause_on_failure,
             )
         };
         TaskHandler {
