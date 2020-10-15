@@ -30,7 +30,7 @@ async fn test_single_huge_payload() -> Result<()> {
         send_message(message, &mut socket).await.unwrap();
     });
 
-    let mut client: Box<dyn GenericSocket> = Box::new(TcpStream::connect(&addr).await?);
+    let mut client: Socket = Box::new(TcpStream::connect(&addr).await?);
 
     // Create a client that sends a message and instantly receives it
     send_message(message, &mut client).await?;

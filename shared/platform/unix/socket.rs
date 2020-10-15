@@ -6,14 +6,16 @@ use async_std::net::{TcpListener, TcpStream};
 use async_std::os::unix::net::{UnixListener, UnixStream};
 use async_trait::async_trait;
 
+/// A new trait, which can be used to represent Unix- and TcpListeners.
+/// This is necessary to easily write generic functions where both types can be used.
 #[async_trait]
 pub trait GenericListener: Sync + Send {
-    async fn accept<'a>(&'a self) -> Result<Box<dyn GenericSocket>>;
+    async fn accept<'a>(&'a self) -> Result<Socket>;
 }
 
 #[async_trait]
 impl GenericListener for TcpListener {
-    async fn accept<'a>(&'a self) -> Result<Box<dyn GenericSocket>> {
+    async fn accept<'a>(&'a self) -> Result<Socket> {
         let (socket, _) = self.accept().await?;
         Ok(Box::new(socket))
     }
@@ -21,16 +23,19 @@ impl GenericListener for TcpListener {
 
 #[async_trait]
 impl GenericListener for UnixListener {
-    async fn accept<'a>(&'a self) -> Result<Box<dyn GenericSocket>> {
+    async fn accept<'a>(&'a self) -> Result<Socket> {
         let (socket, _) = self.accept().await?;
         Ok(Box::new(socket))
     }
 }
 
+/// A new trait, which can be used to represent Unix- and TcpStream.
+/// This is necessary to easily write generic functions where both types can be used.
 pub trait GenericSocket: Read + Write + Unpin + Send + Sync {}
 impl GenericSocket for TcpStream {}
 impl GenericSocket for UnixStream {}
 
+/// Two convenient types, so we don't have type write Box<dyn ...> all the time.
 pub type Listener = Box<dyn GenericListener>;
 pub type Socket = Box<dyn GenericSocket>;
 

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use std::env::{current_dir, vars};
-use std::io::{self, Write as std_Write};
+use std::io::{self, Write};
 
 use anyhow::{bail, Context, Result};
 use log::error;
@@ -25,7 +25,7 @@ use crate::output::*;
 pub struct Client {
     opt: Opt,
     settings: Settings,
-    socket: Box<dyn GenericSocket>,
+    socket: Socket,
 }
 
 impl Client {

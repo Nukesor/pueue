@@ -5,12 +5,12 @@ use async_trait::async_trait;
 
 #[async_trait]
 pub trait GenericListener: Sync + Send {
-    async fn accept<'a>(&'a self) -> Result<Box<dyn GenericSocket>>;
+    async fn accept<'a>(&'a self) -> Result<Socket>;
 }
 
 #[async_trait]
 impl GenericListener for TcpListener {
-    async fn accept<'a>(&'a self) -> Result<Box<dyn GenericSocket>> {
+    async fn accept<'a>(&'a self) -> Result<Socket> {
         let (socket, _) = self.accept().await?;
         Ok(Box::new(socket))
     }

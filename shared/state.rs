@@ -25,6 +25,17 @@ pub struct State {
     pub groups: HashMap<String, bool>,
 }
 
+/// This is the full representation of the current state of the Pueue daemon.
+/// This includes
+/// - All settings.
+/// - The full task list
+/// - The current status of all tasks
+///
+/// However, the State does NOT include:
+/// - Information about child processes
+/// - Handles to child processes
+///
+/// That information is saved in the TaskHandler.
 impl State {
     pub fn new(settings: &Settings) -> State {
         // Create a default group state.
