@@ -7,7 +7,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [0.8.0]
 
 This version adds breaking changes:
-- The configuration file structure has been changed.
+
+- The configuration file structure has been changed. There's now a `shared` section.
 - The configuration files have been moved to a dedicated `pueue` subdirectory.
 
 ### Added

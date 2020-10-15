@@ -7,13 +7,13 @@ use async_std::task::sleep;
 
 use pueue::log::*;
 use pueue::message::*;
-use pueue::protocol::{send_message, SocketBox};
+use pueue::protocol::{send_message, Socket};
 use pueue::state::SharedState;
 
 /// Handle the continuous stream of a message.
 pub async fn handle_follow(
     pueue_directory: &str,
-    socket: &mut SocketBox,
+    socket: &mut Socket,
     state: &SharedState,
     message: StreamRequestMessage,
 ) -> Result<Message> {

@@ -6,9 +6,6 @@ use async_std::net::{TcpListener, TcpStream};
 use async_std::os::unix::net::{UnixListener, UnixStream};
 use async_trait::async_trait;
 
-pub trait GenericSocket: Read + Write + Unpin + Send + Sync {}
-pub type SocketBox = Box<dyn GenericSocket>;
-
 #[async_trait]
 pub trait GenericListener: Sync + Send {
     async fn accept<'a>(&'a self) -> Result<Box<dyn GenericSocket>>;
@@ -30,16 +27,17 @@ impl GenericListener for UnixListener {
     }
 }
 
+pub trait GenericSocket: Read + Write + Unpin + Send + Sync {}
 impl GenericSocket for TcpStream {}
 impl GenericSocket for UnixStream {}
+
+pub type Listener = Box<dyn GenericListener>;
+pub type Socket = Box<dyn GenericSocket>;
 
 /// Get a new stream for the client.
 /// This can either be a UnixStream or a TCPStream,
 /// which depends on the parameters.
-pub async fn get_client(
-    unix_socket_path: Option<String>,
-    port: Option<String>,
-) -> Result<Box<dyn GenericSocket>> {
+pub async fn get_client(unix_socket_path: Option<String>, port: Option<String>) -> Result<Socket> {
     if let Some(socket_path) = unix_socket_path {
         let stream = UnixStream::connect(socket_path).await?;
         return Ok(Box::new(stream));
@@ -63,7 +61,7 @@ pub async fn get_client(
 pub async fn get_listener(
     unix_socket_path: Option<String>,
     port: Option<String>,
-) -> Result<Box<dyn GenericListener>> {
+) -> Result<Listener> {
     if let Some(socket_path) = unix_socket_path {
         // Check, if the socket already exists
         // In case it does, we have to check, if it's an active socket.

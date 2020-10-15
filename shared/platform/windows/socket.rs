@@ -3,9 +3,6 @@ use async_std::io::{Read, Write};
 use async_std::net::{TcpListener, TcpStream};
 use async_trait::async_trait;
 
-pub trait GenericSocket: Read + Write + Unpin + Send + Sync {}
-pub type SocketBox = Box<dyn GenericSocket>;
-
 #[async_trait]
 pub trait GenericListener: Sync + Send {
     async fn accept<'a>(&'a self) -> Result<Box<dyn GenericSocket>>;
@@ -19,12 +16,13 @@ impl GenericListener for TcpListener {
     }
 }
 
+pub trait GenericSocket: Read + Write + Unpin + Send + Sync {}
 impl GenericSocket for TcpStream {}
 
-pub async fn get_client(
-    _unix_socket_path: Option<String>,
-    port: Option<String>,
-) -> Result<Box<dyn GenericSocket>> {
+pub type Listener = Box<dyn GenericListener>;
+pub type Socket = Box<dyn GenericSocket>;
+
+pub async fn get_client(_unix_socket_path: Option<String>, port: Option<String>) -> Result<Socket> {
     // Don't allow anything else than loopback until we have proper crypto
     let address = format!("127.0.0.1:{}", port.unwrap());
 
@@ -39,7 +37,7 @@ pub async fn get_client(
 pub async fn get_listener(
     _unix_socket_path: Option<String>,
     port: Option<String>,
-) -> Result<Box<dyn GenericListener>> {
+) -> Result<Listener> {
     let port = port.unwrap();
     let address = format!("127.0.0.1:{}", port);
     Ok(Box::new(TcpListener::bind(address).await?))
