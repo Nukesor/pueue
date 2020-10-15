@@ -4,6 +4,8 @@ use std::io::{self, Write as std_Write};
 
 use anyhow::{bail, Context, Result};
 use async_std::net::TcpStream;
+#[cfg(not(windows))]
+use async_std::os::unix::net::UnixStream;
 use log::error;
 
 use pueue::message::*;
@@ -39,23 +41,41 @@ impl Client {
         // };
 
         // Commandline argument overwrites the configuration files values for port
-        let port = if let Some(port) = opt.port.clone() {
-            port
-        } else {
-            settings.shared.port.clone()
+        let (unix_socket_path, port) = {
+            // Return the unix socket path, if we're supposed to use it.
+            if settings.shared.use_unix_socket {
+                (Some(settings.shared.unix_socket_path.clone()), None)
+            } else {
+                // Otherwise use tcp sockets and a given port
+                // Commandline argument overwrites the configuration files values for port.
+                let port = if let Some(port) = opt.port.clone() {
+                    port
+                } else {
+                    settings.shared.port.clone()
+                };
+
+                (None, Some(port))
+            }
         };
 
-        // Don't allow anything else than loopback until we have proper crypto
-        // let address = format!("{}:{}", address, port);
-        let address = format!("127.0.0.1:{}", port);
+        let mut socket: Box<dyn GenericSocket> = if let Some(socket_path) = unix_socket_path {
+            let stream = UnixStream::connect(socket_path).await?;
+            Box::new(stream)
+        } else {
+            // Don't allow anything else than loopback until we have proper crypto
+            // let address = format!("{}:{}", address, port);
+            let address = format!("127.0.0.1:{}", port.unwrap());
 
-        // Connect to socket
-        let socket = TcpStream::connect(&address)
-            .await
-            .context("Failed to connect to the daemon. Did you start it?")?;
+            // Connect to socket
+            let socket = TcpStream::connect(&address)
+                .await
+                .context("Failed to connect to the daemon. Did you start it?")?;
+
+            Box::new(socket)
+        };
+
+        // Send the secret to the daemon
         let secret = settings.shared.secret.clone().into_bytes();
-
-        let mut socket: SocketBox = Box::new(socket);
         send_bytes(secret, &mut socket).await?;
 
         Ok(Client {

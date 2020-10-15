@@ -2,6 +2,8 @@ use std::sync::mpsc::Sender;
 
 use anyhow::{bail, Result};
 use async_std::net::TcpListener;
+#[cfg(not(windows))]
+use async_std::os::unix::net::UnixListener;
 use async_std::task;
 use log::{debug, info, warn};
 
@@ -16,20 +18,39 @@ use crate::streaming::handle_follow;
 /// Poll the unix listener and accept new incoming connections.
 /// Create a new future to handle the message and spawn it.
 pub async fn accept_incoming(sender: Sender<Message>, state: SharedState, opt: Opt) -> Result<()> {
-    // Commandline argument overwrites the configuration files values for port.
-    let port = if let Some(port) = opt.port.clone() {
-        port
-    } else {
+    let (unix_socket_path, port) = {
         let state = state.lock().unwrap();
-        state.settings.shared.port.clone()
+        let shared = &state.settings.shared;
+
+        // Return the unix socket path, if we're supposed to use it.
+        if shared.use_unix_socket {
+            (Some(shared.unix_socket_path.clone()), None)
+        } else {
+            // Otherwise use tcp sockets and a given port
+            // Commandline argument overwrites the configuration files values for port.
+            let port = if let Some(port) = opt.port.clone() {
+                port
+            } else {
+                shared.port.clone()
+            };
+
+            (None, Some(port))
+        }
     };
-    let address = format!("127.0.0.1:{}", port);
-    let listener = TcpListener::bind(address).await?;
+
+    let listener: Box<dyn GenericListener> = if let Some(socket_path) = unix_socket_path {
+        Box::new(UnixListener::bind(socket_path).await?)
+    } else {
+        let port = port.unwrap();
+        let address = format!("127.0.0.1:{}", port);
+        Box::new(TcpListener::bind(address).await?)
+    };
 
     loop {
         // Poll if we have a new incoming connection.
-        let (socket, _) = listener.accept().await?;
-        let socket: SocketBox = Box::new(socket);
+        let socket = listener.accept().await?;
+
+        // Start a new task for the request
         let sender_clone = sender.clone();
         let state_clone = state.clone();
         task::spawn(async move {

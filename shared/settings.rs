@@ -56,6 +56,7 @@ impl Settings {
 
         config.set_default("shared.port", "6924")?;
         config.set_default("shared.secret", gen_random_secret())?;
+        config.set_default("shared.pueue_directory", default_pueue_path()?)?;
         config.set_default("shared.use_unix_socket", false)?;
         config.set_default("shared.unix_socket_path", get_unix_socket_path()?)?;
 
