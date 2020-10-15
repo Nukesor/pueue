@@ -1,43 +1,13 @@
 use std::io::Cursor;
 
 use anyhow::{Context, Result};
-use async_std::io::{Read, Write};
-use async_std::net::{TcpListener, TcpStream};
-#[cfg(not(windows))]
-use async_std::os::unix::net::{UnixListener, UnixStream};
 use async_std::prelude::*;
-use async_trait::async_trait;
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use log::debug;
 
 use crate::message::*;
 
-#[async_trait]
-pub trait GenericListener: Sync + Send {
-    async fn accept<'a>(&'a self) -> Result<Box<dyn GenericSocket>>;
-}
-
-#[async_trait]
-impl GenericListener for TcpListener {
-    async fn accept<'a>(&'a self) -> Result<Box<dyn GenericSocket>> {
-        let (socket, _) = self.accept().await?;
-        Ok((Box::new(socket)))
-    }
-}
-
-#[cfg(not(windows))]
-#[async_trait]
-impl GenericListener for UnixListener {
-    async fn accept<'a>(&'a self) -> Result<Box<dyn GenericSocket>> {
-        let (socket, _) = self.accept().await?;
-        Ok((Box::new(socket)))
-    }
-}
-
-pub trait GenericSocket: Read + Write + Unpin + Send + Sync {}
-pub type SocketBox = Box<dyn GenericSocket>;
-impl GenericSocket for TcpStream {}
-impl GenericSocket for UnixStream {}
+pub use crate::platform::socket::*;
 
 /// Convenience wrapper around send_bytes.
 /// Deserialize a message and feed the bytes into send_bytes.

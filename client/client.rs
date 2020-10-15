@@ -3,12 +3,10 @@ use std::env::{current_dir, vars};
 use std::io::{self, Write as std_Write};
 
 use anyhow::{bail, Context, Result};
-use async_std::net::TcpStream;
-#[cfg(not(windows))]
-use async_std::os::unix::net::UnixStream;
 use log::error;
 
 use pueue::message::*;
+use pueue::platform::socket::*;
 use pueue::protocol::*;
 use pueue::settings::Settings;
 
@@ -58,21 +56,7 @@ impl Client {
             }
         };
 
-        let mut socket: Box<dyn GenericSocket> = if let Some(socket_path) = unix_socket_path {
-            let stream = UnixStream::connect(socket_path).await?;
-            Box::new(stream)
-        } else {
-            // Don't allow anything else than loopback until we have proper crypto
-            // let address = format!("{}:{}", address, port);
-            let address = format!("127.0.0.1:{}", port.unwrap());
-
-            // Connect to socket
-            let socket = TcpStream::connect(&address)
-                .await
-                .context("Failed to connect to the daemon. Did you start it?")?;
-
-            Box::new(socket)
-        };
+        let mut socket = get_client(unix_socket_path, port).await?;
 
         // Send the secret to the daemon
         let secret = settings.shared.secret.clone().into_bytes();

@@ -1,9 +1,6 @@
 use std::sync::mpsc::Sender;
 
 use anyhow::{bail, Result};
-use async_std::net::TcpListener;
-#[cfg(not(windows))]
-use async_std::os::unix::net::UnixListener;
 use async_std::task;
 use log::{debug, info, warn};
 
@@ -38,13 +35,7 @@ pub async fn accept_incoming(sender: Sender<Message>, state: SharedState, opt: O
         }
     };
 
-    let listener: Box<dyn GenericListener> = if let Some(socket_path) = unix_socket_path {
-        Box::new(UnixListener::bind(socket_path).await?)
-    } else {
-        let port = port.unwrap();
-        let address = format!("127.0.0.1:{}", port);
-        Box::new(TcpListener::bind(address).await?)
-    };
+    let listener = get_listener(unix_socket_path, port).await?;
 
     loop {
         // Poll if we have a new incoming connection.
