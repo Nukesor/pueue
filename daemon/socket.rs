@@ -1,7 +1,7 @@
 use std::sync::mpsc::Sender;
 
 use anyhow::{bail, Result};
-use async_std::net::{TcpListener, TcpStream};
+use async_std::net::TcpListener;
 use async_std::task;
 use log::{debug, info, warn};
 
@@ -29,6 +29,7 @@ pub async fn accept_incoming(sender: Sender<Message>, state: SharedState, opt: O
     loop {
         // Poll if we have a new incoming connection.
         let (socket, _) = listener.accept().await?;
+        let socket: SocketBox = Box::new(socket);
         let sender_clone = sender.clone();
         let state_clone = state.clone();
         task::spawn(async move {
@@ -41,7 +42,7 @@ pub async fn accept_incoming(sender: Sender<Message>, state: SharedState, opt: O
 /// In case we received an instruction, handle it and create a response future.
 /// The response future is added to unix_responses and handled in a separate function.
 async fn handle_incoming(
-    mut socket: TcpStream,
+    mut socket: SocketBox,
     sender: Sender<Message>,
     state: SharedState,
 ) -> Result<()> {

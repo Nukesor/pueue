@@ -3,7 +3,6 @@ use std::io::{Read, Seek, SeekFrom, Write};
 use std::process::Command;
 
 use anyhow::{Context, Result};
-use async_std::net::TcpStream;
 use tempfile::NamedTempFile;
 
 use pueue::message::*;
@@ -16,7 +15,7 @@ use pueue::protocol::*;
 ///
 /// After receiving the task information, the user can then edit it in their editor.
 /// Upon exiting the text editor, the line will then be read and sent to the server
-pub async fn edit(socket: &mut TcpStream, task_id: usize, edit_path: bool) -> Result<Message> {
+pub async fn edit(socket: &mut SocketBox, task_id: usize, edit_path: bool) -> Result<Message> {
     // Request the data to edit from the server and issue a task-lock while doing so.
     let init_message = Message::EditRequest(task_id);
     send_message(init_message, socket).await?;

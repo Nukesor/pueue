@@ -48,7 +48,7 @@ async fn main() -> Result<()> {
     }
 
     // Create client to talk with the daemon and connect.
-    let client = Client::new(settings, opt).await?;
+    let mut client = Client::new(settings, opt).await?;
     client.start().await?;
 
     Ok(())
