@@ -7,7 +7,7 @@ fn get_home_dir() -> Result<PathBuf> {
 }
 
 pub fn default_config_directory() -> Result<PathBuf> {
-    Ok(get_home_dir()?.join("Library/Preferences"))
+    Ok(get_home_dir()?.join("Library/Preferences/pueue"))
 }
 
 pub fn get_config_directories() -> Result<Vec<PathBuf>> {
@@ -19,8 +19,8 @@ pub fn get_config_directories() -> Result<Vec<PathBuf>> {
 
 pub fn default_pueue_path() -> Result<String> {
     let path = get_home_dir()?.join(".local/share/pueue");
-    path.to_str().map_or_else(
-        || Err(anyhow!("Failed to parse log path (Weird characters?)")),
-        |v| Ok(v.to_string()),
-    )
+    Ok(path
+        .to_str()
+        .ok_or(anyhow!("Failed to parse log path (Weird characters?)"))?
+        .to_string())
 }
