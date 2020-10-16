@@ -9,6 +9,7 @@ use anyhow::Result;
 use simplelog::{Config, LevelFilter, SimpleLogger};
 use structopt::StructOpt;
 
+use pueue::message::Message;
 use pueue::settings::Settings;
 use pueue::state::State;
 
@@ -33,21 +34,6 @@ async fn main() -> Result<()> {
     if let Err(error) = settings.save() {
         println!("Failed saving config file.");
         println!("{:?}", error);
-    }
-
-    // This is somewhat ugly. Right now this is the only place where we can
-    // do cleanup on shutdown. Thereby we do stuff in here, which doesn't have anything
-    // to do with the TaskHandler.
-    //
-    // 1. Remove any existing the unix sockets.
-    if settings.shared.use_unix_socket {
-        let unix_socket_path = settings.shared.unix_socket_path.clone();
-        ctrlc::set_handler(move || {
-            if std::path::PathBuf::from(&unix_socket_path).exists() {
-                std::fs::remove_file(&unix_socket_path)
-                    .expect("Failed to remove unix socket on shutdown");
-            }
-        })?;
     }
 
     // Parse commandline options.
@@ -75,6 +61,26 @@ async fn main() -> Result<()> {
 
     let (sender, receiver) = channel();
     let mut task_handler = TaskHandler::new(state.clone(), receiver);
+
+    // This section handles Shutdown via SigTerm/SigInt process signals
+    // 1. Remove the unix socket (if it exists).
+    // 2. Notify the TaskHandler, so it can shutdown gracefully.
+    //
+    // The actual program exit will be done via the TaskHandler.
+    let unix_socket_path = settings.shared.unix_socket_path.clone();
+    let sender_clone = sender.clone();
+    ctrlc::set_handler(move || {
+        // Clean up the unix socket if we're using it and it exists.
+        if settings.shared.use_unix_socket && std::path::PathBuf::from(&unix_socket_path).exists() {
+            std::fs::remove_file(&unix_socket_path)
+                .expect("Failed to remove unix socket on shutdown");
+        }
+
+        // Notify the task handler
+        sender_clone
+            .send(Message::DaemonShutdown)
+            .expect("Failed to send Message to TaskHandler on Shutdown");
+    })?;
 
     thread::spawn(move || {
         task_handler.run();

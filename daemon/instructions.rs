@@ -1,6 +1,8 @@
 use std::collections::BTreeMap;
 use std::sync::mpsc::Sender;
 
+use log::debug;
+
 use pueue::log::{clean_log_handles, read_and_compress_log_files};
 use pueue::message::*;
 use pueue::state::SharedState;
@@ -32,6 +34,7 @@ pub fn handle_message(message: Message, sender: &Sender<Message>, state: &Shared
         Message::Status => get_status(state),
         Message::Log(message) => get_log(message, state),
         Message::Parallel(message) => set_parallel_tasks(message, state),
+        Message::DaemonShutdown => shutdown(sender, state),
         _ => create_failure_message("Not implemented yet"),
     }
 }
@@ -541,4 +544,30 @@ fn set_parallel_tasks(message: ParallelMessage, state: &SharedState) -> Message 
         "Parallel tasks setting for group {} adjusted",
         group
     ))
+}
+
+/// Initialize the shutdown procedure.
+/// At first, the unix socket will be removed.
+///
+/// Next, the DaemonShutdown Message will be forwarded to the TaskHandler.
+/// The TaskHandler then gracefully shuts down all child processes
+/// and exits with std::proces::exit(0).
+fn shutdown(sender: &Sender<Message>, state: &SharedState) -> Message {
+    // Remove the unix socket
+    {
+        let state = state.lock().unwrap();
+        if state.settings.shared.use_unix_socket {
+            let path = &state.settings.shared.unix_socket_path;
+            debug!("Check if a unit socket exists.");
+            if std::path::PathBuf::from(&path).exists() {
+                std::fs::remove_file(&path).expect("Failed to remove unix socket on shutdown");
+            }
+            debug!("Removed the unix socket.");
+        }
+    }
+
+    // Notify the task handler
+    sender.send(Message::DaemonShutdown).expect(SENDER_ERR);
+
+    create_success_message("Daemon is shutting down")
 }

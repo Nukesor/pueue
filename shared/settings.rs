@@ -102,12 +102,12 @@ impl Settings {
 /// configuration files at those locations.
 /// All configs will be merged by importance.
 fn parse_config(settings: &mut Config) -> Result<()> {
-    println!("Parsing config files");
+    //println!("Parsing config files");
     for directory in get_config_directories()?.into_iter() {
         let path = directory.join("pueue.yml");
-        println!("Checking path: {:?}", &path);
+        //println!("Checking path: {:?}", &path);
         if path.exists() {
-            println!("Parsing config file at: {:?}", path);
+            //println!("Parsing config file at: {:?}", path);
             let config_file = config::File::with_name(path.to_str().unwrap());
             settings.merge(config_file)?;
         }

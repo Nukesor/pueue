@@ -94,11 +94,6 @@ async fn handle_incoming(
             // The client requested the output of a task.
             // Since we allow streaming, this needs to be handled seperately.
             handle_follow(&pueue_directory, &mut socket, &state, message).await?
-        } else if let Message::DaemonShutdown = message {
-            // Simply shut down the daemon right after sending a success response.
-            let response = create_success_message("Daemon is shutting down");
-            send_message(response, &mut socket).await?;
-            std::process::exit(0);
         } else {
             // Process a normal message.
             handle_message(message, &sender, &state)
