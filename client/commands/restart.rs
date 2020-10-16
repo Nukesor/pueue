@@ -1,5 +1,4 @@
 use anyhow::{bail, Result};
-use async_std::net::TcpStream;
 
 use pueue::message::*;
 use pueue::protocol::*;
@@ -13,7 +12,7 @@ use crate::commands::get_state;
 ///
 /// This is done on the client-side, so we can easily edit the task before restarting it.
 pub async fn restart(
-    socket: &mut TcpStream,
+    socket: &mut Socket,
     task_ids: Vec<usize>,
     start_immediately: bool,
     stashed: bool,

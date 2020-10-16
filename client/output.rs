@@ -281,7 +281,7 @@ pub fn print_log(task_log: &mut TaskLogMessage, settings: &Settings) {
 /// If that's the case, read the log files from the local pueue directory
 pub fn print_local_log_output(task_id: usize, settings: &Settings, is_tty: bool) {
     let (mut stdout_log, mut stderr_log) =
-        match get_log_file_handles(task_id, &settings.daemon.pueue_directory) {
+        match get_log_file_handles(task_id, &settings.shared.pueue_directory) {
             Ok((stdout, stderr)) => (stdout, stderr),
             Err(err) => {
                 println!("Failed to get log file handles: {}", err);

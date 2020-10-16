@@ -25,6 +25,17 @@ pub struct State {
     pub groups: HashMap<String, bool>,
 }
 
+/// This is the full representation of the current state of the Pueue daemon.
+/// This includes
+/// - All settings.
+/// - The full task list
+/// - The current status of all tasks
+///
+/// However, the State does NOT include:
+/// - Information about child processes
+/// - Handles to child processes
+///
+/// That information is saved in the TaskHandler.
 impl State {
     pub fn new(settings: &Settings) -> State {
         // Create a default group state.
@@ -201,7 +212,7 @@ impl State {
 
         let serialized = serialized.unwrap();
 
-        let path = Path::new(&self.settings.daemon.pueue_directory);
+        let path = Path::new(&self.settings.shared.pueue_directory);
         let (temp, real) = if log {
             let path = path.join("log");
             let now: DateTime<Utc> = Utc::now();
@@ -242,7 +253,7 @@ impl State {
     /// Restore the last state from a previous session.
     /// The state is stored as json in the log directory.
     fn restore(&mut self) {
-        let path = Path::new(&self.settings.daemon.pueue_directory).join("state.json");
+        let path = Path::new(&self.settings.shared.pueue_directory).join("state.json");
 
         // Ignore if the file doesn't exist. It doesn't have to.
         if !path.exists() {
@@ -328,7 +339,7 @@ impl State {
 
     /// Remove old logs that aren't needed any longer.
     fn rotate(&mut self) -> Result<()> {
-        let path = Path::new(&self.settings.daemon.pueue_directory);
+        let path = Path::new(&self.settings.shared.pueue_directory);
         let path = path.join("log");
 
         // Get all log files in the directory with their respective system time.

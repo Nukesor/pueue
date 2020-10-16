@@ -22,7 +22,8 @@ pub enum TaskStatus {
     Locked,
 }
 
-/// This enum represents the exit status of the actually spawned program.
+/// This enum represents the exit status of an actually spawned program.
+/// It's only of relevance, once a task actually spawned and somehow finished.
 #[derive(Clone, Debug, Display, PartialEq, Serialize, Deserialize)]
 pub enum TaskResult {
     /// Task exited with 0
@@ -84,6 +85,7 @@ impl Task {
         }
     }
 
+    /// A convenience function, which is used to create a duplicate task.
     pub fn from_task(task: &Task) -> Task {
         Task {
             id: 0,
@@ -109,8 +111,8 @@ impl Task {
         self.status == TaskStatus::Done
     }
 
-    // Check if the task errored.
-    // The only case when it didn't error is if it didn't run yet or if the task exited successfully.
+    /// Check if the task errored.
+    /// The only case when it didn't error is if it didn't run yet or if the task exited successfully.
     pub fn failed(&self) -> bool {
         match self.result {
             None => false,

@@ -3,10 +3,10 @@ use std::env::{current_dir, vars};
 use std::io::{self, Write};
 
 use anyhow::{bail, Context, Result};
-use async_std::net::TcpStream;
 use log::error;
 
 use pueue::message::*;
+use pueue::platform::socket::*;
 use pueue::protocol::*;
 use pueue::settings::Settings;
 
@@ -25,7 +25,7 @@ use crate::output::*;
 pub struct Client {
     opt: Opt,
     settings: Settings,
-    socket: TcpStream,
+    socket: Socket,
 }
 
 impl Client {
@@ -39,21 +39,27 @@ impl Client {
         // };
 
         // Commandline argument overwrites the configuration files values for port
-        let port = if let Some(port) = opt.port.clone() {
-            port
-        } else {
-            settings.client.daemon_port.clone()
+        let (unix_socket_path, port) = {
+            // Return the unix socket path, if we're supposed to use it.
+            if settings.shared.use_unix_socket {
+                (Some(settings.shared.unix_socket_path.clone()), None)
+            } else {
+                // Otherwise use tcp sockets and a given port
+                // Commandline argument overwrites the configuration files values for port.
+                let port = if let Some(port) = opt.port.clone() {
+                    port
+                } else {
+                    settings.shared.port.clone()
+                };
+
+                (None, Some(port))
+            }
         };
 
-        // Don't allow anything else than loopback until we have proper crypto
-        // let address = format!("{}:{}", address, port);
-        let address = format!("127.0.0.1:{}", port);
+        let mut socket = get_client(unix_socket_path, port).await?;
 
-        // Connect to socket
-        let mut socket = TcpStream::connect(&address)
-            .await
-            .context("Failed to connect to the daemon. Did you start it?")?;
-        let secret = settings.client.secret.clone().into_bytes();
+        // Send the secret to the daemon
+        let secret = settings.shared.secret.clone().into_bytes();
         send_bytes(secret, &mut socket).await?;
 
         Ok(Client {
@@ -68,7 +74,7 @@ impl Client {
     /// we can finally start doing stuff.
     ///
     /// The command handling is splitted into "simple" and "complex" commands.
-    pub async fn start(&self) -> Result<()> {
+    pub async fn start(&mut self) -> Result<()> {
         // Return early, if the command has already been handled.
         if self.handle_complex_command().await? {
             return Ok(());
@@ -88,12 +94,11 @@ impl Client {
     ///
     /// Returns `true`, if the current command has been handled by this function.
     /// This indicates that the client can now shut down.
-    async fn handle_complex_command(&self) -> Result<bool> {
-        let mut socket = self.socket.clone();
+    async fn handle_complex_command(&mut self) -> Result<bool> {
         // This match handles all "complex" commands.
         match &self.opt.cmd {
             SubCommand::Edit { task_id, path } => {
-                let message = edit(&mut socket, *task_id, *path).await?;
+                let message = edit(&mut self.socket, *task_id, *path).await?;
                 self.handle_response(message);
                 Ok(true)
             }
@@ -105,7 +110,7 @@ impl Client {
                 path,
             } => {
                 restart(
-                    &mut socket,
+                    &mut self.socket,
                     task_ids.clone(),
                     *start_immediately,
                     *stashed,
@@ -120,8 +125,8 @@ impl Client {
                 // Thereby we handle this separately over here.
                 if self.settings.client.read_local_logs {
                     local_follow(
-                        &mut socket,
-                        self.settings.daemon.pueue_directory.clone(),
+                        &mut self.socket,
+                        self.settings.shared.pueue_directory.clone(),
                         task_id,
                         *err,
                     )
@@ -137,22 +142,20 @@ impl Client {
     /// Handle logic that's super generic on the client-side.
     /// This always follows a singular ping-pong pattern.
     /// One message to the daemon, one response, Done.
-    async fn handle_simple_command(&self) -> Result<()> {
-        let mut socket = self.socket.clone();
-
+    async fn handle_simple_command(&mut self) -> Result<()> {
         // Create the message that should be sent to the daemon
         // depending on the given commandline options.
         let message = self.get_message_from_opt()?;
 
         // Create the message payload and send it to the daemon.
-        send_message(message, &mut socket).await?;
+        send_message(message, &mut self.socket).await?;
 
         // Check if we can receive the response from the daemon
-        let mut response = receive_message(&mut socket).await?;
+        let mut response = receive_message(&mut self.socket).await?;
 
         // Check if we can receive the response from the daemon
         while self.handle_response(response) {
-            response = receive_message(&mut socket).await?;
+            response = receive_message(&mut self.socket).await?;
         }
 
         Ok(())

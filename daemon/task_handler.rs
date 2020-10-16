@@ -47,13 +47,13 @@ impl TaskHandler {
         // This prevents locking the State all the time.
         let (pueue_directory, callback, pause_on_failure) = {
             let state = state.lock().unwrap();
-            let settings = &state.settings.daemon;
             (
-                settings.pueue_directory.clone(),
-                settings.callback.clone(),
-                settings.pause_on_failure,
+                state.settings.shared.pueue_directory.clone(),
+                state.settings.daemon.callback.clone(),
+                state.settings.daemon.pause_on_failure,
             )
         };
+
         TaskHandler {
             state,
             receiver,
@@ -63,22 +63,6 @@ impl TaskHandler {
             pueue_directory,
             callback,
             pause_on_failure,
-        }
-    }
-}
-
-/// The task handler needs to kill all child processes as soon, as the program exits.
-/// This is needed to prevent detached processes.
-impl Drop for TaskHandler {
-    fn drop(&mut self) {
-        let task_ids: Vec<usize> = self.children.keys().cloned().collect();
-        for task_id in task_ids {
-            let mut child = self
-                .children
-                .remove(&task_id)
-                .expect("Failed killing children");
-            info!("Killing child {}", task_id);
-            kill_child(task_id, &mut child, true);
         }
     }
 }
@@ -435,7 +419,7 @@ impl TaskHandler {
     /// This function is also responsible for waiting
     fn receive_commands(&mut self) {
         // Sleep for a few milliseconds. We don't want to hurt the CPU.
-        let timeout = Duration::from_millis(100);
+        let timeout = Duration::from_millis(200);
         // Don't use recv_timeout for now, until this bug get's fixed.
         // https://github.com/rust-lang/rust/issues/39364
         //match self.receiver.recv_timeout(timeout) {
@@ -453,6 +437,7 @@ impl TaskHandler {
             Message::Kill(message) => self.kill(message),
             Message::Send(message) => self.send(message),
             Message::Reset(children) => self.reset(children),
+            Message::DaemonShutdown => self.shutdown(),
             _ => info!("Received unhandled message {:?}", message),
         }
     }
@@ -800,5 +785,28 @@ impl TaskHandler {
         for id in finished.iter() {
             self.callbacks.remove(*id);
         }
+    }
+
+    /// Gracefully shutdown the task handler.
+    /// This includes killing all child processes
+    ///
+    /// Afterwards we can actually exit the program
+    fn shutdown(&mut self) {
+        info!("Killing all children due to shutdown.");
+
+        let task_ids: Vec<usize> = self.children.keys().cloned().collect();
+        for task_id in task_ids {
+            let child = self.children.remove(&task_id);
+
+            if let Some(mut child) = child {
+                info!("Killing child {}", &task_id);
+                kill_child(task_id, &mut child, true);
+            } else {
+                error!("Fail to get child {} for killing", &task_id);
+            }
+        }
+
+        // Exit pueued
+        std::process::exit(0)
     }
 }

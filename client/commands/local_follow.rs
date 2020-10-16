@@ -1,11 +1,12 @@
 use anyhow::{bail, Result};
-use async_std::net::TcpStream;
+
+use pueue::protocol::Socket;
 
 use crate::commands::get_state;
 use crate::output::follow_task_logs;
 
 pub async fn local_follow(
-    socket: &mut TcpStream,
+    socket: &mut Socket,
     pueue_directory: String,
     task_id: &Option<usize>,
     err: bool,
@@ -16,7 +17,7 @@ pub async fn local_follow(
     let task_id = match task_id {
         Some(task_id) => *task_id,
         None => {
-            let state = get_state(&mut socket.clone()).await?;
+            let state = get_state(socket).await?;
             let running_ids: Vec<_> = state
                 .tasks
                 .iter()

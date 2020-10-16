@@ -3,18 +3,17 @@ use std::io::Read;
 use std::time::Duration;
 
 use anyhow::Result;
-use async_std::net::TcpStream;
 use async_std::task::sleep;
 
 use pueue::log::*;
 use pueue::message::*;
-use pueue::protocol::send_message;
+use pueue::protocol::{send_message, Socket};
 use pueue::state::SharedState;
 
 /// Handle the continuous stream of a message.
 pub async fn handle_follow(
     pueue_directory: &str,
-    socket: &mut TcpStream,
+    socket: &mut Socket,
     state: &SharedState,
     message: StreamRequestMessage,
 ) -> Result<Message> {

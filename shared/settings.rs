@@ -4,24 +4,30 @@ use std::io::prelude::*;
 
 use anyhow::{anyhow, Result};
 use config::Config;
-use log::info;
 use rand::Rng;
 use serde_derive::{Deserialize, Serialize};
 
 use crate::platform::directories::*;
 
+/// All settings which are used by both, the client and the daemon
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct Shared {
+    pub port: String,
+    pub secret: String,
+    pub pueue_directory: String,
+    pub use_unix_socket: bool,
+    pub unix_socket_path: String,
+}
+
+/// All settings which are used by the client
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Client {
-    pub daemon_port: String,
-    pub secret: String,
     pub read_local_logs: bool,
 }
 
+/// All settings which are used by the daemon
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Daemon {
-    pub pueue_directory: String,
-    pub port: String,
-    pub secret: String,
     pub default_parallel_tasks: usize,
     #[serde(default = "pause_on_failure_default")]
     pub pause_on_failure: bool,
@@ -33,9 +39,9 @@ fn pause_on_failure_default() -> bool {
     false
 }
 
-/// The struct representation of a full configuration.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Settings {
+    pub shared: Shared,
     pub client: Client,
     pub daemon: Daemon,
 }
@@ -48,18 +54,19 @@ impl Settings {
     /// The local config is located at "~/.config/pueue.yml".
     pub fn new() -> Result<Settings> {
         let mut config = Config::new();
-        let random_secret = gen_random_secret();
 
-        config.set_default("client.daemon_port", "6924")?;
-        config.set_default("client.secret", random_secret.clone())?;
+        config.set_default("shared.port", "6924")?;
+        config.set_default("shared.secret", gen_random_secret())?;
+        config.set_default("shared.pueue_directory", default_pueue_path()?)?;
+        config.set_default("shared.use_unix_socket", false)?;
+        config.set_default("shared.unix_socket_path", get_unix_socket_path()?)?;
+
+        // Client specific config
         config.set_default("client.read_local_logs", true)?;
 
-        // Set pueue config defaults
-        config.set_default("daemon.pueue_directory", default_pueue_path()?)?;
-        config.set_default("daemon.port", "6924")?;
+        // Daemon specific config
         config.set_default("daemon.default_parallel_tasks", 1)?;
         config.set_default("daemon.pause_on_failure", false)?;
-        config.set_default("daemon.secret", random_secret)?;
         config.set_default("daemon.callback", None::<String>)?;
         config.set_default("daemon.groups", HashMap::<String, i64>::new())?;
 
@@ -91,13 +98,16 @@ impl Settings {
     }
 }
 
+/// Get all possible configuration paths and check if there are
+/// configuration files at those locations.
+/// All configs will be merged by importance.
 fn parse_config(settings: &mut Config) -> Result<()> {
-    info!("Parsing config files");
+    //println!("Parsing config files");
     for directory in get_config_directories()?.into_iter() {
         let path = directory.join("pueue.yml");
-        info!("Checking path: {:?}", &path);
+        //println!("Checking path: {:?}", &path);
         if path.exists() {
-            info!("Parsing config file at: {:?}", path);
+            //println!("Parsing config file at: {:?}", path);
             let config_file = config::File::with_name(path.to_str().unwrap());
             settings.merge(config_file)?;
         }
@@ -106,6 +116,7 @@ fn parse_config(settings: &mut Config) -> Result<()> {
     Ok(())
 }
 
+/// Simple helper function to generate a random secret
 fn gen_random_secret() -> String {
     const CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ\
                             abcdefghijklmnopqrstuvwxyz\

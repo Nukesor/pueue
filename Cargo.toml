@@ -29,9 +29,11 @@ path = "shared/lib.rs"
 [dependencies]
 anyhow = "1"
 async-std = { version = "1", features = ["attributes", "std"] }
+async-trait = "0.1"
 dirs = "3"
 chrono = { version = "^0.4", features = ["serde"] }
 chrono-english = "^0.1.0"
+ctrlc = { version = "3", features = ["termination"] }
 rand = "^0.7"
 strum = "^0.19"
 strum_macros = "^0.19"
@@ -55,8 +57,8 @@ comfy-table= "^1"
 tempfile = "^3"
 
 [target.'cfg(not(windows))'.dependencies]
-users = "^0.10"
-nix = "^0.18"
+users = "^0.11"
+nix = "^0.19"
 
 [target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]
 procfs = { version = "0.8", default-features = false }
