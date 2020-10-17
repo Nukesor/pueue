@@ -13,28 +13,28 @@ This version adds breaking changes:
 
 ### Added
 
-- Unix socket support
+- Unix socket support (#90)
 
 ### Fixed
 
-- Fixed panic, when killing and immediately removing a task.
-- Fixed broken non-responsive daemon, on panic in threads.
-- Don't allow empty commands on `add`
+- Fixed panic, when killing and immediately removing a task. (#119)
+- Fixed broken non-responsive daemon, on panic in threads. (#119)
+- Don't allow empty commands on `add`.
 
 ## [0.7.2] - 2020-10-05
 
 ### Fixed
 
-- Non-existing tasks were displayed as successfully removed.
+- Non-existing tasks were displayed as successfully removed. (#108)
 - Remove child process handling logic for MacOs, since the library simply doesn't support this.
-- Remove unneeded `config` features and reduce compile time by ~10%. Contribution by [LovecraftianHorror](https://github.com/LovecraftianHorror)
-- Remove futures-timers, effectively reducing compile time by ~14%.
-- Update to comfy-table v1.1.0, reducing compile time by another ~10%.
+- Remove unneeded `config` features and reduce compile time by ~10%. Contribution by [LovecraftianHorror](https://github.com/LovecraftianHorror) (#112)
+- Remove futures-timers, effectively reducing compile time by ~14%. (#112)
+- Update to comfy-table v1.1.0, reducing compile time by another ~10%. (#112)
 
 ### Changed
 
 - Linux process handling now always sends signals to it's direct children, if the root process is a `sh -c` process.
-    Previously, this behavior was somewhat ambiguous and inconsistent.
+    Previously, this behavior was somewhat ambiguous and inconsistent. (#109)
 
 ### Added
 
