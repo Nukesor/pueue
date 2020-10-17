@@ -17,6 +17,8 @@ This version adds breaking changes:
 
 ### Fixed
 
+- Fixed panic, when killing and immediately removing a task.
+- Fixed broken non-responsive daemon, on panic in threads.
 - Don't allow empty commands on `add`
 
 ## [0.7.2] - 2020-10-05

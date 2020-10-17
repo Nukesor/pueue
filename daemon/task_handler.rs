@@ -350,18 +350,37 @@ impl TaskHandler {
         let mut failed_task_exists = false;
 
         for task_id in finished.iter() {
-            let mut child = self.children.remove(task_id).expect("Child went missing");
+            let mut child = self
+                .children
+                .remove(task_id)
+                .expect("Child went missing while finishing up");
 
-            let exit_code = child.wait().unwrap().code();
-            let mut task = state.tasks.get_mut(&task_id).unwrap();
-            // Only processes with exit code 0 exited successfully
-            if exit_code == Some(0) {
-                task.result = Some(TaskResult::Success);
-            // Tasks with an exit code != 0 did fail in some kind of way
-            } else if let Some(exit_code) = exit_code {
-                task.result = Some(TaskResult::Failed(exit_code));
-                failed_task_exists = true;
-            }
+            let exit_code = match child.wait() {
+                Ok(exit_code) => exit_code.code(),
+                Err(err) => {
+                    error!(
+                        "Failed to wait for child {} while finishing up: {:?}",
+                        task_id, err
+                    );
+                    Some(1)
+                }
+            };
+
+            let mut task = state
+                .tasks
+                .get_mut(&task_id)
+                .expect("Task was removed before child process has finished!");
+
+            // Processes with exit code 0 exited successfully
+            // Processes with `None` have been killed by a Signal
+            task.result = match exit_code {
+                Some(0) => Some(TaskResult::Success),
+                Some(exit_code) => {
+                    failed_task_exists = true;
+                    Some(TaskResult::Failed(exit_code))
+                }
+                None => Some(TaskResult::Killed),
+            };
 
             task.status = TaskStatus::Done;
             task.end = Some(Local::now());
@@ -658,14 +677,7 @@ impl TaskHandler {
     /// Triggered on `reset` and `kill`.
     fn kill_task(&mut self, task_id: usize, kill_children: bool) {
         if let Some(mut child) = self.children.get_mut(&task_id) {
-            if kill_child(task_id, &mut child, kill_children) {
-                // Already mark the task as killed over here.
-                // It's hard to distinguish whether it's killed later on.
-                let mut state = self.state.lock().unwrap();
-                let mut task = state.tasks.get_mut(&task_id).unwrap();
-                task.status = TaskStatus::Done;
-                task.result = Some(TaskResult::Killed);
-            }
+            kill_child(task_id, &mut child, kill_children);
         } else {
             warn!("Tried to kill non-existing child: {}", task_id);
         }

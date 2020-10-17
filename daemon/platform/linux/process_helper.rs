@@ -28,6 +28,9 @@ pub fn compile_shell_command(command_string: &str) -> Command {
 /// to the root process directly OR to all it's child processes.
 /// This also affects the `--children` flag on all commands. We then have to either send the signal
 /// to all direct children or to all of the childrens' children.
+///
+/// Returns `Ok(true)`, if everything went alright
+/// Returns `Ok(false)`, if the process went away while we tried to send the signal.
 pub fn send_signal_to_child(
     child: &Child,
     action: &ProcessAction,
@@ -71,6 +74,9 @@ pub fn send_signal_to_child(
 ///
 /// Sadly, this needs some extra handling. Check the docstring of `send_signal_to_child` for
 /// additional information on why this has to be done.
+///
+/// Returns `Ok(true)`, if everything went alright
+/// Returns `Ok(false)`, if the process went away while we tried to send the signal.
 pub fn kill_child(task_id: usize, child: &mut Child, kill_children: bool) -> bool {
     let pid: i32 = child.id().try_into().unwrap();
 
