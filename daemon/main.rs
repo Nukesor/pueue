@@ -3,7 +3,6 @@ use std::path::Path;
 use std::process::Command;
 use std::sync::mpsc::channel;
 use std::sync::{Arc, Mutex};
-use std::thread;
 
 use anyhow::Result;
 use simplelog::{Config, LevelFilter, SimpleLogger};
@@ -82,7 +81,14 @@ async fn main() -> Result<()> {
             .expect("Failed to send Message to TaskHandler on Shutdown");
     })?;
 
-    thread::spawn(move || {
+    let orig_hook = std::panic::take_hook();
+    std::panic::set_hook(Box::new(move |panic_info| {
+        // invoke the default handler and exit the process
+        orig_hook(panic_info);
+        std::process::exit(1);
+    }));
+
+    std::thread::spawn(move || {
         task_handler.run();
     });
 
