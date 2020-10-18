@@ -16,11 +16,19 @@ This version adds breaking changes:
 - Unix socket support (#90)
 - Warning messages for removing/killing tasks (#111) by [Julian Kaindl](https://github.com/kaindljulian)
 
+### Changed
+
+- Never create a default config when starting the client. Only starting the daemon can do that.
+- Windows: The configuration file will now also be placed in `%APPDATA%\Local\pueue`.
+
 ### Fixed
 
 - Fixed panic, when killing and immediately removing a task. (#119)
 - Fixed broken non-responsive daemon, on panic in threads. (#119)
 - Don't allow empty commands on `add`.
+- The client will never persist/write the configuration file. (#116)
+- The daemon will only persist configuration file on startup, if anything changes. (#116)
+- (Probably fixed) Malformed configuration file. (#116)
 
 ## [0.7.2] - 2020-10-05
 

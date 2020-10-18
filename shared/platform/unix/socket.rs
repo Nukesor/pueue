@@ -44,6 +44,12 @@ pub type Socket = Box<dyn GenericSocket>;
 /// which depends on the parameters.
 pub async fn get_client(unix_socket_path: Option<String>, port: Option<String>) -> Result<Socket> {
     if let Some(socket_path) = unix_socket_path {
+        if !PathBuf::from(&socket_path).exists() {
+            bail!(
+                "Couldn't find unix socket at path {:?}. Is the daemon running yet?",
+                socket_path
+            );
+        }
         let stream = UnixStream::connect(socket_path).await?;
         return Ok(Box::new(stream));
     }

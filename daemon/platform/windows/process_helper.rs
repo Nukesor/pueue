@@ -18,10 +18,14 @@ pub fn compile_shell_command(command_string: &str) -> Command {
 /// Send a signal to a windows process.
 pub fn send_signal_to_child(
     _child: &Child,
-    _action: &ProcessAction,
+    action: &ProcessAction,
     _children: bool,
 ) -> Result<bool> {
-    bail!("not supported on windows.")
+    match action {
+        ProcessAction::Pause => bail!("Pause is not yet supported on windows."),
+        ProcessAction::Resume => bail!("Resume is not yet supported on windows."),
+        ProcessAction::Kill => bail!("Kill is not yet supported on windows."),
+    }
 }
 
 /// Kill a child process
