@@ -18,6 +18,7 @@ This version adds breaking changes:
 ### Changed
 
 - Never create a default config when starting the client. Only starting the daemon can do that.
+- Windows: The configuration file will now also be placed in `%APPDATA%\Local\pueue`.
 
 ### Fixed
 

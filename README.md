@@ -247,8 +247,13 @@ SUBCOMMANDS:
 
 ## Configs
 
-The configuration file of Pueue is located in `$CARGO_HOME/pueue.yml`.  
-The default will be generated after starting pueue once.
+The configuration file of Pueue is located in these directories:
+
+- Linux: `$HOME/.config/pueue/pueue.yml`.  
+- MacOs: `$HOME/Library/Preferences/pueue/pueue.yml`
+- Windows: `%APPDATA%\Local\pueue`
+
+A default configuration file will be generated after starting `pueued` for the first time.
 
 ```yaml
 ---

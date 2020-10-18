@@ -12,15 +12,14 @@ fn get_home_dir() -> Result<PathBuf> {
 }
 
 pub fn default_config_directory() -> Result<PathBuf> {
-    Ok(get_home_dir()?.join("pueue"))
+    Ok(dirs::data_local_dir()
+        .ok_or(anyhow!("Couldn't resolve app data directory"))?
+        .join("pueue"))
 }
 
 pub fn get_config_directories() -> Result<Vec<PathBuf>> {
     Ok(vec![
         // Windows Terminal stores its config file in the "AppData/Local" directory.
-        dirs::data_local_dir()
-            .ok_or(anyhow!("Couldn't resolve app data directory"))?
-            .join("pueue"),
         default_config_directory()?,
         Path::new(".").to_path_buf(),
     ])
