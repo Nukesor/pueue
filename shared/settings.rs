@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::fs::{create_dir_all, File};
 use std::io::prelude::*;
 
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, bail, Result};
 use config::Config;
 use rand::Rng;
 use serde_derive::{Deserialize, Serialize};
@@ -52,7 +52,9 @@ impl Settings {
     /// If a local config file already exists it is parsed and
     /// overwrites the default option values.
     /// The local config is located at "~/.config/pueue.yml".
-    pub fn new() -> Result<Settings> {
+    ///
+    /// If `require_config` is `true`, an error will be thrown, if no configuration file can be found.
+    pub fn new(require_config: bool) -> Result<Settings> {
         let mut config = Config::new();
 
         config.set_default("shared.port", "6924")?;
@@ -71,7 +73,7 @@ impl Settings {
         config.set_default("daemon.groups", HashMap::<String, i64>::new())?;
 
         // Add in the home config file
-        parse_config(&mut config)?;
+        parse_config(&mut config, require_config)?;
 
         // Try to can deserialize the entire configuration
         Ok(config.try_into()?)
@@ -101,16 +103,24 @@ impl Settings {
 /// Get all possible configuration paths and check if there are
 /// configuration files at those locations.
 /// All configs will be merged by importance.
-fn parse_config(settings: &mut Config) -> Result<()> {
+///
+/// If `require_config` is `true`, an error will be thrown, if no configuration file can be found.
+fn parse_config(settings: &mut Config, require_config: bool) -> Result<()> {
+    let mut config_found = false;
     //println!("Parsing config files");
     for directory in get_config_directories()?.into_iter() {
         let path = directory.join("pueue.yml");
         //println!("Checking path: {:?}", &path);
         if path.exists() {
-            //println!("Parsing config file at: {:?}", path);
+            //println!("Found config file at: {:?}", path);
+            config_found = true;
             let config_file = config::File::with_name(path.to_str().unwrap());
             settings.merge(config_file)?;
         }
+    }
+
+    if require_config && !config_found {
+        bail!("Couldn't find a configuration file. Did you start the daemon yet?");
     }
 
     Ok(())

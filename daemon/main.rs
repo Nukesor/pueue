@@ -28,7 +28,7 @@ mod task_handler;
 #[async_std::main]
 async fn main() -> Result<()> {
     // Get settings from the configuration file and the program defaults.
-    let settings = Settings::new()?;
+    let settings = Settings::new(false)?;
     // Immediately save it. This also creates the save file in case it didn't exist yet.
     if let Err(error) = settings.save() {
         println!("Failed saving config file.");

@@ -15,6 +15,10 @@ This version adds breaking changes:
 
 - Unix socket support (#90)
 
+### Changed
+
+- Never create a default config when starting the client. Only starting the daemon can do that.
+
 ### Fixed
 
 - Fixed panic, when killing and immediately removing a task. (#119)
