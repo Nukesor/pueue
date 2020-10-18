@@ -185,13 +185,13 @@ impl Client {
 
     /// Prints a warning and prompt for given action and tasks.
     /// Returns `Ok(())` if the action was confirmed.
-    fn handle_user_confirmation(&self, action: &str, task_ids: &Vec<usize>) -> Result<()> {
+    fn handle_user_confirmation(&self, action: &str, task_ids: &[usize]) -> Result<()> {
         // printing warning and prompt
         println!(
             "You are trying to {}: {}",
             action,
             task_ids
-                .into_iter()
+                .iter()
                 .map(|t| format!("task{}", t.to_string()))
                 .collect::<Vec<String>>()
                 .join(", ")
@@ -202,7 +202,7 @@ impl Client {
         io::stdout().flush().unwrap();
         io::stdin().read_line(&mut input)?;
 
-        if input.starts_with("n") || input.starts_with("N") {
+        if input.starts_with('n') || input.starts_with('N') {
             bail!("User did not confirm");
         }
 
