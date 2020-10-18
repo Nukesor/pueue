@@ -185,13 +185,16 @@ impl Client {
 
     /// Prints a warning and prompt for given action and tasks.
     /// Returns `Ok(())` if the action was confirmed.
-    fn handle_user_confirmation(&self, action :&str, task_ids: &Vec<usize>) -> Result<()> {
+    fn handle_user_confirmation(&self, action: &str, task_ids: &Vec<usize>) -> Result<()> {
         // printing warning and prompt
-        println!("You are trying to {}: {}", action, task_ids
-            .into_iter()
-            .map(|t| format!("task{}", t.to_string()))
-            .collect::<Vec<String>>()
-            .join(", ")
+        println!(
+            "You are trying to {}: {}",
+            action,
+            task_ids
+                .into_iter()
+                .map(|t| format!("task{}", t.to_string()))
+                .collect::<Vec<String>>()
+                .join(", ")
         );
         print!("\nDo you want to continue [Y/n]: ");
 
@@ -245,11 +248,11 @@ impl Client {
                 if self.settings.client.print_remove_warnings {
                     match self.handle_user_confirmation("remove", task_ids) {
                         Ok(_) => (),
-                        Err(_) => std::process::exit(1)
+                        Err(_) => std::process::exit(1),
                     }
                 }
                 Ok(Message::Remove(task_ids.clone()))
-            },
+            }
             SubCommand::Stash { task_ids } => Ok(Message::Stash(task_ids.clone())),
             SubCommand::Switch {
                 task_id_1,
@@ -311,7 +314,7 @@ impl Client {
                 if self.settings.client.print_remove_warnings {
                     match self.handle_user_confirmation("kill", task_ids) {
                         Ok(_) => (),
-                        Err(_) => std::process::exit(1)
+                        Err(_) => std::process::exit(1),
                     }
                 }
                 let message = KillMessage {
