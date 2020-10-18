@@ -25,8 +25,9 @@ This version adds breaking changes:
 - Fixed panic, when killing and immediately removing a task. (#119)
 - Fixed broken non-responsive daemon, on panic in threads. (#119)
 - Don't allow empty commands on `add`.
-- The client will never persist/write the configuration file.
-- The daemon will only persist configuration file on startup, if anything changes.
+- The client will never persist/write the configuration file. (#116)
+- The daemon will only persist configuration file on startup, if anything changes. (#116)
+- (Probably fixed) Malformed configuration file. (#116)
 
 ## [0.7.2] - 2020-10-05
 
