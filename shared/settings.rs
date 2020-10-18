@@ -4,6 +4,7 @@ use std::io::prelude::*;
 
 use anyhow::{anyhow, bail, Result};
 use config::Config;
+use log::info;
 use rand::Rng;
 use serde_derive::{Deserialize, Serialize};
 
@@ -116,12 +117,12 @@ impl Settings {
 /// If `require_config` is `true`, an error will be thrown, if no configuration file can be found.
 fn parse_config(settings: &mut Config, require_config: bool) -> Result<()> {
     let mut config_found = false;
-    //println!("Parsing config files");
+    info!("Parsing config files");
     for directory in get_config_directories()?.into_iter() {
         let path = directory.join("pueue.yml");
-        //println!("Checking path: {:?}", &path);
+        info!("Checking path: {:?}", &path);
         if path.exists() {
-            //println!("Found config file at: {:?}", path);
+            info!("Found config file at: {:?}", path);
             config_found = true;
             let config_file = config::File::with_name(path.to_str().unwrap());
             settings.merge(config_file)?;

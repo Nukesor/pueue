@@ -15,22 +15,8 @@ use crate::client::Client;
 
 #[async_std::main]
 async fn main() -> Result<()> {
-    // Try to read settings from the configuration file.
-    let settings = Settings::new(true)?;
-
     // Parse commandline options.
     let opt = Opt::from_args();
-
-    // Set the verbosity level for the client app.
-    if opt.verbose >= 3 {
-        SimpleLogger::init(LevelFilter::Debug, Config::default())?;
-    } else if opt.verbose == 2 {
-        SimpleLogger::init(LevelFilter::Info, Config::default())?;
-    } else if opt.verbose == 1 {
-        SimpleLogger::init(LevelFilter::Warn, Config::default())?;
-    } else if opt.verbose == 0 {
-        SimpleLogger::init(LevelFilter::Error, Config::default())?;
-    }
 
     if let SubCommand::Completions {
         shell,
@@ -41,6 +27,20 @@ async fn main() -> Result<()> {
         clap.gen_completions("pueue", *shell, output_directory);
         return Ok(());
     }
+
+    // Set the verbosity level of the logger.
+    if opt.verbose >= 3 {
+        SimpleLogger::init(LevelFilter::Debug, Config::default())?;
+    } else if opt.verbose == 2 {
+        SimpleLogger::init(LevelFilter::Info, Config::default())?;
+    } else if opt.verbose == 1 {
+        SimpleLogger::init(LevelFilter::Warn, Config::default())?;
+    } else if opt.verbose == 0 {
+        SimpleLogger::init(LevelFilter::Error, Config::default())?;
+    }
+
+    // Try to read settings from the configuration file.
+    let settings = Settings::new(true)?;
 
     // Create client to talk with the daemon and connect.
     let mut client = Client::new(settings, opt).await?;

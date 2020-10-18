@@ -27,6 +27,24 @@ mod task_handler;
 
 #[async_std::main]
 async fn main() -> Result<()> {
+    // Parse commandline options.
+    let opt = Opt::from_args();
+
+    if opt.daemonize {
+        fork_daemon(&opt)?;
+    }
+
+    // Set the verbosity level for the client app.
+    if opt.verbose >= 3 {
+        SimpleLogger::init(LevelFilter::Debug, Config::default())?;
+    } else if opt.verbose == 2 {
+        SimpleLogger::init(LevelFilter::Info, Config::default())?;
+    } else if opt.verbose == 1 {
+        SimpleLogger::init(LevelFilter::Warn, Config::default())?;
+    } else if opt.verbose == 0 {
+        SimpleLogger::init(LevelFilter::Error, Config::default())?;
+    }
+
     // Try to read settings from the configuration file.
     let settings = match Settings::read(false) {
         Ok(settings) => settings,
@@ -45,24 +63,6 @@ async fn main() -> Result<()> {
             settings
         }
     };
-
-    // Parse commandline options.
-    let opt = Opt::from_args();
-
-    if opt.daemonize {
-        fork_daemon(&opt)?;
-    }
-
-    // Set the verbosity level for the client app.
-    if opt.verbose >= 3 {
-        SimpleLogger::init(LevelFilter::Debug, Config::default())?;
-    } else if opt.verbose == 2 {
-        SimpleLogger::init(LevelFilter::Info, Config::default())?;
-    } else if opt.verbose == 1 {
-        SimpleLogger::init(LevelFilter::Warn, Config::default())?;
-    } else if opt.verbose == 0 {
-        SimpleLogger::init(LevelFilter::Error, Config::default())?;
-    }
 
     init_directories(&settings.shared.pueue_directory);
 
