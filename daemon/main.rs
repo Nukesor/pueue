@@ -27,13 +27,24 @@ mod task_handler;
 
 #[async_std::main]
 async fn main() -> Result<()> {
-    // Get settings from the configuration file and the program defaults.
-    let settings = Settings::new(false)?;
-    // Immediately save it. This also creates the save file in case it didn't exist yet.
-    if let Err(error) = settings.save() {
-        println!("Failed saving config file.");
-        println!("{:?}", error);
-    }
+    // Try to read settings from the configuration file.
+    let settings = match Settings::read(false) {
+        Ok(settings) => settings,
+        Err(_) => {
+            // There's something wrong with the config file or something's missing.
+            // Try to read the config and fill missing values with defaults.
+            // This might be possible on version upgrade or first run.
+            let settings = Settings::new(false)?;
+
+            // Since we needed to add values to the configuration, we have to save it.
+            // This also creates the save file in case it didn't exist yet.
+            if let Err(error) = settings.save() {
+                println!("Failed saving config file.");
+                println!("{:?}", error);
+            }
+            settings
+        }
+    };
 
     // Parse commandline options.
     let opt = Opt::from_args();

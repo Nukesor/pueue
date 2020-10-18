@@ -29,14 +29,9 @@ pub struct Client {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Daemon {
     pub default_parallel_tasks: usize,
-    #[serde(default = "pause_on_failure_default")]
     pub pause_on_failure: bool,
     pub callback: Option<String>,
     pub groups: HashMap<String, usize>,
-}
-
-fn pause_on_failure_default() -> bool {
-    false
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -73,6 +68,20 @@ impl Settings {
         config.set_default("daemon.groups", HashMap::<String, i64>::new())?;
 
         // Add in the home config file
+        parse_config(&mut config, require_config)?;
+
+        // Try to can deserialize the entire configuration
+        Ok(config.try_into()?)
+    }
+
+    /// Try to read the config file without any default values.
+    /// This is done by the daemon on startup.
+    /// If the file can be read without any need for defaults, we don't have to persist it
+    /// afterwards.
+    pub fn read(require_config: bool) -> Result<Settings> {
+        let mut config = Config::new();
+
+        // Merge configuration files we can find in ascending order.
         parse_config(&mut config, require_config)?;
 
         // Try to can deserialize the entire configuration

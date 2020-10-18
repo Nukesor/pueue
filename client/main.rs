@@ -15,7 +15,7 @@ use crate::client::Client;
 
 #[async_std::main]
 async fn main() -> Result<()> {
-    // Get settings from the configuration file and the program defaults.
+    // Try to read settings from the configuration file.
     let settings = Settings::new(true)?;
 
     // Parse commandline options.
