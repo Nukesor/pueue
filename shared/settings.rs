@@ -64,7 +64,7 @@ impl Settings {
 
         // Client specific config
         config.set_default("client.read_local_logs", true)?;
-        config.set_default("client.read_local_logs", false)?;
+        config.set_default("client.print_remove_warnings", false)?;
 
         // Daemon specific config
         config.set_default("daemon.default_parallel_tasks", 1)?;
