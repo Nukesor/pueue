@@ -34,7 +34,7 @@ async fn main() -> Result<()> {
         fork_daemon(&opt)?;
     }
 
-    // Set the verbosity level for the client app.
+    // Set the verbosity level of the logger.
     if opt.verbose >= 3 {
         SimpleLogger::init(LevelFilter::Debug, Config::default())?;
     } else if opt.verbose == 2 {
