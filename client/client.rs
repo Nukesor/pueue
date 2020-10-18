@@ -205,17 +205,21 @@ impl Client {
             input.clear();
             io::stdin().read_line(&mut input)?;
 
-            match input.chars().next().unwrap_or("y") {
-                'N' | 'n' => { 
+            match input.chars().next().unwrap() {
+                'N' | 'n' => {
                     println!("Aborted!");
                     std::process::exit(1);
-                },
+                }
                 '\n' | 'Y' | 'y' => {
-                    return Ok(());
-                },
-                _ => { continue; }
+                    break;
+                }
+                _ => {
+                    continue;
+                }
             }
         }
+
+        Ok(())
     }
 
     /// Convert the cli command into the message that's being sent to the server,
@@ -255,7 +259,7 @@ impl Client {
             }
             SubCommand::Remove { task_ids } => {
                 if self.settings.client.print_remove_warnings {
-                    self.handle_user_confirmation("remove", task_ids);
+                    self.handle_user_confirmation("remove", task_ids)?;
                 }
                 Ok(Message::Remove(task_ids.clone()))
             }
@@ -318,7 +322,7 @@ impl Client {
                 children,
             } => {
                 if self.settings.client.print_remove_warnings {
-                    self.handle_user_confirmation("kill", task_ids);
+                    self.handle_user_confirmation("kill", task_ids)?;
                 }
                 let message = KillMessage {
                     task_ids: task_ids.clone(),
