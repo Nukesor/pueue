@@ -196,17 +196,26 @@ impl Client {
                 .collect::<Vec<String>>()
                 .join(", ")
         );
-        print!("\nDo you want to continue [Y/n]: ");
 
         let mut input = String::new();
-        io::stdout().flush().unwrap();
-        io::stdin().read_line(&mut input)?;
 
-        if input.starts_with('n') || input.starts_with('N') {
-            bail!("User did not confirm");
+        loop {
+            print!("Do you want to continue [Y/n]: ");
+            io::stdout().flush().unwrap();
+            input.clear();
+            io::stdin().read_line(&mut input)?;
+
+            match input.chars().next().unwrap_or("y") {
+                'N' | 'n' => { 
+                    println!("Aborted!");
+                    std::process::exit(1);
+                },
+                '\n' | 'Y' | 'y' => {
+                    return Ok(());
+                },
+                _ => { continue; }
+            }
         }
-
-        Ok(())
     }
 
     /// Convert the cli command into the message that's being sent to the server,
@@ -246,10 +255,7 @@ impl Client {
             }
             SubCommand::Remove { task_ids } => {
                 if self.settings.client.print_remove_warnings {
-                    match self.handle_user_confirmation("remove", task_ids) {
-                        Ok(_) => (),
-                        Err(_) => std::process::exit(1),
-                    }
+                    self.handle_user_confirmation("remove", task_ids);
                 }
                 Ok(Message::Remove(task_ids.clone()))
             }
@@ -312,10 +318,7 @@ impl Client {
                 children,
             } => {
                 if self.settings.client.print_remove_warnings {
-                    match self.handle_user_confirmation("kill", task_ids) {
-                        Ok(_) => (),
-                        Err(_) => std::process::exit(1),
-                    }
+                    self.handle_user_confirmation("kill", task_ids);
                 }
                 let message = KillMessage {
                     task_ids: task_ids.clone(),
