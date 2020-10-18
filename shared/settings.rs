@@ -23,6 +23,7 @@ pub struct Shared {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Client {
     pub read_local_logs: bool,
+    pub print_remove_warnings: bool,
 }
 
 /// All settings which are used by the daemon
@@ -63,6 +64,7 @@ impl Settings {
 
         // Client specific config
         config.set_default("client.read_local_logs", true)?;
+        config.set_default("client.read_local_logs", false)?;
 
         // Daemon specific config
         config.set_default("daemon.default_parallel_tasks", 1)?;

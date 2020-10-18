@@ -183,6 +183,29 @@ impl Client {
         false
     }
 
+    /// Prints a warning and prompt for given action and tasks.
+    /// Returns `Ok(())` if the action was confirmed.
+    fn handle_user_confirmation(&self, action :&str, task_ids: &Vec<usize>) -> Result<()> {
+        // printing warning and prompt
+        println!("You are trying to {}: {}", action, task_ids
+            .into_iter()
+            .map(|t| format!("task{}", t.to_string()))
+            .collect::<Vec<String>>()
+            .join(", ")
+        );
+        print!("\nDo you want to continue [Y/n]: ");
+
+        let mut input = String::new();
+        io::stdout().flush().unwrap();
+        io::stdin().read_line(&mut input)?;
+
+        if input.starts_with("n") || input.starts_with("N") {
+            bail!("User did not confirm");
+        }
+
+        Ok(())
+    }
+
     /// Convert the cli command into the message that's being sent to the server,
     /// so it can be understood by the daemon.
     fn get_message_from_opt(&self) -> Result<Message> {
@@ -218,7 +241,15 @@ impl Client {
                     ignore_aliases: false,
                 }))
             }
-            SubCommand::Remove { task_ids } => Ok(Message::Remove(task_ids.clone())),
+            SubCommand::Remove { task_ids } => {
+                if self.settings.client.print_remove_warnings {
+                    match self.handle_user_confirmation("remove", task_ids) {
+                        Ok(_) => (),
+                        Err(_) => std::process::exit(1)
+                    }
+                }
+                Ok(Message::Remove(task_ids.clone()))
+            },
             SubCommand::Stash { task_ids } => Ok(Message::Stash(task_ids.clone())),
             SubCommand::Switch {
                 task_id_1,
@@ -277,6 +308,12 @@ impl Client {
                 all,
                 children,
             } => {
+                if self.settings.client.print_remove_warnings {
+                    match self.handle_user_confirmation("kill", task_ids) {
+                        Ok(_) => (),
+                        Err(_) => std::process::exit(1)
+                    }
+                }
                 let message = KillMessage {
                     task_ids: task_ids.clone(),
                     group: group.clone(),
