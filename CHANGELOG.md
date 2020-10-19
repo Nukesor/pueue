@@ -14,6 +14,7 @@ This version adds breaking changes:
 ### Added
 
 - Unix socket support (#90)
+- Warning messages for removing/killing tasks (#111) by [Julian Kaindl](https://github.com/kaindljulian)
 
 ### Changed
 
@@ -42,7 +43,7 @@ This version adds breaking changes:
 ### Changed
 
 - Linux process handling now always sends signals to it's direct children, if the root process is a `sh -c` process.
-    Previously, this behavior was somewhat ambiguous and inconsistent. (#109)
+  Previously, this behavior was somewhat ambiguous and inconsistent. (#109)
 
 ### Added
 
@@ -94,8 +95,8 @@ This version adds breaking changes:
 ### Added
 
 - `--children/-c` flag for `start` and `stop`.
-    This sends the `SIGSTOP`/`SIGSTART` signal not only to the main process of a task, but also to direct children.
-    This is, for instance, useful if you're starting tasks via a shell script.
+  This sends the `SIGSTOP`/`SIGSTART` signal not only to the main process of a task, but also to direct children.
+  This is, for instance, useful if you're starting tasks via a shell script.
 
 ### Fixed
 
@@ -106,8 +107,8 @@ This version adds breaking changes:
 ### Added
 
 - Groups! Tasks can now be assigned to a group.
-    Each group acts as their own queue and each group has their own setting for parallel task execution.
-    Groups can also be paused/resumed individually.
+  Each group acts as their own queue and each group has their own setting for parallel task execution.
+  Groups can also be paused/resumed individually.
 - Added `--group` flag for `status`. This will only print tasks of a specific group
 - Add new flags `--default` to `kill`. With this flag only tasks in the default queue will be affected.
 - Users can now specify a custom callback that'll be called whenever tasks finish.
@@ -125,14 +126,14 @@ This version adds breaking changes:
 ### Added
 
 - Dependencies! This adds the `--after [ids]` option. Implemented by [tinou98](https://github.com/tinou98).  
-    Task with this option will only be started, if all specified dependencies successfully finish.
-    Tasks with failed dependencies will fail as well.
+   Task with this option will only be started, if all specified dependencies successfully finish.
+  Tasks with failed dependencies will fail as well.
 - New state `FailedToStart`. Used if the process cannot be started.
 - New state `DependencyFailed`. Used if any dependency of a task fails.
 - New config option `read_local_logs`. Default: `true`
-    We assume that the daemon and client run on the same machine by default.
-    This removes the need to send logs via socket, since the client can directly read the log files.  
-    Set to `false` if you, for instance, use Pueue in combination with SSH port forwarding.
+  We assume that the daemon and client run on the same machine by default.
+  This removes the need to send logs via socket, since the client can directly read the log files.  
+   Set to `false` if you, for instance, use Pueue in combination with SSH port forwarding.
 
 ### Changed
 
@@ -168,13 +169,13 @@ This version adds breaking changes:
 ### Added
 
 - New `--delay` flag, which delays enqueueing of a task. Can be used on `start` and `enqueue`. Implemented by [taylor1791](https://github.com/taylor1791).
-- `--stashed` flag for `pueue add` to add a task in stashed mode.  Implemented by [taylor1791](https://github.com/taylor1791).
+- `--stashed` flag for `pueue add` to add a task in stashed mode. Implemented by [taylor1791](https://github.com/taylor1791).
 
 ### Changed
 
 - Generating completion files moved away from build.rs to the new `pueue completions {shell} {output_dir}` subcommand.
-This seems to be the proper way to generate completion files with clap.
-There is a `build_completions.sh` script to build all completion files to the known location for your convenience.
+  This seems to be the proper way to generate completion files with clap.
+  There is a `build_completions.sh` script to build all completion files to the known location for your convenience.
 
 ### Fixed
 

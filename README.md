@@ -7,11 +7,12 @@
 [![Downloads](https://img.shields.io/github/downloads/nukesor/pueue/total.svg)](https://github.com/nukesor/pueue/releases)
 [![Patreon](https://github.com/Nukesor/images/blob/master/patreon-donate-blue.svg)](https://www.patreon.com/nukesor)
 [![Paypal](https://github.com/Nukesor/images/blob/master/paypal-donate-blue.svg)](https://www.paypal.me/arnebeer/)
+
 <!---[![dependency status](https://deps.rs/repo/github/nukesor/pueue/status.svg)](https://deps.rs/repo/github/nukesor/pueue) --->
 
 ![Pueue](https://raw.githubusercontent.com/Nukesor/images/master/pueue.gif)
 
-Pueue is a command-line task management tool for sequential and parallel execution of long-running tasks.  
+Pueue is a command-line task management tool for sequential and parallel execution of long-running tasks.
 
 Simply put, it's a tool that processes a queue of shell commands.
 On top of that, there are a lot of convenience features and abstractions.
@@ -62,7 +63,7 @@ Consider this scenario: You have to unpack large amounts of data into various di
 Usually something like this ends with 10+ open terminals/tmux sessions and an over-challenged hard drive.
 
 Another scenario might be, that you want to re-encode 10 movies and each re-encode takes 10+ hours.
-Creating a chained command with `&&`s isn't ergonomic at all and running that many re-encodes in parallel will break your CPU.  
+Creating a chained command with `&&`s isn't ergonomic at all and running that many re-encodes in parallel will break your CPU.
 
 Pueue is specifically designed for these situations.
 
@@ -99,7 +100,7 @@ Use your system's package manager.
 This will usually deploy service files and completions automatically.  
 Pueue has been packaged for:
 
-- Arch Linux's AUR: e.g. `yay -S pueue`.  
+- Arch Linux's AUR: e.g. `yay -S pueue`.
 - NixOS
 - Homebrew
 
@@ -109,7 +110,7 @@ Statically linked (if possible) binaries for Linux (incl. ARM), Mac OS and Windo
 
 You can download the binaries for the client and the daemon (`pueue` and `pueued`) for each release on the [release page](https://github.com/Nukesor/pueue/releases).
 
-Just download both binaries for your system, rename them to `pueue` and `pueued` and place them in your $PATH/program folder.
+Just download both binaries for your system, rename them to `pueue` and `pueued` and place them in your \$PATH/program folder.
 
 #### Via Cargo
 
@@ -147,13 +148,12 @@ The daemon can be then shut down using the client: `pueue shutdown`
 ### Systemd
 
 If you use Systemd and don't install Pueue with a package manager, place `pueued.service` in `/etc/systemd/user/`.  
-Afterward, every user can start/enable their own session with:  
+Afterward, every user can start/enable their own session with:
 
 ```bash
 systemctl --user start pueued.service
 systemctl --user enable pueued.service
 ```
-
 
 ## How to use it
 
@@ -188,7 +188,6 @@ Most commands can be executed on multiple tasks.
 For instance, you can look at specific logs like this `pueue log 0 1 2 3 15 19`.
 
 This also works with your shell's range parameter, e.g. `pueue log {0..3} 15 19`.
-
 
 **Pitfalls:**
 
@@ -249,7 +248,7 @@ SUBCOMMANDS:
 
 The configuration file of Pueue is located in these directories:
 
-- Linux: `$HOME/.config/pueue/pueue.yml`.  
+- Linux: `$HOME/.config/pueue/pueue.yml`.
 - MacOs: `$HOME/Library/Preferences/pueue/pueue.yml`
 - Windows: `%APPDATA%\Local\pueue`
 
@@ -263,8 +262,10 @@ shared:
   pueue_directory: /home/$USER/.local/share/pueue
   use_unix_sockets: false
   unix_sockets_path: /home/$USER/.local/share/pueue/pueue_$USER.socket
+
 client:
   read_local_logs: true
+  show_confirmation_questions: false
 
 daemon:
   default_parallel_tasks: 1
@@ -276,7 +277,7 @@ daemon:
 
 ### Shared
 
-- `port` The port the daemon listens on and the client connects to in TCP mode.  
+- `port` The port the daemon listens on and the client connects to in TCP mode.
 - `secret` The secret, that's used for authentication
 - `pueue_directory` The location Pueue uses for its intermediate files and logs.
 - `use_unix_sockets` Whether the daemon should listen on a Unix- or a TCP-socket.
@@ -285,10 +286,11 @@ daemon:
 ### Client
 
 - `read_local_logs` If the client runs as the same user (and on the same machine) as the daemon, logs don't have to be sent via the socket but rather read directly.
+- `show_confirmation_questions` The client will print warnings that require confirmation for different critical commands.
 
 ### Daemon
 
-- `default_parallel_tasks` Determines how many tasks should be processed concurrently.  
+- `default_parallel_tasks` Determines how many tasks should be processed concurrently.
 - `pause_on_failure` If set to `true`, the daemon stops starting new task as soon as a single task fails. Already running tasks will continue.
 - `callback` The command that will be called after a task finishes. Can be parameterized
 - `groups` This is a list of the groups with their amount of allowed parallel tasks. It's advised to not manipulate this manually, but rather use the `group` subcommand to create and remove groups.
@@ -309,7 +311,7 @@ This would help me a lot!
 
 Grouping tasks can be useful, whenever your tasks utilize different system resources.  
 A possible scenario would be to have an `io` group for tasks that copy large files, while your cpu-heavy (e.g. reencoding) tasks are in a `cpu` group.
-The parallelism setting of `io` could then be set to `1` and `cpu` be set to `2`.  
+The parallelism setting of `io` could then be set to `1` and `cpu` be set to `2`.
 
 As a result, there'll always be a single task that copies stuff, while two tasks try to utilize your cpu as good as possible.
 
@@ -322,8 +324,8 @@ To get basic aliasing, simply put a `pueue_aliases.yml` besides your `pueue.yml`
 Its contents should look something like this:
 
 ```yaml
-ls: "ls -ahl"
-rsync: "rsync --recursive --partial --perms --progress"
+ls: 'ls -ahl'
+rsync: 'rsync --recursive --partial --perms --progress'
 ```
 
 When adding a command to pueue, the **first** word will then be checked for the alias.
@@ -334,7 +336,7 @@ If you want multiple aliases in a single task, it's probably best to either crea
 ### Callbacks
 
 You can specify a callback that will be called every time a task finishes.
-The callback can be parameterized with some variables.  
+The callback can be parameterized with some variables.
 
 These are the available variables that can be used to create a command:
 
@@ -347,7 +349,7 @@ These are the available variables that can be used to create a command:
 Example callback:
 
 ```yaml
-    callback: "notify-send \"Task {{ id }}\nCommand: {{ command }}\nPath: {{ path }}\nFinished with status '{{ result }}'\""
+callback: "notify-send \"Task {{ id }}\nCommand: {{ command }}\nPath: {{ path }}\nFinished with status '{{ result }}'\""
 ```
 
 ### Shell completion files
