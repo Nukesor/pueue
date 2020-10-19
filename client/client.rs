@@ -258,7 +258,7 @@ impl Client {
                 }))
             }
             SubCommand::Remove { task_ids } => {
-                if self.settings.client.print_remove_warnings {
+                if self.settings.client.show_confirmation_questions {
                     self.handle_user_confirmation("remove", task_ids)?;
                 }
                 Ok(Message::Remove(task_ids.clone()))
@@ -321,7 +321,7 @@ impl Client {
                 all,
                 children,
             } => {
-                if self.settings.client.print_remove_warnings {
+                if self.settings.client.show_confirmation_questions {
                     self.handle_user_confirmation("kill", task_ids)?;
                 }
                 let message = KillMessage {
