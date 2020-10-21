@@ -54,14 +54,16 @@ pub async fn get_client(unix_socket_path: Option<String>, port: Option<String>) 
         return Ok(Box::new(stream));
     }
 
+    let port = port.unwrap();
     // Don't allow anything else than loopback until we have proper crypto
     // let address = format!("{}:{}", address, port);
-    let address = format!("127.0.0.1:{}", port.unwrap());
+    let address = format!("127.0.0.1:{}", &port);
 
     // Connect to socket
-    let socket = TcpStream::connect(&address)
-        .await
-        .context("Failed to connect to the daemon. Did you start it?")?;
+    let socket = TcpStream::connect(&address).await.context(format!(
+        "Failed to connect to the daemon on port {}. Did you start it?",
+        &port
+    ))?;
 
     Ok(Box::new(socket))
 }

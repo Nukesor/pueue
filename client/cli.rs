@@ -307,17 +307,20 @@ pub enum SubCommand {
     author = "Arne Beer <contact@arne.beer>"
 )]
 pub struct Opt {
-    // The number of occurrences of the `v/verbose` flag.
     /// Verbose mode (-v, -vv, -vvv)
     #[structopt(short, long, parse(from_occurrences))]
     pub verbose: u8,
 
-    //    /// The url for the daemon. Overwrites the address in the config file
-    //    #[structopt(short, long)]
-    //    pub address: Option<String>,
     /// The port for the daemon. Overwrites the port in the config file.
+    /// Will force TCP mode.
     #[structopt(short, long)]
     pub port: Option<String>,
+
+    /// The path to the unix socket.
+    /// Overwrites the path in the config file.
+    /// Will force Unix-socket mode.
+    #[structopt(short, long, conflicts_with = "port")]
+    pub unix_socket_path: Option<String>,
 
     #[structopt(subcommand)]
     pub cmd: SubCommand,

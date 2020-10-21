@@ -40,19 +40,15 @@ impl Client {
 
         // Commandline argument overwrites the configuration files values for port
         let (unix_socket_path, port) = {
-            // Return the unix socket path, if we're supposed to use it.
-            if settings.shared.use_unix_socket {
+            // Always prefer commandline options
+            if let Some(path) = opt.unix_socket_path.clone() {
+                (Some(path), None)
+            } else if let Some(port) = opt.port.clone() {
+                (None, Some(port))
+            } else if settings.shared.use_unix_socket {
                 (Some(settings.shared.unix_socket_path.clone()), None)
             } else {
-                // Otherwise use tcp sockets and a given port
-                // Commandline argument overwrites the configuration files values for port.
-                let port = if let Some(port) = opt.port.clone() {
-                    port
-                } else {
-                    settings.shared.port.clone()
-                };
-
-                (None, Some(port))
+                (None, Some(settings.shared.port.clone()))
             }
         };
 
