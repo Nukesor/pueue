@@ -49,8 +49,7 @@ Right now there's pretty much no Windows specific code which means:
 #### MacOs
 
 The `psutil` library, which is used for MacOS is a horrible mess.
-It's missing a lot of missing features and has an extremely bad code style.
-
+It's missing a lot of missing features and has an extremely bad code style.\
 Someone has to add a proper replacement and re-implement the MacOs specific process handling code.
 Until then:
 
@@ -65,13 +64,10 @@ Usually something like this ends with 10+ open terminals/tmux sessions and an ov
 Another scenario might be, that you want to re-encode 10 movies and each re-encode takes 10+ hours.
 Creating a chained command with `&&`s isn't ergonomic at all and running that many re-encodes in parallel will break your CPU.
 
-Pueue is specifically designed for these situations.
-
+Pueue is specifically designed for these situations.\
 You can schedule your task and continue on the same shell without waiting.
-You can specify how many tasks should run in parallel and group tasks to maximize system resource utilization.
-
-Since everything is run by a daemon, you can simply log off your server and check on your tasks' progress whenever you want.
-
+You can specify how many tasks should run in parallel and group tasks to maximize system resource utilization.\
+Since everything is run by a daemon, you can simply log off your server and check on your tasks' progress whenever you want.\
 Heck, you can even set up desktop notifications to get notified or execute parameterized commands every time a task finishes.
 
 **A few possible applications:**
@@ -85,9 +81,8 @@ Heck, you can even set up desktop notifications to get notified or execute param
 
 Pueue made at least my life a lot easier on many occasions.
 
-If you like the project, feel free to give it at try!  
-If you feel like something is missing, please create an issue :).
-
+If you like the project, feel free to give it at try!
+If you feel like something is missing, please create an issue :).\
 PRs are of course very welcome!
 
 ## Installation
@@ -166,7 +161,6 @@ If you want to add flags to the command, you can either:
 - surround the command with a string `pueue add 'ls -al'`
 
 The command will then be added and scheduled for execution, as if you executed it right now and then.
-
 For normal operation it's recommended to add an alias to your shell's rc.\
 E.g.: `alias pad='pueue add --'`
 
@@ -175,17 +169,16 @@ For instance `pueue add ls /tmp/long\ path` will result in the execution of `sh 
 
 **See what's going on:**
 
-To get the status of currently running commands, just type `pueue status`.
-
-To look at the current output of a command use `pueue log` or `pueue log $task_id`.
-
+To get the status of currently running commands, just type `pueue status`.\
+To look at the current output of a command use `pueue log` or `pueue log $task_id`.\
 If you want to follow the output of a running command use `git follow $task_id`.
 To follow stderr, use the `-e` flag.
 
 **Manipulate multiple tasks at once:**
 
 Most commands can be executed on multiple tasks.
-For instance, you can look at specific logs like this `pueue log 0 1 2 3 15 19`.
+For instance, you can look at specific logs like this:\
+`pueue log 0 1 2 3 15 19`.
 
 This also works with your shell's range parameter, e.g. `pueue log {0..3} 15 19`.
 
@@ -196,7 +189,7 @@ To avoid common pitfalls, please read the [FAQ Section](https://github.com/Nukes
 There is a help option (-h) for all commands.
 
 ```text
-Pueue client 0.5.0
+Pueue client 0.8.0
 Arne Beer <contact@arne.beer>
 Interact with the Pueue daemon
 
@@ -209,7 +202,12 @@ FLAGS:
     -v, --verbose    Verbose mode (-v, -vv, -vvv)
 
 OPTIONS:
-    -p, --port <port>    The port for the daemon. Overwrites the port in the config file
+    -p, --port <port>
+            The port for the daemon. Overwrites the port in the config file. Will force TCP mode
+
+    -u, --unix-socket-path <unix-socket-path>
+            The path to the unix socket. Overwrites the path in the config file. Will force Unix-socket mode
+
 
 SUBCOMMANDS:
     add            Enqueue a task for execution
@@ -219,27 +217,27 @@ SUBCOMMANDS:
                    This edits the command of the task by default.
     enqueue        Enqueue stashed tasks. They'll be handled normally afterwards
     follow         Follow the output of a currently running task. This command works like `tail -f`
-    group          Manage groups. Without any flags, this will simply display all known groups
+    group          Manage groups. By default, this will simply display all known groups
     help           Prints this message or the help of the given subcommand(s)
     kill           Kill specific running tasks or various groups of tasks
-    log            Display the log output of finished tasks
+    log            Display the log output of finished tasks. Prints either all logs or only the logs of specified
+                   tasks
     parallel       Set the amount of allowed parallel tasks
     pause          Pause either running tasks or specific groups of tasks.
-                   Without any parameters, pauses the default queue and all it's tasks.
+                   By default, pauses the default queue and all it's tasks.
                    A paused queue (group) won't start any new tasks.
-                   Everything can be resumed with `start`.
+                   Everything can be resumed with 'start'.
     remove         Remove tasks from the list. Running or paused tasks need to be killed first
     reset          Kill all running tasks, remove all tasks and reset max_task_id
-    restart        Restart task(s). Identical tasks will be created and instantly queued (unless specified
-                   otherwise)
-    send           Send something to a task. Useful for sending confirmations ('y\n')
+    restart        Restart task(s). Identical tasks will be created and by default enqueued
+    send           Send something to a task. Useful for sending confirmations such as 'y\n'
     shutdown       Remotely shut down the daemon. Should only be used if the daemon isn't started by a service
                    manager
     start          Resume operation of specific tasks or groups of tasks.
-                   Without any parameters, resumes the default queue and all it's tasks.
+                   By default, this resumes the default queue and all it's tasks.
                    Can also be used force specific tasks to start.
-    stash          Stashed tasks won't be automatically started. Either `enqueue` them, to be normally handled or
-                   explicitly `start` them
+    stash          Stashed tasks won't be automatically started. Either enqueue them, to be normally handled or
+                   explicitly start them
     status         Display the current status of all tasks
     switch         Switches the queue position of two commands. Only works on queued and stashed commands
 ```
@@ -313,8 +311,7 @@ Grouping tasks can be useful, whenever your tasks utilize different system resou
 A possible scenario would be to have an `io` group for tasks that copy large files, while your cpu-heavy (e.g. reencoding) tasks are in a `cpu` group.
 The parallelism setting of `io` could then be set to `1` and `cpu` be set to `2`.
 
-As a result, there'll always be a single task that copies stuff, while two tasks try to utilize your cpu as good as possible.
-
+As a result, there'll always be a single task that copies stuff, while two tasks try to utilize your cpu as good as possible.\
 This removes the problem of scheduling tasks in a way that the system might get slow.
 At the same time, you're able to maximize resource utilization.
 
@@ -329,8 +326,7 @@ rsync: 'rsync --recursive --partial --perms --progress'
 ```
 
 When adding a command to pueue, the **first** word will then be checked for the alias.
-This means, that for instance `ls ~/ && ls /` will result in `ls -ahl ~/ && ls /`.
-
+This means, that for instance `ls ~/ && ls /` will result in `ls -ahl ~/ && ls /`.\
 If you want multiple aliases in a single task, it's probably best to either create a task for each command or to write a custom script.
 
 ### Callbacks
