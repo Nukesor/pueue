@@ -10,12 +10,14 @@ If you have Rust version `>=1.39`, please file a bug report.
 
 ## A Command Doesn't Behave Like Expected
 
-**First thing to do:** Try to run the command without adding it to Pueue. If this fails, it's not a problem with Pueue.
+**First thing to do:** Try to run the command without adding it to Pueue.
+If this fails, it's not a problem with Pueue.
 
 **Second thing** to do when debugging any problems with running/failing processes, is to look at the process output:
 
-This can be done via `pueue log $task_id` for finished processes or `pueue show $task_id` for running processes.  
-You can also get a live view of the output with `pueue follow $task_id`. Add the `-e` flag, if you want to see the error output.
+This can be done via `pueue log $task_id`.
+You can also get a live view of the output with `pueue follow $task_id`.
+Add the `-e` flag, if you want to see the error output.
 
 
 ### The Command Formatting Seems To Be Broken:
@@ -32,7 +34,7 @@ Without quotes, the character escaping won't be transferred to the `bash -c $com
 
 ### Display not found | Unable to Initialize frontend
 
-All programs that require some kinde of display/window manager won't work, as the tasks are executed in the background.
+All programs that require some kind of display/window manager won't work, as the tasks are executed in the background.
 
 Don't use Pueue for commands that won't work in a non-visual environment.
 
