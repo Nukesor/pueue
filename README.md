@@ -348,6 +348,25 @@ Example callback:
 callback: "notify-send \"Task {{ id }}\nCommand: {{ command }}\nPath: {{ path }}\nFinished with status '{{ result }}'\""
 ```
 
+### Connect to remote pueued
+
+Running `pueued` on a server and wanting to check on the current progress without having to `ssh` onto the machine is a common scneario.
+The best solution (for now) is to bind the remote port/socket to a local port/socket.
+
+This might like something like this:
+
+```bash
+ssh -R /home/$USER/.local/share/pueue/pueue_$USER.socket:5252
+```
+
+You can now connect from your local pueue to the remote pueue via port 5252, while also communicating via unix sockets on the server.
+Just write `pueue -p 5252 status`.
+
+Unix-socket to unix-socket is of course also possible:
+```bash
+ssh -R /home/$USER/.local/share/pueue/pueue_$USER.socket:/tmp/local_socket
+```
+
 ### Shell completion files
 
 Shell completion files can be created on the fly with `pueue completions $shell $directory`.
