@@ -93,7 +93,7 @@ pub enum SubCommand {
 
     /// Resume operation of specific tasks or groups of tasks.
     /// By default, this resumes the default queue and all it's tasks.
-    /// Can also be used force specific tasks to start.
+    /// Can also be used force-start specific tasks.
     #[structopt(verbatim_doc_comment)]
     Start {
         /// Enforce starting these tasks. Paused tasks will be started again.
@@ -143,7 +143,6 @@ pub enum SubCommand {
     /// Pause either running tasks or specific groups of tasks.
     /// By default, pauses the default queue and all it's tasks.
     /// A paused queue (group) won't start any new tasks.
-    /// Everything can be resumed with 'start'.
     #[structopt(verbatim_doc_comment)]
     Pause {
         /// Pause these specific tasks.
