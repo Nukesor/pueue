@@ -16,12 +16,12 @@ pub async fn send_message(message: Message, socket: &mut Socket) -> Result<()> {
     // Prepare command for transfer and determine message byte size
     let payload = bincode::serialize(&message).expect("Failed to serialize message.");
 
-    send_bytes(payload, socket).await
+    send_bytes(&payload, socket).await
 }
 
 /// Send a Vec of bytes. Before the actual bytes are send, the size of the message
 /// is transmitted in an header of fixed size (u64).
-pub async fn send_bytes(payload: Vec<u8>, socket: &mut Socket) -> Result<()> {
+pub async fn send_bytes(payload: &[u8], socket: &mut Socket) -> Result<()> {
     let message_size = payload.len() as u64;
 
     let mut header = vec![];

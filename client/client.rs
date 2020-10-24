@@ -55,8 +55,13 @@ impl Client {
         let mut socket = get_client(unix_socket_path, port).await?;
 
         // Send the secret to the daemon
+        // In case everything was successful, we get a short `hello` response from the daemon.
         let secret = settings.shared.secret.clone().into_bytes();
-        send_bytes(secret, &mut socket).await?;
+        send_bytes(&secret, &mut socket).await?;
+        let hello = receive_bytes(&mut socket).await?;
+        if hello != b"hello" {
+            bail!("Daemon went away after initial connection. Did you use the correct secret?")
+        }
 
         Ok(Client {
             opt,

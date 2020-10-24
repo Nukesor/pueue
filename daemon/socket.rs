@@ -77,6 +77,8 @@ async fn handle_incoming(
             bail!("Received invalid secret");
         }
     }
+    // Send a super short `ok` byte to the client, so it knows that the secret has been accepted.
+    send_bytes(b"hello", &mut socket).await?;
 
     // Save the directory for convenience purposes and to prevent continuously
     // locking the state in the streaming loop.
