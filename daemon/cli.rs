@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
@@ -20,4 +22,9 @@ pub struct Opt {
     /// The port the daemon listens on. Overwrites the port in the config file.
     #[structopt(short, long)]
     pub port: Option<String>,
+
+    /// Path to a specific pueue config daemon, that should be used.
+    /// This ignore all other config files.
+    #[structopt(short, long)]
+    pub config: Option<PathBuf>,
 }

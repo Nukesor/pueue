@@ -79,6 +79,7 @@ pub async fn receive_bytes(socket: &mut Socket) -> Result<Vec<u8>> {
 /// Convenience wrapper that receives a message and converts it into a Message.
 pub async fn receive_message(socket: &mut Socket) -> Result<Message> {
     let payload_bytes = receive_bytes(socket).await?;
+    debug!("Received {} bytes", payload_bytes.len());
 
     // Deserialize the message.
     let message: Message = bincode::deserialize(&payload_bytes).context(

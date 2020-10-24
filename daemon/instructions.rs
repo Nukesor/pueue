@@ -537,7 +537,7 @@ fn set_parallel_tasks(message: ParallelMessage, state: &SharedState) -> Message 
         .groups
         .insert(group.into(), message.parallel_tasks);
 
-    if let Err(error) = state.settings.save() {
+    if let Err(error) = state.save_settings() {
         return create_failure_message(format!("Failed while saving the config file: {}", error));
     }
 

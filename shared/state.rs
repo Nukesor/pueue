@@ -23,6 +23,7 @@ pub struct State {
     pub tasks: BTreeMap<usize, Task>,
     /// Represents whether the group is currently paused or running
     pub groups: HashMap<String, bool>,
+    config_path: Option<PathBuf>,
 }
 
 /// This is the full representation of the current state of the Pueue daemon.
@@ -37,7 +38,7 @@ pub struct State {
 ///
 /// That information is saved in the TaskHandler.
 impl State {
-    pub fn new(settings: &Settings) -> State {
+    pub fn new(settings: &Settings, config_path: Option<PathBuf>) -> State {
         // Create a default group state.
         let mut groups = HashMap::new();
         for group in settings.daemon.groups.keys() {
@@ -50,6 +51,7 @@ impl State {
             running: true,
             tasks: BTreeMap::new(),
             groups,
+            config_path,
         };
         state.restore();
         state.save();
@@ -88,7 +90,7 @@ impl State {
         }
 
         self.save();
-        self.settings.save()
+        self.save_settings()
     }
 
     /// Remove a group.
@@ -107,7 +109,7 @@ impl State {
         }
 
         self.save();
-        self.settings.save()
+        self.save_settings()
     }
 
     /// Set the running status for all groups including the default queue
@@ -180,6 +182,10 @@ impl State {
         self.max_id = 0;
         self.tasks = BTreeMap::new();
         self.set_status_for_all_groups(true);
+    }
+
+    pub fn save_settings(&mut self) -> Result<()> {
+        self.settings.save(&self.config_path)
     }
 
     /// Convenience wrapper around save_to_file.

@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::fs::{create_dir_all, File};
 use std::io::prelude::*;
+use std::path::PathBuf;
 
 use anyhow::{anyhow, bail, Result};
 use config::Config;
@@ -51,7 +52,7 @@ impl Settings {
     /// The local config is located at "~/.config/pueue.yml".
     ///
     /// If `require_config` is `true`, an error will be thrown, if no configuration file can be found.
-    pub fn new(require_config: bool) -> Result<Settings> {
+    pub fn new(require_config: bool, from_file: &Option<PathBuf>) -> Result<Settings> {
         let mut config = Config::new();
 
         config.set_default("shared.port", "6924")?;
@@ -70,8 +71,18 @@ impl Settings {
         config.set_default("daemon.callback", None::<String>)?;
         config.set_default("daemon.groups", HashMap::<String, i64>::new())?;
 
-        // Add in the home config file
-        parse_config(&mut config, require_config)?;
+        // Load the config from a very specific file path
+        if let Some(path) = from_file {
+            if !path.exists() {
+                bail!("Couldn't find config at path {:?}", path);
+            }
+            info!("Using config file at: {:?}", path);
+            let config_file = config::File::with_name(path.to_str().unwrap());
+            config.merge(config_file)?;
+        } else {
+            // Load settings from the default config paths.
+            parse_config(&mut config, require_config)?;
+        }
 
         // Try to can deserialize the entire configuration
         Ok(config.try_into()?)
@@ -81,11 +92,21 @@ impl Settings {
     /// This is done by the daemon on startup.
     /// If the file can be read without any need for defaults, we don't have to persist it
     /// afterwards.
-    pub fn read(require_config: bool) -> Result<Settings> {
+    pub fn read(require_config: bool, from_file: &Option<PathBuf>) -> Result<Settings> {
         let mut config = Config::new();
 
-        // Merge configuration files we can find in ascending order.
-        parse_config(&mut config, require_config)?;
+        // Load the config from a very specific file path
+        if let Some(path) = from_file {
+            if !path.exists() {
+                bail!("Couldn't find config at path {:?}", path);
+            }
+            info!("Using config file at: {:?}", path);
+            let config_file = config::File::with_name(path.to_str().unwrap());
+            config.merge(config_file)?;
+        } else {
+            // Load settings from the default config paths.
+            parse_config(&mut config, require_config)?;
+        }
 
         // Try to can deserialize the entire configuration
         Ok(config.try_into()?)
@@ -93,8 +114,12 @@ impl Settings {
 
     /// Save the current configuration as a file to the configuration path.
     /// The file is written to the main configuration directory of the respective OS.
-    pub fn save(&self) -> Result<()> {
-        let config_path = default_config_directory()?.join("pueue.yml");
+    pub fn save(&self, to_file: &Option<PathBuf>) -> Result<()> {
+        let config_path = if let Some(path) = to_file {
+            path.clone()
+        } else {
+            default_config_directory()?.join("pueue.yml")
+        };
         let config_dir = config_path
             .parent()
             .ok_or_else(|| anyhow!("Couldn't resolve config dir"))?;

@@ -1,0 +1,16 @@
+[Unit]
+Description=Remote pueue forward
+ConditionPathExists=|/usr/bin
+After=network.target
+
+[Service]
+ExecStartPre=rm -f ~/.local/share/pueue/remote.sock
+ExecStart=/usr/bin/ssh -L ~/.local/share/pueue/remote.sock:/home/$REMOTEUSER/.local/share/pueue/pueue_$USER.sock $REMOTEUSER@remote_host
+
+
+# Restart every >2 seconds to avoid StartLimitInterval failure
+RestartSec=5
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

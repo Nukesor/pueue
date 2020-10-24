@@ -321,6 +321,11 @@ pub struct Opt {
     #[structopt(short, long, conflicts_with = "port")]
     pub unix_socket_path: Option<String>,
 
+    /// Path to a specific pueue config daemon, that should be used.
+    /// This ignore all other config files.
+    #[structopt(short, long)]
+    pub config: Option<PathBuf>,
+
     #[structopt(subcommand)]
     pub cmd: SubCommand,
 }

@@ -40,7 +40,7 @@ async fn main() -> Result<()> {
     }
 
     // Try to read settings from the configuration file.
-    let settings = Settings::new(true)?;
+    let settings = Settings::new(true, &opt.config)?;
 
     // Create client to talk with the daemon and connect.
     let mut client = Client::new(settings, opt).await?;

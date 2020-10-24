@@ -14,11 +14,14 @@ This version adds breaking changes:
 ### Added
 
 - Unix socket support (#90)
+- New option to specify a configuration file on startup for daemon and client.
 - Warning messages for removing/killing tasks (#111) by [Julian Kaindl](https://github.com/kaindljulian)
+- Guide on how to connect to remote hosts via ssh port forwarding.
 
 ### Changed
 
 - Never create a default config when starting the client. Only starting the daemon can do that.
+- Better error messages when connecting with wrong secret.
 - Windows: The configuration file will now also be placed in `%APPDATA%\Local\pueue`.
 
 ### Fixed

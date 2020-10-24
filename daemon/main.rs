@@ -46,17 +46,17 @@ async fn main() -> Result<()> {
     }
 
     // Try to read settings from the configuration file.
-    let settings = match Settings::read(false) {
+    let settings = match Settings::read(false, &opt.config) {
         Ok(settings) => settings,
         Err(_) => {
             // There's something wrong with the config file or something's missing.
             // Try to read the config and fill missing values with defaults.
             // This might be possible on version upgrade or first run.
-            let settings = Settings::new(false)?;
+            let settings = Settings::new(false, &opt.config)?;
 
             // Since we needed to add values to the configuration, we have to save it.
             // This also creates the save file in case it didn't exist yet.
-            if let Err(error) = settings.save() {
+            if let Err(error) = settings.save(&opt.config) {
                 println!("Failed saving config file.");
                 println!("{:?}", error);
             }
@@ -66,7 +66,7 @@ async fn main() -> Result<()> {
 
     init_directories(&settings.shared.pueue_directory);
 
-    let state = State::new(&settings);
+    let state = State::new(&settings, opt.config.clone());
     let state = Arc::new(Mutex::new(state));
 
     let (sender, receiver) = channel();
