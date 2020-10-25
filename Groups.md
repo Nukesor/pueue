@@ -1,9 +1,8 @@
 Grouping tasks can be useful, whenever your tasks utilize different system resources.  
-A possible scenario would be to have an `io` group for tasks that copy large files
+A possible scenario would be to have an `io` group for tasks that copy large files.\
 At the same time there's the `cpu` group, which will execute your cpu-heavy (e.g. reencoding) tasks.
 
-The parallelism setting of `io` could then be set to `1` and `cpu` be set to `2`.
-
+The parallelism setting of `io` could then be set to `1` and `cpu` be set to `2`.\
 As a result, there'll always be a single task that copies stuff, while two cpu-heavy tasks try to utilize your cpu as good as possible.\
 This can prevent task constellations, which might choke your system, while at the same time maximizing resource utilization.
 
