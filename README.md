@@ -27,6 +27,7 @@ The configuration and alias file is now located in a `pueue` subdirectory.
 - [Why should I use it](https://github.com/Nukesor/pueue#why-should-i-use-it)
 - [Installation](https://github.com/Nukesor/pueue#installation)
 - [How to use it](https://github.com/Nukesor/pueue#how-to-use-it)
+- [Advantages over Using a Terminal Multiplexer](https://github.com/Nukesor/pueue#advantages-over-using-a-terminal-multiplexer)
 
 ### Features
 
@@ -125,7 +126,7 @@ cargo install pueue
 
 This will install pueue to `~/.cargo/bin/pueue`
 
-#### From Source
+#### From source
 
 You'll need Rust version `>=1.39`
 
@@ -204,6 +205,37 @@ SUBCOMMANDS:
     switch         Switches the queue position of two commands. Only works on queued and stashed commands
 ```
 
+## Advantages over Using a Terminal Multiplexer
+
+One of the most frequent questions is, why one should use Pueue, when there're terminal multiplexer such as Tmux or Screen.
+
+My response is, that there're simply a lot of missing convenience features.\
+Here are few examples of Pueue's basic functionality.
+
+- The ability to queue commands and not start them all at once
+- Specifying how many tasks should run in parallel
+- Easy pausing/resuming of tasks
+- Pretty and accessible task status overvies
+- No need to attach to a multiple tmux sessions
+
+There are a lot more built-in convenience features. You should read the [Wiki](https://github.com/Nukesor/pueue/wiki) for a detailed explanation.
+
+Only using your shell's features is definitely possible!
+However, in my opinion, having a tool that's specifically designed for managing tasks is just more efficient and fun.
+
+One of my regular use cases is downloading lots of stuff. In this case I want:
+
+- At most three parallel downloads, otherwise the other services on my service get no bandwidth.
+- To see at first glance whether a download fails and easily edit and re-schedule it.
+- An easy way to look at output.
+- Everything to be in a uniform interface.
+- It to look pretty and clear.
+- To be able to pause/resume everything in case I need to some bandwidth right now.
+
+I used tmux for this stuff all the time before writing Pueue.\
+However, after using it for a really long time, it just kept feeling annoying and inconvenient.
+Up to the point I could not bare it any longer and decided to write something that's better suited for such scenarios.
+
 ## Contributing
 
 Feature requests and pull requests are very much appreciated and welcome!
@@ -214,3 +246,4 @@ It's always nice to know what you're working on and I might have a few suggestio
 There's also the [Contribution Guide](https://github.com/Nukesor/pueue/blob/master/CHANGELOG.md), which is supposed to give you a brief overview and introduction into the project.
 
 Copyright &copy; 2019 Arne Beer ([@Nukesor](https://github.com/Nukesor))
+
