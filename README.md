@@ -20,6 +20,11 @@ On top of that, there are a lot of convenience features and abstractions.
 Since Pueue is not bound to any terminal, you can control your tasks from any terminal on the same machine.
 The queue will be continuously processed, even if you no longer have any active ssh session.
 
+- [Features](https://github.com/Nukesor/pueue#features)
+- [Why should I use it](https://github.com/Nukesor/pueue#why-should-i-use-it)
+- [Installation](https://github.com/Nukesor/pueue#installation)
+- [How to use it](https://github.com/Nukesor/pueue#how-to-use-it)
+
 ### Features
 
 - Schedule commands that will be executed in their respective working directories.
@@ -27,8 +32,8 @@ The queue will be continuously processed, even if you no longer have any active 
 - Interaction with running processes.
 - Pause/resume tasks, when you need some processing power right NOW!
 - Manipulation of the scheduled task order.
-- Running multiple tasks at once (You can decide how many concurrent tasks you want to run).
-- Grouping tasks. Each group acts as their own queue and can have several tasks running in parallel.
+- Run multiple tasks at once. You can decide how many concurrent tasks you want to run.
+- Group tasks. Each group acts as their own queue and can have several tasks running in parallel.
 - A callback hook to, for instance, set up desktop notifications.
 - A lot more. Check the -h options for each subcommand for detailed options.
 
@@ -49,7 +54,7 @@ Right now there's pretty much no Windows specific code which means:
 #### MacOs
 
 The `psutil` library, which is used for MacOS is a horrible mess.
-It's missing a lot of missing features and has an extremely bad code style.\
+It's missing a lot of essential features and has a really bad code style.\
 Someone has to add a proper replacement and re-implement the MacOs specific process handling code.
 Until then:
 
@@ -129,64 +134,18 @@ cargo install --path .
 
 This will install pueue to `~/.cargo/bin/pueue`
 
-## Starting the Daemon
-
-### Local
-
-Just run `pueued` anywhere on your commandline. It'll exit if you close the terminal, though.
-
-### Background
-
-To fork `pueued` into the background, add the `-d` or `--daemonize` flag. E.g. `pueued -d`. \
-The daemon can be then shut down using the client: `pueue shutdown`
-
-### Systemd
-
-If you use Systemd and don't install Pueue with a package manager, place `pueued.service` in `/etc/systemd/user/`.  
-Afterward, every user can start/enable their own session with:
-
-```bash
-systemctl --user start pueued.service
-systemctl --user enable pueued.service
-```
-
 ## How to use it
 
-**Adding Commands:**
+Check out the [Get started](https://github.com/Nukesor/pueue/wiki/Get-started) section of the wiki :).\
 
-To add a command just write: `pueue add sleep 60`\
-If you want to add flags to the command, you can either:
+There are also detailed sections for (hopfully) everything important:
 
-- add `--` => `pueue add -- ls -al`
-- surround the command with a string `pueue add 'ls -al'`
+- [Configuration](https://github.com/Nukesor/pueue/wiki/Configuration)
+- [Groups](https://github.com/Nukesor/pueue/wiki/Groups)
+- [Miscellaneous](https://github.com/Nukesor/pueue/wiki/Miscellaneous)
+- [Connect to remote](https://github.com/Nukesor/pueue/wiki/Connect-to-remote)
 
-The command will then be added and scheduled for execution, as if you executed it right now and then.
-For normal operation it's recommended to add an alias to your shell's rc.\
-E.g.: `alias pad='pueue add --'`
-
-Surrounding a command with quotes is also required, if your command contains escaped characters.\
-For instance `pueue add ls /tmp/long\ path` will result in the execution of `sh -c ls /tmp/long path`, which will then break, as the escaped space is not passed to Pueue.
-
-**See what's going on:**
-
-To get the status of currently running commands, just type `pueue status`.\
-To look at the current output of a command use `pueue log` or `pueue log $task_id`.\
-If you want to follow the output of a running command use `git follow $task_id`.
-To follow stderr, use the `-e` flag.
-
-**Manipulate multiple tasks at once:**
-
-Most commands can be executed on multiple tasks.
-For instance, you can look at specific logs like this:\
-`pueue log 0 1 2 3 15 19`.
-
-This also works with your shell's range parameter, e.g. `pueue log {0..3} 15 19`.
-
-**Pitfalls:**
-
-To avoid common pitfalls, please read the [FAQ Section](https://github.com/Nukesor/pueue/blob/master/FAQ.md).
-
-There is a help option (-h) for all commands.
+On top of that, there is a help option (-h) for all commands.
 
 ```text
 Pueue client 0.8.0
@@ -241,161 +200,6 @@ SUBCOMMANDS:
     status         Display the current status of all tasks
     switch         Switches the queue position of two commands. Only works on queued and stashed commands
 ```
-
-## Configs
-
-The configuration file of Pueue is located in these directories:
-
-- Linux: `$HOME/.config/pueue/pueue.yml`.
-- MacOs: `$HOME/Library/Preferences/pueue/pueue.yml`
-- Windows: `%APPDATA%\Local\pueue`
-
-A default configuration file will be generated after starting `pueued` for the first time.
-
-```yaml
----
-shared:
-  port: "6924"
-  secret: "your_secret"
-  pueue_directory: /home/$USER/.local/share/pueue
-  use_unix_sockets: false
-  unix_sockets_path: /home/$USER/.local/share/pueue/pueue_$USER.socket
-
-client:
-  read_local_logs: true
-  show_confirmation_questions: false
-
-daemon:
-  default_parallel_tasks: 1
-  pause_on_failure: false
-  callback: ""Task {{ id }}\nCommand: {{ command }}\nPath: {{ path }}\nFinished with status '{{ result }}'\""
-  groups:
-    cpu: 1
-```
-
-### Shared
-
-- `port` The port the daemon listens on and the client connects to in TCP mode.
-- `secret` The secret, that's used for authentication
-- `pueue_directory` The location Pueue uses for its intermediate files and logs.
-- `use_unix_sockets` Whether the daemon should listen on a Unix- or a TCP-socket.
-- `unix_socket_path` The path the unix socket is located at.
-
-### Client
-
-- `read_local_logs` If the client runs as the same user (and on the same machine) as the daemon, logs don't have to be sent via the socket but rather read directly.
-- `show_confirmation_questions` The client will print warnings that require confirmation for different critical commands.
-
-### Daemon
-
-- `default_parallel_tasks` Determines how many tasks should be processed concurrently.
-- `pause_on_failure` If set to `true`, the daemon stops starting new task as soon as a single task fails. Already running tasks will continue.
-- `callback` The command that will be called after a task finishes. Can be parameterized
-- `groups` This is a list of the groups with their amount of allowed parallel tasks. It's advised to not manipulate this manually, but rather use the `group` subcommand to create and remove groups.
-
-## Logs
-
-All logs can be found in `${pueue_directory}/logs`.
-Logs of previous Pueue sessions will be created whenever you issue a `reset` or `clean`.  
-In case the daemon fails or something goes wrong, the daemon will print to `stdout`/`stderr`.
-If the daemon crashes or something goes wrong, please set the debug level to `-vvvv` and create an issue with the log!
-
-If you want to dig right into it, you can compile and run it yourself with a debug build.
-This would help me a lot!
-
-## Utilities
-
-### Groups
-
-Grouping tasks can be useful, whenever your tasks utilize different system resources.  
-A possible scenario would be to have an `io` group for tasks that copy large files, while your cpu-heavy (e.g. reencoding) tasks are in a `cpu` group.
-The parallelism setting of `io` could then be set to `1` and `cpu` be set to `2`.
-
-As a result, there'll always be a single task that copies stuff, while two tasks try to utilize your cpu as good as possible.\
-This removes the problem of scheduling tasks in a way that the system might get slow.
-At the same time, you're able to maximize resource utilization.
-
-### Aliases
-
-To get basic aliasing, simply put a `pueue_aliases.yml` besides your `pueue.yml`.
-Its contents should look something like this:
-
-```yaml
-ls: 'ls -ahl'
-rsync: 'rsync --recursive --partial --perms --progress'
-```
-
-When adding a command to pueue, the **first** word will then be checked for the alias.
-This means, that for instance `ls ~/ && ls /` will result in `ls -ahl ~/ && ls /`.\
-If you want multiple aliases in a single task, it's probably best to either create a task for each command or to write a custom script.
-
-### Callbacks
-
-You can specify a callback that will be called every time a task finishes.
-The callback can be parameterized with some variables.
-
-These are the available variables that can be used to create a command:
-
-- `{{ id }}`
-- `{{ command }}`
-- `{{ path }}`
-- `{{ result }}` (Success, Killed, etc.)
-- `{{ group }}`
-
-Example callback:
-
-```yaml
-callback: "notify-send \"Task {{ id }}\nCommand: {{ command }}\nPath: {{ path }}\nFinished with status '{{ result }}'\""
-```
-
-### Connect to remote pueued
-
-Running `pueued` on a server and wanting to check on the current progress without having to `ssh` onto the machine is a common scenario.
-The best solution (for now) is to bind the remote port/socket to a local port/socket.\
-**Reminder:** You have to set `read_local_logs` config to `false`, otherwise `follow` and `log` won't work.
-
-**Tips:**
-
-- It's nice to use a separate configuration file for this, which can be set via the `-c` flag directly after `pueue`. You should also consider creating an shell alias for this.
-- You can create a systemd job, whose job is to open the ssh connection and to reconnect, whenever the connection goes away.
-
-#### Port forwarding
-
-For port this looks like this:
-
-```bash
-ssh -L 127.0.0.1:6925:127.0.0.1:6925 $REMOTE_USER@yourhost
-```
-
-You can now connect from your local pueue to the remote pueue via port 5252. Just write `pueue -p 5252 status`.
-
-#### Unix Socket forwarding
-
-Unix-socket to unix-socket is of course also possible:
-
-```bash
-ssh -L /tmp/local.socket:/home/$REMOTE_USER/.local/share/pueue/pueue_nuke.sock $REMOTE_USER@yourhost
-```
-
-Just connect via `pueue -u /tmp/local_socket status`.
-
-### Shell completion files
-
-Shell completion files can be created on the fly with `pueue completions $shell $directory`.
-There's also a `build_completions.sh` script, which creates all completion files in the `utils/completions` directory.
-
-### JSON Support
-
-The Pueue client `status` and `log` commands support JSON output with the `-j` flag.
-This can be used to easily incorporate it into window manager bars, such as i3bar.
-
-## Scripting
-
-When calling pueue commands in a script, you might need to sleep for a short amount of time for now.
-The pueue server processes requests asynchronously, whilst the TaskManager runs it's own update loop with a small sleep.
-(The TaskManager handles everything related to starting, stopping and communicating with processes.)
-
-A sleep in scripts will probably become irrelevant, as soon as this bug in rust-lang is fixed: [issue](https://github.com/rust-lang/rust/issues/39364)
 
 ## Contributing
 
