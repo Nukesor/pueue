@@ -1,10 +1,14 @@
 Running `pueued` on a server and wanting to check on the current progress without having to `ssh` onto the machine is a common scenario.
 The best solution (for now) is to bind the remote port/socket to a local port/socket.\
-**Reminder:** You have to set `read_local_logs` config to `false`, otherwise `follow` and `log` won't work.
+
+**Reminder:**
+
+- You have to set `read_local_logs` config to `false` in the client config. Otherwise `follow` and `log` won't work.
+- You have to set the secret of your client configuration to the same of the remote daemon.
 
 **Tips:**
 
-- It's nice to use a separate configuration file for this, which can be set via the `-c` flag directly after `pueue`. You should also consider creating an shell alias for this.
+- It's nice to use a separate configuration file for this. The file can be set via the `-c` flag. You should also consider creating an shell alias for this.
 - You can create a systemd job, whose job is to open the ssh connection and to reconnect, whenever the connection goes away.
 
 ## Port forwarding

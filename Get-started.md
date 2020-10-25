@@ -65,7 +65,7 @@ To follow stderr, use the `-e` flag.
 
 ### Parallel tasks
 
-By default pueue only executes a single task at a time.
+By default, pueue only executes a single task at a time.
 This can be changed in the configuration file, but also on-demand during runtime.
 Just use the `parallel` subcommand, e.g. `pueue parallel 3`.
 Now there'll always be up to three tasks running in parallel.
@@ -144,7 +144,7 @@ This can be also be avoided by issuing the command with something like a `-y` fl
 ### My shell aliases don't work
 
 Pueue doesn't support aliases in shell's `.*rc` files, since that's pretty tricky.
-That's why Pueue brings it's own aliasing.\
+That's why Pueue brings it's own aliasing.
 Check the [Miscellaneous section](https://github.com/Nukesor/pueue/wiki/Miscellaneous) on how to use it.
 
 ### Display not found
