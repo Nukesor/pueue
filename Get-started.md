@@ -7,7 +7,7 @@
     * [Pause, resume and start tasks](#pause-resume-and-start-tasks)
     * [Manipulate multiple tasks at once](#manipulate-multiple-tasks-at-once)
     * [Dependencies, delays, immediate](#dependencies-delays-immediate)
-- [Common pitfalls](#common-pitfalls)
+- [Common pitfalls](#common-pitfalls-and-debugging)
     * [A command does not behave like expected](#a-command-does-not-behave-like-expected)
     * [The command formatting seems to be broken](#the-command-formatting-seems-to-be-broken)
     * [A process waits for input](#a-process-waits-for-input)
@@ -85,7 +85,6 @@ It can be resumed the same way with the `start` command.
 `start` can also force tasks to be started.
 This will ignore any limitations on parallel tasks and just spawn the process.
 
-
 ### Manipulate multiple tasks at once
 
 Most commands can be executed on multiple tasks at once.
@@ -96,7 +95,7 @@ This also works with your shell's range parameter, e.g. `pueue log {0..3} 15 19`
 
 ### Dependencies, delays, immediate
 
-There are more ways to specify when a command should be executed.
+There are multiple ways to specify when a command should be executed.
 Check the help text of the `add` subcommand to see all options.
 
 As an example, you can
@@ -105,8 +104,7 @@ As an example, you can
 - Set a delay. The task will be scheduled after e.g. 5 hours.
 - force a start. The task will be started immediately.
 
-
-## Common pitfalls
+## Common pitfalls and debuging
 
 ## A command does not behave like expected
 
@@ -130,7 +128,6 @@ pueue add -- ls -al "/tmp/this\ is\ a\ test\ directory"
 
 Without quotes, the character escaping won't be transferred to the `bash -c $command`, as it's already removed by calling it from the current shell.
 
-
 ### A process waits for input
 
 Sometimes some process waits for input. For instance, a package manager may wait for confirmation (`y/n`).
@@ -147,18 +144,11 @@ This can be also be avoided by issuing the command with something like a `-y` fl
 ### My shell aliases don't work
 
 Pueue doesn't support aliases in shell's `.*rc` files, since that's pretty tricky.
-That's why Pueue brings it's own aliasing.
-Check the Readme on how to use it.
+That's why Pueue brings it's own aliasing.\
+Check the [Miscellaneous section](https://github.com/Nukesor/pueue/wiki/Miscellaneous) on how to use it.
 
 ### Display not found
 
-All programs that require some kind of display/window manager won't work, as the tasks are executed in the background.
-
+All programs that require some kind of display/window manager won't work, as the tasks are executed in the background.\
 Don't use Pueue for commands that won't work in a non-visual environment.
-
-### My shell aliases do not work
-
-Pueue doesn't support aliases in shell's `.*rc` files, since that's pretty tricky.
-That's why Pueue brings it's own aliasing.
-Check the Readme on how to use it.
 
