@@ -419,6 +419,13 @@ fn group(message: GroupMessage, state: &SharedState) -> Message {
         return create_success_message(format!("Group {} removed", group));
     }
 
+    // There are no groups yet.
+    if state.groups.is_empty() {
+        return create_success_message(
+            "There are no groups yet. You can add them with the 'group -a' flag",
+        );
+    }
+
     // Compile a small minimalistic text with all important information about all known groups
     let mut group_status = String::new();
     let mut group_iter = state.groups.iter().peekable();

@@ -16,6 +16,7 @@ This version adds breaking changes:
 - Unix socket support (#90)
 - New option to specify a configuration file on startup for daemon and client.
 - Warning messages for removing/killing tasks (#111) by [Julian Kaindl](https://github.com/kaindljulian)
+- Better message on `pueue group`, when there are no groups yet.
 - Guide on how to connect to remote hosts via ssh port forwarding.
 
 ### Changed
