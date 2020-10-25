@@ -17,9 +17,8 @@ The addition and removal of groups is managed with the `group` subcommand.
 
 ### Add tasks to a group
 
-You can specify in which group a task should be run in with the `add -g` flag.
-For example, `pueue add -g cpu -- 'sleep 60'`.
-
+You can specify in which group a task should be run in with the `add -g` flag.\
+For example, `pueue add -g cpu -- 'sleep 60'`.\
 The `sleep 60` task will then be run in the `cpu` group.
 
 If no group is specified, the task will just be added to the default queue.
@@ -29,10 +28,10 @@ If no group is specified, the task will just be added to the default queue.
 You can set the amount of parallel tasks per group.
 Just call the `parallel` subcommand with the `-g` flag.
 
-For instance, `pueue parallel -g cpu 2'.
+For instance, `pueue parallel -g cpu 2`.
 The `cpu` group will now always run up to two tasks at the same time.
 
 ### Pueue status with groups
 
-By default, the `status` command shows all groups with any tasks.
+By default, the `status` command shows all groups with any tasks.\
 If you have too many groups, you can specify a group to only see this group's tasks.
