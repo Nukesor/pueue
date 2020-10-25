@@ -3,13 +3,17 @@
 - [How to use the client](#how-to-use-the-client)
     * [Adding commands](#adding-commands)
     * [See what's going on](#see-whats-going-on)
+    * [Parallel tasks](#parallel-tasks)
+    * [Pause, resume and start tasks](#pause-resume-and-start-tasks)
     * [Manipulate multiple tasks at once](#manipulate-multiple-tasks-at-once)
+    * [Dependencies, delays, immediate](#dependencies-delays-immediate)
 - [Common pitfalls](#common-pitfalls)
     * [A command does not behave like expected](#a-command-does-not-behave-like-expected)
     * [The command formatting seems to be broken](#the-command-formatting-seems-to-be-broken)
     * [A process waits for input](#a-process-waits-for-input)
-    * [My shell aliases don't work](#my-shell-aliases-don't-work)
+    * [My shell aliases do not work](#my-shell-aliases-do-not-work)
     * [Display not found](#display-not-found)
+
 
 ## Start the Daemon
 
@@ -59,6 +63,29 @@ To look at the current output of a command use `pueue log` or `pueue log $task_i
 If you want to follow the output of a running command use `git follow $task_id`.
 To follow stderr, use the `-e` flag.
 
+### Parallel tasks
+
+By default pueue only executes a single task at a time.
+This can be changed in the configuration file, but also on-demand during runtime.
+Just use the `parallel` subcommand, e.g. `pueue parallel 3`.
+Now there'll always be up to three tasks running in parallel.
+
+### Pause, resume and start tasks
+
+Without any parameters, the `pause` subcommand pauses all running tasks and the daemon itself.
+A pause daemon won't start any new tasks, until it's started again.
+
+To resume normal operation, just write `pueue start`.
+This will continue all paused tasks and the daemon will continue starting tasks.
+
+However, you can also pause specific tasks, without affecting the daemon or any other tasks.
+Just add the id of the this task as a parameter, e.g. `pueue pause 1`.
+It can be resumed the same way with the `start` command.
+
+`start` can also force tasks to be started.
+This will ignore any limitations on parallel tasks and just spawn the process.
+
+
 ### Manipulate multiple tasks at once
 
 Most commands can be executed on multiple tasks at once.
@@ -66,6 +93,18 @@ For instance, you can look at specific logs like this:\
 `pueue log 0 1 2 3 15 19`.
 
 This also works with your shell's range parameter, e.g. `pueue log {0..3} 15 19`.
+
+### Dependencies, delays, immediate
+
+There are more ways to specify when a command should be executed.
+Check the help text of the `add` subcommand to see all options.
+
+As an example, you can
+
+- Specify dependencies. The task will only be executed if all dependencies were successful.
+- Set a delay. The task will be scheduled after e.g. 5 hours.
+- force a start. The task will be started immediately.
+
 
 ## Common pitfalls
 
@@ -80,14 +119,13 @@ This can be done via `pueue log $task_id`.
 You can also get a live view of the output with `pueue follow $task_id`.
 Add the `-e` flag, if you want to see the error output.
 
-
 ### The command formatting seems to be broken
 
 Pueue takes your input and uses it exactly as is to create a new `bash -c $command` in the background.  
 If your command contains spaces or characters that need escaping, you might need to encapsulate it into a string:
 
-```
-    pueue add -- ls -al "/tmp/this\ is\ a\ test\ directory"
+```bash
+pueue add -- ls -al "/tmp/this\ is\ a\ test\ directory"
 ```
 
 Without quotes, the character escaping won't be transferred to the `bash -c $command`, as it's already removed by calling it from the current shell.
@@ -99,7 +137,7 @@ Sometimes some process waits for input. For instance, a package manager may wait
 
 In this case you can send the desired input to the process via:
 
-```
+```bash
 pueue send "y
 "
 ```
@@ -118,8 +156,9 @@ All programs that require some kind of display/window manager won't work, as the
 
 Don't use Pueue for commands that won't work in a non-visual environment.
 
-### My shell aliases don't work
+### My shell aliases do not work
 
 Pueue doesn't support aliases in shell's `.*rc` files, since that's pretty tricky.
 That's why Pueue brings it's own aliasing.
 Check the Readme on how to use it.
+
