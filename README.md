@@ -20,6 +20,9 @@ On top of that, there are a lot of convenience features and abstractions.
 Since Pueue is not bound to any terminal, you can control your tasks from any terminal on the same machine.
 The queue will be continuously processed, even if you no longer have any active ssh session.
 
+**Announcement:** The location of the configuration file changed with v0.8.0.
+The configuration and alias file is now located in a `pueue` subdirectory.
+
 - [Features](https://github.com/Nukesor/pueue#features)
 - [Why should I use it](https://github.com/Nukesor/pueue#why-should-i-use-it)
 - [Installation](https://github.com/Nukesor/pueue#installation)
