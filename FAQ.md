@@ -1,64 +1,10 @@
 # Frequently Asked Questions
 
-
-## The Project Does Not Compile:
+## The Project Does Not Compile
 Do you have Rust version `>=1.39` installed?
 If that's not the case, there should also be warning at the very top of your `cargo build` output.
 
 If you have Rust version `>=1.39`, please file a bug report.
-
-
-## A Command Doesn't Behave Like Expected
-
-**First thing to do:** Try to run the command without adding it to Pueue.
-If this fails, it's not a problem with Pueue.
-
-**Second thing** to do when debugging any problems with running/failing processes, is to look at the process output:
-
-This can be done via `pueue log $task_id`.
-You can also get a live view of the output with `pueue follow $task_id`.
-Add the `-e` flag, if you want to see the error output.
-
-
-### The Command Formatting Seems To Be Broken:
-
-Pueue takes your input and uses it exactly as is to create a new `bash -c $command` in the background.  
-If your command contains spaces or characters that need escaping, you might need to encapsulate it into a string:
-
-```
-    pueue add -- ls -al "/tmp/this\ is\ a\ test\ directory"
-```
-
-Without quotes, the character escaping won't be transferred to the `bash -c $command`, as it's already removed by calling it from the current shell.
-
-
-### Display not found | Unable to Initialize frontend
-
-All programs that require some kind of display/window manager won't work, as the tasks are executed in the background.
-
-Don't use Pueue for commands that won't work in a non-visual environment.
-
-
-### A Process Waits For Input:
-
-Sometimes some process waits for input. For instance, a package manager may wait for confirmation (`y/n`).
-
-In this case you can send the desired input to the process via:
-
-```
-pueue send "y
-"
-```
-
-This can be also be avoided by issuing the command with something like a `-y` flag (if the program allows something like this).
-
-
-
-### My Shell Aliases Don't Work:
-
-Pueue doesn't support aliases in shell's `.*rc` files, since that's pretty tricky.
-That's why Pueue brings it's own aliasing.
-Check the Readme on how to use it.
 
 ## What's The Advantage Over Using A Terminal Multiplexer
 
@@ -73,7 +19,6 @@ Additionally the long term plan is:
 - to allow remote connection to servers. No need to ssh onto a server, you can manipulate and check the status directly on your local machine.
 
 A lot of its functionality is convenience. Using your shell's tools is possible, but IMO, having something that's specifically designed for this task is more efficient and definitely more convenient.
-
 
 For example, one of my very regular use cases is Movie encoding. In this case I want:
 

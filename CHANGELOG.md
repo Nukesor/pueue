@@ -20,6 +20,7 @@ This version adds breaking changes:
 
 ### Changed
 
+- Move a lot of documentation from the README and FAQ into Github's wiki. The docs have been restructured at the same time.
 - Never create a default config when starting the client. Only starting the daemon can do that.
 - Better error messages when connecting with wrong secret.
 - Windows: The configuration file will now also be placed in `%APPDATA%\Local\pueue`.
