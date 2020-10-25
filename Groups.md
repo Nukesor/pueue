@@ -12,7 +12,7 @@ The addition and removal of groups is managed with the `group` subcommand.
 
 - New groups can be added with the `-a` flag. For instance, `pueue group -a cpu` will create the `cpu` group.
 - Groups can be removed with the `-r` flag, e.g. `pueue group -r cpu`.
-- Show all existing groups by calling `group` without any parameters, e.g. `pueue group`.
+- Show all existing groups by calling `group` without any parameters, i.e. `pueue group`.
 
 ### Add tasks to a group
 
@@ -34,3 +34,10 @@ The `cpu` group will now always run up to two tasks at the same time.
 
 By default, the `status` command shows all groups with any tasks.\
 If you have too many groups, you can specify a group to only see this group's tasks.
+
+### Pause and resume specific groups
+
+Just as `pause` and `start` pause/resume the whole daemon and all running tasks, you can also pause/resume groups and their tasks.\
+To pause a specific group add the `-g` flag.
+
+For instance, `pueue pause -g cpu` will pause all tasks in the `cpu` group. This also stops any new tasks from being started in this group.
