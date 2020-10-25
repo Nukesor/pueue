@@ -1,4 +1,20 @@
+- [Start the daemon](#start-the-daemon)
+    * [Systemd](#systemd)
+- [How to use the client](#how-to-use-the-client)
+    * [Adding commands](#adding-commands)
+    * [See what's going on](#see-whats-going-on)
+    * [Manipulate multiple tasks at once](#manipulate-multiple-tasks-at-once)
+- [Common pitfalls](#common-pitfalls)
+    * [A command does not behave like expected](#a-command-does-not-behave-like-expected)
+    * [The command formatting seems to be broken](#the-command-formatting-seems-to-be-broken)
+    * [A process waits for input](#a-process-waits-for-input)
+    * [My shell aliases don't work](#my-shell-aliases-don't-work)
+    * [Display not found](#display-not-found)
+
 ## Start the Daemon
+
+<a name="headers"/>
+
 Before you can use the `pueue` client, you have to start the daemon.
 
 **Local:**
@@ -21,7 +37,7 @@ systemctl --user enable pueued.service
 
 ## How to use the client
 
-### Adding Commands
+### Adding commands
 
 To add a command just write: `pueue add sleep 60`\
 If you want to add flags to the command, you can either:
@@ -51,6 +67,59 @@ For instance, you can look at specific logs like this:\
 
 This also works with your shell's range parameter, e.g. `pueue log {0..3} 15 19`.
 
-**Pitfalls:**
+## Common pitfalls
 
-To avoid common pitfalls, please read the [FAQ Section](https://github.com/Nukesor/pueue/blob/master/FAQ.md).
+## A command does not behave like expected
+
+**First thing to do:** Try to run the command without adding it to Pueue.
+If this fails, it's not a problem with Pueue.
+
+**Second thing** to do when debugging any problems with running/failing processes, is to look at the process output:
+
+This can be done via `pueue log $task_id`.
+You can also get a live view of the output with `pueue follow $task_id`.
+Add the `-e` flag, if you want to see the error output.
+
+
+### The command formatting seems to be broken
+
+Pueue takes your input and uses it exactly as is to create a new `bash -c $command` in the background.  
+If your command contains spaces or characters that need escaping, you might need to encapsulate it into a string:
+
+```
+    pueue add -- ls -al "/tmp/this\ is\ a\ test\ directory"
+```
+
+Without quotes, the character escaping won't be transferred to the `bash -c $command`, as it's already removed by calling it from the current shell.
+
+
+### A process waits for input
+
+Sometimes some process waits for input. For instance, a package manager may wait for confirmation (`y/n`).
+
+In this case you can send the desired input to the process via:
+
+```
+pueue send "y
+"
+```
+
+This can be also be avoided by issuing the command with something like a `-y` flag (if the program allows something like this).
+
+### My shell aliases don't work
+
+Pueue doesn't support aliases in shell's `.*rc` files, since that's pretty tricky.
+That's why Pueue brings it's own aliasing.
+Check the Readme on how to use it.
+
+### Display not found
+
+All programs that require some kind of display/window manager won't work, as the tasks are executed in the background.
+
+Don't use Pueue for commands that won't work in a non-visual environment.
+
+### My shell aliases don't work
+
+Pueue doesn't support aliases in shell's `.*rc` files, since that's pretty tricky.
+That's why Pueue brings it's own aliasing.
+Check the Readme on how to use it.
