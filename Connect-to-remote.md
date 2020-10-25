@@ -16,17 +16,17 @@ The best solution (for now) is to bind the remote port/socket to a local port/so
 For port this looks like this:
 
 ```bash
-ssh -L 127.0.0.1:6925:127.0.0.1:6925 $REMOTE_USER@yourhost
+ssh -L 127.0.0.1:6924:127.0.0.1:6924 $REMOTE_USER@yourhost
 ```
 
-You can now connect from your local pueue to the remote pueue via port 5252. Just write `pueue -p 5252 status`.
+You can now connect from your local pueue to the remote pueue via port 6924. Just write `pueue -p 6924 status`.
 
 ## Unix Socket forwarding
 
 Unix-socket to unix-socket is of course also possible:
 
 ```bash
-ssh -L /tmp/local.socket:/home/$REMOTE_USER/.local/share/pueue/pueue_nuke.sock $REMOTE_USER@yourhost
+ssh -L /tmp/local.socket:/home/$REMOTE_USER/.local/share/pueue/pueue_$REMOTE_USER.sock $REMOTE_USER@yourhost
 ```
 
 Just connect via `pueue -u /tmp/local_socket status`.
