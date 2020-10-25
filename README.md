@@ -136,9 +136,9 @@ This will install pueue to `~/.cargo/bin/pueue`
 
 ## How to use it
 
-Check out the [Get started](https://github.com/Nukesor/pueue/wiki/Get-started) section of the wiki :).\
+Check out wiki to [get you started](https://github.com/Nukesor/pueue/wiki/Get-started) :).\
 
-There are also detailed sections for (hopfully) everything important:
+There are also detailed sections for (hopefully) every important feature:
 
 - [Configuration](https://github.com/Nukesor/pueue/wiki/Configuration)
 - [Groups](https://github.com/Nukesor/pueue/wiki/Groups)
