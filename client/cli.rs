@@ -252,7 +252,7 @@ pub enum SubCommand {
     },
 
     /// Follow the output of a currently running task.
-    /// This command works like `tail -f`.
+    /// This command works like tail -f.
     Follow {
         /// The id of the task you want to watch.
         /// If no or multiple tasks are running, you have to specify the id.
