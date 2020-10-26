@@ -225,7 +225,7 @@ However, in my opinion, having a tool that's specifically designed for managing 
 
 One of my regular use cases is downloading lots of stuff. In this case I want:
 
-- At most three parallel downloads, otherwise the other services on my service get no bandwidth.
+- At most three parallel downloads, otherwise the other services on my server get starved.
 - To see at first glance whether a download fails and easily edit and re-schedule it.
 - An easy way to look at output.
 - Everything to be in a uniform interface.
