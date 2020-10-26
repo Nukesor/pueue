@@ -18,7 +18,7 @@ Simply put, it's a tool that processes a queue of shell commands.
 On top of that, there are a lot of convenience features and abstractions.
 
 Since Pueue is not bound to any terminal, you can control your tasks from any terminal on the same machine.
-The queue will be continuously processed, even if you no longer have any active ssh session.
+The queue will be continuously processed, even if you no longer have any active ssh sessions.
 
 **Announcement:** The location of the configuration file changed with v0.8.0.
 The configuration and alias file is now located in a `pueue` subdirectory.
@@ -215,7 +215,7 @@ Here are few examples of Pueue's basic functionality.
 - The ability to queue commands and not start them all at once
 - Specifying how many tasks should run in parallel
 - Easy pausing/resuming of tasks
-- Pretty and accessible task status overvies
+- Pretty and accessible task status overviews
 - No need to attach to a multiple tmux sessions
 
 There are a lot more built-in convenience features. You should read the [Wiki](https://github.com/Nukesor/pueue/wiki) for a detailed explanation.
