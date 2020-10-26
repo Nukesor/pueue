@@ -322,7 +322,7 @@ pub struct Opt {
     pub unix_socket_path: Option<String>,
 
     /// Path to a specific pueue config daemon, that should be used.
-    /// This ignore all other config files.
+    /// This ignores all other config files.
     #[structopt(short, long)]
     pub config: Option<PathBuf>,
 
