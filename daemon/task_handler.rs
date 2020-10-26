@@ -741,6 +741,15 @@ impl TaskHandler {
         parameters.insert("command", task.command.clone());
         parameters.insert("path", task.path.clone());
         parameters.insert("result", task.result.clone().unwrap().to_string());
+
+        let print_time = |time: Option<DateTime<Local>>| {
+            time.map(|time| time.timestamp().to_string())
+                .unwrap_or_else(String::new)
+        };
+        parameters.insert("enqueue", print_time(task.enqueue_at));
+        parameters.insert("start", print_time(task.start));
+        parameters.insert("end", print_time(task.end));
+
         if let Some(group) = &task.group {
             parameters.insert("group", group.clone());
         } else {
