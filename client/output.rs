@@ -30,7 +30,7 @@ pub fn print_error(message: &str) {
 }
 
 /// Print the current state of the daemon in a nicely formatted table.
-pub fn print_state(state: State, cli_command: &SubCommand) {
+pub fn print_state(state: State, cli_command: &SubCommand, settings: &Settings) {
     let (json, group_only) = match cli_command {
         SubCommand::Status { json, group } => (*json, group.clone()),
         _ => panic!(
@@ -62,7 +62,7 @@ pub fn print_state(state: State, cli_command: &SubCommand) {
     if group_only.is_none() {
         let default_tasks = get_default_tasks(&state.tasks);
         if !default_tasks.is_empty() {
-            print_table(&default_tasks);
+            print_table(&default_tasks, settings);
         }
     }
 
@@ -75,12 +75,12 @@ pub fn print_state(state: State, cli_command: &SubCommand) {
             }
         }
         println!("{}", get_group_headline(&group, &state, is_tty));
-        print_table(&tasks);
+        print_table(&tasks, settings);
     }
 }
 
 /// Print some tasks into a nicely formatted table
-fn print_table(tasks: &BTreeMap<usize, Task>) {
+fn print_table(tasks: &BTreeMap<usize, Task>, settings: &Settings) {
     let (has_delayed_tasks, has_dependencies) = has_special_columns(tasks);
 
     // Create table header row
@@ -109,6 +109,9 @@ fn print_table(tasks: &BTreeMap<usize, Task>) {
     // Add rows one by one.
     for (id, task) in tasks {
         let mut row = Row::new();
+        if let Some(height) = settings.client.max_status_height {
+            row.max_height(height);
+        }
         row.add_cell(Cell::new(&id.to_string()));
 
         // Determine the human readable task status representation and the respective color.
