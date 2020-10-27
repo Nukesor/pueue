@@ -232,3 +232,9 @@ This version adds breaking changes:
 
 - Replace prettytables-rs with comfy-table.
 - Replace termion with crossterm.
+
+## [0.8.1] -
+
+### Added
+
+- Add `start`, `end` and `enqueue` time paramters to callback hooks
