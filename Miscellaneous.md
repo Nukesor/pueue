@@ -31,17 +31,26 @@ These are the available variables that can be used to create a command:
 - `{{ path }}`
 - `{{ result }}` (Success, Killed, etc.)
 - `{{ group }}`
+- `{{ start }}` (times are UNIX timestamps or empty)
+- `{{ end }}`
+- `{{ enqueue }}`
 
 Example callback:
 
 ```yaml
-callback: "notify-send \"Task {{ id }}\nCommand: {{ command }}\nPath: {{ path }}\nFinished with status '{{ result }}'\""
+callback: "notify-send \"Task {{ id }}\nCommand: {{ command }}\nPath: {{ path }}\nFinished with status '{{ result }}'\nTook: $(bc <<< \"{{end}} - {{start}}\") seconds\""
 ```
 
 Here's another example for macOS notifications:
 
 ```yaml
 callback: "osascript -e 'display notification \"Finished with status {{ result }}\" with title \"Pueue task {{ id }}\" subtitle \"{{ command }}\"'"
+```
+
+Depending on how complex your callback becomes it might make sense to put into an external file:
+
+```yaml
+callback: '/path/to/callback "{{id}}" "{{command}}" "{{path}}" "{{result}}" "{{group}}" "{{start}}" "{{end}}" "{{enqueue}}"'
 ```
 
 ## Shell completion files
@@ -65,10 +74,9 @@ This can also be used to easily incorporate it into window manager bars, such as
 ## Logs
 
 All logs can be found in `${pueue_directory}/logs`.
-Logs of previous Pueue sessions will be created whenever you issue a `reset` or `clean`.  
+Logs of previous Pueue sessions will be created whenever you issue a `reset` or `clean`.
 In case the daemon fails or something goes wrong, the daemon will print to `stdout`/`stderr`.
 If the daemon crashes or something goes wrong, please set the debug level to `-vvvv` and create an issue with the log!
 
 If you want to dig right into it, you can compile and run it yourself with a debug build.
 This would help me a lot!
-
