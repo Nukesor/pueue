@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [0.8.1] -
+
+### Added
+
+- Add `start`, `end` and `enqueue` time parameters to callback hooks by [soruh](https://github.com/soruh).
+- Config flag to truncate content in 'status'.
+
+### Fixed
+
+- ZSH completion script fix by [ahkrr](https://github.com/ahkrr).
+
 ## [0.8.0] - 2020-10-25
 
 This version adds breaking changes:
@@ -232,9 +244,3 @@ This version adds breaking changes:
 
 - Replace prettytables-rs with comfy-table.
 - Replace termion with crossterm.
-
-## [0.8.1] -
-
-### Added
-
-- Add `start`, `end` and `enqueue` time paramters to callback hooks

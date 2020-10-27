@@ -35,15 +35,13 @@ async fn main() -> Result<()> {
     }
 
     // Set the verbosity level of the logger.
-    if opt.verbose >= 3 {
-        SimpleLogger::init(LevelFilter::Debug, Config::default())?;
-    } else if opt.verbose == 2 {
-        SimpleLogger::init(LevelFilter::Info, Config::default())?;
-    } else if opt.verbose == 1 {
-        SimpleLogger::init(LevelFilter::Warn, Config::default())?;
-    } else if opt.verbose == 0 {
-        SimpleLogger::init(LevelFilter::Error, Config::default())?;
-    }
+    let level = match opt.verbose {
+        0 => LevelFilter::Error,
+        1 => LevelFilter::Warn,
+        2 => LevelFilter::Info,
+        _ => LevelFilter::Debug,
+    };
+    SimpleLogger::init(level, Config::default()).unwrap();
 
     // Try to read settings from the configuration file.
     let settings = match Settings::read(false, &opt.config) {

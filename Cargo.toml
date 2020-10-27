@@ -39,7 +39,7 @@ strum = "^0.19"
 strum_macros = "^0.19"
 handlebars = "3"
 
-bytes = "^0.5"
+bytes = "^0.6"
 byteorder = "^1"
 snap = "1"
 serde = "^1.0"
@@ -52,7 +52,7 @@ log = "0.4"
 config = { version = "^0.10", default-features = false, features = ["yaml"] }
 simplelog = { version = "0.8", default-features = false }
 structopt = "0.3"
-crossterm = "^0.17"
+crossterm = "^0.18"
 comfy-table= "^1"
 tempfile = "^3"
 
