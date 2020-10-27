@@ -38,6 +38,12 @@ Example callback:
 callback: "notify-send \"Task {{ id }}\nCommand: {{ command }}\nPath: {{ path }}\nFinished with status '{{ result }}'\""
 ```
 
+Here's another example for macOS notifications:
+
+```yaml
+callback: "osascript -e 'display notification \"Finished with status {{ result }}\" with title \"Pueue task {{ id }}\" subtitle \"{{ command }}\"'"
+```
+
 ## Shell completion files
 
 Shell completion files can be created on the fly with `pueue completions $shell $directory`.
