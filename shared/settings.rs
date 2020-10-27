@@ -26,7 +26,7 @@ pub struct Shared {
 pub struct Client {
     pub read_local_logs: bool,
     pub show_confirmation_questions: bool,
-    pub max_status_height: Option<usize>,
+    pub max_status_lines: Option<usize>,
 }
 
 /// All settings which are used by the daemon
@@ -65,7 +65,7 @@ impl Settings {
         // Client specific config
         config.set_default("client.read_local_logs", true)?;
         config.set_default("client.show_confirmation_questions", false)?;
-        config.set_default("client.max_status_height", None::<i64>)?;
+        config.set_default("client.max_status_lines", None::<i64>)?;
 
         // Daemon specific config
         config.set_default("daemon.default_parallel_tasks", 1)?;

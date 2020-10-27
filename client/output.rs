@@ -109,7 +109,7 @@ fn print_table(tasks: &BTreeMap<usize, Task>, settings: &Settings) {
     // Add rows one by one.
     for (id, task) in tasks {
         let mut row = Row::new();
-        if let Some(height) = settings.client.max_status_height {
+        if let Some(height) = settings.client.max_status_lines {
             row.max_height(height);
         }
         row.add_cell(Cell::new(&id.to_string()));
