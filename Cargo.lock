@@ -1115,7 +1115,7 @@ dependencies = [
 
 [[package]]
 name = "pueue"
-version = "0.8.1-alpha.0"
+version = "0.8.1"
 dependencies = [
  "anyhow",
  "async-std",
