@@ -51,7 +51,8 @@ serde_derive = "^1.0"
 log = "0.4"
 config = { version = "^0.10", default-features = false, features = ["yaml"] }
 simplelog = { version = "0.8", default-features = false }
-structopt = "0.3"
+clap = "3.0.0-beta.2"
+clap_generate = "3.0.0-beta.2"
 crossterm = "^0.18"
 comfy-table= "^1"
 tempfile = "^3"

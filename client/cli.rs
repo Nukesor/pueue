@@ -3,46 +3,45 @@ use std::path::PathBuf;
 use chrono::prelude::*;
 use chrono::Duration;
 use chrono_english::*;
-use structopt::clap::Shell;
-use structopt::StructOpt;
+use clap::Clap;
 
-#[derive(StructOpt, Debug)]
+#[derive(Clap, Debug)]
 pub enum SubCommand {
     /// Enqueue a task for execution.
     Add {
         /// The command that should be added.
-        #[structopt(required = true)]
+        #[clap(required = true)]
         command: Vec<String>,
 
         /// Start the task immediately.
-        #[structopt(name = "immediate", short, long, conflicts_with = "stashed")]
+        #[clap(name = "immediate", short, long, conflicts_with = "stashed")]
         start_immediately: bool,
 
         /// Create the task in stashed state.
         /// Useful to avoid immediate execution if the queue is empty.
-        #[structopt(name = "stashed", short, long, conflicts_with = "immediate")]
+        #[clap(name = "stashed", short, long, conflicts_with = "immediate")]
         stashed: bool,
 
         /// Delays enqueueing the task until <delay> elapses. See "enqueue" for accepted formats.
-        #[structopt(name = "delay", short, long, conflicts_with = "immediate", parse(try_from_str=parse_delay_until))]
+        #[clap(name = "delay", short, long, conflicts_with = "immediate", parse(try_from_str=parse_delay_until))]
         delay_until: Option<DateTime<Local>>,
 
         /// Assign the task to a group. Groups kind of act as separate queues.
         /// I.e. all groups run in parallel and you can specify the amount of parallel tasks for each group.
         /// If no group is specified, the default group will be used.
-        #[structopt(name = "group", short, long)]
+        #[clap(name = "group", short, long)]
         group: Option<String>,
 
         /// Start the task once all specified tasks have successfully finished.
         /// As soon as one of the dependencies fails, this task will fail as well.
-        #[structopt(name = "after", short, long)]
+        #[clap(name = "after", short, long)]
         dependencies: Vec<usize>,
     },
     /// Remove tasks from the list.
     /// Running or paused tasks need to be killed first.
     Remove {
         /// The task ids to be removed.
-        #[structopt(required = true)]
+        #[clap(required = true)]
         task_ids: Vec<usize>,
     },
     /// Switches the queue position of two commands. Only works on queued and stashed commands.
@@ -56,11 +55,11 @@ pub enum SubCommand {
     /// Either enqueue them, to be normally handled or explicitly start them.
     Stash {
         /// The id(s) of the tasks you want to stash.
-        #[structopt(required = true)]
+        #[clap(required = true)]
         task_ids: Vec<usize>,
     },
     /// Enqueue stashed tasks. They'll be handled normally afterwards.
-    #[structopt(after_help = "DELAY FORMAT:
+    #[clap(after_help = "DELAY FORMAT:
 
     The --delay argument must be either a number of seconds or a \"date expression\" similar to GNU \
     `date -d` with some extensions. It does not attempt to parse all natural language, but is \
@@ -87,31 +86,31 @@ pub enum SubCommand {
         task_ids: Vec<usize>,
 
         /// Delay enqueuing the tasks until <delay> elapses. See DELAY FORMAT below.
-        #[structopt(name = "delay", short, long, parse(try_from_str=parse_delay_until))]
+        #[clap(name = "delay", short, long, parse(try_from_str=parse_delay_until))]
         delay_until: Option<DateTime<Local>>,
     },
 
     /// Resume operation of specific tasks or groups of tasks.
     /// By default, this resumes the default queue and all its tasks.
     /// Can also be used force-start specific tasks.
-    #[structopt(verbatim_doc_comment)]
+    #[clap(verbatim_doc_comment)]
     Start {
         /// Enforce starting these tasks. Paused tasks will be started again.
         /// This does not affect anything other than these tasks.
         task_ids: Vec<usize>,
 
         /// Start a specific group and all paused tasks in it.
-        #[structopt(short, long, group("start"))]
+        #[clap(short, long, group("start"))]
         group: Option<String>,
 
         /// Start a everything (Default queue and all groups)!
         /// All groups will be set to `running` and all paused tasks will be resumed.
-        #[structopt(short, long, group("start"))]
+        #[clap(short, long, group("start"))]
         all: bool,
 
         /// Also resume direct child processes of your paused tasks.
         /// By default only the main process will get a SIGSTART.
-        #[structopt(short, long, group("start"))]
+        #[clap(short, long, group("start"))]
         children: bool,
     },
 
@@ -119,54 +118,54 @@ pub enum SubCommand {
     /// Identical tasks will be created and by default enqueued.
     Restart {
         /// The tasks you want to restart.
-        #[structopt(required = true)]
+        #[clap(required = true)]
         task_ids: Vec<usize>,
 
         /// Immediately start the task(s).
-        #[structopt(name = "immediate", short, long)]
+        #[clap(name = "immediate", short, long)]
         start_immediately: bool,
 
         /// Create the task in stashed state.
         /// Useful to avoid immediate execution.
-        #[structopt(short, long, conflicts_with = "immediate")]
+        #[clap(short, long, conflicts_with = "immediate")]
         stashed: bool,
 
         /// Edit the command of the task before restarting
-        #[structopt(short, long)]
+        #[clap(short, long)]
         edit: bool,
 
         /// Edit the path of the task before restarting
-        #[structopt(short, long)]
+        #[clap(short, long)]
         path: bool,
     },
 
     /// Pause either running tasks or specific groups of tasks.
     /// By default, pauses the default queue and all its tasks.
     /// A paused queue (group) won't start any new tasks.
-    #[structopt(verbatim_doc_comment)]
+    #[clap(verbatim_doc_comment)]
     Pause {
         /// Pause these specific tasks.
         /// Does not affect the default queue, groups or any other tasks.
         task_ids: Vec<usize>,
 
         /// Pause a specific group.
-        #[structopt(short, long, group("pause"))]
+        #[clap(short, long, group("pause"))]
         group: Option<String>,
 
         /// Pause everything (Default queue and all groups)!
-        #[structopt(short, long, group("pause"))]
+        #[clap(short, long, group("pause"))]
         all: bool,
 
         /// Don not pause already running tasks and let them finish by themselves,
         /// when pausing with `default`, `all` or `group`.
-        #[structopt(short, long, group("pause"))]
+        #[clap(short, long, group("pause"))]
         wait: bool,
 
         /// Also pause direct child processes of a task's main process.
         /// By default only the main process will get a SIGSTOP.
         /// This is useful when calling bash scripts, which start other processes themselves.
         /// This operation is not recursive!
-        #[structopt(short, long, group("pause"))]
+        #[clap(short, long, group("pause"))]
         children: bool,
     },
 
@@ -176,20 +175,20 @@ pub enum SubCommand {
         task_ids: Vec<usize>,
 
         /// Kill all running tasks in the default queue. Pause the default queue.
-        #[structopt(short, long, group("kill"))]
+        #[clap(short, long, group("kill"))]
         default: bool,
 
         /// Kill all running in a group. Pauses the group.
-        #[structopt(short, long, group("kill"))]
+        #[clap(short, long, group("kill"))]
         group: Option<String>,
 
         /// Kill ALL running tasks. This also pauses everything
-        #[structopt(short, long, group("kill"))]
+        #[clap(short, long, group("kill"))]
         all: bool,
 
         /// Send the SIGTERM signal to all children as well.
         /// Useful when working with shell scripts.
-        #[structopt(short, long, group("kill"))]
+        #[clap(short, long, group("kill"))]
         children: bool,
     },
 
@@ -204,13 +203,13 @@ pub enum SubCommand {
 
     /// Edit the command or path of a stashed or queued task.
     /// This edits the command of the task by default.
-    #[structopt(verbatim_doc_comment)]
+    #[clap(verbatim_doc_comment)]
     Edit {
         /// The id of the task.
         task_id: usize,
 
         /// Edit the path of the task.
-        #[structopt(short, long)]
+        #[clap(short, long)]
         path: bool,
     },
 
@@ -218,12 +217,12 @@ pub enum SubCommand {
     /// By default, this will simply display all known groups.
     Group {
         /// Add a group
-        #[structopt(short, long)]
+        #[clap(short, long)]
         add: Option<String>,
 
         /// Remove a group.
         /// This will move all tasks in this group to the default group!
-        #[structopt(short, long)]
+        #[clap(short, long)]
         remove: Option<String>,
     },
 
@@ -232,10 +231,10 @@ pub enum SubCommand {
         /// Print the current state as json to stdout.
         /// This does not include stdout/stderr of tasks.
         /// Use `log -j` if you want everything.
-        #[structopt(short, long)]
+        #[clap(short, long)]
         json: bool,
 
-        #[structopt(short, long)]
+        #[clap(short, long)]
         /// Only show tasks of a specific group
         group: Option<String>,
     },
@@ -247,7 +246,7 @@ pub enum SubCommand {
         task_ids: Vec<usize>,
         /// Print the current state as json.
         /// Includes EVERYTHING.
-        #[structopt(short, long)]
+        #[clap(short, long)]
         json: bool,
     },
 
@@ -260,7 +259,7 @@ pub enum SubCommand {
         task_id: Option<usize>,
 
         /// Show stderr instead of stdout.
-        #[structopt(short, long)]
+        #[clap(short, long)]
         err: bool,
     },
 
@@ -271,7 +270,7 @@ pub enum SubCommand {
     Reset {
         /// Send the SIGTERM signal to all children as well.
         /// Useful when working with shell scripts.
-        #[structopt(short, long)]
+        #[clap(short, long)]
         children: bool,
     },
 
@@ -281,11 +280,11 @@ pub enum SubCommand {
     /// Set the amount of allowed parallel tasks.
     Parallel {
         /// The amount of allowed parallel tasks.
-        #[structopt(validator=min_one)]
+        #[clap(validator=min_one)]
         parallel_tasks: usize,
 
         /// Specify the amount of parallel tasks for a group.
-        #[structopt(name = "group", short, long)]
+        #[clap(name = "group", short, long)]
         group: Option<String>,
     },
 
@@ -293,40 +292,50 @@ pub enum SubCommand {
     /// This can be ignored during normal operations.
     Completions {
         /// The target shell. Can be `bash`, `fish`, `powershell`, `elvish` and `zsh`.
+        #[clap(arg_enum)]
         shell: Shell,
         /// The output directory to which the file should be written.
         output_directory: PathBuf,
     },
 }
 
-#[derive(StructOpt, Debug)]
-#[structopt(
+#[derive(Clap, Debug, PartialEq)]
+pub enum Shell {
+    Bash,
+    Elvish,
+    Fish,
+    PowerShell,
+    Zsh,
+}
+
+#[derive(Clap, Debug)]
+#[clap(
     name = "Pueue client",
     about = "Interact with the Pueue daemon",
     author = "Arne Beer <contact@arne.beer>"
 )]
 pub struct Opt {
     /// Verbose mode (-v, -vv, -vvv)
-    #[structopt(short, long, parse(from_occurrences))]
+    #[clap(short, long, parse(from_occurrences))]
     pub verbose: u8,
 
     /// The port for the daemon. Overwrites the port in the config file.
     /// Will force TCP mode.
-    #[structopt(short, long)]
+    #[clap(short, long)]
     pub port: Option<String>,
 
     /// The path to the unix socket.
     /// Overwrites the path in the config file.
     /// Will force Unix-socket mode.
-    #[structopt(short, long, conflicts_with = "port")]
+    #[clap(short, long, conflicts_with = "port")]
     pub unix_socket_path: Option<String>,
 
     /// Path to a specific pueue config daemon, that should be used.
     /// This ignores all other config files.
-    #[structopt(short, long)]
+    #[clap(short, long)]
     pub config: Option<PathBuf>,
 
-    #[structopt(subcommand)]
+    #[clap(subcommand)]
     pub cmd: SubCommand,
 }
 
@@ -346,7 +355,7 @@ fn parse_delay_until(src: &str) -> Result<DateTime<Local>, String> {
 }
 
 /// Validator function. The input string has to be parsable as int and bigger than 0
-fn min_one(value: String) -> Result<(), String> {
+fn min_one(value: &str) -> Result<(), String> {
     match value.parse::<usize>() {
         Ok(value) => {
             if value < 1 {

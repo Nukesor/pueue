@@ -5,8 +5,8 @@ use std::sync::mpsc::channel;
 use std::sync::{Arc, Mutex};
 
 use anyhow::Result;
+use clap::Clap;
 use simplelog::{Config, LevelFilter, SimpleLogger};
-use structopt::StructOpt;
 
 use pueue::message::Message;
 use pueue::settings::Settings;
@@ -28,7 +28,7 @@ mod task_handler;
 #[async_std::main]
 async fn main() -> Result<()> {
     // Parse commandline options.
-    let opt = Opt::from_args();
+    let opt = Opt::parse();
 
     if opt.daemonize {
         fork_daemon(&opt)?;
