@@ -26,6 +26,7 @@ async fn main() -> Result<()> {
     } = &opt.cmd
     {
         let mut app = CliArguments::into_app();
+        app.set_bin_name("pueue");
         match shell {
             Shell::Bash => generate_to::<Bash, _, _>(&mut app, "pueue", output_directory),
             Shell::Elvish => generate_to::<Elvish, _, _>(&mut app, "pueue", output_directory),
