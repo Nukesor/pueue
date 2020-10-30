@@ -20,23 +20,23 @@ async fn main() -> Result<()> {
     // Parse commandline options.
     let opt = CliArguments::parse();
 
-    //if let SubCommand::Completions {
-    //    shell,
-    //    output_directory,
-    //} = &opt.cmd
-    //{
-    //    let app = CliArguments::clap();
-    //    match shell {
-    //        Shell::Bash => generate_to::<Bash, _, _>(&mut app, "pueue", output_directory),
-    //        Shell::Elvish => generate_to::<Elvish, _, _>(&mut app, "pueue", output_directory),
-    //        Shell::Fish => generate_to::<Fish, _, _>(&mut app, "pueue", output_directory),
-    //        Shell::PowerShell => {
-    //            generate_to::<PowerShell, _, _>(&mut app, "pueue", output_directory)
-    //        }
-    //        Shell::Zsh => generate_to::<Zsh, _, _>(&mut app, "pueue", output_directory),
-    //    };
-    //    return Ok(());
-    //}
+    if let SubCommand::Completions {
+        shell,
+        output_directory,
+    } = &opt.cmd
+    {
+        let mut app = CliArguments::into_app();
+        match shell {
+            Shell::Bash => generate_to::<Bash, _, _>(&mut app, "pueue", output_directory),
+            Shell::Elvish => generate_to::<Elvish, _, _>(&mut app, "pueue", output_directory),
+            Shell::Fish => generate_to::<Fish, _, _>(&mut app, "pueue", output_directory),
+            Shell::PowerShell => {
+                generate_to::<PowerShell, _, _>(&mut app, "pueue", output_directory)
+            }
+            Shell::Zsh => generate_to::<Zsh, _, _>(&mut app, "pueue", output_directory),
+        };
+        return Ok(());
+    }
 
     // Set the verbosity level of the logger.
     let level = match opt.verbose {
