@@ -14,11 +14,16 @@ use crate::platform::directories::*;
 /// All settings which are used by both, the client and the daemon
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Shared {
-    pub port: String,
     pub secret: String,
     pub pueue_directory: String,
     pub use_unix_socket: bool,
     pub unix_socket_path: String,
+
+    pub url: String,
+    pub port: String,
+    pub daemon_cert: PathBuf,
+    pub daemon_key: PathBuf,
+    pub client_cert: String,
 }
 
 /// All settings which are used by the client
@@ -57,11 +62,18 @@ impl Settings {
     pub fn new(require_config: bool, from_file: &Option<PathBuf>) -> Result<Settings> {
         let mut config = Config::new();
 
-        config.set_default("shared.port", "6924")?;
+        let pueue_path = default_pueue_path()?;
         config.set_default("shared.secret", gen_random_secret())?;
-        config.set_default("shared.pueue_directory", default_pueue_path()?)?;
+        config.set_default("shared.pueue_directory", pueue_path.clone())?;
         config.set_default("shared.use_unix_socket", false)?;
         config.set_default("shared.unix_socket_path", get_unix_socket_path()?)?;
+
+        config.set_default("shared.url", "localhost")?;
+        config.set_default("shared.port", "6924")?;
+        config.set_default("shared.tls_enabled", true)?;
+        config.set_default("shared.key_cert", pueue_path.clone() + "/daemon.key")?;
+        config.set_default("shared.daemon_cert", pueue_path.clone() + "/daemon.cert")?;
+        config.set_default("shared.client_cert", pueue_path + "/client.cert")?;
 
         // Client specific config
         config.set_default("client.read_local_logs", true)?;

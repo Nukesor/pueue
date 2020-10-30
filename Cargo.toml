@@ -29,7 +29,9 @@ path = "shared/lib.rs"
 [dependencies]
 anyhow = "1"
 async-std = { version = "1", features = ["attributes", "std"] }
+async-tls = "0.11"
 async-trait = "0.1"
+rustls = "0.19"
 dirs = "3"
 chrono = { version = "^0.4", features = ["serde"] }
 chrono-english = "^0.1.0"

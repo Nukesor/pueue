@@ -4,6 +4,7 @@ use anyhow::{bail, Context, Result};
 use async_std::io::{Read, Write};
 use async_std::net::{TcpListener, TcpStream};
 use async_std::os::unix::net::{UnixListener, UnixStream};
+use async_tls::{server::TlsStream, TlsAcceptor};
 use async_trait::async_trait;
 
 /// A new trait, which can be used to represent Unix- and TcpListeners.
@@ -31,9 +32,10 @@ impl GenericListener for UnixListener {
 
 /// A new trait, which can be used to represent Unix- and TcpStream.
 /// This is necessary to easily write generic functions where both types can be used.
-pub trait GenericSocket: Read + Write + Unpin + Send + Sync {}
+pub trait GenericSocket: Read + Write + Unpin + Send {}
 impl GenericSocket for TcpStream {}
 impl GenericSocket for UnixStream {}
+impl GenericSocket for TlsStream<Box<dyn GenericSocket>> {}
 
 /// Two convenient types, so we don't have type write Box<dyn ...> all the time.
 pub type Listener = Box<dyn GenericListener>;
@@ -73,7 +75,7 @@ pub async fn get_client(unix_socket_path: Option<String>, port: Option<String>) 
 /// which depends on the parameters.
 pub async fn get_listener(
     unix_socket_path: Option<String>,
-    port: Option<String>,
+    port: Option<(String, TlsAcceptor)>,
 ) -> Result<Listener> {
     if let Some(socket_path) = unix_socket_path {
         // Check, if the socket already exists
@@ -95,7 +97,7 @@ pub async fn get_listener(
         return Ok(Box::new(UnixListener::bind(socket_path).await?));
     }
 
-    let port = port.unwrap();
+    let (port, _) = port.unwrap();
     let address = format!("127.0.0.1:{}", port);
     Ok(Box::new(TcpListener::bind(address).await?))
 }

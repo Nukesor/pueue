@@ -1,25 +1,28 @@
 use std::sync::mpsc::Sender;
+use std::sync::Arc;
 
 use anyhow::{bail, Result};
 use async_std::task;
+use async_tls::TlsAcceptor;
 use log::{debug, info, warn};
 
 use pueue::message::*;
 use pueue::protocol::*;
 use pueue::state::SharedState;
+use pueue::tls::load_config;
 
 use crate::cli::CliArguments;
 use crate::instructions::handle_message;
 use crate::streaming::handle_follow;
 
-/// Poll the unix listener and accept new incoming connections.
+/// Poll the listener and accept new incoming connections.
 /// Create a new future to handle the message and spawn it.
 pub async fn accept_incoming(
     sender: Sender<Message>,
     state: SharedState,
     opt: CliArguments,
 ) -> Result<()> {
-    let (unix_socket_path, port) = {
+    let (unix_socket_path, tcp_info) = {
         let state = state.lock().unwrap();
         let shared = &state.settings.shared;
 
@@ -27,29 +30,46 @@ pub async fn accept_incoming(
         if shared.use_unix_socket {
             (Some(shared.unix_socket_path.clone()), None)
         } else {
-            // Otherwise use tcp sockets and a given port
+            // Otherwise use tcp sockets on a given port and host.
             // Commandline argument overwrites the configuration files values for port.
+            // This also initializes the TLS acceptor.
             let port = if let Some(port) = opt.port.clone() {
                 port
             } else {
                 shared.port.clone()
             };
 
-            (None, Some(port))
+            let config = load_config(&state.settings)?;
+            let acceptor = TlsAcceptor::from(Arc::new(config));
+            (None, Some((port, acceptor)))
         }
     };
 
-    let listener = get_listener(unix_socket_path, port).await?;
+    let listener = get_listener(unix_socket_path, tcp_info.clone()).await?;
 
     loop {
-        // Poll if we have a new incoming connection.
-        let socket = listener.accept().await?;
+        // Poll incoming connections.
+        // We have to decide between Unix sockets and TCP sockets.
+        // In case of a TCP connection, we have to add a TLS layer.
+        let stream = if let Some((_, acceptor)) = tcp_info.clone() {
+            let stream = listener.accept().await?;
+            Box::new(acceptor.accept(stream).await?)
+        } else {
+            listener.accept().await?
+        };
+
+        //let socket = if let Some((_, ref acceptor)) = tcp_info {
+        //    let stream = listener.accept().await?;
+        //    Box::new(acceptor.accept(stream)?)
+        //} else {
+        //    listener.accept().await?
+        //};
 
         // Start a new task for the request
         let sender_clone = sender.clone();
         let state_clone = state.clone();
         task::spawn(async move {
-            let _result = handle_incoming(socket, sender_clone, state_clone).await;
+            let _result = handle_incoming(stream, sender_clone, state_clone).await;
         });
     }
 }
