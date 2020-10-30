@@ -12,20 +12,20 @@ pub mod commands;
 pub mod output;
 pub mod output_helper;
 
-use crate::cli::{Opt, Shell, SubCommand};
+use crate::cli::{CliArguments, Shell, SubCommand};
 use crate::client::Client;
 
 #[async_std::main]
 async fn main() -> Result<()> {
     // Parse commandline options.
-    let opt = Opt::parse();
+    let opt = CliArguments::parse();
 
     //if let SubCommand::Completions {
     //    shell,
     //    output_directory,
     //} = &opt.cmd
     //{
-    //    let app = Opt::clap();
+    //    let app = CliArguments::clap();
     //    match shell {
     //        Shell::Bash => generate_to::<Bash, _, _>(&mut app, "pueue", output_directory),
     //        Shell::Elvish => generate_to::<Elvish, _, _>(&mut app, "pueue", output_directory),

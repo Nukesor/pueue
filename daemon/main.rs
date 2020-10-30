@@ -12,7 +12,7 @@ use pueue::message::Message;
 use pueue::settings::Settings;
 use pueue::state::State;
 
-use crate::cli::Opt;
+use crate::cli::CliArguments;
 use crate::socket::accept_incoming;
 use crate::task_handler::TaskHandler;
 
@@ -28,7 +28,7 @@ mod task_handler;
 #[async_std::main]
 async fn main() -> Result<()> {
     // Parse commandline options.
-    let opt = Opt::parse();
+    let opt = CliArguments::parse();
 
     if opt.daemonize {
         fork_daemon(&opt)?;
@@ -144,7 +144,7 @@ fn init_directories(path: &str) {
 
 /// This is a simple and cheap custom fork method.
 /// Simply spawn a new child with identical arguments and exit right away.
-fn fork_daemon(opt: &Opt) -> Result<()> {
+fn fork_daemon(opt: &CliArguments) -> Result<()> {
     let mut arguments = Vec::<String>::new();
 
     if let Some(port) = &opt.port {

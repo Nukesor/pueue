@@ -10,7 +10,7 @@ use pueue::platform::socket::*;
 use pueue::protocol::*;
 use pueue::settings::Settings;
 
-use crate::cli::{Opt, SubCommand};
+use crate::cli::{CliArguments, SubCommand};
 use crate::commands::edit::*;
 use crate::commands::local_follow::*;
 use crate::commands::restart::*;
@@ -23,14 +23,14 @@ use crate::output::*;
 /// Most commands are a simple ping-pong. However, some commands require a more complex
 /// communication pattern, such as the `follow` command, which continuously streams the output of a task.
 pub struct Client {
-    opt: Opt,
+    opt: CliArguments,
     settings: Settings,
     socket: Socket,
 }
 
 impl Client {
     /// Connect to the daemon, authorize via secret and return a new initialized Client.
-    pub async fn new(settings: Settings, opt: Opt) -> Result<Self> {
+    pub async fn new(settings: Settings, opt: CliArguments) -> Result<Self> {
         // // Commandline argument overwrites the configuration files values for address
         // let address = if let Some(address) = opt.address.clone() {
         //     address

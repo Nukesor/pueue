@@ -314,7 +314,7 @@ pub enum Shell {
     about = "Interact with the Pueue daemon",
     author = "Arne Beer <contact@arne.beer>"
 )]
-pub struct Opt {
+pub struct CliArguments {
     /// Verbose mode (-v, -vv, -vvv)
     #[clap(short, long, parse(from_occurrences))]
     pub verbose: u8,

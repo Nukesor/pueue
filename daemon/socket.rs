@@ -8,13 +8,13 @@ use pueue::message::*;
 use pueue::protocol::*;
 use pueue::state::SharedState;
 
-use crate::cli::Opt;
+use crate::cli::CliArguments;
 use crate::instructions::handle_message;
 use crate::streaming::handle_follow;
 
 /// Poll the unix listener and accept new incoming connections.
 /// Create a new future to handle the message and spawn it.
-pub async fn accept_incoming(sender: Sender<Message>, state: SharedState, opt: Opt) -> Result<()> {
+pub async fn accept_incoming(sender: Sender<Message>, state: SharedState, opt: CliArguments) -> Result<()> {
     let (unix_socket_path, port) = {
         let state = state.lock().unwrap();
         let shared = &state.settings.shared;
