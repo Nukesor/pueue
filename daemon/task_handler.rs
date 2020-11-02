@@ -70,17 +70,21 @@ impl TaskHandler {
 impl TaskHandler {
     /// Main loop of the task handler.
     /// In here a few things happen:
-    /// 1. Propagated commands from socket communication is received and handled.
-    /// 2. Check whether any tasks just finished.
-    /// 3. Check if there are any stashed processes ready for being enqueued.
-    /// 4. Check whether we can spawn new tasks.
+    ///
+    /// - Receive and handle instructions from the client.
+    /// - Handle finished tasks, i.e. cleanup processes, update statuses.
+    /// - If the client requested a reset: reset the state if all children have been killed and handled.
+    /// - Callback handling logic. This is rather uncritical.
+    /// - Enqueue any stashed processes which are ready for being queued.
+    /// - Ensure tasks with dependencies have no failed ancestors
+    /// - Check whether we can spawn new tasks.
     pub fn run(&mut self) {
         loop {
             self.receive_commands();
             self.handle_finished_tasks();
             self.handle_reset();
             self.check_callbacks();
-            self.check_stashed();
+            self.enqueue_delayed_tasks();
             self.check_failed_dependencies();
             if !self.reset {
                 let _res = self.check_new();
@@ -308,7 +312,7 @@ impl TaskHandler {
 
     /// As time passes, some delayed tasks may need to be enqueued.
     /// Gather all stashed tasks and enqueue them if it is after the task's enqueue_at
-    fn check_stashed(&mut self) {
+    fn enqueue_delayed_tasks(&mut self) {
         let mut state = self.state.lock().unwrap();
 
         let mut changed = false;
