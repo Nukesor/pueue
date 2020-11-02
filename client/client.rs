@@ -21,7 +21,8 @@ use crate::output::*;
 /// and interpreting their responses.
 ///
 /// Most commands are a simple ping-pong. However, some commands require a more complex
-/// communication pattern, such as the `follow` command, which continuously streams the output of a task.
+/// communication pattern, such as the `follow` command, which can read local files,
+/// or the `edit` command, which needs to open an editor locally.
 pub struct Client {
     opt: CliArguments,
     settings: Settings,
@@ -90,8 +91,7 @@ impl Client {
     /// Handle all complex client-side functionalities.
     /// Complex functionalities need some special handling and are contained
     /// in their own functions with their own communication code.
-    /// Such functionalities includes reading local files, data streaming
-    /// and sending multiple messages.
+    /// Such functionalities includes reading local filestand sending multiple messages.
     ///
     /// Returns `true`, if the current command has been handled by this function.
     /// This indicates that the client can now shut down.
@@ -141,8 +141,11 @@ impl Client {
     }
 
     /// Handle logic that's super generic on the client-side.
-    /// This always follows a singular ping-pong pattern.
+    /// This (almost) always follows a singular ping-pong pattern.
     /// One message to the daemon, one response, Done.
+    ///
+    /// The only exception is streaming of log output.
+    /// In that case, we send one request and contine receiving until the socket shuts down.
     async fn handle_simple_command(&mut self) -> Result<()> {
         // Create the message that should be sent to the daemon
         // depending on the given commandline options.
