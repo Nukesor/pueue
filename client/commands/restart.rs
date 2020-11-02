@@ -58,7 +58,7 @@ pub async fn restart(
             ignore_aliases: true,
         });
 
-        // Send the cloned task to the daemon and abort on any Failure messages.
+        // Send the cloned task to the daemon and abort on any failure messages.
         send_message(add_task_message, socket).await?;
         if let Message::Failure(message) = receive_message(socket).await? {
             bail!(message);

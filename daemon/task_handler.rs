@@ -98,7 +98,7 @@ impl TaskHandler {
     /// - There are free slots in the task's group
     /// - The group is running
     /// - has all its dependencies in `Done` state
-    pub fn get_next_task_id(&mut self) -> Option<usize> {
+    fn get_next_task_id(&mut self) -> Option<usize> {
         let state = self.state.lock().unwrap();
         // Check how many tasks are running in each group
         let mut running_tasks_per_group: HashMap<String, usize> = HashMap::new();
@@ -208,7 +208,7 @@ impl TaskHandler {
 
     /// Ensure that no `Queued` tasks have any failed dependencies.
     /// Otherwise set their status to `Done` and result to `DependencyFailed`.
-    pub fn check_failed_dependencies(&mut self) {
+    fn check_failed_dependencies(&mut self) {
         let mut state = self.state.lock().unwrap();
         let has_failed_deps: Vec<_> = state
             .tasks
@@ -347,6 +347,7 @@ impl TaskHandler {
             return;
         }
 
+        // Clone the state ref, so we don't have two mutable borrows later on
         let state_ref = self.state.clone();
         let mut state = state_ref.lock().unwrap();
         // We need to know if there are any failed tasks,
@@ -523,7 +524,7 @@ impl TaskHandler {
                 return;
             }
             // Set the group to running.
-            state.groups.insert(group.clone(), true);
+            state.groups.insert(group.into(), true);
             info!("Resuming group {}", group);
 
             state.task_ids_in_group_with_stati(&message.group, vec![TaskStatus::Paused])
@@ -592,7 +593,7 @@ impl TaskHandler {
                 return;
             }
             // Pause a specific group.
-            state.groups.insert(group.clone(), false);
+            state.groups.insert(group.into(), false);
             info!("Pausing group {}", group);
 
             state.task_ids_in_group_with_stati(&message.group, vec![TaskStatus::Running])
@@ -656,7 +657,7 @@ impl TaskHandler {
                 return;
             }
             // Pause a specific group.
-            state.groups.insert(group.clone(), false);
+            state.groups.insert(group.into(), false);
             info!("Killing tasks of group {}", group);
 
             state.task_ids_in_group_with_stati(
