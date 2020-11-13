@@ -114,11 +114,7 @@ impl Task {
     /// Check if the task errored.
     /// The only case when it didn't error is if it didn't run yet or if the task exited successfully.
     pub fn failed(&self) -> bool {
-        match self.result {
-            None => false,
-            Some(TaskResult::Success) => false,
-            _ => true,
-        }
+        !matches!(self.result, None | Some(TaskResult::Success))
     }
 
     pub fn is_queued(&self) -> bool {

@@ -45,7 +45,7 @@ jobs:
 
       - name: cargo clippy
         uses: actions-rs/cargo@v1
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'ubuntu-latest' && matrix.toolchain != '1.42.0'
         with:
           command: clippy
           args: -- -D warnings
