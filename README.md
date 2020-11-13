@@ -140,7 +140,7 @@ This will install pueue to `~/.cargo/bin/pueue`
 
 ## How to use it
 
-Check out wiki to [get you started](https://github.com/Nukesor/pueue/wiki/Get-started) :).
+Check out the wiki to [get you started](https://github.com/Nukesor/pueue/wiki/Get-started) :).
 
 There are also detailed sections for (hopefully) every important feature:
 
