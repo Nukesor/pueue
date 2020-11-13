@@ -118,7 +118,7 @@ Just download both binaries for your system, rename them to `pueue` and `pueued`
 
 #### Via Cargo
 
-You'll need Rust version `>=1.39`
+You'll need Rust version `>=1.42`
 
 ```bash
 cargo install pueue
@@ -128,7 +128,7 @@ This will install pueue to `~/.cargo/bin/pueue`
 
 #### From source
 
-You'll need Rust version `>=1.39`
+You'll need Rust version `>=1.42`
 
 ```bash
 git clone git@github.com:Nukesor/pueue
