@@ -8,12 +8,12 @@ on:
 
 jobs:
   publish:
-    name: Test on ${{ matrix.os }} for ${{ matrix.target }}
+    name: Test on ${{ matrix.os }} for ${{ matrix.toolchain }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        toolchain: [stable, nightly]
+        toolchain: ["1.42.0", stable, nightly]
 
     steps:
       - name: Checkout code
