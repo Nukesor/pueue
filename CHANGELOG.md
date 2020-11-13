@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [0.8.2] - 
 
+### Added
+
+- Add `exit_code` parameter to callback hooks.
+
 ### Changed
 
 - Update to beta branch of Clap v3. Mainly for better auto-completion scripts.

@@ -760,6 +760,15 @@ impl TaskHandler {
         } else {
             parameters.insert("group", "default".into());
         }
+
+        if let Some(TaskResult::Success) = &task.result {
+            parameters.insert("exit_code", "0".into());
+        } else if let Some(TaskResult::Failed(code)) = &task.result {
+            parameters.insert("exit_code", code.to_string());
+        } else {
+            parameters.insert("exit_code", "None".into());
+        }
+
         let callback_command = match handlebars.render_template(&callback, &parameters) {
             Ok(callback_command) => callback_command,
             Err(err) => {
