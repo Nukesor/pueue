@@ -369,7 +369,7 @@ impl Client {
                 Ok(Message::StreamRequest(message))
             }
             SubCommand::Clean => Ok(Message::Clean),
-            SubCommand::Reset { children } => Ok(Message::Reset(*children)),
+            SubCommand::Reset { children, .. } => Ok(Message::Reset(*children)),
             SubCommand::Shutdown => Ok(Message::DaemonShutdown),
             SubCommand::Parallel {
                 parallel_tasks,
