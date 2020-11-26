@@ -11,9 +11,9 @@ use pueue::protocol::*;
 use pueue::settings::Settings;
 
 use crate::cli::{CliArguments, SubCommand};
-use crate::commands::edit::*;
 use crate::commands::local_follow::*;
 use crate::commands::restart::*;
+use crate::commands::{edit::*, get_state};
 use crate::output::*;
 
 /// This struct contains the base logic for the client.
@@ -100,11 +100,28 @@ impl Client {
     async fn handle_complex_command(&mut self) -> Result<bool> {
         // This match handles all "complex" commands.
         match &self.opt.cmd {
+            SubCommand::Reset { force, .. } => {
+                let state = get_state(&mut self.socket).await?;
+                let running_tasks = state
+                    .tasks
+                    .iter()
+                    .filter_map(|(id, task)| if task.is_running() { Some(*id) } else { None })
+                    .collect::<Vec<_>>();
+
+                if !running_tasks.is_empty() && !force {
+                    self.handle_user_confirmation("remove running tasks", &running_tasks)?;
+                }
+
+                // Let handle_simple_command to handle `reset` after getting user behalf
+                Ok(false)
+            }
+
             SubCommand::Edit { task_id, path } => {
                 let message = edit(&mut self.socket, *task_id, *path).await?;
                 self.handle_response(message);
                 Ok(true)
             }
+
             SubCommand::Restart {
                 task_ids,
                 start_immediately,
@@ -123,6 +140,7 @@ impl Client {
                 .await?;
                 Ok(true)
             }
+
             SubCommand::Follow { task_id, err } => {
                 // Simple log output follows for local logs don't need any communication with the daemon.
                 // Thereby we handle this separately over here.
@@ -138,6 +156,7 @@ impl Client {
                 }
                 Ok(false)
             }
+
             _ => Ok(false),
         }
     }
