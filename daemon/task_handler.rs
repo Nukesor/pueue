@@ -87,7 +87,7 @@ impl TaskHandler {
             self.enqueue_delayed_tasks();
             self.check_failed_dependencies();
             if !self.reset {
-                let _res = self.check_new();
+                self.check_new();
             }
         }
     }
@@ -197,13 +197,11 @@ impl TaskHandler {
     }
 
     /// See if we can start a new queued task.
-    fn check_new(&mut self) -> Result<()> {
+    fn check_new(&mut self) {
         // Get the next task id that can be started
         if let Some(id) = self.get_next_task_id() {
             self.start_process(id);
         }
-
-        Ok(())
     }
 
     /// Ensure that no `Queued` tasks have any failed dependencies.
