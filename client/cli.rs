@@ -266,12 +266,15 @@ pub enum SubCommand {
     /// Remove all finished tasks from the list (also clears logs).
     Clean,
 
-    /// Kill all running tasks, remove all tasks and reset max_task_id.
+    /// Kill all running tasks on user behalf, remove all tasks and reset max_task_id.
     Reset {
         /// Send the SIGTERM signal to all children as well.
         /// Useful when working with shell scripts.
         #[clap(short, long)]
         children: bool,
+        /// Force killing all the running tasks without confirmation.
+        #[clap(short, long)]
+        force: bool,
     },
 
     /// Remotely shut down the daemon. Should only be used if the daemon isn't started by a service manager.
