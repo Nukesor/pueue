@@ -112,7 +112,8 @@ impl Client {
                     self.handle_user_confirmation("remove running tasks", &running_tasks)?;
                 }
 
-                // Let handle_simple_command to handle `reset` after getting user behalf
+                // Let handle_simple_command to handle `reset` after getting user permission to kill
+                // running tasks
                 Ok(false)
             }
 
