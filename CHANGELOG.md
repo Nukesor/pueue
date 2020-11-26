@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 
 - Add `exit_code` parameter to callback hooks.
+- Add a confirmation message when using `reset` with running tasks by [quebin31](https://github.com/quebin31).
 
 ### Changed
 
