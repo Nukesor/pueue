@@ -315,7 +315,8 @@ pub enum Shell {
 #[clap(
     name = "Pueue client",
     about = "Interact with the Pueue daemon",
-    author = "Arne Beer <contact@arne.beer>"
+    author = env!("CARGO_PKG_AUTHORS"),
+    version = env!("CARGO_PKG_VERSION")
 )]
 pub struct CliArguments {
     /// Verbose mode (-v, -vv, -vvv)
