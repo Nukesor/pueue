@@ -16,14 +16,14 @@ pub enum TaskStatus {
     Running,
     /// A previously running task has been paused
     Paused,
-    /// Task finished successfully
+    /// Task finished. The actual result of the task is handled by the [TaskResult] enum.
     Done,
     /// Used while the command of a task is edited (to prevent starting the task)
     Locked,
 }
 
 /// This enum represents the exit status of an actually spawned program.
-/// It's only of relevance, once a task actually spawned and somehow finished.
+/// It's only used, once a task finished or failed in some kind of way.
 #[derive(Clone, Debug, Display, PartialEq, Serialize, Deserialize)]
 pub enum TaskResult {
     /// Task exited with 0
