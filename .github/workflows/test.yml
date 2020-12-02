@@ -50,10 +50,11 @@ jobs:
         with:
           command: fmt
           args: --all -- --check
+        if: matrix.os == 'ubuntu-latest' && matrix.toolchain == 'stable'
 
       - name: cargo clippy
         uses: actions-rs/cargo@v1
-        if: matrix.os == 'ubuntu-latest' && matrix.toolchain != '1.42.0'
+        if: matrix.os == 'ubuntu-latest' && matrix.toolchain == 'stable'
         with:
           command: clippy
           args: -- -D warnings
