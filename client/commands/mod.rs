@@ -7,6 +7,7 @@ use pueue::state::State;
 pub mod edit;
 pub mod local_follow;
 pub mod restart;
+pub mod wait;
 
 // This is a helper function for easy retrieval of the current daemon state.
 // The current daemon state is often needed in more complex commands.
