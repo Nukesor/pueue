@@ -16,7 +16,6 @@ use crate::cli::CliArguments;
 use crate::socket::accept_incoming;
 use crate::task_handler::TaskHandler;
 
-mod aliasing;
 mod cli;
 mod instructions;
 mod platform;

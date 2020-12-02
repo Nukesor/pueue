@@ -3,12 +3,12 @@ use std::sync::mpsc::Sender;
 
 use log::debug;
 
+use pueue::aliasing::insert_alias;
 use pueue::log::{clean_log_handles, read_and_compress_log_files};
 use pueue::message::*;
 use pueue::state::SharedState;
 use pueue::task::{Task, TaskStatus};
 
-use crate::aliasing::insert_alias;
 use crate::response_helper::*;
 
 static SENDER_ERR: &str = "Failed to send message to task handler thread";
@@ -65,16 +65,9 @@ fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) 
         ));
     }
 
-    let command = if !message.ignore_aliases {
-        // Check if there exists an alias for the given command
-        insert_alias(message.command)
-    } else {
-        message.command.clone()
-    };
-
     // Create a new task and add it to the state.
     let task = Task::new(
-        command,
+        message.command,
         message.path,
         message.envs,
         message.group,
@@ -351,7 +344,7 @@ fn edit_request(task_id: usize, state: &SharedState) -> Message {
 
             let message = EditResponseMessage {
                 task_id: task.id,
-                command: task.command.clone(),
+                command: task.original_command.clone(),
                 path: task.path.clone(),
             };
             Message::EditResponse(message)
@@ -372,7 +365,7 @@ fn edit(message: EditMessage, state: &SharedState) -> Message {
             }
 
             task.status = task.prev_status.clone();
-            task.command = message.command.clone();
+            task.command = insert_alias(message.command.clone());
             task.path = message.path.clone();
             state.save();
 

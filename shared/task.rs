@@ -4,6 +4,8 @@ use chrono::prelude::*;
 use serde_derive::{Deserialize, Serialize};
 use strum_macros::Display;
 
+use crate::aliasing::insert_alias;
+
 /// This enum represents the status of the internal task handling of Pueue.
 /// They basically represent the internal task life-cycle.
 #[derive(Clone, Debug, Display, PartialEq, Serialize, Deserialize)]
@@ -46,6 +48,7 @@ pub enum TaskResult {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Task {
     pub id: usize,
+    pub original_command: String,
     pub command: String,
     pub path: String,
     pub envs: HashMap<String, String>,
@@ -61,7 +64,7 @@ pub struct Task {
 
 impl Task {
     pub fn new(
-        command: String,
+        original_command: String,
         path: String,
         envs: HashMap<String, String>,
         group: Option<String>,
@@ -69,8 +72,11 @@ impl Task {
         enqueue_at: Option<DateTime<Local>>,
         dependencies: Vec<usize>,
     ) -> Task {
+        let command = insert_alias(original_command.clone());
+
         Task {
             id: 0,
+            original_command,
             command,
             path,
             envs,
@@ -89,6 +95,7 @@ impl Task {
     pub fn from_task(task: &Task) -> Task {
         Task {
             id: 0,
+            original_command: task.original_command.clone(),
             command: task.command.clone(),
             path: task.path.clone(),
             envs: task.envs.clone(),

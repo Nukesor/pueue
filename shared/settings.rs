@@ -26,6 +26,7 @@ pub struct Shared {
 pub struct Client {
     pub read_local_logs: bool,
     pub show_confirmation_questions: bool,
+    pub show_expanded_aliases: bool,
     pub max_status_lines: Option<usize>,
 }
 
@@ -64,6 +65,7 @@ impl Settings {
 
         // Client specific config
         config.set_default("client.read_local_logs", true)?;
+        config.set_default("client.show_expanded_aliases", false)?;
         config.set_default("client.show_confirmation_questions", false)?;
         config.set_default("client.max_status_lines", None::<i64>)?;
 
