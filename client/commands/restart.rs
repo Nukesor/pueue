@@ -35,7 +35,7 @@ pub async fn restart(
         new_task.status = new_status.clone();
 
         // Path and command can be edited, if the use specified the -e or -p flag.
-        let mut command = task.command.clone();
+        let mut command = task.original_command.clone();
         let mut path = task.path.clone();
         if edit_command {
             command = edit_line(&command)?
@@ -55,7 +55,6 @@ pub async fn restart(
             group: task.group.clone(),
             enqueue_at: None,
             dependencies: Vec::new(),
-            ignore_aliases: true,
         });
 
         // Send the cloned task to the daemon and abort on any failure messages.

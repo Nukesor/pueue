@@ -158,7 +158,11 @@ fn print_table(tasks: &BTreeMap<usize, Task>, settings: &Settings) {
         row.add_cell(exit_code_cell);
 
         // Add command and path.
-        row.add_cell(Cell::new(&task.command));
+        if settings.client.show_expanded_aliases {
+            row.add_cell(Cell::new(&task.command));
+        } else {
+            row.add_cell(Cell::new(&task.original_command));
+        }
         row.add_cell(Cell::new(&task.path));
 
         // Add start time, if already set.

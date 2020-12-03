@@ -52,7 +52,6 @@ pub struct AddMessage {
     pub group: Option<String>,
     pub enqueue_at: Option<DateTime<Local>>,
     pub dependencies: Vec<usize>,
-    pub ignore_aliases: bool,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
