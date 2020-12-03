@@ -10,6 +10,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - The `wait` subcommand. This allows you to wait for all tasks in the default queue/ a specific group to finish.
     On top of this, you can also specify specific tasks ids.
+- New client configuration `show_expanded_aliases` (default: `false`).
+    Determines whether the original input command or the expanded alias will be shown when calling `status`.
+
+### Changed
+
+- The original user command will be used when editing a task's command.
+    As a result of this, aliases will be re-applied after editing a command.
 
 ## [0.8.2] - 2020-11-20
 
