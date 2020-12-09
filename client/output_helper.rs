@@ -1,6 +1,8 @@
 use std::collections::BTreeMap;
+use std::io::stdout;
 
 use crossterm::style::{style, Attribute, Color};
+use crossterm::tty::IsTty;
 
 use pueue::state::State;
 use pueue::task::Task;
@@ -8,15 +10,15 @@ use pueue::task::Task;
 /// This is a simple small helper function with the purpose of easily styling text,
 /// while also prevent styling if we're printing to a non-tty output.
 /// If there's any kind of styling in the code, it should be done with the help of this function.
-pub fn style_text(
-    text: &str,
-    is_tty: bool,
+pub fn style_text<T: ToString>(
+    text: T,
     color: Option<Color>,
     attribute: Option<Attribute>,
 ) -> String {
+    let text = text.to_string();
     // No tty, we aren't allowed to do any styling
-    if !is_tty {
-        return text.to_string();
+    if !stdout().is_tty() {
+        return text;
     }
 
     let mut styled = style(text);
@@ -45,24 +47,24 @@ pub fn has_special_columns(tasks: &BTreeMap<usize, Task>) -> (bool, bool) {
 }
 
 /// Return a nicely formatted headline that's displayed at the start of `pueue status`
-pub fn get_default_headline(state: &State, is_tty: bool) -> String {
+pub fn get_default_headline(state: &State) -> String {
     // Print the current daemon state.
     let daemon_status_text = if state.running {
-        style_text("running", is_tty, Some(Color::Green), None)
+        style_text("running", Some(Color::Green), None)
     } else {
-        style_text("paused", is_tty, Some(Color::Yellow), None)
+        style_text("paused", Some(Color::Yellow), None)
     };
     let parallel = state.settings.daemon.default_parallel_tasks;
     format!(
         "{} ({} parallel): {}",
-        style_text("Default queue", is_tty, None, Some(Attribute::Bold)),
+        style_text("Default queue", None, Some(Attribute::Bold)),
         parallel,
         daemon_status_text
     )
 }
 
 /// Return a nicely formatted headline that's displayed above group tables
-pub fn get_group_headline(group: &str, state: &State, is_tty: bool) -> String {
+pub fn get_group_headline(group: &str, state: &State) -> String {
     // Group name
     let group_text = style(format!("Group \"{}\"", group)).attribute(Attribute::Bold);
 
@@ -74,14 +76,14 @@ pub fn get_group_headline(group: &str, state: &State, is_tty: bool) -> String {
             "{} ({} parallel): {}",
             group_text,
             parallel,
-            style_text("running", is_tty, Some(Color::Green), None),
+            style_text("running", Some(Color::Green), None),
         )
     } else {
         format!(
             "{} ({} parallel): {}",
             group_text,
             parallel,
-            style_text("paused", is_tty, Some(Color::Yellow), None),
+            style_text("paused", Some(Color::Yellow), None),
         )
     }
 }

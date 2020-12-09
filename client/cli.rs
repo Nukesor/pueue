@@ -263,6 +263,28 @@ pub enum SubCommand {
         err: bool,
     },
 
+    /// Wait until tasks are finished. This can be quite useful for scripting.
+    /// By default, this will wait for all tasks in the default queue to finish.
+    /// Note: This will also wait for all tasks that aren't somehow 'Done'.
+    /// Includes: [Paused, Stashed, Locked, Queued, ...]
+    Wait {
+        /// This allows you to wait for specific tasks to finish.
+        #[clap(short, long)]
+        task_ids: Option<Vec<usize>>,
+
+        /// Wait for all tasks in a specific group
+        #[clap(short, long)]
+        group: Option<String>,
+
+        /// Wait for all tasks across all groups and the default queue.
+        #[clap(short, long)]
+        all: bool,
+
+        /// Don't show any log output while waiting
+        #[clap(short, long)]
+        quiet: bool,
+    },
+
     /// Remove all finished tasks from the list (also clears logs).
     Clean,
 

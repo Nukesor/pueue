@@ -11,9 +11,11 @@ use pueue::protocol::*;
 use pueue::settings::Settings;
 
 use crate::cli::{CliArguments, SubCommand};
-use crate::commands::local_follow::*;
-use crate::commands::restart::*;
-use crate::commands::{edit::*, get_state};
+use crate::commands::edit::edit;
+use crate::commands::get_state;
+use crate::commands::local_follow::local_follow;
+use crate::commands::restart::restart;
+use crate::commands::wait::wait;
 use crate::output::*;
 
 /// This struct contains the base logic for the client.
@@ -122,7 +124,15 @@ impl Client {
                 self.handle_response(message);
                 Ok(true)
             }
-
+            SubCommand::Wait {
+                task_ids,
+                group,
+                all,
+                quiet,
+            } => {
+                wait(&mut self.socket, task_ids, group, *all, *quiet).await?;
+                Ok(true)
+            }
             SubCommand::Restart {
                 task_ids,
                 start_immediately,
@@ -403,6 +413,7 @@ impl Client {
             SubCommand::Completions { .. } => bail!("Completions have to be handled earlier"),
             SubCommand::Restart { .. } => bail!("Restarts have to be handled earlier"),
             SubCommand::Edit { .. } => bail!("Edits have to be handled earlier"),
+            SubCommand::Wait { .. } => bail!("Wait has to be handled earlier"),
         }
     }
 }
