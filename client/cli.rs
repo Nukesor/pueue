@@ -100,17 +100,17 @@ pub enum SubCommand {
         task_ids: Vec<usize>,
 
         /// Start a specific group and all paused tasks in it.
-        #[clap(short, long, group("start"))]
+        #[clap(short, long, conflicts_with = "all")]
         group: Option<String>,
 
         /// Start a everything (Default queue and all groups)!
         /// All groups will be set to `running` and all paused tasks will be resumed.
-        #[clap(short, long, group("start"))]
+        #[clap(short, long)]
         all: bool,
 
         /// Also resume direct child processes of your paused tasks.
         /// By default only the main process will get a SIGSTART.
-        #[clap(short, long, group("start"))]
+        #[clap(short, long)]
         children: bool,
     },
 
@@ -122,12 +122,12 @@ pub enum SubCommand {
         task_ids: Vec<usize>,
 
         /// Immediately start the task(s).
-        #[clap(name = "immediate", short, long)]
+        #[clap(short, long, name = "immediate", conflicts_with = "stashed")]
         start_immediately: bool,
 
         /// Create the task in stashed state.
         /// Useful to avoid immediate execution.
-        #[clap(short, long, conflicts_with = "immediate")]
+        #[clap(short, long)]
         stashed: bool,
 
         /// Edit the command of the task before restarting
@@ -149,46 +149,47 @@ pub enum SubCommand {
         task_ids: Vec<usize>,
 
         /// Pause a specific group.
-        #[clap(short, long, group("pause"))]
+        #[clap(short, long, conflicts_with = "all")]
         group: Option<String>,
 
         /// Pause everything (Default queue and all groups)!
-        #[clap(short, long, group("pause"))]
+        #[clap(short, long)]
         all: bool,
 
         /// Don not pause already running tasks and let them finish by themselves,
         /// when pausing with `default`, `all` or `group`.
-        #[clap(short, long, group("pause"))]
+        #[clap(short, long)]
         wait: bool,
 
         /// Also pause direct child processes of a task's main process.
         /// By default only the main process will get a SIGSTOP.
         /// This is useful when calling bash scripts, which start other processes themselves.
         /// This operation is not recursive!
-        #[clap(short, long, group("pause"))]
+        #[clap(short, long)]
         children: bool,
     },
 
     /// Kill specific running tasks or various groups of tasks.
     Kill {
         /// The tasks that should be killed.
+        #[clap(short, long)]
         task_ids: Vec<usize>,
 
         /// Kill all running tasks in the default queue. Pause the default queue.
-        #[clap(short, long, group("kill"))]
+        #[clap(short, long, conflicts_with = "group", conflicts_with = "all")]
         default: bool,
 
         /// Kill all running in a group. Pauses the group.
-        #[clap(short, long, group("kill"))]
+        #[clap(short, long, conflicts_with = "all")]
         group: Option<String>,
 
         /// Kill ALL running tasks. This also pauses everything
-        #[clap(short, long, group("kill"))]
+        #[clap(short, long)]
         all: bool,
 
         /// Send the SIGTERM signal to all children as well.
         /// Useful when working with shell scripts.
-        #[clap(short, long, group("kill"))]
+        #[clap(short, long)]
         children: bool,
     },
 
@@ -217,7 +218,7 @@ pub enum SubCommand {
     /// By default, this will simply display all known groups.
     Group {
         /// Add a group
-        #[clap(short, long)]
+        #[clap(short, long, conflicts_with = "remove")]
         add: Option<String>,
 
         /// Remove a group.
@@ -269,11 +270,11 @@ pub enum SubCommand {
     /// Includes: [Paused, Stashed, Locked, Queued, ...]
     Wait {
         /// This allows you to wait for specific tasks to finish.
-        #[clap(short, long)]
+        #[clap(short, long, conflicts_with = "group", conflicts_with = "all")]
         task_ids: Option<Vec<usize>>,
 
         /// Wait for all tasks in a specific group
-        #[clap(short, long)]
+        #[clap(short, long, conflicts_with = "all")]
         group: Option<String>,
 
         /// Wait for all tasks across all groups and the default queue.
