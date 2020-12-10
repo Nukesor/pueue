@@ -112,12 +112,8 @@ pub async fn wait(
             break;
         }
 
-        // Sleep for a few milliseconds. We don't want to hurt the CPU.
-        let timeout = Duration::from_millis(2000);
-        // Don't use recv_timeout for now, until this bug get's fixed.
-        // https://github.com/rust-lang/rust/issues/39364
-        //match self.receiver.recv_timeout(timeout) {
-        sleep(timeout);
+        // Sleep for a few seconds. We don't want to hurt the CPU.
+        sleep(Duration::from_millis(2000));
         first_run = false;
     }
 
