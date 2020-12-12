@@ -1,12 +1,12 @@
-use std::collections::BTreeMap;
 use std::sync::mpsc::Sender;
+use std::{collections::BTreeMap, sync::MutexGuard};
 
 use log::debug;
 
 use pueue::aliasing::insert_alias;
 use pueue::log::{clean_log_handles, read_and_compress_log_files};
 use pueue::message::*;
-use pueue::state::SharedState;
+use pueue::state::{SharedState, State};
 use pueue::task::{Task, TaskStatus};
 
 use crate::response_helper::*;
@@ -17,6 +17,7 @@ pub fn handle_message(message: Message, sender: &Sender<Message>, state: &Shared
     match message {
         Message::Add(message) => add_task(message, sender, state),
         Message::Remove(task_ids) => remove(task_ids, state),
+        Message::Restart(message) => restart_multiple(message, sender, state),
         Message::Switch(message) => switch(message, state),
         Message::Stash(task_ids) => stash(task_ids, state),
         Message::Enqueue(message) => enqueue(message, state),
@@ -247,6 +248,58 @@ fn start(message: StartMessage, sender: &Sender<Message>, state: &SharedState) -
     }
 }
 
+/// This is a small wrapper around the actual in-place task `restart` functionality.
+fn restart_multiple(
+    message: RestartMessage,
+    sender: &Sender<Message>,
+    state: &SharedState,
+) -> Message {
+    let mut state = state.lock().unwrap();
+    for task in message.tasks.iter() {
+        restart(&mut state, task, message.stashed);
+    }
+
+    // Tell the task manager to start the task immediately, if it's requested.
+    if message.start_immediately {
+        sender
+            .send(Message::Start(StartMessage {
+                task_ids: message.tasks.iter().map(|task| task.task_id).collect(),
+                ..Default::default()
+            }))
+            .expect(SENDER_ERR);
+    }
+
+    create_success_message("Tasks restarted")
+}
+
+/// This is invoked, whenever a task is actually restarted (in-place) without creating a new task.
+/// Update a possibly changed path/command and reset all infos from the previous run.
+fn restart(state: &mut MutexGuard<State>, to_restart: &TasksToRestart, stashed: bool) {
+    // Check if we actually know this task.
+    let task = if let Some(task) = state.tasks.get_mut(&to_restart.task_id) {
+        task
+    } else {
+        return;
+    };
+
+    // Either enqueue the task or stash it.
+    task.status = if stashed {
+        TaskStatus::Stashed
+    } else {
+        TaskStatus::Queued
+    };
+
+    // Update command and path.
+    task.original_command = to_restart.command.clone();
+    task.command = insert_alias(to_restart.command.clone());
+    task.path = to_restart.path.clone();
+
+    // Reset all variables of any previous run.
+    task.result = None;
+    task.start = None;
+    task.end = None;
+}
+
 /// Invoked when calling `pueue pause`.
 /// Forward the pause message to the task handler, which then pauses groups/tasks/everything.
 fn pause(message: PauseMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
@@ -365,6 +418,7 @@ fn edit(message: EditMessage, state: &SharedState) -> Message {
             }
 
             task.status = task.prev_status.clone();
+            task.original_command = message.command.clone();
             task.command = insert_alias(message.command.clone());
             task.path = message.path.clone();
             state.save();

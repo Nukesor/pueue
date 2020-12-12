@@ -139,6 +139,7 @@ impl Client {
                 stashed,
                 edit,
                 path,
+                in_place,
             } => {
                 restart(
                     &mut self.socket,
@@ -147,6 +148,7 @@ impl Client {
                     *stashed,
                     *edit,
                     *path,
+                    *in_place,
                 )
                 .await?;
                 Ok(true)

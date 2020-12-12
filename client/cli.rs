@@ -116,6 +116,7 @@ pub enum SubCommand {
 
     /// Restart task(s).
     /// Identical tasks will be created and by default enqueued.
+    /// By default, a new task will be created.
     Restart {
         /// The tasks you want to restart.
         #[clap(required = true)]
@@ -129,6 +130,11 @@ pub enum SubCommand {
         /// Useful to avoid immediate execution.
         #[clap(short, long)]
         stashed: bool,
+
+        /// Restart the task by reusing the already existing tasks.
+        /// This will overwrite any previous logs of the restarted tasks.
+        #[clap(short, long)]
+        in_place: bool,
 
         /// Edit the command of the task before restarting
         #[clap(short, long)]

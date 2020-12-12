@@ -42,9 +42,7 @@ pub enum TaskResult {
 
 /// Representation of a task.
 /// start will be set the second the task starts processing.
-/// exit_code, output and end won't be initialized, until the task has finished.
-/// The output of the task is written into seperate files.
-/// Upon task completion, the output is read from the files and put into the struct.
+/// `result`, `output` and `end` won't be initialized, until the task has finished.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Task {
     pub id: usize,
@@ -56,6 +54,9 @@ pub struct Task {
     pub enqueue_at: Option<DateTime<Local>>,
     pub dependencies: Vec<usize>,
     pub status: TaskStatus,
+    /// This field is only used when editing the path/command of a task.
+    /// It's necessary, since we enter the `Locked` state during editing.
+    /// However, we have to go back to the previous state after we finished editing.
     pub prev_status: TaskStatus,
     pub result: Option<TaskResult>,
     pub start: Option<DateTime<Local>>,
