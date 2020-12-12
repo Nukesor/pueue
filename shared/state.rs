@@ -182,7 +182,7 @@ impl State {
     pub fn handle_task_failure(&mut self, group: Option<String>) {
         if self.settings.daemon.pause_on_failure {
             if let Some(group) = group {
-                self.groups.insert(group.clone(), false);
+                self.groups.insert(group, false);
             } else {
                 self.running = false;
             }
