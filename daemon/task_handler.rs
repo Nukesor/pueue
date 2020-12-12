@@ -225,11 +225,31 @@ impl TaskHandler {
             })
             .collect();
 
+        // Update the state of all tasks with failed dependencies
         for (id, _) in has_failed_deps {
-            if let Some(task) = state.tasks.get_mut(&id) {
-                task.status = TaskStatus::Done;
-                task.result = Some(TaskResult::DependencyFailed);
+            // Clone the task here, since we need to access the state later on.
+            let mut task = if let Some(task) = state.tasks.get(&id) {
+                task.clone()
+            } else {
+                continue;
+            };
+
+            // Only update the status, if the group isn't paused.
+            // This allows users to fix and restart dependencies in-place without
+            // breaking the dependency chain.
+            if task.group.is_none() && !state.running {
+                continue;
+            } else if let Some(group) = &task.group {
+                // Continue if the task's group is paused.
+                if !state.groups.get(group).unwrap() {
+                    continue;
+                }
             }
+
+            task.status = TaskStatus::Done;
+            task.result = Some(TaskResult::DependencyFailed);
+
+            state.tasks.insert(id, task);
         }
     }
 
