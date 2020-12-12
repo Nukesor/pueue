@@ -177,6 +177,18 @@ impl State {
         (matching, mismatching)
     }
 
+    /// Pause the daemon, if the settings say so.
+    /// Always pause the respective queue/group of the task.
+    pub fn handle_task_failure(&mut self, group: Option<String>) {
+        if self.settings.daemon.pause_on_failure {
+            if let Some(group) = group {
+                self.groups.insert(group.clone(), false);
+            } else {
+                self.running = false;
+            }
+        }
+    }
+
     pub fn reset(&mut self) {
         self.backup();
         self.max_id = 0;

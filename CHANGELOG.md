@@ -12,6 +12,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
     On top of this, you can also specify specific tasks ids.
 - New client configuration `show_expanded_aliases` (default: `false`).
     Determines whether the original input command or the expanded alias will be shown when calling `status`.
+- New `--in-place` option for `restart`, which resets and reuses the existing task instead of creating a new one.
+
+### Changed
+
+- Don't update the status of tasks with failed dependencies on paused queues.
+    This allows to fix dependency chains without having to restart all tasks in combination with the `pause_on_failure` and the new `--in-place` restart option.
+
+### Fixed
+
+- `pause_on_failure` pauses the group of the failed tasks. Previously this always paused the default queue.
+- Properly display version when using `-V`.
 
 ### Changed
 
