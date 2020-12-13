@@ -27,7 +27,6 @@ pub struct TaskHandler {
     // Some static settings that are extracted from `state.settings` for convenience purposes.
     pueue_directory: String,
     callback: Option<String>,
-    pause_on_failure: bool,
 }
 
 /// Pueue directly interacts with processes.
@@ -45,12 +44,11 @@ impl TaskHandler {
     pub fn new(state: SharedState, receiver: Receiver<Message>) -> Self {
         // Extract some static settings we often need.
         // This prevents locking the State all the time.
-        let (pueue_directory, callback, pause_on_failure) = {
+        let (pueue_directory, callback) = {
             let state = state.lock().unwrap();
             (
                 state.settings.shared.pueue_directory.clone(),
                 state.settings.daemon.callback.clone(),
-                state.settings.daemon.pause_on_failure,
             )
         };
 
@@ -62,7 +60,6 @@ impl TaskHandler {
             reset: false,
             pueue_directory,
             callback,
-            pause_on_failure,
         }
     }
 }
@@ -207,12 +204,18 @@ impl TaskHandler {
     /// Ensure that no `Queued` tasks have any failed dependencies.
     /// Otherwise set their status to `Done` and result to `DependencyFailed`.
     fn check_failed_dependencies(&mut self) {
-        let mut state = self.state.lock().unwrap();
+        // Clone the state ref, so we don't have two mutable borrows later on.
+        let state_ref = self.state.clone();
+        let mut state = state_ref.lock().unwrap();
+
+        // Get id's of all tasks with failed dependencies
         let has_failed_deps: Vec<_> = state
             .tasks
             .iter()
-            .filter(|(_, task)| task.status == TaskStatus::Queued)
+            .filter(|(_, task)| task.status == TaskStatus::Queued && !task.dependencies.is_empty())
             .filter_map(|(id, task)| {
+                // At this point we got all queued tasks with dependencies.
+                // Go through all dependencies and ensure they didn't fail.
                 let failed = task
                     .dependencies
                     .iter()
@@ -225,11 +228,33 @@ impl TaskHandler {
             })
             .collect();
 
+        // Update the state of all tasks with failed dependencies.
         for (id, _) in has_failed_deps {
-            if let Some(task) = state.tasks.get_mut(&id) {
-                task.status = TaskStatus::Done;
-                task.result = Some(TaskResult::DependencyFailed);
+            // Get the task's group, since we have to check if it's paused.
+            let group = if let Some(task) = state.tasks.get(&id) {
+                task.group.clone()
+            } else {
+                continue;
+            };
+
+            // Only update the status, if the group isn't paused.
+            // This allows users to fix and restart dependencies in-place without
+            // breaking the dependency chain.
+            if group.is_none() && !state.running {
+                continue;
+            } else if let Some(group) = &group {
+                // Continue if the task's group is paused.
+                if !state.groups.get(group).unwrap() {
+                    continue;
+                }
             }
+
+            let task = state.tasks.get_mut(&id).unwrap();
+            task.status = TaskStatus::Done;
+            task.result = Some(TaskResult::DependencyFailed);
+            task.start = Some(Local::now());
+            task.end = Some(Local::now());
+            self.spawn_callback(&task);
         }
     }
 
@@ -238,10 +263,12 @@ impl TaskHandler {
     fn start_process(&mut self, task_id: usize) {
         // Already get the mutex here to ensure that the state won't be manipulated
         // while we are looking for a task to start.
-        let mut state = self.state.lock().unwrap();
+        // Also clone the state ref, so we don't have two mutable borrows later on.
+        let state_ref = self.state.clone();
+        let mut state = state_ref.lock().unwrap();
 
-        let task = state.tasks.get_mut(&task_id);
-        let task = match task {
+        // Check if the task exists and can actually be spawned. Otherwise do an early return.
+        match state.tasks.get(&task_id) {
             Some(task) => {
                 if !vec![TaskStatus::Stashed, TaskStatus::Queued, TaskStatus::Paused]
                     .contains(&task.status)
@@ -249,16 +276,12 @@ impl TaskHandler {
                     info!("Tried to start task with status: {}", task.status);
                     return;
                 }
-                task
             }
             None => {
                 info!("Tried to start non-existing task: {}", task_id);
                 return;
             }
         };
-        // In case a task that has been scheduled for enqueueing, is forcefully
-        // started by hand, set `enqueue_at` to `None`.
-        task.enqueue_at = None;
 
         // Try to get the log files to which the output of the process
         // will be written to. Error if this doesn't work!
@@ -271,13 +294,19 @@ impl TaskHandler {
             }
         };
 
+        // Get all necessary info for starting the task
+        let (command, path, envs) = {
+            let task = state.tasks.get(&task_id).unwrap();
+            (task.command.clone(), task.path.clone(), task.envs.clone())
+        };
+
         // Spawn the actual subprocess
-        let mut command = compile_shell_command(&task.command);
+        let mut command = compile_shell_command(&command);
 
         let spawned_command = command
-            .current_dir(&task.path)
+            .current_dir(path)
             .stdin(Stdio::piped())
-            .envs(&task.envs)
+            .envs(envs)
             .stdout(Stdio::from(stdout_log))
             .stderr(Stdio::from(stderr_log))
             .spawn();
@@ -289,22 +318,34 @@ impl TaskHandler {
                 let error = format!("Failed to spawn child {} with err: {:?}", task_id, err);
                 error!("{}", error);
                 clean_log_handles(task_id, &self.pueue_directory);
-                task.status = TaskStatus::Done;
-                task.result = Some(TaskResult::FailedToSpawn(error));
 
-                // Pause the daemon, if the settings say so
-                if self.pause_on_failure {
-                    state.running = false
-                }
+                // Update all necessary fields on the task.
+                let group = {
+                    let task = state.tasks.get_mut(&task_id).unwrap();
+                    task.status = TaskStatus::Done;
+                    task.result = Some(TaskResult::FailedToSpawn(error));
+                    task.start = Some(Local::now());
+                    task.end = Some(Local::now());
+                    task.enqueue_at = None;
+                    self.spawn_callback(&task);
+
+                    task.group.clone()
+                };
+
+                state.handle_task_failure(group);
+                state.save();
                 return;
             }
         };
         self.children.insert(task_id, child);
-        info!("Started task: {}", task.command);
+
+        let task = state.tasks.get_mut(&task_id).unwrap();
 
         task.start = Some(Local::now());
         task.status = TaskStatus::Running;
+        task.enqueue_at = None;
 
+        info!("Started task: {}", task.command);
         state.save();
     }
 
@@ -345,13 +386,9 @@ impl TaskHandler {
             return;
         }
 
-        // Clone the state ref, so we don't have two mutable borrows later on
+        // Clone the state ref, so we don't have two mutable borrows later on.
         let state_ref = self.state.clone();
         let mut state = state_ref.lock().unwrap();
-        // We need to know if there are any failed tasks,
-        // in case the user wants to stop the daemon if a tasks fails
-        let mut failed_task_exists = false;
-
         for task_id in finished.iter() {
             let mut child = self
                 .children
@@ -369,46 +406,54 @@ impl TaskHandler {
                 }
             };
 
-            let mut task = state
-                .tasks
-                .get_mut(&task_id)
-                .expect("Task was removed before child process has finished!");
-
             // Processes with exit code 0 exited successfully
             // Processes with `None` have been killed by a Signal
-            task.result = match exit_code {
+            let result = match exit_code {
                 Some(0) => Some(TaskResult::Success),
-                Some(exit_code) => {
-                    failed_task_exists = true;
-                    Some(TaskResult::Failed(exit_code))
-                }
+                Some(exit_code) => Some(TaskResult::Failed(exit_code)),
                 None => Some(TaskResult::Killed),
             };
 
-            task.status = TaskStatus::Done;
-            task.end = Some(Local::now());
+            // Update all properties on the task and get the group for later
+            let group = {
+                let mut task = state
+                    .tasks
+                    .get_mut(&task_id)
+                    .expect("Task was removed before child process has finished!");
+
+                task.status = TaskStatus::Done;
+                task.end = Some(Local::now());
+                task.result = result.clone();
+                self.spawn_callback(&task);
+
+                task.group.clone()
+            };
+
+            if let Some(TaskResult::Failed(_)) = result {
+                state.handle_task_failure(group);
+            }
 
             // Already remove the output files, if the daemon is being reset anyway
             if self.reset {
                 clean_log_handles(*task_id, &self.pueue_directory);
             }
-            self.spawn_callback(&task);
         }
 
         // Handle errored tasks
         // TODO: This could be be refactored. Let's try to combine finished and error handling.
         for task_id in errored.iter() {
             let _child = self.children.remove(task_id).expect("Child went missing");
-            let mut task = state.tasks.get_mut(&task_id).unwrap();
-            task.status = TaskStatus::Done;
-            task.result = Some(TaskResult::Killed);
-            failed_task_exists = true;
-            self.spawn_callback(&task);
-        }
+            let group = {
+                let mut task = state.tasks.get_mut(&task_id).unwrap();
+                task.status = TaskStatus::Done;
+                task.end = Some(Local::now());
+                task.result = Some(TaskResult::Killed);
+                self.spawn_callback(&task);
 
-        // Pause the daemon, if the settings say so and some process failed
-        if failed_task_exists && self.pause_on_failure {
-            state.running = false;
+                task.group.clone()
+            };
+
+            state.handle_task_failure(group);
         }
 
         state.save()

@@ -18,6 +18,7 @@ pub async fn restart(
     stashed: bool,
     edit_command: bool,
     edit_path: bool,
+    in_place: bool,
 ) -> Result<()> {
     let new_status = if stashed {
         TaskStatus::Stashed
@@ -27,6 +28,14 @@ pub async fn restart(
 
     let mut state = get_state(socket).await?;
     let (matching, mismatching) = state.tasks_in_statuses(vec![TaskStatus::Done], Some(task_ids));
+
+    // Build a RestartMessage, if the tasks should be replaced instead of creating a copy of the
+    // original task. This is only important, if replace is `True`.
+    let mut restart_message = RestartMessage {
+        tasks: Vec::new(),
+        stashed,
+        start_immediately,
+    };
 
     // Go through all Done commands we found and restart them
     for task_id in &matching {
@@ -44,8 +53,19 @@ pub async fn restart(
             path = edit_line(&path)?;
         }
 
-        // Create a AddMessage to add the task to the daemon from the
-        // updated info and the old task.
+        // Add the tasks to the singular message, if we want to restart the tasks in-place.
+        // And continue with the next task. The message will then be sent after the for loop.
+        if in_place {
+            restart_message.tasks.push(TasksToRestart {
+                task_id: *task_id,
+                command,
+                path,
+            });
+
+            continue;
+        }
+
+        // Create a AddMessage to send the task to the daemon from the updated info and the old task.
         let add_task_message = Message::Add(AddMessage {
             command,
             path,
@@ -59,6 +79,14 @@ pub async fn restart(
 
         // Send the cloned task to the daemon and abort on any failure messages.
         send_message(add_task_message, socket).await?;
+        if let Message::Failure(message) = receive_message(socket).await? {
+            bail!(message);
+        };
+    }
+
+    // Send the singular in-place restart message to the daemon.
+    if in_place {
+        send_message(Message::Restart(restart_message), socket).await?;
         if let Message::Failure(message) = receive_message(socket).await? {
             bail!(message);
         };

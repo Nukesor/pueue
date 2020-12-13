@@ -16,6 +16,7 @@ pub enum Message {
     Enqueue(EnqueueMessage),
 
     Start(StartMessage),
+    Restart(RestartMessage),
     Pause(PauseMessage),
     Kill(KillMessage),
 
@@ -72,6 +73,20 @@ pub struct StartMessage {
     pub group: Option<String>,
     pub all: bool,
     pub children: bool,
+}
+
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+pub struct RestartMessage {
+    pub tasks: Vec<TasksToRestart>,
+    pub start_immediately: bool,
+    pub stashed: bool,
+}
+
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+pub struct TasksToRestart {
+    pub task_id: usize,
+    pub command: String,
+    pub path: String,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
