@@ -204,12 +204,18 @@ impl TaskHandler {
     /// Ensure that no `Queued` tasks have any failed dependencies.
     /// Otherwise set their status to `Done` and result to `DependencyFailed`.
     fn check_failed_dependencies(&mut self) {
-        let mut state = self.state.lock().unwrap();
+        // Clone the state ref, so we don't have two mutable borrows later on.
+        let state_ref = self.state.clone();
+        let mut state = state_ref.lock().unwrap();
+
+        // Get id's of all tasks with failed dependencies
         let has_failed_deps: Vec<_> = state
             .tasks
             .iter()
-            .filter(|(_, task)| task.status == TaskStatus::Queued)
+            .filter(|(_, task)| task.status == TaskStatus::Queued && !task.dependencies.is_empty())
             .filter_map(|(id, task)| {
+                // At this point we got all queued tasks with dependencies.
+                // Go through all dependencies and ensure they didn't fail.
                 let failed = task
                     .dependencies
                     .iter()
@@ -222,11 +228,11 @@ impl TaskHandler {
             })
             .collect();
 
-        // Update the state of all tasks with failed dependencies
+        // Update the state of all tasks with failed dependencies.
         for (id, _) in has_failed_deps {
-            // Clone the task here, since we need to access the state later on.
-            let mut task = if let Some(task) = state.tasks.get(&id) {
-                task.clone()
+            // Get the task's group, since we have to check if it's paused.
+            let group = if let Some(task) = state.tasks.get(&id) {
+                task.group.clone()
             } else {
                 continue;
             };
@@ -234,19 +240,21 @@ impl TaskHandler {
             // Only update the status, if the group isn't paused.
             // This allows users to fix and restart dependencies in-place without
             // breaking the dependency chain.
-            if task.group.is_none() && !state.running {
+            if group.is_none() && !state.running {
                 continue;
-            } else if let Some(group) = &task.group {
+            } else if let Some(group) = &group {
                 // Continue if the task's group is paused.
                 if !state.groups.get(group).unwrap() {
                     continue;
                 }
             }
 
+            let task = state.tasks.get_mut(&id).unwrap();
             task.status = TaskStatus::Done;
             task.result = Some(TaskResult::DependencyFailed);
-
-            state.tasks.insert(id, task);
+            task.start = Some(Local::now());
+            task.end = Some(Local::now());
+            self.spawn_callback(&task);
         }
     }
 
@@ -255,7 +263,9 @@ impl TaskHandler {
     fn start_process(&mut self, task_id: usize) {
         // Already get the mutex here to ensure that the state won't be manipulated
         // while we are looking for a task to start.
-        let mut state = self.state.lock().unwrap();
+        // Also clone the state ref, so we don't have two mutable borrows later on.
+        let state_ref = self.state.clone();
+        let mut state = state_ref.lock().unwrap();
 
         // Check if the task exists and can actually be spawned. Otherwise do an early return.
         match state.tasks.get(&task_id) {
@@ -316,6 +326,8 @@ impl TaskHandler {
                     task.result = Some(TaskResult::FailedToSpawn(error));
                     task.start = Some(Local::now());
                     task.end = Some(Local::now());
+                    task.enqueue_at = None;
+                    self.spawn_callback(&task);
 
                     task.group.clone()
                 };
@@ -374,7 +386,7 @@ impl TaskHandler {
             return;
         }
 
-        // Clone the state ref, so we don't have two mutable borrows later on
+        // Clone the state ref, so we don't have two mutable borrows later on.
         let state_ref = self.state.clone();
         let mut state = state_ref.lock().unwrap();
         for task_id in finished.iter() {
@@ -434,6 +446,7 @@ impl TaskHandler {
             let group = {
                 let mut task = state.tasks.get_mut(&task_id).unwrap();
                 task.status = TaskStatus::Done;
+                task.end = Some(Local::now());
                 task.result = Some(TaskResult::Killed);
                 self.spawn_callback(&task);
 

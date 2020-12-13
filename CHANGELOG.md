@@ -23,6 +23,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - `pause_on_failure` pauses the group of the failed tasks. Previously this always paused the default queue.
 - Properly display version when using `-V`.
+- Execute callbacks for tasks with failed dependencies.
+- Execute callbacks for tasks that failed to spawn at all.
+- Persist state changes when handling tasks that failed to spawn.
+- Set proper start/end times for all tasks that failed in any way.
 
 ### Changed
 
