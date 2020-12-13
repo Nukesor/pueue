@@ -104,6 +104,7 @@ Use your system's package manager.
 This will usually deploy service files and completions automatically.  
 Pueue has been packaged for:
 
+- Alpine Linux (since 3.13)
 - Arch Linux's AUR: e.g. `yay -S pueue`.
 - NixOS
 - Homebrew
