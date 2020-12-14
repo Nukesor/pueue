@@ -100,13 +100,12 @@ There are four different ways to install Pueue.
 
 #### Package Manager
 
-Use your system's package manager.  
-This will usually deploy service files and completions automatically.  
-Pueue has been packaged for:
+<a href="https://repology.org/project/pueue/versions"><img align="right" src="https://repology.org/badge/vertical-allrepos/pueue.svg" alt="Packaging status"></a>
 
-- Arch Linux's AUR: e.g. `yay -S pueue`.
-- NixOS
-- Homebrew
+The preferred way to install Pueue is to use your system's package manager.  
+This will usually deploy service files and completions automatically.  
+
+Pueue has been packaged for a quite a few distributions, check the table on the right for more information.
 
 #### Prebuild Binaries
 
