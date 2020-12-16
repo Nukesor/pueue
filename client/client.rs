@@ -34,28 +34,8 @@ pub struct Client {
 impl Client {
     /// Connect to the daemon, authorize via secret and return a new initialized Client.
     pub async fn new(settings: Settings, opt: CliArguments) -> Result<Self> {
-        // // Commandline argument overwrites the configuration files values for address
-        // let address = if let Some(address) = opt.address.clone() {
-        //     address
-        // } else {
-        //     settings.client.daemon_address
-        // };
-
-        // Commandline argument overwrites the configuration files values for port
-        let (unix_socket_path, port) = {
-            // Always prefer commandline options
-            if let Some(path) = opt.unix_socket_path.clone() {
-                (Some(path), None)
-            } else if let Some(port) = opt.port.clone() {
-                (None, Some(port))
-            } else if settings.shared.use_unix_socket {
-                (Some(settings.shared.unix_socket_path.clone()), None)
-            } else {
-                (None, Some(settings.shared.port.clone()))
-            }
-        };
-
-        let mut socket = get_client(unix_socket_path, port).await?;
+        let mut socket =
+            get_client_socket(&settings, opt.port.clone(), opt.unix_socket_path.clone()).await?;
 
         // Send the secret to the daemon
         // In case everything was successful, we get a short `hello` response from the daemon.
