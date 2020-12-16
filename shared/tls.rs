@@ -20,6 +20,8 @@ pub async fn get_client_tls_connector(settings: &Settings) -> Result<TlsConnecto
         .add_pem_file(&mut pem)
         .map_err(|_| Error::new(ErrorKind::InvalidInput, "invalid cert"))?;
 
+    config.enable_sni = false;
+
     Ok(TlsConnector::from(Arc::new(config)))
 }
 
@@ -33,6 +35,7 @@ pub fn load_config(settings: &Settings) -> Result<ServerConfig> {
 
     // we don't use client authentication
     let mut config = ServerConfig::new(NoClientAuth::new());
+    config.mtu = Some(1500);
     config
         // set this server to use one cert together with the loaded private key
         .set_single_cert(certs, keys.remove(0))

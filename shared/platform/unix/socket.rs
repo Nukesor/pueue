@@ -45,8 +45,8 @@ impl GenericListener for UnixListener {
     }
 }
 
-/// A new trait, which can be used to represent Unix- and TcpStream.
-/// This is necessary to easily write generic functions where both types can be used.
+/// A new trait, which can be used to represent Unix- and Tls encrypted TcpStreams.
+/// This is necessary to write generic functions where both types can be used.
 pub trait GenericSocket: Read + Write + Unpin + Send {}
 impl GenericSocket for UnixStream {}
 impl GenericSocket for async_tls::server::TlsStream<TcpStream> {}
@@ -63,6 +63,7 @@ pub async fn get_client_socket(
     cli_port: Option<String>,
     cli_unix_socket_path: Option<String>,
 ) -> Result<Socket> {
+    // Get the unix socket path.
     // Commandline arguments take prescedence
     let unix_socket_path = if let Some(path) = cli_unix_socket_path {
         path
@@ -70,6 +71,7 @@ pub async fn get_client_socket(
         settings.shared.unix_socket_path.clone()
     };
 
+    // Get the host for TCP connections.
     // Commandline arguments take prescedence
     // let host = if let Some(host) = cli_host {
     //     host
@@ -79,6 +81,7 @@ pub async fn get_client_socket(
     // Don't allow anything else than loopback until we have proper crypto
     let host = "127.0.0.1";
 
+    // Get the host's port for TCP connections.
     // Get the port Commandline arguments take prescedence
     let port = if let Some(port) = cli_port {
         port
@@ -86,6 +89,7 @@ pub async fn get_client_socket(
         settings.shared.port.clone()
     };
 
+    // Create a unix socket, if the config says so.
     if settings.shared.use_unix_socket {
         if !PathBuf::from(&unix_socket_path).exists() {
             bail!(
@@ -97,16 +101,18 @@ pub async fn get_client_socket(
         return Ok(Box::new(stream));
     }
 
-    let tls_connector = get_client_tls_connector(&settings).await?;
-
-    // Connect to socket
+    // Connect to the daemon via TCP
     let address = format!("{}:{}", &host, &port);
     let tcp_stream = TcpStream::connect(&address).await.context(format!(
         "Failed to connect to the daemon on {}. Did you start it?",
         &address
     ))?;
 
-    Ok(Box::new(tls_connector.connect(&host, tcp_stream).await?))
+    // Initialize the TLS layer
+    let tls_connector = get_client_tls_connector(&settings).await?;
+    Ok(Box::new(
+        tls_connector.connect("localhost", tcp_stream).await?,
+    ))
 }
 
 /// Get a new listener for the daemon.

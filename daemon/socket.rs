@@ -23,7 +23,13 @@ pub async fn accept_incoming(
 
     loop {
         // Poll incoming connections.
-        let stream = listener.accept().await?;
+        let stream = match listener.accept().await {
+            Ok(stream) => stream,
+            Err(err) => {
+                warn!("Failed connecting to client: {:?}", err);
+                continue;
+            }
+        };
 
         // Start a new task for the request
         let sender_clone = sender.clone();
