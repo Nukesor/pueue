@@ -109,10 +109,16 @@ pub async fn get_client_socket(
     ))?;
 
     // Initialize the TLS layer
-    let tls_connector = get_client_tls_connector(&settings).await?;
-    Ok(Box::new(
-        tls_connector.connect("localhost", tcp_stream).await?,
-    ))
+    let tls_connector = get_client_tls_connector(&settings)
+        .await
+        .context("Failed to initialize TLS Connector")?;
+
+    let stream = tls_connector
+        .connect("localhost", tcp_stream)
+        .await
+        .context("Failed to initialize TLS stream")?;
+
+    Ok(Box::new(stream))
 }
 
 /// Get a new listener for the daemon.

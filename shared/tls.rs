@@ -3,7 +3,7 @@ use std::io::{BufReader, Cursor};
 use std::path::Path;
 use std::sync::Arc;
 
-use async_std::io::{Error, ErrorKind, Result};
+use anyhow::{anyhow, Context, Error, Result};
 use async_tls::TlsConnector;
 use rustls::internal::pemfile::{certs, rsa_private_keys};
 use rustls::{Certificate, ClientConfig, NoClientAuth, PrivateKey, ServerConfig};
@@ -18,7 +18,7 @@ pub async fn get_client_tls_connector(settings: &Settings) -> Result<TlsConnecto
     config
         .root_store
         .add_pem_file(&mut pem)
-        .map_err(|_| Error::new(ErrorKind::InvalidInput, "invalid cert"))?;
+        .map_err(|_| anyhow!("Failed to add client certificate to root store."))?;
 
     config.enable_sni = false;
 
@@ -39,7 +39,8 @@ pub fn load_config(settings: &Settings) -> Result<ServerConfig> {
     config
         // set this server to use one cert together with the loaded private key
         .set_single_cert(certs, keys.remove(0))
-        .map_err(|err| Error::new(ErrorKind::InvalidInput, err))?;
+        .map_err(|err| Error::new(err))
+        .context("Failed to set single certificate for daemon.")?;
 
     Ok(config)
 }
@@ -47,11 +48,11 @@ pub fn load_config(settings: &Settings) -> Result<ServerConfig> {
 /// Load the passed certificates file
 fn load_certs(path: &Path) -> Result<Vec<Certificate>> {
     certs(&mut BufReader::new(File::open(path)?))
-        .map_err(|_| Error::new(ErrorKind::InvalidInput, "invalid cert"))
+        .map_err(|_| anyhow!("Failed to parse daemon certificate."))
 }
 
 /// Load the passed keys file
 fn load_keys(path: &Path) -> Result<Vec<PrivateKey>> {
     rsa_private_keys(&mut BufReader::new(File::open(path)?))
-        .map_err(|_| Error::new(ErrorKind::InvalidInput, "invalid key"))
+        .map_err(|_| anyhow!("Failed to parse daemon key."))
 }
