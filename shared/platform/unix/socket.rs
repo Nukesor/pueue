@@ -20,9 +20,9 @@ pub trait GenericListener: Sync + Send {
 
 /// This is a helper struct for TCP connections.
 /// TCP should always be used in conjunction with TLS.
-/// That's why we create a intermediate struct, which will encapsulate the logic of accepting a new
+/// That's why this helper exists, which encapsulates the logic of accepting a new
 /// connection and initializing the TLS layer on top of it.
-/// To the outside, it will just look like another GenericListener
+/// This way we can expose an `accept` function and implement the GenericListener trait.
 pub struct TlsTcpListener {
     tcp_listener: TcpListener,
     tls_acceptor: TlsAcceptor,
@@ -59,9 +59,6 @@ pub type GenericStream = Box<dyn Stream>;
 /// This can either be a UnixStream or a Tls encrypted TCPStream, depending on the parameters.
 pub async fn get_client_stream(settings: &Settings) -> Result<GenericStream> {
     let unix_socket_path = &settings.shared.unix_socket_path;
-    // Don't allow anything else than loopback until we have proper crypto
-    let host = "127.0.0.1";
-    let port = &settings.shared.port;
 
     // Create a unix socket, if the config says so.
     if settings.shared.use_unix_socket {
@@ -75,18 +72,23 @@ pub async fn get_client_stream(settings: &Settings) -> Result<GenericStream> {
         return Ok(Box::new(stream));
     }
 
-    // Connect to the daemon via TCP
+    // Don't allow anything else than loopback until we have proper crypto
+    let host = "127.0.0.1";
+    let port = &settings.shared.port;
     let address = format!("{}:{}", host, port);
+
+    // Connect to the daemon via TCP
     let tcp_stream = TcpStream::connect(&address).await.context(format!(
         "Failed to connect to the daemon on {}. Did you start it?",
         &address
     ))?;
 
-    // Initialize the TLS layer
+    // Get the configured rustls TlsConnector
     let tls_connector = get_tls_connector(&settings)
         .await
         .context("Failed to initialize TLS Connector")?;
 
+    // Initialize the TLS layer
     let stream = tls_connector
         .connect("pueue.local", tcp_stream)
         .await
@@ -102,10 +104,6 @@ pub async fn get_listener(state: &SharedState) -> Result<Listener> {
     let state = state.lock().unwrap();
 
     let unix_socket_path = &state.settings.shared.unix_socket_path;
-    // Don't allow anything else than loopback until we have proper crypto
-    let host = "127.0.0.1";
-    let port = &state.settings.shared.port;
-
     if state.settings.shared.use_unix_socket {
         // Check, if the socket already exists
         // In case it does, we have to check, if it's an active socket.
@@ -126,11 +124,15 @@ pub async fn get_listener(state: &SharedState) -> Result<Listener> {
         return Ok(Box::new(UnixListener::bind(unix_socket_path).await?));
     }
 
+    // Don't allow anything else than loopback until we have proper crypto
+    let host = "127.0.0.1";
+    let port = &state.settings.shared.port;
+
     let tls_acceptor = get_tls_listener(&state.settings)?;
     let address = format!("{}:{}", host, port);
     let tcp_listener = TcpListener::bind(address).await?;
 
-    // Create a list, which accepts connections and initializes a TLS layer.
+    // Create a struct, which accepts connections and initializes a TLS layer in one go.
     let tls_listener = TlsTcpListener {
         tcp_listener,
         tls_acceptor,
