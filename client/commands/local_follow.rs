@@ -1,12 +1,12 @@
 use anyhow::{bail, Result};
 
-use pueue::protocol::Socket;
+use pueue::protocol::GenericStream;
 
 use crate::commands::get_state;
 use crate::output::follow_task_logs;
 
 pub async fn local_follow(
-    socket: &mut Socket,
+    socket: &mut GenericStream,
     pueue_directory: String,
     task_id: &Option<usize>,
     err: bool,

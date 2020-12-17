@@ -11,7 +11,7 @@ pub mod wait;
 
 // This is a helper function for easy retrieval of the current daemon state.
 // The current daemon state is often needed in more complex commands.
-pub async fn get_state(socket: &mut Socket) -> Result<State> {
+pub async fn get_state(socket: &mut GenericStream) -> Result<State> {
     // Create the message payload and send it to the daemon.
     send_message(Message::Status, socket).await?;
 

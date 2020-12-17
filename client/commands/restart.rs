@@ -12,7 +12,7 @@ use crate::commands::get_state;
 ///
 /// This is done on the client-side, so we can easily edit the task before restarting it.
 pub async fn restart(
-    socket: &mut Socket,
+    socket: &mut GenericStream,
     task_ids: Vec<usize>,
     start_immediately: bool,
     stashed: bool,

@@ -28,7 +28,7 @@ use crate::output::*;
 pub struct Client {
     opt: CliArguments,
     settings: Settings,
-    socket: Socket,
+    socket: GenericStream,
 }
 
 impl Client {

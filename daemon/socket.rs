@@ -44,7 +44,7 @@ pub async fn accept_incoming(
 /// In case we received an instruction, handle it and create a response future.
 /// The response future is added to unix_responses and handled in a separate function.
 async fn handle_incoming(
-    mut socket: Socket,
+    mut socket: GenericStream,
     sender: Sender<Message>,
     state: SharedState,
 ) -> Result<()> {

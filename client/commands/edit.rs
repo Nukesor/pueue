@@ -15,7 +15,7 @@ use pueue::protocol::*;
 ///
 /// After receiving the task information, the user can then edit it in their editor.
 /// Upon exiting the text editor, the line will then be read and sent to the server
-pub async fn edit(socket: &mut Socket, task_id: usize, edit_path: bool) -> Result<Message> {
+pub async fn edit(socket: &mut GenericStream, task_id: usize, edit_path: bool) -> Result<Message> {
     // Request the data to edit from the server and issue a task-lock while doing so.
     let init_message = Message::EditRequest(task_id);
     send_message(init_message, socket).await?;

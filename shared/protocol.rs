@@ -11,7 +11,7 @@ pub use crate::platform::socket::*;
 
 /// Convenience wrapper around send_bytes.
 /// Deserialize a message and feed the bytes into send_bytes.
-pub async fn send_message(message: Message, socket: &mut Socket) -> Result<()> {
+pub async fn send_message(message: Message, socket: &mut GenericStream) -> Result<()> {
     debug!("Sending message: {:?}", message);
     // Prepare command for transfer and determine message byte size
     let payload = bincode::serialize(&message).expect("Failed to serialize message.");
@@ -21,7 +21,7 @@ pub async fn send_message(message: Message, socket: &mut Socket) -> Result<()> {
 
 /// Send a Vec of bytes. Before the actual bytes are send, the size of the message
 /// is transmitted in an header of fixed size (u64).
-pub async fn send_bytes(payload: &[u8], socket: &mut Socket) -> Result<()> {
+pub async fn send_bytes(payload: &[u8], socket: &mut GenericStream) -> Result<()> {
     let message_size = payload.len() as u64;
 
     let mut header = vec![];
@@ -41,7 +41,7 @@ pub async fn send_bytes(payload: &[u8], socket: &mut Socket) -> Result<()> {
 
 /// Receive a byte stream depending on a given header.
 /// This is the basic protocol beneath all pueue communication.
-pub async fn receive_bytes(socket: &mut Socket) -> Result<Vec<u8>> {
+pub async fn receive_bytes(socket: &mut GenericStream) -> Result<Vec<u8>> {
     // Receive the header with the overall message size
     let mut header = vec![0; 8];
     socket.read(&mut header).await?;
@@ -77,7 +77,7 @@ pub async fn receive_bytes(socket: &mut Socket) -> Result<Vec<u8>> {
 }
 
 /// Convenience wrapper that receives a message and converts it into a Message.
-pub async fn receive_message(socket: &mut Socket) -> Result<Message> {
+pub async fn receive_message(socket: &mut GenericStream) -> Result<Message> {
     let payload_bytes = receive_bytes(socket).await?;
     debug!("Received {} bytes", payload_bytes.len());
 
@@ -122,7 +122,7 @@ mod test {
             send_message(message, &mut socket).await.unwrap();
         });
 
-        let mut client: Socket = Box::new(TcpStream::connect(&addr).await?);
+        let mut client: GenericStream = Box::new(TcpStream::connect(&addr).await?);
 
         // Create a client that sends a message and instantly receives it
         send_message(message, &mut client).await?;

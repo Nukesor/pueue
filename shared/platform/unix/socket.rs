@@ -16,7 +16,7 @@ use crate::tls::{get_client_tls_connector, load_config};
 /// This is necessary to easily write generic functions where both types can be used.
 #[async_trait]
 pub trait GenericListener: Sync + Send {
-    async fn accept<'a>(&'a self) -> Result<Socket>;
+    async fn accept<'a>(&'a self) -> Result<GenericStream>;
 }
 
 /// This is a helper struct for TCP connections.
@@ -31,7 +31,7 @@ pub struct TlsTcpListener {
 
 #[async_trait]
 impl GenericListener for TlsTcpListener {
-    async fn accept<'a>(&'a self) -> Result<Socket> {
+    async fn accept<'a>(&'a self) -> Result<GenericStream> {
         let (stream, _) = self.tcp_listener.accept().await?;
         Ok(Box::new(self.tls_acceptor.accept(stream).await?))
     }
@@ -39,7 +39,7 @@ impl GenericListener for TlsTcpListener {
 
 #[async_trait]
 impl GenericListener for UnixListener {
-    async fn accept<'a>(&'a self) -> Result<Socket> {
+    async fn accept<'a>(&'a self) -> Result<GenericStream> {
         let (socket, _) = self.accept().await?;
         Ok(Box::new(socket))
     }
@@ -47,14 +47,14 @@ impl GenericListener for UnixListener {
 
 /// A new trait, which can be used to represent Unix- and Tls encrypted TcpStreams.
 /// This is necessary to write generic functions where both types can be used.
-pub trait GenericSocket: Read + Write + Unpin + Send {}
-impl GenericSocket for UnixStream {}
-impl GenericSocket for async_tls::server::TlsStream<TcpStream> {}
-impl GenericSocket for async_tls::client::TlsStream<TcpStream> {}
+pub trait Stream: Read + Write + Unpin + Send {}
+impl Stream for UnixStream {}
+impl Stream for async_tls::server::TlsStream<TcpStream> {}
+impl Stream for async_tls::client::TlsStream<TcpStream> {}
 
 /// Two convenient types, so we don't have type write Box<dyn ...> all the time.
 pub type Listener = Box<dyn GenericListener>;
-pub type Socket = Box<dyn GenericSocket>;
+pub type GenericStream = Box<dyn Stream>;
 
 /// Get a new stream for the client.
 /// This can either be a UnixStream or a Tls encrypted TCPStream, depending on the parameters.
@@ -62,7 +62,7 @@ pub async fn get_client_socket(
     settings: &Settings,
     cli_port: Option<String>,
     cli_unix_socket_path: Option<String>,
-) -> Result<Socket> {
+) -> Result<GenericStream> {
     // Get the unix socket path.
     // Commandline arguments take prescedence
     let unix_socket_path = if let Some(path) = cli_unix_socket_path {

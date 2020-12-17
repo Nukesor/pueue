@@ -5,24 +5,24 @@ use async_trait::async_trait;
 
 #[async_trait]
 pub trait GenericListener: Sync + Send {
-    async fn accept<'a>(&'a self) -> Result<Socket>;
+    async fn accept<'a>(&'a self) -> Result<GenericStream>;
 }
 
 #[async_trait]
 impl GenericListener for TcpListener {
-    async fn accept<'a>(&'a self) -> Result<Socket> {
+    async fn accept<'a>(&'a self) -> Result<GenericStream> {
         let (socket, _) = self.accept().await?;
         Ok(Box::new(socket))
     }
 }
 
-pub trait GenericSocket: Read + Write + Unpin + Send + Sync {}
-impl GenericSocket for TcpStream {}
+pub trait Stream: Read + Write + Unpin + Send + Sync {}
+impl Stream for TcpStream {}
 
 pub type Listener = Box<dyn GenericListener>;
-pub type Socket = Box<dyn GenericSocket>;
+pub type GenericStream = Box<dyn Stream>;
 
-pub async fn get_client(_unix_socket_path: Option<String>, port: Option<String>) -> Result<Socket> {
+pub async fn get_client(_unix_socket_path: Option<String>, port: Option<String>) -> Result<GenericStream> {
     // Don't allow anything else than loopback until we have proper crypto
     let address = format!("127.0.0.1:{}", port.unwrap());
 
