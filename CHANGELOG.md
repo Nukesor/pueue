@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 
+
+### Changed
+
+- Use TLS encryption for TCP communication.
+- Use TLS client certificates as authentication mechanism instead of pre-shared secret.
+
+### Removed
+
+- `--port` and `--unix-socket-path` cli flags on client. In favor of the `--config` flag.
+- `--port` flag on the daemon. IN favor of the `--config` flag.
+
+### Fixed
+
+- Properly pass `--config` CLI argument to daemonized `pueued` instance.
+
 ## [0.9.0] - 2020-12-14
 
 ### Added

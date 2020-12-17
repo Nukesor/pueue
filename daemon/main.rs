@@ -100,7 +100,7 @@ async fn main() -> Result<()> {
         task_handler.run();
     });
 
-    accept_incoming(sender, state.clone(), opt).await?;
+    accept_incoming(sender, state.clone()).await?;
 
     Ok(())
 }
@@ -146,9 +146,9 @@ fn init_directories(path: &str) {
 fn fork_daemon(opt: &CliArguments) -> Result<()> {
     let mut arguments = Vec::<String>::new();
 
-    if let Some(port) = &opt.port {
-        arguments.push("--port".to_string());
-        arguments.push(port.clone());
+    if let Some(config) = &opt.config {
+        arguments.push("--config".to_string());
+        arguments.push(config.to_string_lossy().into_owned());
     }
 
     if opt.verbose > 0 {

@@ -1,5 +1,4 @@
 use std::path::PathBuf;
-use std::sync::Arc;
 
 use anyhow::{bail, Context, Result};
 use async_std::io::{Read, Write};
@@ -10,7 +9,7 @@ use async_trait::async_trait;
 
 use crate::settings::Settings;
 use crate::state::SharedState;
-use crate::tls::{get_client_tls_connector, load_config};
+use crate::tls::{get_tls_connector, get_tls_listener};
 
 /// A new trait, which can be used to represent Unix- and TcpListeners.
 /// This is necessary to easily write generic functions where both types can be used.
@@ -58,40 +57,15 @@ pub type GenericStream = Box<dyn Stream>;
 
 /// Get a new stream for the client.
 /// This can either be a UnixStream or a Tls encrypted TCPStream, depending on the parameters.
-pub async fn get_client_stream(
-    settings: &Settings,
-    cli_port: Option<String>,
-    cli_unix_socket_path: Option<String>,
-) -> Result<GenericStream> {
-    // Get the unix socket path.
-    // Commandline arguments take prescedence
-    let unix_socket_path = if let Some(path) = cli_unix_socket_path {
-        path
-    } else {
-        settings.shared.unix_socket_path.clone()
-    };
-
-    // Get the host for TCP connections.
-    // Commandline arguments take prescedence
-    // let host = if let Some(host) = cli_host {
-    //     host
-    // } else {
-    //     settings.shared.host.clone()
-    // };
+pub async fn get_client_stream(settings: &Settings) -> Result<GenericStream> {
+    let unix_socket_path = &settings.shared.unix_socket_path;
     // Don't allow anything else than loopback until we have proper crypto
     let host = "127.0.0.1";
-
-    // Get the host's port for TCP connections.
-    // Get the port Commandline arguments take prescedence
-    let port = if let Some(port) = cli_port {
-        port
-    } else {
-        settings.shared.port.clone()
-    };
+    let port = &settings.shared.port;
 
     // Create a unix socket, if the config says so.
     if settings.shared.use_unix_socket {
-        if !PathBuf::from(&unix_socket_path).exists() {
+        if !PathBuf::from(unix_socket_path).exists() {
             bail!(
                 "Couldn't find unix socket at path {:?}. Is the daemon running yet?",
                 unix_socket_path
@@ -102,14 +76,14 @@ pub async fn get_client_stream(
     }
 
     // Connect to the daemon via TCP
-    let address = format!("{}:{}", &host, &port);
+    let address = format!("{}:{}", host, port);
     let tcp_stream = TcpStream::connect(&address).await.context(format!(
         "Failed to connect to the daemon on {}. Did you start it?",
         &address
     ))?;
 
     // Initialize the TLS layer
-    let tls_connector = get_client_tls_connector(&settings)
+    let tls_connector = get_tls_connector(&settings)
         .await
         .context("Failed to initialize TLS Connector")?;
 
@@ -124,40 +98,21 @@ pub async fn get_client_stream(
 /// Get a new listener for the daemon.
 /// This can either be a UnixListener or a TCPlistener,
 /// which depends on the parameters.
-pub async fn get_listener(state: &SharedState, cli_port: Option<String>) -> Result<Listener> {
+pub async fn get_listener(state: &SharedState) -> Result<Listener> {
     let state = state.lock().unwrap();
-    let (unix_socket_path, tcp_info) = {
-        let shared = &state.settings.shared;
 
-        // Return the unix socket path, if we're supposed to use it.
-        if shared.use_unix_socket {
-            (Some(shared.unix_socket_path.clone()), None)
-        } else {
-            // Otherwise use tcp sockets on a given port and host.
-            // Commandline argument overwrites the configuration files values for port.
-            // This also initializes the TLS acceptor.
-            let port = if let Some(port) = cli_port {
-                port
-            } else {
-                shared.port.clone()
-            };
+    let unix_socket_path = &state.settings.shared.unix_socket_path;
+    // Don't allow anything else than loopback until we have proper crypto
+    let host = "127.0.0.1";
+    let port = &state.settings.shared.port;
 
-            let config = load_config(&state.settings)?;
-            let acceptor = TlsAcceptor::from(Arc::new(config));
-            (None, Some((port, acceptor)))
-        }
-    };
-
-    if let Some(socket_path) = unix_socket_path {
+    if state.settings.shared.use_unix_socket {
         // Check, if the socket already exists
         // In case it does, we have to check, if it's an active socket.
         // If it is, we have to throw an error, because another daemon is already running.
         // Otherwise, we can simply remove it.
-        if PathBuf::from(&socket_path).exists() {
-            if get_client_stream(&state.settings, None, Some(socket_path.clone()))
-                .await
-                .is_ok()
-            {
+        if PathBuf::from(unix_socket_path).exists() {
+            if get_client_stream(&state.settings).await.is_ok() {
                 bail!(
                     "There seems to be an active pueue daemon.\n\
                       If you're sure there isn't, please remove the socket by hand \
@@ -165,14 +120,14 @@ pub async fn get_listener(state: &SharedState, cli_port: Option<String>) -> Resu
                 );
             }
 
-            std::fs::remove_file(&socket_path)?;
+            std::fs::remove_file(unix_socket_path)?;
         }
 
-        return Ok(Box::new(UnixListener::bind(socket_path).await?));
+        return Ok(Box::new(UnixListener::bind(unix_socket_path).await?));
     }
 
-    let (port, tls_acceptor) = tcp_info.unwrap();
-    let address = format!("127.0.0.1:{}", port);
+    let tls_acceptor = get_tls_listener(&state.settings)?;
+    let address = format!("{}:{}", host, port);
     let tcp_listener = TcpListener::bind(address).await?;
 
     // Create a list, which accepts connections and initializes a TLS layer.

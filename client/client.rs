@@ -34,8 +34,7 @@ pub struct Client {
 impl Client {
     /// Connect to the daemon, authorize via secret and return a new initialized Client.
     pub async fn new(settings: Settings, opt: CliArguments) -> Result<Self> {
-        let mut stream =
-            get_client_stream(&settings, opt.port.clone(), opt.unix_socket_path.clone()).await?;
+        let mut stream = get_client_stream(&settings).await?;
 
         // Send the secret to the daemon
         // In case everything was successful, we get a short `hello` response from the daemon.

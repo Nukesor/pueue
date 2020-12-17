@@ -4,7 +4,7 @@ use std::path::Path;
 use std::sync::Arc;
 
 use anyhow::{anyhow, Context, Error, Result};
-use async_tls::TlsConnector;
+use async_tls::{TlsAcceptor, TlsConnector};
 use rustls::internal::pemfile::{certs, rsa_private_keys};
 use rustls::{Certificate, ClientConfig, PrivateKey, ServerConfig};
 
@@ -13,7 +13,7 @@ use crate::settings::Settings;
 /// Initialize our client [TlsConnector].
 /// 1. Trust our own CA. ONLY our own CA.
 /// 2. Set the client certificate and key
-pub async fn get_client_tls_connector(settings: &Settings) -> Result<TlsConnector> {
+pub async fn get_tls_connector(settings: &Settings) -> Result<TlsConnector> {
     let mut config = ClientConfig::new();
 
     // Trust server-certificates signed with our own CA.
@@ -41,7 +41,7 @@ pub async fn get_client_tls_connector(settings: &Settings) -> Result<TlsConnecto
 /// A TLS server needs a certificate and a fitting private key.
 /// On top of that, we require authentication via client certificates.
 /// We need to trust our own CA for that to work.
-pub fn load_config(settings: &Settings) -> Result<ServerConfig> {
+pub fn get_tls_listener(settings: &Settings) -> Result<TlsAcceptor> {
     // Initialize our cert store with our own CA.
     let mut root_store = rustls::RootCertStore::empty();
     let mut ca = load_ca(&settings.shared.ca_cert)?;
@@ -65,7 +65,7 @@ pub fn load_config(settings: &Settings) -> Result<ServerConfig> {
         .map_err(|err| Error::new(err))
         .context("Failed to set single certificate for daemon.")?;
 
-    Ok(config)
+    Ok(TlsAcceptor::from(Arc::new(config)))
 }
 
 /// Load the passed certificates file

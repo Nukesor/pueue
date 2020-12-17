@@ -357,17 +357,6 @@ pub struct CliArguments {
     #[clap(short, long, parse(from_occurrences))]
     pub verbose: u8,
 
-    /// The port for the daemon. Overwrites the port in the config file.
-    /// Will force TCP mode.
-    #[clap(short, long)]
-    pub port: Option<String>,
-
-    /// The path to the unix socket.
-    /// Overwrites the path in the config file.
-    /// Will force Unix-socket mode.
-    #[clap(short, long, conflicts_with = "port")]
-    pub unix_socket_path: Option<String>,
-
     /// Path to a specific pueue config daemon, that should be used.
     /// This ignores all other config files.
     #[clap(short, long)]
