@@ -12,15 +12,13 @@ use crate::settings::Settings;
 
 pub async fn get_client_tls_connector(settings: &Settings) -> Result<TlsConnector> {
     let mut config = ClientConfig::new();
-    let file = async_std::fs::read(&settings.shared.client_cert).await?;
+    let file = async_std::fs::read(&settings.shared.ca_file).await?;
     let mut pem = Cursor::new(file);
 
     config
         .root_store
         .add_pem_file(&mut pem)
         .map_err(|_| anyhow!("Failed to add client certificate to root store."))?;
-
-    config.enable_sni = false;
 
     Ok(TlsConnector::from(Arc::new(config)))
 }

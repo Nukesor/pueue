@@ -114,7 +114,7 @@ pub async fn get_client_stream(
         .context("Failed to initialize TLS Connector")?;
 
     let stream = tls_connector
-        .connect("localhost", tcp_stream)
+        .connect("pueue.local", tcp_stream)
         .await
         .context("Failed to initialize TLS stream")?;
 

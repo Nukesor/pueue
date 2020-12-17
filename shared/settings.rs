@@ -20,9 +20,10 @@ pub struct Shared {
     pub unix_socket_path: String,
 
     pub port: String,
+    pub ca_file: PathBuf,
     pub daemon_cert: PathBuf,
     pub daemon_key: PathBuf,
-    pub client_cert: String,
+    pub client_cert: PathBuf,
 }
 
 /// All settings which are used by the client
