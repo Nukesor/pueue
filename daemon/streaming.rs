@@ -13,7 +13,7 @@ use pueue::state::SharedState;
 /// Handle the continuous stream of a message.
 pub async fn handle_follow(
     pueue_directory: &str,
-    socket: &mut GenericStream,
+    stream: &mut GenericStream,
     state: &SharedState,
     message: StreamRequestMessage,
 ) -> Result<Message> {
@@ -91,7 +91,7 @@ pub async fn handle_follow(
 
         // Send the new chunk and wait for 1 second.
         let response = Message::Stream(text);
-        send_message(response, socket).await?;
+        send_message(response, stream).await?;
         sleep(Duration::from_millis(1000)).await;
     }
 }

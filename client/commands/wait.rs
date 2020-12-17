@@ -22,7 +22,7 @@ use crate::output_helper::style_text;
 /// By default, this will log status changes on tasks.
 /// Pass `quiet == true` to supress any logging.
 pub async fn wait(
-    socket: &mut GenericStream,
+    stream: &mut GenericStream,
     task_ids: &Option<Vec<usize>>,
     group: &Option<String>,
     all: bool,
@@ -34,7 +34,7 @@ pub async fn wait(
     let mut watched_tasks: HashMap<usize, TaskStatus> = HashMap::new();
 
     loop {
-        let state = get_state(socket).await?;
+        let state = get_state(stream).await?;
 
         let tasks: Vec<Task> = if all {
             // Get all tasks

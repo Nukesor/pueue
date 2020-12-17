@@ -40,8 +40,8 @@ impl GenericListener for TlsTcpListener {
 #[async_trait]
 impl GenericListener for UnixListener {
     async fn accept<'a>(&'a self) -> Result<GenericStream> {
-        let (socket, _) = self.accept().await?;
-        Ok(Box::new(socket))
+        let (stream, _) = self.accept().await?;
+        Ok(Box::new(stream))
     }
 }
 
@@ -58,7 +58,7 @@ pub type GenericStream = Box<dyn Stream>;
 
 /// Get a new stream for the client.
 /// This can either be a UnixStream or a Tls encrypted TCPStream, depending on the parameters.
-pub async fn get_client_socket(
+pub async fn get_client_stream(
     settings: &Settings,
     cli_port: Option<String>,
     cli_unix_socket_path: Option<String>,
@@ -154,7 +154,7 @@ pub async fn get_listener(state: &SharedState, cli_port: Option<String>) -> Resu
         // If it is, we have to throw an error, because another daemon is already running.
         // Otherwise, we can simply remove it.
         if PathBuf::from(&socket_path).exists() {
-            if get_client_socket(&state.settings, None, Some(socket_path.clone()))
+            if get_client_stream(&state.settings, None, Some(socket_path.clone()))
                 .await
                 .is_ok()
             {

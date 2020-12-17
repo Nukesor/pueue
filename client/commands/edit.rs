@@ -15,12 +15,12 @@ use pueue::protocol::*;
 ///
 /// After receiving the task information, the user can then edit it in their editor.
 /// Upon exiting the text editor, the line will then be read and sent to the server
-pub async fn edit(socket: &mut GenericStream, task_id: usize, edit_path: bool) -> Result<Message> {
+pub async fn edit(stream: &mut GenericStream, task_id: usize, edit_path: bool) -> Result<Message> {
     // Request the data to edit from the server and issue a task-lock while doing so.
     let init_message = Message::EditRequest(task_id);
-    send_message(init_message, socket).await?;
+    send_message(init_message, stream).await?;
 
-    let init_response = receive_message(socket).await?;
+    let init_response = receive_message(stream).await?;
 
     // In case we don't receive an EditResponse, something went wrong
     // Return the response to the parent function and let the client handle it
@@ -46,9 +46,9 @@ pub async fn edit(socket: &mut GenericStream, task_id: usize, edit_path: bool) -
         command,
         path,
     });
-    send_message(edit_message, socket).await?;
+    send_message(edit_message, stream).await?;
 
-    receive_message(socket).await
+    receive_message(stream).await
 }
 
 /// This function allows the user to edit a task's command or path.

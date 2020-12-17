@@ -44,12 +44,12 @@ pub async fn accept_incoming(
 /// In case we received an instruction, handle it and create a response future.
 /// The response future is added to unix_responses and handled in a separate function.
 async fn handle_incoming(
-    mut socket: GenericStream,
+    mut stream: GenericStream,
     sender: Sender<Message>,
     state: SharedState,
 ) -> Result<()> {
     // Receive the secret once and check, whether the client is allowed to connect
-    let payload_bytes = receive_bytes(&mut socket).await?;
+    let payload_bytes = receive_bytes(&mut stream).await?;
 
     // Didn't receive any bytes. The client disconnected.
     if payload_bytes.is_empty() {
@@ -68,7 +68,7 @@ async fn handle_incoming(
         }
     }
     // Send a super short `ok` byte to the client, so it knows that the secret has been accepted.
-    send_bytes(b"hello", &mut socket).await?;
+    send_bytes(b"hello", &mut stream).await?;
 
     // Save the directory for convenience purposes and to prevent continuously
     // locking the state in the streaming loop.
@@ -79,19 +79,19 @@ async fn handle_incoming(
 
     loop {
         // Receive the actual instruction from the client
-        let message = receive_message(&mut socket).await?;
+        let message = receive_message(&mut stream).await?;
         debug!("Received instruction: {:?}", message);
 
         let response = if let Message::StreamRequest(message) = message {
             // The client requested the output of a task.
             // Since we allow streaming, this needs to be handled seperately.
-            handle_follow(&pueue_directory, &mut socket, &state, message).await?
+            handle_follow(&pueue_directory, &mut stream, &state, message).await?
         } else {
             // Process a normal message.
             handle_message(message, &sender, &state)
         };
 
         // Respond to the client.
-        send_message(response, &mut socket).await?;
+        send_message(response, &mut stream).await?;
     }
 }

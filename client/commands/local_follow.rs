@@ -6,7 +6,7 @@ use crate::commands::get_state;
 use crate::output::follow_task_logs;
 
 pub async fn local_follow(
-    socket: &mut GenericStream,
+    stream: &mut GenericStream,
     pueue_directory: String,
     task_id: &Option<usize>,
     err: bool,
@@ -17,7 +17,7 @@ pub async fn local_follow(
     let task_id = match task_id {
         Some(task_id) => *task_id,
         None => {
-            let state = get_state(socket).await?;
+            let state = get_state(stream).await?;
             let running_ids: Vec<_> = state
                 .tasks
                 .iter()

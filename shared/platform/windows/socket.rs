@@ -11,8 +11,8 @@ pub trait GenericListener: Sync + Send {
 #[async_trait]
 impl GenericListener for TcpListener {
     async fn accept<'a>(&'a self) -> Result<GenericStream> {
-        let (socket, _) = self.accept().await?;
-        Ok(Box::new(socket))
+        let (stream, _) = self.accept().await?;
+        Ok(Box::new(stream))
     }
 }
 
@@ -27,11 +27,11 @@ pub async fn get_client(_unix_socket_path: Option<String>, port: Option<String>)
     let address = format!("127.0.0.1:{}", port.unwrap());
 
     // Connect to socket
-    let socket = TcpStream::connect(&address)
+    let stream = TcpStream::connect(&address)
         .await
         .context("Failed to connect to the daemon. Did you start it?")?;
 
-    Ok(Box::new(socket))
+    Ok(Box::new(stream))
 }
 
 pub async fn get_listener(

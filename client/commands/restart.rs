@@ -12,7 +12,7 @@ use crate::commands::get_state;
 ///
 /// This is done on the client-side, so we can easily edit the task before restarting it.
 pub async fn restart(
-    socket: &mut GenericStream,
+    stream: &mut GenericStream,
     task_ids: Vec<usize>,
     start_immediately: bool,
     stashed: bool,
@@ -26,7 +26,7 @@ pub async fn restart(
         TaskStatus::Queued
     };
 
-    let mut state = get_state(socket).await?;
+    let mut state = get_state(stream).await?;
     let (matching, mismatching) = state.tasks_in_statuses(vec![TaskStatus::Done], Some(task_ids));
 
     // Build a RestartMessage, if the tasks should be replaced instead of creating a copy of the
@@ -79,16 +79,16 @@ pub async fn restart(
         });
 
         // Send the cloned task to the daemon and abort on any failure messages.
-        send_message(add_task_message, socket).await?;
-        if let Message::Failure(message) = receive_message(socket).await? {
+        send_message(add_task_message, stream).await?;
+        if let Message::Failure(message) = receive_message(stream).await? {
             bail!(message);
         };
     }
 
     // Send the singular in-place restart message to the daemon.
     if in_place {
-        send_message(Message::Restart(restart_message), socket).await?;
-        if let Message::Failure(message) = receive_message(socket).await? {
+        send_message(Message::Restart(restart_message), stream).await?;
+        if let Message::Failure(message) = receive_message(stream).await? {
             bail!(message);
         };
     }
