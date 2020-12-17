@@ -30,7 +30,7 @@ async fn main() -> Result<()> {
     let opt = CliArguments::parse();
 
     if opt.daemonize {
-        fork_daemon(&opt)?;
+        return fork_daemon(&opt);
     }
 
     // Set the verbosity level of the logger.
@@ -158,5 +158,5 @@ fn fork_daemon(opt: &CliArguments) -> Result<()> {
     Command::new("pueued").args(&arguments).spawn()?;
 
     println!("Pueued is now running in the background");
-    std::process::exit(0);
+    Ok(())
 }
