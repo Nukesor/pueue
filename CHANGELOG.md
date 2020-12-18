@@ -9,7 +9,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Changed
 
 - Use TLS encryption for TCP communication.
-- Use TLS client certificates as authentication mechanism instead of pre-shared secret.
+- Extract the shared `secret` into a separate file. This will allow users to publicly sync their config directory between machines.
+- Change default secret length from 20 to 500 chars.
 
 ### Removed
 
