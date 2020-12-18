@@ -8,6 +8,7 @@ use log::error;
 use pueue::message::*;
 use pueue::platform::socket::*;
 use pueue::protocol::*;
+use pueue::secret::read_shared_secret;
 use pueue::settings::Settings;
 
 use crate::cli::{CliArguments, SubCommand};
@@ -38,7 +39,7 @@ impl Client {
 
         // Send the secret to the daemon
         // In case everything was successful, we get a short `hello` response from the daemon.
-        let secret = settings.shared.secret.clone().into_bytes();
+        let secret = read_shared_secret(&settings.shared.shared_secret_path)?;
         send_bytes(&secret, &mut stream).await?;
         let hello = receive_bytes(&mut stream).await?;
         if hello != b"hello" {
@@ -139,7 +140,7 @@ impl Client {
                 if self.settings.client.read_local_logs {
                     local_follow(
                         &mut self.stream,
-                        self.settings.shared.pueue_directory.clone(),
+                        &self.settings.shared.pueue_directory,
                         task_id,
                         *err,
                     )

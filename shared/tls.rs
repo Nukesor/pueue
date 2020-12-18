@@ -51,14 +51,14 @@ pub fn get_tls_listener(settings: &Settings) -> Result<TlsAcceptor> {
 
 /// Load the passed certificates file
 fn load_certs(path: &Path) -> Result<Vec<Certificate>> {
-    certs(&mut BufReader::new(File::open(path)?))
-        .map_err(|_| anyhow!("Failed to parse daemon certificate."))
+    let file = File::open(path).context(format!("Cannot open cert {:?}", path))?;
+    certs(&mut BufReader::new(file)).map_err(|_| anyhow!("Failed to parse daemon certificate."))
 }
 
 /// Load the passed keys file
 fn load_keys(path: &Path) -> Result<Vec<PrivateKey>> {
-    rsa_private_keys(&mut BufReader::new(File::open(path)?))
-        .map_err(|_| anyhow!("Failed to parse daemon key."))
+    let file = File::open(path).context(format!("Cannot open key {:?}", path))?;
+    rsa_private_keys(&mut BufReader::new(file)).map_err(|_| anyhow!("Failed to parse daemon key."))
 }
 
 fn load_ca(path: &Path) -> Result<Cursor<Vec<u8>>> {

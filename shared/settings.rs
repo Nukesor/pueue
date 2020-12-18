@@ -6,7 +6,6 @@ use std::path::PathBuf;
 use anyhow::{anyhow, bail, Result};
 use config::Config;
 use log::info;
-use rand::Rng;
 use serde_derive::{Deserialize, Serialize};
 
 use crate::platform::directories::*;
@@ -14,15 +13,15 @@ use crate::platform::directories::*;
 /// All settings which are used by both, the client and the daemon
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Shared {
-    pub secret: String,
-    pub pueue_directory: String,
+    pub pueue_directory: PathBuf,
     pub use_unix_socket: bool,
-    pub unix_socket_path: String,
+    pub unix_socket_path: PathBuf,
 
     pub port: String,
     pub ca_cert: PathBuf,
     pub daemon_cert: PathBuf,
     pub daemon_key: PathBuf,
+    pub shared_secret_path: PathBuf,
 }
 
 /// All settings which are used by the client
@@ -45,9 +44,9 @@ pub struct Daemon {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Settings {
-    pub shared: Shared,
     pub client: Client,
     pub daemon: Daemon,
+    pub shared: Shared,
 }
 
 impl Settings {
@@ -60,14 +59,11 @@ impl Settings {
     /// If `require_config` is `true`, an error will be thrown, if no configuration file can be found.
     pub fn new(require_config: bool, from_file: &Option<PathBuf>) -> Result<Settings> {
         let mut config = Config::new();
-
         let pueue_path = default_pueue_path()?;
-        config.set_default("shared.secret", gen_random_secret())?;
         config.set_default("shared.pueue_directory", pueue_path.clone())?;
         config.set_default("shared.use_unix_socket", false)?;
         config.set_default("shared.unix_socket_path", get_unix_socket_path()?)?;
 
-        config.set_default("shared.url", "localhost")?;
         config.set_default("shared.port", "6924")?;
         config.set_default("shared.tls_enabled", true)?;
         config.set_default("shared.ca_cert", pueue_path.clone() + "/certs/ca.cert")?;
@@ -78,6 +74,10 @@ impl Settings {
         config.set_default(
             "shared.daemon_cert",
             pueue_path.clone() + "/certs/daemon.cert",
+        )?;
+        config.set_default(
+            "shared.shared_secret_path",
+            pueue_path.clone() + "/shared_secret",
         )?;
 
         // Client specific config
@@ -182,22 +182,4 @@ fn parse_config(settings: &mut Config, require_config: bool) -> Result<()> {
     }
 
     Ok(())
-}
-
-/// Simple helper function to generate a random secret
-fn gen_random_secret() -> String {
-    const CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ\
-                            abcdefghijklmnopqrstuvwxyz\
-                            0123456789)(*&^%$#@!~";
-    const PASSWORD_LEN: usize = 20;
-    let mut rng = rand::thread_rng();
-
-    let secret: String = (0..PASSWORD_LEN)
-        .map(|_| {
-            let idx = rng.gen_range(0, CHARSET.len());
-            CHARSET[idx] as char
-        })
-        .collect();
-
-    secret
 }

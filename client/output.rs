@@ -1,8 +1,8 @@
-use std::collections::BTreeMap;
 use std::io;
 use std::string::ToString;
 use std::thread::sleep;
 use std::time::Duration;
+use std::{collections::BTreeMap, path::PathBuf};
 
 use anyhow::Result;
 use comfy_table::presets::UTF8_HORIZONTAL_BORDERS_ONLY;
@@ -362,7 +362,7 @@ pub fn print_remote_task_output(task_log: &TaskLogMessage, stdout: bool) -> Resu
 /// - No running task: Print an error that there are no running tasks
 /// - Single running task: Follow the output of that task
 /// - Multiple running tasks: Print out the list of possible tasks to follow.
-pub fn follow_task_logs(pueue_directory: String, task_id: usize, stderr: bool) {
+pub fn follow_task_logs(pueue_directory: &PathBuf, task_id: usize, stderr: bool) {
     let (stdout_handle, stderr_handle) = match get_log_file_handles(task_id, &pueue_directory) {
         Ok((stdout, stderr)) => (stdout, stderr),
         Err(err) => {

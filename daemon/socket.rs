@@ -6,6 +6,7 @@ use log::{debug, info, warn};
 
 use pueue::message::*;
 use pueue::protocol::*;
+use pueue::secret::read_shared_secret;
 use pueue::state::SharedState;
 
 use crate::instructions::handle_message;
@@ -15,6 +16,10 @@ use crate::streaming::handle_follow;
 /// Create a new future to handle the message and spawn it.
 pub async fn accept_incoming(sender: Sender<Message>, state: SharedState) -> Result<()> {
     let listener = get_listener(&state).await?;
+    let secret = {
+        let state = state.lock().unwrap();
+        read_shared_secret(&state.settings.shared.shared_secret_path)?
+    };
 
     loop {
         // Poll incoming connections.
@@ -29,8 +34,9 @@ pub async fn accept_incoming(sender: Sender<Message>, state: SharedState) -> Res
         // Start a new task for the request
         let sender_clone = sender.clone();
         let state_clone = state.clone();
+        let secret_clone = secret.clone();
         task::spawn(async move {
-            let _result = handle_incoming(stream, sender_clone, state_clone).await;
+            let _result = handle_incoming(stream, sender_clone, state_clone, secret_clone).await;
         });
     }
 }
@@ -42,6 +48,7 @@ async fn handle_incoming(
     mut stream: GenericStream,
     sender: Sender<Message>,
     state: SharedState,
+    secret: Vec<u8>,
 ) -> Result<()> {
     // Receive the secret once and check, whether the client is allowed to connect
     let payload_bytes = receive_bytes(&mut stream).await?;
@@ -52,16 +59,15 @@ async fn handle_incoming(
         return Ok(());
     }
 
-    let secret = String::from_utf8(payload_bytes)?;
-
     // Return immediately, if we got a wrong secret from the client.
-    {
-        let state = state.lock().unwrap();
-        if secret != state.settings.shared.secret {
-            warn!("Received invalid secret: {}", secret);
-            bail!("Received invalid secret");
-        }
+    if payload_bytes != secret {
+        warn!(
+            "Received invalid secret: {}",
+            String::from_utf8(payload_bytes)?
+        );
+        bail!("Received invalid secret");
     }
+
     // Send a super short `ok` byte to the client, so it knows that the secret has been accepted.
     send_bytes(b"hello", &mut stream).await?;
 

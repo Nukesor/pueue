@@ -1,5 +1,5 @@
 use std::fs::create_dir_all;
-use std::path::Path;
+use std::path::PathBuf;
 use std::process::Command;
 use std::sync::mpsc::channel;
 use std::sync::{Arc, Mutex};
@@ -9,6 +9,7 @@ use clap::Clap;
 use simplelog::{Config, LevelFilter, SimpleLogger};
 
 use pueue::message::Message;
+use pueue::secret::init_shared_secret;
 use pueue::settings::Settings;
 use pueue::state::State;
 
@@ -62,6 +63,7 @@ async fn main() -> Result<()> {
     };
 
     init_directories(&settings.shared.pueue_directory);
+    init_shared_secret(&settings.shared.shared_secret_path)?;
 
     let state = State::new(&settings, opt.config.clone());
     let state = Arc::new(Mutex::new(state));
@@ -78,7 +80,7 @@ async fn main() -> Result<()> {
     let sender_clone = sender.clone();
     ctrlc::set_handler(move || {
         // Clean up the unix socket if we're using it and it exists.
-        if settings.shared.use_unix_socket && std::path::PathBuf::from(&unix_socket_path).exists() {
+        if settings.shared.use_unix_socket && PathBuf::from(&unix_socket_path).exists() {
             std::fs::remove_file(&unix_socket_path)
                 .expect("Failed to remove unix socket on shutdown");
         }
@@ -106,9 +108,8 @@ async fn main() -> Result<()> {
 }
 
 /// Initialize all directories needed for normal operation.
-fn init_directories(path: &str) {
+fn init_directories(pueue_dir: &PathBuf) {
     // Pueue base path
-    let pueue_dir = Path::new(path);
     if !pueue_dir.exists() {
         if let Err(error) = create_dir_all(&pueue_dir) {
             panic!(

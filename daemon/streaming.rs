@@ -1,6 +1,6 @@
-use std::fs::File;
 use std::io::Read;
 use std::time::Duration;
+use std::{fs::File, path::PathBuf};
 
 use anyhow::Result;
 use async_std::task::sleep;
@@ -12,7 +12,7 @@ use pueue::state::SharedState;
 
 /// Handle the continuous stream of a message.
 pub async fn handle_follow(
-    pueue_directory: &str,
+    pueue_directory: &PathBuf,
     stream: &mut GenericStream,
     state: &SharedState,
     message: StreamRequestMessage,
