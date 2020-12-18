@@ -96,6 +96,19 @@ mod test {
 
     use async_std::net::{TcpListener, TcpStream};
     use async_std::task;
+    use async_trait::async_trait;
+
+    use crate::platform::socket::Stream as PueueStream;
+
+    // Implement generic Listener/Stream traits, so we can test stuff on normal TCP
+    #[async_trait]
+    impl GenericListener for TcpListener {
+        async fn accept<'a>(&'a self) -> Result<GenericStream> {
+            let (stream, _) = self.accept().await?;
+            Ok(Box::new(stream))
+        }
+    }
+    impl PueueStream for TcpStream {}
 
     #[async_std::test]
     async fn test_single_huge_payload() -> Result<()> {
