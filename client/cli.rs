@@ -36,6 +36,11 @@ pub enum SubCommand {
         /// As soon as one of the dependencies fails, this task will fail as well.
         #[clap(name = "after", short, long)]
         dependencies: Vec<usize>,
+
+        /// Only return the task id instead of a text.
+        /// This is useful when scripting and working with dependencies.
+        #[clap(short, long)]
+        print_task_id: bool,
     },
     /// Remove tasks from the list.
     /// Running or paused tasks need to be killed first.
