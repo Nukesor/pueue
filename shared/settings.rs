@@ -23,8 +23,6 @@ pub struct Shared {
     pub ca_cert: PathBuf,
     pub daemon_cert: PathBuf,
     pub daemon_key: PathBuf,
-    pub client_cert: PathBuf,
-    pub client_key: PathBuf,
 }
 
 /// All settings which are used by the client
@@ -81,11 +79,6 @@ impl Settings {
             "shared.daemon_cert",
             pueue_path.clone() + "/certs/daemon.cert",
         )?;
-        config.set_default(
-            "shared.client_cert",
-            pueue_path.clone() + "/certs/client.cert",
-        )?;
-        config.set_default("shared.client_key", pueue_path + "/certs/client.key")?;
 
         // Client specific config
         config.set_default("client.read_local_logs", true)?;

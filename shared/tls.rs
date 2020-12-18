@@ -5,7 +5,10 @@ use std::sync::Arc;
 
 use anyhow::{anyhow, Context, Error, Result};
 use async_tls::{TlsAcceptor, TlsConnector};
-use rustls::internal::pemfile::{certs, rsa_private_keys};
+use rustls::{
+    internal::pemfile::{certs, rsa_private_keys},
+    NoClientAuth,
+};
 use rustls::{Certificate, ClientConfig, PrivateKey, ServerConfig};
 
 use crate::settings::Settings;
@@ -23,35 +26,13 @@ pub async fn get_tls_connector(settings: &Settings) -> Result<TlsConnector> {
         .add_pem_file(&mut ca)
         .map_err(|_| anyhow!("Failed to add CA to client root store."))?;
 
-    // Set the client-side key and certificate that should be used for any communication
-    let certs = load_certs(&settings.shared.client_cert)?;
-    let mut keys = load_keys(&settings.shared.client_key)?;
-    config
-        // set this server to use one cert together with the loaded private key
-        .set_single_client_cert(certs, keys.remove(0))
-        .map_err(|err| Error::new(err))
-        .context("Failed to set single certificate for daemon.")?;
-
-    config.enable_sni = false;
-
     Ok(TlsConnector::from(Arc::new(config)))
 }
 
 /// Configure the server using rusttls.
 /// A TLS server needs a certificate and a fitting private key.
-/// On top of that, we require authentication via client certificates.
-/// We need to trust our own CA for that to work.
 pub fn get_tls_listener(settings: &Settings) -> Result<TlsAcceptor> {
-    // Initialize our cert store with our own CA.
-    let mut root_store = rustls::RootCertStore::empty();
-    let mut ca = load_ca(&settings.shared.ca_cert)?;
-    root_store
-        .add_pem_file(&mut ca)
-        .map_err(|_| anyhow!("Failed to add CA to client root store."))?;
-
-    // Only trust clients with a valid certificate of our own CA.
-    let client_auth_only = rustls::AllowAnyAuthenticatedClient::new(root_store);
-    let mut config = ServerConfig::new(client_auth_only);
+    let mut config = ServerConfig::new(NoClientAuth::new());
 
     // Set the mtu to 1500, since we might have non-local communication.
     config.mtu = Some(1500);
