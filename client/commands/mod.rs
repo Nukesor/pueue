@@ -19,7 +19,7 @@ pub async fn get_state(stream: &mut GenericStream) -> Result<State> {
     let message = receive_message(stream).await?;
 
     match message {
-        Message::StatusResponse(state) => Ok(state),
+        Message::StatusResponse(state) => Ok(*state),
         _ => unreachable!(),
     }
 }

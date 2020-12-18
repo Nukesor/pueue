@@ -43,7 +43,7 @@ pub fn get_tls_listener(settings: &Settings) -> Result<TlsAcceptor> {
     config
         // set this server to use one cert together with the loaded private key
         .set_single_cert(certs, keys.remove(0))
-        .map_err(|err| Error::new(err))
+        .map_err(Error::new)
         .context("Failed to set single certificate for daemon.")?;
 
     Ok(TlsAcceptor::from(Arc::new(config)))

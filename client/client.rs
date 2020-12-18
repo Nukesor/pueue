@@ -188,7 +188,7 @@ impl Client {
         match message {
             Message::Success(text) => print_success(&text),
             Message::Failure(text) => print_error(&text),
-            Message::StatusResponse(state) => print_state(state, &self.opt.cmd, &self.settings),
+            Message::StatusResponse(state) => print_state(*state, &self.opt.cmd, &self.settings),
             Message::LogResponse(task_logs) => print_logs(task_logs, &self.opt.cmd, &self.settings),
             Message::Stream(text) => {
                 print!("{}", text);

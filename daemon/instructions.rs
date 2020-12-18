@@ -521,7 +521,7 @@ fn reset(sender: &Sender<Message>, children: bool) -> Message {
 /// Return the current state.
 fn get_status(state: &SharedState) -> Message {
     let state = state.lock().unwrap().clone();
-    Message::StatusResponse(state)
+    Message::StatusResponse(Box::new(state))
 }
 
 /// Invoked when calling `pueue log`.

@@ -75,10 +75,7 @@ impl Settings {
             "shared.daemon_cert",
             pueue_path.clone() + "/certs/daemon.cert",
         )?;
-        config.set_default(
-            "shared.shared_secret_path",
-            pueue_path.clone() + "/shared_secret",
-        )?;
+        config.set_default("shared.shared_secret_path", pueue_path + "/shared_secret")?;
 
         // Client specific config
         config.set_default("client.read_local_logs", true)?;
