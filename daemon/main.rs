@@ -14,15 +14,12 @@ use pueue::settings::Settings;
 use pueue::state::State;
 
 use crate::cli::CliArguments;
-use crate::socket::accept_incoming;
+use crate::network::socket::accept_incoming;
 use crate::task_handler::TaskHandler;
 
 mod cli;
-mod instructions;
+mod network;
 mod platform;
-mod response_helper;
-mod socket;
-mod streaming;
 mod task_handler;
 
 #[async_std::main]

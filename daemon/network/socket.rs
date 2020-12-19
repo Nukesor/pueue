@@ -9,8 +9,8 @@ use pueue::network::protocol::*;
 use pueue::network::secret::read_shared_secret;
 use pueue::state::SharedState;
 
-use crate::instructions::handle_message;
-use crate::streaming::handle_follow;
+use crate::network::follow_log::handle_follow;
+use crate::network::message_handler::handle_message;
 
 /// Poll the listener and accept new incoming connections.
 /// Create a new future to handle the message and spawn it.

@@ -9,7 +9,7 @@ use pueue::network::message::*;
 use pueue::state::{SharedState, State};
 use pueue::task::{Task, TaskStatus};
 
-use crate::response_helper::*;
+use crate::network::response_helper::*;
 
 static SENDER_ERR: &str = "Failed to send message to task handler thread";
 
