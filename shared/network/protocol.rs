@@ -7,7 +7,8 @@ use log::debug;
 
 use crate::network::message::*;
 
-pub use crate::platform::socket::*;
+// Reexport all stream/socket related stuff for convenience purposes
+pub use super::platform::socket::*;
 
 /// Convenience wrapper around send_bytes.
 /// Deserialize a message and feed the bytes into send_bytes.
@@ -98,7 +99,7 @@ mod test {
     use async_std::task;
     use async_trait::async_trait;
 
-    use crate::platform::socket::Stream as PueueStream;
+    use crate::network::platform::socket::Stream as PueueStream;
 
     // Implement generic Listener/Stream traits, so we can test stuff on normal TCP
     #[async_trait]

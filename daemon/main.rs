@@ -10,8 +10,8 @@ use simplelog::{Config, LevelFilter, SimpleLogger};
 
 use pueue::network::certificate::create_certificates;
 use pueue::network::message::Message;
+use pueue::network::protocol::socket_cleanup;
 use pueue::network::secret::init_shared_secret;
-use pueue::platform::socket::socket_cleanup;
 use pueue::settings::Settings;
 use pueue::state::State;
 

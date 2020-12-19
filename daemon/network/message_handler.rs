@@ -4,7 +4,7 @@ use std::{collections::BTreeMap, sync::MutexGuard};
 use pueue::aliasing::insert_alias;
 use pueue::log::{clean_log_handles, read_and_compress_log_files};
 use pueue::network::message::*;
-use pueue::platform::socket::socket_cleanup;
+use pueue::network::protocol::socket_cleanup;
 use pueue::state::{SharedState, State};
 use pueue::task::{Task, TaskStatus};
 
