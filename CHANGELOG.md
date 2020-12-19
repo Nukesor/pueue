@@ -11,11 +11,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Use TLS encryption for TCP communication.
 - Extract the shared `secret` into a separate file. This will allow users to publicly sync their config directory between machines.
 - Change default secret length from 20 to 512 chars.
+- Removed any unix socket code when building on Windows.
+- Lots of internal code cleanup/refactoring/restructuring.
 
 ### Added
 
-- Create default ecdsa keys for TLS crypto.
-- Wait 1 second on invalid secret.
+- Added `shared.host` 
+- Create default ECDSA keys for TLS crypto with [rcgen](https://github.com/est31/rcgen).
+- Improved error messages in many places.
 
 ### Removed
 

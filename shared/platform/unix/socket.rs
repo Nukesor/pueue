@@ -132,7 +132,9 @@ pub async fn get_listener(settings: &Shared) -> Result<Listener> {
 
     // This is the listener, which accepts low-level TCP connections
     let address = format!("{}:{}", &settings.host, &settings.port);
-    let tcp_listener = TcpListener::bind(address).await?;
+    let tcp_listener = TcpListener::bind(&address)
+        .await
+        .context(format!("Failed to listen on address: {}", address))?;
 
     // This is the TLS acceptor, which initializes the TLS layer
     let tls_acceptor = get_tls_listener(&settings)?;
