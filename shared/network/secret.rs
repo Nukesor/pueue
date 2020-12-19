@@ -3,7 +3,7 @@ use std::io::prelude::*;
 use std::path::PathBuf;
 
 use anyhow::{bail, Result};
-use rand::Rng;
+use rand::{distributions::Alphanumeric, Rng};
 
 /// Simple helper function to generate a random secret
 pub fn read_shared_secret(path: &PathBuf) -> Result<Vec<u8>> {
@@ -24,17 +24,13 @@ pub fn init_shared_secret(path: &PathBuf) -> Result<()> {
         return Ok(());
     }
 
-    const CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ\
-                            abcdefghijklmnopqrstuvwxyz\
-                            0123456789)(*&^%$#@!~";
-    const PASSWORD_LEN: usize = 500;
+    const PASSWORD_LEN: usize = 512;
     let mut rng = rand::thread_rng();
 
-    let secret: String = (0..PASSWORD_LEN)
-        .map(|_| {
-            let idx = rng.gen_range(0, CHARSET.len());
-            CHARSET[idx] as char
-        })
+    let secret: String = std::iter::repeat(())
+        .map(|()| rng.sample(Alphanumeric))
+        .map(char::from)
+        .take(PASSWORD_LEN)
         .collect();
 
     let mut file = File::create(path)?;

@@ -10,7 +10,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Use TLS encryption for TCP communication.
 - Extract the shared `secret` into a separate file. This will allow users to publicly sync their config directory between machines.
-- Change default secret length from 20 to 500 chars.
+- Change default secret length from 20 to 512 chars.
+
+### Added
+
+- Create default ecdsa keys for TLS crypto.
+- Wait 1 second on invalid secret.
 
 ### Removed
 
