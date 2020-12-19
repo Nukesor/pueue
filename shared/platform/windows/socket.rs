@@ -4,9 +4,9 @@ use async_std::net::{TcpListener, TcpStream};
 use async_tls::TlsAcceptor;
 use async_trait::async_trait;
 
+use crate::network::tls::{get_tls_connector, get_tls_listener};
 use crate::settings::Settings;
 use crate::state::SharedState;
-use crate::tls::{get_tls_connector, get_tls_listener};
 
 /// This is a helper struct for TCP connections.
 /// TCP should always be used in conjunction with TLS.

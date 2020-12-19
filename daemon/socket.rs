@@ -4,9 +4,9 @@ use anyhow::{bail, Result};
 use async_std::task;
 use log::{debug, info, warn};
 
-use pueue::message::*;
-use pueue::protocol::*;
-use pueue::secret::read_shared_secret;
+use pueue::network::message::*;
+use pueue::network::protocol::*;
+use pueue::network::secret::read_shared_secret;
 use pueue::state::SharedState;
 
 use crate::instructions::handle_message;

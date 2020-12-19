@@ -10,7 +10,7 @@ use comfy_table::*;
 use snap::read::FrameDecoder;
 
 use pueue::log::{get_log_file_handles, get_log_paths};
-use pueue::message::TaskLogMessage;
+use pueue::network::message::TaskLogMessage;
 use pueue::settings::Settings;
 use pueue::state::State;
 use pueue::task::{Task, TaskResult, TaskStatus};

@@ -1,7 +1,7 @@
 use anyhow::{bail, Result};
 
-use pueue::message::*;
-use pueue::protocol::*;
+use pueue::network::message::*;
+use pueue::network::protocol::*;
 use pueue::task::{Task, TaskStatus};
 
 use crate::commands::edit::edit_line;

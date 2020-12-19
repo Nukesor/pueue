@@ -13,7 +13,7 @@ use handlebars::Handlebars;
 use log::{debug, error, info, warn};
 
 use pueue::log::*;
-use pueue::message::*;
+use pueue::network::message::*;
 use pueue::state::SharedState;
 use pueue::task::{Task, TaskResult, TaskStatus};
 

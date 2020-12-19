@@ -8,8 +8,8 @@ use anyhow::Result;
 use clap::Clap;
 use simplelog::{Config, LevelFilter, SimpleLogger};
 
-use pueue::message::Message;
-use pueue::secret::init_shared_secret;
+use pueue::network::message::Message;
+use pueue::network::secret::init_shared_secret;
 use pueue::settings::Settings;
 use pueue::state::State;
 

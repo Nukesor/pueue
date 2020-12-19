@@ -6,8 +6,8 @@ use anyhow::Result;
 use async_std::task::sleep;
 
 use pueue::log::*;
-use pueue::message::*;
-use pueue::protocol::{send_message, GenericStream};
+use pueue::network::message::*;
+use pueue::network::protocol::{send_message, GenericStream};
 use pueue::state::SharedState;
 
 /// Handle the continuous stream of a message.

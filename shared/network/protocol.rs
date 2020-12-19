@@ -5,7 +5,7 @@ use async_std::prelude::*;
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use log::debug;
 
-use crate::message::*;
+use crate::network::message::*;
 
 pub use crate::platform::socket::*;
 

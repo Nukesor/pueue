@@ -5,8 +5,8 @@ use std::process::Command;
 use anyhow::{Context, Result};
 use tempfile::NamedTempFile;
 
-use pueue::message::*;
-use pueue::protocol::*;
+use pueue::network::message::*;
+use pueue::network::protocol::*;
 
 /// This function handles the logic for editing tasks.
 /// At first, we request the daemon to send us the task to edit.

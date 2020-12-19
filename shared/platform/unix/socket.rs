@@ -7,9 +7,9 @@ use async_std::os::unix::net::{UnixListener, UnixStream};
 use async_tls::TlsAcceptor;
 use async_trait::async_trait;
 
+use crate::network::tls::{get_tls_connector, get_tls_listener};
 use crate::settings::Settings;
 use crate::state::SharedState;
-use crate::tls::{get_tls_connector, get_tls_listener};
 
 /// A new trait, which can be used to represent Unix- and TcpListeners.
 /// This is necessary to easily write generic functions where both types can be used.

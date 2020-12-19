@@ -5,10 +5,9 @@ use std::io::{self, Write};
 use anyhow::{bail, Context, Result};
 use log::error;
 
-use pueue::message::*;
-use pueue::platform::socket::*;
-use pueue::protocol::*;
-use pueue::secret::read_shared_secret;
+use pueue::network::message::*;
+use pueue::network::protocol::*;
+use pueue::network::secret::read_shared_secret;
 use pueue::settings::Settings;
 
 use crate::cli::{CliArguments, SubCommand};

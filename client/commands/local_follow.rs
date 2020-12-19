@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use anyhow::{bail, Result};
 
-use pueue::protocol::GenericStream;
+use pueue::network::protocol::GenericStream;
 
 use crate::commands::get_state;
 use crate::output::follow_task_logs;

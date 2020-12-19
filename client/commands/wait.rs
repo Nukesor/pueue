@@ -6,7 +6,7 @@ use anyhow::Result;
 use chrono::Local;
 use crossterm::style::{Attribute, Color};
 
-use pueue::protocol::GenericStream;
+use pueue::network::protocol::GenericStream;
 use pueue::task::{Task, TaskResult, TaskStatus};
 
 use crate::commands::get_state;

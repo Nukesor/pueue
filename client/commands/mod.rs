@@ -1,7 +1,7 @@
 use anyhow::Result;
 
-use pueue::message::Message;
-use pueue::protocol::*;
+use pueue::network::message::Message;
+use pueue::network::protocol::*;
 use pueue::state::State;
 
 pub mod edit;
