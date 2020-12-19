@@ -11,16 +11,16 @@ use rustls::{
 };
 use rustls::{Certificate, ClientConfig, PrivateKey, ServerConfig};
 
-use crate::settings::Settings;
+use crate::settings::Shared;
 
 /// Initialize our client [TlsConnector].
 /// 1. Trust our own CA. ONLY our own CA.
 /// 2. Set the client certificate and key
-pub async fn get_tls_connector(settings: &Settings) -> Result<TlsConnector> {
+pub async fn get_tls_connector(settings: &Shared) -> Result<TlsConnector> {
     let mut config = ClientConfig::new();
 
     // Trust server-certificates signed with our own CA.
-    let mut ca = load_ca(&settings.shared.daemon_cert)?;
+    let mut ca = load_ca(&settings.daemon_cert)?;
     config
         .root_store
         .add_pem_file(&mut ca)
@@ -31,19 +31,19 @@ pub async fn get_tls_connector(settings: &Settings) -> Result<TlsConnector> {
 
 /// Configure the server using rusttls.
 /// A TLS server needs a certificate and a fitting private key.
-pub fn get_tls_listener(settings: &Settings) -> Result<TlsAcceptor> {
+pub fn get_tls_listener(settings: &Shared) -> Result<TlsAcceptor> {
     let mut config = ServerConfig::new(NoClientAuth::new());
 
     // Set the mtu to 1500, since we might have non-local communication.
     config.mtu = Some(1500);
 
     // Set the server-side key and certificate that should be used for any communication
-    let certs = load_certs(&settings.shared.daemon_cert)?;
-    let mut keys = load_keys(&settings.shared.daemon_key)?;
+    let certs = load_certs(&settings.daemon_cert)?;
+    let mut keys = load_keys(&settings.daemon_key)?;
     if keys.is_empty() {
         bail!(
             "Couldn't extract private key from keyfile {:?}",
-            &settings.shared.daemon_key
+            &settings.daemon_key
         );
     }
 

@@ -5,11 +5,10 @@ use async_tls::TlsAcceptor;
 use async_trait::async_trait;
 
 use crate::network::tls::{get_tls_connector, get_tls_listener};
-use crate::settings::Settings;
-use crate::state::SharedState;
+use crate::settings::Shared;
 
 /// Windowsspecific cleanup handling when getting a SIGINT/SIGTERM.
-pub fn socket_cleanup(_settings: &Settings) {}
+pub fn socket_cleanup(_settings: &Shared) {}
 
 /// This is a helper struct for TCP connections.
 /// TCP should always be used in conjunction with TLS.
@@ -48,13 +47,9 @@ pub type GenericStream = Box<dyn Stream>;
 
 /// Get a new stream for the client.
 /// This can either be a UnixStream or a Tls encrypted TCPStream, depending on the parameters.
-pub async fn get_client_stream(settings: &Settings) -> Result<GenericStream> {
-    // Don't allow anything else than loopback until we have proper crypto
-    let host = "127.0.0.1";
-    let port = &settings.shared.port;
-    let address = format!("{}:{}", host, port);
-
+pub async fn get_client_stream(settings: &Shared) -> Result<GenericStream> {
     // Connect to the daemon via TCP
+    let address = format!("{}:{}", settings.host, settings.port);
     let tcp_stream = TcpStream::connect(&address).await.context(format!(
         "Failed to connect to the daemon on {}. Did you start it?",
         &address
@@ -74,19 +69,14 @@ pub async fn get_client_stream(settings: &Settings) -> Result<GenericStream> {
     Ok(Box::new(stream))
 }
 
-/// Get a new listener for the daemon.
-/// This can either be a UnixListener or a TCPlistener,
-/// which depends on the parameters.
-pub async fn get_listener(state: &SharedState) -> Result<Listener> {
-    let state = state.lock().unwrap();
-
-    // Don't allow anything else than loopback until we have proper crypto
-    let host = "127.0.0.1";
-    let port = &state.settings.shared.port;
-
-    let tls_acceptor = get_tls_listener(&state.settings)?;
-    let address = format!("{}:{}", host, port);
+/// Get a new tcp&tls listener for the daemon.
+pub async fn get_listener(settings: &Shared) -> Result<Listener> {
+    // This is the listener, which accepts low-level TCP connections
+    let address = format!("{}:{}", settings.host, settings.port);
     let tcp_listener = TcpListener::bind(address).await?;
+
+    // This is the TLS acceptor, which initializes the TLS layer
+    let tls_acceptor = get_tls_listener(&settings)?;
 
     // Create a struct, which accepts connections and initializes a TLS layer in one go.
     let tls_listener = TlsTcpListener {

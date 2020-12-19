@@ -8,8 +8,7 @@ use async_tls::TlsAcceptor;
 use async_trait::async_trait;
 
 use crate::network::tls::{get_tls_connector, get_tls_listener};
-use crate::settings::Settings;
-use crate::state::SharedState;
+use crate::settings::Shared;
 
 /// Determine, whether we should use unix sockets by default.
 pub fn use_unix_socket_default() -> bool {
@@ -17,11 +16,10 @@ pub fn use_unix_socket_default() -> bool {
 }
 
 /// Unix specific cleanup handling when getting a SIGINT/SIGTERM.
-pub fn socket_cleanup(settings: &Settings) {
+pub fn socket_cleanup(settings: &Shared) {
     // Clean up the unix socket if we're using it and it exists.
-    if settings.shared.use_unix_socket && PathBuf::from(&settings.shared.unix_socket_path).exists()
-    {
-        std::fs::remove_file(&settings.shared.unix_socket_path)
+    if settings.use_unix_socket && PathBuf::from(&settings.unix_socket_path).exists() {
+        std::fs::remove_file(&settings.unix_socket_path)
             .expect("Failed to remove unix socket on shutdown");
     }
 }
@@ -72,27 +70,21 @@ pub type GenericStream = Box<dyn Stream>;
 
 /// Get a new stream for the client.
 /// This can either be a UnixStream or a Tls encrypted TCPStream, depending on the parameters.
-pub async fn get_client_stream(settings: &Settings) -> Result<GenericStream> {
-    let unix_socket_path = &settings.shared.unix_socket_path;
-
+pub async fn get_client_stream(settings: &Shared) -> Result<GenericStream> {
     // Create a unix socket, if the config says so.
-    if settings.shared.use_unix_socket {
-        if !PathBuf::from(unix_socket_path).exists() {
+    if settings.use_unix_socket {
+        if !PathBuf::from(&settings.unix_socket_path).exists() {
             bail!(
                 "Couldn't find unix socket at path {:?}. Is the daemon running yet?",
-                unix_socket_path
+                &settings.unix_socket_path
             );
         }
-        let stream = UnixStream::connect(unix_socket_path).await?;
+        let stream = UnixStream::connect(&settings.unix_socket_path).await?;
         return Ok(Box::new(stream));
     }
 
-    // Don't allow anything else than loopback until we have proper crypto
-    let host = "127.0.0.1";
-    let port = &settings.shared.port;
-    let address = format!("{}:{}", host, port);
-
     // Connect to the daemon via TCP
+    let address = format!("{}:{}", &settings.host, &settings.port);
     let tcp_stream = TcpStream::connect(&address).await.context(format!(
         "Failed to connect to the daemon on {}. Did you start it?",
         &address
@@ -115,17 +107,14 @@ pub async fn get_client_stream(settings: &Settings) -> Result<GenericStream> {
 /// Get a new listener for the daemon.
 /// This can either be a UnixListener or a TCPlistener,
 /// which depends on the parameters.
-pub async fn get_listener(state: &SharedState) -> Result<Listener> {
-    let state = state.lock().unwrap();
-
-    let unix_socket_path = &state.settings.shared.unix_socket_path;
-    if state.settings.shared.use_unix_socket {
+pub async fn get_listener(settings: &Shared) -> Result<Listener> {
+    if settings.use_unix_socket {
         // Check, if the socket already exists
         // In case it does, we have to check, if it's an active socket.
         // If it is, we have to throw an error, because another daemon is already running.
         // Otherwise, we can simply remove it.
-        if PathBuf::from(unix_socket_path).exists() {
-            if get_client_stream(&state.settings).await.is_ok() {
+        if PathBuf::from(&settings.unix_socket_path).exists() {
+            if get_client_stream(&settings).await.is_ok() {
                 bail!(
                     "There seems to be an active pueue daemon.\n\
                       If you're sure there isn't, please remove the socket by hand \
@@ -133,19 +122,20 @@ pub async fn get_listener(state: &SharedState) -> Result<Listener> {
                 );
             }
 
-            std::fs::remove_file(unix_socket_path)?;
+            std::fs::remove_file(&settings.unix_socket_path)?;
         }
 
-        return Ok(Box::new(UnixListener::bind(unix_socket_path).await?));
+        return Ok(Box::new(
+            UnixListener::bind(&settings.unix_socket_path).await?,
+        ));
     }
 
-    // Don't allow anything else than loopback until we have proper crypto
-    let host = "127.0.0.1";
-    let port = &state.settings.shared.port;
-
-    let tls_acceptor = get_tls_listener(&state.settings)?;
-    let address = format!("{}:{}", host, port);
+    // This is the listener, which accepts low-level TCP connections
+    let address = format!("{}:{}", &settings.host, &settings.port);
     let tcp_listener = TcpListener::bind(address).await?;
+
+    // This is the TLS acceptor, which initializes the TLS layer
+    let tls_acceptor = get_tls_listener(&settings)?;
 
     // Create a struct, which accepts connections and initializes a TLS layer in one go.
     let tls_listener = TlsTcpListener {

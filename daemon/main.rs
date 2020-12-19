@@ -81,7 +81,7 @@ async fn main() -> Result<()> {
     let sender_clone = sender.clone();
     let settings_clone = settings.clone();
     ctrlc::set_handler(move || {
-        socket_cleanup(&settings_clone);
+        socket_cleanup(&settings_clone.shared);
 
         // Notify the task handler
         sender_clone

@@ -16,10 +16,11 @@ use crate::network::message_handler::handle_message;
 /// Poll the listener and accept new incoming connections.
 /// Create a new future to handle the message and spawn it.
 pub async fn accept_incoming(sender: Sender<Message>, state: SharedState) -> Result<()> {
-    let listener = get_listener(&state).await?;
-    let secret = {
+    let (listener, secret) = {
         let state = state.lock().unwrap();
-        read_shared_secret(&state.settings.shared.shared_secret_path)?
+        let listener = get_listener(&state.settings.shared).await?;
+        let secret = read_shared_secret(&state.settings.shared.shared_secret_path)?;
+        (listener, secret)
     };
 
     loop {

@@ -612,7 +612,7 @@ fn shutdown(sender: &Sender<Message>, state: &SharedState) -> Message {
     // Do some socket cleanup (unix socket)
     {
         let state = state.lock().unwrap();
-        socket_cleanup(&state.settings);
+        socket_cleanup(&state.settings.shared);
     }
 
     // Notify the task handler
