@@ -11,6 +11,7 @@ use simplelog::{Config, LevelFilter, SimpleLogger};
 use pueue::network::certificate::create_certificates;
 use pueue::network::message::Message;
 use pueue::network::secret::init_shared_secret;
+use pueue::platform::socket::socket_cleanup;
 use pueue::settings::Settings;
 use pueue::state::State;
 
@@ -77,14 +78,10 @@ async fn main() -> Result<()> {
     // 2. Notify the TaskHandler, so it can shutdown gracefully.
     //
     // The actual program exit will be done via the TaskHandler.
-    let unix_socket_path = settings.shared.unix_socket_path.clone();
     let sender_clone = sender.clone();
+    let settings_clone = settings.clone();
     ctrlc::set_handler(move || {
-        // Clean up the unix socket if we're using it and it exists.
-        if settings.shared.use_unix_socket && PathBuf::from(&unix_socket_path).exists() {
-            std::fs::remove_file(&unix_socket_path)
-                .expect("Failed to remove unix socket on shutdown");
-        }
+        socket_cleanup(&settings_clone);
 
         // Notify the task handler
         sender_clone

@@ -11,6 +11,21 @@ use crate::network::tls::{get_tls_connector, get_tls_listener};
 use crate::settings::Settings;
 use crate::state::SharedState;
 
+/// Determine, whether we should use unix sockets by default.
+pub fn use_unix_socket_default() -> bool {
+    true
+}
+
+/// Unix specific cleanup handling when getting a SIGINT/SIGTERM.
+pub fn socket_cleanup(settings: &Settings) {
+    // Clean up the unix socket if we're using it and it exists.
+    if settings.shared.use_unix_socket && PathBuf::from(&settings.shared.unix_socket_path).exists()
+    {
+        std::fs::remove_file(&settings.shared.unix_socket_path)
+            .expect("Failed to remove unix socket on shutdown");
+    }
+}
+
 /// A new trait, which can be used to represent Unix- and TcpListeners.
 /// This is necessary to easily write generic functions where both types can be used.
 #[async_trait]

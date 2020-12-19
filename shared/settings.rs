@@ -14,9 +14,12 @@ use crate::platform::directories::*;
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Shared {
     pub pueue_directory: PathBuf,
+    #[cfg(not(target_os = "windows"))]
     pub use_unix_socket: bool,
+    #[cfg(not(target_os = "windows"))]
     pub unix_socket_path: PathBuf,
 
+    pub host: String,
     pub port: String,
     pub daemon_cert: PathBuf,
     pub daemon_key: PathBuf,
@@ -60,9 +63,12 @@ impl Settings {
         let mut config = Config::new();
         let pueue_path = default_pueue_path()?;
         config.set_default("shared.pueue_directory", pueue_path.clone())?;
+        #[cfg(not(target_os = "windows"))]
         config.set_default("shared.use_unix_socket", false)?;
+        #[cfg(not(target_os = "windows"))]
         config.set_default("shared.unix_socket_path", get_unix_socket_path()?)?;
 
+        config.set_default("shared.host", "localhost")?;
         config.set_default("shared.port", "6924")?;
         config.set_default("shared.tls_enabled", true)?;
         config.set_default(

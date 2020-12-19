@@ -8,6 +8,9 @@ use crate::network::tls::{get_tls_connector, get_tls_listener};
 use crate::settings::Settings;
 use crate::state::SharedState;
 
+/// Windowsspecific cleanup handling when getting a SIGINT/SIGTERM.
+pub fn socket_cleanup(_settings: &Settings) {}
+
 /// This is a helper struct for TCP connections.
 /// TCP should always be used in conjunction with TLS.
 /// That's why this helper exists, which encapsulates the logic of accepting a new

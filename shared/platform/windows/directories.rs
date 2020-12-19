@@ -2,11 +2,6 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, Result};
 
-/// Windows doesn't have unix sockets
-pub fn get_unix_socket_path() -> Result<String> {
-    Ok(".\\UnixStreams\\are\\not\\available\\on\\Windows".to_string())
-}
-
 fn get_home_dir() -> Result<PathBuf> {
     dirs::home_dir().ok_or_else(|| anyhow!("Couldn't resolve home dir"))
 }
