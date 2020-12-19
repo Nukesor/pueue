@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Change default secret length from 20 to 512 chars.
 - Removed any unix socket code when building on Windows.
 - Lots of internal code cleanup/refactoring/restructuring.
+- Exit client with non-zero Exitcode when getting a failure message from the daemon.
 
 ### Added
 

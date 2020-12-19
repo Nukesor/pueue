@@ -186,7 +186,10 @@ impl Client {
     fn handle_response(&self, message: Message) -> bool {
         match message {
             Message::Success(text) => print_success(&text),
-            Message::Failure(text) => print_error(&text),
+            Message::Failure(text) => {
+                print_error(&text);
+                std::process::exit(1);
+            }
             Message::StatusResponse(state) => print_state(*state, &self.opt.cmd, &self.settings),
             Message::LogResponse(task_logs) => print_logs(task_logs, &self.opt.cmd, &self.settings),
             Message::Stream(text) => {
