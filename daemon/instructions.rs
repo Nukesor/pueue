@@ -99,7 +99,9 @@ fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) 
             .expect(SENDER_ERR);
     }
     // Create the customized response for the client.
-    let message = if let Some(enqueue_at) = message.enqueue_at {
+    let message = if message.print_task_id {
+        task_id.to_string()
+    } else if let Some(enqueue_at) = message.enqueue_at {
         format!(
             "New task added (id {}). It will be enqueued at {}",
             task_id,

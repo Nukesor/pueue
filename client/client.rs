@@ -271,6 +271,7 @@ impl Client {
                 group,
                 delay_until,
                 dependencies,
+                print_task_id,
             } => {
                 let cwd_pathbuf = current_dir()?;
                 let cwd = cwd_pathbuf
@@ -292,6 +293,7 @@ impl Client {
                     group: group.clone(),
                     enqueue_at: *delay_until,
                     dependencies: dependencies.to_vec(),
+                    print_task_id: *print_task_id,
                 }))
             }
             SubCommand::Remove { task_ids } => {
