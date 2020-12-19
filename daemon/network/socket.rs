@@ -1,6 +1,7 @@
 use std::sync::mpsc::Sender;
+use std::time::{Duration, SystemTime};
 
-use anyhow::{bail, Result};
+use anyhow::{bail, Context, Result};
 use async_std::task;
 use log::{debug, info, warn};
 
@@ -59,12 +60,22 @@ async fn handle_incoming(
         return Ok(());
     }
 
+    let start = SystemTime::now();
+
     // Return immediately, if we got a wrong secret from the client.
     if payload_bytes != secret {
         warn!(
             "Received invalid secret: {}",
             String::from_utf8(payload_bytes)?
         );
+
+        // Always wait for 1 second, when getting a invalid secret.
+        // This makes brute-forcing even more impossible and invalidates any timing attacks.
+        let remaining_sleep_time = Duration::from_secs(1)
+            - SystemTime::now()
+                .duration_since(start)
+                .context("Couldn't calculate duration. Did the system time change?")?;
+        std::thread::sleep(remaining_sleep_time);
         bail!("Received invalid secret");
     }
 
