@@ -8,6 +8,7 @@ use anyhow::Result;
 use clap::Clap;
 use simplelog::{Config, LevelFilter, SimpleLogger};
 
+use pueue::network::certificate::create_certificates;
 use pueue::network::message::Message;
 use pueue::network::secret::init_shared_secret;
 use pueue::settings::Settings;
@@ -60,6 +61,9 @@ async fn main() -> Result<()> {
     };
 
     init_directories(&settings.shared.pueue_directory);
+    if !settings.shared.daemon_key.exists() && !settings.shared.daemon_cert.exists() {
+        create_certificates(&settings)?;
+    }
     init_shared_secret(&settings.shared.shared_secret_path)?;
 
     let state = State::new(&settings, opt.config.clone());
@@ -123,6 +127,17 @@ fn init_directories(pueue_dir: &PathBuf) {
             panic!(
                 "Failed to create log directory at {:?} error: {:?}",
                 log_dir, error
+            );
+        }
+    }
+
+    // Task certs dir
+    let certs_dir = pueue_dir.join("certs");
+    if !certs_dir.exists() {
+        if let Err(error) = create_dir_all(&certs_dir) {
+            panic!(
+                "Failed to create certificate directory at {:?} error: {:?}",
+                certs_dir, error
             );
         }
     }

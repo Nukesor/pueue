@@ -3,10 +3,10 @@ use std::io::{BufReader, Cursor};
 use std::path::Path;
 use std::sync::Arc;
 
-use anyhow::{anyhow, Context, Error, Result};
+use anyhow::{anyhow, bail, Context, Error, Result};
 use async_tls::{TlsAcceptor, TlsConnector};
 use rustls::{
-    internal::pemfile::{certs, rsa_private_keys},
+    internal::pemfile::{certs, pkcs8_private_keys, rsa_private_keys},
     NoClientAuth,
 };
 use rustls::{Certificate, ClientConfig, PrivateKey, ServerConfig};
@@ -20,7 +20,7 @@ pub async fn get_tls_connector(settings: &Settings) -> Result<TlsConnector> {
     let mut config = ClientConfig::new();
 
     // Trust server-certificates signed with our own CA.
-    let mut ca = load_ca(&settings.shared.ca_cert)?;
+    let mut ca = load_ca(&settings.shared.daemon_cert)?;
     config
         .root_store
         .add_pem_file(&mut ca)
@@ -40,6 +40,13 @@ pub fn get_tls_listener(settings: &Settings) -> Result<TlsAcceptor> {
     // Set the server-side key and certificate that should be used for any communication
     let certs = load_certs(&settings.shared.daemon_cert)?;
     let mut keys = load_keys(&settings.shared.daemon_key)?;
+    if keys.is_empty() {
+        bail!(
+            "Couldn't extract private key from keyfile {:?}",
+            &settings.shared.daemon_key
+        );
+    }
+
     config
         // set this server to use one cert together with the loaded private key
         .set_single_cert(certs, keys.remove(0))
@@ -58,6 +65,15 @@ fn load_certs(path: &Path) -> Result<Vec<Certificate>> {
 /// Load the passed keys file
 fn load_keys(path: &Path) -> Result<Vec<PrivateKey>> {
     let file = File::open(path).context(format!("Cannot open key {:?}", path))?;
+    // Try to read pkcs8 format first
+    let keys = pkcs8_private_keys(&mut BufReader::new(&file))
+        .map_err(|_| anyhow!("Failed to parse daemon key."))?;
+
+    if !keys.is_empty() {
+        return Ok(keys);
+    }
+
+    // Try the normal rsa format afterwards.
     rsa_private_keys(&mut BufReader::new(file)).map_err(|_| anyhow!("Failed to parse daemon key."))
 }
 

@@ -18,7 +18,6 @@ pub struct Shared {
     pub unix_socket_path: PathBuf,
 
     pub port: String,
-    pub ca_cert: PathBuf,
     pub daemon_cert: PathBuf,
     pub daemon_key: PathBuf,
     pub shared_secret_path: PathBuf,
@@ -66,7 +65,6 @@ impl Settings {
 
         config.set_default("shared.port", "6924")?;
         config.set_default("shared.tls_enabled", true)?;
-        config.set_default("shared.ca_cert", pueue_path.clone() + "/certs/ca.cert")?;
         config.set_default(
             "shared.daemon_key",
             pueue_path.clone() + "/certs/daemon.key",
