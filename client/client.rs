@@ -5,9 +5,9 @@ use std::io::{self, Write};
 use anyhow::{bail, Context, Result};
 use log::error;
 
-use pueue::message::*;
-use pueue::platform::socket::*;
-use pueue::protocol::*;
+use pueue::network::message::*;
+use pueue::network::protocol::*;
+use pueue::network::secret::read_shared_secret;
 use pueue::settings::Settings;
 
 use crate::cli::{CliArguments, SubCommand};
@@ -28,40 +28,19 @@ use crate::output::*;
 pub struct Client {
     opt: CliArguments,
     settings: Settings,
-    socket: Socket,
+    stream: GenericStream,
 }
 
 impl Client {
     /// Connect to the daemon, authorize via secret and return a new initialized Client.
     pub async fn new(settings: Settings, opt: CliArguments) -> Result<Self> {
-        // // Commandline argument overwrites the configuration files values for address
-        // let address = if let Some(address) = opt.address.clone() {
-        //     address
-        // } else {
-        //     settings.client.daemon_address
-        // };
-
-        // Commandline argument overwrites the configuration files values for port
-        let (unix_socket_path, port) = {
-            // Always prefer commandline options
-            if let Some(path) = opt.unix_socket_path.clone() {
-                (Some(path), None)
-            } else if let Some(port) = opt.port.clone() {
-                (None, Some(port))
-            } else if settings.shared.use_unix_socket {
-                (Some(settings.shared.unix_socket_path.clone()), None)
-            } else {
-                (None, Some(settings.shared.port.clone()))
-            }
-        };
-
-        let mut socket = get_client(unix_socket_path, port).await?;
+        let mut stream = get_client_stream(&settings.shared).await?;
 
         // Send the secret to the daemon
         // In case everything was successful, we get a short `hello` response from the daemon.
-        let secret = settings.shared.secret.clone().into_bytes();
-        send_bytes(&secret, &mut socket).await?;
-        let hello = receive_bytes(&mut socket).await?;
+        let secret = read_shared_secret(&settings.shared.shared_secret_path)?;
+        send_bytes(&secret, &mut stream).await?;
+        let hello = receive_bytes(&mut stream).await?;
         if hello != b"hello" {
             bail!("Daemon went away after initial connection. Did you use the correct secret?")
         }
@@ -69,7 +48,7 @@ impl Client {
         Ok(Client {
             opt,
             settings,
-            socket,
+            stream,
         })
     }
 
@@ -103,7 +82,7 @@ impl Client {
         // This match handles all "complex" commands.
         match &self.opt.cmd {
             SubCommand::Reset { force, .. } => {
-                let state = get_state(&mut self.socket).await?;
+                let state = get_state(&mut self.stream).await?;
                 let running_tasks = state
                     .tasks
                     .iter()
@@ -120,7 +99,7 @@ impl Client {
             }
 
             SubCommand::Edit { task_id, path } => {
-                let message = edit(&mut self.socket, *task_id, *path).await?;
+                let message = edit(&mut self.stream, *task_id, *path).await?;
                 self.handle_response(message);
                 Ok(true)
             }
@@ -130,7 +109,7 @@ impl Client {
                 all,
                 quiet,
             } => {
-                wait(&mut self.socket, task_ids, group, *all, *quiet).await?;
+                wait(&mut self.stream, task_ids, group, *all, *quiet).await?;
                 Ok(true)
             }
             SubCommand::Restart {
@@ -142,7 +121,7 @@ impl Client {
                 in_place,
             } => {
                 restart(
-                    &mut self.socket,
+                    &mut self.stream,
                     task_ids.clone(),
                     *start_immediately,
                     *stashed,
@@ -159,8 +138,8 @@ impl Client {
                 // Thereby we handle this separately over here.
                 if self.settings.client.read_local_logs {
                     local_follow(
-                        &mut self.socket,
-                        self.settings.shared.pueue_directory.clone(),
+                        &mut self.stream,
+                        &self.settings.shared.pueue_directory,
                         task_id,
                         *err,
                     )
@@ -179,21 +158,21 @@ impl Client {
     /// One message to the daemon, one response, Done.
     ///
     /// The only exception is streaming of log output.
-    /// In that case, we send one request and contine receiving until the socket shuts down.
+    /// In that case, we send one request and contine receiving until the stream shuts down.
     async fn handle_simple_command(&mut self) -> Result<()> {
         // Create the message that should be sent to the daemon
         // depending on the given commandline options.
         let message = self.get_message_from_opt()?;
 
         // Create the message payload and send it to the daemon.
-        send_message(message, &mut self.socket).await?;
+        send_message(message, &mut self.stream).await?;
 
         // Check if we can receive the response from the daemon
-        let mut response = receive_message(&mut self.socket).await?;
+        let mut response = receive_message(&mut self.stream).await?;
 
         // Check if we can receive the response from the daemon
         while self.handle_response(response) {
-            response = receive_message(&mut self.socket).await?;
+            response = receive_message(&mut self.stream).await?;
         }
 
         Ok(())
@@ -208,7 +187,7 @@ impl Client {
         match message {
             Message::Success(text) => print_success(&text),
             Message::Failure(text) => print_error(&text),
-            Message::StatusResponse(state) => print_state(state, &self.opt.cmd, &self.settings),
+            Message::StatusResponse(state) => print_state(*state, &self.opt.cmd, &self.settings),
             Message::LogResponse(task_logs) => print_logs(task_logs, &self.opt.cmd, &self.settings),
             Message::Stream(text) => {
                 print!("{}", text);

@@ -1,5 +1,6 @@
 use std::collections::{BTreeMap, HashMap};
 use std::io::Write;
+use std::path::PathBuf;
 use std::process::Child;
 use std::process::Stdio;
 use std::sync::mpsc::Receiver;
@@ -12,7 +13,7 @@ use handlebars::Handlebars;
 use log::{debug, error, info, warn};
 
 use pueue::log::*;
-use pueue::message::*;
+use pueue::network::message::*;
 use pueue::state::SharedState;
 use pueue::task::{Task, TaskResult, TaskStatus};
 
@@ -25,7 +26,7 @@ pub struct TaskHandler {
     callbacks: Vec<Child>,
     reset: bool,
     // Some static settings that are extracted from `state.settings` for convenience purposes.
-    pueue_directory: String,
+    pueue_directory: PathBuf,
     callback: Option<String>,
 }
 

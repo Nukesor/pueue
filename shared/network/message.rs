@@ -27,7 +27,7 @@ pub enum Message {
     Group(GroupMessage),
 
     Status,
-    StatusResponse(State),
+    StatusResponse(Box<State>),
     Log(LogRequestMessage),
     LogResponse(BTreeMap<usize, TaskLogMessage>),
     Stream(String),

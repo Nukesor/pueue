@@ -4,6 +4,31 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 
+
+### Changed
+
+- Use TLS encryption for TCP communication.
+- Extract the shared `secret` into a separate file. This will allow users to publicly sync their config directory between machines.
+- Change default secret length from 20 to 512 chars.
+- Removed any unix socket code when building on Windows.
+- Lots of internal code cleanup/refactoring/restructuring.
+
+### Added
+
+- Added `shared.host` 
+- Create default ECDSA keys for TLS crypto with [rcgen](https://github.com/est31/rcgen).
+- Improved error messages in many places.
+
+### Removed
+
+- `--port` and `--unix-socket-path` cli flags on client. In favor of the `--config` flag.
+- `--port` flag on the daemon. IN favor of the `--config` flag.
+
+### Fixed
+
+- Properly pass `--config` CLI argument to daemonized `pueued` instance.
+
 ## [0.9.0] - 2020-12-14
 
 ### Added

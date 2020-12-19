@@ -1,15 +1,14 @@
 use std::sync::mpsc::Sender;
 use std::{collections::BTreeMap, sync::MutexGuard};
 
-use log::debug;
-
 use pueue::aliasing::insert_alias;
 use pueue::log::{clean_log_handles, read_and_compress_log_files};
-use pueue::message::*;
+use pueue::network::message::*;
+use pueue::network::protocol::socket_cleanup;
 use pueue::state::{SharedState, State};
 use pueue::task::{Task, TaskStatus};
 
-use crate::response_helper::*;
+use crate::network::response_helper::*;
 
 static SENDER_ERR: &str = "Failed to send message to task handler thread";
 
@@ -521,7 +520,7 @@ fn reset(sender: &Sender<Message>, children: bool) -> Message {
 /// Return the current state.
 fn get_status(state: &SharedState) -> Message {
     let state = state.lock().unwrap().clone();
-    Message::StatusResponse(state)
+    Message::StatusResponse(Box::new(state))
 }
 
 /// Invoked when calling `pueue log`.
@@ -610,17 +609,10 @@ fn set_parallel_tasks(message: ParallelMessage, state: &SharedState) -> Message 
 /// The TaskHandler then gracefully shuts down all child processes
 /// and exits with std::proces::exit(0).
 fn shutdown(sender: &Sender<Message>, state: &SharedState) -> Message {
-    // Remove the unix socket
+    // Do some socket cleanup (unix socket)
     {
         let state = state.lock().unwrap();
-        if state.settings.shared.use_unix_socket {
-            let path = &state.settings.shared.unix_socket_path;
-            debug!("Check if a unit socket exists.");
-            if std::path::PathBuf::from(&path).exists() {
-                std::fs::remove_file(&path).expect("Failed to remove unix socket on shutdown");
-            }
-            debug!("Removed the unix socket.");
-        }
+        socket_cleanup(&state.settings.shared);
     }
 
     // Notify the task handler

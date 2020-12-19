@@ -1,19 +1,19 @@
-use std::fs::File;
 use std::io::Read;
 use std::time::Duration;
+use std::{fs::File, path::PathBuf};
 
 use anyhow::Result;
 use async_std::task::sleep;
 
 use pueue::log::*;
-use pueue::message::*;
-use pueue::protocol::{send_message, Socket};
+use pueue::network::message::*;
+use pueue::network::protocol::{send_message, GenericStream};
 use pueue::state::SharedState;
 
 /// Handle the continuous stream of a message.
 pub async fn handle_follow(
-    pueue_directory: &str,
-    socket: &mut Socket,
+    pueue_directory: &PathBuf,
+    stream: &mut GenericStream,
     state: &SharedState,
     message: StreamRequestMessage,
 ) -> Result<Message> {
@@ -91,7 +91,7 @@ pub async fn handle_follow(
 
         // Send the new chunk and wait for 1 second.
         let response = Message::Stream(text);
-        send_message(response, socket).await?;
+        send_message(response, stream).await?;
         sleep(Duration::from_millis(1000)).await;
     }
 }

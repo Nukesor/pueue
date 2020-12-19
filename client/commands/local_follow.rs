@@ -1,13 +1,15 @@
+use std::path::PathBuf;
+
 use anyhow::{bail, Result};
 
-use pueue::protocol::Socket;
+use pueue::network::protocol::GenericStream;
 
 use crate::commands::get_state;
 use crate::output::follow_task_logs;
 
 pub async fn local_follow(
-    socket: &mut Socket,
-    pueue_directory: String,
+    stream: &mut GenericStream,
+    pueue_directory: &PathBuf,
     task_id: &Option<usize>,
     err: bool,
 ) -> Result<()> {
@@ -17,7 +19,7 @@ pub async fn local_follow(
     let task_id = match task_id {
         Some(task_id) => *task_id,
         None => {
-            let state = get_state(socket).await?;
+            let state = get_state(stream).await?;
             let running_ids: Vec<_> = state
                 .tasks
                 .iter()

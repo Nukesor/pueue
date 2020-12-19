@@ -1,5 +1,5 @@
 use std::fs::create_dir_all;
-use std::path::Path;
+use std::path::PathBuf;
 use std::process::Command;
 use std::sync::mpsc::channel;
 use std::sync::{Arc, Mutex};
@@ -8,20 +8,20 @@ use anyhow::Result;
 use clap::Clap;
 use simplelog::{Config, LevelFilter, SimpleLogger};
 
-use pueue::message::Message;
+use pueue::network::certificate::create_certificates;
+use pueue::network::message::Message;
+use pueue::network::protocol::socket_cleanup;
+use pueue::network::secret::init_shared_secret;
 use pueue::settings::Settings;
 use pueue::state::State;
 
 use crate::cli::CliArguments;
-use crate::socket::accept_incoming;
+use crate::network::socket::accept_incoming;
 use crate::task_handler::TaskHandler;
 
 mod cli;
-mod instructions;
+mod network;
 mod platform;
-mod response_helper;
-mod socket;
-mod streaming;
 mod task_handler;
 
 #[async_std::main]
@@ -30,7 +30,7 @@ async fn main() -> Result<()> {
     let opt = CliArguments::parse();
 
     if opt.daemonize {
-        fork_daemon(&opt)?;
+        return fork_daemon(&opt);
     }
 
     // Set the verbosity level of the logger.
@@ -62,6 +62,10 @@ async fn main() -> Result<()> {
     };
 
     init_directories(&settings.shared.pueue_directory);
+    if !settings.shared.daemon_key.exists() && !settings.shared.daemon_cert.exists() {
+        create_certificates(&settings)?;
+    }
+    init_shared_secret(&settings.shared.shared_secret_path)?;
 
     let state = State::new(&settings, opt.config.clone());
     let state = Arc::new(Mutex::new(state));
@@ -74,14 +78,10 @@ async fn main() -> Result<()> {
     // 2. Notify the TaskHandler, so it can shutdown gracefully.
     //
     // The actual program exit will be done via the TaskHandler.
-    let unix_socket_path = settings.shared.unix_socket_path.clone();
     let sender_clone = sender.clone();
+    let settings_clone = settings.clone();
     ctrlc::set_handler(move || {
-        // Clean up the unix socket if we're using it and it exists.
-        if settings.shared.use_unix_socket && std::path::PathBuf::from(&unix_socket_path).exists() {
-            std::fs::remove_file(&unix_socket_path)
-                .expect("Failed to remove unix socket on shutdown");
-        }
+        socket_cleanup(&settings_clone.shared);
 
         // Notify the task handler
         sender_clone
@@ -100,15 +100,14 @@ async fn main() -> Result<()> {
         task_handler.run();
     });
 
-    accept_incoming(sender, state.clone(), opt).await?;
+    accept_incoming(sender, state.clone()).await?;
 
     Ok(())
 }
 
 /// Initialize all directories needed for normal operation.
-fn init_directories(path: &str) {
+fn init_directories(pueue_dir: &PathBuf) {
     // Pueue base path
-    let pueue_dir = Path::new(path);
     if !pueue_dir.exists() {
         if let Err(error) = create_dir_all(&pueue_dir) {
             panic!(
@@ -125,6 +124,17 @@ fn init_directories(path: &str) {
             panic!(
                 "Failed to create log directory at {:?} error: {:?}",
                 log_dir, error
+            );
+        }
+    }
+
+    // Task certs dir
+    let certs_dir = pueue_dir.join("certs");
+    if !certs_dir.exists() {
+        if let Err(error) = create_dir_all(&certs_dir) {
+            panic!(
+                "Failed to create certificate directory at {:?} error: {:?}",
+                certs_dir, error
             );
         }
     }
@@ -146,9 +156,9 @@ fn init_directories(path: &str) {
 fn fork_daemon(opt: &CliArguments) -> Result<()> {
     let mut arguments = Vec::<String>::new();
 
-    if let Some(port) = &opt.port {
-        arguments.push("--port".to_string());
-        arguments.push(port.clone());
+    if let Some(config) = &opt.config {
+        arguments.push("--config".to_string());
+        arguments.push(config.to_string_lossy().into_owned());
     }
 
     if opt.verbose > 0 {
@@ -158,5 +168,5 @@ fn fork_daemon(opt: &CliArguments) -> Result<()> {
     Command::new("pueued").args(&arguments).spawn()?;
 
     println!("Pueued is now running in the background");
-    std::process::exit(0);
+    Ok(())
 }

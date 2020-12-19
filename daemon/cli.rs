@@ -20,10 +20,6 @@ pub struct CliArguments {
     #[clap(short, long)]
     pub daemonize: bool,
 
-    /// The port the daemon listens on. Overwrites the port in the config file.
-    #[clap(short, long)]
-    pub port: Option<String>,
-
     /// Path to a specific pueue config daemon, that should be used.
     /// This ignores all other config files.
     #[clap(short, long)]
