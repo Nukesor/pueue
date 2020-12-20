@@ -9,6 +9,7 @@ use pueue::network::message::*;
 use pueue::network::protocol::*;
 use pueue::network::secret::read_shared_secret;
 use pueue::settings::Settings;
+use pueue::state::group_or_default;
 
 use crate::cli::{CliArguments, SubCommand};
 use crate::commands::edit::edit;
@@ -109,7 +110,8 @@ impl Client {
                 all,
                 quiet,
             } => {
-                wait(&mut self.stream, task_ids, group, *all, *quiet).await?;
+                let group = group_or_default(group);
+                wait(&mut self.stream, task_ids, &group, *all, *quiet).await?;
                 Ok(true)
             }
             SubCommand::Restart {
@@ -267,13 +269,14 @@ impl Client {
                     envs.insert(key, value);
                 }
 
+                let group = group_or_default(group);
                 Ok(Message::Add(AddMessage {
                     command: command.join(" "),
                     path: cwd.to_string(),
                     envs,
                     start_immediately: *start_immediately,
                     stashed: *stashed,
-                    group: group.clone(),
+                    group,
                     enqueue_at: *delay_until,
                     dependencies: dependencies.to_vec(),
                     print_task_id: *print_task_id,
@@ -312,9 +315,10 @@ impl Client {
                 all,
                 children,
             } => {
+                let group = group_or_default(group);
                 let message = StartMessage {
                     task_ids: task_ids.clone(),
-                    group: group.clone(),
+                    group,
                     all: *all,
                     children: *children,
                 };
@@ -327,9 +331,10 @@ impl Client {
                 all,
                 children,
             } => {
+                let group = group_or_default(group);
                 let message = PauseMessage {
                     task_ids: task_ids.clone(),
-                    group: group.clone(),
+                    group,
                     wait: *wait,
                     all: *all,
                     children: *children,
@@ -339,17 +344,16 @@ impl Client {
             SubCommand::Kill {
                 task_ids,
                 group,
-                default,
                 all,
                 children,
             } => {
                 if self.settings.client.show_confirmation_questions {
                     self.handle_user_confirmation("kill", task_ids)?;
                 }
+                let group = group_or_default(group);
                 let message = KillMessage {
                     task_ids: task_ids.clone(),
-                    group: group.clone(),
-                    default: *default,
+                    group,
                     all: *all,
                     children: *children,
                 };
@@ -391,9 +395,10 @@ impl Client {
                 parallel_tasks,
                 group,
             } => {
+                let group = group_or_default(group);
                 let message = ParallelMessage {
                     parallel_tasks: *parallel_tasks,
-                    group: group.clone(),
+                    group,
                 };
                 Ok(Message::Parallel(message))
             }

@@ -24,7 +24,7 @@ use crate::output_helper::style_text;
 pub async fn wait(
     stream: &mut GenericStream,
     task_ids: &Option<Vec<usize>>,
-    group: &Option<String>,
+    group: &str,
     all: bool,
     quiet: bool,
 ) -> Result<()> {
@@ -39,14 +39,6 @@ pub async fn wait(
         let tasks: Vec<Task> = if all {
             // Get all tasks
             state.tasks.iter().map(|(_, task)| task.clone()).collect()
-        } else if let Some(group) = group {
-            // Get all tasks of a specific group
-            state
-                .tasks
-                .iter()
-                .filter(|(_, task)| task.group == Some(group.clone()))
-                .map(|(_, task)| task.clone())
-                .collect()
         } else if let Some(ids) = task_ids {
             // Get all tasks of a specific group
             state
@@ -56,11 +48,11 @@ pub async fn wait(
                 .map(|(_, task)| task.clone())
                 .collect()
         } else {
-            // Get all tasks of the default queue by default
+            // Get all tasks of a specific group
             state
                 .tasks
                 .iter()
-                .filter(|(_, task)| task.group == None)
+                .filter(|(_, task)| task.group.eq(group.clone()))
                 .map(|(_, task)| task.clone())
                 .collect()
         };

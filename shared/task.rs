@@ -50,7 +50,7 @@ pub struct Task {
     pub command: String,
     pub path: String,
     pub envs: HashMap<String, String>,
-    pub group: Option<String>,
+    pub group: String,
     pub enqueue_at: Option<DateTime<Local>>,
     pub dependencies: Vec<usize>,
     pub status: TaskStatus,
@@ -68,7 +68,7 @@ impl Task {
         original_command: String,
         path: String,
         envs: HashMap<String, String>,
-        group: Option<String>,
+        group: String,
         starting_status: TaskStatus,
         enqueue_at: Option<DateTime<Local>>,
         dependencies: Vec<usize>,
@@ -100,7 +100,7 @@ impl Task {
             command: task.command.clone(),
             path: task.path.clone(),
             envs: task.envs.clone(),
-            group: None,
+            group: "default".to_string(),
             enqueue_at: None,
             dependencies: Vec::new(),
             status: TaskStatus::Queued,
@@ -127,5 +127,13 @@ impl Task {
 
     pub fn is_queued(&self) -> bool {
         self.status == TaskStatus::Queued || self.status == TaskStatus::Stashed
+    }
+
+    pub fn set_default_group(&mut self) {
+        self.group = String::from("default");
+    }
+
+    pub fn is_in_default_group(&self) -> bool {
+        self.group.eq("default")
     }
 }

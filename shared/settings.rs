@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::fs::{create_dir_all, File};
 use std::io::prelude::*;
 use std::path::PathBuf;
@@ -39,9 +39,10 @@ pub struct Client {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Daemon {
     pub default_parallel_tasks: usize,
-    pub pause_on_failure: bool,
+    pub pause_group_on_failure: bool,
+    pub pause_all_on_failure: bool,
     pub callback: Option<String>,
-    pub groups: HashMap<String, usize>,
+    pub groups: BTreeMap<String, usize>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -89,7 +90,8 @@ impl Settings {
 
         // Daemon specific config
         config.set_default("daemon.default_parallel_tasks", 1)?;
-        config.set_default("daemon.pause_on_failure", false)?;
+        config.set_default("daemon.pause_group_on_failure", false)?;
+        config.set_default("daemon.pause_all_on_failure", false)?;
         config.set_default("daemon.callback", None::<String>)?;
         config.set_default("daemon.groups", HashMap::<String, i64>::new())?;
 

@@ -21,15 +21,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Added `shared.host` 
 - Create default ECDSA keys for TLS crypto with [rcgen](https://github.com/est31/rcgen).
 - Improved error messages in many places.
+- `pause_groups_on_failure` config, which only pauses the group of the affected task instead of everything.
+- `pause_all_on_failure` config, which actually pauses all groups as soon as a task fails..
 
 ### Removed
 
 - `--port` and `--unix-socket-path` cli flags on client. In favor of the `--config` flag.
 - `--port` flag on the daemon. IN favor of the `--config` flag.
+- `pause_on_failure` in favor of two other options.
 
 ### Fixed
 
 - Properly pass `--config` CLI argument to daemonized `pueued` instance.
+- Removed `--default` flag on `kill` command, since this was the default anyway.
+    That makes this command's behavior consistent with the `start` and `pause` command.
+
+### Internal
+
+- The default group is now an actual group.
 
 ## [0.9.0] - 2020-12-14
 

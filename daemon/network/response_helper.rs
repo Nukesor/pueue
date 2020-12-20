@@ -1,5 +1,19 @@
-use pueue::state::SharedState;
-use pueue::task::TaskStatus;
+use pueue::{network::message::create_failure_message, task::TaskStatus};
+use pueue::{network::message::Message, state::SharedState};
+
+/// Check whether the given group exists. Return an failure message if it doesn't.
+pub fn ensure_group_exists(state: &SharedState, group: &str) -> Result<(), Message> {
+    let state = state.lock().unwrap();
+    if !state.groups.contains_key(group) {
+        return Err(create_failure_message(format!(
+            "Group {} doesn't exists. Use one of these: {:?}",
+            group,
+            state.groups.keys()
+        )));
+    }
+
+    Ok(())
+}
 
 pub fn task_response_helper(
     message: &str,

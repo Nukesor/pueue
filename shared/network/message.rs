@@ -51,7 +51,7 @@ pub struct AddMessage {
     pub envs: HashMap<String, String>,
     pub start_immediately: bool,
     pub stashed: bool,
-    pub group: Option<String>,
+    pub group: String,
     pub enqueue_at: Option<DateTime<Local>>,
     pub dependencies: Vec<usize>,
     pub print_task_id: bool,
@@ -72,7 +72,7 @@ pub struct EnqueueMessage {
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct StartMessage {
     pub task_ids: Vec<usize>,
-    pub group: Option<String>,
+    pub group: String,
     pub all: bool,
     pub children: bool,
 }
@@ -94,7 +94,7 @@ pub struct TasksToRestart {
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct PauseMessage {
     pub task_ids: Vec<usize>,
-    pub group: Option<String>,
+    pub group: String,
     pub wait: bool,
     pub all: bool,
     pub children: bool,
@@ -103,8 +103,7 @@ pub struct PauseMessage {
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct KillMessage {
     pub task_ids: Vec<usize>,
-    pub group: Option<String>,
-    pub default: bool,
+    pub group: String,
     pub all: bool,
     pub children: bool,
 }
@@ -137,8 +136,8 @@ pub struct GroupMessage {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct GroupResponseMessage {
-    pub groups: HashMap<String, GroupStatus>,
-    pub settings: HashMap<String, usize>,
+    pub groups: BTreeMap<String, GroupStatus>,
+    pub settings: BTreeMap<String, usize>,
 }
 
 /// `err` decides, whether you should stream stderr or stdout.
@@ -169,7 +168,7 @@ pub struct TaskLogMessage {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ParallelMessage {
     pub parallel_tasks: usize,
-    pub group: Option<String>,
+    pub group: String,
 }
 
 pub fn create_success_message<T: ToString>(text: T) -> Message {
