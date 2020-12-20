@@ -52,7 +52,7 @@ pub async fn wait(
             state
                 .tasks
                 .iter()
-                .filter(|(_, task)| task.group.eq(group.clone()))
+                .filter(|(_, task)| task.group.eq(group))
                 .map(|(_, task)| task.clone())
                 .collect()
         };

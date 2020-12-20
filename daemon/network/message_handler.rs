@@ -44,7 +44,8 @@ pub fn handle_message(message: Message, sender: &Sender<Message>, state: &Shared
 /// Queues a new task to the state.
 /// If the start_immediately flag is set, send a StartMessage to the task handler.
 fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
-    if let Err(message) = ensure_group_exists(state, &message.group) {
+    let mut state = state.lock().unwrap();
+    if let Err(message) = ensure_group_exists(&state, &message.group) {
         return message;
     }
 
@@ -53,8 +54,6 @@ fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) 
     } else {
         TaskStatus::Queued
     };
-
-    let mut state = state.lock().unwrap();
 
     // Ensure that specified dependencies actually exist.
     let not_found: Vec<_> = message
@@ -213,7 +212,8 @@ fn enqueue(message: EnqueueMessage, state: &SharedState) -> Message {
 /// Invoked when calling `pueue start`.
 /// Forward the start message to the task handler, which then starts the process(es).
 fn start(message: StartMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
-    if let Err(message) = ensure_group_exists(state, &message.group) {
+    let state = state.lock().unwrap();
+    if let Err(message) = ensure_group_exists(&state, &message.group) {
         return message;
     }
 
@@ -226,7 +226,7 @@ fn start(message: StartMessage, sender: &Sender<Message>, state: &SharedState) -
             "Tasks are being started",
             message.task_ids,
             vec![TaskStatus::Paused, TaskStatus::Queued, TaskStatus::Stashed],
-            state,
+            &state,
         );
         return create_success_message(response);
     }
@@ -293,19 +293,21 @@ fn restart(state: &mut MutexGuard<State>, to_restart: &TasksToRestart, stashed: 
 /// Invoked when calling `pueue pause`.
 /// Forward the pause message to the task handler, which then pauses groups/tasks/everything.
 fn pause(message: PauseMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
-    if let Err(message) = ensure_group_exists(state, &message.group) {
+    let state = state.lock().unwrap();
+    if let Err(message) = ensure_group_exists(&state, &message.group) {
         return message;
     }
 
     sender
         .send(Message::Pause(message.clone()))
         .expect(SENDER_ERR);
+
     if !message.task_ids.is_empty() {
         let response = task_response_helper(
             "Tasks are being paused",
             message.task_ids,
             vec![TaskStatus::Running],
-            state,
+            &state,
         );
         return create_success_message(response);
     }
@@ -324,11 +326,12 @@ fn kill(message: KillMessage, sender: &Sender<Message>, state: &SharedState) -> 
         .expect(SENDER_ERR);
 
     if !message.task_ids.is_empty() {
+        let state = state.lock().unwrap();
         let response = task_response_helper(
             "Tasks are being killed",
             message.task_ids,
             vec![TaskStatus::Running, TaskStatus::Paused],
-            state,
+            &state,
         );
         return create_success_message(response);
     }
@@ -441,17 +444,25 @@ fn group(message: GroupMessage, state: &SharedState) -> Message {
         return create_success_message(format!("Group \"{}\" created", group));
     }
 
-    // Remove a new group.
+    // Remove an existing group.
     if let Some(group) = message.remove {
-        if !state.groups.contains_key(&group) {
-            return create_failure_message(format!("Group \"{}\" doesn't exists", group));
+        if let Err(message) = ensure_group_exists(&state, &group) {
+            return message;
         }
+
         if let Err(error) = state.remove_group(&group) {
+            return create_failure_message(format!("{}", error));
+        }
+
+        // Save the state and the settings file.
+        state.save();
+        if let Err(error) = state.save_settings() {
             return create_failure_message(format!(
                 "Failed while saving the config file: {}",
                 error
             ));
         }
+
         return create_success_message(format!("Group \"{}\" removed", group));
     }
 
@@ -546,11 +557,11 @@ fn get_log(message: LogRequestMessage, state: &SharedState) -> Message {
 
 /// Set the parallel tasks for either a specific group or the global default.
 fn set_parallel_tasks(message: ParallelMessage, state: &SharedState) -> Message {
-    if let Err(message) = ensure_group_exists(state, &message.group) {
+    let mut state = state.lock().unwrap();
+    if let Err(message) = ensure_group_exists(&state, &message.group) {
         return message;
     }
 
-    let mut state = state.lock().unwrap();
     state
         .settings
         .daemon

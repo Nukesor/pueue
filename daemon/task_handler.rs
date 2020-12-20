@@ -111,9 +111,9 @@ impl TaskHandler {
                 continue;
             }
 
-            match running_tasks_per_group.get(&task.group) {
-                Some(&count) => {
-                    running_tasks_per_group.insert(task.group.clone(), count + 1);
+            match running_tasks_per_group.get_mut(&task.group) {
+                Some(count) => {
+                    *count += 1;
                 }
                 None => {
                     running_tasks_per_group.insert(task.group.clone(), 1);
