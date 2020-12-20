@@ -298,13 +298,14 @@ pub enum SubCommand {
     /// Remove all finished tasks from the list (also clears logs).
     Clean,
 
-    /// Kill all running tasks on user behalf, remove all tasks and reset max_task_id.
+    /// Kill all tasks, clean up afterwards and reset EVERYTHING!
     Reset {
         /// Send the SIGTERM signal to all children as well.
         /// Useful when working with shell scripts.
         #[clap(short, long)]
         children: bool,
-        /// Force killing all the running tasks without confirmation.
+
+        /// Don't ask for any confirmation.
         #[clap(short, long)]
         force: bool,
     },

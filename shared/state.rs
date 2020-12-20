@@ -18,7 +18,6 @@ pub type SharedState = Arc<Mutex<State>>;
 pub enum GroupStatus {
     Running,
     Paused,
-    Reset,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -32,7 +31,7 @@ pub struct State {
 
 /// Small wrapper to get the default group in one place.
 pub fn group_or_default(group: &Option<String>) -> String {
-    group.clone().unwrap_or("default".to_string())
+    group.clone().unwrap_or_else(|| "default".to_string())
 }
 
 /// This is the full representation of the current state of the Pueue daemon.
@@ -130,14 +129,19 @@ impl State {
     }
 
     /// Get all ids of task with a specific state inside a specific group
-    pub fn task_ids_in_group_with_stati(
-        &mut self,
-        group: &str,
-        stati: Vec<TaskStatus>,
-    ) -> Vec<usize> {
+    pub fn task_ids_in_group_with_stati(&self, group: &str, stati: Vec<TaskStatus>) -> Vec<usize> {
         self.tasks
             .iter()
             .filter(|(_, task)| stati.contains(&task.status))
+            .filter(|(_, task)| task.group.eq(group))
+            .map(|(id, _)| *id)
+            .collect()
+    }
+
+    /// Get all ids of task inside a specific group
+    pub fn task_ids_in_group(&self, group: &str) -> Vec<usize> {
+        self.tasks
+            .iter()
             .filter(|(_, task)| task.group.eq(group))
             .map(|(id, _)| *id)
             .collect()
@@ -150,7 +154,7 @@ impl State {
     /// Additionally, a list of task_ids can be specified to only run the check
     /// on a subset of all tasks.
     pub fn tasks_in_statuses(
-        &mut self,
+        &self,
         statuses: Vec<TaskStatus>,
         task_ids: Option<Vec<usize>>,
     ) -> (Vec<usize>, Vec<usize>) {
@@ -189,9 +193,7 @@ impl State {
         if self.settings.daemon.pause_group_on_failure {
             self.groups.insert(group, GroupStatus::Paused);
         } else if self.settings.daemon.pause_all_on_failure {
-            for group in self.groups.keys().cloned().collect::<Vec<String>>() {
-                self.groups.insert(group, GroupStatus::Paused);
-            }
+            self.set_status_for_all_groups(GroupStatus::Paused);
         }
     }
 
@@ -202,19 +204,19 @@ impl State {
         self.set_status_for_all_groups(GroupStatus::Running);
     }
 
-    pub fn save_settings(&mut self) -> Result<()> {
+    pub fn save_settings(&self) -> Result<()> {
         self.settings.save(&self.config_path)
     }
 
     /// Convenience wrapper around save_to_file.
-    pub fn save(&mut self) {
+    pub fn save(&self) {
         self.save_to_file(false);
     }
 
     /// Save the current current state in a file with a timestamp.
     /// At the same time remove old state logs from the log directory.
     /// This function is called, when large changes to the state are applied, e.g. clean/reset.
-    pub fn backup(&mut self) {
+    pub fn backup(&self) {
         self.save_to_file(true);
         if let Err(error) = self.rotate() {
             error!("Failed to rotate files: {:?}", error);
@@ -227,7 +229,7 @@ impl State {
     ///
     /// In comparison to the daemon -> client communication, the state is saved
     /// as JSON for better readability and debug purposes.
-    fn save_to_file(&mut self, log: bool) {
+    fn save_to_file(&self, log: bool) {
         let serialized = serde_json::to_string(&self);
         if let Err(error) = serialized {
             error!("Failed to serialize state: {:?}", error);
@@ -305,13 +307,10 @@ impl State {
         }
         let mut state = deserialized.unwrap();
 
-        // Create groups from the current settings file.
-        // Copy group statuses from the previous state, otherwise default to `Running`.
+        // Copy group statuses from the previous state.
         for (group, _) in state.settings.daemon.groups {
             if let Some(status) = state.groups.get(&group) {
                 self.groups.insert(group.clone(), status.clone());
-            } else {
-                self.groups.insert(group.clone(), GroupStatus::Running);
             }
         }
 
@@ -358,7 +357,7 @@ impl State {
     }
 
     /// Remove old logs that aren't needed any longer.
-    fn rotate(&mut self) -> Result<()> {
+    fn rotate(&self) -> Result<()> {
         let path = Path::new(&self.settings.shared.pueue_directory);
         let path = path.join("log");
 

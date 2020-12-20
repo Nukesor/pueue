@@ -170,6 +170,7 @@ impl TaskHandler {
         if self.full_reset && self.children.is_empty() {
             let mut state = self.state.lock().unwrap();
             state.reset();
+            state.set_status_for_all_groups(GroupStatus::Running);
             reset_task_log_directory(&self.pueue_directory);
             self.full_reset = false;
         }
@@ -480,7 +481,7 @@ impl TaskHandler {
             Message::Start(message) => self.start(message),
             Message::Kill(message) => self.kill(message),
             Message::Send(message) => self.send(message),
-            Message::Reset(children) => self.reset(children),
+            Message::Reset(message) => self.reset(message),
             Message::DaemonShutdown => self.shutdown(),
             _ => info!("Received unhandled message {:?}", message),
         }
@@ -718,18 +719,22 @@ impl TaskHandler {
         }
     }
 
-    /// Kill all children by reusing the `kill` function.
-    /// Set the `reset` flag, which will prevent new tasks from being spawned.
-    /// If all children finished, the state will be completely reset.
-    fn reset(&mut self, children: bool) {
+    /// Kill all children by using the `kill` function.
+    /// Set the respective group's statuses to `Reset`. This will prevent new tasks from being spawned.
+    fn reset(&mut self, message: ResetMessage) {
+        {
+            let mut state = self.state.lock().unwrap();
+            state.set_status_for_all_groups(GroupStatus::Paused);
+        }
+        self.full_reset = true;
+
         let message = KillMessage {
             all: true,
-            children,
+            children: message.children,
             ..Default::default()
         };
-        self.kill(message);
 
-        self.full_reset = true;
+        self.kill(message);
     }
 
     /// Users can specify a callback that's fired whenever a task finishes.

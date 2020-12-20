@@ -29,13 +29,8 @@ pub fn print_error(message: &str) {
 
 pub fn print_groups(message: GroupResponseMessage) {
     let mut text = String::new();
-    // Get a alphabetically sorted list of all groups.
-    let mut group_names = message.groups.keys().cloned().collect::<Vec<String>>();
-    group_names.sort();
-
-    let mut group_iter = group_names.iter().peekable();
-    while let Some(name) = group_iter.next() {
-        let status = message.groups.get(name).unwrap();
+    let mut group_iter = message.groups.iter().peekable();
+    while let Some((name, status)) = group_iter.next() {
         let parallel = *message.settings.get(name).unwrap();
         let styled = get_group_headline(name, &status, parallel);
 
@@ -85,7 +80,7 @@ pub fn print_state(state: State, cli_command: &SubCommand, settings: &Settings) 
 
         // Add a newline if there are further groups to be printed
         if sorted_tasks.len() > 1 {
-            println!("");
+            println!();
         }
     }
 
@@ -114,7 +109,7 @@ pub fn print_state(state: State, cli_command: &SubCommand, settings: &Settings) 
 
         // Add a newline between groups
         if sorted_iter.peek().is_some() {
-            println!("");
+            println!();
         }
     }
 }

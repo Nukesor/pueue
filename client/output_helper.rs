@@ -55,7 +55,6 @@ pub fn get_group_headline(name: &str, status: &GroupStatus, parallel: usize) -> 
     let status = match status {
         GroupStatus::Running => style_text("running", Some(Color::Green), None),
         GroupStatus::Paused => style_text("paused", Some(Color::Yellow), None),
-        GroupStatus::Reset => style_text("being reset", Some(Color::Red), None),
     };
 
     format!("{} ({} parallel): {}", name, parallel, status)

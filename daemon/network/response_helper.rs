@@ -23,7 +23,7 @@ pub fn task_response_helper(
 ) -> String {
     // Get all matching/mismatching task_ids for all given ids and statuses.
     let (matching, mismatching) = {
-        let mut state = state.lock().unwrap();
+        let state = state.lock().unwrap();
         state.tasks_in_statuses(statuses, Some(task_ids))
     };
 

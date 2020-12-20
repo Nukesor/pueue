@@ -26,7 +26,7 @@ pub async fn restart(
         TaskStatus::Queued
     };
 
-    let mut state = get_state(stream).await?;
+    let state = get_state(stream).await?;
     let (matching, mismatching) = state.tasks_in_statuses(vec![TaskStatus::Done], Some(task_ids));
 
     // Build a RestartMessage, if the tasks should be replaced instead of creating a copy of the

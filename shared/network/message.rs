@@ -34,7 +34,7 @@ pub enum Message {
     Stream(String),
     StreamRequest(StreamRequestMessage),
     /// The boolean decides, whether the children should be get a SIGTERM as well.
-    Reset(bool),
+    Reset(ResetMessage),
     Clean,
     DaemonShutdown,
 
@@ -138,6 +138,11 @@ pub struct GroupMessage {
 pub struct GroupResponseMessage {
     pub groups: BTreeMap<String, GroupStatus>,
     pub settings: BTreeMap<String, usize>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct ResetMessage {
+    pub children: bool,
 }
 
 /// `err` decides, whether you should stream stderr or stdout.
