@@ -75,6 +75,7 @@ pub async fn restart(
             group: task.group.clone(),
             enqueue_at: None,
             dependencies: Vec::new(),
+            label: task.label.clone(),
             print_task_id: false,
         });
 

@@ -53,6 +53,7 @@ pub struct Task {
     pub group: String,
     pub enqueue_at: Option<DateTime<Local>>,
     pub dependencies: Vec<usize>,
+    pub label: Option<String>,
     pub status: TaskStatus,
     /// This field is only used when editing the path/command of a task.
     /// It's necessary, since we enter the `Locked` state during editing.
@@ -64,6 +65,7 @@ pub struct Task {
 }
 
 impl Task {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         original_command: String,
         path: String,
@@ -72,6 +74,7 @@ impl Task {
         starting_status: TaskStatus,
         enqueue_at: Option<DateTime<Local>>,
         dependencies: Vec<usize>,
+        label: Option<String>,
     ) -> Task {
         let command = insert_alias(original_command.clone());
 
@@ -84,6 +87,7 @@ impl Task {
             group,
             enqueue_at,
             dependencies,
+            label,
             status: starting_status.clone(),
             prev_status: starting_status,
             result: None,
@@ -103,6 +107,7 @@ impl Task {
             group: "default".to_string(),
             enqueue_at: None,
             dependencies: Vec::new(),
+            label: task.label.clone(),
             status: TaskStatus::Queued,
             prev_status: TaskStatus::Queued,
             result: None,

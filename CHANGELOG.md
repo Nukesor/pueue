@@ -27,6 +27,7 @@ Please read the patchnotes carefully.
 - Improved error messages in many places.
 - `daemon.pause_all_on_failure` config, which actually pauses all groups as soon as a task fails.
 - `daemon.pause_group_on_failure` config, which only pauses the group of the affected task instead of everything.
+- Users can add some additional information to tasks with the `task add --label $LABEL` option, which will be displayed when calling `pueue status`.
 
 ### Removed
 

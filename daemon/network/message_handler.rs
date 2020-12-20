@@ -77,6 +77,7 @@ fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) 
         starting_status,
         message.enqueue_at,
         message.dependencies,
+        message.label,
     );
 
     let task_id = state.add_task(task);
