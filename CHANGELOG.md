@@ -8,36 +8,40 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 This release adds a lot of breaking changes!
 I tried to clean up, refactor and streamline as much code as possible.
-Please read the patchnotes carefully.
+
+`v1.0.0` aims to be a stable release and maintain backward compatibility for as long as possible (v2.0.0).\
+Please read the changelog carefully.
 
 ### Changed
 
-- Use TLS encryption for TCP communication.
-- Extract the shared `secret` into a separate file. This will allow users to publicly sync their config directory between machines.
+- Use TLS encryption for all TCP communication.
+- Extract the shared `secret` into a separate file.
+    This will allow users to publicly sync their config directory between machines.
 - Change default secret length from 20 to 512 chars.
-- Removed any unix socket code when building on Windows.
+- Any unix socket code or configuration stuff has been removed, when building for Windows.
 - Lots of internal code cleanup/refactoring/restructuring.
 - Exit client with non-zero exit code when getting a failure message from the daemon.
-- Style the group list.
+- The `group` list output has been properly styled.
 
 ### Added
 
-- Add `shared.host`. This allows outside connections and comes with it's own security implications!!!
-- Create default ECDSA keys for TLS crypto with [rcgen](https://github.com/est31/rcgen).
-- Improved error messages in many places.
+- Add the `shared.host` configuration variable.
+    This finally allows to accept outside connections, but comes with some security implications.
+- Create a self-signed ECDSA cert/key for TLS crypto with [rcgen](https://github.com/est31/rcgen).
+- Error messages have been improved in many places.
 - `daemon.pause_all_on_failure` config, which actually pauses all groups as soon as a task fails.
 - `daemon.pause_group_on_failure` config, which only pauses the group of the affected task instead of everything.
 
 ### Removed
 
-- `--port` and `--unix-socket-path` cli flags on client. In favor of the `--config` flag.
-- `--port` flag on the daemon. In favor of the `--config` flag.
-- `daemon.pause_on_failure` in favor of the other two previously mentioned options.
+- Removed the `daemon.pause_on_failure` configuration variable in favor of the other two previously mentioned options.
+- Removed the `--port` and `--unix-socket-path` cli flags on client in favor of the `--config` flag.
+- Removed the `--port` flag on the daemon in favor of the `--config` flag.
 
 ### Fixed
 
 - Properly pass `--config` CLI argument to daemonized `pueued` instance.
-- Removed `--default` flag on `kill` command, since this was the default anyway.
+- The `--default` flag on the `kill` command has been removed, since this was the default anyway.
     That makes this command's behavior consistent with the `start` and `pause` command.
 
 ### Internal
