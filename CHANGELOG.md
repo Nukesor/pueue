@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [1.0.0] - 
 
+This release adds a lot of breaking changes!
+I tried to clean up, refactor and streamline as much code as possible.
+Please read the patchnotes carefully.
+
 ### Changed
 
 - Use TLS encryption for TCP communication.
@@ -13,22 +17,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Change default secret length from 20 to 512 chars.
 - Removed any unix socket code when building on Windows.
 - Lots of internal code cleanup/refactoring/restructuring.
-- Exit client with non-zero Exitcode when getting a failure message from the daemon.
+- Exit client with non-zero exit code when getting a failure message from the daemon.
+- Style the group list.
 
 ### Added
 
-- Added `shared.host` 
+- Add `shared.host`. This allows outside connections and comes with it's own security implications!!!
 - Create default ECDSA keys for TLS crypto with [rcgen](https://github.com/est31/rcgen).
 - Improved error messages in many places.
+- `daemon.pause_all_on_failure` config, which actually pauses all groups as soon as a task fails.
+- `daemon.pause_group_on_failure` config, which only pauses the group of the affected task instead of everything.
 
 ### Removed
 
 - `--port` and `--unix-socket-path` cli flags on client. In favor of the `--config` flag.
-- `--port` flag on the daemon. IN favor of the `--config` flag.
+- `--port` flag on the daemon. In favor of the `--config` flag.
+- `daemon.pause_on_failure` in favor of the other two previously mentioned options.
 
 ### Fixed
 
 - Properly pass `--config` CLI argument to daemonized `pueued` instance.
+- Removed `--default` flag on `kill` command, since this was the default anyway.
+    That makes this command's behavior consistent with the `start` and `pause` command.
+
+### Internal
+
+- The default group is now an actual group.
 
 ## [0.9.0] - 2020-12-14
 

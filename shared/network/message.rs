@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, HashMap};
 use chrono::prelude::*;
 use serde_derive::{Deserialize, Serialize};
 
-use crate::state::State;
+use crate::state::{GroupStatus, State};
 use crate::task::Task;
 
 /// The Message used to add a new command to the daemon.
@@ -25,6 +25,7 @@ pub enum Message {
     EditResponse(EditResponseMessage),
     Edit(EditMessage),
     Group(GroupMessage),
+    GroupResponse(GroupResponseMessage),
 
     Status,
     StatusResponse(Box<State>),
@@ -33,7 +34,7 @@ pub enum Message {
     Stream(String),
     StreamRequest(StreamRequestMessage),
     /// The boolean decides, whether the children should be get a SIGTERM as well.
-    Reset(bool),
+    Reset(ResetMessage),
     Clean,
     DaemonShutdown,
 
@@ -50,7 +51,7 @@ pub struct AddMessage {
     pub envs: HashMap<String, String>,
     pub start_immediately: bool,
     pub stashed: bool,
-    pub group: Option<String>,
+    pub group: String,
     pub enqueue_at: Option<DateTime<Local>>,
     pub dependencies: Vec<usize>,
     pub print_task_id: bool,
@@ -71,7 +72,7 @@ pub struct EnqueueMessage {
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct StartMessage {
     pub task_ids: Vec<usize>,
-    pub group: Option<String>,
+    pub group: String,
     pub all: bool,
     pub children: bool,
 }
@@ -93,7 +94,7 @@ pub struct TasksToRestart {
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct PauseMessage {
     pub task_ids: Vec<usize>,
-    pub group: Option<String>,
+    pub group: String,
     pub wait: bool,
     pub all: bool,
     pub children: bool,
@@ -102,8 +103,7 @@ pub struct PauseMessage {
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct KillMessage {
     pub task_ids: Vec<usize>,
-    pub group: Option<String>,
-    pub default: bool,
+    pub group: String,
     pub all: bool,
     pub children: bool,
 }
@@ -134,6 +134,17 @@ pub struct GroupMessage {
     pub remove: Option<String>,
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct GroupResponseMessage {
+    pub groups: BTreeMap<String, GroupStatus>,
+    pub settings: BTreeMap<String, usize>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct ResetMessage {
+    pub children: bool,
+}
+
 /// `err` decides, whether you should stream stderr or stdout.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct StreamRequestMessage {
@@ -162,7 +173,7 @@ pub struct TaskLogMessage {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ParallelMessage {
     pub parallel_tasks: usize,
-    pub group: Option<String>,
+    pub group: String,
 }
 
 pub fn create_success_message<T: ToString>(text: T) -> Message {

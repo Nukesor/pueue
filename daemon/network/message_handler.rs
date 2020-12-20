@@ -31,7 +31,7 @@ pub fn handle_message(message: Message, sender: &Sender<Message>, state: &Shared
         Message::Group(message) => group(message, state),
 
         Message::Clean => clean(state),
-        Message::Reset(children) => reset(sender, children),
+        Message::Reset(message) => reset(message, sender),
         Message::Status => get_status(state),
         Message::Log(message) => get_log(message, state),
         Message::Parallel(message) => set_parallel_tasks(message, state),
@@ -44,13 +44,16 @@ pub fn handle_message(message: Message, sender: &Sender<Message>, state: &Shared
 /// Queues a new task to the state.
 /// If the start_immediately flag is set, send a StartMessage to the task handler.
 fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
+    let mut state = state.lock().unwrap();
+    if let Err(message) = ensure_group_exists(&state, &message.group) {
+        return message;
+    }
+
     let starting_status = if message.stashed || message.enqueue_at.is_some() {
         TaskStatus::Stashed
     } else {
         TaskStatus::Queued
     };
-
-    let mut state = state.lock().unwrap();
 
     // Ensure that specified dependencies actually exist.
     let not_found: Vec<_> = message
@@ -75,16 +78,6 @@ fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) 
         message.enqueue_at,
         message.dependencies,
     );
-
-    // Create a new group in case the user used a unknown group.
-    if let Some(group) = &task.group {
-        if state.groups.get(group).is_none() {
-            return create_failure_message(format!(
-                "Tried to create task with unknown group '{}'",
-                group
-            ));
-        }
-    }
 
     let task_id = state.add_task(task);
 
@@ -219,33 +212,29 @@ fn enqueue(message: EnqueueMessage, state: &SharedState) -> Message {
 /// Invoked when calling `pueue start`.
 /// Forward the start message to the task handler, which then starts the process(es).
 fn start(message: StartMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
-    // Check whether a given group exists
-    if let Some(group) = &message.group {
-        let state = state.lock().unwrap();
-        if !state.groups.contains_key(group) {
-            return create_failure_message(format!("Group {} doesn't exists", group));
-        }
+    let state = state.lock().unwrap();
+    if let Err(message) = ensure_group_exists(&state, &message.group) {
+        return message;
     }
 
     sender
         .send(Message::Start(message.clone()))
         .expect(SENDER_ERR);
+
     if !message.task_ids.is_empty() {
         let response = task_response_helper(
             "Tasks are being started",
             message.task_ids,
             vec![TaskStatus::Paused, TaskStatus::Queued, TaskStatus::Stashed],
-            state,
+            &state,
         );
         return create_success_message(response);
     }
 
-    if let Some(group) = &message.group {
-        create_success_message(format!("Group {} is being resumed.", group))
-    } else if message.all {
+    if message.all {
         create_success_message("All queues are being resumed.")
     } else {
-        create_success_message("Default queue is being resumed.")
+        create_success_message(format!("Group \"{}\" is being resumed.", &message.group))
     }
 }
 
@@ -304,32 +293,28 @@ fn restart(state: &mut MutexGuard<State>, to_restart: &TasksToRestart, stashed: 
 /// Invoked when calling `pueue pause`.
 /// Forward the pause message to the task handler, which then pauses groups/tasks/everything.
 fn pause(message: PauseMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
-    // Check whether a given group exists
-    if let Some(group) = &message.group {
-        let state = state.lock().unwrap();
-        if !state.groups.contains_key(group) {
-            return create_failure_message(format!("Group {} doesn't exists", group));
-        }
+    let state = state.lock().unwrap();
+    if let Err(message) = ensure_group_exists(&state, &message.group) {
+        return message;
     }
 
     sender
         .send(Message::Pause(message.clone()))
         .expect(SENDER_ERR);
+
     if !message.task_ids.is_empty() {
         let response = task_response_helper(
             "Tasks are being paused",
             message.task_ids,
             vec![TaskStatus::Running],
-            state,
+            &state,
         );
         return create_success_message(response);
     }
-    if let Some(group) = &message.group {
-        create_success_message(format!("Group {} is being paused.", group))
-    } else if message.all {
+    if message.all {
         create_success_message("All queues are being paused.")
     } else {
-        create_success_message("Default queue is being paused.")
+        create_success_message(format!("Group \"{}\" is being paused.", &message.group))
     }
 }
 
@@ -341,21 +326,23 @@ fn kill(message: KillMessage, sender: &Sender<Message>, state: &SharedState) -> 
         .expect(SENDER_ERR);
 
     if !message.task_ids.is_empty() {
+        let state = state.lock().unwrap();
         let response = task_response_helper(
             "Tasks are being killed",
             message.task_ids,
             vec![TaskStatus::Running, TaskStatus::Paused],
-            state,
+            &state,
         );
         return create_success_message(response);
     }
 
-    if let Some(group) = &message.group {
-        create_success_message(format!("All tasks of Group {} is being killed.", group))
-    } else if message.all {
+    if message.all {
         create_success_message("All tasks are being killed.")
     } else {
-        create_success_message("All tasks of the default queue are being paused.")
+        create_success_message(format!(
+            "All tasks of group \"{}\" are being killed.",
+            &message.group
+        ))
     }
 }
 
@@ -410,7 +397,7 @@ fn edit_request(task_id: usize, state: &SharedState) -> Message {
 /// Invoked after closing the editor on `pueue edit`.
 /// Now we actually update the message with the updated command from the client.
 fn edit(message: EditMessage, state: &SharedState) -> Message {
-    // Check whether the task exists and is locked. Abort if that's not the case
+    // Check whether the task exists and is locked. Abort if that's not the case.
     let mut state = state.lock().unwrap();
     match state.tasks.get_mut(&message.task_id) {
         Some(task) => {
@@ -438,57 +425,59 @@ fn edit(message: EditMessage, state: &SharedState) -> Message {
 fn group(message: GroupMessage, state: &SharedState) -> Message {
     let mut state = state.lock().unwrap();
 
-    // Create a new group
+    // Create a new group.
     if let Some(group) = message.add {
         if state.groups.contains_key(&group) {
-            return create_failure_message(format!("Group {} already exists", group));
+            return create_failure_message(format!("Group \"{}\" already exists", group));
         }
-        if let Err(error) = state.create_group(&group) {
+        state.create_group(&group);
+
+        // Save the state and the settings file.
+        state.save();
+        if let Err(error) = state.save_settings() {
             return create_failure_message(format!(
                 "Failed while saving the config file: {}",
                 error
             ));
         }
 
-        return create_success_message(format!("Group {} created", group));
+        return create_success_message(format!("Group \"{}\" created", group));
     }
 
-    // Remove a new group
+    // Remove an existing group.
     if let Some(group) = message.remove {
-        if !state.groups.contains_key(&group) {
-            return create_failure_message(format!("Group {} doesn't exists", group));
+        if let Err(message) = ensure_group_exists(&state, &group) {
+            return message;
         }
+
         if let Err(error) = state.remove_group(&group) {
+            return create_failure_message(format!("{}", error));
+        }
+
+        // Save the state and the settings file.
+        state.save();
+        if let Err(error) = state.save_settings() {
             return create_failure_message(format!(
                 "Failed while saving the config file: {}",
                 error
             ));
         }
-        return create_success_message(format!("Group {} removed", group));
+
+        return create_success_message(format!("Group \"{}\" removed", group));
     }
 
     // There are no groups yet.
     if state.groups.is_empty() {
         return create_success_message(
-            "There are no groups yet. You can add them with the 'group -a' flag",
+            "There are no groups yet. You can add groups with the 'group --add' flag",
         );
     }
 
-    // Compile a small minimalistic text with all important information about all known groups
-    let mut group_status = String::new();
-    let mut group_iter = state.groups.iter().peekable();
-    while let Some((group, running)) = group_iter.next() {
-        group_status.push_str(&format!(
-            "Group {} ({} parallel), running: {}",
-            group,
-            state.settings.daemon.groups.get(group).unwrap(),
-            running
-        ));
-        if group_iter.peek().is_some() {
-            group_status.push('\n');
-        }
-    }
-    create_success_message(group_status)
+    // Return information about all groups to the client.
+    Message::GroupResponse(GroupResponseMessage {
+        groups: state.groups.clone(),
+        settings: state.settings.daemon.groups.clone(),
+    })
 }
 
 /// Invoked when calling `pueue clean`.
@@ -511,8 +500,8 @@ fn clean(state: &SharedState) -> Message {
 /// Invoked when calling `pueue reset`.
 /// Forward the reset request to the task handler.
 /// The handler then kills all children and clears the task queue.
-fn reset(sender: &Sender<Message>, children: bool) -> Message {
-    sender.send(Message::Reset(children)).expect(SENDER_ERR);
+fn reset(message: ResetMessage, sender: &Sender<Message>) -> Message {
+    sender.send(Message::Reset(message)).expect(SENDER_ERR);
     create_success_message("Everything is being reset right now.")
 }
 
@@ -527,7 +516,7 @@ fn get_status(state: &SharedState) -> Message {
 /// Return the current state and the stdou/stderr of all tasks to the client.
 fn get_log(message: LogRequestMessage, state: &SharedState) -> Message {
     let state = state.lock().unwrap().clone();
-    // Return all logs, if no specific task id is specified
+    // Return all logs, if no specific task id is specified.
     let task_ids = if message.task_ids.is_empty() {
         state.tasks.keys().cloned().collect()
     } else {
@@ -569,36 +558,23 @@ fn get_log(message: LogRequestMessage, state: &SharedState) -> Message {
 /// Set the parallel tasks for either a specific group or the global default.
 fn set_parallel_tasks(message: ParallelMessage, state: &SharedState) -> Message {
     let mut state = state.lock().unwrap();
-
-    // Set the default parallel tasks if no group is specified.
-    if message.group.is_none() {
-        state.settings.daemon.default_parallel_tasks = message.parallel_tasks;
-        return create_success_message("Parallel tasks setting adjusted");
-    }
-
-    // We can safely unwrap, since we handled the `None` case above.
-    let group = &message.group.unwrap();
-    // Check if the given group exists.
-    if !state.groups.contains_key(group) {
-        return create_failure_message(format!(
-            "Unknown group. Use one of these: {:?}",
-            state.groups.keys()
-        ));
+    if let Err(message) = ensure_group_exists(&state, &message.group) {
+        return message;
     }
 
     state
         .settings
         .daemon
         .groups
-        .insert(group.into(), message.parallel_tasks);
+        .insert(message.group.clone(), message.parallel_tasks);
 
     if let Err(error) = state.save_settings() {
         return create_failure_message(format!("Failed while saving the config file: {}", error));
     }
 
     create_success_message(format!(
-        "Parallel tasks setting for group {} adjusted",
-        group
+        "Parallel tasks setting for group \"{}\" adjusted",
+        &message.group
     ))
 }
 
@@ -609,13 +585,13 @@ fn set_parallel_tasks(message: ParallelMessage, state: &SharedState) -> Message 
 /// The TaskHandler then gracefully shuts down all child processes
 /// and exits with std::proces::exit(0).
 fn shutdown(sender: &Sender<Message>, state: &SharedState) -> Message {
-    // Do some socket cleanup (unix socket)
+    // Do some socket cleanup (unix socket).
     {
         let state = state.lock().unwrap();
         socket_cleanup(&state.settings.shared);
     }
 
-    // Notify the task handler
+    // Notify the task handler.
     sender.send(Message::DaemonShutdown).expect(SENDER_ERR);
 
     create_success_message("Daemon is shutting down")

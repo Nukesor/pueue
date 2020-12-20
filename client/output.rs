@@ -10,7 +10,7 @@ use comfy_table::*;
 use snap::read::FrameDecoder;
 
 use pueue::log::{get_log_file_handles, get_log_paths};
-use pueue::network::message::TaskLogMessage;
+use pueue::network::message::{GroupResponseMessage, TaskLogMessage};
 use pueue::settings::Settings;
 use pueue::state::State;
 use pueue::task::{Task, TaskResult, TaskStatus};
@@ -25,6 +25,21 @@ pub fn print_success(message: &str) {
 pub fn print_error(message: &str) {
     let styled = style_text(message, Some(Color::Red), None);
     println!("{}", styled);
+}
+
+pub fn print_groups(message: GroupResponseMessage) {
+    let mut text = String::new();
+    let mut group_iter = message.groups.iter().peekable();
+    while let Some((name, status)) = group_iter.next() {
+        let parallel = *message.settings.get(name).unwrap();
+        let styled = get_group_headline(name, &status, parallel);
+
+        text.push_str(&styled);
+        if group_iter.peek().is_some() {
+            text.push('\n');
+        }
+    }
+    println!("{}", text);
 }
 
 /// Print the current state of the daemon in a nicely formatted table.
@@ -43,35 +58,59 @@ pub fn print_state(state: State, cli_command: &SubCommand, settings: &Settings) 
         return;
     }
 
-    // Don't show default queue headline if a single group is requested
-    if group_only.is_none() {
-        println!("{}", get_default_headline(&state));
-    }
-
     // Early exit and hint if there are no tasks in the queue
     if state.tasks.is_empty() {
-        println!("\nTask list is empty. Add tasks with `pueue add -- [cmd]`");
+        println!("Task list is empty. Add tasks with `pueue add -- [cmd]`");
         return;
     }
 
-    // Skip default queue, if a single group is requested
+    // Sort all tasks by their respective group;
+    let sorted_tasks = sort_tasks_by_group(&state.tasks);
+
+    // Always print the default queue at the very top.
     if group_only.is_none() {
-        let default_tasks = get_default_tasks(&state.tasks);
-        if !default_tasks.is_empty() {
-            print_table(&default_tasks, settings);
+        let tasks = sorted_tasks.get("default").unwrap();
+        let headline = get_group_headline(
+            &"default",
+            &state.groups.get("default").unwrap(),
+            *state.settings.daemon.groups.get("default").unwrap(),
+        );
+        println!("{}", headline);
+        print_table(&tasks, settings);
+
+        // Add a newline if there are further groups to be printed
+        if sorted_tasks.len() > 1 {
+            println!();
         }
     }
 
+    let mut sorted_iter = sorted_tasks.iter().peekable();
     // Print new table for each group
-    for (group, tasks) in sort_tasks_by_group(&state.tasks) {
+    while let Some((group, tasks)) = sorted_iter.next() {
+        // We always want to print the default group at the very top.
+        // That's why we print it outside of this loop and skip it in here.
+        if group.eq("default") {
+            continue;
+        }
+
         // Skip unwanted groups, if a single group is requested
         if let Some(group_only) = &group_only {
-            if group_only != &group {
+            if group_only != group {
                 continue;
             }
         }
-        println!("{}", get_group_headline(&group, &state));
+        let headline = get_group_headline(
+            &group,
+            &state.groups.get(group).unwrap(),
+            *state.settings.daemon.groups.get(group).unwrap(),
+        );
+        println!("{}", headline);
         print_table(&tasks, settings);
+
+        // Add a newline between groups
+        if sorted_iter.peek().is_some() {
+            println!();
+        }
     }
 }
 

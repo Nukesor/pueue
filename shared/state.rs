@@ -1,11 +1,10 @@
 use std::collections::BTreeMap;
-use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::time::SystemTime;
 
-use anyhow::Result;
+use anyhow::{bail, Result};
 use chrono::prelude::*;
 use log::{debug, error, info};
 use serde_derive::{Deserialize, Serialize};
@@ -16,14 +15,23 @@ use crate::task::{Task, TaskResult, TaskStatus};
 pub type SharedState = Arc<Mutex<State>>;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
+pub enum GroupStatus {
+    Running,
+    Paused,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct State {
     max_id: usize,
     pub settings: Settings,
-    pub running: bool,
     pub tasks: BTreeMap<usize, Task>,
-    /// Represents whether the group is currently paused or running
-    pub groups: HashMap<String, bool>,
+    pub groups: BTreeMap<String, GroupStatus>,
     config_path: Option<PathBuf>,
+}
+
+/// Small wrapper to get the default group in one place.
+pub fn group_or_default(group: &Option<String>) -> String {
+    group.clone().unwrap_or_else(|| "default".to_string())
 }
 
 /// This is the full representation of the current state of the Pueue daemon.
@@ -40,19 +48,19 @@ pub struct State {
 impl State {
     pub fn new(settings: &Settings, config_path: Option<PathBuf>) -> State {
         // Create a default group state.
-        let mut groups = HashMap::new();
+        let mut groups = BTreeMap::new();
         for group in settings.daemon.groups.keys() {
-            groups.insert(group.into(), true);
+            groups.insert(group.into(), GroupStatus::Running);
         }
 
         let mut state = State {
             max_id: 0,
             settings: settings.clone(),
-            running: true,
             tasks: BTreeMap::new(),
             groups,
             config_path,
         };
+        state.create_group("default");
         state.restore();
         state.save();
         state
@@ -81,30 +89,29 @@ impl State {
 
     /// Check if the given group already exists.
     /// If it doesn't exist yet, create a state entry and a new settings entry.
-    pub fn create_group(&mut self, group: &str) -> Result<()> {
+    pub fn create_group(&mut self, group: &str) {
         if self.settings.daemon.groups.get(group).is_none() {
             self.settings.daemon.groups.insert(group.into(), 1);
         }
         if self.groups.get(group).is_none() {
-            self.groups.insert(group.into(), true);
+            self.groups.insert(group.into(), GroupStatus::Running);
         }
-
-        self.save();
-        self.save_settings()
     }
 
     /// Remove a group.
     /// Also go through all tasks and set the removed group to `None`.
     pub fn remove_group(&mut self, group: &str) -> Result<()> {
+        if group.eq("default") {
+            bail!("You cannot remove the default group.");
+        }
+
         self.settings.daemon.groups.remove(group);
         self.groups.remove(group);
 
-        // Reset all tasks with removed group to the default
+        // Reset all tasks with removed group to the default.
         for (_, task) in self.tasks.iter_mut() {
-            if let Some(group_name) = &task.group {
-                if group_name == group {
-                    task.group = None;
-                }
+            if task.group.eq(group) {
+                task.set_default_group();
             }
         }
 
@@ -113,25 +120,29 @@ impl State {
     }
 
     /// Set the running status for all groups including the default queue
-    pub fn set_status_for_all_groups(&mut self, status: bool) {
-        self.running = status;
+    pub fn set_status_for_all_groups(&mut self, status: GroupStatus) {
         let keys = self.groups.keys().cloned().collect::<Vec<String>>();
         for key in keys {
-            self.groups.insert(key, status);
+            self.groups.insert(key, status.clone());
         }
         self.save()
     }
 
-    /// Get all task ids of a specific group
-    pub fn task_ids_in_group_with_stati(
-        &mut self,
-        group: &Option<String>,
-        stati: Vec<TaskStatus>,
-    ) -> Vec<usize> {
+    /// Get all ids of task with a specific state inside a specific group
+    pub fn task_ids_in_group_with_stati(&self, group: &str, stati: Vec<TaskStatus>) -> Vec<usize> {
         self.tasks
             .iter()
             .filter(|(_, task)| stati.contains(&task.status))
-            .filter(|(_, task)| group == &task.group)
+            .filter(|(_, task)| task.group.eq(group))
+            .map(|(id, _)| *id)
+            .collect()
+    }
+
+    /// Get all ids of task inside a specific group
+    pub fn task_ids_in_group(&self, group: &str) -> Vec<usize> {
+        self.tasks
+            .iter()
+            .filter(|(_, task)| task.group.eq(group))
             .map(|(id, _)| *id)
             .collect()
     }
@@ -143,7 +154,7 @@ impl State {
     /// Additionally, a list of task_ids can be specified to only run the check
     /// on a subset of all tasks.
     pub fn tasks_in_statuses(
-        &mut self,
+        &self,
         statuses: Vec<TaskStatus>,
         task_ids: Option<Vec<usize>>,
     ) -> (Vec<usize>, Vec<usize>) {
@@ -177,15 +188,12 @@ impl State {
         (matching, mismatching)
     }
 
-    /// Pause the daemon, if the settings say so.
-    /// Always pause the respective queue/group of the task.
-    pub fn handle_task_failure(&mut self, group: Option<String>) {
-        if self.settings.daemon.pause_on_failure {
-            if let Some(group) = group {
-                self.groups.insert(group, false);
-            } else {
-                self.running = false;
-            }
+    /// Users can specify to pause either the task's group or all groups on a failure.
+    pub fn handle_task_failure(&mut self, group: String) {
+        if self.settings.daemon.pause_group_on_failure {
+            self.groups.insert(group, GroupStatus::Paused);
+        } else if self.settings.daemon.pause_all_on_failure {
+            self.set_status_for_all_groups(GroupStatus::Paused);
         }
     }
 
@@ -193,22 +201,22 @@ impl State {
         self.backup();
         self.max_id = 0;
         self.tasks = BTreeMap::new();
-        self.set_status_for_all_groups(true);
+        self.set_status_for_all_groups(GroupStatus::Running);
     }
 
-    pub fn save_settings(&mut self) -> Result<()> {
+    pub fn save_settings(&self) -> Result<()> {
         self.settings.save(&self.config_path)
     }
 
     /// Convenience wrapper around save_to_file.
-    pub fn save(&mut self) {
+    pub fn save(&self) {
         self.save_to_file(false);
     }
 
     /// Save the current current state in a file with a timestamp.
     /// At the same time remove old state logs from the log directory.
     /// This function is called, when large changes to the state are applied, e.g. clean/reset.
-    pub fn backup(&mut self) {
+    pub fn backup(&self) {
         self.save_to_file(true);
         if let Err(error) = self.rotate() {
             error!("Failed to rotate files: {:?}", error);
@@ -221,7 +229,7 @@ impl State {
     ///
     /// In comparison to the daemon -> client communication, the state is saved
     /// as JSON for better readability and debug purposes.
-    fn save_to_file(&mut self, log: bool) {
+    fn save_to_file(&self, log: bool) {
         let serialized = serde_json::to_string(&self);
         if let Err(error) = serialized {
             error!("Failed to serialize state: {:?}", error);
@@ -299,7 +307,14 @@ impl State {
         }
         let mut state = deserialized.unwrap();
 
-        // Restore the state from the file.
+        // Copy group statuses from the previous state.
+        for (group, _) in state.settings.daemon.groups {
+            if let Some(status) = state.groups.get(&group) {
+                self.groups.insert(group.clone(), status.clone());
+            }
+        }
+
+        // Restore all tasks.
         // While restoring the tasks, check for any invalid/broken stati.
         for (task_id, task) in state.tasks.iter_mut() {
             // Handle ungraceful shutdowns while executing tasks.
@@ -313,50 +328,36 @@ impl State {
                 task.status = TaskStatus::Done;
                 task.result = Some(TaskResult::Killed);
             }
-            // Crash during editing of the task command.
+
+            // Handle crash during editing of the task command.
             if task.status == TaskStatus::Locked {
                 task.status = TaskStatus::Stashed;
             }
-            // If there are any queued tasks, pause the daemon.
+
+            // Go trough all tasks and set all groups that are no longer
+            // listed in the configuration file to the default.
+            if !self.settings.daemon.groups.contains_key(&task.group) {
+                task.set_default_group();
+            }
+
+            // If there are any queued tasks, pause the group.
             // This should prevent any unwanted execution of tasks due to a system crash.
             if task.status == TaskStatus::Queued {
-                info!("Pausing daemon to prevent unwanted execution of previous tasks");
-                state.running = false;
+                info!(
+                    "Pausing group {} to prevent unwanted execution of previous tasks",
+                    &task.group
+                );
+                self.groups.insert(task.group.clone(), GroupStatus::Paused);
             }
 
             self.tasks.insert(*task_id, task.clone());
         }
 
-        if !self.running {
-            // If the daemon isn't running, stop all groups.
-            for group in self.settings.daemon.groups.keys() {
-                self.groups.insert(group.into(), false);
-            }
-        } else {
-            // If the daemon running, apply all running group states from the previous state.
-            for (group, running) in state.groups.iter() {
-                if self.groups.contains_key(group) {
-                    self.groups.insert(group.into(), *running);
-                }
-            }
-        }
-
-        // Go trough all tasks and set all groups that are no longer
-        // listed in the configuration file to the default.
-        for (_, task) in self.tasks.iter_mut() {
-            if let Some(group) = &task.group {
-                if !self.groups.contains_key(group) {
-                    task.group = None;
-                }
-            }
-        }
-
-        self.running = state.running;
         self.max_id = state.max_id;
     }
 
     /// Remove old logs that aren't needed any longer.
-    fn rotate(&mut self) -> Result<()> {
+    fn rotate(&self) -> Result<()> {
         let path = Path::new(&self.settings.shared.pueue_directory);
         let path = path.join("log");
 

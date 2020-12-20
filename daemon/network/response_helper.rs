@@ -1,17 +1,30 @@
-use pueue::state::SharedState;
+use std::sync::MutexGuard;
+
+use pueue::network::message::{create_failure_message, Message};
+use pueue::state::State;
 use pueue::task::TaskStatus;
+
+/// Check whether the given group exists. Return an failure message if it doesn't.
+pub fn ensure_group_exists(state: &MutexGuard<State>, group: &str) -> Result<(), Message> {
+    if !state.groups.contains_key(group) {
+        return Err(create_failure_message(format!(
+            "Group {} doesn't exists. Use one of these: {:?}",
+            group,
+            state.groups.keys()
+        )));
+    }
+
+    Ok(())
+}
 
 pub fn task_response_helper(
     message: &str,
     task_ids: Vec<usize>,
     statuses: Vec<TaskStatus>,
-    state: &SharedState,
+    state: &MutexGuard<State>,
 ) -> String {
     // Get all matching/mismatching task_ids for all given ids and statuses.
-    let (matching, mismatching) = {
-        let mut state = state.lock().unwrap();
-        state.tasks_in_statuses(statuses, Some(task_ids))
-    };
+    let (matching, mismatching) = state.tasks_in_statuses(statuses, Some(task_ids));
 
     compile_task_response(message, matching, mismatching)
 }

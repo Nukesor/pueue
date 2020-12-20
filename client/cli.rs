@@ -22,7 +22,7 @@ pub enum SubCommand {
         #[clap(name = "stashed", short, long, conflicts_with = "immediate")]
         stashed: bool,
 
-        /// Delays enqueueing the task until <delay> elapses. See "enqueue" for accepted formats.
+        /// Prevents the task from being enqueued until <delay> elapses. See "enqueue" for accepted formats.
         #[clap(name = "delay", short, long, conflicts_with = "immediate", parse(try_from_str=parse_delay_until))]
         delay_until: Option<DateTime<Local>>,
 
@@ -49,7 +49,8 @@ pub enum SubCommand {
         #[clap(required = true)]
         task_ids: Vec<usize>,
     },
-    /// Switches the queue position of two commands. Only works on queued and stashed commands.
+    /// Switches the queue position of two commands.
+    /// Only works on queued and stashed commands.
     Switch {
         /// The first task id.
         task_id_1: usize,
@@ -96,7 +97,7 @@ pub enum SubCommand {
     },
 
     /// Resume operation of specific tasks or groups of tasks.
-    /// By default, this resumes the default queue and all its tasks.
+    /// By default, this resumes the default group and all its tasks.
     /// Can also be used force-start specific tasks.
     #[clap(verbatim_doc_comment)]
     Start {
@@ -108,7 +109,7 @@ pub enum SubCommand {
         #[clap(short, long, conflicts_with = "all")]
         group: Option<String>,
 
-        /// Start a everything (Default queue and all groups)!
+        /// Start a everything (default group and all groups)!
         /// All groups will be set to `running` and all paused tasks will be resumed.
         #[clap(short, long)]
         all: bool,
@@ -151,19 +152,19 @@ pub enum SubCommand {
     },
 
     /// Pause either running tasks or specific groups of tasks.
-    /// By default, pauses the default queue and all its tasks.
+    /// By default, pauses the default group and all its tasks.
     /// A paused queue (group) won't start any new tasks.
     #[clap(verbatim_doc_comment)]
     Pause {
         /// Pause these specific tasks.
-        /// Does not affect the default queue, groups or any other tasks.
+        /// Does not affect the default group, groups or any other tasks.
         task_ids: Vec<usize>,
 
         /// Pause a specific group.
         #[clap(short, long, conflicts_with = "all")]
         group: Option<String>,
 
-        /// Pause everything (Default queue and all groups)!
+        /// Pause everything (default group and all groups)!
         #[clap(short, long)]
         all: bool,
 
@@ -181,14 +182,11 @@ pub enum SubCommand {
     },
 
     /// Kill specific running tasks or various groups of tasks.
+    /// Kills all tasks of the default group when no ids are provided.
     Kill {
         /// The tasks that should be killed.
         #[clap(short, long)]
         task_ids: Vec<usize>,
-
-        /// Kill all running tasks in the default queue. Pause the default queue.
-        #[clap(short, long, conflicts_with = "group", conflicts_with = "all")]
-        default: bool,
 
         /// Kill all running in a group. Pauses the group.
         #[clap(short, long, conflicts_with = "all")]
@@ -276,7 +274,7 @@ pub enum SubCommand {
     },
 
     /// Wait until tasks are finished. This can be quite useful for scripting.
-    /// By default, this will wait for all tasks in the default queue to finish.
+    /// By default, this will wait for all tasks in the default group to finish.
     /// Note: This will also wait for all tasks that aren't somehow 'Done'.
     /// Includes: [Paused, Stashed, Locked, Queued, ...]
     Wait {
@@ -288,7 +286,7 @@ pub enum SubCommand {
         #[clap(short, long, conflicts_with = "all")]
         group: Option<String>,
 
-        /// Wait for all tasks across all groups and the default queue.
+        /// Wait for all tasks across all groups and the default group.
         #[clap(short, long)]
         all: bool,
 
@@ -300,13 +298,14 @@ pub enum SubCommand {
     /// Remove all finished tasks from the list (also clears logs).
     Clean,
 
-    /// Kill all running tasks on user behalf, remove all tasks and reset max_task_id.
+    /// Kill all tasks, clean up afterwards and reset EVERYTHING!
     Reset {
         /// Send the SIGTERM signal to all children as well.
         /// Useful when working with shell scripts.
         #[clap(short, long)]
         children: bool,
-        /// Force killing all the running tasks without confirmation.
+
+        /// Don't ask for any confirmation.
         #[clap(short, long)]
         force: bool,
     },
