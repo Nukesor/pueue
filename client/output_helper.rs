@@ -4,7 +4,7 @@ use std::io::stdout;
 use crossterm::style::{style, Attribute, Color};
 use crossterm::tty::IsTty;
 
-use pueue::state::State;
+use pueue::state::{GroupStatus, State};
 use pueue::task::Task;
 
 /// This is a simple small helper function with the purpose of easily styling text,
@@ -64,28 +64,18 @@ pub fn get_default_headline(state: &State) -> String {
 }
 
 /// Return a nicely formatted headline that's displayed above group tables
-pub fn get_group_headline(group: &str, state: &State) -> String {
-    // Group name
-    let group_text = style(format!("Group \"{}\"", group)).attribute(Attribute::Bold);
-
-    let parallel = state.settings.daemon.groups.get(group).unwrap();
+pub fn get_group_headline(name: &str, status: &GroupStatus, parallel: usize) -> String {
+    // Style group name
+    let name = style(format!("Group \"{}\"", name)).attribute(Attribute::Bold);
 
     // Print the current state of the group.
-    if *state.groups.get(group).unwrap() {
-        format!(
-            "{} ({} parallel): {}",
-            group_text,
-            parallel,
-            style_text("running", Some(Color::Green), None),
-        )
-    } else {
-        format!(
-            "{} ({} parallel): {}",
-            group_text,
-            parallel,
-            style_text("paused", Some(Color::Yellow), None),
-        )
-    }
+    let status = match status {
+        GroupStatus::Running => style_text("running", Some(Color::Green), None),
+        GroupStatus::Paused => style_text("paused", Some(Color::Yellow), None),
+        GroupStatus::Reset => style_text("being reset", Some(Color::Red), None),
+    };
+
+    format!("{} ({} parallel): {}", name, parallel, status)
 }
 
 /// Get all tasks that aren't assigned to a group

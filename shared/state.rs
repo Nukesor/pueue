@@ -16,13 +16,20 @@ use crate::task::{Task, TaskResult, TaskStatus};
 pub type SharedState = Arc<Mutex<State>>;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
+pub enum GroupStatus {
+    Running,
+    Paused,
+    Reset,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct State {
     max_id: usize,
     pub settings: Settings,
     pub running: bool,
     pub tasks: BTreeMap<usize, Task>,
     /// Represents whether the group is currently paused or running
-    pub groups: HashMap<String, bool>,
+    pub groups: HashMap<String, GroupStatus>,
     config_path: Option<PathBuf>,
 }
 
@@ -42,7 +49,7 @@ impl State {
         // Create a default group state.
         let mut groups = HashMap::new();
         for group in settings.daemon.groups.keys() {
-            groups.insert(group.into(), true);
+            groups.insert(group.into(), GroupStatus::Running);
         }
 
         let mut state = State {
@@ -86,7 +93,7 @@ impl State {
             self.settings.daemon.groups.insert(group.into(), 1);
         }
         if self.groups.get(group).is_none() {
-            self.groups.insert(group.into(), true);
+            self.groups.insert(group.into(), GroupStatus::Running);
         }
 
         self.save();
@@ -113,11 +120,14 @@ impl State {
     }
 
     /// Set the running status for all groups including the default queue
-    pub fn set_status_for_all_groups(&mut self, status: bool) {
-        self.running = status;
+    pub fn set_status_for_all_groups(&mut self, status: GroupStatus) {
+        match status {
+            GroupStatus::Running => self.running = true,
+            _ => self.running = false,
+        }
         let keys = self.groups.keys().cloned().collect::<Vec<String>>();
         for key in keys {
-            self.groups.insert(key, status);
+            self.groups.insert(key, status.clone());
         }
         self.save()
     }
@@ -182,7 +192,7 @@ impl State {
     pub fn handle_task_failure(&mut self, group: Option<String>) {
         if self.settings.daemon.pause_on_failure {
             if let Some(group) = group {
-                self.groups.insert(group, false);
+                self.groups.insert(group, GroupStatus::Paused);
             } else {
                 self.running = false;
             }
@@ -193,7 +203,7 @@ impl State {
         self.backup();
         self.max_id = 0;
         self.tasks = BTreeMap::new();
-        self.set_status_for_all_groups(true);
+        self.set_status_for_all_groups(GroupStatus::Running);
     }
 
     pub fn save_settings(&mut self) -> Result<()> {
@@ -330,13 +340,13 @@ impl State {
         if !self.running {
             // If the daemon isn't running, stop all groups.
             for group in self.settings.daemon.groups.keys() {
-                self.groups.insert(group.into(), false);
+                self.groups.insert(group.into(), GroupStatus::Paused);
             }
         } else {
             // If the daemon running, apply all running group states from the previous state.
             for (group, running) in state.groups.iter() {
                 if self.groups.contains_key(group) {
-                    self.groups.insert(group.into(), *running);
+                    self.groups.insert(group.into(), running.clone());
                 }
             }
         }

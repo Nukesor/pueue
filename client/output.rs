@@ -10,7 +10,7 @@ use comfy_table::*;
 use snap::read::FrameDecoder;
 
 use pueue::log::{get_log_file_handles, get_log_paths};
-use pueue::network::message::TaskLogMessage;
+use pueue::network::message::{GroupResponseMessage, TaskLogMessage};
 use pueue::settings::Settings;
 use pueue::state::State;
 use pueue::task::{Task, TaskResult, TaskStatus};
@@ -25,6 +25,26 @@ pub fn print_success(message: &str) {
 pub fn print_error(message: &str) {
     let styled = style_text(message, Some(Color::Red), None);
     println!("{}", styled);
+}
+
+pub fn print_groups(message: GroupResponseMessage) {
+    let mut text = String::new();
+    // Get a alphabetically sorted list of all groups.
+    let mut group_names = message.groups.keys().cloned().collect::<Vec<String>>();
+    group_names.sort();
+
+    let mut group_iter = group_names.iter().peekable();
+    while let Some(name) = group_iter.next() {
+        let status = message.groups.get(name).unwrap();
+        let parallel = *message.settings.get(name).unwrap();
+        let styled = get_group_headline(name, &status, parallel);
+
+        text.push_str(&styled);
+        if group_iter.peek().is_some() {
+            text.push('\n');
+        }
+    }
+    println!("{}", text);
 }
 
 /// Print the current state of the daemon in a nicely formatted table.
@@ -70,7 +90,12 @@ pub fn print_state(state: State, cli_command: &SubCommand, settings: &Settings) 
                 continue;
             }
         }
-        println!("{}", get_group_headline(&group, &state));
+        let headline = get_group_headline(
+            &group,
+            &state.groups.get(&group).unwrap(),
+            *state.settings.daemon.groups.get(&group).unwrap(),
+        );
+        println!("{}", headline);
         print_table(&tasks, settings);
     }
 }

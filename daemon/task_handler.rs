@@ -14,7 +14,7 @@ use log::{debug, error, info, warn};
 
 use pueue::log::*;
 use pueue::network::message::*;
-use pueue::state::SharedState;
+use pueue::state::{GroupStatus, SharedState};
 use pueue::task::{Task, TaskResult, TaskStatus};
 
 use crate::platform::process_helper::*;
@@ -135,8 +135,8 @@ impl TaskHandler {
             .filter(|(_, task)| {
                 if let Some(group) = &task.group {
                     // The task is assigned to a group.
-                    // First let's check if the group is paused. If it is, simply return false.
-                    if !state.groups.get(group).unwrap() {
+                    // First let's check if the group is running. If it isn't, simply return false.
+                    if !matches!(state.groups.get(group), Some(GroupStatus::Running)) {
                         return false;
                     }
 
@@ -245,7 +245,7 @@ impl TaskHandler {
                 continue;
             } else if let Some(group) = &group {
                 // Continue if the task's group is paused.
-                if !state.groups.get(group).unwrap() {
+                if matches!(state.groups.get(group).unwrap(), GroupStatus::Paused) {
                     continue;
                 }
             }
@@ -558,7 +558,7 @@ impl TaskHandler {
             // Resume all groups and the default queue
             info!("Resuming everything");
             let mut state = self.state.lock().unwrap();
-            state.set_status_for_all_groups(true);
+            state.set_status_for_all_groups(GroupStatus::Running);
 
             self.children.keys().cloned().collect()
         } else if let Some(group) = &message.group {
@@ -568,7 +568,7 @@ impl TaskHandler {
                 return;
             }
             // Set the group to running.
-            state.groups.insert(group.into(), true);
+            state.groups.insert(group.into(), GroupStatus::Running);
             info!("Resuming group {}", group);
 
             state.task_ids_in_group_with_stati(&message.group, vec![TaskStatus::Paused])
@@ -626,7 +626,7 @@ impl TaskHandler {
         } else if message.all {
             // Pause all running tasks
             let mut state = self.state.lock().unwrap();
-            state.set_status_for_all_groups(false);
+            state.set_status_for_all_groups(GroupStatus::Paused);
 
             info!("Pausing everything");
             self.children.keys().cloned().collect()
@@ -637,7 +637,7 @@ impl TaskHandler {
                 return;
             }
             // Pause a specific group.
-            state.groups.insert(group.into(), false);
+            state.groups.insert(group.into(), GroupStatus::Paused);
             info!("Pausing group {}", group);
 
             state.task_ids_in_group_with_stati(&message.group, vec![TaskStatus::Running])
@@ -690,7 +690,7 @@ impl TaskHandler {
         } else if message.all {
             // Pause all running tasks
             let mut state = self.state.lock().unwrap();
-            state.set_status_for_all_groups(false);
+            state.set_status_for_all_groups(GroupStatus::Paused);
 
             info!("Killing all running tasks");
             self.children.keys().cloned().collect()
@@ -701,7 +701,7 @@ impl TaskHandler {
                 return;
             }
             // Pause a specific group.
-            state.groups.insert(group.into(), false);
+            state.groups.insert(group.into(), GroupStatus::Paused);
             info!("Killing tasks of group {}", group);
 
             state.task_ids_in_group_with_stati(

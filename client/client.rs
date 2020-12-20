@@ -192,6 +192,7 @@ impl Client {
             }
             Message::StatusResponse(state) => print_state(*state, &self.opt.cmd, &self.settings),
             Message::LogResponse(task_logs) => print_logs(task_logs, &self.opt.cmd, &self.settings),
+            Message::GroupResponse(groups) => print_groups(groups),
             Message::Stream(text) => {
                 print!("{}", text);
                 io::stdout().flush().unwrap();

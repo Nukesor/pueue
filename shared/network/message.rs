@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, HashMap};
 use chrono::prelude::*;
 use serde_derive::{Deserialize, Serialize};
 
-use crate::state::State;
+use crate::state::{GroupStatus, State};
 use crate::task::Task;
 
 /// The Message used to add a new command to the daemon.
@@ -25,6 +25,7 @@ pub enum Message {
     EditResponse(EditResponseMessage),
     Edit(EditMessage),
     Group(GroupMessage),
+    GroupResponse(GroupResponseMessage),
 
     Status,
     StatusResponse(Box<State>),
@@ -132,6 +133,12 @@ pub struct EditResponseMessage {
 pub struct GroupMessage {
     pub add: Option<String>,
     pub remove: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct GroupResponseMessage {
+    pub groups: HashMap<String, GroupStatus>,
+    pub settings: HashMap<String, usize>,
 }
 
 /// `err` decides, whether you should stream stderr or stdout.

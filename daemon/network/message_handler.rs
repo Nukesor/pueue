@@ -470,25 +470,15 @@ fn group(message: GroupMessage, state: &SharedState) -> Message {
     // There are no groups yet.
     if state.groups.is_empty() {
         return create_success_message(
-            "There are no groups yet. You can add them with the 'group -a' flag",
+            "There are no groups yet. You can add groups with the 'group --add' flag",
         );
     }
 
-    // Compile a small minimalistic text with all important information about all known groups
-    let mut group_status = String::new();
-    let mut group_iter = state.groups.iter().peekable();
-    while let Some((group, running)) = group_iter.next() {
-        group_status.push_str(&format!(
-            "Group {} ({} parallel), running: {}",
-            group,
-            state.settings.daemon.groups.get(group).unwrap(),
-            running
-        ));
-        if group_iter.peek().is_some() {
-            group_status.push('\n');
-        }
-    }
-    create_success_message(group_status)
+    // Return information about all groups to the client
+    Message::GroupResponse(GroupResponseMessage {
+        groups: state.groups.clone(),
+        settings: state.settings.daemon.groups.clone(),
+    })
 }
 
 /// Invoked when calling `pueue clean`.
