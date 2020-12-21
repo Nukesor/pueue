@@ -32,18 +32,21 @@ pub fn style_text<T: ToString>(
     styled.to_string()
 }
 
-pub fn has_special_columns(tasks: &BTreeMap<usize, Task>) -> (bool, bool) {
+/// By default, several columns aren't shown until there's actually some data to display.
+/// This function determines, which of those columns actually need to be shown.
+pub fn has_special_columns(tasks: &BTreeMap<usize, Task>) -> (bool, bool, bool) {
     // Check whether there are any delayed tasks.
-    // In case there are, we need to add another column to the table.
     let has_delayed_tasks = tasks.iter().any(|(_id, task)| task.enqueue_at.is_some());
 
     // Check whether there are any tasks with dependencies.
-    // In case there are, we need to add another column to the table.
     let has_dependencies = tasks
         .iter()
         .any(|(_id, task)| !task.dependencies.is_empty());
 
-    (has_delayed_tasks, has_dependencies)
+    // Check whether there are any tasks a label.
+    let has_labels = tasks.iter().any(|(_id, task)| task.label.is_some());
+
+    (has_delayed_tasks, has_dependencies, has_labels)
 }
 
 /// Return a nicely formatted headline that's displayed above group tables

@@ -37,6 +37,12 @@ pub enum SubCommand {
         #[clap(name = "after", short, long)]
         dependencies: Vec<usize>,
 
+        /// Add some information for yourself.
+        /// This string will be shown in the `status` table.
+        /// There's no additional logic connected to it.
+        #[clap(short, long)]
+        label: Option<String>,
+
         /// Only return the task id instead of a text.
         /// This is useful when scripting and working with dependencies.
         #[clap(short, long)]

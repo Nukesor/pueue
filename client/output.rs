@@ -116,7 +116,7 @@ pub fn print_state(state: State, cli_command: &SubCommand, settings: &Settings) 
 
 /// Print some tasks into a nicely formatted table
 fn print_table(tasks: &BTreeMap<usize, Task>, settings: &Settings) {
-    let (has_delayed_tasks, has_dependencies) = has_special_columns(tasks);
+    let (has_delayed_tasks, has_dependencies, has_labels) = has_special_columns(tasks);
 
     // Create table header row
     let mut headers = vec![Cell::new("Index"), Cell::new("Status")];
@@ -126,8 +126,14 @@ fn print_table(tasks: &BTreeMap<usize, Task>, settings: &Settings) {
     if has_dependencies {
         headers.push(Cell::new("Deps"));
     }
+
+    headers.push(Cell::new("Exitcode"));
+
+    if has_labels {
+        headers.push(Cell::new("Label"));
+    }
+
     headers.append(&mut vec![
-        Cell::new("Exitcode"),
         Cell::new("Command"),
         Cell::new("Path"),
         Cell::new("Start"),
@@ -191,6 +197,13 @@ fn print_table(tasks: &BTreeMap<usize, Task>, settings: &Settings) {
             _ => Cell::new(""),
         };
         row.add_cell(exit_code_cell);
+        if has_labels {
+            if let Some(label) = &task.label {
+                row.add_cell(label.to_cell());
+            } else {
+                row.add_cell(Cell::new(""));
+            }
+        }
 
         // Add command and path.
         if settings.client.show_expanded_aliases {

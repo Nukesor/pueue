@@ -256,6 +256,7 @@ impl Client {
                 group,
                 delay_until,
                 dependencies,
+                label,
                 print_task_id,
             } => {
                 let cwd_pathbuf = current_dir()?;
@@ -279,6 +280,7 @@ impl Client {
                     group,
                     enqueue_at: *delay_until,
                     dependencies: dependencies.to_vec(),
+                    label: label.clone(),
                     print_task_id: *print_task_id,
                 }))
             }
