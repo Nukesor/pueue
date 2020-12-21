@@ -22,6 +22,7 @@ Please read the changelog carefully.
 - Lots of internal code cleanup/refactoring/restructuring.
 - Exit client with non-zero exit code when getting a failure message from the daemon.
 - The `group` list output has been properly styled.
+- Use unix sockets by default on unix systems.
 
 ### Added
 

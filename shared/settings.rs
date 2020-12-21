@@ -65,7 +65,7 @@ impl Settings {
         let pueue_path = default_pueue_path()?;
         config.set_default("shared.pueue_directory", pueue_path.clone())?;
         #[cfg(not(target_os = "windows"))]
-        config.set_default("shared.use_unix_socket", false)?;
+        config.set_default("shared.use_unix_socket", true)?;
         #[cfg(not(target_os = "windows"))]
         config.set_default("shared.unix_socket_path", get_unix_socket_path()?)?;
 

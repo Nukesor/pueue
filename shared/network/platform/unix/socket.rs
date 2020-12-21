@@ -10,11 +10,6 @@ use async_trait::async_trait;
 use crate::network::tls::{get_tls_connector, get_tls_listener};
 use crate::settings::Shared;
 
-/// Determine, whether we should use unix sockets by default.
-pub fn use_unix_socket_default() -> bool {
-    true
-}
-
 /// Unix specific cleanup handling when getting a SIGINT/SIGTERM.
 pub fn socket_cleanup(settings: &Shared) {
     // Clean up the unix socket if we're using it and it exists.
