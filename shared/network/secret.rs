@@ -2,7 +2,7 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::path::PathBuf;
 
-use anyhow::{bail, Result};
+use anyhow::{bail, Context, Result};
 use rand::{distributions::Alphanumeric, Rng};
 
 /// Simple helper function to generate a random secret
@@ -35,6 +35,18 @@ pub fn init_shared_secret(path: &PathBuf) -> Result<()> {
 
     let mut file = File::create(path)?;
     file.write_all(&secret.into_bytes())?;
+
+    #[cfg(not(target_os = "windows"))]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let mut permissions = file
+            .metadata()
+            .context("Failed to set secret file permissions")?
+            .permissions();
+        permissions.set_mode(0o640);
+        std::fs::set_permissions(path, permissions)
+            .context("Failed to set permissions on tls certificate")?;
+    }
 
     Ok(())
 }

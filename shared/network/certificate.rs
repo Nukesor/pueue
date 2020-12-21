@@ -48,5 +48,17 @@ pub fn write_file(blob: String, name: &str, path: &PathBuf) -> Result<()> {
 
     file.write_all(&blob.into_bytes()).context(error_message)?;
 
+    #[cfg(not(target_os = "windows"))]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let mut permissions = file
+            .metadata()
+            .context("Failed to set secret file permissions")?
+            .permissions();
+        permissions.set_mode(0o640);
+        std::fs::set_permissions(path, permissions)
+            .context("Failed to set permissions on tls certificate")?;
+    }
+
     Ok(())
 }
