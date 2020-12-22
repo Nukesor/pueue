@@ -20,8 +20,7 @@ On top of that, there are a lot of convenience features and abstractions.
 Since Pueue is not bound to any terminal, you can control your tasks from any terminal on the same machine.
 The queue will be continuously processed, even if you no longer have any active ssh sessions.
 
-**Announcement:** The location of the configuration file changed with v0.8.0.
-The configuration and alias file is now located in a `pueue` subdirectory.
+**Announcement:** v0.10.0 changed and broke a lot of things. Please check the release [Changelog](https://github.com/Nukesor/pueue/blob/master/CHANGELOG.md).
 
 - [Features](https://github.com/Nukesor/pueue#features)
 - [Why should I use it](https://github.com/Nukesor/pueue#why-should-i-use-it)
@@ -130,7 +129,7 @@ There are also detailed sections for (hopefully) every important feature:
 On top of that, there is a help option (-h) for all commands.
 
 ```text
-Pueue client 0.8.0
+Pueue client 0.10.0
 Arne Beer <contact@arne.beer>
 Interact with the Pueue daemon
 
@@ -139,48 +138,51 @@ USAGE:
 
 FLAGS:
     -h, --help       Prints help information
-    -V, --version    Prints version information
     -v, --verbose    Verbose mode (-v, -vv, -vvv)
+    -V, --version    Prints version information
 
 OPTIONS:
-    -p, --port <port>
-            The port for the daemon. Overwrites the port in the config file. Will force TCP mode
-
-    -u, --unix-socket-path <unix-socket-path>
-            The path to the unix socket. Overwrites the path in the config file. Will force Unix-socket mode
-
+    -c, --config <config>    Path to a specific pueue config daemon, that should be used. This
+                             ignores all other config files
 
 SUBCOMMANDS:
     add            Enqueue a task for execution
     clean          Remove all finished tasks from the list (also clears logs)
-    completions    Generates shell completion files. This can be ignored during normal operations
+    completions    Generates shell completion files. This can be ignored during normal
+                   operations
     edit           Edit the command or path of a stashed or queued task.
                    This edits the command of the task by default.
     enqueue        Enqueue stashed tasks. They'll be handled normally afterwards
-    follow         Follow the output of a currently running task. This command works like `tail -f`
+    follow         Follow the output of a currently running task. This command works like tail
+                   -f
     group          Manage groups. By default, this will simply display all known groups
     help           Prints this message or the help of the given subcommand(s)
     kill           Kill specific running tasks or various groups of tasks
-    log            Display the log output of finished tasks. Prints either all logs or only the logs of specified
-                   tasks
+    log            Display the log output of finished tasks. Prints either all logs or only the
+                   logs of specified tasks
     parallel       Set the amount of allowed parallel tasks
     pause          Pause either running tasks or specific groups of tasks.
-                   By default, pauses the default queue and all it's tasks.
+                   By default, pauses the default queue and all its tasks.
                    A paused queue (group) won't start any new tasks.
-                   Everything can be resumed with 'start'.
     remove         Remove tasks from the list. Running or paused tasks need to be killed first
-    reset          Kill all running tasks, remove all tasks and reset max_task_id
-    restart        Restart task(s). Identical tasks will be created and by default enqueued
+    reset          Kill all running tasks on user behalf, remove all tasks and reset max_task_id
+    restart        Restart task(s). Identical tasks will be created and by default enqueued. By
+                   default, a new task will be created
     send           Send something to a task. Useful for sending confirmations such as 'y\n'
-    shutdown       Remotely shut down the daemon. Should only be used if the daemon isn't started by a service
-                   manager
+    shutdown       Remotely shut down the daemon. Should only be used if the daemon isn't
+                   started by a service manager
     start          Resume operation of specific tasks or groups of tasks.
-                   By default, this resumes the default queue and all it's tasks.
-                   Can also be used force specific tasks to start.
-    stash          Stashed tasks won't be automatically started. Either enqueue them, to be normally handled or
-                   explicitly start them
+                   By default, this resumes the default queue and all its tasks.
+                   Can also be used force-start specific tasks.
+    stash          Stashed tasks won't be automatically started. Either enqueue them, to be
+                   normally handled or explicitly start them
     status         Display the current status of all tasks
-    switch         Switches the queue position of two commands. Only works on queued and stashed commands
+    switch         Switches the queue position of two commands. Only works on queued and stashed
+                   commands
+    wait           Wait until tasks are finished. This can be quite useful for scripting. By
+                   default, this will wait for all tasks in the default queue to finish. Note:
+                   This will also wait for all tasks that aren't somehow 'Done'. Includes:
+                   [Paused, Stashed, Locked, Queued, ...]
 ```
 
 ## Advantages over Using a Terminal Multiplexer

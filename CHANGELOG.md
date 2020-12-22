@@ -4,13 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0] - 
+## [0.10.0] - 
 
 This release adds a lot of breaking changes!
 I tried to clean up, refactor and streamline as much code as possible.
 
-`v1.0.0` aims to be a stable release and maintain backward compatibility for as long as possible (v2.0.0).\
-Please read the changelog carefully.
+`v0.10.0` aims to be the last release before hitting v1.0.0. \
+From that point on I'll try to maintain backward compatibility for as long as possible (v2.0.0).\
+Please read this changelog carefully.
 
 ### Changed
 
