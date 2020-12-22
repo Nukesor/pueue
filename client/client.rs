@@ -1,6 +1,6 @@
-use std::collections::HashMap;
 use std::env::{current_dir, vars};
 use std::io::{self, Write};
+use std::{borrow::Cow, collections::HashMap};
 
 use anyhow::{bail, Context, Result};
 use log::error;
@@ -251,6 +251,7 @@ impl Client {
         match &self.opt.cmd {
             SubCommand::Add {
                 command,
+                escape,
                 start_immediately,
                 stashed,
                 group,
@@ -269,6 +270,17 @@ impl Client {
                 for (key, value) in vars() {
                     envs.insert(key, value);
                 }
+
+                // Escape any special shell characters in all strings before we concatenated them
+                // to a single string.
+                let command: Vec<String> = if *escape {
+                    command
+                        .iter()
+                        .map(|parameter| shell_escape::escape(Cow::from(parameter)).into_owned())
+                        .collect()
+                } else {
+                    command.clone()
+                };
 
                 let group = group_or_default(group);
                 Ok(Message::Add(AddMessage {
