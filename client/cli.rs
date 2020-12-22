@@ -13,6 +13,11 @@ pub enum SubCommand {
         #[clap(required = true)]
         command: Vec<String>,
 
+        /// Escape any special shell characters (` `, `&`, `!`, etc.).
+        /// Beware: This implicitly disables basically all shell features (`&&`, `&>`).
+        #[clap(short, long)]
+        escape: bool,
+
         /// Start the task immediately.
         #[clap(name = "immediate", short, long, conflicts_with = "stashed")]
         start_immediately: bool,

@@ -33,6 +33,7 @@ chrono = { version = "^0.4", features = ["serde"] }
 chrono-english = "^0.1.0"
 ctrlc = { version = "3", features = ["termination"] }
 rand = "^0.7"
+shell-escape = "^0.1"
 strum = "^0.20"
 strum_macros = "^0.20"
 tempfile = "^3"
