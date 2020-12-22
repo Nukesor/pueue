@@ -41,29 +41,8 @@ The configuration and alias file is now located in a `pueue` subdirectory.
 - A callback hook to, for instance, set up desktop notifications.
 - A lot more. Check the -h options for each subcommand for detailed options.
 
-Works on Linux and partially on MacOS and Windows.
-
-**Disclaimer:** Windows and MacOS don't yet support the full feature set:
-
-#### Windows
-
-The Windows version needs someone to implement process handling!
-Right now there's pretty much no Windows specific code which means:
-
-- Pausing/resuming commands doesn't work for now.
-- Sending signals to processes' children doesn't work.
-- We cannot ensure that there aren't dangling processes on `kill`.
-- Pueue only supports `powershell` for executing commands, keep this in mind when writing commands.
-
-#### MacOs
-
-The `psutil` library, which is used for MacOS is a horrible mess.
-It's missing a lot of essential features and has a really bad code style.\
-Someone has to add a proper replacement and re-implement the MacOs specific process handling code.
-Until then:
-
-- Sending signals to processes' children doesn't work.
-- We cannot ensure that there aren't dangling processes on `kill`.
+Works on Linux and **partially** on MacOS and Windows. \
+Check these issues to find out what's missing for MacOs (#115) and Windows (#114).
 
 ## Why should I use it
 
