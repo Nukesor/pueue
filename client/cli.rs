@@ -9,20 +9,20 @@ use clap::Clap;
 pub enum SubCommand {
     /// Enqueue a task for execution.
     Add {
-        /// The command that should be added.
+        /// The command to be added.
         #[clap(required = true)]
         command: Vec<String>,
 
-        /// Escape any special shell characters (` `, `&`, `!`, etc.).
-        /// Beware: This implicitly disables basically all shell features (`&&`, `&>`).
+        /// Escape any special shell characters (" ", "&", "!", etc.).
+        /// Beware: This implicitly disables basically all shell specific syntax ("&&", "&>").
         #[clap(short, long)]
         escape: bool,
 
-        /// Start the task immediately.
+        /// Immediately start the task.
         #[clap(name = "immediate", short, long, conflicts_with = "stashed")]
         start_immediately: bool,
 
-        /// Create the task in stashed state.
+        /// Create the task in Stashed state.
         /// Useful to avoid immediate execution if the queue is empty.
         #[clap(name = "stashed", short, long, conflicts_with = "immediate")]
         stashed: bool,
@@ -43,7 +43,7 @@ pub enum SubCommand {
         dependencies: Vec<usize>,
 
         /// Add some information for yourself.
-        /// This string will be shown in the `status` table.
+        /// This string will be shown in the "status" table.
         /// There's no additional logic connected to it.
         #[clap(short, long)]
         label: Option<String>,
@@ -69,9 +69,9 @@ pub enum SubCommand {
         task_id_2: usize,
     },
     /// Stashed tasks won't be automatically started.
-    /// Either enqueue them, to be normally handled or explicitly start them.
+    /// You have to enqueue them or start them by hand.
     Stash {
-        /// The id(s) of the tasks you want to stash.
+        /// Stash these specific tasks.
         #[clap(required = true)]
         task_ids: Vec<usize>,
     },
@@ -79,7 +79,7 @@ pub enum SubCommand {
     #[clap(after_help = "DELAY FORMAT:
 
     The --delay argument must be either a number of seconds or a \"date expression\" similar to GNU \
-    `date -d` with some extensions. It does not attempt to parse all natural language, but is \
+    \"date -d\" with some extensions. It does not attempt to parse all natural language, but is \
     incredibly flexible. Here are some supported examples.
 
     2020-04-01T18:30:00   // RFC 3339 timestamp
@@ -99,10 +99,10 @@ pub enum SubCommand {
     3600s                 // 3600 seconds from now
 ")]
     Enqueue {
-        /// The id(s) of the tasks you want to enqueue.
+        /// Enqueue these specific tasks.
         task_ids: Vec<usize>,
 
-        /// Delay enqueuing the tasks until <delay> elapses. See DELAY FORMAT below.
+        /// Delay enqueuing these tasks until <delay> elapses. See DELAY FORMAT below.
         #[clap(name = "delay", short, long, parse(try_from_str=parse_delay_until))]
         delay_until: Option<DateTime<Local>>,
     },
@@ -112,16 +112,17 @@ pub enum SubCommand {
     /// Can also be used force-start specific tasks.
     #[clap(verbatim_doc_comment)]
     Start {
-        /// Enforce starting these tasks. Paused tasks will be started again.
-        /// This does not affect anything other than these tasks.
+        /// Start these specific tasks. Paused tasks will resumed.
+        /// Queued or Stashed tasks will be force-started.
         task_ids: Vec<usize>,
 
-        /// Start a specific group and all paused tasks in it.
+        /// Resume a specific group and all paused tasks in it.
+        /// The group will be set to running and its paused tasks will be resumed.
         #[clap(short, long, conflicts_with = "all")]
         group: Option<String>,
 
-        /// Start a everything (default group and all groups)!
-        /// All groups will be set to `running` and all paused tasks will be resumed.
+        /// Resume all groups!
+        /// All groups will be set to running and paused tasks will be resumed.
         #[clap(short, long)]
         all: bool,
 
@@ -135,15 +136,15 @@ pub enum SubCommand {
     /// Identical tasks will be created and by default enqueued.
     /// By default, a new task will be created.
     Restart {
-        /// The tasks you want to restart.
+        /// Restart these specific tasks.
         #[clap(required = true)]
         task_ids: Vec<usize>,
 
-        /// Immediately start the task(s).
+        /// Immediately start the tasks.
         #[clap(short, long, name = "immediate", conflicts_with = "stashed")]
         start_immediately: bool,
 
-        /// Create the task in stashed state.
+        /// Set the restarted task to a "Stashed" state.
         /// Useful to avoid immediate execution.
         #[clap(short, long)]
         stashed: bool,
@@ -153,16 +154,16 @@ pub enum SubCommand {
         #[clap(short, long)]
         in_place: bool,
 
-        /// Edit the command of the task before restarting
+        /// Edit the tasks' command before restarting.
         #[clap(short, long)]
         edit: bool,
 
-        /// Edit the path of the task before restarting
+        /// Edit the tasks' path before restarting.
         #[clap(short, long)]
         path: bool,
     },
 
-    /// Pause either running tasks or specific groups of tasks.
+    /// Either pause running tasks or specific groups of tasks.
     /// By default, pauses the default group and all its tasks.
     /// A paused queue (group) won't start any new tasks.
     #[clap(verbatim_doc_comment)]
@@ -175,12 +176,11 @@ pub enum SubCommand {
         #[clap(short, long, conflicts_with = "all")]
         group: Option<String>,
 
-        /// Pause everything (default group and all groups)!
+        /// Pause all groups!
         #[clap(short, long)]
         all: bool,
 
-        /// Don not pause already running tasks and let them finish by themselves,
-        /// when pausing with `default`, `all` or `group`.
+        /// Only pause the specified group and let already running tasks finish by themselves.
         #[clap(short, long)]
         wait: bool,
 
@@ -192,17 +192,17 @@ pub enum SubCommand {
         children: bool,
     },
 
-    /// Kill specific running tasks or various groups of tasks.
+    /// Kill specific running tasks or whole task groups.
     /// Kills all tasks of the default group when no ids are provided.
     Kill {
-        /// The tasks that should be killed.
+        /// Kill these specific tasks.
         task_ids: Vec<usize>,
 
-        /// Kill all running in a group. Pauses the group.
+        /// Kill all running tasks in a group. This also pauses the group.
         #[clap(short, long, conflicts_with = "all")]
         group: Option<String>,
 
-        /// Kill ALL running tasks. This also pauses everything
+        /// Kill all running tasks across ALL groups. This also pauses all groups.
         #[clap(short, long)]
         all: bool,
 
@@ -222,7 +222,7 @@ pub enum SubCommand {
     },
 
     /// Edit the command or path of a stashed or queued task.
-    /// This edits the command of the task by default.
+    /// The command is edited by default.
     #[clap(verbatim_doc_comment)]
     Edit {
         /// The id of the task.
@@ -233,14 +233,14 @@ pub enum SubCommand {
         path: bool,
     },
 
-    /// Manage groups.
+    /// Use this to add or remove groups.
     /// By default, this will simply display all known groups.
     Group {
-        /// Add a group
+        /// Add a group by name.
         #[clap(short, long, conflicts_with = "remove")]
         add: Option<String>,
 
-        /// Remove a group.
+        /// Remove a group by name.
         /// This will move all tasks in this group to the default group!
         #[clap(short, long)]
         remove: Option<String>,
@@ -262,7 +262,7 @@ pub enum SubCommand {
     /// Display the log output of finished tasks.
     /// Prints either all logs or only the logs of specified tasks.
     Log {
-        /// Specify for which specific tasks you want to see the output.
+        /// View the task output of these specific tasks.
         task_ids: Vec<usize>,
         /// Print the current state as json.
         /// Includes EVERYTHING.
@@ -324,12 +324,13 @@ pub enum SubCommand {
     Shutdown,
 
     /// Set the amount of allowed parallel tasks.
+    /// By default, adjusts the amount of the default group.
     Parallel {
         /// The amount of allowed parallel tasks.
         #[clap(validator=min_one)]
         parallel_tasks: usize,
 
-        /// Specify the amount of parallel tasks for a group.
+        /// Set the amount for a specific group.
         #[clap(name = "group", short, long)]
         group: Option<String>,
     },
@@ -337,7 +338,7 @@ pub enum SubCommand {
     /// Generates shell completion files.
     /// This can be ignored during normal operations.
     Completions {
-        /// The target shell. Can be `bash`, `fish`, `powershell`, `elvish` and `zsh`.
+        /// The target shell.
         #[clap(arg_enum)]
         shell: Shell,
         /// The output directory to which the file should be written.

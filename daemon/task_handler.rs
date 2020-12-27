@@ -447,7 +447,7 @@ impl TaskHandler {
     }
 
     /// Gather all finished tasks and sort them by finished and errored.
-    /// Returns a list finished task id's and whether they errored or not.
+    /// Returns a list of finished task ids and whether they errored or not.
     fn get_finished(&mut self) -> Vec<(usize, Option<std::io::Error>)> {
         let mut finished = Vec::new();
         for (id, child) in self.children.iter_mut() {
