@@ -196,7 +196,6 @@ pub enum SubCommand {
     /// Kills all tasks of the default group when no ids are provided.
     Kill {
         /// The tasks that should be killed.
-        #[clap(short, long)]
         task_ids: Vec<usize>,
 
         /// Kill all running in a group. Pauses the group.

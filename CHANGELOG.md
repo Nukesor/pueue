@@ -47,6 +47,9 @@ Please read this changelog carefully.
 - Properly pass `--config` CLI argument to daemonized `pueued` instance.
 - The `--default` flag on the `kill` command has been removed, since this was the default anyway.
     That makes this command's behavior consistent with the `start` and `pause` command.
+- Allow the old `kill [task_ids...]` behavior.
+    You no longer need the `-t` flag to kill a tasks.
+    This broke in one of the previous refactorings.
 
 ### Internal
 
