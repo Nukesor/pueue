@@ -145,6 +145,13 @@ fn log_status_change(current_time: &str, previous_status: TaskStatus, task: &Tas
                     style_text(exit_code, Some(Color::Red), Some(Attribute::Bold))
                 )
             }
+            Some(TaskResult::Errored) => {
+                format!(
+                    "Task {} experienced an {}.",
+                    style_text(task.id, None, Some(Attribute::Bold)),
+                    style_text("IO error", Some(Color::Red), Some(Attribute::Bold))
+                )
+            }
             Some(TaskResult::Killed) => {
                 format!(
                     "Task {} has been {}",

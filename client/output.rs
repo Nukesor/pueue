@@ -298,6 +298,7 @@ pub fn print_log(task_log: &mut TaskLogMessage, settings: &Settings) {
         }
         Some(TaskResult::FailedToSpawn(err)) => (format!("failed to spawn: {}", err), Color::Red),
         Some(TaskResult::Killed) => ("killed by system or user".into(), Color::Red),
+        Some(TaskResult::Errored) => ("some IO error.\n Check daemon log.".into(), Color::Red),
         Some(TaskResult::DependencyFailed) => ("dependency failed".into(), Color::Red),
         None => ("running".into(), Color::White),
     };
