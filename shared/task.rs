@@ -36,6 +36,8 @@ pub enum TaskResult {
     FailedToSpawn(String),
     /// Task has been actively killed by either the user or the daemon on shutdown
     Killed,
+    /// Some kind of IO error. This should barely ever happen. Please check the daemon logs.
+    Errored,
     /// A dependency of the task failed.
     DependencyFailed,
 }

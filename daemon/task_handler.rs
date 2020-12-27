@@ -7,7 +7,7 @@ use std::sync::mpsc::Receiver;
 use std::thread::sleep;
 use std::time::Duration;
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use chrono::prelude::*;
 use handlebars::Handlebars;
 use log::{debug, error, info, warn};
@@ -357,32 +357,58 @@ impl TaskHandler {
     /// Check whether there are any finished processes
     /// In case there are, handle them and update the shared state
     fn handle_finished_tasks(&mut self) {
-        let (finished, errored) = self.get_finished();
+        let finished = self.get_finished();
 
         // Nothing to do. Early return
-        if finished.is_empty() && errored.is_empty() {
+        if finished.is_empty() {
             return;
         }
 
         // Clone the state ref, so we don't have two mutable borrows later on.
         let state_ref = self.state.clone();
         let mut state = state_ref.lock().unwrap();
-        for task_id in finished.iter() {
+
+        for (task_id, error) in finished.iter() {
+            // Handle std::io errors on child processes.
+            // I have never seen something like this, but it might happen.
+            if let Some(error) = error {
+                let _child = self
+                    .children
+                    .remove(task_id)
+                    .expect("Errored child went missing while handling finished task.");
+
+                let group = {
+                    let mut task = state.tasks.get_mut(&task_id).unwrap();
+                    task.status = TaskStatus::Done;
+                    task.end = Some(Local::now());
+                    task.result = Some(TaskResult::Errored);
+                    self.spawn_callback(&task);
+
+                    task.group.clone()
+                };
+                error!("Child {} failed with io::Error: {:?}", task_id, error);
+
+                state.handle_task_failure(group);
+                continue;
+            }
+
+            // Handle any tasks that exited with some kind of exit code
             let mut child = self
                 .children
                 .remove(task_id)
-                .expect("Child went missing while finishing up");
+                .expect("Child of task {} went away while handling finished task.");
 
-            let exit_code = match child.wait() {
-                Ok(exit_code) => exit_code.code(),
-                Err(err) => {
-                    error!(
-                        "Failed to wait for child {} while finishing up: {:?}",
-                        task_id, err
-                    );
-                    Some(1)
-                }
-            };
+            // Get the exit code of the child.
+            // Errors really shouldn't happen in here, since we already checked if it's finished
+            // with try_wait() before.
+            let exit_code_result = child.wait();
+            let exit_code = exit_code_result
+                .context(format!(
+                    "Failed on wait() for finished task {} with error: {:?}",
+                    task_id, error
+                ))
+                .unwrap()
+                .code();
 
             // Processes with exit code 0 exited successfully
             // Processes with `None` have been killed by a Signal
@@ -417,47 +443,29 @@ impl TaskHandler {
             }
         }
 
-        // Handle errored tasks
-        // TODO: This could be be refactored. Let's try to combine finished and error handling.
-        for task_id in errored.iter() {
-            let _child = self.children.remove(task_id).expect("Child went missing");
-            let group = {
-                let mut task = state.tasks.get_mut(&task_id).unwrap();
-                task.status = TaskStatus::Done;
-                task.end = Some(Local::now());
-                task.result = Some(TaskResult::Killed);
-                self.spawn_callback(&task);
-
-                task.group.clone()
-            };
-
-            state.handle_task_failure(group);
-        }
-
         state.save()
     }
 
     /// Gather all finished tasks and sort them by finished and errored.
-    /// Returns two lists of task ids, namely finished_task_ids and errored _task_ids
-    fn get_finished(&mut self) -> (Vec<usize>, Vec<usize>) {
+    /// Returns a list finished task id's and whether they errored or not.
+    fn get_finished(&mut self) -> Vec<(usize, Option<std::io::Error>)> {
         let mut finished = Vec::new();
-        let mut errored = Vec::new();
         for (id, child) in self.children.iter_mut() {
             match child.try_wait() {
                 // Handle a child error.
                 Err(error) => {
-                    info!("Task {} failed with error {:?}", id, error);
-                    errored.push(*id);
+                    finished.push((*id, Some(error)));
                 }
                 // Child process did not exit yet
                 Ok(None) => continue,
                 Ok(_exit_status) => {
                     info!("Task {} just finished", id);
-                    finished.push(*id);
+                    finished.push((*id, None));
                 }
             }
         }
-        (finished, errored)
+
+        finished
     }
 
     /// Some client instructions require immediate action by the task handler
