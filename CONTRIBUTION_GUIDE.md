@@ -6,9 +6,8 @@ It's purpose is to explain the project structure, so you understand where you ca
 
 ## Structure
 
-This project is divided into three modules. `client`, `daemon` and `shared`.
-
-`client` and `daemon` contain everything that's specific to the respective binaries of `pueue` and `pueued`.
+This project is divided into three modules. `client`, `daemon` and `shared`. \
+`client` and `daemon` contain everything that's specific to the respective binaries of `pueue` and `pueued`. \
 
 `shared` however contains everything that's used by both sides.
 This includes:
@@ -30,18 +29,10 @@ This allows notifying the TaskHandler of any special tasks that need to be done.
 
 The `daemon.socket` module contains the logic for accepting client connections and receiving payloads.
 
-The payload is then deserialized to `Message` and handled by the matching function.
-All functions used for handling these messages can be found in `daemon.instructions`.
-
-Many messages can be instantly handled by simply modifying or reading the state.  
-
-However, sometimes one needs to notify the TaskHandler if one wants do something that involves actual system processes.
-
-A few examples for such actions are:
-
-- Instant starting of tasks
-- Pausing/resuming
-- Resetting the daemon
+The payload is then deserialized to `Message` and handled a the matching function.
+All functions used for handling these messages can be found in `daemon.instructions`. \
+Many messages can be instantly handled by simply modifying or reading the state. \ 
+However, sometimes the TaskHandler has to be notified, if something involves actual system processes (start/pause/kill tasks).
 
 ### The TaskHandler
 
