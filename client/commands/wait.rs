@@ -23,7 +23,7 @@ use crate::output_helper::style_text;
 /// Pass `quiet == true` to supress any logging.
 pub async fn wait(
     stream: &mut GenericStream,
-    task_ids: &Vec<usize>,
+    task_ids: &[usize],
     group: &str,
     all: bool,
     quiet: bool,
