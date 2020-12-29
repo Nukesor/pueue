@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.10.0] - 
+## [0.10.0] - 29-12-2020
 
 This release adds a lot of breaking changes!
 I tried to clean up, refactor and streamline as much code as possible.
@@ -16,6 +16,7 @@ Please read this changelog carefully.
 ### Changed
 
 - Use TLS encryption for all TCP communication.
+- Updated Crossterm and thereby bump the required rust version to `1.48`.
 - Extract the shared `secret` into a separate file.
     This will allow users to publicly sync their config directory between machines.
 - Change default secret length from 20 to 512 chars.
