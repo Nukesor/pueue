@@ -57,7 +57,7 @@ log = "0.4"
 simplelog = { version = "0.9", default-features = false }
 clap = "3.0.0-beta.2"
 clap_generate = "3.0.0-beta.2"
-crossterm = "^0.18"
+crossterm = "^0.19"
 comfy-table= "^1"
 
 [target.'cfg(not(windows))'.dependencies]
