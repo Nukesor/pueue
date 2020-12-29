@@ -87,15 +87,14 @@ Pueue has been packaged for a quite a few distributions, check the table on the 
 
 #### Prebuild Binaries
 
-Statically linked (if possible) binaries for Linux (incl. ARM), Mac OS and Windows are built on each release.
-
-You can download the binaries for the client and the daemon (`pueue` and `pueued`) for each release on the [release page](https://github.com/Nukesor/pueue/releases).
-
+Statically linked (if possible) binaries for Linux (incl. ARM), Mac OS and Windows are built on each release. \
+You can download the binaries for the client and the daemon (`pueue` and `pueued`) for each release on the [release page](https://github.com/Nukesor/pueue/releases). \
 Just download both binaries for your system, rename them to `pueue` and `pueued` and place them in your \$PATH/program folder.
 
 #### Via Cargo
 
-You'll need Rust version `>=1.48`
+Pueue is built for the current `stable` Rust version.
+It might compile on older versions, but this isn't tested or officially supported.
 
 ```bash
 cargo install pueue
@@ -105,7 +104,8 @@ This will install pueue to `~/.cargo/bin/pueue`
 
 #### From source
 
-You'll need Rust version `>=1.48`
+Pueue is built for the current `stable` Rust version.
+It might compile on older versions, but this isn't tested or officially supported.
 
 ```bash
 git clone git@github.com:Nukesor/pueue
