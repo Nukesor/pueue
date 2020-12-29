@@ -35,6 +35,7 @@ Please read this changelog carefully.
 - `daemon.pause_group_on_failure` config, which only pauses the group of the affected task instead of everything.
 - Users can add some additional information to tasks with the `task add --label $LABEL` option, which will be displayed when calling `pueue status`.
 - `--escape` flag on the `add` subcommand, which takes all given Parameter strings and escapes special characters.
+- Remove `--task-ids` for `wait`. Now it's used the same way as start/kill/pause etc.
 
 ### Removed
 

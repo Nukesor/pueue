@@ -23,7 +23,7 @@ use crate::output_helper::style_text;
 /// Pass `quiet == true` to supress any logging.
 pub async fn wait(
     stream: &mut GenericStream,
-    task_ids: &Option<Vec<usize>>,
+    task_ids: &Vec<usize>,
     group: &str,
     all: bool,
     quiet: bool,
@@ -36,17 +36,17 @@ pub async fn wait(
     loop {
         let state = get_state(stream).await?;
 
-        let tasks: Vec<Task> = if all {
-            // Get all tasks
-            state.tasks.iter().map(|(_, task)| task.clone()).collect()
-        } else if let Some(ids) = task_ids {
+        let tasks: Vec<Task> = if !task_ids.is_empty() {
             // Get all tasks of a specific group
             state
                 .tasks
                 .iter()
-                .filter(|(id, _)| ids.contains(id))
+                .filter(|(id, _)| task_ids.contains(id))
                 .map(|(_, task)| task.clone())
                 .collect()
+        } else if all {
+            // Get all tasks
+            state.tasks.iter().map(|(_, task)| task.clone()).collect()
         } else {
             // Get all tasks of a specific group
             state

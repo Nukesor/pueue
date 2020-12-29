@@ -289,8 +289,7 @@ pub enum SubCommand {
     /// Includes: [Paused, Stashed, Locked, Queued, ...]
     Wait {
         /// This allows you to wait for specific tasks to finish.
-        #[clap(short, long, conflicts_with = "group", conflicts_with = "all")]
-        task_ids: Option<Vec<usize>>,
+        task_ids: Vec<usize>,
 
         /// Wait for all tasks in a specific group
         #[clap(short, long, conflicts_with = "all")]
