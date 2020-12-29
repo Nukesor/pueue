@@ -68,7 +68,7 @@ pub fn print_state(state: State, cli_command: &SubCommand, settings: &Settings) 
     let sorted_tasks = sort_tasks_by_group(&state.tasks);
 
     // Always print the default queue at the very top.
-    if group_only.is_none() {
+    if group_only.is_none() && sorted_tasks.get("default").is_some() {
         let tasks = sorted_tasks.get("default").unwrap();
         let headline = get_group_headline(
             &"default",
