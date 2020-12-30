@@ -67,7 +67,10 @@ async fn main() -> Result<()> {
     }
     init_shared_secret(&settings.shared.shared_secret_path)?;
 
-    let state = State::new(&settings, opt.config.clone());
+    let mut state = State::new(&settings, opt.config.clone());
+    // Restore the previous state and save any changes that might have happened during this process
+    state.restore();
+    state.save();
     let state = Arc::new(Mutex::new(state));
 
     let (sender, receiver) = channel();

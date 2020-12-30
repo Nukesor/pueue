@@ -61,8 +61,6 @@ impl State {
             config_path,
         };
         state.create_group("default");
-        state.restore();
-        state.save();
         state
     }
 
@@ -188,6 +186,38 @@ impl State {
         (matching, mismatching)
     }
 
+    /// Check if a task can be deleted.
+    /// We have to check all dependant tasks, which haven't finished yet.
+    /// This is necessary to prevent deletion of tasks which are specified as a dependency.
+    ///
+    /// `to_delete` A list of task ids, which should also be deleted.
+    pub fn is_task_removable(&self, task_id: &usize, to_delete: &[usize]) -> bool {
+        // Get all task ids of any dependant tasks.
+        let dependants: Vec<usize> = self
+            .tasks
+            .iter()
+            .filter(|(_, task)| {
+                task.dependencies.contains(&task_id) && task.status != TaskStatus::Done
+            })
+            .map(|(_, task)| task.id)
+            .collect();
+
+        if dependants.is_empty() {
+            return true;
+        }
+
+        // Check if the dependants are supposed to be deleted as well.
+        let should_delete_dependants = dependants.iter().all(|task_id| to_delete.contains(task_id));
+        if !should_delete_dependants {
+            return false;
+        }
+
+        // Lastly, do a recursive check if there are any dependants on our dependants
+        dependants
+            .iter()
+            .all(|task_id| self.is_task_removable(task_id, to_delete))
+    }
+
     /// Users can specify to pause either the task's group or all groups on a failure.
     pub fn handle_task_failure(&mut self, group: String) {
         if self.settings.daemon.pause_group_on_failure {
@@ -278,7 +308,7 @@ impl State {
 
     /// Restore the last state from a previous session.
     /// The state is stored as json in the log directory.
-    fn restore(&mut self) {
+    pub fn restore(&mut self) {
         let path = Path::new(&self.settings.shared.pueue_directory).join("state.json");
 
         // Ignore if the file doesn't exist. It doesn't have to.

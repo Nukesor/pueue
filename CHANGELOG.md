@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.2] - 31-12-2020
+
+### Fixed
+
+- It was possible to remove tasks with active dependants, i.e. tasks which have a dependency and didn't finish yet.
+    This didn't lead to any crashes, but could lead to unwanted behavior, since the dependant tasks simply started due to the dependency no longer existing.
+    It's however still possible to delete dependencies as long as their dependants are deleted as well.
+
 ## [0.10.1] - 29-12-2020
 
 ### Fixed

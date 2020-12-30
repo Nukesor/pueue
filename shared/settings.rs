@@ -61,6 +61,26 @@ impl Settings {
     ///
     /// If `require_config` is `true`, an error will be thrown, if no configuration file can be found.
     pub fn new(require_config: bool, from_file: &Option<PathBuf>) -> Result<Settings> {
+        let mut config = Settings::default_config()?;
+
+        // Load the config from a very specific file path
+        if let Some(path) = from_file {
+            if !path.exists() {
+                bail!("Couldn't find config at path {:?}", path);
+            }
+            info!("Using config file at: {:?}", path);
+            let config_file = config::File::with_name(path.to_str().unwrap());
+            config.merge(config_file)?;
+        } else {
+            // Load settings from the default config paths.
+            parse_config(&mut config, require_config)?;
+        }
+
+        // Try to can deserialize the entire configuration
+        Ok(config.try_into()?)
+    }
+
+    pub fn default_config() -> Result<Config> {
         let mut config = Config::new();
         let pueue_path = default_pueue_path()?;
         config.set_default("shared.pueue_directory", pueue_path.clone())?;
@@ -95,21 +115,7 @@ impl Settings {
         config.set_default("daemon.callback", None::<String>)?;
         config.set_default("daemon.groups", HashMap::<String, i64>::new())?;
 
-        // Load the config from a very specific file path
-        if let Some(path) = from_file {
-            if !path.exists() {
-                bail!("Couldn't find config at path {:?}", path);
-            }
-            info!("Using config file at: {:?}", path);
-            let config_file = config::File::with_name(path.to_str().unwrap());
-            config.merge(config_file)?;
-        } else {
-            // Load settings from the default config paths.
-            parse_config(&mut config, require_config)?;
-        }
-
-        // Try to can deserialize the entire configuration
-        Ok(config.try_into()?)
+        Ok(config)
     }
 
     /// Try to read the config file without any default values.
