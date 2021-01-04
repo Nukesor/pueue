@@ -65,7 +65,7 @@ impl Settings {
 
         // Load the config from a very specific file path
         if let Some(path) = from_file {
-            if !path.exists() {
+            if !path.exists() || !path.is_file() {
                 bail!("Couldn't find config at path {:?}", path);
             }
             info!("Using config file at: {:?}", path);
@@ -178,7 +178,7 @@ fn parse_config(settings: &mut Config, require_config: bool) -> Result<()> {
     for directory in get_config_directories()?.into_iter() {
         let path = directory.join("pueue.yml");
         info!("Checking path: {:?}", &path);
-        if path.exists() {
+        if path.exists() && path.is_file() {
             info!("Found config file at: {:?}", path);
             config_found = true;
             let config_file = config::File::with_name(path.to_str().unwrap());
