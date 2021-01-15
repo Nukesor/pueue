@@ -43,6 +43,7 @@ async-std = { version = "1", features = ["attributes", "std"] }
 async-tls = "0.11"
 async-trait = "0.1"
 rustls = "0.19"
+rev_lines = "0.2"
 rcgen = "0.8"
 byteorder = "^1"
 snap = "1"

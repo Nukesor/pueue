@@ -388,10 +388,17 @@ impl Client {
                 Ok(Message::Group(message))
             }
             SubCommand::Status { .. } => Ok(Message::Status),
-            SubCommand::Log { task_ids, .. } => {
+            SubCommand::Log {
+                task_ids,
+                lines,
+                full,
+                ..
+            } => {
                 let message = LogRequestMessage {
                     task_ids: task_ids.clone(),
                     send_logs: !self.settings.client.read_local_logs,
+                    lines: lines.clone(),
+                    full: *full,
                 };
                 Ok(Message::Log(message))
             }

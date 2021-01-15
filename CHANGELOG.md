@@ -4,12 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.10.3] - 
+## [0.11.0] - 
 
 ### Added
 
-- Add the `--successful-only` flag to the `clean` subcommand.
-    This let's keep you all important logs of failed tasks, while freeing up some screen space.
+- Add the `--lines` flag to the `log` subcommand.
+    This is used to only show the last X lines of each task's stdout and stderr.
+- Add the `--full` flag to the `log` subcommand.
+    This is used to show the whole logfile of each task's stdout and stderr.
+
+### Changed
+
+- If multiple tasks are selected, `log` now only shows the last few lines for each log.
+    You can use the new `--full` option to get the old behavior.
 
 ### Fixed
 

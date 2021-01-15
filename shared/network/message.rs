@@ -166,6 +166,8 @@ pub struct StreamRequestMessage {
 pub struct LogRequestMessage {
     pub task_ids: Vec<usize>,
     pub send_logs: bool,
+    pub lines: Option<usize>,
+    pub full: bool,
 }
 
 /// Helper struct for sending tasks and their log output to the client.

@@ -261,13 +261,25 @@ pub enum SubCommand {
 
     /// Display the log output of finished tasks.
     /// Prints either all logs or only the logs of specified tasks.
+    ///
+    /// When looking at multiple logs, only the last 20 lines will be shown
     Log {
         /// View the task output of these specific tasks.
         task_ids: Vec<usize>,
-        /// Print the current state as json.
-        /// Includes EVERYTHING.
+        /// Print the resulting tasks and output as json.
+        /// Can be very large!
         #[clap(short, long)]
         json: bool,
+
+        /// Only print the last X lines of each task's output.
+        /// This is done by default if you're looking at multiple tasks.
+        #[clap(short, long, conflicts_with = "full")]
+        lines: Option<usize>,
+
+        /// Show the whole std_out and std_err output.
+        /// This is the default if only a single task is being looked at.
+        #[clap(short, long)]
+        full: bool,
     },
 
     /// Follow the output of a currently running task.

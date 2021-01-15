@@ -1,5 +1,8 @@
-use std::collections::BTreeMap;
-use std::io;
+use std::{collections::BTreeMap, io::BufReader};
+use std::{
+    fs::File,
+    io::{self, Stdout},
+};
 
 use anyhow::Result;
 use comfy_table::*;
@@ -21,18 +24,30 @@ pub fn print_logs(
     cli_command: &SubCommand,
     settings: &Settings,
 ) {
-    let (json, task_ids) = match cli_command {
-        SubCommand::Log { json, task_ids } => (*json, task_ids.clone()),
+    // Get actual commandline options.
+    // This is necessary to know how we should display/return the log information.
+    let (json, task_ids, lines, full) = match cli_command {
+        SubCommand::Log {
+            json,
+            task_ids,
+            lines,
+            full,
+        } => (*json, task_ids.clone(), lines.clone(), *full),
         _ => panic!(
             "Got wrong Subcommand {:?} in print_log. This shouldn't happen",
             cli_command
         ),
     };
+
+    // Return the server response in json representation.
+    // TODO: This only works properly if we get the logs from remote.
+    // TODO: However, this still doesn't work, since the logs are still compressed.
     if json {
         println!("{}", serde_json::to_string(&task_logs).unwrap());
         return;
     }
 
+    // Check some early return conditions
     if task_ids.is_empty() && task_logs.is_empty() {
         println!("There are no finished tasks");
         return;
@@ -43,9 +58,26 @@ pub fn print_logs(
         return;
     }
 
+    // Determine, whether we should draw everything or only a part of the log output.
+    // None implicates that all lines are printed
+    let lines = if full {
+        None
+    } else if let Some(lines) = lines {
+        Some(lines)
+    } else {
+        // By default only some lines are shown per task, if multiple tasks exist.
+        // For a single task, the whole log output is shown.
+        if task_logs.len() > 1 {
+            Some(15)
+        } else {
+            None
+        }
+    };
+
+    // Do the actual log printing
     let mut task_iter = task_logs.iter_mut().peekable();
     while let Some((_, mut task_log)) = task_iter.next() {
-        print_log(&mut task_log, settings);
+        print_log(&mut task_log, settings, lines);
 
         // Add a newline if there is another task that's going to be printed.
         if let Some((_, task_log)) = task_iter.peek() {
@@ -59,8 +91,14 @@ pub fn print_logs(
 }
 
 /// Print the log of a single task.
-pub fn print_log(task_log: &mut TaskLogMessage, settings: &Settings) {
-    let task = &task_log.task;
+///
+/// message: The message returned by the daemon. This message includes all
+///          requested tasks and the tasks' logs, if we don't read local logs.
+/// lines: Whether we should reduce the log output of each task to a specific number of lines.
+///         `None` implicates that everything should be printed.
+///         This is only important, if we read local lines.
+pub fn print_log(message: &mut TaskLogMessage, settings: &Settings, lines: Option<usize>) {
+    let task = &message.task;
     // We only show logs of finished or running tasks.
     if !vec![TaskStatus::Done, TaskStatus::Running, TaskStatus::Paused].contains(&task.status) {
         return;
@@ -94,9 +132,9 @@ pub fn print_log(task_log: &mut TaskLogMessage, settings: &Settings) {
     }
 
     if settings.client.read_local_logs {
-        print_local_log_output(task_log.task.id, settings);
-    } else if task_log.stdout.is_some() && task_log.stderr.is_some() {
-        print_task_output_from_daemon(task_log);
+        print_local_log(message.task.id, settings, lines);
+    } else if message.stdout.is_some() && message.stderr.is_some() {
+        print_remote_log(message);
     } else {
         println!("Logs requested from pueue daemon, but none received. Please report this bug.");
     }
@@ -104,7 +142,7 @@ pub fn print_log(task_log: &mut TaskLogMessage, settings: &Settings) {
 
 /// The daemon didn't send any log output, thereby we didn't request any.
 /// If that's the case, read the log files from the local pueue directory
-pub fn print_local_log_output(task_id: usize, settings: &Settings) {
+pub fn print_local_log(task_id: usize, settings: &Settings, lines: Option<usize>) {
     let (mut stdout_log, mut stderr_log) =
         match get_log_file_handles(task_id, &settings.shared.pueue_directory) {
             Ok((stdout, stderr)) => (stdout, stderr),
@@ -117,29 +155,51 @@ pub fn print_local_log_output(task_id: usize, settings: &Settings) {
     // without having to load anything into memory.
     let mut stdout = io::stdout();
 
-    if let Ok(metadata) = stdout_log.metadata() {
+    print_local_file(
+        &mut stdout,
+        &mut stdout_log,
+        &lines,
+        style_text("stdout:", Some(Color::Green), Some(Attribute::Bold)),
+    );
+
+    print_local_file(
+        &mut stdout,
+        &mut stderr_log,
+        &lines,
+        style_text("stderr:", Some(Color::Red), Some(Attribute::Bold)),
+    );
+}
+
+/// Print a local log file.
+/// This is usually either the stdout or the stderr
+pub fn print_local_file(stdout: &mut Stdout, file: &mut File, lines: &Option<usize>, text: String) {
+    if let Ok(metadata) = file.metadata() {
         if metadata.len() != 0 {
-            println!(
-                "\n{}",
-                style_text("stdout:", Some(Color::Green), Some(Attribute::Bold))
-            );
+            println!("\n{}", text);
+            // Only print the last lines if requested
+            if let Some(lines) = lines {
+                // TODO: This is super imperformant, but works as long as we don't use the last
+                // 1000 lines. It would be cleaner to seek to the beginning of the requested
+                // position and simply stream the content to stdout.
+                let last_lines: Vec<String> = rev_lines::RevLines::new(BufReader::new(file))
+                    .expect("Failed to read last lines of file")
+                    .take(*lines)
+                    .collect();
 
-            if let Err(err) = io::copy(&mut stdout_log, &mut stdout) {
-                println!("Failed reading local stdout log file: {}", err);
-            };
-        }
-    }
+                println!(
+                    "{}",
+                    last_lines
+                        .into_iter()
+                        .rev()
+                        .collect::<Vec<String>>()
+                        .join("\n")
+                );
+                return;
+            }
 
-    if let Ok(metadata) = stderr_log.metadata() {
-        if metadata.len() != 0 {
-            // Add a spacer line between stdout and stderr
-            println!(
-                "\n{}",
-                style_text("stderr:", Some(Color::Red), Some(Attribute::Bold))
-            );
-
-            if let Err(err) = io::copy(&mut stderr_log, &mut stdout) {
-                println!("Failed reading local stderr log file: {}", err);
+            // Print everything
+            if let Err(err) = io::copy(file, stdout) {
+                println!("Failed reading local log file: {}", err);
             };
         }
     }
@@ -148,23 +208,23 @@ pub fn print_local_log_output(task_id: usize, settings: &Settings) {
 /// Prints log output received from the daemon.
 /// We can safely call .unwrap() on stdout and stderr in here, since this
 /// branch is always called after ensuring that both are `Some`.
-pub fn print_task_output_from_daemon(task_log: &TaskLogMessage) {
+pub fn print_remote_log(task_log: &TaskLogMessage) {
     // Save whether stdout was printed, so we can add a newline between outputs.
     if !task_log.stdout.as_ref().unwrap().is_empty() {
-        if let Err(err) = print_remote_task_output(&task_log, true) {
+        if let Err(err) = print_remote_task_log(&task_log, true) {
             println!("Error while parsing stdout: {}", err);
         }
     }
 
     if !task_log.stderr.as_ref().unwrap().is_empty() {
-        if let Err(err) = print_remote_task_output(&task_log, false) {
+        if let Err(err) = print_remote_task_log(&task_log, false) {
             println!("Error while parsing stderr: {}", err);
         };
     }
 }
 
 /// Print log output of a finished process.
-pub fn print_remote_task_output(task_log: &TaskLogMessage, stdout: bool) -> Result<()> {
+pub fn print_remote_task_log(task_log: &TaskLogMessage, stdout: bool) -> Result<()> {
     let (pre_text, color, bytes) = if stdout {
         ("stdout: ", Color::Green, task_log.stdout.as_ref().unwrap())
     } else {

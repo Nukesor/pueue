@@ -1197,6 +1197,7 @@ dependencies = [
  "psutil",
  "rand 0.8.2",
  "rcgen",
+ "rev_lines",
  "rustls",
  "serde",
  "serde_derive",
@@ -1384,6 +1385,12 @@ checksum = "3acd125665422973a33ac9d3dd2df85edad0f4ae9b00dafb1a05e43a9f5ef8e7"
 dependencies = [
  "winapi",
 ]
+
+[[package]]
+name = "rev_lines"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "18eb52b6664d331053136fcac7e4883bdc6f5fc04a6aab3b0f75eafb80ab88b3"
 
 [[package]]
 name = "ring"

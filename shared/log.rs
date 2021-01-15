@@ -1,6 +1,5 @@
 use std::fs::{read_dir, remove_file, File};
 use std::io;
-use std::io::prelude::*;
 use std::path::PathBuf;
 
 use anyhow::{bail, Result};
@@ -31,21 +30,6 @@ pub fn get_log_file_handles(task_id: usize, path: &PathBuf) -> Result<(File, Fil
     let stderr = File::open(err_path)?;
 
     Ok((stdout, stderr))
-}
-
-/// Return the content of temporary stdout and stderr files for a task.
-pub fn read_log_files(task_id: usize, path: &PathBuf) -> Result<(String, String)> {
-    let (mut stdout_handle, mut stderr_handle) = get_log_file_handles(task_id, path)?;
-    let mut stdout_buffer = Vec::new();
-    let mut stderr_buffer = Vec::new();
-
-    stdout_handle.read_to_end(&mut stdout_buffer)?;
-    stderr_handle.read_to_end(&mut stderr_buffer)?;
-
-    let stdout = String::from_utf8_lossy(&stdout_buffer);
-    let stderr = String::from_utf8_lossy(&stderr_buffer);
-
-    Ok((stdout.to_string(), stderr.to_string()))
 }
 
 /// Remove temporary stdout and stderr files for a task.
