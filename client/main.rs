@@ -9,8 +9,7 @@ use pueue::settings::Settings;
 pub mod cli;
 pub mod client;
 pub mod commands;
-pub mod output;
-pub mod output_helper;
+pub mod display;
 
 use crate::cli::{CliArguments, Shell, SubCommand};
 use crate::client::Client;

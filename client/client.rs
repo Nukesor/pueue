@@ -17,7 +17,7 @@ use crate::commands::get_state;
 use crate::commands::local_follow::local_follow;
 use crate::commands::restart::restart;
 use crate::commands::wait::wait;
-use crate::output::*;
+use crate::display::*;
 
 /// This struct contains the base logic for the client.
 /// The client is responsible for connecting to the daemon, sending instructions

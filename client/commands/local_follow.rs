@@ -5,7 +5,7 @@ use anyhow::{bail, Result};
 use pueue::network::protocol::GenericStream;
 
 use crate::commands::get_state;
-use crate::output::follow_task_logs;
+use crate::display::follow_local_task_logs;
 
 pub async fn local_follow(
     stream: &mut GenericStream,
@@ -46,7 +46,7 @@ pub async fn local_follow(
         }
     };
 
-    follow_task_logs(pueue_directory, task_id, err);
+    follow_local_task_logs(pueue_directory, task_id, err);
 
     Ok(())
 }

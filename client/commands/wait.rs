@@ -10,7 +10,7 @@ use pueue::network::protocol::GenericStream;
 use pueue::task::{Task, TaskResult, TaskStatus};
 
 use crate::commands::get_state;
-use crate::output_helper::style_text;
+use crate::display::helper::style_text;
 
 /// Wait until tasks are done.
 /// Tasks can be specified by:
