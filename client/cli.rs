@@ -305,7 +305,11 @@ pub enum SubCommand {
     },
 
     /// Remove all finished tasks from the list (also clears logs).
-    Clean,
+    Clean {
+        /// Only clean tasks that finished successfully.
+        #[clap(short, long)]
+        successful_only: bool,
+    },
 
     /// Kill all tasks, clean up afterwards and reset EVERYTHING!
     Reset {

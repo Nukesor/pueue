@@ -402,7 +402,13 @@ impl Client {
                 };
                 Ok(Message::StreamRequest(message))
             }
-            SubCommand::Clean => Ok(Message::Clean),
+            SubCommand::Clean { successful_only } => {
+                let message = CleanMessage {
+                    successful_only: *successful_only,
+                };
+
+                Ok(Message::Clean(message))
+            }
             SubCommand::Reset { children, force } => {
                 if self.settings.client.show_confirmation_questions && !force {
                     self.handle_user_confirmation("reset", &Vec::new())?;

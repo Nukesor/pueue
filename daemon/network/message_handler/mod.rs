@@ -27,7 +27,7 @@ static SENDER_ERR: &str = "Failed to send message to task handler thread";
 pub fn handle_message(message: Message, sender: &Sender<Message>, state: &SharedState) -> Message {
     match message {
         Message::Add(message) => add::add_task(message, sender, state),
-        Message::Clean => clean::clean(state),
+        Message::Clean(message) => clean::clean(message, state),
         Message::Edit(message) => edit::edit(message, state),
         Message::EditRequest(task_id) => edit::edit_request(task_id, state),
         Message::Enqueue(message) => enqueue::enqueue(message, state),
@@ -114,13 +114,13 @@ mod fixtures {
     }
 
     /// Create a new task with stub data
-    pub fn get_stub_task(id: &str) -> Task {
+    pub fn get_stub_task(id: &str, status: TaskStatus) -> Task {
         Task::new(
             format!("ls {}", id),
             "/tmp".to_string(),
             HashMap::new(),
             "default".to_string(),
-            TaskStatus::Queued,
+            status,
             None,
             Vec::new(),
             None,
@@ -132,28 +132,24 @@ mod fixtures {
         {
             // Queued task
             let mut state = state.lock().unwrap();
-            let task = get_stub_task("0");
+            let task = get_stub_task("0", TaskStatus::Queued);
             state.add_task(task);
 
             // Finished task
-            let mut task = get_stub_task("1");
-            task.status = TaskStatus::Done;
+            let mut task = get_stub_task("1", TaskStatus::Done);
             task.result = Some(TaskResult::Success);
             state.add_task(task);
 
             // Stashed task
-            let mut task = get_stub_task("2");
-            task.status = TaskStatus::Stashed;
+            let task = get_stub_task("2", TaskStatus::Stashed);
             state.add_task(task);
 
             // Running task
-            let mut task = get_stub_task("3");
-            task.status = TaskStatus::Running;
+            let task = get_stub_task("3", TaskStatus::Running);
             state.add_task(task);
 
             // Paused task
-            let mut task = get_stub_task("4");
-            task.status = TaskStatus::Paused;
+            let task = get_stub_task("4", TaskStatus::Paused);
             state.add_task(task);
         }
 

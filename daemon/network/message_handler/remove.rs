@@ -47,6 +47,8 @@ mod tests {
         // 3 and 4 aren't allowed to be removed, since they're running.
         // The rest will succeed.
         let message = remove(vec![0, 1, 2, 3, 4], &state);
+
+        // Return message is correct
         assert!(matches!(message, Message::Success(_)));
         if let Message::Success(text) = message {
             assert_eq!(
@@ -66,18 +68,20 @@ mod tests {
         {
             let mut state = state.lock().unwrap();
             // Add a task with a dependency to a finished task
-            let mut task = get_stub_task("5");
+            let mut task = get_stub_task("5", TaskStatus::Queued);
             task.dependencies = vec![1];
             state.add_task(task);
 
             // Add a task depending on the previous task -> Linked dependencies
-            let mut task = get_stub_task("6");
+            let mut task = get_stub_task("6", TaskStatus::Queued);
             task.dependencies = vec![5];
             state.add_task(task);
         }
 
         // Make sure we cannot remove a task with dependencies.
         let message = remove(vec![1], &state);
+
+        // Return message is correct
         assert!(matches!(message, Message::Success(_)));
         if let Message::Success(text) = message {
             assert_eq!(text, "The command failed for tasks: 1");
@@ -90,6 +94,8 @@ mod tests {
 
         // Make sure we cannot remove a task with recursive dependencies.
         let message = remove(vec![1, 5], &state);
+
+        // Return message is correct
         assert!(matches!(message, Message::Success(_)));
         if let Message::Success(text) = message {
             assert_eq!(text, "The command failed for tasks: 1, 5");
@@ -102,6 +108,8 @@ mod tests {
 
         // Make sure we can remove tasks with dependencies if all dependencies are specified.
         let message = remove(vec![1, 5, 6], &state);
+
+        // Return message is correct
         assert!(matches!(message, Message::Success(_)));
         if let Message::Success(text) = message {
             assert_eq!(text, "Tasks removed from list: 1, 5, 6");

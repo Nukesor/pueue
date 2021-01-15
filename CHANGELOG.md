@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [0.10.3] - 
 
+### Added
+
+- Add the `--successful-only` flag to the `clean` subcommand.
+    This let's keep you all important logs of failed tasks, while freeing up some screen space.
+
 ### Fixed
 
 - Don't parse config path, if it's a directory.
