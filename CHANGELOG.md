@@ -22,6 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Don't parse config path, if it's a directory.
 - Error with "Couldn't find config at path {:?}" when passing a directory via `--config`.
+- Fixed missing newline between tasks in `log` output.
 
 ## [0.10.2] - 31-12-2020
 

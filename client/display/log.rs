@@ -81,10 +81,10 @@ pub fn print_logs(
 
         // Add a newline if there is another task that's going to be printed.
         if let Some((_, task_log)) = task_iter.peek() {
-            if !vec![TaskStatus::Done, TaskStatus::Running, TaskStatus::Paused]
+            if vec![TaskStatus::Done, TaskStatus::Running, TaskStatus::Paused]
                 .contains(&task_log.task.status)
             {
-                println!();
+                println!("\n");
             }
         }
     }
