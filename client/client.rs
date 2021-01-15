@@ -397,7 +397,7 @@ impl Client {
                 let message = LogRequestMessage {
                     task_ids: task_ids.clone(),
                     send_logs: !self.settings.client.read_local_logs,
-                    lines: lines.clone(),
+                    lines: *lines,
                     full: *full,
                 };
                 Ok(Message::Log(message))

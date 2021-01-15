@@ -30,7 +30,7 @@ pub fn print_logs(
             task_ids,
             lines,
             full,
-        } => (*json, task_ids.clone(), lines.clone(), *full),
+        } => (*json, task_ids.clone(), *lines, *full),
         _ => panic!(
             "Got wrong Subcommand {:?} in print_log. This shouldn't happen",
             cli_command
