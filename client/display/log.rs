@@ -1,14 +1,12 @@
-use std::{collections::BTreeMap, io::BufReader};
-use std::{
-    fs::File,
-    io::{self, Stdout},
-};
+use std::collections::BTreeMap;
+use std::fs::File;
+use std::io::{self, Stdout};
 
 use anyhow::Result;
 use comfy_table::*;
 use snap::read::FrameDecoder;
 
-use pueue::log::get_log_file_handles;
+use pueue::log::{get_log_file_handles, read_last_lines};
 use pueue::network::message::TaskLogMessage;
 use pueue::settings::Settings;
 use pueue::task::{TaskResult, TaskStatus};
@@ -143,7 +141,7 @@ pub fn print_log(message: &mut TaskLogMessage, settings: &Settings, lines: Optio
 /// The daemon didn't send any log output, thereby we didn't request any.
 /// If that's the case, read the log files from the local pueue directory
 pub fn print_local_log(task_id: usize, settings: &Settings, lines: Option<usize>) {
-    let (mut stdout_log, mut stderr_log) =
+    let (mut stdout_file, mut stderr_file) =
         match get_log_file_handles(task_id, &settings.shared.pueue_directory) {
             Ok((stdout, stderr)) => (stdout, stderr),
             Err(err) => {
@@ -157,14 +155,14 @@ pub fn print_local_log(task_id: usize, settings: &Settings, lines: Option<usize>
 
     print_local_file(
         &mut stdout,
-        &mut stdout_log,
+        &mut stdout_file,
         &lines,
         style_text("stdout:", Some(Color::Green), Some(Attribute::Bold)),
     );
 
     print_local_file(
         &mut stdout,
-        &mut stderr_log,
+        &mut stderr_file,
         &lines,
         style_text("stderr:", Some(Color::Red), Some(Attribute::Bold)),
     );
@@ -178,22 +176,7 @@ pub fn print_local_file(stdout: &mut Stdout, file: &mut File, lines: &Option<usi
             println!("\n{}", text);
             // Only print the last lines if requested
             if let Some(lines) = lines {
-                // TODO: This is super imperformant, but works as long as we don't use the last
-                // 1000 lines. It would be cleaner to seek to the beginning of the requested
-                // position and simply stream the content to stdout.
-                let last_lines: Vec<String> = rev_lines::RevLines::new(BufReader::new(file))
-                    .expect("Failed to read last lines of file")
-                    .take(*lines)
-                    .collect();
-
-                println!(
-                    "{}",
-                    last_lines
-                        .into_iter()
-                        .rev()
-                        .collect::<Vec<String>>()
-                        .join("\n")
-                );
+                println!("{}", read_last_lines(file, *lines));
                 return;
             }
 

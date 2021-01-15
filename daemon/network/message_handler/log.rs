@@ -15,6 +15,22 @@ pub fn get_log(message: LogRequestMessage, state: &SharedState) -> Message {
         message.task_ids
     };
 
+    // Determine, whether we should draw everything or only a part of the log output.
+    // None implicates that all lines are printed
+    let lines = if message.full {
+        None
+    } else if let Some(lines) = message.lines {
+        Some(lines)
+    } else {
+        // By default only some lines are shown per task, if multiple tasks exist.
+        // For a single task, the whole log output is shown.
+        if task_ids.len() > 1 {
+            Some(15)
+        } else {
+            None
+        }
+    };
+
     let mut tasks = BTreeMap::new();
     for task_id in task_ids.iter() {
         if let Some(task) = state.tasks.get(task_id) {
@@ -22,8 +38,11 @@ pub fn get_log(message: LogRequestMessage, state: &SharedState) -> Message {
             // This isn't as efficient as sending the raw compressed data directly,
             // but it's a lot more convenient for now.
             let (stdout, stderr) = if message.send_logs {
-                match read_and_compress_log_files(*task_id, &state.settings.shared.pueue_directory)
-                {
+                match read_and_compress_log_files(
+                    *task_id,
+                    &state.settings.shared.pueue_directory,
+                    lines,
+                ) {
                     Ok((stdout, stderr)) => (Some(stdout), Some(stderr)),
                     Err(err) => {
                         // Fail early if there's some problem with getting the log output

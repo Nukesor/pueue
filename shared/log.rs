@@ -1,5 +1,5 @@
 use std::fs::{read_dir, remove_file, File};
-use std::io;
+use std::io::{self, BufReader, Cursor};
 use std::path::PathBuf;
 
 use anyhow::{bail, Result};
@@ -51,8 +51,12 @@ pub fn clean_log_handles(task_id: usize, path: &PathBuf) {
 
 /// Return stdout and stderr of a finished process.
 /// Task output is compressed using snap to save some memory and bandwidth.
-pub fn read_and_compress_log_files(task_id: usize, path: &PathBuf) -> Result<(Vec<u8>, Vec<u8>)> {
-    let (mut stdout_handle, mut stderr_handle) = match get_log_file_handles(task_id, path) {
+pub fn read_and_compress_log_files(
+    task_id: usize,
+    path: &PathBuf,
+    lines: Option<usize>,
+) -> Result<(Vec<u8>, Vec<u8>)> {
+    let (mut stdout_file, mut stderr_file) = match get_log_file_handles(task_id, path) {
         Ok((stdout, stderr)) => (stdout, stderr),
         Err(err) => {
             bail!("Error while opening the output files: {}", err);
@@ -61,12 +65,25 @@ pub fn read_and_compress_log_files(task_id: usize, path: &PathBuf) -> Result<(Ve
 
     let mut stdout = Vec::new();
     let mut stderr = Vec::new();
-    {
-        // Compress log input and pipe it into the base64 encoder
+
+    if let Some(lines) = lines {
+        // Get the last few lines of both files
+        let stdout_bytes = read_last_lines(&mut stdout_file, lines).into_bytes();
+        let stderr_bytes = read_last_lines(&mut stderr_file, lines).into_bytes();
+        let mut stdout_cursor = Cursor::new(stdout_bytes);
+        let mut stderr_cursor = Cursor::new(stderr_bytes);
+
+        // Compress the partial log input and pipe it into the snappy compressor
         let mut stdout_compressor = FrameEncoder::new(&mut stdout);
-        io::copy(&mut stdout_handle, &mut stdout_compressor)?;
+        io::copy(&mut stdout_cursor, &mut stdout_compressor)?;
         let mut stderr_compressor = FrameEncoder::new(&mut stderr);
-        io::copy(&mut stderr_handle, &mut stderr_compressor)?;
+        io::copy(&mut stderr_cursor, &mut stderr_compressor)?;
+    } else {
+        // Compress the full log input and pipe it into the snappy compressor
+        let mut stdout_compressor = FrameEncoder::new(&mut stdout);
+        io::copy(&mut stdout_file, &mut stdout_compressor)?;
+        let mut stderr_compressor = FrameEncoder::new(&mut stderr);
+        io::copy(&mut stderr_file, &mut stderr_compressor)?;
     }
 
     Ok((stdout, stderr))
@@ -85,4 +102,22 @@ pub fn reset_task_log_directory(path: &PathBuf) {
             }
         }
     }
+}
+
+/// Read the last `amount` lines of a file to a string.
+///
+/// TODO: This is super imperformant, but works as long as we don't use the last
+/// 1000 lines. It would be cleaner to seek to the beginning of the requested
+/// position and simply stream the content.
+pub fn read_last_lines(file: &mut File, amount: usize) -> String {
+    let last_lines: Vec<String> = rev_lines::RevLines::new(BufReader::new(file))
+        .expect("Failed to read last lines of file")
+        .take(amount)
+        .collect();
+
+    last_lines
+        .into_iter()
+        .rev()
+        .collect::<Vec<String>>()
+        .join("\n")
 }

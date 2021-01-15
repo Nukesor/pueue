@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
     This is used to only show the last X lines of each task's stdout and stderr.
 - Add the `--full` flag to the `log` subcommand.
     This is used to show the whole logfile of each task's stdout and stderr.
+- Add the `--successful-only` flag to the `clean` subcommand.
+     This let's keep you all important logs of failed tasks, while freeing up some screen space.
 
 ### Changed
 
