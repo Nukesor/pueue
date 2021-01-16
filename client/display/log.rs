@@ -9,7 +9,7 @@ use snap::read::FrameDecoder;
 use pueue::log::{get_log_file_handles, read_last_lines};
 use pueue::network::message::TaskLogMessage;
 use pueue::settings::Settings;
-use pueue::task::{TaskResult, TaskStatus};
+use pueue::task::{Task, TaskResult, TaskStatus};
 
 use super::helper::*;
 use crate::cli::SubCommand;
@@ -102,8 +102,22 @@ pub fn print_log(message: &mut TaskLogMessage, settings: &Settings, lines: Optio
         return;
     }
 
+    print_task_info(task);
+
+    if settings.client.read_local_logs {
+        print_local_log(message.task.id, settings, lines);
+    } else if message.stdout.is_some() && message.stderr.is_some() {
+        print_remote_log(message);
+    } else {
+        println!("Logs requested from pueue daemon, but none received. Please report this bug.");
+    }
+}
+
+/// Print some information about a task, which is displayed on top of the task's log output.
+pub fn print_task_info(task: &Task) {
     // Print task id and exit code.
-    let task_text = style_text(&format!("Task {}", task.id), None, Some(Attribute::Bold));
+    let task_cell = Cell::new(format!("Task {}", task.id)).add_attribute(Attribute::Bold);
+
     let (exit_status, color) = match &task.result {
         Some(TaskResult::Success) => ("completed successfully".into(), Color::Green),
         Some(TaskResult::Failed(exit_code)) => {
@@ -115,27 +129,42 @@ pub fn print_log(message: &mut TaskLogMessage, settings: &Settings, lines: Optio
         Some(TaskResult::DependencyFailed) => ("dependency failed".into(), Color::Red),
         None => ("running".into(), Color::White),
     };
-    let status_text = style_text(&exit_status, Some(color), None);
-    println!("{} {}", task_text, status_text);
+    let status_cell = Cell::new(exit_status).fg(color);
 
-    // Print command and path.
-    println!("Command: {}", task.command);
-    println!("Path: {}", task.path);
+    let mut table = Table::new();
+    table.load_preset("     ──            ");
+    table.set_content_arrangement(comfy_table::ContentArrangement::Dynamic);
 
+    // Add the id, exit status and other info of the task.
+    table.set_header(vec![task_cell, status_cell]);
+    table.add_row(vec![
+        Cell::new("Command:").add_attribute(Attribute::Bold),
+        Cell::new(&task.command),
+    ]);
+    table.add_row(vec![
+        Cell::new("Path:").add_attribute(Attribute::Bold),
+        Cell::new(&task.path),
+    ]);
+
+    // Add the start and end time
     if let Some(start) = task.start {
-        println!("Start: {}", start.to_rfc2822());
+        table.add_row(vec![
+            Cell::new("Start:").add_attribute(Attribute::Bold),
+            Cell::new(start.to_rfc2822()),
+        ]);
     }
     if let Some(end) = task.end {
-        println!("End: {}", end.to_rfc2822());
+        table.add_row(vec![
+            Cell::new("End:").add_attribute(Attribute::Bold),
+            Cell::new(end.to_rfc2822()),
+        ]);
     }
 
-    if settings.client.read_local_logs {
-        print_local_log(message.task.id, settings, lines);
-    } else if message.stdout.is_some() && message.stderr.is_some() {
-        print_remote_log(message);
-    } else {
-        println!("Logs requested from pueue daemon, but none received. Please report this bug.");
-    }
+    // Set the padding of the left column to 0
+    let first_column = table.get_column_mut(0).unwrap();
+    first_column.set_padding((0, 0));
+
+    println!("{}", table);
 }
 
 /// The daemon didn't send any log output, thereby we didn't request any.

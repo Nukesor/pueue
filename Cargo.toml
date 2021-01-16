@@ -59,7 +59,7 @@ simplelog = { version = "0.9", default-features = false }
 clap = "3.0.0-beta.2"
 clap_generate = "3.0.0-beta.2"
 crossterm = "^0.19"
-comfy-table= "^1"
+comfy-table= "^2"
 
 [target.'cfg(not(windows))'.dependencies]
 users = "^0.11"
