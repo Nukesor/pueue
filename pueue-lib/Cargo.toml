@@ -1,13 +1,13 @@
 [package]
 name = "pueue-lib"
-description = "The shared library used by both the Pueue client and daemon."
+description = "The shared library to work with the Pueue client and daemon."
 version = "0.10.3-alpha.0"
 authors = ["Arne Beer <contact@arne.beer>"]
 homepage = "https://github.com/nukesor/pueue"
 repository = "https://github.com/nukesor/pueue"
 documentation = "https://docs.rs/pueue/"
 license = "MIT"
-keywords = ["shell", "command", "parallel", "task", "queue"]
+keywords = ["shell", "command", "parallel", "task", "queue", "pueue"]
 readme = "README.md"
 edition = "2018"
 
@@ -40,12 +40,3 @@ log = "0.4"
 
 [target.'cfg(not(windows))'.dependencies]
 users = "^0.11"
-
-[target.'cfg(target_os = "macos")'.dependencies]
-psutil = "^3"
-
-[build-dependencies]
-version_check = "^0.9"
-
-[dev-dependencies]
-proptest = "^0.10"

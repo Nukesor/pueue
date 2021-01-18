@@ -57,6 +57,3 @@ psutil = "^3"
 
 [build-dependencies]
 version_check = "^0.9"
-
-[dev-dependencies]
-proptest = "^0.10"
