@@ -171,12 +171,9 @@ pub fn print_task_info(task: &Task) {
         ]);
     }
 
-    // Align the keys (first column) to the right
-    let column = table.get_column_mut(0).unwrap();
-    column.set_cell_alignment(CellAlignment::Right);
-
-    // Set the padding of the left column to 0
+    // Set the padding of the left column to 0 align the keys to the right
     let first_column = table.get_column_mut(0).unwrap();
+    first_column.set_cell_alignment(CellAlignment::Right);
     first_column.set_padding((0, 0));
 
     println!("{}", table);
