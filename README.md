@@ -98,7 +98,7 @@ It might compile on older versions, but this isn't tested or officially supporte
 cargo install pueue
 ```
 
-This will install pueue to `~/.cargo/bin/pueue`
+This will install Pueue to `$CARGO_HOME/bin/pueue` (default is `~/.cargo/bin/pueue`)
 
 #### From source
 
@@ -107,11 +107,11 @@ It might compile on older versions, but this isn't tested or officially supporte
 
 ```bash
 git clone git@github.com:Nukesor/pueue
-cd pueue
+cd pueue/pueue
 cargo install --path .
 ```
 
-This will install pueue to `~/.cargo/bin/pueue`
+This will install Pueue to `$CARGO_HOME/bin/pueue` (default is `~/.cargo/bin/pueue`)
 
 ## How to use it
 

@@ -82,7 +82,7 @@ pub fn print_logs(
             if vec![TaskStatus::Done, TaskStatus::Running, TaskStatus::Paused]
                 .contains(&task_log.task.status)
             {
-                println!("\n");
+                println!();
             }
         }
     }
@@ -116,7 +116,7 @@ pub fn print_log(message: &mut TaskLogMessage, settings: &Settings, lines: Optio
 /// Print some information about a task, which is displayed on top of the task's log output.
 pub fn print_task_info(task: &Task) {
     // Print task id and exit code.
-    let task_cell = Cell::new(format!("Task {}", task.id)).add_attribute(Attribute::Bold);
+    let task_cell = Cell::new(format!("Task {}: ", task.id)).add_attribute(Attribute::Bold);
 
     let (exit_status, color) = match &task.result {
         Some(TaskResult::Success) => ("completed successfully".into(), Color::Green),
@@ -127,16 +127,27 @@ pub fn print_task_info(task: &Task) {
         Some(TaskResult::Killed) => ("killed by system or user".into(), Color::Red),
         Some(TaskResult::Errored) => ("some IO error.\n Check daemon log.".into(), Color::Red),
         Some(TaskResult::DependencyFailed) => ("dependency failed".into(), Color::Red),
-        None => ("running".into(), Color::White),
+        None => match &task.status {
+            TaskStatus::Paused => ("paused".into(), Color::White),
+            TaskStatus::Running => ("running".into(), Color::Yellow),
+            _ => (task.status.to_string(), Color::White),
+        },
     };
     let status_cell = Cell::new(exit_status).fg(color);
 
+    // The styling of the task number and status is done by a single-row table.
     let mut table = Table::new();
-    table.load_preset("     ──            ");
+    table.load_preset("││─ └──┘     ─ ┌┐  ");
+    table.set_content_arrangement(comfy_table::ContentArrangement::Dynamic);
+    table.set_header(vec![task_cell, status_cell]);
+    println!("{}", table);
+
+    // All other information is alligned and styled by using a separat table.
+    let mut table = Table::new();
+    table.load_preset(comfy_table::presets::NOTHING);
     table.set_content_arrangement(comfy_table::ContentArrangement::Dynamic);
 
-    // Add the id, exit status and other info of the task.
-    table.set_header(vec![task_cell, status_cell]);
+    // Command and path
     table.add_row(vec![
         Cell::new("Command:").add_attribute(Attribute::Bold),
         Cell::new(&task.command),
@@ -146,7 +157,7 @@ pub fn print_task_info(task: &Task) {
         Cell::new(&task.path),
     ]);
 
-    // Add the start and end time
+    // Start and end time
     if let Some(start) = task.start {
         table.add_row(vec![
             Cell::new("Start:").add_attribute(Attribute::Bold),
@@ -159,6 +170,10 @@ pub fn print_task_info(task: &Task) {
             Cell::new(end.to_rfc2822()),
         ]);
     }
+
+    // Align the keys (first column) to the right
+    let column = table.get_column_mut(0).unwrap();
+    column.set_cell_alignment(CellAlignment::Right);
 
     // Set the padding of the left column to 0
     let first_column = table.get_column_mut(0).unwrap();
@@ -202,7 +217,9 @@ pub fn print_local_log(task_id: usize, settings: &Settings, lines: Option<usize>
 pub fn print_local_file(stdout: &mut Stdout, file: &mut File, lines: &Option<usize>, text: String) {
     if let Ok(metadata) = file.metadata() {
         if metadata.len() != 0 {
+            // Don't print a newline between the task information and the first output
             println!("\n{}", text);
+
             // Only print the last lines if requested
             if let Some(lines) = lines {
                 println!("{}", read_last_lines(file, *lines));

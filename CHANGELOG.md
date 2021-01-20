@@ -4,7 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.11.0] - 19-01-2020
+## [0.11.2] - 
+
+### Changed
+
+- Readability of the `log` command has been further improved.
+
+## [0.11.1] - 19-01-2020
 
 ### Fixed
 
