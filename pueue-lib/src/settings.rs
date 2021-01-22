@@ -89,7 +89,7 @@ impl Settings {
         #[cfg(not(target_os = "windows"))]
         config.set_default("shared.unix_socket_path", get_unix_socket_path()?)?;
 
-        config.set_default("shared.host", "localhost")?;
+        config.set_default("shared.host", "127.0.0.1")?;
         config.set_default("shared.port", "6924")?;
         config.set_default("shared.tls_enabled", true)?;
         config.set_default(

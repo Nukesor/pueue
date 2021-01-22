@@ -9,6 +9,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Changed
 
 - Readability of the `log` command has been further improved.
+- Use `127.0.0.1` instead of `localhost` as default host.
+    This prevents any unforseen consequences if somebody deletes the default `localhost` entry from their `/etc/hosts` file.
 
 ## [0.11.1] - 19-01-2020
 
