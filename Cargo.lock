@@ -1164,8 +1164,8 @@ dependencies = [
  "simplelog",
  "snap",
  "tempfile",
- "users",
  "version_check",
+ "whoami",
 ]
 
 [[package]]
@@ -1192,7 +1192,7 @@ dependencies = [
  "serde_yaml",
  "snap",
  "strum_macros",
- "users",
+ "whoami",
 ]
 
 [[package]]
@@ -1837,6 +1837,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0fcb14dea929042224824779fbc82d9fab8d2e6d3cbc0ac404de8edf489e77ff"
 dependencies = [
  "cc",
+]
+
+[[package]]
+name = "whoami"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1a921c0ad578a51c0b6c0bbb9b95f0ed11e90d61da506139e48a946edd11ee1e"
+dependencies = [
+ "wasm-bindgen",
+ "web-sys",
 ]
 
 [[package]]
