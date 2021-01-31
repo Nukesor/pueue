@@ -382,7 +382,7 @@ pub struct CliArguments {
     #[clap(short, long, parse(from_occurrences))]
     pub verbose: u8,
 
-    /// Path to a specific pueue config daemon, that should be used.
+    /// Path to a specific pueue config file to use.
     /// This ignores all other config files.
     #[clap(short, long)]
     pub config: Option<PathBuf>,
