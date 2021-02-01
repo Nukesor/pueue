@@ -1158,40 +1158,13 @@ dependencies = [
  "nix 0.19.1",
  "procfs",
  "psutil",
- "pueue-lib 0.11.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "pueue-lib 0.11.1",
  "serde_json",
  "shell-escape",
  "simplelog",
  "snap",
  "tempfile",
  "version_check",
- "whoami",
-]
-
-[[package]]
-name = "pueue-lib"
-version = "0.11.1"
-dependencies = [
- "anyhow",
- "async-std",
- "async-tls",
- "async-trait",
- "bincode",
- "byteorder",
- "chrono",
- "config",
- "dirs",
- "log",
- "rand",
- "rcgen",
- "rev_lines",
- "rustls",
- "serde",
- "serde_derive",
- "serde_json",
- "serde_yaml",
- "snap",
- "strum_macros",
  "whoami",
 ]
 
@@ -1222,6 +1195,33 @@ dependencies = [
  "snap",
  "strum_macros",
  "users",
+]
+
+[[package]]
+name = "pueue-lib"
+version = "0.11.2"
+dependencies = [
+ "anyhow",
+ "async-std",
+ "async-tls",
+ "async-trait",
+ "bincode",
+ "byteorder",
+ "chrono",
+ "config",
+ "dirs",
+ "log",
+ "rand",
+ "rcgen",
+ "rev_lines",
+ "rustls",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "serde_yaml",
+ "snap",
+ "strum_macros",
+ "whoami",
 ]
 
 [[package]]
