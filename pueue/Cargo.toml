@@ -14,30 +14,6 @@ edition = "2018"
 [badges]
 maintenance = { status = "actively-developed" }
 
-[dependencies]
-pueue-lib = { version = "0.11.1"}
-#pueue-lib = { path = "../pueue-lib" }
-
-anyhow = "1"
-chrono = { version = "^0.4", features = ["serde"] }
-chrono-english = "^0.1.0"
-shell-escape = "^0.1"
-tempfile = "^3"
-
-async-std = { version = "1", features = ["attributes", "std"] }
-snap = "1"
-serde_json = "^1.0"
-
-log = "0.4"
-simplelog = { version = "0.9", default-features = false }
-clap = "3.0.0-beta.2"
-clap_generate = "3.0.0-beta.2"
-crossterm = "^0.19"
-comfy-table= "^2"
-
-handlebars = "3"
-ctrlc = { version = "3", features = ["termination"] }
-
 [[bin]]
 name = "pueue"
 path = "client/main.rs"
@@ -46,15 +22,39 @@ path = "client/main.rs"
 name = "pueued"
 path = "daemon/main.rs"
 
+[dependencies]
+pueue-lib = { version = "0.11"}
+#pueue-lib = { path = "../pueue-lib" }
+
+anyhow = "1"
+chrono = { version = "0.4", features = ["serde"] }
+chrono-english = "0.1"
+shell-escape = "0.1"
+tempfile = "3"
+
+async-std = { version = "1", features = ["attributes", "std"] }
+snap = "1"
+serde_json = "1"
+
+log = "0.4"
+simplelog = { version = "0.9", default-features = false }
+clap = "3.0.0-beta.2"
+clap_generate = "3.0.0-beta.2"
+crossterm = "0.19"
+comfy-table= "2"
+
+handlebars = "3"
+ctrlc = { version = "3", features = ["termination"] }
+
 [target.'cfg(not(windows))'.dependencies]
-nix = "^0.19"
-users = "^0.11"
+nix = "0.19"
+whoami = "1"
 
 [target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]
 procfs = { version = "0.9", default-features = false }
 
 [target.'cfg(target_os = "macos")'.dependencies]
-psutil = "^3"
+psutil = "3"
 
 [build-dependencies]
-version_check = "^0.9"
+version_check = "0.9"

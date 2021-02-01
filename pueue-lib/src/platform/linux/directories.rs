@@ -1,18 +1,12 @@
 use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, Result};
-use users::{get_current_uid, get_user_by_uid};
 
 /// Get the default unix socket path for the current user
 pub fn get_unix_socket_path() -> Result<String> {
-    // Get the user and their username
-    let user = get_user_by_uid(get_current_uid())
-        .ok_or_else(|| anyhow!("Couldn't find username for current user"))?;
-    let username = user.name().to_string_lossy();
-
     // Create the socket in the default pueue path
     let pueue_path = PathBuf::from(default_pueue_path()?);
-    let path = pueue_path.join(format!("pueue_{}.socket", username));
+    let path = pueue_path.join(format!("pueue_{}.socket", whoami::username()));
     Ok(path
         .to_str()
         .ok_or_else(|| anyhow!("Failed to parse log path (Weird characters?)"))?
