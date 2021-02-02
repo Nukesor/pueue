@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use anyhow::{bail, Context, Result};
 use rand::{distributions::Alphanumeric, Rng};
 
-/// Simple helper function to generate a random secret
+/// Read the shared secret from a file.
 pub fn read_shared_secret(path: &PathBuf) -> Result<Vec<u8>> {
     if !path.exists() {
         bail!("Couldn't find shared secret file. Did you start the daemon at least once?");
@@ -18,7 +18,7 @@ pub fn read_shared_secret(path: &PathBuf) -> Result<Vec<u8>> {
     Ok(buffer)
 }
 
-/// Simple helper function to generate a random secret
+/// Generate a random secret and write it to a file.
 pub fn init_shared_secret(path: &PathBuf) -> Result<()> {
     if path.exists() {
         return Ok(());

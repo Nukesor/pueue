@@ -20,32 +20,43 @@ pub enum GroupStatus {
     Paused,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct State {
-    max_id: usize,
-    pub settings: Settings,
-    pub tasks: BTreeMap<usize, Task>,
-    pub groups: BTreeMap<String, GroupStatus>,
-    config_path: Option<PathBuf>,
-}
-
-/// Small wrapper to get the default group in one place.
-pub fn group_or_default(group: &Option<String>) -> String {
-    group.clone().unwrap_or_else(|| "default".to_string())
-}
-
 /// This is the full representation of the current state of the Pueue daemon.
+///
 /// This includes
-/// - All settings.
+/// - The currently used settings.
 /// - The full task list
 /// - The current status of all tasks
+/// - All known groups.
 ///
 /// However, the State does NOT include:
 /// - Information about child processes
 /// - Handles to child processes
 ///
-/// That information is saved in the TaskHandler.
+/// That information is saved in the daemon's TaskHandler.
+///
+/// Most functions implemented on the state shouldn't be used by third party software.
+/// The daemon is constantly changing and persisting the state. \
+/// Any changes applied to a state and saved to disk, will most likely be overwritten
+/// after a short time.
+///
+///
+/// The daemon uses the state as a piece of shared memory between it's threads.
+/// It's wrapped in a MutexGuard, which allows us to guarantee sequential access to any crucial
+/// information, such as status changes and incoming commands by the client.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct State {
+    max_id: usize,
+    /// The current settings used by the daemon.
+    pub settings: Settings,
+    /// All tasks currently managed by the daemon.
+    pub tasks: BTreeMap<usize, Task>,
+    /// All groups
+    pub groups: BTreeMap<String, GroupStatus>,
+    config_path: Option<PathBuf>,
+}
+
 impl State {
+    /// Create a new default state.
     pub fn new(settings: &Settings, config_path: Option<PathBuf>) -> State {
         // Create a default group state.
         let mut groups = BTreeMap::new();
@@ -64,6 +75,7 @@ impl State {
         state
     }
 
+    /// Add a new task
     pub fn add_task(&mut self, mut task: Task) -> usize {
         task.id = self.max_id;
         self.tasks.insert(self.max_id, task);
@@ -72,6 +84,7 @@ impl State {
         self.max_id - 1
     }
 
+    /// A small helper to change the status of a specific task.
     pub fn change_status(&mut self, id: usize, new_status: TaskStatus) {
         if let Some(ref mut task) = self.tasks.get_mut(&id) {
             task.status = new_status;
@@ -79,14 +92,16 @@ impl State {
         };
     }
 
+    /// Set the time a specific task should be enqueued at.
     pub fn set_enqueue_at(&mut self, id: usize, enqueue_at: Option<DateTime<Local>>) {
         if let Some(ref mut task) = self.tasks.get_mut(&id) {
             task.enqueue_at = enqueue_at;
         }
     }
 
-    /// Check if the given group already exists.
-    /// If it doesn't exist yet, create a state entry and a new settings entry.
+    /// Add a new group to the daemon. \
+    /// This also check if the given group already exists.
+    /// Create a state.group entry and a settings.group entry, if it doesn't.
     pub fn create_group(&mut self, group: &str) {
         if self.settings.daemon.groups.get(group).is_none() {
             self.settings.daemon.groups.insert(group.into(), 1);
@@ -97,7 +112,8 @@ impl State {
     }
 
     /// Remove a group.
-    /// Also go through all tasks and set the removed group to `None`.
+    /// This also iterates through all tasks and sets any tasks' group
+    /// to the `default` group if it matches the deleted group.
     pub fn remove_group(&mut self, group: &str) -> Result<()> {
         if group.eq("default") {
             bail!("You cannot remove the default group.");
@@ -117,7 +133,7 @@ impl State {
         self.save_settings()
     }
 
-    /// Set the running status for all groups including the default queue
+    /// Set the group status (running/paused) for all groups including the default queue.
     pub fn set_status_for_all_groups(&mut self, status: GroupStatus) {
         let keys = self.groups.keys().cloned().collect::<Vec<String>>();
         for key in keys {
@@ -126,7 +142,7 @@ impl State {
         self.save()
     }
 
-    /// Get all ids of task with a specific state inside a specific group
+    /// Get all ids of task with a specific state inside a specific group.
     pub fn task_ids_in_group_with_stati(&self, group: &str, stati: Vec<TaskStatus>) -> Vec<usize> {
         self.tasks
             .iter()
@@ -136,7 +152,7 @@ impl State {
             .collect()
     }
 
-    /// Get all ids of task inside a specific group
+    /// Get all ids of task inside a specific group.
     pub fn task_ids_in_group(&self, group: &str) -> Vec<usize> {
         self.tasks
             .iter()
@@ -145,12 +161,12 @@ impl State {
             .collect()
     }
 
-    /// This checks, whether the given task_ids are in the specified statuses.
-    /// The first result is the list of task_ids that match these statuses.
-    /// The second result is the list of task_ids that don't match these statuses.
+    /// This checks, whether some tasks have one of the specified statuses. \
+    /// The first result is the list of task_ids that match these statuses. \
+    /// The second result is the list of task_ids that don't match these statuses. \
     ///
-    /// Additionally, a list of task_ids can be specified to only run the check
-    /// on a subset of all tasks.
+    /// By default, this checks all tasks in the current state. If a list of task_ids is
+    /// provided as the third parameter, only those tasks will be checked.
     pub fn tasks_in_statuses(
         &self,
         statuses: Vec<TaskStatus>,
@@ -186,11 +202,12 @@ impl State {
         (matching, mismatching)
     }
 
-    /// Check if a task can be deleted.
-    /// We have to check all dependant tasks, which haven't finished yet.
+    /// Check if a task can be deleted. \
+    /// We have to check all dependant tasks, that haven't finished yet.
     /// This is necessary to prevent deletion of tasks which are specified as a dependency.
     ///
     /// `to_delete` A list of task ids, which should also be deleted.
+    ///             This allows to remove dependency tasks as well as their dependants.
     pub fn is_task_removable(&self, task_id: &usize, to_delete: &[usize]) -> bool {
         // Get all task ids of any dependant tasks.
         let dependants: Vec<usize> = self
@@ -218,7 +235,12 @@ impl State {
             .all(|task_id| self.is_task_removable(task_id, to_delete))
     }
 
-    /// Users can specify to pause either the task's group or all groups on a failure.
+    /// A small helper for handling task failures. \
+    /// Users can specify whether they want to pause the task's group or the
+    /// whole daemon on a failed tasks. This function wraps that logic and decides if anything should be
+    /// paused depending on the current settings.
+    ///
+    /// `group` should be the name of the failed task.
     pub fn handle_task_failure(&mut self, group: String) {
         if self.settings.daemon.pause_group_on_failure {
             self.groups.insert(group, GroupStatus::Paused);
@@ -227,6 +249,8 @@ impl State {
         }
     }
 
+    /// Do a full reset of the state.
+    /// This doesn't reset any processes!
     pub fn reset(&mut self) {
         self.backup();
         self.max_id = 0;
@@ -234,6 +258,7 @@ impl State {
         self.set_status_for_all_groups(GroupStatus::Running);
     }
 
+    /// A small convenience wrapper for saving the settings to a file.
     pub fn save_settings(&self) -> Result<()> {
         self.settings.save(&self.config_path)
     }
@@ -253,8 +278,8 @@ impl State {
         };
     }
 
-    /// Save the current state to disk.
-    /// We do this to restore in case of a crash.
+    /// Save the current state to disk. \
+    /// We do this to restore in case of a crash. \
     /// If log == true, the file will be saved with a time stamp.
     ///
     /// In comparison to the daemon -> client communication, the state is saved
@@ -306,7 +331,7 @@ impl State {
         }
     }
 
-    /// Restore the last state from a previous session.
+    /// Restore the last state from a previous session. \
     /// The state is stored as json in the log directory.
     pub fn restore(&mut self) {
         let path = Path::new(&self.settings.shared.pueue_directory).join("state.json");

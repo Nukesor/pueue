@@ -8,6 +8,7 @@ use log::debug;
 use crate::network::message::*;
 
 // Reexport all stream/socket related stuff for convenience purposes
+pub use super::platform::socket::Stream;
 pub use super::platform::socket::*;
 
 /// Convenience wrapper around send_bytes.
@@ -32,16 +33,20 @@ pub async fn send_bytes(payload: &[u8], stream: &mut GenericStream) -> Result<()
     // Afterwards send the request.
     stream.write_all(&header).await?;
 
-    // Split the payload into 1.5kbyte chunks (MUT for TCP)
-    for chunk in payload.chunks(1500) {
+    // Split the payload into 1.4Kbyte chunks
+    // 1.5Kbyte is the MUT for TCP, but some carrier have a little less, such as Wireguard.
+    for chunk in payload.chunks(1400) {
         stream.write_all(chunk).await?;
     }
 
     Ok(())
 }
 
-/// Receive a byte stream depending on a given header.
-/// This is the basic protocol beneath all pueue communication.
+/// Receive a byte stream. \
+/// This is the basic protocol beneath all pueue communication. \
+///
+/// 1. The client sends a u64, which specifies the length of the payload.
+/// 2. Receive chunks of 1400 bytes until we finished all expected bytes
 pub async fn receive_bytes(stream: &mut GenericStream) -> Result<Vec<u8>> {
     // Receive the header with the overall message size
     let mut header = vec![0; 8];
@@ -55,10 +60,10 @@ pub async fn receive_bytes(stream: &mut GenericStream) -> Result<Vec<u8>> {
     // Receive chunks until we reached the expected message size
     while payload_bytes.len() < message_size {
         // Calculate the amount of bytes left
-        // By default try a buffer size of 1024 bytes
+        // By default try a buffer size of 1400 bytes
         let mut chunk_size = message_size - payload_bytes.len();
-        if chunk_size > 1024 {
-            chunk_size = 1024;
+        if chunk_size > 1400 {
+            chunk_size = 1400;
         }
 
         // Read data and get the amount of received bytes

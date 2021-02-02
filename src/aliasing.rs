@@ -7,8 +7,8 @@ use log::{info, warn};
 
 use crate::platform::directories::get_config_directories;
 
-/// Return the contents of the alias file, if it exists and can be parsed.
-/// The file should be located in `pueue_directory` and named `pueue_aliases`.
+/// Return the contents of the alias file, if it exists and can be parsed. \
+/// The file has to be located in `pueue_directory` and named `pueue_aliases.yml`.
 pub fn get_aliases() -> Result<HashMap<String, String>> {
     // Go through all config directories and check for a alias file.
     let mut alias_file_path = None;
@@ -37,7 +37,7 @@ pub fn get_aliases() -> Result<HashMap<String, String>> {
 }
 
 /// Check if there exists an alias for a given command.
-/// Only the first word will be replaced. The separator is a space.
+/// Only the first word will be replaced.
 pub fn insert_alias(command: String) -> String {
     let first = match command.split_whitespace().next() {
         Some(first) => first,

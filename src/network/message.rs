@@ -6,7 +6,8 @@ use serde_derive::{Deserialize, Serialize};
 use crate::state::{GroupStatus, State};
 use crate::task::Task;
 
-/// The Message used to add a new command to the daemon.
+/// This is the main message enum. \
+/// Everything that's communicated in Pueue can be serialized as this enum.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum Message {
     Add(AddMessage),

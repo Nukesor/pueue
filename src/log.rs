@@ -6,7 +6,7 @@ use anyhow::{bail, Result};
 use log::error;
 use snap::write::FrameEncoder;
 
-/// Return the paths to temporary stdout and stderr files for a task.
+/// Return the paths to the `(stdout, stderr)` log files of a task.
 pub fn get_log_paths(task_id: usize, path: &PathBuf) -> (PathBuf, PathBuf) {
     let task_log_dir = path.join("task_logs");
     let out_path = task_log_dir.join(format!("{}_stdout.log", task_id));
@@ -14,7 +14,7 @@ pub fn get_log_paths(task_id: usize, path: &PathBuf) -> (PathBuf, PathBuf) {
     (out_path, err_path)
 }
 
-/// Create and return the file handle for temporary stdout and stderr files for a task.
+/// Create and return the file handle for the `(stdout, stderr)` log files of a task.
 pub fn create_log_file_handles(task_id: usize, path: &PathBuf) -> Result<(File, File)> {
     let (out_path, err_path) = get_log_paths(task_id, path);
     let stdout = File::create(out_path)?;
@@ -23,7 +23,7 @@ pub fn create_log_file_handles(task_id: usize, path: &PathBuf) -> Result<(File, 
     Ok((stdout, stderr))
 }
 
-/// Return the file handle for temporary stdout and stderr files for a task.
+/// Return the file handle for the `(stdout, stderr)` log files of a task.
 pub fn get_log_file_handles(task_id: usize, path: &PathBuf) -> Result<(File, File)> {
     let (out_path, err_path) = get_log_paths(task_id, path);
     let stdout = File::open(out_path)?;
@@ -32,7 +32,7 @@ pub fn get_log_file_handles(task_id: usize, path: &PathBuf) -> Result<(File, Fil
     Ok((stdout, stderr))
 }
 
-/// Remove temporary stdout and stderr files for a task.
+/// Remove the the log files of a task.
 pub fn clean_log_handles(task_id: usize, path: &PathBuf) {
     let (out_path, err_path) = get_log_paths(task_id, path);
     if let Err(err) = remove_file(out_path) {
@@ -49,8 +49,8 @@ pub fn clean_log_handles(task_id: usize, path: &PathBuf) {
     };
 }
 
-/// Return stdout and stderr of a finished process.
-/// Task output is compressed using snap to save some memory and bandwidth.
+/// Return the `(stdout, stderr)` output of a task. \
+/// Task output is compressed using [snap] to save some memory and bandwidth.
 pub fn read_and_compress_log_files(
     task_id: usize,
     path: &PathBuf,
@@ -89,7 +89,7 @@ pub fn read_and_compress_log_files(
     Ok((stdout, stderr))
 }
 
-/// Remove temporary stdout and stderr files for a task.
+/// Remove all files in the log directory.
 pub fn reset_task_log_directory(path: &PathBuf) {
     let task_log_dir = path.join("task_logs");
 

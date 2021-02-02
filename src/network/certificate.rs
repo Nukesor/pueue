@@ -41,7 +41,7 @@ pub fn create_certificates(settings: &Settings) -> Result<()> {
     Ok(())
 }
 
-pub fn write_file(blob: String, name: &str, path: &PathBuf) -> Result<()> {
+fn write_file(blob: String, name: &str, path: &PathBuf) -> Result<()> {
     info!("Generate {}.", name);
     let error_message = format!("Cannot write default {}: {:?}", name, path);
     let mut file = File::create(path).context(error_message.clone())?;

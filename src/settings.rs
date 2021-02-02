@@ -13,38 +13,63 @@ use crate::platform::directories::*;
 /// All settings which are used by both, the client and the daemon
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Shared {
+    /// The directory that is used for all runtime information. \
+    /// I.e. task logs, sockets, state dumps, etc.
     pub pueue_directory: PathBuf,
+    /// If this is set to true, unix sockets will be used.
+    /// Otherwise we default to TCP+TLS
     #[cfg(not(target_os = "windows"))]
     pub use_unix_socket: bool,
+    /// The path to the unix socket.
     #[cfg(not(target_os = "windows"))]
     pub unix_socket_path: PathBuf,
 
+    /// The TCP hostname/ip address.
     pub host: String,
+    /// The TCP port.
     pub port: String,
+    /// The path to the TLS certificate used by the daemon. \
+    /// This is also used by the client to verify the daemon's identity.
     pub daemon_cert: PathBuf,
+    /// The path to the TLS key used by the daemon.
     pub daemon_key: PathBuf,
+    /// The path to the file containing the shared secret used to authenticate the client.
     pub shared_secret_path: PathBuf,
 }
 
 /// All settings which are used by the client
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Client {
+    /// Whether the client should read the logs directly from disk or whether it should
+    /// request the data from the daemon via socket.
     pub read_local_logs: bool,
+    /// Whether the client should show a confirmation question on potential dangerous actions.
     pub show_confirmation_questions: bool,
+    /// Whether aliases specified in `pueue_aliases.yml` should be expanded in the `pueue status`
+    /// or shown in their short form.
     pub show_expanded_aliases: bool,
+    /// The max amount of lines each task get's in the `pueue status` view.
     pub max_status_lines: Option<usize>,
 }
 
 /// All settings which are used by the daemon
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Daemon {
+    /// How many parallel tasks a group should have by default
     pub default_parallel_tasks: usize,
+    /// Whether a group should be paused as soon as a single task fails
     pub pause_group_on_failure: bool,
+    /// Whether the daemon (and all groups) should be paused as soon as a single task fails
     pub pause_all_on_failure: bool,
+    /// The callback that's called whenever a task finishes.
     pub callback: Option<String>,
+    /// This shouldn't be manipulated manually if the daemon is running.
+    /// This represents all known groups and their amount of parallel tasks.
     pub groups: BTreeMap<String, usize>,
 }
 
+/// The parent settings struct. \
+/// This contains all other setting structs.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Settings {
     pub client: Client,
@@ -54,12 +79,14 @@ pub struct Settings {
 
 impl Settings {
     /// This function creates a new configuration instance and
-    /// populates it with default values for every option.
-    /// If a local config file already exists it is parsed and
-    /// overwrites the default option values.
-    /// The local config is located at "~/.config/pueue.yml".
+    /// populates it with default values for every option. \
+    /// If a local config file already exists, it is parsed and
+    /// overrules the default option values.
+    /// The default local config is located at "~/.config/pueue.yml".
     ///
     /// If `require_config` is `true`, an error will be thrown, if no configuration file can be found.
+    /// This is utilized by the client, since only the daemon is allowed to touch the configuration
+    /// file.
     pub fn new(require_config: bool, from_file: &Option<PathBuf>) -> Result<Settings> {
         let mut config = Settings::default_config()?;
 
@@ -142,10 +169,11 @@ impl Settings {
         Ok(config.try_into()?)
     }
 
-    /// Save the current configuration as a file to the configuration path.
-    /// The file is written to the main configuration directory of the respective OS.
-    pub fn save(&self, to_file: &Option<PathBuf>) -> Result<()> {
-        let config_path = if let Some(path) = to_file {
+    /// Save the current configuration as a file to the given path. \
+    /// If no path is given, the default configuration path will be used. \
+    /// The file is then written to the main configuration directory of the respective OS.
+    pub fn save(&self, path: &Option<PathBuf>) -> Result<()> {
+        let config_path = if let Some(path) = path {
             path.clone()
         } else {
             default_config_directory()?.join("pueue.yml")

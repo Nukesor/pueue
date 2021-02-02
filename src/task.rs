@@ -98,7 +98,7 @@ impl Task {
         }
     }
 
-    /// A convenience function, which is used to create a duplicate task.
+    /// A convenience function used to duplicate a task.
     pub fn from_task(task: &Task) -> Task {
         Task {
             id: 0,
@@ -118,16 +118,18 @@ impl Task {
         }
     }
 
+    /// Whether the task is having a running process managed by the TaskHandler
     pub fn is_running(&self) -> bool {
         self.status == TaskStatus::Running || self.status == TaskStatus::Paused
     }
 
+    /// Whether the task's process finished.
     pub fn is_done(&self) -> bool {
         self.status == TaskStatus::Done
     }
 
-    /// Check if the task errored.
-    /// The only case when it didn't error is if it didn't run yet or if the task exited successfully.
+    /// Check if the task errored. \
+    /// It either didn't run yet or finished successfully.
     pub fn failed(&self) -> bool {
         !matches!(self.result, None | Some(TaskResult::Success))
     }
@@ -136,6 +138,7 @@ impl Task {
         self.status == TaskStatus::Queued || self.status == TaskStatus::Stashed
     }
 
+    /// Small convenience function to set the task's group to the default group.
     pub fn set_default_group(&mut self) {
         self.group = String::from("default");
     }

@@ -19,7 +19,7 @@ pub fn socket_cleanup(settings: &Shared) {
     }
 }
 
-/// A new trait, which can be used to represent Unix- and TcpListeners.
+/// A new trait, which can be used to represent Unix- and TcpListeners. \
 /// This is necessary to easily write generic functions where both types can be used.
 #[async_trait]
 pub trait GenericListener: Sync + Send {
@@ -31,7 +31,7 @@ pub trait GenericListener: Sync + Send {
 /// That's why this helper exists, which encapsulates the logic of accepting a new
 /// connection and initializing the TLS layer on top of it.
 /// This way we can expose an `accept` function and implement the GenericListener trait.
-pub struct TlsTcpListener {
+pub(crate) struct TlsTcpListener {
     tcp_listener: TcpListener,
     tls_acceptor: TlsAcceptor,
 }
@@ -52,18 +52,20 @@ impl GenericListener for UnixListener {
     }
 }
 
-/// A new trait, which can be used to represent Unix- and Tls encrypted TcpStreams.
+/// A new trait, which can be used to represent Unix- and Tls encrypted TcpStreams. \
 /// This is necessary to write generic functions where both types can be used.
 pub trait Stream: Read + Write + Unpin + Send {}
 impl Stream for UnixStream {}
 impl Stream for async_tls::server::TlsStream<TcpStream> {}
 impl Stream for async_tls::client::TlsStream<TcpStream> {}
 
-/// Two convenient types, so we don't have type write Box<dyn ...> all the time.
+/// Convenience type, so we don't have type write Box<dyn GenericListener> all the time.
 pub type Listener = Box<dyn GenericListener>;
+/// Convenience type, so we don't have type write Box<dyn Stream> all the time. \
+/// This also prevents name collisions, since `Stream` is imported in many preludes.
 pub type GenericStream = Box<dyn Stream>;
 
-/// Get a new stream for the client.
+/// Get a new stream for the client. \
 /// This can either be a UnixStream or a Tls encrypted TCPStream, depending on the parameters.
 pub async fn get_client_stream(settings: &Shared) -> Result<GenericStream> {
     // Create a unix socket, if the config says so.
@@ -99,9 +101,8 @@ pub async fn get_client_stream(settings: &Shared) -> Result<GenericStream> {
     Ok(Box::new(stream))
 }
 
-/// Get a new listener for the daemon.
-/// This can either be a UnixListener or a TCPlistener,
-/// which depends on the parameters.
+/// Get a new listener for the daemon. \
+/// This can either be a UnixListener or a TCPlistener, depending on the parameters.
 pub async fn get_listener(settings: &Shared) -> Result<Listener> {
     if settings.use_unix_socket {
         // Check, if the socket already exists

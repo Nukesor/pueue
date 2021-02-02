@@ -13,7 +13,7 @@ use rustls::{Certificate, ClientConfig, PrivateKey, ServerConfig};
 
 use crate::settings::Shared;
 
-/// Initialize our client [TlsConnector].
+/// Initialize our client [TlsConnector]. \
 /// 1. Trust our own CA. ONLY our own CA.
 /// 2. Set the client certificate and key
 pub async fn get_tls_connector(settings: &Shared) -> Result<TlsConnector> {
@@ -29,7 +29,7 @@ pub async fn get_tls_connector(settings: &Shared) -> Result<TlsConnector> {
     Ok(TlsConnector::from(Arc::new(config)))
 }
 
-/// Configure the server using rusttls.
+/// Configure the server using rusttls. \
 /// A TLS server needs a certificate and a fitting private key.
 pub fn get_tls_listener(settings: &Shared) -> Result<TlsAcceptor> {
     let mut config = ServerConfig::new(NoClientAuth::new());
