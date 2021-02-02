@@ -23,8 +23,8 @@ name = "pueued"
 path = "src/daemon/main.rs"
 
 [dependencies]
-pueue-lib = { version = "^0.11-alpha.0"}
-#pueue-lib = { path = "../pueue-lib" }
+#pueue-lib = { version = "^0.11-alpha.0"}
+pueue-lib = { path = "../pueue-lib" }
 
 anyhow = "1"
 chrono = { version = "0.4", features = ["serde"] }

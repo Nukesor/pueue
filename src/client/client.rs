@@ -9,7 +9,6 @@ use pueue_lib::network::message::*;
 use pueue_lib::network::protocol::*;
 use pueue_lib::network::secret::read_shared_secret;
 use pueue_lib::settings::Settings;
-use pueue_lib::state::group_or_default;
 
 use crate::cli::{CliArguments, SubCommand};
 use crate::commands::edit::edit;
@@ -30,6 +29,11 @@ pub struct Client {
     opt: CliArguments,
     settings: Settings,
     stream: GenericStream,
+}
+
+/// This is a small helper which either returns a given group or the default group.
+pub fn group_or_default(group: &Option<String>) -> String {
+    group.clone().unwrap_or_else(|| "default".to_string())
 }
 
 impl Client {
