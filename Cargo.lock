@@ -1169,7 +1169,7 @@ dependencies = [
  "nix 0.19.1",
  "procfs",
  "psutil",
- "pueue-lib 0.11.2",
+ "pueue-lib",
  "serde_json",
  "shell-escape",
  "simplelog",
@@ -1181,36 +1181,9 @@ dependencies = [
 
 [[package]]
 name = "pueue-lib"
-version = "0.11.2"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "100fea38f3c8127dd3a31fe42bc5662a24defc1c7705279a564172019148e4e2"
-dependencies = [
- "anyhow",
- "async-std",
- "async-tls",
- "async-trait",
- "bincode",
- "byteorder",
- "chrono",
- "config",
- "dirs",
- "log",
- "rand",
- "rcgen",
- "rev_lines",
- "rustls",
- "serde",
- "serde_derive",
- "serde_json",
- "serde_yaml",
- "snap",
- "strum_macros",
- "whoami",
-]
-
-[[package]]
-name = "pueue-lib"
-version = "0.11.3-alpha.0"
+checksum = "2fbde4949922bc8e6e783f66fbd322ab9f68fa4aa6e2c97ef9d19b9b20f6cbef"
 dependencies = [
  "anyhow",
  "async-std",
@@ -1360,9 +1333,9 @@ checksum = "18eb52b6664d331053136fcac7e4883bdc6f5fc04a6aab3b0f75eafb80ab88b3"
 
 [[package]]
 name = "ring"
-version = "0.16.19"
+version = "0.16.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "024a1e66fea74c66c66624ee5622a7ff0e4b73a13b4f5c326ddb50c708944226"
+checksum = "3053cf52e236a3ed746dfc745aa9cacf1b791d846bdaf412f60a8d7d6e17c8fc"
 dependencies = [
  "cc",
  "libc",

@@ -4,21 +4,28 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.11.2] - 
+
+## [0.12.0] - 
+
+Info for all packagers: \
+The new repository layout with workspaces didn't work out that well.
+Managing both versions in a single repository in combination with `cargo release` was quite cumbersome. \
+This will hopefully be the last time, you'll need to adjust paths.
+
+## [0.11.2] - 01-02-2021
 
 ### Changed
 
 - Readability of the `log` command has been further improved.
-- Use `127.0.0.1` instead of `localhost` as default host.
-    This prevents any unforseen consequences if somebody deletes the default `localhost` entry from their `/etc/hosts` file.
+- Dependency update to pueue-lib v0.11.2
 
-## [0.11.1] - 19-01-2020
+## [0.11.1] - 19-01-2021
 
 ### Fixed
 
 - Wrong version (`pueue-v0.11.0-alpha.0`) due to an error in the build process with the new project structure.
 
-## [0.11.0] - 18-01-2020
+## [0.11.0] - 18-01-2021
 
 ### Added
 
@@ -33,12 +40,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - If multiple tasks are selected, `log` now only shows the last few lines for each log.
     You can use the new `--full` option to get the old behavior.
-
-### Fixed
-
-- Don't parse config path, if it's a directory.
-- Error with "Couldn't find config at path {:?}" when passing a directory via `--config`.
-- Fixed missing newline between tasks in `log` output.
 
 ## [0.10.2] - 31-12-2020
 

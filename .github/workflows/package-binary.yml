@@ -3,7 +3,7 @@ name: Packaging
 on:
   push:
     tags:
-      - 'pueue-v*.*.*'
+      - 'v*.*.*'
 
 jobs:
   publish:
