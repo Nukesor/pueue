@@ -6,12 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Moved into a stand-alone repository for better maintainability.
 
-## [0.12.0] -
+## [0.12.0] - 04-02-2021
+
+Moved into a stand-alone repository for better maintainability.
 
 ### Changed
 
-- Moved into a stand-alone repository for better maintainability.
-- Change the packet size to 1.4 Kbyte from 1.5 Kbyte
+- Change the packet size from 1.5 Kbyte to 1.4 Kbyte to prevent packet splitting on smaller MTUs.
 - Add LOTS of documentation.
 - Hide modules that aren't intended for public use.
 - Rename `GenericListener` to `Listener` and vice versa.
