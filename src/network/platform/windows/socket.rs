@@ -23,12 +23,12 @@ pub struct TlsTcpListener {
 /// A new trait, which can be used to represent Unix- and TcpListeners.
 /// This is necessary to easily write generic functions where both types can be used.
 #[async_trait]
-pub trait GenericListener: Sync + Send {
+pub trait Listener: Sync + Send {
     async fn accept<'a>(&'a self) -> Result<GenericStream>;
 }
 
 #[async_trait]
-impl GenericListener for TlsTcpListener {
+impl Listener for TlsTcpListener {
     async fn accept<'a>(&'a self) -> Result<GenericStream> {
         let (stream, _) = self.tcp_listener.accept().await?;
         Ok(Box::new(self.tls_acceptor.accept(stream).await?))
@@ -42,7 +42,7 @@ impl Stream for async_tls::server::TlsStream<TcpStream> {}
 impl Stream for async_tls::client::TlsStream<TcpStream> {}
 
 /// Two convenient types, so we don't have type write Box<dyn ...> all the time.
-pub type Listener = Box<dyn GenericListener>;
+pub type GenericListener = Box<dyn Listener>;
 pub type GenericStream = Box<dyn Stream>;
 
 /// Get a new stream for the client.
@@ -70,7 +70,7 @@ pub async fn get_client_stream(settings: &Shared) -> Result<GenericStream> {
 }
 
 /// Get a new tcp&tls listener for the daemon.
-pub async fn get_listener(settings: &Shared) -> Result<Listener> {
+pub async fn get_listener(settings: &Shared) -> Result<GenericListener> {
     // This is the listener, which accepts low-level TCP connections
     let address = format!("{}:{}", settings.host, settings.port);
     let tcp_listener = TcpListener::bind(&address)

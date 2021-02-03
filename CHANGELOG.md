@@ -12,9 +12,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Moved into a stand-alone repository for better maintainability.
 - Change the packet size to 1.4 Kbyte from 1.5 Kbyte
-- Remove unused `group_or_default` function.
 - Add LOTS of documentation.
 - Hide modules that aren't intended for public use.
+- Rename `GenericListener` to `Listener` and vice versa.
+
+### Removed
+
+- Remove unused `group_or_default` function.
 
 ## [0.11.2] - 01-02-2021
 

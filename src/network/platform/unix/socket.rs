@@ -22,7 +22,7 @@ pub fn socket_cleanup(settings: &Shared) {
 /// A new trait, which can be used to represent Unix- and TcpListeners. \
 /// This is necessary to easily write generic functions where both types can be used.
 #[async_trait]
-pub trait GenericListener: Sync + Send {
+pub trait Listener: Sync + Send {
     async fn accept<'a>(&'a self) -> Result<GenericStream>;
 }
 
@@ -30,14 +30,14 @@ pub trait GenericListener: Sync + Send {
 /// TCP should always be used in conjunction with TLS.
 /// That's why this helper exists, which encapsulates the logic of accepting a new
 /// connection and initializing the TLS layer on top of it.
-/// This way we can expose an `accept` function and implement the GenericListener trait.
+/// This way we can expose an `accept` function and implement the Listener trait.
 pub(crate) struct TlsTcpListener {
     tcp_listener: TcpListener,
     tls_acceptor: TlsAcceptor,
 }
 
 #[async_trait]
-impl GenericListener for TlsTcpListener {
+impl Listener for TlsTcpListener {
     async fn accept<'a>(&'a self) -> Result<GenericStream> {
         let (stream, _) = self.tcp_listener.accept().await?;
         Ok(Box::new(self.tls_acceptor.accept(stream).await?))
@@ -45,7 +45,7 @@ impl GenericListener for TlsTcpListener {
 }
 
 #[async_trait]
-impl GenericListener for UnixListener {
+impl Listener for UnixListener {
     async fn accept<'a>(&'a self) -> Result<GenericStream> {
         let (stream, _) = self.accept().await?;
         Ok(Box::new(stream))
@@ -59,9 +59,9 @@ impl Stream for UnixStream {}
 impl Stream for async_tls::server::TlsStream<TcpStream> {}
 impl Stream for async_tls::client::TlsStream<TcpStream> {}
 
-/// Convenience type, so we don't have type write Box<dyn GenericListener> all the time.
-pub type Listener = Box<dyn GenericListener>;
-/// Convenience type, so we don't have type write Box<dyn Stream> all the time. \
+/// Convenience type, so we don't have type write `Box<dyn Listener>` all the time.
+pub type GenericListener = Box<dyn Listener>;
+/// Convenience type, so we don't have type write `Box<dyn Stream>` all the time. \
 /// This also prevents name collisions, since `Stream` is imported in many preludes.
 pub type GenericStream = Box<dyn Stream>;
 
@@ -103,7 +103,7 @@ pub async fn get_client_stream(settings: &Shared) -> Result<GenericStream> {
 
 /// Get a new listener for the daemon. \
 /// This can either be a UnixListener or a TCPlistener, depending on the parameters.
-pub async fn get_listener(settings: &Shared) -> Result<Listener> {
+pub async fn get_listener(settings: &Shared) -> Result<GenericListener> {
     if settings.use_unix_socket {
         // Check, if the socket already exists
         // In case it does, we have to check, if it's an active socket.

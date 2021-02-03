@@ -108,7 +108,7 @@ mod test {
 
     // Implement generic Listener/Stream traits, so we can test stuff on normal TCP
     #[async_trait]
-    impl GenericListener for TcpListener {
+    impl Listener for TcpListener {
         async fn accept<'a>(&'a self) -> Result<GenericStream> {
             let (stream, _) = self.accept().await?;
             Ok(Box::new(stream))
@@ -126,7 +126,7 @@ mod test {
         let message = create_success_message(payload);
         let original_bytes = bincode::serialize(&message).expect("Failed to serialize message.");
 
-        let listener: Box<dyn GenericListener> = Box::new(listener);
+        let listener: GenericListener = Box::new(listener);
 
         // Spawn a sub thread that:
         // 1. Accepts a new connection
