@@ -7,10 +7,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [0.12.0] - 
 
-Info for all packagers: \
+**Info for all packagers:** \
 The new repository layout with workspaces didn't work out that well.
 Managing both versions in a single repository in combination with `cargo release` was quite cumbersome. \
 This will hopefully be the last time, you'll need to adjust paths.
+
+### Changed
+
+- Rename/change some flags on the `restart` subcommand.
+    1. Rename `--path` to `--edit-path`. The short flag stays the same (`p`).
+    2. Rename the short flag for `--start-immediately` to `-k`.
+
+### Fixed
+
+- `-s` flag overload on the `restart` command. `--start-immediately` and `--stashed` collided.
 
 ## [0.11.2] - 01-02-2021
 

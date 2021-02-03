@@ -137,11 +137,10 @@ pub enum SubCommand {
     /// By default, a new task will be created.
     Restart {
         /// Restart these specific tasks.
-        #[clap(required = true)]
         task_ids: Vec<usize>,
 
         /// Immediately start the tasks.
-        #[clap(short, long, name = "immediate", conflicts_with = "stashed")]
+        #[clap(short = 'k', long, conflicts_with = "stashed")]
         start_immediately: bool,
 
         /// Set the restarted task to a "Stashed" state.
@@ -154,13 +153,17 @@ pub enum SubCommand {
         #[clap(short, long)]
         in_place: bool,
 
+        /// Restart all failed tasks.
+        #[clap(short, long)]
+        all_failed: bool,
+
         /// Edit the tasks' command before restarting.
         #[clap(short, long)]
         edit: bool,
 
         /// Edit the tasks' path before restarting.
-        #[clap(short, long)]
-        path: bool,
+        #[clap(short = 'p', long)]
+        edit_path: bool,
     },
 
     /// Either pause running tasks or specific groups of tasks.

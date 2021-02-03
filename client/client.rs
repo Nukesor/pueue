@@ -123,8 +123,9 @@ impl Client {
                 start_immediately,
                 stashed,
                 edit,
-                path,
+                edit_path,
                 in_place,
+                all_failed,
             } => {
                 restart(
                     &mut self.stream,
@@ -132,8 +133,9 @@ impl Client {
                     *start_immediately,
                     *stashed,
                     *edit,
-                    *path,
+                    *edit_path,
                     *in_place,
+                    *all_failed,
                 )
                 .await?;
                 Ok(true)

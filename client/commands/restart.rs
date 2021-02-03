@@ -2,7 +2,7 @@ use anyhow::{bail, Result};
 
 use pueue_lib::network::message::*;
 use pueue_lib::network::protocol::*;
-use pueue_lib::task::{Task, TaskStatus};
+use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
 use crate::commands::edit::edit_line;
 use crate::commands::get_state;
@@ -11,6 +11,8 @@ use crate::commands::get_state;
 /// is create from the existing task in the state.
 ///
 /// This is done on the client-side, so we can easily edit the task before restarting it.
+/// It's also necessary to get all failed tasks, in case the user specified the --all_failed flag.
+#[allow(clippy::too_many_arguments)]
 pub async fn restart(
     stream: &mut GenericStream,
     task_ids: Vec<usize>,
@@ -19,6 +21,7 @@ pub async fn restart(
     edit_command: bool,
     edit_path: bool,
     in_place: bool,
+    all_failed: bool,
 ) -> Result<()> {
     let new_status = if stashed {
         TaskStatus::Stashed
@@ -27,7 +30,28 @@ pub async fn restart(
     };
 
     let state = get_state(stream).await?;
-    let (matching, mismatching) = state.tasks_in_statuses(vec![TaskStatus::Done], Some(task_ids));
+    let (matching, mismatching) = if all_failed {
+        // All failed tasks need to be restarted.
+        // First we have to get all finished tasks (Done)
+        let (matching, _) = state.tasks_in_statuses(vec![TaskStatus::Done], None);
+
+        // Now remove all tasks that finished succesfully
+        let failed = matching
+            .into_iter()
+            .filter(|task_id| {
+                let task = state.tasks.get(task_id).unwrap();
+                !matches!(task.result.as_ref().unwrap(), TaskResult::Success)
+            })
+            .collect();
+
+        // We return an empty vec for the mismatching tasks, since there shouldn't be any.
+        // Any User provided ids are ignored in this mode.
+        (failed, Vec::new())
+    } else if task_ids.is_empty() {
+        bail!("Please provide the ids of the tasks you want to restart.");
+    } else {
+        state.tasks_in_statuses(vec![TaskStatus::Done], Some(task_ids))
+    };
 
     // Build a RestartMessage, if the tasks should be replaced instead of creating a copy of the
     // original task. This is only important, if replace is `True`.
