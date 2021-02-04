@@ -8,9 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [0.12.0] - 
 
 **Info for all packagers:** \
+In case you updated your packaging rules for the new layout, those changes need to be reverted. \
 The new repository layout with workspaces didn't work out that well.
-Managing both versions in a single repository in combination with `cargo release` was quite cumbersome. \
-This will hopefully be the last time, you'll need to adjust paths.
+Managing two crates in a single repository in combination with `cargo release` turned out to be quite annoying.
+
+### Added
+
+- `--all-failed` flag for `restart`. This will restart all tasks that didn't finish with a `Success` status.
 
 ### Changed
 
