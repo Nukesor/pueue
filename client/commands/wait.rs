@@ -9,8 +9,8 @@ use crossterm::style::{Attribute, Color};
 use pueue_lib::network::protocol::GenericStream;
 use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
-use crate::commands::get_state;
 use crate::display::helper::style_text;
+use crate::{commands::get_state, display::colors::Colors};
 
 /// Wait until tasks are done.
 /// Tasks can be specified by:
@@ -27,6 +27,7 @@ pub async fn wait(
     group: &str,
     all: bool,
     quiet: bool,
+    colors: &Colors,
 ) -> Result<()> {
     let mut first_run = true;
     // Create a list of tracked tasks.
@@ -68,7 +69,7 @@ pub async fn wait(
                     // Add any unknown tasks to our watchlist
                     // Don't log anything if this is the first run
                     if !quiet && !first_run {
-                        let color = get_color_for_status(&task.status);
+                        let color = get_color_for_status(&task.status, colors);
                         println!(
                             "{} - New task {} with status {}",
                             current_time,
@@ -91,7 +92,7 @@ pub async fn wait(
             // Update the (previous) task status and log any changes
             watched_tasks.insert(task.id, task.status.clone());
             if !quiet {
-                log_status_change(&current_time, previous_status, &task);
+                log_status_change(&current_time, previous_status, &task, colors);
             }
         }
 
@@ -112,7 +113,12 @@ pub async fn wait(
     Ok(())
 }
 
-fn log_status_change(current_time: &str, previous_status: TaskStatus, task: &Task) {
+fn log_status_change(
+    current_time: &str,
+    previous_status: TaskStatus,
+    task: &Task,
+    colors: &Colors,
+) {
     // Finishing tasks get some special handling
     if task.status == TaskStatus::Done {
         let text = match task.result {
@@ -120,14 +126,14 @@ fn log_status_change(current_time: &str, previous_status: TaskStatus, task: &Tas
                 format!(
                     "Task {} succeeded with {}",
                     style_text(task.id, None, Some(Attribute::Bold)),
-                    style_text("0", Some(Color::Green), None)
+                    style_text("0", Some(colors.green()), None)
                 )
             }
             Some(TaskResult::DependencyFailed) => {
                 format!(
                     "Task {} failed due to {}",
                     style_text(task.id, None, Some(Attribute::Bold)),
-                    style_text("failed dependencies", Some(Color::Red), None)
+                    style_text("failed dependencies", Some(colors.red()), None)
                 )
             }
 
@@ -135,28 +141,28 @@ fn log_status_change(current_time: &str, previous_status: TaskStatus, task: &Tas
                 format!(
                     "Task {} {}",
                     style_text(task.id, None, Some(Attribute::Bold)),
-                    style_text("failed to spawn", Some(Color::Red), None)
+                    style_text("failed to spawn", Some(colors.red()), None)
                 )
             }
             Some(TaskResult::Failed(exit_code)) => {
                 format!(
                     "Task {} failed with {}",
                     style_text(task.id, None, Some(Attribute::Bold)),
-                    style_text(exit_code, Some(Color::Red), Some(Attribute::Bold))
+                    style_text(exit_code, Some(colors.red()), Some(Attribute::Bold))
                 )
             }
             Some(TaskResult::Errored) => {
                 format!(
                     "Task {} experienced an {}.",
                     style_text(task.id, None, Some(Attribute::Bold)),
-                    style_text("IO error", Some(Color::Red), Some(Attribute::Bold))
+                    style_text("IO error", Some(colors.red()), Some(Attribute::Bold))
                 )
             }
             Some(TaskResult::Killed) => {
                 format!(
                     "Task {} has been {}",
                     style_text(task.id, None, Some(Attribute::Bold)),
-                    style_text("killed", Some(Color::Red), None)
+                    style_text("killed", Some(colors.red()), None)
                 )
             }
             None => panic!("Got a 'Done' task without a task result. Please report this bug."),
@@ -165,8 +171,8 @@ fn log_status_change(current_time: &str, previous_status: TaskStatus, task: &Tas
 
         return;
     }
-    let new_status_color = get_color_for_status(&task.status);
-    let previous_status_color = get_color_for_status(&previous_status);
+    let new_status_color = get_color_for_status(&task.status, colors);
+    let previous_status_color = get_color_for_status(&previous_status, colors);
 
     println!(
         "{} - Task {} changed from {} to {}",
@@ -177,10 +183,10 @@ fn log_status_change(current_time: &str, previous_status: TaskStatus, task: &Tas
     );
 }
 
-fn get_color_for_status(task_status: &TaskStatus) -> Color {
+fn get_color_for_status(task_status: &TaskStatus, colors: &Colors) -> Color {
     match task_status {
-        TaskStatus::Running | TaskStatus::Done => Color::Green,
-        TaskStatus::Paused | TaskStatus::Locked => Color::White,
-        _ => Color::Yellow,
+        TaskStatus::Running | TaskStatus::Done => colors.green(),
+        TaskStatus::Paused | TaskStatus::Locked => colors.white(),
+        _ => colors.white(),
     }
 }

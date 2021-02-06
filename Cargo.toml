@@ -23,7 +23,7 @@ name = "pueued"
 path = "daemon/main.rs"
 
 [dependencies]
-pueue-lib = "0.12"
+pueue-lib = "0.12.1"
 #pueue-lib = { path = "../pueue-lib" }
 
 anyhow = "1"
