@@ -14,31 +14,36 @@ Managing two crates in a single repository in combination with `cargo release` t
 
 ### Added
 
-- `--all-failed` flag for `restart`. This will restart all tasks that didn't finish with a `Success` status.
-- New config option `client.dark_mode` by [Mephistophiles](https://github.com/Mephistophiles). Default: `false`. Adds the ability to switch to dark colors instead of regular colors. 
+- `--all-failed` flag for `restart`.
+     This will restart all tasks that didn't finish with a `Success` status. [#79](https://github.com/Nukesor/pueue/issues/79)
+- New config option `client.dark_mode` by [Mephistophiles](https://github.com/Mephistophiles). [#178](https://github.com/Nukesor/pueue/issues/178)
+    Default: `false`. Adds the ability to switch to dark colors instead of regular colors.
 
 ### Changed
 
 - Rename/change some flags on the `restart` subcommand.
     1. Rename `--path` to `--edit-path`. The short flag stays the same (`p`).
     2. Rename the short flag for `--start-immediately` to `-k`.
+- Dependency bump to pueue-lib `v0.12.1`
 
 ### Fixed
 
-- `-s` flag overload on the `restart` command. `--start-immediately` and `--stashed` collided.
+- `-s` flag overload on the `restart` command.
+    `--start-immediately` and `--stashed` collided.
+- Error on BSD due to inability to get username from system registry. [#173](https://github.com/Nukesor/pueue/issues/173)
 
 ## [0.11.2] - 01-02-2021
 
 ### Changed
 
 - Readability of the `log` command has been further improved.
-- Dependency update to pueue-lib v0.11.2
+- Dependency bump to pueue-lib `v0.11.2`
 
 ## [0.11.1] - 19-01-2021
 
 ### Fixed
 
-- Wrong version (`pueue-v0.11.0-alpha.0`) due to an error in the build process with the new project structure.
+- Wrong version (`pueue-v0.11.0-alpha.0`) due to an error in the build process with the new project structure. [#169](https://github.com/Nukesor/pueue/issues/169)
 
 ## [0.11.0] - 18-01-2021
 
@@ -81,28 +86,29 @@ Please read this changelog carefully.
 
 ### Changed
 
-- Use TLS encryption for all TCP communication.
+- Use TLS encryption for all TCP communication. [#52](https://github.com/Nukesor/pueue/issues/52)
 - Updated Crossterm and thereby bump the required rust version to `1.48`.
-- Extract the shared `secret` into a separate file.
+- Extract the shared `secret` into a separate file. [#52](https://github.com/Nukesor/pueue/issues/52)
     This will allow users to publicly sync their config directory between machines.
-- Change default secret length from 20 to 512 chars.
-- Any unix socket code or configuration stuff has been removed, when building for Windows.
+- Change default secret length from 20 to 512 chars. [#52](https://github.com/Nukesor/pueue/issues/52)
 - Lots of internal code cleanup/refactoring/restructuring.
 - Exit client with non-zero exit code when getting a failure message from the daemon.
-- The `group` list output has been properly styled.
-- Use unix sockets by default on unix systems.
+- The `group` list output has been properly styled. 
+- Use unix sockets by default on unix systems. [#165](https://github.com/Nukesor/pueue/issues/165)
+- Any unix socket code or configuration stuff has been removed, when building for Windows.
 
 ### Added
 
-- Add the `shared.host` configuration variable.
+- Add the `shared.host` configuration variable. [#52](https://github.com/Nukesor/pueue/issues/52)
     This finally allows to accept outside connections, but comes with some security implications.
-- Create a self-signed ECDSA cert/key for TLS crypto with [rcgen](https://github.com/est31/rcgen).
+- Create a self-signed ECDSA cert/key for TLS crypto with [rcgen](https://github.com/est31/rcgen). [#52](https://github.com/Nukesor/pueue/issues/52)
 - Error messages have been improved in many places.
 - `daemon.pause_all_on_failure` config, which actually pauses all groups as soon as a task fails.
 - `daemon.pause_group_on_failure` config, which only pauses the group of the affected task instead of everything.
-- Users can add some additional information to tasks with the `task add --label $LABEL` option, which will be displayed when calling `pueue status`.
-- `--escape` flag on the `add` subcommand, which takes all given Parameter strings and escapes special characters.
-- Remove `--task-ids` for `wait`. Now it's used the same way as start/kill/pause etc.
+- Users can add some additional information to tasks with the `task add --label $LABEL` option, which will be displayed when calling `pueue status`. [#155](https://github.com/Nukesor/pueue/issues/155)
+- `--escape` flag on the `add` subcommand, which takes all given Parameter strings and escapes special characters. [#158](https://github.com/Nukesor/pueue/issues/158)
+- Remove `--task-ids` for `wait`. Now it's used the same way as start/kill/pause etc. 
+- Add an option `--print-task-id` to only return the task id on `add`. This allows for better scripting. [#151](https://github.com/Nukesor/pueue/issues/151)
 
 ### Removed
 
@@ -127,11 +133,11 @@ Please read this changelog carefully.
 
 ### Added
 
-- The `wait` subcommand. This allows you to wait for all tasks in the default queue/ a specific group to finish.
+- The `wait` subcommand. This allows you to wait for all tasks in the default queue/ a specific group to finish. [#117](https://github.com/Nukesor/pueue/issues/117)
     On top of this, you can also specify specific tasks ids.
 - New client configuration `show_expanded_aliases` (default: `false`).
     Determines whether the original input command or the expanded alias will be shown when calling `status`.
-- New `--in-place` option for `restart`, which resets and reuses the existing task instead of creating a new one.
+- New `--in-place` option for `restart`, which resets and reuses the existing task instead of creating a new one. [#147](https://github.com/Nukesor/pueue/issues/147)
 
 ### Changed
 
@@ -141,7 +147,7 @@ Please read this changelog carefully.
 ### Fixed
 
 - `pause_on_failure` pauses the group of the failed tasks. Previously this always paused the default queue.
-- Properly display version when using `-V`.
+- Properly display version when using `-V`. (#143)
 - Execute callbacks for tasks with failed dependencies.
 - Execute callbacks for tasks that failed to spawn at all.
 - Persist state changes when handling tasks that failed to spawn.
@@ -156,8 +162,8 @@ Please read this changelog carefully.
 
 ### Added
 
-- Add `exit_code` parameter to callback hooks.
-- Add a confirmation message when using `reset` with running tasks by [quebin31](https://github.com/quebin31).
+- Add `exit_code` parameter to callback hooks. (#138)
+- Add a confirmation message when using `reset` with running tasks by [quebin31](https://github.com/quebin31). [#140](https://github.com/Nukesor/pueue/issues/140)
 
 ### Changed
 
@@ -168,7 +174,7 @@ Please read this changelog carefully.
 ### Added
 
 - Add `start`, `end` and `enqueue` time parameters to callback hooks by [soruh](https://github.com/soruh).
-- Config flag to truncate content in 'status'.
+- Config flag to truncate content in 'status'. (#123)
 
 ### Fixed
 
@@ -183,9 +189,9 @@ This version adds breaking changes:
 
 ### Added
 
-- Unix socket support (#90)
+- Unix socket support [#90](https://github.com/Nukesor/pueue/issues/)
 - New option to specify a configuration file on startup for daemon and client.
-- Warning messages for removing/killing tasks (#111) by [Julian Kaindl](https://github.com/kaindljulian)
+- Warning messages for removing/killing tasks [#111](https://github.com/Nukesor/pueue/issues/111) by [Julian Kaindl](https://github.com/kaindljulian)
 - Better message on `pueue group`, when there are no groups yet.
 - Guide on how to connect to remote hosts via ssh port forwarding.
 
@@ -198,27 +204,27 @@ This version adds breaking changes:
 
 ### Fixed
 
-- Fixed panic, when killing and immediately removing a task. (#119)
-- Fixed broken non-responsive daemon, on panic in threads. (#119)
+- Fixed panic, when killing and immediately removing a task. [#119](https://github.com/Nukesor/pueue/issues/119)
+- Fixed broken non-responsive daemon, on panic in threads. [#119](https://github.com/Nukesor/pueue/issues/119)
 - Don't allow empty commands on `add`.
-- The client will never persist/write the configuration file. (#116)
-- The daemon will only persist configuration file on startup, if anything changes. (#116)
-- (Probably fixed) Malformed configuration file. (#116)
+- The client will never persist/write the configuration file. [#116](https://github.com/Nukesor/pueue/issues/116)
+- The daemon will only persist configuration file on startup, if anything changes. [#116](https://github.com/Nukesor/pueue/issues/116)
+- (Probably fixed) Malformed configuration file. [#116](https://github.com/Nukesor/pueue/issues/116)
 
 ## [0.7.2] - 2020-10-05
 
 ### Fixed
 
-- Non-existing tasks were displayed as successfully removed. (#108)
+- Non-existing tasks were displayed as successfully removed. [#108](https://github.com/Nukesor/pueue/issues/108)
 - Remove child process handling logic for MacOs, since the library simply doesn't support this.
-- Remove unneeded `config` features and reduce compile time by ~10%. Contribution by [LovecraftianHorror](https://github.com/LovecraftianHorror) (#112)
-- Remove futures-timers, effectively reducing compile time by ~14%. (#112)
-- Update to comfy-table v1.1.0, reducing compile time by another ~10%. (#112)
+- Remove unneeded `config` features and reduce compile time by ~10%. Contribution by [LovecraftianHorror](https://github.com/LovecraftianHorror) [#112](https://github.com/Nukesor/pueue/issues/112)
+- Remove futures-timers, effectively reducing compile time by ~14%. [#112](https://github.com/Nukesor/pueue/issues/112)
+- Update to comfy-table v1.1.0, reducing compile time by another ~10%. [#112](https://github.com/Nukesor/pueue/issues/112)
 
 ### Changed
 
 - Linux process handling now always sends signals to it's direct children, if the root process is a `sh -c` process.
-  Previously, this behavior was somewhat ambiguous and inconsistent. (#109)
+  Previously, this behavior was somewhat ambiguous and inconsistent. [#109](https://github.com/Nukesor/pueue/issues/109)
 
 ### Added
 
@@ -228,7 +234,9 @@ This version adds breaking changes:
 
 ### Added
 
-- New `-e` and `-p` flags to edit tasks on restart. `-e` for `command`, `-p` for `path`. Both can be added at the same time.
+- New `-e` and `-p` flags to edit tasks on restart.
+    `-e` for `command`, `-p` for `path`.
+    Both can be added at the same time.
 
 ### Changed
 
@@ -236,7 +244,8 @@ This version adds breaking changes:
 
 ### Fixed
 
-- Improved CLI validation. Several subcommands accepted empty task id vectors, when they shouldn't.
+- Improved CLI validation.
+    Several subcommands accepted empty task id vectors, when they shouldn't.
 
 ## [0.6.3] - 2020-07-11
 
@@ -255,7 +264,8 @@ This version adds breaking changes:
 
 ### Changed
 
-- New default behavior for `follow`. Implemented by [JP-Ellis](https://github.com/JP-Ellis).
+- New default behavior for `follow`.
+    Implemented by [JP-Ellis](https://github.com/JP-Ellis).
 - Delete everything in Pueue's `task_logs` folder on `reset`.
 
 ## [0.6.0] - 2020-06-07
