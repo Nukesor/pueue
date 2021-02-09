@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Moved into a stand-alone repository for better maintainability.
 
+## [0.12.1] - 09-02-2021
+
+### Added
+
+- `dark_mode` client configuration flag by [Mephistophiles](https://github.com/Mephistophiles)
+
 ## [0.12.0] - 04-02-2021
 
 Moved into a stand-alone repository for better maintainability.
