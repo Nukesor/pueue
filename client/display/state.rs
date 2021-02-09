@@ -8,11 +8,11 @@ use pueue_lib::settings::Settings;
 use pueue_lib::state::State;
 use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
-use super::helper::*;
+use super::{colors::Colors, helper::*};
 use crate::cli::SubCommand;
 
 /// Print the current state of the daemon in a nicely formatted table.
-pub fn print_state(state: State, cli_command: &SubCommand, settings: &Settings) {
+pub fn print_state(state: State, cli_command: &SubCommand, colors: &Colors, settings: &Settings) {
     let (json, group_only) = match cli_command {
         SubCommand::Status { json, group } => (*json, group.clone()),
         _ => panic!(
@@ -43,9 +43,10 @@ pub fn print_state(state: State, cli_command: &SubCommand, settings: &Settings) 
             &"default",
             &state.groups.get("default").unwrap(),
             *state.settings.daemon.groups.get("default").unwrap(),
+            colors,
         );
         println!("{}", headline);
-        print_table(&tasks, settings);
+        print_table(&tasks, colors, settings);
 
         // Add a newline if there are further groups to be printed
         if sorted_tasks.len() > 1 {
@@ -72,9 +73,10 @@ pub fn print_state(state: State, cli_command: &SubCommand, settings: &Settings) 
             &group,
             &state.groups.get(group).unwrap(),
             *state.settings.daemon.groups.get(group).unwrap(),
+            colors,
         );
         println!("{}", headline);
-        print_table(&tasks, settings);
+        print_table(&tasks, colors, settings);
 
         // Add a newline between groups
         if sorted_iter.peek().is_some() {
@@ -84,7 +86,7 @@ pub fn print_state(state: State, cli_command: &SubCommand, settings: &Settings) 
 }
 
 /// Print some tasks into a nicely formatted table
-fn print_table(tasks: &BTreeMap<usize, Task>, settings: &Settings) {
+fn print_table(tasks: &BTreeMap<usize, Task>, colors: &Colors, settings: &Settings) {
     let (has_delayed_tasks, has_dependencies, has_labels) = has_special_columns(tasks);
 
     // Create table header row
@@ -127,16 +129,18 @@ fn print_table(tasks: &BTreeMap<usize, Task>, settings: &Settings) {
         // Determine the human readable task status representation and the respective color.
         let status_string = task.status.to_string();
         let (status_text, color) = match task.status {
-            TaskStatus::Running => (status_string, Color::Green),
-            TaskStatus::Paused | TaskStatus::Locked => (status_string, Color::White),
+            TaskStatus::Running => (status_string, colors.green()),
+            TaskStatus::Paused | TaskStatus::Locked => (status_string, colors.white()),
             TaskStatus::Done => match &task.result {
-                Some(TaskResult::Success) => (TaskResult::Success.to_string(), Color::Green),
-                Some(TaskResult::DependencyFailed) => ("Dependency failed".to_string(), Color::Red),
-                Some(TaskResult::FailedToSpawn(_)) => ("Failed to spawn".to_string(), Color::Red),
-                Some(result) => (result.to_string(), Color::Red),
+                Some(TaskResult::Success) => (TaskResult::Success.to_string(), colors.green()),
+                Some(TaskResult::DependencyFailed) => {
+                    ("Dependency failed".to_string(), colors.red())
+                }
+                Some(TaskResult::FailedToSpawn(_)) => ("Failed to spawn".to_string(), colors.red()),
+                Some(result) => (result.to_string(), colors.red()),
                 None => panic!("Got a 'Done' task without a task result. Please report this bug."),
             },
-            _ => (status_string, Color::Yellow),
+            _ => (status_string, colors.yellow()),
         };
         row.add_cell(Cell::new(status_text).fg(color));
 
@@ -161,8 +165,8 @@ fn print_table(tasks: &BTreeMap<usize, Task>, settings: &Settings) {
         // Match the color of the exit code.
         // If the exit_code is none, it has been killed by the task handler.
         let exit_code_cell = match task.result {
-            Some(TaskResult::Success) => Cell::new("0").fg(Color::Green),
-            Some(TaskResult::Failed(code)) => Cell::new(&code.to_string()).fg(Color::Red),
+            Some(TaskResult::Success) => Cell::new("0").fg(colors.green()),
+            Some(TaskResult::Failed(code)) => Cell::new(&code.to_string()).fg(colors.red()),
             _ => Cell::new(""),
         };
         row.add_cell(exit_code_cell);

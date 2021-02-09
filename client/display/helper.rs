@@ -7,6 +7,8 @@ use crossterm::tty::IsTty;
 use pueue_lib::state::GroupStatus;
 use pueue_lib::task::Task;
 
+use super::colors::Colors;
+
 /// This is a simple small helper function with the purpose of easily styling text,
 /// while also prevent styling if we're printing to a non-tty output.
 /// If there's any kind of styling in the code, it should be done with the help of this function.
@@ -50,14 +52,19 @@ pub fn has_special_columns(tasks: &BTreeMap<usize, Task>) -> (bool, bool, bool) 
 }
 
 /// Return a nicely formatted headline that's displayed above group tables
-pub fn get_group_headline(name: &str, status: &GroupStatus, parallel: usize) -> String {
+pub fn get_group_headline(
+    name: &str,
+    status: &GroupStatus,
+    parallel: usize,
+    colors: &Colors,
+) -> String {
     // Style group name
     let name = style(format!("Group \"{}\"", name)).attribute(Attribute::Bold);
 
     // Print the current state of the group.
     let status = match status {
-        GroupStatus::Running => style_text("running", Some(Color::Green), None),
-        GroupStatus::Paused => style_text("paused", Some(Color::Yellow), None),
+        GroupStatus::Running => style_text("running", Some(colors.green()), None),
+        GroupStatus::Paused => style_text("paused", Some(colors.yellow()), None),
     };
 
     format!("{} ({} parallel): {}", name, parallel, status)

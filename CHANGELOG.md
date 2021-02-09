@@ -15,6 +15,7 @@ Managing two crates in a single repository in combination with `cargo release` t
 ### Added
 
 - `--all-failed` flag for `restart`. This will restart all tasks that didn't finish with a `Success` status.
+- New config option `client.dark_mode` by [Mephistophiles](https://github.com/Mephistophiles). Default: `false`. Adds the ability to switch to dark colors instead of regular colors. 
 
 ### Changed
 

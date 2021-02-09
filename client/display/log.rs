@@ -11,7 +11,7 @@ use pueue_lib::network::message::TaskLogMessage;
 use pueue_lib::settings::Settings;
 use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
-use super::helper::*;
+use super::{colors::Colors, helper::*};
 use crate::cli::SubCommand;
 
 /// Print the log ouput of finished tasks.
@@ -20,6 +20,7 @@ use crate::cli::SubCommand;
 pub fn print_logs(
     mut task_logs: BTreeMap<usize, TaskLogMessage>,
     cli_command: &SubCommand,
+    colors: &Colors,
     settings: &Settings,
 ) {
     // Get actual commandline options.
@@ -75,7 +76,7 @@ pub fn print_logs(
     // Do the actual log printing
     let mut task_iter = task_logs.iter_mut().peekable();
     while let Some((_, mut task_log)) = task_iter.next() {
-        print_log(&mut task_log, settings, lines);
+        print_log(&mut task_log, colors, settings, lines);
 
         // Add a newline if there is another task that's going to be printed.
         if let Some((_, task_log)) = task_iter.peek() {
@@ -95,42 +96,47 @@ pub fn print_logs(
 /// lines: Whether we should reduce the log output of each task to a specific number of lines.
 ///         `None` implicates that everything should be printed.
 ///         This is only important, if we read local lines.
-pub fn print_log(message: &mut TaskLogMessage, settings: &Settings, lines: Option<usize>) {
+pub fn print_log(
+    message: &mut TaskLogMessage,
+    colors: &Colors,
+    settings: &Settings,
+    lines: Option<usize>,
+) {
     let task = &message.task;
     // We only show logs of finished or running tasks.
     if !vec![TaskStatus::Done, TaskStatus::Running, TaskStatus::Paused].contains(&task.status) {
         return;
     }
 
-    print_task_info(task);
+    print_task_info(task, colors);
 
     if settings.client.read_local_logs {
-        print_local_log(message.task.id, settings, lines);
+        print_local_log(message.task.id, colors, settings, lines);
     } else if message.stdout.is_some() && message.stderr.is_some() {
-        print_remote_log(message);
+        print_remote_log(message, colors);
     } else {
         println!("Logs requested from pueue daemon, but none received. Please report this bug.");
     }
 }
 
 /// Print some information about a task, which is displayed on top of the task's log output.
-pub fn print_task_info(task: &Task) {
+fn print_task_info(task: &Task, colors: &Colors) {
     // Print task id and exit code.
     let task_cell = Cell::new(format!("Task {}: ", task.id)).add_attribute(Attribute::Bold);
 
     let (exit_status, color) = match &task.result {
-        Some(TaskResult::Success) => ("completed successfully".into(), Color::Green),
+        Some(TaskResult::Success) => ("completed successfully".into(), colors.green()),
         Some(TaskResult::Failed(exit_code)) => {
-            (format!("failed with exit code {}", exit_code), Color::Red)
+            (format!("failed with exit code {}", exit_code), colors.red())
         }
-        Some(TaskResult::FailedToSpawn(err)) => (format!("failed to spawn: {}", err), Color::Red),
-        Some(TaskResult::Killed) => ("killed by system or user".into(), Color::Red),
-        Some(TaskResult::Errored) => ("some IO error.\n Check daemon log.".into(), Color::Red),
-        Some(TaskResult::DependencyFailed) => ("dependency failed".into(), Color::Red),
+        Some(TaskResult::FailedToSpawn(err)) => (format!("failed to spawn: {}", err), colors.red()),
+        Some(TaskResult::Killed) => ("killed by system or user".into(), colors.red()),
+        Some(TaskResult::Errored) => ("some IO error.\n Check daemon log.".into(), colors.red()),
+        Some(TaskResult::DependencyFailed) => ("dependency failed".into(), colors.red()),
         None => match &task.status {
-            TaskStatus::Paused => ("paused".into(), Color::White),
-            TaskStatus::Running => ("running".into(), Color::Yellow),
-            _ => (task.status.to_string(), Color::White),
+            TaskStatus::Paused => ("paused".into(), colors.white()),
+            TaskStatus::Running => ("running".into(), colors.yellow()),
+            _ => (task.status.to_string(), colors.white()),
         },
     };
     let status_cell = Cell::new(exit_status).fg(color);
@@ -181,7 +187,7 @@ pub fn print_task_info(task: &Task) {
 
 /// The daemon didn't send any log output, thereby we didn't request any.
 /// If that's the case, read the log files from the local pueue directory
-pub fn print_local_log(task_id: usize, settings: &Settings, lines: Option<usize>) {
+fn print_local_log(task_id: usize, colors: &Colors, settings: &Settings, lines: Option<usize>) {
     let (mut stdout_file, mut stderr_file) =
         match get_log_file_handles(task_id, &settings.shared.pueue_directory) {
             Ok((stdout, stderr)) => (stdout, stderr),
@@ -198,14 +204,14 @@ pub fn print_local_log(task_id: usize, settings: &Settings, lines: Option<usize>
         &mut stdout,
         &mut stdout_file,
         &lines,
-        style_text("stdout:", Some(Color::Green), Some(Attribute::Bold)),
+        style_text("stdout:", Some(colors.green()), Some(Attribute::Bold)),
     );
 
     print_local_file(
         &mut stdout,
         &mut stderr_file,
         &lines,
-        style_text("stderr:", Some(Color::Red), Some(Attribute::Bold)),
+        style_text("stderr:", Some(colors.red()), Some(Attribute::Bold)),
     );
 }
 
@@ -234,27 +240,31 @@ pub fn print_local_file(stdout: &mut Stdout, file: &mut File, lines: &Option<usi
 /// Prints log output received from the daemon.
 /// We can safely call .unwrap() on stdout and stderr in here, since this
 /// branch is always called after ensuring that both are `Some`.
-pub fn print_remote_log(task_log: &TaskLogMessage) {
+pub fn print_remote_log(task_log: &TaskLogMessage, colors: &Colors) {
     // Save whether stdout was printed, so we can add a newline between outputs.
     if !task_log.stdout.as_ref().unwrap().is_empty() {
-        if let Err(err) = print_remote_task_log(&task_log, true) {
+        if let Err(err) = print_remote_task_log(&task_log, colors, true) {
             println!("Error while parsing stdout: {}", err);
         }
     }
 
     if !task_log.stderr.as_ref().unwrap().is_empty() {
-        if let Err(err) = print_remote_task_log(&task_log, false) {
+        if let Err(err) = print_remote_task_log(&task_log, colors, false) {
             println!("Error while parsing stderr: {}", err);
         };
     }
 }
 
 /// Print log output of a finished process.
-pub fn print_remote_task_log(task_log: &TaskLogMessage, stdout: bool) -> Result<()> {
+fn print_remote_task_log(task_log: &TaskLogMessage, colors: &Colors, stdout: bool) -> Result<()> {
     let (pre_text, color, bytes) = if stdout {
-        ("stdout: ", Color::Green, task_log.stdout.as_ref().unwrap())
+        (
+            "stdout: ",
+            colors.green(),
+            task_log.stdout.as_ref().unwrap(),
+        )
     } else {
-        ("stderr: ", Color::Red, task_log.stderr.as_ref().unwrap())
+        ("stderr: ", colors.red(), task_log.stderr.as_ref().unwrap())
     };
 
     println!(

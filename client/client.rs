@@ -3,6 +3,7 @@ use std::io::{self, Write};
 use std::{borrow::Cow, collections::HashMap};
 
 use anyhow::{bail, Context, Result};
+use colors::Colors;
 use log::error;
 
 use pueue_lib::network::message::*;
@@ -28,6 +29,7 @@ use crate::display::*;
 pub struct Client {
     opt: CliArguments,
     settings: Settings,
+    colors: Colors,
     stream: GenericStream,
 }
 
@@ -50,9 +52,12 @@ impl Client {
             bail!("Daemon went away after initial connection. Did you use the correct secret?")
         }
 
+        let colors = Colors::new(&settings);
+
         Ok(Client {
             opt,
             settings,
+            colors,
             stream,
         })
     }
@@ -115,7 +120,15 @@ impl Client {
                 quiet,
             } => {
                 let group = group_or_default(group);
-                wait(&mut self.stream, task_ids, &group, *all, *quiet).await?;
+                wait(
+                    &mut self.stream,
+                    task_ids,
+                    &group,
+                    *all,
+                    *quiet,
+                    &self.colors,
+                )
+                .await?;
                 Ok(true)
             }
             SubCommand::Restart {
@@ -193,14 +206,18 @@ impl Client {
     /// and handle messages from the daemon. Otherwise the client will simply exit.
     fn handle_response(&self, message: Message) -> bool {
         match message {
-            Message::Success(text) => print_success(&text),
+            Message::Success(text) => print_success(&self.colors, &text),
             Message::Failure(text) => {
-                print_error(&text);
+                print_error(&self.colors, &text);
                 std::process::exit(1);
             }
-            Message::StatusResponse(state) => print_state(*state, &self.opt.cmd, &self.settings),
-            Message::LogResponse(task_logs) => print_logs(task_logs, &self.opt.cmd, &self.settings),
-            Message::GroupResponse(groups) => print_groups(groups),
+            Message::StatusResponse(state) => {
+                print_state(*state, &self.opt.cmd, &self.colors, &self.settings)
+            }
+            Message::LogResponse(task_logs) => {
+                print_logs(task_logs, &self.opt.cmd, &self.colors, &self.settings)
+            }
+            Message::GroupResponse(groups) => print_groups(groups, &self.colors),
             Message::Stream(text) => {
                 print!("{}", text);
                 io::stdout().flush().unwrap();
