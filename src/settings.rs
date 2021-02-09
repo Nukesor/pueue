@@ -48,6 +48,9 @@ pub struct Client {
     /// Whether aliases specified in `pueue_aliases.yml` should be expanded in the `pueue status`
     /// or shown in their short form.
     pub show_expanded_aliases: bool,
+    /// Whether the client should use dark shades instead of regular colors.
+    #[serde(default = "default_dark_mode")]
+    pub dark_mode: bool,
     /// The max amount of lines each task get's in the `pueue status` view.
     pub max_status_lines: Option<usize>,
 }
@@ -133,6 +136,7 @@ impl Settings {
         config.set_default("client.read_local_logs", true)?;
         config.set_default("client.show_expanded_aliases", false)?;
         config.set_default("client.show_confirmation_questions", false)?;
+        config.set_default("client.dark_mode", false)?;
         config.set_default("client.max_status_lines", None::<i64>)?;
 
         // Daemon specific config
@@ -219,4 +223,10 @@ fn parse_config(settings: &mut Config, require_config: bool) -> Result<()> {
     }
 
     Ok(())
+}
+
+/// The default value for the `dark_mode` client settings.
+/// Needed to keep backward compatibility between v0.11 and v0.12
+fn default_dark_mode() -> bool {
+    false
 }
