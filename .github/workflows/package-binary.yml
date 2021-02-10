@@ -113,6 +113,7 @@ jobs:
         file: ${{ matrix.client_artifact_name }}
         asset_name: ${{ matrix.client_release_name }}
         tag: ${{ github.ref }}
+        overwrite: true
 
     - name: Upload daemon binaries to release
       uses: svenstaro/upload-release-action@v2
@@ -121,6 +122,7 @@ jobs:
         file: ${{ matrix.daemon_artifact_name }}
         asset_name: ${{ matrix.daemon_release_name }}
         tag: ${{ github.ref }}
+        overwrite: true
 
     - uses: svenstaro/upload-release-action@v2
       with:
