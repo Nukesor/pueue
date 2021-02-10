@@ -5,10 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [0.12.0] - 
+## [0.12.0] - 10-02-2021
 
 **Info for all packagers:** \
-In case you updated your packaging rules for the new layout, those changes need to be reverted. \
+In case you updated your packaging rules for the new layout in v0.11, those changes need to be reverted. \
 The new repository layout with workspaces didn't work out that well.
 Managing two crates in a single repository in combination with `cargo release` turned out to be quite annoying.
 
