@@ -8,7 +8,7 @@ repository = "https://github.com/nukesor/pueue"
 documentation = "https://docs.rs/pueue/"
 license = "MIT"
 keywords = ["shell", "command", "parallel", "task", "queue"]
-readme = "../README.md"
+readme = "README.md"
 edition = "2018"
 
 [badges]
