@@ -14,7 +14,7 @@ pub enum SubCommand {
         command: Vec<String>,
 
         /// Escape any special shell characters (" ", "&", "!", etc.).
-        /// Beware: This implicitly disables basically all shell specific syntax ("&&", "&>").
+        /// Beware: This implicitly disables nearly all shell specific syntax ("&&", "&>").
         #[clap(short, long)]
         escape: bool,
 

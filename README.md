@@ -25,17 +25,33 @@ The queue will be continuously processed, even if you no longer have any active 
 - [Installation](https://github.com/Nukesor/pueue#installation)
 - [How to use it](https://github.com/Nukesor/pueue#how-to-use-it)
 - [Advantages over Using a Terminal Multiplexer](https://github.com/Nukesor/pueue#advantages-over-using-a-terminal-multiplexer)
+- [Similar Projects](https://github.com/Nukesor/pueue#similar-projects)
 
 ### Features
 
-- Schedule commands that will be executed in their respective working directories.
-- Easy output inspection.
-- Interaction with running processes.
-- Pause/resume tasks, when you need some processing power right NOW!
-- Manipulation of the scheduled task order.
-- Run multiple tasks at once. You can decide how many concurrent tasks you want to run.
-- Group tasks. Each group acts as their own queue and can have several tasks running in parallel.
-- A callback hook to, for instance, set up desktop notifications.
+- Scheduling
+    * Add tasks as you go.
+    * Run multiple tasks at once. You decide how many tasks should run concurrently.
+    * Change the order of the scheduled tasks.
+    * Specify dependencies between tasks.
+    * Schedule tasks to run at a specific time.
+- Process interaction
+    * Easy output inspection.
+    * Send input to running processes.
+    * Pause/resume tasks, when you need some processing power right NOW!
+- Task groups (multiple queues)
+    * Each group can have several tasks running in parallel.
+    * Pause/start tasks by group.
+- Background process execution
+    * The `pueued` daemon runs in the background. No need to be logged in.
+    * Commands are executed in their respective working directories.
+    * Environment variables are cloned on `pueue add`.
+- Consistency
+    * The queue is always saved to disk and restored on kill/system crash.
+    * Logs are persisted onto the disk and survive a crash.
+- Miscellaneous
+    * A callback hook to, for instance, set up desktop notifications.
+    * Convenient methods for scripting
 - A lot more. Check the -h options for each subcommand for detailed options.
 
 Works on Linux and **partially** on MacOS and Windows. \
@@ -213,6 +229,19 @@ One of my regular use cases is downloading lots of stuff. In this case I want:
 I used tmux for this stuff all the time before writing Pueue.\
 However, after using it for a really long time, it just kept feeling annoying and inconvenient.
 Up to the point I could not bare it any longer and decided to write something that's better suited for such scenarios.
+
+## Similar Projects
+
+**nq** [link](https://github.com/leahneukirchen/nq)
+
+A very lightweight job queue systems which require no setup, maintenance, supervision, or any long-running processes.
+
+**task-spooler**
+
+Links to [ubuntu manpage](http://manpages.ubuntu.com/manpages/xenial/man1/tsp.1.html) and a [fork on Github](https://github.com/xenogenesi/task-spooler).
+The original website seems to be down.
+
+_task spooler_ is a Unix batch system where the tasks spooled run one after the other.
 
 ## Contributing
 
