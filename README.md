@@ -45,7 +45,7 @@ The queue will be continuously processed, even if you no longer have any active 
 - Background process execution
     * The `pueued` daemon runs in the background. No need to be logged in.
     * Commands are executed in their respective working directories.
-    * Environment variables are cloned on `pueue add`.
+    * Environment variables are on `pueue add`.
 - Consistency
     * The queue is always saved to disk and restored on kill/system crash.
     * Logs are persisted onto the disk and survive a crash.
@@ -232,16 +232,16 @@ Up to the point I could not bare it any longer and decided to write something th
 
 ## Similar Projects
 
-**nq** [link](https://github.com/leahneukirchen/nq)
+**nq**
 
-A very lightweight job queue systems which require no setup, maintenance, supervision, or any long-running processes.
+A very lightweight job queue systems which require no setup, maintenance, supervision, or any long-running processes. \
+[Link to project](https://github.com/leahneukirchen/nq)
 
 **task-spooler**
 
+_task spooler_ is a Unix batch system where the tasks spooled run one after the other. \
 Links to [ubuntu manpage](http://manpages.ubuntu.com/manpages/xenial/man1/tsp.1.html) and a [fork on Github](https://github.com/xenogenesi/task-spooler).
 The original website seems to be down.
-
-_task spooler_ is a Unix batch system where the tasks spooled run one after the other.
 
 ## Contributing
 
