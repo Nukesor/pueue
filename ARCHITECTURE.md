@@ -9,6 +9,8 @@ Feel free to expand this document!
 - [Daemon](https://github.com/Nukesor/pueue/blob/master/ARCHITECTURE.md#daemon)
 - [Request Handler](https://github.com/Nukesor/pueue/blob/master/ARCHITECTURE.md#request-handler)
 - [TaskHandler](https://github.com/Nukesor/pueue/blob/master/ARCHITECTURE.md#taskhandler)
+- [Shared State](https://github.com/Nukesor/pueue/blob/master/ARCHITECTURE.md#shared-state)
+- [Code Style](https://github.com/Nukesor/pueue/blob/master/ARCHITECTURE.md#code-style)
 
 ## Overall Structure
 
