@@ -13,7 +13,7 @@
 Pueue is a command-line task management tool for sequential and parallel execution of long-running tasks.
 
 Simply put, it's a tool that processes a queue of shell commands.
-On top of that, there are a lot of convenience features and abstractions.
+On top of that, there are a lot of convenient features and abstractions.
 
 Since Pueue is not bound to any terminal, you can control your tasks from any terminal on the same machine.
 The queue will be continuously processed, even if you no longer have any active ssh sessions.
@@ -41,7 +41,7 @@ The queue will be continuously processed, even if you no longer have any active 
     * Pause/resume tasks, when you need some processing power right NOW!
 - Task groups (multiple queues)
     * Each group can have several tasks running in parallel.
-    * Pause/start tasks by group.
+    * Pause/start tasks by a group.
 - Background process execution
     * The `pueued` daemon runs in the background. No need to be logged in.
     * Commands are executed in their respective working directories.
@@ -60,7 +60,7 @@ Check these issues to find out what's missing for MacOs (#115) and Windows (#114
 ## Why should I use it
 
 Consider this scenario: You have to unpack large amounts of data into various directories.
-Usually something like this ends with 10+ open terminals/tmux sessions and an over-challenged hard drive.
+Usually, something like this ends with 10+ open terminals/tmux sessions and an over-challenged hard drive.
 
 Another scenario might be, that you want to re-encode 10 movies and each re-encode takes 10+ hours.
 Creating a chained command with `&&`s isn't ergonomic at all and running that many re-encodes in parallel will break your CPU.
@@ -97,7 +97,7 @@ There are four different ways to install Pueue.
 The preferred way to install Pueue is to use your system's package manager.  
 This will usually deploy service files and completions automatically.  
 
-Pueue has been packaged for a quite a few distributions, check the table on the right for more information.
+Pueue has been packaged for quite a few distributions, check the table on the right for more information.
 
 #### Prebuild Binaries
 
@@ -210,25 +210,25 @@ Here are few examples of Pueue's basic functionality.
 - Specifying how many tasks should run in parallel
 - Easy pausing/resuming of tasks
 - Pretty and accessible task status overviews
-- No need to attach to a multiple tmux sessions
+- No need to attach to multiple tmux sessions
 
 There are a lot more built-in convenience features. You should read the [Wiki](https://github.com/Nukesor/pueue/wiki) for a detailed explanation.
 
 Only using your shell's features is definitely possible!
 However, in my opinion, having a tool that's specifically designed for managing tasks is just more efficient and fun.
 
-One of my regular use cases is downloading lots of stuff. In this case I want:
+One of my regular use cases is downloading lots of stuff. In this case, I want:
 
 - At most three parallel downloads, otherwise the other services on my server get starved.
 - To see at first glance whether a download fails and easily edit and re-schedule it.
-- An easy way to look at output.
+- An easy way to look at process output.
 - Everything to be in a uniform interface.
 - It to look pretty and clear.
 - To be able to pause/resume everything in case I need to some bandwidth right now.
 
 I used tmux for this stuff all the time before writing Pueue.\
 However, after using it for a really long time, it just kept feeling annoying and inconvenient.
-Up to the point I could not bare it any longer and decided to write something that's better suited for such scenarios.
+Up to the point, I couldn't bear it any longer and decided to write something that's better suited for such scenarios.
 
 ## Similar Projects
 
@@ -250,7 +250,7 @@ Feature requests and pull requests are very much appreciated and welcome!
 Anyhow, please talk to me a bit about your ideas before you start hacking!
 It's always nice to know what you're working on and I might have a few suggestions or tips :)
 
-There's also the [Architecture Guide](https://github.com/Nukesor/pueue/blob/master/ARCHITECTURE.md), which is supposed to give you a brief overview and introduction into the project.
+There's also the [Architecture Guide](https://github.com/Nukesor/pueue/blob/master/ARCHITECTURE.md), which is supposed to give you a brief overview and introduction to the project.
 
 Copyright &copy; 2019 Arne Beer ([@Nukesor](https://github.com/Nukesor))
 
