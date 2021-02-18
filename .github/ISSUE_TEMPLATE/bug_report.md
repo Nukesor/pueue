@@ -7,7 +7,8 @@ assignees: Nukesor
 
 ---
 
-First of all, please read the [FAQ Section](https://github.com/Nukesor/pueue/blob/master/FAQ.md), especially if you have problem with failing tasks or compilation errors.
+First of all, please read the [getting started guide](https://github.com/Nukesor/pueue/wiki/Get-started).
+Especially if you have problem with **escaping** or **wrong shell syntax**!
 
 Otherwise feel free to go ahead :)
 
