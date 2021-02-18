@@ -8,7 +8,7 @@ assignees: Nukesor
 ---
 
 First of all, please read the [getting started guide](https://github.com/Nukesor/pueue/wiki/Get-started).
-Especially if you have problem with **escaping** or **wrong shell syntax**!
+Especially if you have a problem with **escaping** or **wrong shell syntax**!
 
 Otherwise feel free to go ahead :)
 
