@@ -19,15 +19,34 @@ pub fn compile_shell_command(command_string: &str) -> Command {
 }
 
 /// Send a signal to one of Pueue's child process handles.
-/// We need a special since there exists some inconsistent behavior.
 ///
-/// In some circumstances and environments `sh -c $command` doesn't spawn a shell,
-/// but rather spawns the `$command` directly.
+/// There are two scenarios:
 ///
-/// This makes things a lot more complicated, since we need to either send signals
-/// to the root process directly OR to all it's child processes.
-/// This also affects the `--children` flag on all commands. We then have to either send the signal
-/// to all direct children or to all of the childrens' children.
+/// **Normal case**
+///
+/// A task, such as `sleep 60` get's spawned by the posix shell `sh`.
+/// This results in the process `sh -c 'sleep 60'`.
+/// Since the posix shell doesn't propagate any process signals to its children, we have to:
+/// 1. Send the signal to the shell.
+/// 2. Send the signal directly to the children.
+///     In our case this would be the `sleep 60` child process.
+///
+/// If the user also want's to send the signal to all child processes of the task,
+/// we have to get all child-processes of the child process.
+///
+/// **Special case**
+///
+/// The posix shell `sh` has some some inconsistent behavior.
+/// In some circumstances and environments, the `sh -c $command` doesn't spawn a `sh` process with a
+/// `$command` child-process, but rather spawns the `$command` as a top-level process directly.
+///
+/// This makes things a bit more complicated, since we have to find out whether a shell is spawned
+/// or not. If a shell is spawned, we do the **Normal case** handling.
+///
+/// If **no** shell is spawned, we have to send the signal to the top-level process only.
+///
+/// If the user also want's to send the signal to all child processes of the task,
+/// we have to get all child-processes of that `$command` process. and send them the signal.
 ///
 /// Returns `Ok(true)`, if everything went alright
 /// Returns `Ok(false)`, if the process went away while we tried to send the signal.
@@ -50,7 +69,7 @@ pub fn send_signal_to_child(
         // There might be multiple children, for instance, when users use the `&` operator.
         // If the `send_to_children` flag is given, the
 
-        // Send the signal to the shell, don't propagate to it's children yet.
+        // Send the signal to the shell, don't propagate to its children yet.
         send_signal_to_process(pid, action, false)?;
 
         // Now send the signal to the shells child processes and their respective
@@ -70,13 +89,13 @@ pub fn send_signal_to_child(
 }
 
 /// This is a helper function to safely kill a child process.
-/// It's purpose is to properly kill all processes and prevent any dangling processes.
+/// Its purpose is to properly kill all processes and prevent any dangling processes.
 ///
 /// Sadly, this needs some extra handling. Check the docstring of `send_signal_to_child` for
-/// additional information on why this has to be done.
+/// additional information on why this needs to be done.
 ///
-/// Returns `Ok(true)`, if everything went alright
-/// Returns `Ok(false)`, if the process went away while we tried to send the signal.
+/// Returns `true`, if everything went alright
+/// Returns `false`, if the process went away while we tried to send the signal.
 pub fn kill_child(task_id: usize, child: &mut Child, kill_children: bool) -> bool {
     let pid: i32 = child.id().try_into().unwrap();
 
@@ -88,7 +107,7 @@ pub fn kill_child(task_id: usize, child: &mut Child, kill_children: bool) -> boo
     };
 
     // We have to kill the root process first, to prevent it from spawning new processes.
-    // However, this prevents us from getting it's child processes afterwards.
+    // However, this prevents us from getting its child processes afterwards.
     // That's why we have to get the list of child processes already now.
     let mut child_processes = None;
     if kill_children || is_shell {
@@ -142,7 +161,7 @@ fn did_process_spawn_shell(pid: i32) -> Result<bool> {
         bail!("Process has just gone away");
     };
 
-    // Get the root command and, so we check whether it's actually a shell with `sh -c`.
+    // Get the root command and check whether it's actually a shell with `sh -c`.
     let mut cmdline = if let Ok(cmdline) = process.cmdline() {
         cmdline
     } else {
@@ -191,7 +210,8 @@ fn send_signal_to_children(pid: i32, action: &ProcessAction) {
     send_signal_to_processes(get_child_processes(pid), action);
 }
 
-/// Send a signal to a list of processes
+/// Send a signal to a list of processes.
+/// This is a convenience wrapper around `send_signal_to_process`.
 fn send_signal_to_processes(processes: Vec<Process>, action: &ProcessAction) {
     let signal = get_signal_from_action(action);
     for process in processes {
@@ -292,7 +312,7 @@ mod tests {
     }
 
     #[test]
-    /// Ensure that a `sh -c` process with a child process that has children of it's own
+    /// Ensure that a `sh -c` process with a child process that has children of its own
     /// will properly kill all processes and their children's children without detached processes.
     fn test_shell_command_children_are_killed() {
         let mut child = compile_shell_command("bash -c 'sleep 60 && sleep 60' && sleep 60")
@@ -349,7 +369,7 @@ mod tests {
         // Make sure the process did not spawn a shell.
         assert!(!did_process_spawn_shell(pid).unwrap());
 
-        // No childprocesses exist
+        // No child processes exist
         let child_processes = get_child_processes(pid);
         assert_eq!(child_processes.len(), 0);
 
@@ -363,7 +383,7 @@ mod tests {
     }
 
     #[test]
-    /// Ensure a normal command and all it's children will be
+    /// Ensure a normal command and all its children will be
     /// properly killed without any detached processes.
     fn test_normal_command_children_are_killed() {
         let mut child = Command::new("bash")

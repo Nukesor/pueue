@@ -223,7 +223,7 @@ This version adds breaking changes:
 
 ### Changed
 
-- Linux process handling now always sends signals to it's direct children, if the root process is a `sh -c` process.
+- Linux process handling now always sends signals to its direct children, if the root process is a `sh -c` process.
   Previously, this behavior was somewhat ambiguous and inconsistent. [#109](https://github.com/Nukesor/pueue/issues/109)
 
 ### Added

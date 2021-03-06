@@ -26,7 +26,7 @@ pub fn send_signal_to_child(
 ) -> Result<bool> {
     let signal = get_signal_from_action(action);
     let pid = child.id();
-    // Send the signal to the shell, don't propagate to it's children yet.
+    // Send the signal to the shell, don't propagate to its children yet.
     send_signal_to_process(pid, action, false)?;
 
     signal::kill(Pid::from_raw(pid.try_into().unwrap()), signal)?;
@@ -34,7 +34,7 @@ pub fn send_signal_to_child(
 }
 
 /// This is a helper function to safely kill a child process.
-/// It's purpose is to properly kill all processes and prevent any dangling processes.
+/// Its purpose is to properly kill all processes and prevent any dangling processes.
 pub fn kill_child(task_id: usize, child: &mut Child, _kill_children: bool) -> bool {
     match child.kill() {
         Err(_) => {

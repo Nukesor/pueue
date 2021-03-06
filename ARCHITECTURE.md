@@ -55,7 +55,7 @@ That's when the `mpsc` channel to the TaskHandler comes into play.
 ### TaskHandler
 
 The TaskHandler is responsible for actually starting and managing system processes. \
-It's further important to note, that it runs in it's own thread.
+It's further important to note, that it runs in its own thread.
 
 The TaskHandler runs a never ending loop, which checks a few times each second, if
 
