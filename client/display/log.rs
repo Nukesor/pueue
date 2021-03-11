@@ -242,37 +242,38 @@ pub fn print_local_file(stdout: &mut Stdout, file: &mut File, lines: &Option<usi
 /// branch is always called after ensuring that both are `Some`.
 pub fn print_remote_log(task_log: &TaskLogMessage, colors: &Colors) {
     // Save whether stdout was printed, so we can add a newline between outputs.
-    if !task_log.stdout.as_ref().unwrap().is_empty() {
-        if let Err(err) = print_remote_task_log(&task_log, colors, true) {
-            println!("Error while parsing stdout: {}", err);
+    if let Some(bytes) = task_log.stdout.as_ref() {
+        if !bytes.is_empty() {
+            println!(
+                "\n{}",
+                style_text("stdout: ", Some(colors.green()), Some(Attribute::Bold))
+            );
+
+            if let Err(err) = decompress_and_print_remote_log(bytes) {
+                println!("Error while parsing stdout: {}", err);
+            }
         }
     }
 
-    if !task_log.stderr.as_ref().unwrap().is_empty() {
-        if let Err(err) = print_remote_task_log(&task_log, colors, false) {
-            println!("Error while parsing stderr: {}", err);
-        };
+    if let Some(bytes) = task_log.stderr.as_ref() {
+        if !bytes.is_empty() {
+            println!(
+                "\n{}",
+                style_text("stderr: ", Some(colors.red()), Some(Attribute::Bold))
+            );
+
+            if let Err(err) = decompress_and_print_remote_log(bytes) {
+                println!("Error while parsing stderr: {}", err);
+            };
+        }
     }
 }
 
-/// Print log output of a finished process.
-fn print_remote_task_log(task_log: &TaskLogMessage, colors: &Colors, stdout: bool) -> Result<()> {
-    let (pre_text, color, bytes) = if stdout {
-        (
-            "stdout: ",
-            colors.green(),
-            task_log.stdout.as_ref().unwrap(),
-        )
-    } else {
-        ("stderr: ", colors.red(), task_log.stderr.as_ref().unwrap())
-    };
-
-    println!(
-        "\n{}",
-        style_text(pre_text, Some(color), Some(Attribute::Bold))
-    );
-
-    let mut decompressor = FrameDecoder::new(bytes.as_slice());
+/// We cannot easily stream log output from the client to the daemon (yet).
+/// Right now, stdout and stderr are compressed in the daemon and sent as a single payload to the
+/// client. In here, we take that payload, decompress it and stream it it directly to stdout.
+fn decompress_and_print_remote_log(bytes: &[u8]) -> Result<()> {
+    let mut decompressor = FrameDecoder::new(bytes);
 
     let stdout = io::stdout();
     let mut write = stdout.lock();
