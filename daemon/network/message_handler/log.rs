@@ -4,7 +4,7 @@ use pueue_lib::log::read_and_compress_log_files;
 use pueue_lib::network::message::*;
 use pueue_lib::state::SharedState;
 
-/// Invoked when calling `pueue_lib log`.
+/// Invoked when calling `pueue log`.
 /// Return the current state and the stdou/stderr of all tasks to the client.
 pub fn get_log(message: LogRequestMessage, state: &SharedState) -> Message {
     let state = state.lock().unwrap().clone();

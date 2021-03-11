@@ -3,7 +3,7 @@ use pueue_lib::network::message::*;
 use pueue_lib::state::SharedState;
 use pueue_lib::task::TaskStatus;
 
-/// Invoked when calling `pueue_lib edit`.
+/// Invoked when calling `pueue edit`.
 /// If a user wants to edit a message, we need to send him the current command.
 /// Lock the task to prevent execution, before the user has finished editing the command.
 pub fn edit_request(task_id: usize, state: &SharedState) -> Message {
