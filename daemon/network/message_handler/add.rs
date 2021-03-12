@@ -35,7 +35,7 @@ pub fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedSta
     }
 
     // Create a new task and add it to the state.
-    let task = Task::new(
+    let mut task = Task::new(
         message.command,
         message.path,
         message.envs,
@@ -45,6 +45,9 @@ pub fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedSta
         message.dependencies,
         message.label,
     );
+    // Sort and deduplicate dependency id.
+    task.dependencies.sort_unstable();
+    task.dependencies.dedup();
 
     let task_id = state.add_task(task);
 

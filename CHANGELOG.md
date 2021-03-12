@@ -6,8 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [0.12.1] -
 
-### Added
+### Fixed
 
+- Dependant tasks didn't update the id of their dependencies, if a dependency's id was changed via `pueue switch` [#185](https://github.com/Nukesor/pueue/issues/185)
 
 ## [0.12.0] - 10-02-2021
 

@@ -116,7 +116,7 @@ mod fixtures {
     /// Create a new task with stub data
     pub fn get_stub_task(id: &str, status: TaskStatus) -> Task {
         Task::new(
-            format!("ls {}", id),
+            format!("{}", id),
             "/tmp".to_string(),
             HashMap::new(),
             "default".to_string(),
