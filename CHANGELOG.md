@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Dependant tasks didn't update the id of their dependencies, if a dependency's id was changed via `pueue switch` [#185](https://github.com/Nukesor/pueue/issues/185)
 
+### Changed
+
+- Show the status of the default group, if there are no tasks in the queue.
+
 ## [0.12.0] - 10-02-2021
 
 **Info for all packagers:** \

@@ -28,7 +28,16 @@ pub fn print_state(state: State, cli_command: &SubCommand, colors: &Colors, sett
     }
 
     // Early exit and hint if there are no tasks in the queue
+    // Print the state of the default group anyway, since this is information one wants to
+    // see most of the time anyway.
     if state.tasks.is_empty() {
+        let headline = get_group_headline(
+            &"default",
+            &state.groups.get("default").unwrap(),
+            *state.settings.daemon.groups.get("default").unwrap(),
+            colors,
+        );
+        println!("{}\n", headline);
         println!("Task list is empty. Add tasks with `pueue add -- [cmd]`");
         return;
     }
