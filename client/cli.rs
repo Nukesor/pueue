@@ -319,7 +319,7 @@ pub enum SubCommand {
         quiet: bool,
     },
 
-    /// Remove all finished tasks from the list (also clears logs).
+    /// Remove all finished tasks from the list.
     Clean {
         /// Only clean tasks that finished successfully.
         #[clap(short, long)]

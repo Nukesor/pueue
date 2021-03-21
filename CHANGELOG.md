@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fixed
 
+- Remove task logs on `pueue remove`. [#187](https://github.com/Nukesor/pueue/issues/187)
+
 ## [0.12.1] - 12-03-2021
 
 ### Fixed
