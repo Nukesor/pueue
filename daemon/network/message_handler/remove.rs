@@ -1,3 +1,4 @@
+use pueue_lib::log::clean_log_handles;
 use pueue_lib::network::message::*;
 use pueue_lib::state::SharedState;
 use pueue_lib::task::TaskStatus;
@@ -28,6 +29,8 @@ pub fn remove(task_ids: Vec<usize>, state: &SharedState) -> Message {
 
     for task_id in &not_running {
         state.tasks.remove(task_id);
+
+        clean_log_handles(*task_id, &state.settings.shared.pueue_directory);
     }
 
     let text = "Tasks removed from list";
