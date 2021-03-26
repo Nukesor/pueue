@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::Path;
 
 use anyhow::{bail, Result};
 
@@ -9,7 +9,7 @@ use crate::display::follow_local_task_logs;
 
 pub async fn local_follow(
     stream: &mut GenericStream,
-    pueue_directory: &PathBuf,
+    pueue_directory: &Path,
     task_id: &Option<usize>,
     err: bool,
 ) -> Result<()> {

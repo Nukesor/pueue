@@ -1,5 +1,5 @@
 use std::io;
-use std::path::PathBuf;
+use std::path::Path;
 use std::thread::sleep;
 use std::time::Duration;
 
@@ -12,8 +12,8 @@ use pueue_lib::log::{get_log_file_handles, get_log_paths};
 /// - No running task: Print an error that there are no running tasks
 /// - Single running task: Follow the output of that task
 /// - Multiple running tasks: Print out the list of possible tasks to follow.
-pub fn follow_local_task_logs(pueue_directory: &PathBuf, task_id: usize, stderr: bool) {
-    let (stdout_handle, stderr_handle) = match get_log_file_handles(task_id, &pueue_directory) {
+pub fn follow_local_task_logs(pueue_directory: &Path, task_id: usize, stderr: bool) {
+    let (stdout_handle, stderr_handle) = match get_log_file_handles(task_id, pueue_directory) {
         Ok((stdout, stderr)) => (stdout, stderr),
         Err(err) => {
             println!("Failed to get log file handles: {}", err);
@@ -22,7 +22,7 @@ pub fn follow_local_task_logs(pueue_directory: &PathBuf, task_id: usize, stderr:
     };
     let mut handle = if stderr { stderr_handle } else { stdout_handle };
 
-    let (out_path, err_path) = get_log_paths(task_id, &pueue_directory);
+    let (out_path, err_path) = get_log_paths(task_id, pueue_directory);
     let handle_path = if stderr { err_path } else { out_path };
 
     // Stdout handler to directly write log file output to io::stdout

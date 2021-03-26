@@ -1,5 +1,5 @@
 use std::fs::create_dir_all;
-use std::path::PathBuf;
+use std::path::Path;
 use std::process::Command;
 use std::sync::mpsc::channel;
 use std::sync::{Arc, Mutex};
@@ -109,7 +109,7 @@ async fn main() -> Result<()> {
 }
 
 /// Initialize all directories needed for normal operation.
-fn init_directories(pueue_dir: &PathBuf) {
+fn init_directories(pueue_dir: &Path) {
     // Pueue base path
     if !pueue_dir.exists() {
         if let Err(error) = create_dir_all(&pueue_dir) {
