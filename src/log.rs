@@ -1,13 +1,13 @@
 use std::fs::{read_dir, remove_file, File};
 use std::io::{self, BufReader, Cursor};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Result};
 use log::error;
 use snap::write::FrameEncoder;
 
 /// Return the paths to the `(stdout, stderr)` log files of a task.
-pub fn get_log_paths(task_id: usize, path: &PathBuf) -> (PathBuf, PathBuf) {
+pub fn get_log_paths(task_id: usize, path: &Path) -> (PathBuf, PathBuf) {
     let task_log_dir = path.join("task_logs");
     let out_path = task_log_dir.join(format!("{}_stdout.log", task_id));
     let err_path = task_log_dir.join(format!("{}_stderr.log", task_id));
@@ -15,7 +15,7 @@ pub fn get_log_paths(task_id: usize, path: &PathBuf) -> (PathBuf, PathBuf) {
 }
 
 /// Create and return the file handle for the `(stdout, stderr)` log files of a task.
-pub fn create_log_file_handles(task_id: usize, path: &PathBuf) -> Result<(File, File)> {
+pub fn create_log_file_handles(task_id: usize, path: &Path) -> Result<(File, File)> {
     let (out_path, err_path) = get_log_paths(task_id, path);
     let stdout = File::create(out_path)?;
     let stderr = File::create(err_path)?;
@@ -24,7 +24,7 @@ pub fn create_log_file_handles(task_id: usize, path: &PathBuf) -> Result<(File, 
 }
 
 /// Return the file handle for the `(stdout, stderr)` log files of a task.
-pub fn get_log_file_handles(task_id: usize, path: &PathBuf) -> Result<(File, File)> {
+pub fn get_log_file_handles(task_id: usize, path: &Path) -> Result<(File, File)> {
     let (out_path, err_path) = get_log_paths(task_id, path);
     let stdout = File::open(out_path)?;
     let stderr = File::open(err_path)?;
@@ -33,7 +33,7 @@ pub fn get_log_file_handles(task_id: usize, path: &PathBuf) -> Result<(File, Fil
 }
 
 /// Remove the the log files of a task.
-pub fn clean_log_handles(task_id: usize, path: &PathBuf) {
+pub fn clean_log_handles(task_id: usize, path: &Path) {
     let (out_path, err_path) = get_log_paths(task_id, path);
     if let Err(err) = remove_file(out_path) {
         error!(
@@ -53,7 +53,7 @@ pub fn clean_log_handles(task_id: usize, path: &PathBuf) {
 /// Task output is compressed using [snap] to save some memory and bandwidth.
 pub fn read_and_compress_log_files(
     task_id: usize,
-    path: &PathBuf,
+    path: &Path,
     lines: Option<usize>,
 ) -> Result<(Vec<u8>, Vec<u8>)> {
     let (mut stdout_file, mut stderr_file) = match get_log_file_handles(task_id, path) {
@@ -90,16 +90,14 @@ pub fn read_and_compress_log_files(
 }
 
 /// Remove all files in the log directory.
-pub fn reset_task_log_directory(path: &PathBuf) {
+pub fn reset_task_log_directory(path: &Path) {
     let task_log_dir = path.join("task_logs");
 
     let files = read_dir(task_log_dir).expect("Failed to open pueue's task_logs directory");
 
-    for file in files {
-        if let Ok(file) = file {
-            if let Err(err) = remove_file(file.path()) {
-                error!("Failed to delete log file: {}", err);
-            }
+    for file in files.flatten() {
+        if let Err(err) = remove_file(file.path()) {
+            error!("Failed to delete log file: {}", err);
         }
     }
 }

@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Moved into a stand-alone repository for better maintainability.
 
+## [0.13.0] - 
+
+## Changed
+
+- Clippy adjustment: Transform `&PathBuf` to `&Path` in function parameter types.
+
 ## [0.12.1] - 09-02-2021
 
 ### Added
