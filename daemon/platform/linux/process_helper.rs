@@ -115,37 +115,40 @@ pub fn kill_child(task_id: usize, child: &mut Child, kill_children: bool) -> boo
     }
 
     // Kill the parent first
-    match child.kill() {
-        Err(_) => {
-            info!("Task {} has already finished by itself", task_id);
-            false
-        }
-        _ => {
-            // Now kill all remaining children, after the parent has been killed.
-            // If a shell is spawned, we have to manually send the kill signal to all children.
-            // Otherwise only send a signal to all children if the `kill_children` flag is set.
-            if let Some(child_processes) = child_processes {
-                if is_shell {
-                    for child_process in child_processes {
-                        // Send the signal to each child process, show warning if this fails.
-                        let process_pid = child_process.pid();
-                        if let Err(error) =
-                            send_signal_to_process(process_pid, &ProcessAction::Kill, kill_children)
-                        {
-                            warn!(
-                                "Failed to send kill to pid {} with error {:?}",
-                                process_pid, error
-                            );
-                        }
-                    }
-                } else if kill_children {
-                    send_signal_to_processes(child_processes, &ProcessAction::Kill);
-                }
-            }
-
-            true
-        }
+    let kill_result = child.kill();
+    if kill_result.is_err() {
+        info!("Task {} has already finished by itself", task_id);
+        return false;
     }
+
+    // Do an early return, if we don't need to kill any children.
+    let child_processes = if let Some(child_processes) = child_processes {
+        child_processes
+    } else {
+        return true;
+    };
+
+    // Now kill all remaining children. The parent has been already been killed at this point.
+    // If a shell is spawned, we have to manually send the kill signal to all children.
+    // Otherwise only send a signal to all children if the `kill_children` flag is set.
+    if is_shell {
+        for child_process in child_processes {
+            // Send the signal to each child process, show warning if this fails.
+            let process_pid = child_process.pid();
+            if let Err(error) =
+                send_signal_to_process(process_pid, &ProcessAction::Kill, kill_children)
+            {
+                warn!(
+                    "Failed to send kill to pid {} with error {:?}",
+                    process_pid, error
+                );
+            }
+        }
+    } else if kill_children {
+        send_signal_to_processes(child_processes, &ProcessAction::Kill);
+    }
+
+    true
 }
 
 /// Check whether a process's commandline string is actually a shell or not
