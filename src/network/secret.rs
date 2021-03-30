@@ -36,6 +36,7 @@ pub fn init_shared_secret(path: &Path) -> Result<()> {
     let mut file = File::create(path)?;
     file.write_all(&secret.into_bytes())?;
 
+    // Set proper file permissions for unix filesystems
     #[cfg(not(target_os = "windows"))]
     {
         use std::os::unix::fs::PermissionsExt;
