@@ -23,7 +23,7 @@ name = "pueued"
 path = "daemon/main.rs"
 
 [dependencies]
-pueue-lib = "0.12.1"
+pueue-lib = "0.12.2"
 #pueue-lib = { path = "../pueue-lib" }
 
 anyhow = "1"
@@ -37,7 +37,7 @@ snap = "1"
 serde_json = "1"
 
 log = "0.4"
-simplelog = { version = "0.9", default-features = false }
+simplelog = { version = "0.10", default-features = false }
 clap = "3.0.0-beta.2"
 clap_generate = "3.0.0-beta.2"
 crossterm = "0.19"
