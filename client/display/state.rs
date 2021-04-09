@@ -64,8 +64,6 @@ fn print_single_group(
         return;
     }
     print_table(&tasks, colors, settings);
-
-    return;
 }
 
 fn print_all_groups(
