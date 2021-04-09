@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Remove task logs on `pueue remove`. [#187](https://github.com/Nukesor/pueue/issues/187)
 - Improve Windows support by [oiatz](https://github.com/oiatz). [#114](https://github.com/Nukesor/pueue/issues/114)
+- Fix empty output for empty groups when requesting specific group with `status -g $name`. [#190](https://github.com/Nukesor/pueue/issues/190)
+- Fix missing output when explicitly requesting default group with `status -g default`. [#190](https://github.com/Nukesor/pueue/issues/190)
 
 ## [0.12.1] - 12-03-2021
 

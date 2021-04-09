@@ -27,6 +27,53 @@ pub fn print_state(state: State, cli_command: &SubCommand, colors: &Colors, sett
         return;
     }
 
+    // Sort all tasks by their respective group;
+    let sorted_tasks = sort_tasks_by_group(&state.tasks);
+
+    if let Some(group) = group_only {
+        print_single_group(state, settings, colors, sorted_tasks, group);
+        return;
+    }
+
+    print_all_groups(state, settings, colors, sorted_tasks);
+}
+
+fn print_single_group(
+    state: State,
+    settings: &Settings,
+    colors: &Colors,
+    mut sorted_tasks: BTreeMap<String, BTreeMap<usize, Task>>,
+    group: String,
+) {
+    // Only a single group is requested. Print that group and return.
+    let tasks = sorted_tasks.entry(group.clone()).or_default();
+    let headline = get_group_headline(
+        &group,
+        &state.groups.get(&group).unwrap(),
+        *state.settings.daemon.groups.get(&group).unwrap(),
+        colors,
+    );
+    println!("{}", headline);
+
+    // Show a message if the requested group doesn't have any tasks.
+    if tasks.is_empty() {
+        println!(
+            "Task list is empty. Add tasks with `pueue add -g {} -- [cmd]`",
+            group
+        );
+        return;
+    }
+    print_table(&tasks, colors, settings);
+
+    return;
+}
+
+fn print_all_groups(
+    state: State,
+    settings: &Settings,
+    colors: &Colors,
+    sorted_tasks: BTreeMap<String, BTreeMap<usize, Task>>,
+) {
     // Early exit and hint if there are no tasks in the queue
     // Print the state of the default group anyway, since this is information one wants to
     // see most of the time anyway.
@@ -42,11 +89,8 @@ pub fn print_state(state: State, cli_command: &SubCommand, colors: &Colors, sett
         return;
     }
 
-    // Sort all tasks by their respective group;
-    let sorted_tasks = sort_tasks_by_group(&state.tasks);
-
-    // Always print the default queue at the very top.
-    if group_only.is_none() && sorted_tasks.get("default").is_some() {
+    // Always print the default queue at the very top, if no specific group is requested.
+    if sorted_tasks.get("default").is_some() {
         let tasks = sorted_tasks.get("default").unwrap();
         let headline = get_group_headline(
             &"default",
@@ -63,21 +107,15 @@ pub fn print_state(state: State, cli_command: &SubCommand, colors: &Colors, sett
         }
     }
 
+    // Print a table for every other group that has any tasks
     let mut sorted_iter = sorted_tasks.iter().peekable();
-    // Print new table for each group
     while let Some((group, tasks)) = sorted_iter.next() {
         // We always want to print the default group at the very top.
-        // That's why we print it outside of this loop and skip it in here.
+        // That's why we print it before this loop and skip it in here.
         if group.eq("default") {
             continue;
         }
 
-        // Skip unwanted groups, if a single group is requested
-        if let Some(group_only) = &group_only {
-            if group_only != group {
-                continue;
-            }
-        }
         let headline = get_group_headline(
             &group,
             &state.groups.get(group).unwrap(),
