@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, Result};
 
-fn get_home_dir() -> Result<PathBuf> {
+pub fn get_home_dir() -> Result<PathBuf> {
     dirs::home_dir().ok_or_else(|| anyhow!("Couldn't resolve home dir"))
 }
 

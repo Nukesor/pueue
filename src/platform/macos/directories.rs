@@ -13,7 +13,7 @@ pub fn get_unix_socket_path() -> Result<String> {
         .to_string())
 }
 
-fn get_home_dir() -> Result<PathBuf> {
+pub fn get_home_dir() -> Result<PathBuf> {
     dirs::home_dir().ok_or_else(|| anyhow!("Couldn't resolve home dir"))
 }
 

@@ -10,7 +10,7 @@ use crate::settings::Settings;
 
 /// This the default certificates at the default `pueue_dir/certs` location.
 pub fn create_certificates(settings: &Settings) -> Result<()> {
-    let certs_dir = settings.shared.pueue_directory.join("certs");
+    let certs_dir = settings.shared.pueue_directory().join("certs");
 
     let daemon_cert_path = certs_dir.join("daemon.cert");
     let daemon_key_path = certs_dir.join("daemon.key");
