@@ -1,18 +1,20 @@
 use std::path::{Path, PathBuf};
 
-use anyhow::{anyhow, Result};
+use crate::error::Error;
 
-pub fn get_home_dir() -> Result<PathBuf> {
-    dirs::home_dir().ok_or_else(|| anyhow!("Couldn't resolve home dir"))
+pub fn get_home_dir() -> Result<PathBuf, Error> {
+    dirs::home_dir().ok_or(Error::InvalidPath("Couldn't resolve home dir".into()))
 }
 
-pub fn default_config_directory() -> Result<PathBuf> {
+pub fn default_config_directory() -> Result<PathBuf, Error> {
     Ok(dirs::data_local_dir()
-        .ok_or(anyhow!("Couldn't resolve app data directory"))?
+        .ok_or(Error::InvalidPath(
+            "Couldn't resolve app data directory".into(),
+        ))?
         .join("pueue"))
 }
 
-pub fn get_config_directories() -> Result<Vec<PathBuf>> {
+pub fn get_config_directories() -> Result<Vec<PathBuf>, Error> {
     Ok(vec![
         // Windows Terminal stores its config file in the "AppData/Local" directory.
         default_config_directory()?,
@@ -20,13 +22,17 @@ pub fn get_config_directories() -> Result<Vec<PathBuf>> {
     ])
 }
 
-pub fn default_pueue_path() -> Result<String> {
+pub fn default_pueue_path() -> Result<String, Error> {
     // Use local data directory since this data doesn't need to be synced.
     let path = dirs::data_local_dir()
-        .ok_or(anyhow!("Couldn't resolve app data directory"))?
+        .ok_or(Error::InvalidPath(
+            "Couldn't resolve app data directory".into(),
+        ))?
         .join("pueue");
     Ok(path
         .to_str()
-        .ok_or(anyhow!("Failed to parse log path (Weird characters?)"))?
+        .ok_or(Error::InvalidPath(
+            "Failed to parse pueue directory path (Weird characters?)".into(),
+        ))?
         .to_string())
 }

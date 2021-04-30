@@ -14,6 +14,7 @@ use pueue_lib::settings::Shared;
 #[async_std::test]
 /// This tests whether we can create a listener and client, that communicate via unix sockets.
 async fn test_unix_socket() -> Result<()> {
+    better_panic::install();
     // Create a temporary directory used for testing.
     let tempdir = TempDir::new("pueue_lib")?;
     let shared_settings = Shared {

@@ -2,14 +2,14 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::prelude::*;
 
-use anyhow::Result;
 use log::{info, warn};
 
+use crate::error::Error;
 use crate::platform::directories::get_config_directories;
 
 /// Return the contents of the alias file, if it exists and can be parsed. \
 /// The file has to be located in `pueue_directory` and named `pueue_aliases.yml`.
-pub fn get_aliases() -> Result<HashMap<String, String>> {
+pub fn get_aliases() -> Result<HashMap<String, String>, Error> {
     // Go through all config directories and check for a alias file.
     let mut alias_file_path = None;
     for directory in get_config_directories()? {
@@ -33,7 +33,9 @@ pub fn get_aliases() -> Result<HashMap<String, String>> {
     let mut content = String::new();
     alias_file.read_to_string(&mut content)?;
 
-    Ok(serde_yaml::from_str(&content)?)
+    serde_yaml::from_str(&content).map_err(|err| {
+        Error::ConfigDeserialization(format!("Failed to read alias configuration file:\n{}", err))
+    })
 }
 
 /// Check if there exists an alias for a given command.

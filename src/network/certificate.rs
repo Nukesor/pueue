@@ -1,31 +1,29 @@
-use std::fs::{create_dir, File};
+use std::fs::File;
 use std::io::Write;
 use std::path::Path;
 
-use anyhow::{bail, Context, Result};
 use log::info;
 use rcgen::generate_simple_self_signed;
 
+use crate::error::Error;
 use crate::settings::Shared;
 
 /// This the default certificates at the default `pueue_dir/certs` location.
-pub fn create_certificates(shared_settings: &Shared) -> Result<()> {
-    let certs_dir = shared_settings.pueue_directory().join("certs");
-    if !certs_dir.exists() {
-        create_dir(&certs_dir)?;
-    }
+pub fn create_certificates(shared_settings: &Shared) -> Result<(), Error> {
+    let certs_dir = shared_settings.pueue_directory.join("certs");
 
     let daemon_cert_path = certs_dir.join("daemon.cert");
     let daemon_key_path = certs_dir.join("daemon.key");
 
     if daemon_key_path.exists() || daemon_cert_path.exists() {
         if !(daemon_key_path.exists() && daemon_cert_path.exists()) {
-            bail!(
+            return Err(Error::CertificateFailure(
                 "Not all default certificates exist, some are missing. \
                  Please fix your cert/key paths.\n \
                  You can also remove the `$pueue_directory/certs` directory \
                  and restart the daemon to create new certificates/keys."
-            );
+                    .into(),
+            ));
         }
         info!("All default keys do exist.");
         return Ok(());
@@ -37,7 +35,7 @@ pub fn create_certificates(shared_settings: &Shared) -> Result<()> {
     // The certificate is now valid for localhost and the domain "hello.world.example"
     let ca_cert = cert
         .serialize_pem()
-        .context("Failed to serialize daemon certificate.")?;
+        .map_err(|_| Error::CertificateFailure("Failed to serialize daemon certificate.".into()))?;
     write_file(ca_cert, "daemon cert", &daemon_cert_path)?;
 
     let ca_key = cert.serialize_private_key_pem();
@@ -46,23 +44,22 @@ pub fn create_certificates(shared_settings: &Shared) -> Result<()> {
     Ok(())
 }
 
-fn write_file(blob: String, name: &str, path: &Path) -> Result<()> {
+fn write_file(blob: String, name: &str, path: &Path) -> Result<(), Error> {
     info!("Generate {}.", name);
-    let error_message = format!("Cannot write default {}: {:?}", name, path);
-    let mut file = File::create(path).context(error_message.clone())?;
+    let mut file = File::create(path)?;
 
-    file.write_all(&blob.into_bytes()).context(error_message)?;
+    file.write_all(&blob.into_bytes())?;
 
     #[cfg(not(target_os = "windows"))]
     {
         use std::os::unix::fs::PermissionsExt;
         let mut permissions = file
             .metadata()
-            .context("Failed to set secret file permissions")?
+            .map_err(|_| Error::CertificateFailure("Failed to certificate permission.".into()))?
             .permissions();
         permissions.set_mode(0o640);
         std::fs::set_permissions(path, permissions)
-            .context("Failed to set permissions on tls certificate")?;
+            .map_err(|_| Error::CertificateFailure("Failed to certificate permission.".into()))?;
     }
 
     Ok(())

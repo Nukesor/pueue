@@ -3,12 +3,12 @@ use std::fs::{create_dir_all, File};
 use std::io::prelude::*;
 use std::path::{Path, PathBuf};
 
-use anyhow::{anyhow, bail, Result};
 use config::Config;
 use log::info;
 use serde_derive::{Deserialize, Serialize};
 use shellexpand::tilde;
 
+use crate::error::Error;
 use crate::platform::directories::*;
 
 /// All settings which are used by both, the client and the daemon
@@ -127,7 +127,7 @@ impl Shared {
 impl Settings {
     /// Read from existing config files.
     /// If no config files can be found or fields are missing, an error is returned.
-    pub fn read(from_file: &Option<PathBuf>) -> Result<Settings> {
+    pub fn read(from_file: &Option<PathBuf>) -> Result<Settings, Error> {
         let config = Config::new();
 
         parse_config(config, true, from_file)
@@ -147,48 +147,74 @@ impl Settings {
     pub fn read_with_defaults(
         require_config: bool,
         from_file: &Option<PathBuf>,
-    ) -> Result<Settings> {
+    ) -> Result<Settings, Error> {
         let config = Settings::default_config()?;
 
         parse_config(config, require_config, from_file)
     }
 
-    pub fn default_config() -> Result<Config> {
+    pub fn default_config() -> Result<Config, Error> {
         let mut config = Config::new();
         let pueue_path = default_pueue_path()?;
-        config.set_default("shared.pueue_directory", pueue_path.clone())?;
+        config
+            .set_default("shared.pueue_directory", pueue_path.clone())
+            .unwrap();
         #[cfg(not(target_os = "windows"))]
-        config.set_default("shared.use_unix_socket", true)?;
+        config.set_default("shared.use_unix_socket", true).unwrap();
         #[cfg(not(target_os = "windows"))]
-        config.set_default("shared.unix_socket_path", get_unix_socket_path()?)?;
+        config
+            .set_default("shared.unix_socket_path", get_unix_socket_path()?)
+            .unwrap();
 
-        config.set_default("shared.host", "127.0.0.1")?;
-        config.set_default("shared.port", "6924")?;
-        config.set_default("shared.tls_enabled", true)?;
-        config.set_default(
-            "shared.daemon_key",
-            pueue_path.clone() + "/certs/daemon.key",
-        )?;
-        config.set_default(
-            "shared.daemon_cert",
-            pueue_path.clone() + "/certs/daemon.cert",
-        )?;
-        config.set_default("shared.shared_secret_path", pueue_path + "/shared_secret")?;
+        config.set_default("shared.host", "127.0.0.1").unwrap();
+        config.set_default("shared.port", "6924").unwrap();
+        config.set_default("shared.tls_enabled", true).unwrap();
+        config
+            .set_default(
+                "shared.daemon_key",
+                pueue_path.clone() + "/certs/daemon.key",
+            )
+            .unwrap();
+        config
+            .set_default(
+                "shared.daemon_cert",
+                pueue_path.clone() + "/certs/daemon.cert",
+            )
+            .unwrap();
+        config
+            .set_default("shared.shared_secret_path", pueue_path + "/shared_secret")
+            .unwrap();
 
         // Client specific config
-        config.set_default("client.read_local_logs", true)?;
-        config.set_default("client.show_expanded_aliases", false)?;
-        config.set_default("client.show_confirmation_questions", false)?;
-        config.set_default("client.dark_mode", false)?;
-        config.set_default("client.max_status_lines", None::<i64>)?;
+        config.set_default("client.read_local_logs", true).unwrap();
+        config
+            .set_default("client.show_expanded_aliases", false)
+            .unwrap();
+        config
+            .set_default("client.show_confirmation_questions", false)
+            .unwrap();
+        config.set_default("client.dark_mode", false).unwrap();
+        config
+            .set_default("client.max_status_lines", None::<i64>)
+            .unwrap();
 
         // Daemon specific config
-        config.set_default("daemon.default_parallel_tasks", 1)?;
-        config.set_default("daemon.pause_group_on_failure", false)?;
-        config.set_default("daemon.pause_all_on_failure", false)?;
-        config.set_default("daemon.callback", None::<String>)?;
-        config.set_default("daemon.callback_log_lines", 10)?;
-        config.set_default("daemon.groups", HashMap::<String, i64>::new())?;
+        config
+            .set_default("daemon.default_parallel_tasks", 1)
+            .unwrap();
+        config
+            .set_default("daemon.pause_group_on_failure", false)
+            .unwrap();
+        config
+            .set_default("daemon.pause_all_on_failure", false)
+            .unwrap();
+        config
+            .set_default("daemon.callback", None::<String>)
+            .unwrap();
+        config.set_default("daemon.callback_log_lines", 10).unwrap();
+        config
+            .set_default("daemon.groups", HashMap::<String, i64>::new())
+            .unwrap();
 
         Ok(config)
     }
@@ -196,7 +222,7 @@ impl Settings {
     /// Save the current configuration as a file to the given path. \
     /// If no path is given, the default configuration path will be used. \
     /// The file is then written to the main configuration directory of the respective OS.
-    pub fn save(&self, path: &Option<PathBuf>) -> Result<()> {
+    pub fn save(&self, path: &Option<PathBuf>) -> Result<(), Error> {
         let config_path = if let Some(path) = path {
             path.clone()
         } else {
@@ -204,14 +230,22 @@ impl Settings {
         };
         let config_dir = config_path
             .parent()
-            .ok_or_else(|| anyhow!("Couldn't resolve config dir"))?;
+            .ok_or_else(|| Error::InvalidPath("Couldn't resolve config directory".into()))?;
 
         // Create the config dir, if it doesn't exist yet
         if !config_dir.exists() {
             create_dir_all(config_dir)?;
         }
 
-        let content = serde_yaml::to_string(self)?;
+        let content = match serde_yaml::to_string(self) {
+            Ok(content) => content,
+            Err(error) => {
+                return Err(Error::Generic(format!(
+                    "Configuration file serialization failed:\n{}",
+                    error
+                )))
+            }
+        };
         let mut file = File::create(config_path)?;
         file.write_all(content.as_bytes())?;
 
@@ -228,11 +262,14 @@ fn parse_config(
     mut config: Config,
     require_config: bool,
     from_file: &Option<PathBuf>,
-) -> Result<Settings> {
+) -> Result<Settings, Error> {
     // Load the config from a very specific file path
     if let Some(path) = from_file {
         if !path.exists() || !path.is_file() {
-            bail!("Couldn't find config at path {:?}", path);
+            return Err(Error::FileNotFound(format!(
+                "Couldn't find config at path {:?}",
+                path
+            )));
         }
         info!("Using config file at: {:?}", path);
         let config_file = config::File::with_name(path.to_str().unwrap());
@@ -240,8 +277,6 @@ fn parse_config(
         return Ok(config.try_into()?);
     };
 
-    // Go through all config directories for this system and check if it contains a pueue.yml.
-    // If that's the case, parse it and merge it into the given configuration.
     let mut config_found = false;
     info!("Parsing config files");
     for directory in get_config_directories()?.into_iter() {
@@ -258,7 +293,9 @@ fn parse_config(
     }
 
     if require_config && !config_found {
-        bail!("Couldn't find a configuration file. Did you start the daemon yet?");
+        return Err(Error::FileNotFound(
+            "Couldn't find a configuration file. Did you start the daemon yet?".into(),
+        ));
     }
 
     // Try to can deserialize the entire configuration
