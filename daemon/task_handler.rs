@@ -155,7 +155,7 @@ impl TaskHandler {
                 task.dependencies
                     .iter()
                     .flat_map(|id| state.tasks.get(id))
-                    .all(|task| task.status == TaskStatus::Done)
+                    .all(|task| task.status == TaskStatus::Done && !task.failed())
             })
             .map(|(id, _)| *id)
     }

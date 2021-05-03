@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fixed
 
+- Handle very rare race-condition, where tasks with failed dependencies start anyway.
 
 ## [0.12.2] - 20-04-2021
 
