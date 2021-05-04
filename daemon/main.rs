@@ -61,11 +61,11 @@ async fn main() -> Result<()> {
         }
     };
 
-    init_directories(&settings.shared.pueue_directory);
-    if !settings.shared.daemon_key.exists() && !settings.shared.daemon_cert.exists() {
+    init_directories(&settings.shared.pueue_directory());
+    if !settings.shared.daemon_key().exists() && !settings.shared.daemon_cert().exists() {
         create_certificates(&settings)?;
     }
-    init_shared_secret(&settings.shared.shared_secret_path)?;
+    init_shared_secret(&settings.shared.shared_secret_path())?;
 
     let mut state = State::new(&settings, opt.config.clone());
     // Restore the previous state and save any changes that might have happened during this process

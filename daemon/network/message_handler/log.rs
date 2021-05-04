@@ -40,7 +40,7 @@ pub fn get_log(message: LogRequestMessage, state: &SharedState) -> Message {
             let (stdout, stderr) = if message.send_logs {
                 match read_and_compress_log_files(
                     *task_id,
-                    &state.settings.shared.pueue_directory,
+                    &state.settings.shared.pueue_directory(),
                     lines,
                 ) {
                     Ok((stdout, stderr)) => (Some(stdout), Some(stderr)),

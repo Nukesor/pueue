@@ -22,7 +22,7 @@ pub async fn accept_incoming(sender: Sender<Message>, state: SharedState) -> Res
         state.settings.shared.clone()
     };
     let listener = get_listener(&shared_settings).await?;
-    let secret = read_shared_secret(&shared_settings.shared_secret_path)?;
+    let secret = read_shared_secret(&shared_settings.shared_secret_path())?;
 
     loop {
         // Poll incoming connections.
@@ -88,7 +88,7 @@ async fn handle_incoming(
     // locking the state in the streaming loop.
     let pueue_directory = {
         let state = state.lock().unwrap();
-        state.settings.shared.pueue_directory.clone()
+        state.settings.shared.pueue_directory().clone()
     };
 
     loop {

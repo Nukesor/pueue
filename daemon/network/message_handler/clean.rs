@@ -24,7 +24,7 @@ pub fn clean(message: CleanMessage, state: &SharedState) -> Message {
             }
         }
         let _ = state.tasks.remove(task_id).unwrap();
-        clean_log_handles(*task_id, &state.settings.shared.pueue_directory);
+        clean_log_handles(*task_id, &state.settings.shared.pueue_directory());
     }
 
     state.save();
