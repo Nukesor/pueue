@@ -90,6 +90,7 @@ impl Shared {
         return Shared::expand(&self.pueue_directory);
     }
 
+    #[cfg(not(target_os = "windows"))]
     pub fn unix_socket_path(&self) -> PathBuf {
         return Shared::expand(&self.unix_socket_path);
     }
