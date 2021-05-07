@@ -20,7 +20,7 @@ pub async fn get_tls_connector(settings: &Shared) -> Result<TlsConnector> {
     let mut config = ClientConfig::new();
 
     // Trust server-certificates signed with our own CA.
-    let mut ca = load_ca(&settings.daemon_cert)?;
+    let mut ca = load_ca(&settings.daemon_cert())?;
     config
         .root_store
         .add_pem_file(&mut ca)
@@ -38,12 +38,12 @@ pub fn get_tls_listener(settings: &Shared) -> Result<TlsAcceptor> {
     config.mtu = Some(1500);
 
     // Set the server-side key and certificate that should be used for any communication
-    let certs = load_certs(&settings.daemon_cert)?;
-    let mut keys = load_keys(&settings.daemon_key)?;
+    let certs = load_certs(&settings.daemon_cert())?;
+    let mut keys = load_keys(&settings.daemon_key())?;
     if keys.is_empty() {
         bail!(
             "Couldn't extract private key from keyfile {:?}",
-            &settings.daemon_key
+            &settings.daemon_key()
         );
     }
 

@@ -13,8 +13,8 @@ use crate::settings::Shared;
 /// Unix specific cleanup handling when getting a SIGINT/SIGTERM.
 pub fn socket_cleanup(settings: &Shared) {
     // Clean up the unix socket if we're using it and it exists.
-    if settings.use_unix_socket && PathBuf::from(&settings.unix_socket_path).exists() {
-        std::fs::remove_file(&settings.unix_socket_path)
+    if settings.use_unix_socket && PathBuf::from(&settings.unix_socket_path()).exists() {
+        std::fs::remove_file(&settings.unix_socket_path())
             .expect("Failed to remove unix socket on shutdown");
     }
 }
@@ -70,13 +70,13 @@ pub type GenericStream = Box<dyn Stream>;
 pub async fn get_client_stream(settings: &Shared) -> Result<GenericStream> {
     // Create a unix socket, if the config says so.
     if settings.use_unix_socket {
-        if !PathBuf::from(&settings.unix_socket_path).exists() {
+        if !PathBuf::from(&settings.unix_socket_path()).exists() {
             bail!(
                 "Couldn't find unix socket at path {:?}. Is the daemon running yet?",
-                &settings.unix_socket_path
+                &settings.unix_socket_path()
             );
         }
-        let stream = UnixStream::connect(&settings.unix_socket_path).await?;
+        let stream = UnixStream::connect(&settings.unix_socket_path()).await?;
         return Ok(Box::new(stream));
     }
 
@@ -109,7 +109,7 @@ pub async fn get_listener(settings: &Shared) -> Result<GenericListener> {
         // In case it does, we have to check, if it's an active socket.
         // If it is, we have to throw an error, because another daemon is already running.
         // Otherwise, we can simply remove it.
-        if PathBuf::from(&settings.unix_socket_path).exists() {
+        if PathBuf::from(&settings.unix_socket_path()).exists() {
             if get_client_stream(&settings).await.is_ok() {
                 bail!(
                     "There seems to be an active pueue daemon.\n\
@@ -118,11 +118,11 @@ pub async fn get_listener(settings: &Shared) -> Result<GenericListener> {
                 );
             }
 
-            std::fs::remove_file(&settings.unix_socket_path)?;
+            std::fs::remove_file(&settings.unix_socket_path())?;
         }
 
         return Ok(Box::new(
-            UnixListener::bind(&settings.unix_socket_path).await?,
+            UnixListener::bind(&settings.unix_socket_path()).await?,
         ));
     }
 
