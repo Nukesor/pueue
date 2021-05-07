@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, HashMap};
 use std::fs::{create_dir_all, File};
 use std::io::prelude::*;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, bail, Result};
 use config::Config;
@@ -82,27 +82,27 @@ pub struct Settings {
 }
 
 impl Shared {
-    pub fn expand(old_path: &PathBuf) -> PathBuf {
-        return PathBuf::from(tilde(&old_path.to_string_lossy()).into_owned());
+    pub fn expand(old_path: &Path) -> PathBuf {
+        PathBuf::from(tilde(&old_path.to_string_lossy()).into_owned())
     }
 
     pub fn pueue_directory(&self) -> PathBuf {
-        return Shared::expand(&self.pueue_directory);
+        Shared::expand(&self.pueue_directory)
     }
 
     #[cfg(not(target_os = "windows"))]
     pub fn unix_socket_path(&self) -> PathBuf {
-        return Shared::expand(&self.unix_socket_path);
+        Shared::expand(&self.unix_socket_path)
     }
 
     pub fn daemon_cert(&self) -> PathBuf {
-        return Shared::expand(&self.daemon_cert);
+        Shared::expand(&self.daemon_cert)
     }
     pub fn daemon_key(&self) -> PathBuf {
-        return Shared::expand(&self.daemon_key);
+        Shared::expand(&self.daemon_key)
     }
     pub fn shared_secret_path(&self) -> PathBuf {
-        return Shared::expand(&self.shared_secret_path);
+        Shared::expand(&self.shared_secret_path)
     }
 }
 
