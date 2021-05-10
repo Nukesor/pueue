@@ -1191,6 +1191,7 @@ dependencies = [
 [[package]]
 name = "pueue-lib"
 version = "0.12.3"
+source = "git+https://github.com/Nukesor/pueue-lib#a2278bd1d04951bc351fe5312654c5f88525a5c8"
 dependencies = [
  "anyhow",
  "async-std",
