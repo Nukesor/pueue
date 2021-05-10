@@ -4,7 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-- Moved into a stand-alone repository for better maintainability.
+
+## [0.13.0] - 
+
+## Changed
+
+- Paths are now accessed via functions by [dadav](https://github.com/dadav) for [Pueue #191](https://github.com/Nukesor/pueue/issues/191)
+- Use the next id that's available. This results in ids being reused, on `pueue clean` or `pueue remove` of the last tasks in a queue.
+
+## Added
+
+- `~` is now respected in configuration paths by [dadav](https://github.com/dadav) for [Pueue #191](https://github.com/Nukesor/pueue/issues/191).
 
 ## [0.12.2] - 30-03-2021
 
@@ -45,6 +55,7 @@ Moved into a stand-alone repository for better maintainability.
 
 ### Fixed
 
+- Moved into a stand-alone repository for better maintainability.
 - Don't parse config path, if it's a directory.
 - Error with "Couldn't find config at path {:?}" when passing a directory via `--config`.
 - Fixed missing newline between tasks in `log` output.

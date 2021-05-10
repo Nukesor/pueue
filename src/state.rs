@@ -45,7 +45,6 @@ pub enum GroupStatus {
 /// information, such as status changes and incoming commands by the client.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct State {
-    max_id: usize,
     /// The current settings used by the daemon.
     pub settings: Settings,
     /// All tasks currently managed by the daemon.
@@ -65,7 +64,6 @@ impl State {
         }
 
         let mut state = State {
-            max_id: 0,
             settings: settings.clone(),
             tasks: BTreeMap::new(),
             groups,
@@ -77,11 +75,15 @@ impl State {
 
     /// Add a new task
     pub fn add_task(&mut self, mut task: Task) -> usize {
-        task.id = self.max_id;
-        self.tasks.insert(self.max_id, task);
-        self.max_id += 1;
+        let next_id = match self.tasks.keys().max() {
+            None => 0,
+            Some(id) => id + 1,
+        };
+        task.id = next_id;
+        self.tasks.insert(next_id, task);
         self.save();
-        self.max_id - 1
+
+        next_id
     }
 
     /// A small helper to change the status of a specific task.
@@ -253,7 +255,6 @@ impl State {
     /// This doesn't reset any processes!
     pub fn reset(&mut self) {
         self.backup();
-        self.max_id = 0;
         self.tasks = BTreeMap::new();
         self.set_status_for_all_groups(GroupStatus::Running);
     }
@@ -406,8 +407,6 @@ impl State {
 
             self.tasks.insert(*task_id, task.clone());
         }
-
-        self.max_id = state.max_id;
     }
 
     /// Remove old logs that aren't needed any longer.
