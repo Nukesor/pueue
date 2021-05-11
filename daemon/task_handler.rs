@@ -774,6 +774,15 @@ impl TaskHandler {
         parameters.insert("end", print_time(task.end));
         parameters.insert("group", task.group.clone());
 
+        // Read the last 10 lines of output and make it available.
+        if let Ok((stdout, stderr)) = read_last_log_file_lines(task.id, &self.pueue_directory, 10) {
+            parameters.insert("stdout", stdout);
+            parameters.insert("stderr", stderr);
+        } else {
+            parameters.insert("stdout", "".to_string());
+            parameters.insert("stderr", "".to_string());
+        }
+
         if let Some(TaskResult::Success) = &task.result {
             parameters.insert("exit_code", "0".into());
         } else if let Some(TaskResult::Failed(code)) = &task.result {
