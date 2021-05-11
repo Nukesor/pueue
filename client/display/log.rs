@@ -189,7 +189,7 @@ fn print_task_info(task: &Task, colors: &Colors) {
 /// If that's the case, read the log files from the local pueue directory
 fn print_local_log(task_id: usize, colors: &Colors, settings: &Settings, lines: Option<usize>) {
     let (mut stdout_file, mut stderr_file) =
-        match get_log_file_handles(task_id, &settings.shared.pueue_directory) {
+        match get_log_file_handles(task_id, &settings.shared.pueue_directory()) {
             Ok((stdout, stderr)) => (stdout, stderr),
             Err(err) => {
                 println!("Failed to get log file handles: {}", err);

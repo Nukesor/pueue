@@ -30,7 +30,7 @@ pub fn remove(task_ids: Vec<usize>, state: &SharedState) -> Message {
     for task_id in &not_running {
         state.tasks.remove(task_id);
 
-        clean_log_handles(*task_id, &state.settings.shared.pueue_directory);
+        clean_log_handles(*task_id, &state.settings.shared.pueue_directory());
     }
 
     let text = "Tasks removed from list";
