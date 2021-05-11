@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - `~` is now respected in configuration paths by [dadav](https://github.com/dadav) for [Pueue #191](https://github.com/Nukesor/pueue/issues/191).
 - New function `read_last_log_file_lines` for [#196](https://github.com/Nukesor/pueue/issues/196).
 - Add `callback_log_lines` setting for Daemon, specifying the amount of lines returned to the callback. [#196](https://github.com/Nukesor/pueue/issues/196).
+- Support for other `apple` platforms by [althiometer](https://github.com/althiometer)
 
 ## [0.12.2] - 30-03-2021
 

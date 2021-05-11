@@ -1,9 +1,9 @@
+/// MacOs specific stuff
+#[cfg(target_vendor = "apple")]
+pub mod apple;
 /// Linux specific stuff
 #[cfg(any(target_os = "linux", target_os = "freebsd"))]
 pub mod linux;
-/// MacOs specific stuff
-#[cfg(target_os = "macos")]
-pub mod macos;
 /// Windows specific stuff
 #[cfg(target_os = "windows")]
 pub mod windows;
@@ -12,8 +12,8 @@ pub mod windows;
 #[cfg(any(target_os = "linux", target_os = "freebsd"))]
 pub use self::linux::directories;
 
-#[cfg(target_os = "macos")]
-pub use self::macos::directories;
+#[cfg(target_vendor = "apple")]
+pub use self::apple::directories;
 
 #[cfg(target_os = "windows")]
 pub use self::windows::directories;
