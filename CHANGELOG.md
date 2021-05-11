@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## Added
 
 - `~` is now respected in configuration paths by [dadav](https://github.com/dadav) for [Pueue #191](https://github.com/Nukesor/pueue/issues/191).
+- New function `read_last_log_file_lines` for [#196](https://github.com/Nukesor/pueue/issues/196).
 
 ## [0.12.2] - 30-03-2021
 

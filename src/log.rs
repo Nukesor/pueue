@@ -89,6 +89,32 @@ pub fn read_and_compress_log_files(
     Ok((stdout, stderr))
 }
 
+/// Return the last lines of `(stdout, stderr)` of a task. \
+/// This output is uncompressed and may take a lot of memory, which is why we only read
+/// the last few lines.
+pub fn read_last_log_file_lines(
+    task_id: usize,
+    path: &Path,
+    lines: usize,
+) -> Result<(String, String)> {
+    let (mut stdout_file, mut stderr_file) = match get_log_file_handles(task_id, path) {
+        Ok((stdout, stderr)) => (stdout, stderr),
+        Err(err) => {
+            bail!(
+                "Error while opening the log files for task {}: {}",
+                task_id,
+                err
+            );
+        }
+    };
+
+    // Get the last few lines of both files
+    Ok((
+        read_last_lines(&mut stdout_file, lines),
+        read_last_lines(&mut stderr_file, lines),
+    ))
+}
+
 /// Remove all files in the log directory.
 pub fn reset_task_log_directory(path: &Path) {
     let task_log_dir = path.join("task_logs");
