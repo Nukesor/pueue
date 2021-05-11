@@ -24,7 +24,7 @@ path = "daemon/main.rs"
 
 [dependencies]
 #pueue-lib = "0.12.2"
-pueue-lib = { git = "https://github.com/Nukesor/pueue-lib" }
+pueue-lib = { git = "https://github.com/Nukesor/pueue-lib", branch = "master" }
 #pueue-lib = { path = "../../libraries/pueue-lib" }
 
 anyhow = "1"
@@ -57,7 +57,7 @@ whoami = "1"
 [target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]
 procfs = { version = "0.9", default-features = false }
 
-[target.'cfg(target_os = "macos")'.dependencies]
+[target.'cfg(target_os = "apple")'.dependencies]
 psutil = "3"
 
 [build-dependencies]
