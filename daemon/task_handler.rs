@@ -28,6 +28,7 @@ pub struct TaskHandler {
     // Some static settings that are extracted from `state.settings` for convenience purposes.
     pueue_directory: PathBuf,
     callback: Option<String>,
+    callback_log_lines: usize,
 }
 
 /// Pueue directly interacts with processes.
@@ -45,11 +46,12 @@ impl TaskHandler {
     pub fn new(state: SharedState, receiver: Receiver<Message>) -> Self {
         // Extract some static settings we often need.
         // This prevents locking the State all the time.
-        let (pueue_directory, callback) = {
+        let (pueue_directory, callback, callback_log_lines) = {
             let state = state.lock().unwrap();
             (
                 state.settings.shared.pueue_directory(),
                 state.settings.daemon.callback.clone(),
+                state.settings.daemon.callback_log_lines,
             )
         };
 
@@ -61,6 +63,7 @@ impl TaskHandler {
             full_reset: false,
             pueue_directory,
             callback,
+            callback_log_lines,
         }
     }
 }
@@ -775,7 +778,9 @@ impl TaskHandler {
         parameters.insert("group", task.group.clone());
 
         // Read the last 10 lines of output and make it available.
-        if let Ok((stdout, stderr)) = read_last_log_file_lines(task.id, &self.pueue_directory, 10) {
+        if let Ok((stdout, stderr)) =
+            read_last_log_file_lines(task.id, &self.pueue_directory, self.callback_log_lines)
+        {
             parameters.insert("stdout", stdout);
             parameters.insert("stderr", stderr);
         } else {

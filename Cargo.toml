@@ -25,7 +25,7 @@ path = "daemon/main.rs"
 [dependencies]
 #pueue-lib = "0.12.2"
 pueue-lib = { git = "https://github.com/Nukesor/pueue-lib" }
-#pueue-lib = { path = "../pueue-lib" }
+#pueue-lib = { path = "../../libraries/pueue-lib" }
 
 anyhow = "1"
 chrono = { version = "0.4", features = ["serde"] }
