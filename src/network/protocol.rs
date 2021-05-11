@@ -4,6 +4,8 @@ use anyhow::{Context, Result};
 use async_std::prelude::*;
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use log::debug;
+use serde_cbor::de::from_slice;
+use serde_cbor::ser::to_vec;
 
 use crate::network::message::*;
 
@@ -16,7 +18,7 @@ pub use super::platform::socket::*;
 pub async fn send_message(message: Message, stream: &mut GenericStream) -> Result<()> {
     debug!("Sending message: {:?}", message);
     // Prepare command for transfer and determine message byte size
-    let payload = bincode::serialize(&message).expect("Failed to serialize message.");
+    let payload = to_vec(&message).expect("Failed to serialize message.");
 
     send_bytes(&payload, stream).await
 }
@@ -88,7 +90,7 @@ pub async fn receive_message(stream: &mut GenericStream) -> Result<Message> {
     debug!("Received {} bytes", payload_bytes.len());
 
     // Deserialize the message.
-    let message: Message = bincode::deserialize(&payload_bytes).context(
+    let message: Message = from_slice(&payload_bytes).context(
         "In case you updated Pueue, try restarting the daemon. Otherwise please report this",
     )?;
     debug!("Received message: {:?}", message);
@@ -124,7 +126,7 @@ mod test {
         // The message that should be sent
         let payload = "a".repeat(100_000);
         let message = create_success_message(payload);
-        let original_bytes = bincode::serialize(&message).expect("Failed to serialize message.");
+        let original_bytes = to_vec(&message).expect("Failed to serialize message.");
 
         let listener: GenericListener = Box::new(listener);
 
@@ -136,7 +138,7 @@ mod test {
             let mut stream = listener.accept().await.unwrap();
             let message_bytes = receive_bytes(&mut stream).await.unwrap();
 
-            let message: Message = bincode::deserialize(&message_bytes).unwrap();
+            let message: Message = from_slice(&message_bytes).unwrap();
 
             send_message(message, &mut stream).await.unwrap();
         });
@@ -146,7 +148,7 @@ mod test {
         // Create a client that sends a message and instantly receives it
         send_message(message, &mut client).await?;
         let response_bytes = receive_bytes(&mut client).await?;
-        let _message: Message = bincode::deserialize(&response_bytes)?;
+        let _message: Message = from_slice(&response_bytes)?;
 
         assert_eq!(response_bytes, original_bytes);
 
