@@ -48,7 +48,7 @@ impl TaskHandler {
         let (pueue_directory, callback) = {
             let state = state.lock().unwrap();
             (
-                state.settings.shared.pueue_directory().clone(),
+                state.settings.shared.pueue_directory(),
                 state.settings.daemon.callback.clone(),
             )
         };
