@@ -67,6 +67,9 @@ pub struct Daemon {
     pub pause_all_on_failure: bool,
     /// The callback that's called whenever a task finishes.
     pub callback: Option<String>,
+    /// The amount of log lines from stdout/stderr that are passed to the callback command.
+    #[serde(default = "default_callback_log_lines")]
+    pub callback_log_lines: usize,
     /// This shouldn't be manipulated manually if the daemon is running.
     /// This represents all known groups and their amount of parallel tasks.
     pub groups: BTreeMap<String, usize>,
@@ -170,6 +173,7 @@ impl Settings {
         config.set_default("daemon.pause_group_on_failure", false)?;
         config.set_default("daemon.pause_all_on_failure", false)?;
         config.set_default("daemon.callback", None::<String>)?;
+        config.set_default("daemon.callback_log_lines", 10)?;
         config.set_default("daemon.groups", HashMap::<String, i64>::new())?;
 
         Ok(config)
@@ -255,4 +259,10 @@ fn parse_config(settings: &mut Config, require_config: bool) -> Result<()> {
 /// Needed to keep backward compatibility between v0.11 and v0.12
 fn default_dark_mode() -> bool {
     false
+}
+
+/// The default value for the `dark_mode` client settings.
+/// Needed to keep backward compatibility between v0.11 and v0.12
+fn default_callback_log_lines() -> usize {
+    10
 }
