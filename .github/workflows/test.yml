@@ -29,7 +29,7 @@ jobs:
             - arm-unknown-linux-musleabihf
             - x86_64-pc-windows-msvc
             - x86_64-apple-darwin
-              #- aarch64-apple-ios
+            - aarch64-apple-ios
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-musl
@@ -55,10 +55,10 @@ jobs:
             target: x86_64-apple-darwin
             cross: false
             strip: true
-            #- os: macos-latest
-            #  target: aarch64-apple-ios
-            #  cross: true
-            #  strip: true
+          - os: macos-latest
+            target: aarch64-apple-ios
+            cross: true
+            strip: true
 
     steps:
       - name: Checkout code
