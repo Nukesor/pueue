@@ -42,7 +42,7 @@ pub fn print_logs(
     // TODO: This only works properly if we get the logs from remote.
     // TODO: However, this still doesn't work, since the logs are still compressed.
     if json {
-        println!("{}", serde_json::to_string(&task_logs).unwrap());
+        print_log_json(task_logs, settings);
         return;
     }
 
@@ -280,4 +280,9 @@ fn decompress_and_print_remote_log(bytes: &[u8]) -> Result<()> {
     io::copy(&mut decompressor, &mut write)?;
 
     Ok(())
+}
+
+fn print_log_json(task_logs: BTreeMap<usize, TaskLogMessage>, settings: &Settings) {
+    println!("{}", serde_json::to_string(&task_logs).unwrap());
+    return;
 }

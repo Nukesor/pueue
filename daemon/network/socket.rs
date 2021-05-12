@@ -3,6 +3,7 @@ use std::time::{Duration, SystemTime};
 
 use anyhow::{bail, Context, Result};
 use async_std::task;
+use clap::crate_version;
 use log::{debug, info, warn};
 
 use pueue_lib::network::message::*;
@@ -82,7 +83,7 @@ async fn handle_incoming(
     }
 
     // Send a super short `ok` byte to the client, so it knows that the secret has been accepted.
-    send_bytes(b"hello", &mut stream).await?;
+    send_bytes(crate_version!().as_bytes(), &mut stream).await?;
 
     // Save the directory for convenience purposes and to prevent continuously
     // locking the state in the streaming loop.

@@ -3,6 +3,7 @@ use std::io::{self, Write};
 use std::{borrow::Cow, collections::HashMap};
 
 use anyhow::{bail, Context, Result};
+use clap::crate_version;
 use colors::Colors;
 use log::error;
 
@@ -41,15 +42,37 @@ pub fn group_or_default(group: &Option<String>) -> String {
 impl Client {
     /// Connect to the daemon, authorize via secret and return a new initialized Client.
     pub async fn new(settings: Settings, opt: CliArguments) -> Result<Self> {
+        // Connect to daemon and get stream used for communication.
         let mut stream = get_client_stream(&settings.shared).await?;
 
-        // Send the secret to the daemon
-        // In case everything was successful, we get a short `hello` response from the daemon.
+        // Next we do a handshake with the daemon
+        // 1. Client sends the secret to the daemon.
+        // 2. If successful, the daemon responds with their version.
         let secret = read_shared_secret(&settings.shared.shared_secret_path())?;
         send_bytes(&secret, &mut stream).await?;
-        let hello = receive_bytes(&mut stream).await?;
-        if hello != b"hello" {
-            bail!("Daemon went away after initial connection. Did you use the correct secret?")
+        let version_bytes = receive_bytes(&mut stream)
+            .await
+            .context("Failed sending secret during handshake with daemon.")?;
+
+        if version_bytes.is_empty() {
+            bail!("Daemon went away after sending secret. Did you use the correct secret?")
+        }
+
+        // Check if we got valid utf8. Invalid utf8 should never happen and probably
+        let version = match String::from_utf8(version_bytes) {
+            Ok(version) => version,
+            Err(_) => {
+                bail!("Daemon went away after sending secret. Did you use the correct secret?")
+            }
+        };
+
+        // Info if the daemon runs a different version.
+        // Backward compatibility should work, but some features might not work as expected.
+        if version != crate_version!() {
+            println!(
+                "Different daemon version detected '{}'. Consider restarting the daemon.",
+                version
+            );
         }
 
         let colors = Colors::new(&settings);
