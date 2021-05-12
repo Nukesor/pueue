@@ -226,7 +226,7 @@ fn send_signal_to_processes(processes: Vec<Process>, action: &ProcessAction) {
         let pid = Pid::from_raw(process.pid);
         if let Err(error) = signal::kill(pid, signal) {
             warn!(
-                "Failed send signal {:?} to Pid {}: {:?}",
+                "Failed to send signal {:?} to Pid {}: {:?}",
                 signal, process.pid, error
             );
         }

@@ -6,17 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [0.13.0] - 
 
+### Added
+
+- The last lines of `stderr` and `stdout` are now available in the callback command. [#196](https://github.com/Nukesor/pueue/issues/196).
+- Add `callback_log_lines` setting for the daemon, specifying the amount of lines returned to the callback. [#196](https://github.com/Nukesor/pueue/issues/196).
+- `~` is respected in configuration paths by [dadav](https://github.com/dadav) for [#191](https://github.com/Nukesor/pueue/issues/191).
+- Support for other `apple` platforms. New build artifacts for `ios-aarch64`.
+
+### Changed
+
+- Use the next available id instead of constantly increasing id's. This results in ids being reused, on `pueue clean` or `pueue remove` of the last tasks in a queue.
+- Backward compatible protocol for stable version changes with `serde_cbor`.
+- Detection of old daemon versions on update.
+
 ### Fixed
 
 - Handle very rare race-condition, where tasks with failed dependencies start anyway.
-
-### Added
-
-- Use the next available id instead of constantly increasing id's. This results in ids being reused, on `pueue clean` or `pueue remove` of the last tasks in a queue.
-- The last lines of `stderr` and `stdout` are now available in the callback command. [#196](https://github.com/Nukesor/pueue/issues/196).
-- Add `callback_log_lines` setting for Daemon, specifying the amount of lines returned to the callback. [#196](https://github.com/Nukesor/pueue/issues/196).
-- `~` is respected in configuration paths by [dadav](https://github.com/dadav) for [#191](https://github.com/Nukesor/pueue/issues/191).
-- Support for other `apple` platforms. New build artifacts for `ios-aarch64`.
 
 ## [0.12.2] - 20-04-2021
 
