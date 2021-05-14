@@ -35,18 +35,22 @@ pub fn get_log_file_handles(task_id: usize, path: &Path) -> Result<(File, File)>
 /// Remove the the log files of a task.
 pub fn clean_log_handles(task_id: usize, path: &Path) {
     let (out_path, err_path) = get_log_paths(task_id, path);
-    if let Err(err) = remove_file(out_path) {
-        error!(
-            "Failed to remove stdout file for task {} with error {:?}",
-            task_id, err
-        );
-    };
-    if let Err(err) = remove_file(err_path) {
-        error!(
-            "Failed to remove stderr file for task {} with error {:?}",
-            task_id, err
-        );
-    };
+    if out_path.exists() {
+        if let Err(err) = remove_file(out_path) {
+            error!(
+                "Failed to remove stdout file for task {} with error {:?}",
+                task_id, err
+            );
+        };
+    }
+    if err_path.exists() {
+        if let Err(err) = remove_file(err_path) {
+            error!(
+                "Failed to remove stderr file for task {} with error {:?}",
+                task_id, err
+            );
+        };
+    }
 }
 
 /// Return the `(stdout, stderr)` output of a task. \

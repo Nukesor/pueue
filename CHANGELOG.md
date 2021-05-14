@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Use `serde_cbor` instead of `bincode` to allow protocol backward compatibility between versions
 - Use the next id that's available. This results in ids being reused, on `pueue clean` or `pueue remove` of the last tasks in a queue.
 - Paths are now accessed via functions by [dadav](https://github.com/dadav) for [Pueue #191](https://github.com/Nukesor/pueue/issues/191)
+- Remove `full` flag from TaskLogRequestMessage
 
 ## Added
 
@@ -19,6 +20,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - New function `read_last_log_file_lines` for [#196](https://github.com/Nukesor/pueue/issues/196).
 - Add `callback_log_lines` setting for Daemon, specifying the amount of lines returned to the callback. [#196](https://github.com/Nukesor/pueue/issues/196).
 - Support for other `apple` platforms by [althiometer](https://github.com/althiometer)
+
+## Fixed
+
+- Only try to remove log files, if they actually exist.
 
 ## [0.12.2] - 30-03-2021
 
