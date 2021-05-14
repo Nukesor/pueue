@@ -1130,6 +1130,8 @@ dependencies = [
  "procfs",
  "psutil",
  "pueue-lib",
+ "serde",
+ "serde_derive",
  "serde_json",
  "shell-escape",
  "simplelog",

@@ -17,6 +17,36 @@ use json::*;
 use local::*;
 use remote::*;
 
+// Determine how many lines of stderr/out should be printed/returned.
+// `None` implicates that all lines are printed.
+//
+// By default, everything is returned for single tasks and only some lines for multiple.
+// `json` is an exception to this, in json mode we always only return some lines
+// (unless otherwise explicitely requested).
+//
+// `full` always forces the full log output
+// `lines` force a specific amount of lines
+pub fn determine_log_line_amount(
+    full: bool,
+    lines: &Option<usize>,
+    json: bool,
+    task_amount: usize,
+) -> Option<usize> {
+    if full {
+        None
+    } else if let Some(lines) = lines {
+        Some(*lines)
+    } else {
+        // By default, only some lines are shown per task, if multiple tasks exist or
+        // json ouput is requested.
+        if task_amount > 1 || json {
+            Some(15)
+        } else {
+            None
+        }
+    }
+}
+
 /// Print the log ouput of finished tasks.
 /// Either print the logs of every task
 /// or only print the logs of the specified tasks.
@@ -41,11 +71,11 @@ pub fn print_logs(
         ),
     };
 
+    let lines = determine_log_line_amount(full, &lines, json, task_logs.len());
+
     // Return the server response in json representation.
-    // TODO: This only works properly if we get the logs from remote.
-    // TODO: However, this still doesn't work, since the logs are still compressed.
     if json {
-        print_log_json(task_logs, settings);
+        print_log_json(task_logs, settings, lines);
         return;
     }
 
@@ -59,22 +89,6 @@ pub fn print_logs(
         println!("There are no finished tasks for your specified ids");
         return;
     }
-
-    // Determine, whether we should print everything or only a part of the log output.
-    // `None` implicates that all lines are printed.
-    let lines = if full {
-        None
-    } else if let Some(lines) = lines {
-        Some(lines)
-    } else {
-        // By default, only some lines are shown per task if multiple tasks exist.
-        // For a single task, the whole log output is shown.
-        if task_logs.len() > 1 {
-            Some(15)
-        } else {
-            None
-        }
-    };
 
     // Iterate over each task and print the respective log.
     let mut task_iter = task_logs.iter_mut().peekable();
@@ -99,7 +113,7 @@ pub fn print_logs(
 /// lines: Whether we should reduce the log output of each task to a specific number of lines.
 ///         `None` implicates that everything should be printed.
 ///         This is only important, if we read local lines.
-pub fn print_log(
+fn print_log(
     message: &mut TaskLogMessage,
     colors: &Colors,
     settings: &Settings,

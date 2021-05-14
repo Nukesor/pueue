@@ -10,7 +10,7 @@ use self::{colors::Colors, helper::style_text};
 // Re-exports
 pub use self::follow::follow_local_task_logs;
 pub use self::group::print_groups;
-pub use self::log::print_logs;
+pub use self::log::{determine_log_line_amount, print_logs};
 pub use self::state::print_state;
 
 /// Used to style any generic success message from the daemon.
