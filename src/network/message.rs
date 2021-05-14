@@ -160,15 +160,15 @@ pub struct StreamRequestMessage {
 }
 
 /// Request logs for specific tasks.
-/// An empty task_id vector will return logs of all tasks.
-/// If send_logs is false, the daemon won't send the logs
-/// and the client will read logs from the local disk.
+///
+/// `task_ids` specifies the requested tasks. If none are given, all tasks are selected.
+/// `send_logs` Determines whether tasks should be sent at all.
+/// `lines` Determines whether only a few lines of log should be returned.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct LogRequestMessage {
     pub task_ids: Vec<usize>,
     pub send_logs: bool,
     pub lines: Option<usize>,
-    pub full: bool,
 }
 
 /// Helper struct for sending tasks and their log output to the client.

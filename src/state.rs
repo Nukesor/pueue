@@ -14,6 +14,8 @@ use crate::task::{Task, TaskResult, TaskStatus};
 
 pub type SharedState = Arc<Mutex<State>>;
 
+/// Represents the current status of a group.
+/// Each group acts as a queue and can be managed individually.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum GroupStatus {
     Running,
