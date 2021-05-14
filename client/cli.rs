@@ -270,7 +270,9 @@ pub enum SubCommand {
         /// View the task output of these specific tasks.
         task_ids: Vec<usize>,
         /// Print the resulting tasks and output as json.
-        /// Can be very large!
+        /// By default only the last stdout/-err lines will be returned unless --full is provided.
+        /// Take care, as the json cannot be streamed!
+        /// If your logs are really huge, using --full can use all of your machine's RAM.
         #[clap(short, long)]
         json: bool,
 
