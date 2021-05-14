@@ -74,7 +74,10 @@ fn shutdown(sender: &Sender<Message>, state: &SharedState) -> Message {
     // Do some socket cleanup (unix socket).
     {
         let state = state.lock().unwrap();
-        socket_cleanup(&state.settings.shared);
+        if let Err(error) = socket_cleanup(&state.settings.shared) {
+            println!("Failed to cleanup socket after shutdown.");
+            println!("{}", error);
+        };
     }
 
     // Notify the task handler.

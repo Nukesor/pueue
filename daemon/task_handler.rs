@@ -174,7 +174,9 @@ impl TaskHandler {
             let mut state = self.state.lock().unwrap();
             state.reset();
             state.set_status_for_all_groups(GroupStatus::Running);
-            reset_task_log_directory(&self.pueue_directory);
+            if let Err(error) = reset_task_log_directory(&self.pueue_directory) {
+                panic!("Error while resetting task log directory: {}", error);
+            };
             self.full_reset = false;
         }
     }

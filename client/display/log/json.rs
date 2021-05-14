@@ -1,11 +1,10 @@
 use std::collections::BTreeMap;
 use std::io::Read;
 
-use anyhow::Result;
 use serde_derive::{Deserialize, Serialize};
 use snap::read::FrameDecoder;
 
-use pueue_lib::log::{get_log_file_handles, read_last_lines, read_last_log_file_lines};
+use pueue_lib::log::{get_log_file_handles, read_last_lines};
 use pueue_lib::network::message::TaskLogMessage;
 use pueue_lib::settings::Settings;
 use pueue_lib::task::Task;
@@ -43,7 +42,7 @@ pub fn print_log_json(
     // Now assemble the final struct that will be returned
     let mut json = BTreeMap::new();
     for (id, task) in tasks {
-        let (id, (stderr, stdout)) = task_log.remove_entry(&id).unwrap();
+        let (id, (stdout, stderr)) = task_log.remove_entry(&id).unwrap();
 
         json.insert(
             id,
@@ -73,7 +72,12 @@ fn get_local_logs(settings: &Settings, id: usize, lines: Option<usize>) -> (Stri
         read_last_lines(&mut stdout_file, lines)
     } else {
         let mut stdout = String::new();
-        stdout_file.read_to_string(&mut stdout);
+        if let Err(error) = stdout_file.read_to_string(&mut stdout) {
+            stdout.push_str(&format!(
+                "(Pueue error) Failed to read local log output file: {:?}",
+                error
+            ))
+        };
 
         stdout
     };
@@ -82,7 +86,12 @@ fn get_local_logs(settings: &Settings, id: usize, lines: Option<usize>) -> (Stri
         read_last_lines(&mut stderr_file, lines)
     } else {
         let mut stderr = String::new();
-        stderr_file.read_to_string(&mut stderr);
+        if let Err(error) = stderr_file.read_to_string(&mut stderr) {
+            stderr.push_str(&format!(
+                "(Pueue error) Failed to read local log output file: {:?}",
+                error
+            ))
+        };
 
         stderr
     };
