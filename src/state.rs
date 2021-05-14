@@ -6,7 +6,7 @@ use std::time::SystemTime;
 
 use anyhow::{bail, Result};
 use chrono::prelude::*;
-use log::{debug, error, info};
+use log::{debug, error, info, warn};
 use serde_derive::{Deserialize, Serialize};
 
 use crate::settings::Settings;
@@ -359,7 +359,8 @@ impl State {
         // Try to deserialize the state file.
         let deserialized: Result<State, serde_json::error::Error> = serde_json::from_str(&data);
         if let Err(error) = deserialized {
-            error!("Failed to deserialize previous state log: {:?}", error);
+            warn!("Failed to deserialize previous state log: {:?}", error);
+            warn!("Discarding previous state. This is probably due to a new version.");
             return;
         }
         let mut state = deserialized.unwrap();
