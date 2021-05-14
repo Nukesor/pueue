@@ -438,13 +438,14 @@ impl Client {
                 task_ids,
                 lines,
                 full,
-                ..
+                json,
             } => {
+                let lines = determine_log_line_amount(*full, lines, *json, task_ids.len());
+
                 let message = LogRequestMessage {
                     task_ids: task_ids.clone(),
                     send_logs: !self.settings.client.read_local_logs,
-                    lines: *lines,
-                    full: *full,
+                    lines,
                 };
                 Ok(Message::Log(message))
             }

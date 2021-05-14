@@ -1130,6 +1130,8 @@ dependencies = [
  "procfs",
  "psutil",
  "pueue-lib",
+ "serde",
+ "serde_derive",
  "serde_json",
  "shell-escape",
  "simplelog",
@@ -1143,7 +1145,7 @@ dependencies = [
 [[package]]
 name = "pueue-lib"
 version = "0.12.3"
-source = "git+https://github.com/Nukesor/pueue-lib?branch=master#a8c1d64edc186483b2c89aceb1b3c476f9f55d03"
+source = "git+https://github.com/Nukesor/pueue-lib?branch=master#74f54764e5eccc76f9b339acf8ca92b65809911b"
 dependencies = [
  "anyhow",
  "async-std",
@@ -1343,9 +1345,9 @@ dependencies = [
 
 [[package]]
 name = "serde"
-version = "1.0.125"
+version = "1.0.126"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "558dc50e1a5a5fa7112ca2ce4effcb321b0300c0d4ccf0776a9f60cd89031171"
+checksum = "ec7505abeacaec74ae4778d9d9328fe5a5d04253220a85c4ee022239fc996d03"
 
 [[package]]
 name = "serde_cbor"
@@ -1359,9 +1361,9 @@ dependencies = [
 
 [[package]]
 name = "serde_derive"
-version = "1.0.125"
+version = "1.0.126"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b093b7a2bb58203b5da3056c05b4ec1fed827dcfdb37347a8841695263b3d06d"
+checksum = "963a7dbc9895aeac7ac90e74f34a5d5261828f79df35cbed41e10189d3804d43"
 dependencies = [
  "proc-macro2",
  "quote",

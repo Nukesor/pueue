@@ -84,7 +84,10 @@ async fn main() -> Result<()> {
     let sender_clone = sender.clone();
     let settings_clone = settings.clone();
     ctrlc::set_handler(move || {
-        socket_cleanup(&settings_clone.shared);
+        if let Err(error) = socket_cleanup(&settings_clone.shared) {
+            println!("Failed to cleanup socket after shutdown signal.");
+            println!("{}", error);
+        };
 
         // Notify the task handler
         sender_clone
