@@ -15,13 +15,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
-- Use the next available id instead of constantly increasing id's. This results in ids being reused, on `pueue clean` or `pueue remove` of the last tasks in a queue.
+- Use the next available id instead of constantly increasing id's.
+    This results in ids being reused, on `pueue clean` or `pueue remove` of the last tasks in a queue.
 - Backward compatible protocol for stable version changes with `serde_cbor`.
 - Detection of old daemon versions on update.
+- Overall better debug messages.
 
 ### Fixed
 
 - Handle very rare race-condition, where tasks with failed dependencies start anyway.
+- `pueue log --json` now works again.
+    By default, only a few lines of output will be provided, but this can be configured via the `--full` and `--lines` option.
 
 ## [0.12.2] - 20-04-2021
 
