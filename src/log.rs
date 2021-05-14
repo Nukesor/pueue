@@ -134,10 +134,12 @@ pub fn reset_task_log_directory(path: &Path) {
 /// 1000 lines. It would be cleaner to seek to the beginning of the requested
 /// position and simply stream the content.
 pub fn read_last_lines(file: &mut File, amount: usize) -> String {
-    let last_lines: Vec<String> = rev_lines::RevLines::new(BufReader::new(file))
-        .expect("Failed to read last lines of file")
-        .take(amount)
-        .collect();
+    // Read the lines from the file.
+    // Return a debug string if it fails.
+    let last_lines: Vec<String> = match rev_lines::RevLines::new(BufReader::new(file)) {
+        Ok(lines) => lines.take(amount).collect(),
+        Err(error) => return format!("(Pueue error) Failed to read last lines of file: {}", error),
+    };
 
     last_lines
         .into_iter()
