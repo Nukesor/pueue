@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 use std::io::Read;
 
 use serde_derive::{Deserialize, Serialize};
@@ -41,9 +41,10 @@ pub fn print_log_json(
 
     // Now assemble the final struct that will be returned
     let mut json = BTreeMap::new();
-    for (id, task) in tasks {
+    for (id, mut task) in tasks {
         let (id, (stdout, stderr)) = task_log.remove_entry(&id).unwrap();
 
+        task.envs = HashMap::new();
         json.insert(
             id,
             TaskLog {
