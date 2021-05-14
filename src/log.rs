@@ -2,7 +2,7 @@ use std::fs::{read_dir, remove_file, File};
 use std::io::{self, BufReader, Cursor};
 use std::path::{Path, PathBuf};
 
-use anyhow::{bail, Result};
+use anyhow::{bail, Context, Result};
 use log::error;
 use snap::write::FrameEncoder;
 
@@ -116,16 +116,18 @@ pub fn read_last_log_file_lines(
 }
 
 /// Remove all files in the log directory.
-pub fn reset_task_log_directory(path: &Path) {
+pub fn reset_task_log_directory(path: &Path) -> Result<()> {
     let task_log_dir = path.join("task_logs");
 
-    let files = read_dir(task_log_dir).expect("Failed to open pueue's task_logs directory");
+    let files = read_dir(task_log_dir).context("Failed to open pueue's task_logs directory")?;
 
     for file in files.flatten() {
         if let Err(err) = remove_file(file.path()) {
             error!("Failed to delete log file: {}", err);
         }
     }
+
+    Ok(())
 }
 
 /// Read the last `amount` lines of a file to a string.

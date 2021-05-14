@@ -18,7 +18,7 @@ pub use super::platform::socket::*;
 pub async fn send_message(message: Message, stream: &mut GenericStream) -> Result<()> {
     debug!("Sending message: {:?}", message);
     // Prepare command for transfer and determine message byte size
-    let payload = to_vec(&message).expect("Failed to serialize message.");
+    let payload = to_vec(&message).context("Failed to serialize message.")?;
 
     send_bytes(&payload, stream).await
 }

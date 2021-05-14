@@ -11,12 +11,14 @@ use crate::network::tls::{get_tls_connector, get_tls_listener};
 use crate::settings::Shared;
 
 /// Unix specific cleanup handling when getting a SIGINT/SIGTERM.
-pub fn socket_cleanup(settings: &Shared) {
+pub fn socket_cleanup(settings: &Shared) -> Result<()> {
     // Clean up the unix socket if we're using it and it exists.
     if settings.use_unix_socket && PathBuf::from(&settings.unix_socket_path()).exists() {
         std::fs::remove_file(&settings.unix_socket_path())
-            .expect("Failed to remove unix socket on shutdown");
+            .context("Failed to remove unix socket on shutdown")?;
     }
+
+    Ok(())
 }
 
 /// A new trait, which can be used to represent Unix- and TcpListeners. \
