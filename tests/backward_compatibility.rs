@@ -12,9 +12,12 @@ use pueue_lib::state::State;
 ///
 /// We have to be able to restore from that state at all costs.
 /// Everything else results in a breaking change and needs a major version change.
+///
+/// On top of simply having an old state, I also added a few non-existing fields.
+/// This should be handled as well.
 #[test]
 fn test_restore_from_old_state() -> Result<()> {
-    let old_state = include_str!("v0.12.2_state.json");
+    let old_state = include_str!("data/v0.12.2_state.json");
 
     let temp_dir = TempDir::new("pueue_lib")?;
     let temp_path = temp_dir.path();

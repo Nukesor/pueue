@@ -1,5 +1,6 @@
 {
     "max_id": 3,
+    "rofl": "This field doesn't exist",
     "settings": {
         "client": {
             "read_local_logs": true,
