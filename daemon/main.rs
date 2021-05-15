@@ -4,7 +4,7 @@ use std::process::Command;
 use std::sync::mpsc::channel;
 use std::sync::{Arc, Mutex};
 
-use anyhow::Result;
+use anyhow::{bail, Result};
 use clap::Clap;
 use simplelog::{Config, LevelFilter, SimpleLogger};
 
@@ -43,19 +43,18 @@ async fn main() -> Result<()> {
     SimpleLogger::init(level, Config::default()).unwrap();
 
     // Try to read settings from the configuration file.
-    let settings = match Settings::read(false, &opt.config) {
+    let settings = match Settings::read(&opt.config) {
         Ok(settings) => settings,
         Err(_) => {
             // There's something wrong with the config file or something's missing.
             // Try to read the config and fill missing values with defaults.
             // This might be possible on version upgrade or first run.
-            let settings = Settings::new(false, &opt.config)?;
+            let settings = Settings::read_with_defaults(false, &opt.config)?;
 
             // Since we needed to add values to the configuration, we have to save it.
             // This also creates the save file in case it didn't exist yet.
             if let Err(error) = settings.save(&opt.config) {
-                println!("Failed saving config file.");
-                println!("{:?}", error);
+                bail!("Failed saving config file: {:?}.", error);
             }
             settings
         }
@@ -63,7 +62,7 @@ async fn main() -> Result<()> {
 
     init_directories(&settings.shared.pueue_directory());
     if !settings.shared.daemon_key().exists() && !settings.shared.daemon_cert().exists() {
-        create_certificates(&settings)?;
+        create_certificates(&settings.shared)?;
     }
     init_shared_secret(&settings.shared.shared_secret_path())?;
 

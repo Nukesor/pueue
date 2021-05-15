@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Backward compatible protocol for stable version changes with `serde_cbor`.
 - Detection of old daemon versions on update.
 - Overall better debug messages.
+- Crash hard, if we fail to write the settings file.
 
 ### Fixed
 
