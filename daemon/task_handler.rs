@@ -19,12 +19,35 @@ use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
 use crate::platform::process_helper::*;
 
+/// This is a little helper macro, which looks at a critical result and shuts the
+/// TaskHandler down, if an error occurred. This is mostly used if the state cannot.
+/// be written due to IO errors.
+/// Those errors are considered unrecoverable and we should initiate a graceful shutdown
+/// immediately.
+macro_rules! ok_or_shutdown {
+    ($task_manager:ident, $result:ident) => {
+        match $result {
+            Err(err) => {
+                error!(
+                    "Initializing graceful shutdown. Encountered error in TaskManager: {}",
+                    err
+                );
+                $task_manager.emergency_shutdown = true;
+                return;
+            }
+            Ok(inner) => inner,
+        }
+    };
+}
+
 pub struct TaskHandler {
     state: SharedState,
     receiver: Receiver<Message>,
     children: BTreeMap<usize, Child>,
     callbacks: Vec<Child>,
     full_reset: bool,
+    graceful_shutdown: bool,
+    emergency_shutdown: bool,
     // Some static settings that are extracted from `state.settings` for convenience purposes.
     pueue_directory: PathBuf,
     callback: Option<String>,
@@ -61,6 +84,8 @@ impl TaskHandler {
             children: BTreeMap::new(),
             callbacks: Vec::new(),
             full_reset: false,
+            graceful_shutdown: false,
+            emergency_shutdown: false,
             pueue_directory,
             callback,
             callback_log_lines,
@@ -81,15 +106,26 @@ impl TaskHandler {
     /// - Check whether we can spawn new tasks.
     pub fn run(&mut self) {
         loop {
+            self.handle_emergency_shutdown();
             self.receive_commands();
             self.handle_finished_tasks();
             self.handle_reset();
             self.check_callbacks();
             self.enqueue_delayed_tasks();
             self.check_failed_dependencies();
-            if !self.full_reset {
+
+            // Don't start new tasks, if we're in the middle of a reset or shutdown.
+            if !self.full_reset && !self.graceful_shutdown && !self.emergency_shutdown {
                 self.check_new();
             }
+        }
+    }
+
+    /// We encountered an error and the daemon needs to gracefully shutdown.
+    /// Initiate a full reset.
+    fn handle_emergency_shutdown(&mut self) {
+        if self.emergency_shutdown && !self.full_reset {
+            self.reset(false);
         }
     }
 
@@ -172,12 +208,23 @@ impl TaskHandler {
         // The daemon got a reset request and all children already finished
         if self.full_reset && self.children.is_empty() {
             let mut state = self.state.lock().unwrap();
-            state.reset();
+            if let Err(error) = state.reset() {
+                error!("Failed to reset state with error: {:?}", error);
+            };
             state.set_status_for_all_groups(GroupStatus::Running);
+
             if let Err(error) = reset_task_log_directory(&self.pueue_directory) {
                 panic!("Error while resetting task log directory: {}", error);
             };
             self.full_reset = false;
+
+            // Actually exit the program in case we're supposed to.
+            // Depending on the current shutdown type, we exit with different exit codes.
+            if self.graceful_shutdown {
+                std::process::exit(0);
+            } else if self.emergency_shutdown {
+                std::process::exit(1);
+            }
         }
     }
 
@@ -329,7 +376,8 @@ impl TaskHandler {
         task.enqueue_at = None;
 
         info!("Started task: {}", task.command);
-        state.save();
+        let result = state.save();
+        ok_or_shutdown!(self, result);
     }
 
     /// As time passes, some delayed tasks may need to be enqueued.
@@ -448,7 +496,7 @@ impl TaskHandler {
             }
         }
 
-        state.save()
+        state.save();
     }
 
     /// Gather all finished tasks and sort them by finished and errored.
@@ -494,7 +542,7 @@ impl TaskHandler {
             Message::Start(message) => self.start(message),
             Message::Kill(message) => self.kill(message),
             Message::Send(message) => self.send(message),
-            Message::Reset(message) => self.reset(message),
+            Message::Reset(message) => self.reset(message.children),
             Message::DaemonShutdown => self.shutdown(),
             _ => info!("Received unhandled message {:?}", message),
         }
@@ -549,6 +597,8 @@ impl TaskHandler {
             info!("Resuming everything");
             let mut state = self.state.lock().unwrap();
             state.set_status_for_all_groups(GroupStatus::Running);
+            let result = state.save();
+            ok_or_shutdown!(self, result);
 
             self.children.keys().cloned().collect()
         } else {
@@ -584,32 +634,35 @@ impl TaskHandler {
                 return;
             }
         }
-        match self.perform_action(id, ProcessAction::Resume, children) {
-            Err(err) => warn!("Failed resuming task {}: {:?}", id, err),
-            Ok(success) => {
-                if success {
-                    let mut state = self.state.lock().unwrap();
-                    state.change_status(id, TaskStatus::Running);
-                }
+        let success = match self.perform_action(id, ProcessAction::Resume, children) {
+            Err(err) => {
+                warn!("Failed to resume task {}: {:?}", id, err);
+                false
             }
+            Ok(success) => success,
+        };
+
+        if success {
+            let mut state = self.state.lock().unwrap();
+            state.change_status(id, TaskStatus::Running);
+            state.save();
         }
     }
 
     /// Handle the pause message:
     /// 1. Either pause the daemon and all tasks.
-    /// 2. Or only pause specific tasks.
+    /// 2. Only pause specific tasks.
     fn pause(&mut self, message: PauseMessage) {
-        // Get the keys of all tasks that should be resumed
+        // Get the keys of all tasks that should be paused
         // These can either be
-        // - Specific tasks
-        // - All running tasks
-        // - The paused tasks of a group
-        // - The paused tasks of the default queue
+        // - User specified tasks
+        // - All tasks
+        // - Tasks of a specific group
         // Only pause specific tasks
         let keys: Vec<usize> = if !message.task_ids.is_empty() {
             message.task_ids
         } else if message.all {
-            // Pause all running tasks
+            // Pause all groups, since we're pausing the whole daemon.
             let mut state = self.state.lock().unwrap();
             state.set_status_for_all_groups(GroupStatus::Paused);
 
@@ -630,14 +683,16 @@ impl TaskHandler {
             state.task_ids_in_group_with_stati(&message.group, vec![TaskStatus::Running])
         };
 
-        // Pause all specified tasks
+        // Pause all tasks that were found.
         if !message.wait {
             for id in keys {
                 self.pause_task(id, message.children);
             }
         }
-    }
 
+        let state = self.state.lock().unwrap();
+        state.save();
+    }
     /// Pause a specific task.
     /// Send a signal to the process to actually pause the OS process.
     fn pause_task(&mut self, id: usize, children: bool) {
@@ -734,16 +789,17 @@ impl TaskHandler {
 
     /// Kill all children by using the `kill` function.
     /// Set the respective group's statuses to `Reset`. This will prevent new tasks from being spawned.
-    fn reset(&mut self, message: ResetMessage) {
+    fn reset(&mut self, kill_children: bool) {
         {
             let mut state = self.state.lock().unwrap();
             state.set_status_for_all_groups(GroupStatus::Paused);
         }
+
         self.full_reset = true;
 
         let message = KillMessage {
             all: true,
-            children: message.children,
+            children: kill_children,
             ..Default::default()
         };
 
@@ -857,20 +913,7 @@ impl TaskHandler {
     /// Afterwards we can actually exit the program
     fn shutdown(&mut self) {
         info!("Killing all children due to shutdown.");
-
-        let task_ids: Vec<usize> = self.children.keys().cloned().collect();
-        for task_id in task_ids {
-            let child = self.children.remove(&task_id);
-
-            if let Some(mut child) = child {
-                info!("Killing child {}", &task_id);
-                kill_child(task_id, &mut child, true);
-            } else {
-                error!("Fail to get child {} for killing", &task_id);
-            }
-        }
-
-        // Exit pueued
-        std::process::exit(0)
+        self.reset(true);
+        self.graceful_shutdown = true;
     }
 }

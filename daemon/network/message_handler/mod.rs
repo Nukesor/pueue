@@ -1,3 +1,4 @@
+use std::fmt::Display;
 use std::sync::mpsc::Sender;
 
 use pueue_lib::network::message::*;
@@ -84,6 +85,26 @@ fn shutdown(sender: &Sender<Message>, state: &SharedState) -> Message {
     sender.send(Message::DaemonShutdown).expect(SENDER_ERR);
 
     create_success_message("Daemon is shutting down")
+}
+
+fn ok_or_failure_message<T, E: Display>(result: Result<T, E>) -> Result<T, Message> {
+    match result {
+        Ok(inner) => Ok(inner),
+        Err(error) => Err(create_failure_message(format!(
+            "Failed to save state. This is a bug: {}",
+            error
+        ))),
+    }
+}
+
+#[macro_export]
+macro_rules! ok_or_return_failure_message {
+    ($expression:expr) => {
+        match ok_or_failure_message($expression) {
+            Ok(task_id) => task_id,
+            Err(error) => return error,
+        }
+    };
 }
 
 #[cfg(test)]

@@ -6,6 +6,7 @@ use std::sync::{Arc, Mutex};
 
 use anyhow::{bail, Result};
 use clap::Clap;
+use log::warn;
 use simplelog::{Config, LevelFilter, SimpleLogger};
 
 use pueue_lib::network::certificate::create_certificates;
@@ -68,8 +69,11 @@ async fn main() -> Result<()> {
 
     let mut state = State::new(&settings, opt.config.clone());
     // Restore the previous state and save any changes that might have happened during this process
-    state.restore();
-    state.save();
+    if let Err(error) = state.restore() {
+        warn!("Failed to restore previous state:\n {:?}", error);
+        warn!("Using clean state instead.");
+    };
+    state.save()?;
     let state = Arc::new(Mutex::new(state));
 
     let (sender, receiver) = channel();
