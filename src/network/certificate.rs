@@ -1,4 +1,4 @@
-use std::fs::File;
+use std::fs::{create_dir, File};
 use std::io::Write;
 use std::path::Path;
 
@@ -6,11 +6,14 @@ use anyhow::{bail, Context, Result};
 use log::info;
 use rcgen::generate_simple_self_signed;
 
-use crate::settings::Settings;
+use crate::settings::Shared;
 
 /// This the default certificates at the default `pueue_dir/certs` location.
-pub fn create_certificates(settings: &Settings) -> Result<()> {
-    let certs_dir = settings.shared.pueue_directory().join("certs");
+pub fn create_certificates(shared_settings: &Shared) -> Result<()> {
+    let certs_dir = shared_settings.pueue_directory().join("certs");
+    if !certs_dir.exists() {
+        create_dir(&certs_dir)?;
+    }
 
     let daemon_cert_path = certs_dir.join("daemon.cert");
     let daemon_key_path = certs_dir.join("daemon.key");

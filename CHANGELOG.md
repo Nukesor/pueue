@@ -12,7 +12,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Use `serde_cbor` instead of `bincode` to allow protocol backward compatibility between versions
 - Use the next id that's available. This results in ids being reused, on `pueue clean` or `pueue remove` of the last tasks in a queue.
 - Paths are now accessed via functions by [dadav](https://github.com/dadav) for [Pueue #191](https://github.com/Nukesor/pueue/issues/191)
-- Remove `full` flag from TaskLogRequestMessage
+- Remove `full` flag from TaskLogRequestMessage.
+- Automatically create `$pueue_directory/certs` directory on `create_certificates` if it doesn't exist yet.
 
 ## Added
 
