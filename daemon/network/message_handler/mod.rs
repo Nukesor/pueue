@@ -89,6 +89,7 @@ fn shutdown(sender: &Sender<Message>, state: &SharedState) -> Message {
 #[cfg(test)]
 mod fixtures {
     use std::collections::HashMap;
+    use std::path::PathBuf;
     pub use std::sync::mpsc::Sender;
     use std::sync::{Arc, Mutex};
 
@@ -103,15 +104,18 @@ mod fixtures {
     pub use super::*;
     pub use crate::network::response_helper::*;
 
-    pub fn get_settings() -> Settings {
-        Settings::default_config()
+    pub fn get_settings(pueue_dir: PathBuf) -> Settings {
+        let mut settings: Settings = Settings::default_config()
             .expect("Failed to get default config")
             .try_into()
-            .expect("Failed to get test settings")
+            .expect("Failed to get test settings");
+        settings.shared.pueue_directory = pueue_dir;
+
+        settings
     }
 
-    pub fn get_state() -> SharedState {
-        let settings = get_settings();
+    pub fn get_state(pueue_dir: PathBuf) -> SharedState {
+        let settings = get_settings(pueue_dir);
         let state = State::new(&settings, None);
         Arc::new(Mutex::new(state))
     }
@@ -130,8 +134,8 @@ mod fixtures {
         )
     }
 
-    pub fn get_stub_state() -> SharedState {
-        let state = get_state();
+    pub fn get_stub_state(pueue_dir: PathBuf) -> SharedState {
+        let state = get_state(pueue_dir);
         {
             // Queued task
             let mut state = state.lock().unwrap();
