@@ -136,7 +136,18 @@ mod fixtures {
     }
 
     pub fn get_state(pueue_dir: PathBuf) -> SharedState {
-        let settings = get_settings(pueue_dir);
+        let settings = get_settings(pueue_dir.clone());
+
+        // Create the normal pueue directories.
+        let log_dir = pueue_dir.join("log");
+        if !log_dir.exists() {
+            std::fs::create_dir(log_dir).expect("Failed to create test log dir");
+        }
+        let task_log_dir = pueue_dir.join("task_log");
+        if !task_log_dir.exists() {
+            std::fs::create_dir(task_log_dir).expect("Failed to create test task log dir");
+        }
+
         let state = State::new(&settings, None);
         Arc::new(Mutex::new(state))
     }

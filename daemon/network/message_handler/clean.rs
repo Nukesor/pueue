@@ -95,6 +95,7 @@ mod tests {
         let message = clean(get_message(false), &state);
 
         // Return message is correct
+        println!("{:?}", message);
         assert!(matches!(message, Message::Success(_)));
         if let Message::Success(text) = message {
             assert_eq!(text, "All finished tasks have been removed");
@@ -113,6 +114,7 @@ mod tests {
         let message = clean(get_message(false), &state);
 
         // Return message is correct
+        println!("{:?}", message);
         assert!(matches!(message, Message::Success(_)));
         if let Message::Success(text) = message {
             assert_eq!(text, "All finished tasks have been removed");
@@ -132,6 +134,7 @@ mod tests {
         let message = clean(get_message(true), &state);
 
         // Return message is correct
+        println!("{:?}", message);
         assert!(matches!(message, Message::Success(_)));
         if let Message::Success(text) = message {
             assert_eq!(text, "All successfully finished tasks have been removed");
