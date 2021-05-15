@@ -14,28 +14,43 @@ use crate::platform::directories::*;
 /// All settings which are used by both, the client and the daemon
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Shared {
+    /// Don't access this property directly, but rather use the getter with the same name.
+    /// It's only public to allow proper integration testing.
+    ///
     /// The directory that is used for all runtime information. \
     /// I.e. task logs, sockets, state dumps, etc.
-    pueue_directory: PathBuf,
+    pub pueue_directory: PathBuf,
     /// If this is set to true, unix sockets will be used.
     /// Otherwise we default to TCP+TLS
     #[cfg(not(target_os = "windows"))]
     pub use_unix_socket: bool,
+    /// Don't access this property directly, but rather use the getter with the same name.
+    /// It's only public to allow proper integration testing.
+    ///
     /// The path to the unix socket.
     #[cfg(not(target_os = "windows"))]
-    unix_socket_path: PathBuf,
+    pub unix_socket_path: PathBuf,
 
     /// The TCP hostname/ip address.
     pub host: String,
     /// The TCP port.
     pub port: String,
+    /// Don't access this property directly, but rather use the getter with the same name.
+    /// It's only public to allow proper integration testing.
+    ///
     /// The path to the TLS certificate used by the daemon. \
     /// This is also used by the client to verify the daemon's identity.
-    daemon_cert: PathBuf,
+    pub daemon_cert: PathBuf,
+    /// Don't access this property directly, but rather use the getter with the same name.
+    /// It's only public to allow proper integration testing.
+    ///
     /// The path to the TLS key used by the daemon.
-    daemon_key: PathBuf,
+    pub daemon_key: PathBuf,
+    /// Don't access this property directly, but rather use the getter with the same name.
+    /// It's only public to allow proper integration testing.
+    ///
     /// The path to the file containing the shared secret used to authenticate the client.
-    shared_secret_path: PathBuf,
+    pub shared_secret_path: PathBuf,
 }
 
 /// All settings which are used by the client
