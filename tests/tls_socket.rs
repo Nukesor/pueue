@@ -12,7 +12,6 @@ use pueue_lib::network::message::*;
 use pueue_lib::network::protocol::*;
 use pueue_lib::settings::Shared;
 
-#[cfg(not(target_os = "windows"))]
 #[async_std::test]
 /// This tests whether we can create a listener and client, that communicate via unix sockets.
 /// This includes the handshake between both parties.
