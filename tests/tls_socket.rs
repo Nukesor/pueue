@@ -21,7 +21,9 @@ async fn test_tls_socket() -> Result<()> {
 
     let shared_settings = Shared {
         pueue_directory: temp_dir_path.clone(),
+        #[cfg(not(target_os = "windows"))]
         use_unix_socket: false,
+        #[cfg(not(target_os = "windows"))]
         unix_socket_path: PathBuf::new(),
         host: "localhost".to_string(),
         port: pick_unused_port()
