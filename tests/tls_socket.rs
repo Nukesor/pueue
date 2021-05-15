@@ -13,8 +13,7 @@ use pueue_lib::network::protocol::*;
 use pueue_lib::settings::Shared;
 
 #[async_std::test]
-/// This tests whether we can create a listener and client, that communicate via unix sockets.
-/// This includes the handshake between both parties.
+/// This tests whether we can create a listener and client, that communicate via TLS sockets.
 async fn test_tls_socket() -> Result<()> {
     // Create a temporary directory used for testing.
     let temp_dir = TempDir::new("pueue_lib")?;

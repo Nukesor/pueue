@@ -13,7 +13,6 @@ use pueue_lib::settings::Shared;
 #[cfg(not(target_os = "windows"))]
 #[async_std::test]
 /// This tests whether we can create a listener and client, that communicate via unix sockets.
-/// This includes the handshake between both parties.
 async fn test_unix_socket() -> Result<()> {
     // Create a temporary directory used for testing.
     let tempdir = TempDir::new("pueue_lib")?;
