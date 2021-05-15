@@ -1,4 +1,3 @@
-use std::collections::{BTreeMap, HashMap};
 use std::io::Write;
 use std::path::PathBuf;
 use std::process::Child;
@@ -6,6 +5,10 @@ use std::process::Stdio;
 use std::sync::mpsc::Receiver;
 use std::thread::sleep;
 use std::time::Duration;
+use std::{
+    collections::{BTreeMap, HashMap},
+    sync::MutexGuard,
+};
 
 use anyhow::{Context, Result};
 use chrono::prelude::*;
@@ -14,10 +17,12 @@ use log::{debug, error, info, warn};
 
 use pueue_lib::log::*;
 use pueue_lib::network::message::*;
-use pueue_lib::state::{GroupStatus, SharedState};
+use pueue_lib::state::{GroupStatus, SharedState, State};
 use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
 use crate::platform::process_helper::*;
+
+type LockedState<'a> = MutexGuard<'a, State>;
 
 /// This is a little helper macro, which looks at a critical result and shuts the
 /// TaskHandler down, if an error occurred. This is mostly used if the state cannot.
@@ -25,7 +30,7 @@ use crate::platform::process_helper::*;
 /// Those errors are considered unrecoverable and we should initiate a graceful shutdown
 /// immediately.
 macro_rules! ok_or_shutdown {
-    ($task_manager:ident, $result:ident) => {
+    ($task_manager:ident, $result:expr) => {
         match $result {
             Err(err) => {
                 error!(
@@ -363,7 +368,7 @@ impl TaskHandler {
                 };
 
                 state.handle_task_failure(group);
-                state.save();
+                ok_or_shutdown!(self, state.save());
                 return;
             }
         };
@@ -376,8 +381,7 @@ impl TaskHandler {
         task.enqueue_at = None;
 
         info!("Started task: {}", task.command);
-        let result = state.save();
-        ok_or_shutdown!(self, result);
+        ok_or_shutdown!(self, state.save());
     }
 
     /// As time passes, some delayed tasks may need to be enqueued.
@@ -403,7 +407,7 @@ impl TaskHandler {
         }
         // Save the state if a task has been enqueued
         if changed {
-            state.save();
+            ok_or_shutdown!(self, state.save());
         }
     }
 
@@ -496,7 +500,7 @@ impl TaskHandler {
             }
         }
 
-        state.save();
+        ok_or_shutdown!(self, state.save());
     }
 
     /// Gather all finished tasks and sort them by finished and errored.
@@ -538,9 +542,25 @@ impl TaskHandler {
 
     fn handle_message(&mut self, message: Message) {
         match message {
-            Message::Pause(message) => self.pause(message),
-            Message::Start(message) => self.start(message),
-            Message::Kill(message) => self.kill(message),
+            Message::Pause(message) => self.pause(
+                message.task_ids,
+                message.group,
+                message.all,
+                message.children,
+                message.wait,
+            ),
+            Message::Start(message) => self.start(
+                message.task_ids,
+                message.group,
+                message.all,
+                message.children,
+            ),
+            Message::Kill(message) => self.kill(
+                message.task_ids,
+                message.group,
+                message.all,
+                message.children,
+            ),
             Message::Send(message) => self.send(message),
             Message::Reset(message) => self.reset(message.children),
             Message::DaemonShutdown => self.shutdown(),
@@ -568,22 +588,30 @@ impl TaskHandler {
         }
     }
 
-    /// Handle the start message:
-    /// 1. Either start the daemon and all tasks.
-    /// 2. Or force the start of specific tasks.
-    fn start(&mut self, message: StartMessage) {
+    /// Start specific tasks or groups.
+    ///
+    /// 1. If task_ids is not empty, start specific tasks.
+    /// 2. If `all` is true, start everything.
+    /// 3. Start specific group.
+    ///
+    /// `children` decides, whether the start signal will be send to child processes as well.
+    fn start(&mut self, task_ids: Vec<usize>, group: String, all: bool, children: bool) {
+        let cloned_state_mutex = self.state.clone();
+        let mut state = cloned_state_mutex.lock().unwrap();
+
         // Only start specific tasks
         // This is handled separately, since this can also force-spawn processes
-        if !message.task_ids.is_empty() {
-            for id in &message.task_ids {
+        if !task_ids.is_empty() {
+            for id in &task_ids {
                 // Continue all children that are simply paused
                 if self.children.contains_key(id) {
-                    self.continue_task(*id, message.children);
+                    self.continue_task(&state, *id, children);
                 } else {
                     // Start processes for all tasks that haven't been started yet
                     self.start_process(*id);
                 }
             }
+            ok_or_shutdown!(self, state.save());
             return;
         }
 
@@ -592,48 +620,45 @@ impl TaskHandler {
         // - All running tasks
         // - The paused tasks of a specific group
         // - The paused tasks of the default queue
-        let keys: Vec<usize> = if message.all {
+        let keys: Vec<usize> = if all {
             // Resume all groups and the default queue
             info!("Resuming everything");
-            let mut state = self.state.lock().unwrap();
             state.set_status_for_all_groups(GroupStatus::Running);
-            let result = state.save();
-            ok_or_shutdown!(self, result);
 
             self.children.keys().cloned().collect()
         } else {
-            let mut state = self.state.lock().unwrap();
             // Ensure that a given group exists. (Might not happen due to concurrency)
-            if !state.groups.contains_key(&message.group) {
+            if !state.groups.contains_key(&group) {
                 return;
             }
             // Set the group to running.
-            state
-                .groups
-                .insert(message.group.clone(), GroupStatus::Running);
-            info!("Resuming group {}", &message.group);
+            state.groups.insert(group.clone(), GroupStatus::Running);
+            info!("Resuming group {}", &group);
 
-            state.task_ids_in_group_with_stati(&message.group, vec![TaskStatus::Paused])
+            state.task_ids_in_group_with_stati(&group, vec![TaskStatus::Paused])
         };
 
         // Resume all specified paused tasks
         for id in keys {
-            self.continue_task(id, message.children);
+            self.continue_task(&state, id, children);
         }
+
+        let state = self.state.lock().unwrap();
+        ok_or_shutdown!(self, state.save());
     }
 
     /// Send a start signal to a paused task to continue execution.
-    fn continue_task(&mut self, id: usize, children: bool) {
+    fn continue_task(&mut self, state: &LockedState, id: usize, children: bool) {
+        // Task doesn't exist
         if !self.children.contains_key(&id) {
             return;
         }
-        {
-            // Task is already done
-            let state = self.state.lock().unwrap();
-            if state.tasks.get(&id).unwrap().is_done() {
-                return;
-            }
+
+        // Task is already done
+        if state.tasks.get(&id).unwrap().is_done() {
+            return;
         }
+
         let success = match self.perform_action(id, ProcessAction::Resume, children) {
             Err(err) => {
                 warn!("Failed to resume task {}: {:?}", id, err);
@@ -645,74 +670,86 @@ impl TaskHandler {
         if success {
             let mut state = self.state.lock().unwrap();
             state.change_status(id, TaskStatus::Running);
-            state.save();
         }
     }
 
-    /// Handle the pause message:
-    /// 1. Either pause the daemon and all tasks.
-    /// 2. Only pause specific tasks.
-    fn pause(&mut self, message: PauseMessage) {
+    /// Pause specific tasks or groups.
+    ///
+    /// 1. If task_ids is not empty, pause specific tasks.
+    /// 2. If `all` is true, pause everything.
+    /// 3. Pause a specific group.
+    ///
+    /// `children` decides, whether the pause signal will be send to child processes as well.
+    /// `wait` decides, whether running tasks will kept running until they finish on their own.
+    fn pause(
+        &mut self,
+        task_ids: Vec<usize>,
+        group: String,
+        all: bool,
+        children: bool,
+        wait: bool,
+    ) {
+        let cloned_state_mutex = self.state.clone();
+        let mut state = cloned_state_mutex.lock().unwrap();
+
         // Get the keys of all tasks that should be paused
         // These can either be
         // - User specified tasks
         // - All tasks
         // - Tasks of a specific group
         // Only pause specific tasks
-        let keys: Vec<usize> = if !message.task_ids.is_empty() {
-            message.task_ids
-        } else if message.all {
+        let keys: Vec<usize> = if !task_ids.is_empty() {
+            task_ids
+        } else if all {
             // Pause all groups, since we're pausing the whole daemon.
-            let mut state = self.state.lock().unwrap();
             state.set_status_for_all_groups(GroupStatus::Paused);
 
             info!("Pausing everything");
             self.children.keys().cloned().collect()
         } else {
             // Ensure that a given group exists. (Might not happen due to concurrency)
-            let mut state = self.state.lock().unwrap();
-            if !state.groups.contains_key(&message.group) {
+            if !state.groups.contains_key(&group) {
                 return;
             }
             // Pause a specific group.
-            state
-                .groups
-                .insert(message.group.clone(), GroupStatus::Paused);
-            info!("Pausing group {}", &message.group);
+            state.groups.insert(group.clone(), GroupStatus::Paused);
+            info!("Pausing group {}", &group);
 
-            state.task_ids_in_group_with_stati(&message.group, vec![TaskStatus::Running])
+            state.task_ids_in_group_with_stati(&group, vec![TaskStatus::Running])
         };
 
         // Pause all tasks that were found.
-        if !message.wait {
+        if !wait {
             for id in keys {
-                self.pause_task(id, message.children);
+                self.pause_task(&mut state, id, children);
             }
         }
 
-        let state = self.state.lock().unwrap();
-        state.save();
+        ok_or_shutdown!(self, state.save());
     }
     /// Pause a specific task.
     /// Send a signal to the process to actually pause the OS process.
-    fn pause_task(&mut self, id: usize, children: bool) {
+    fn pause_task(&mut self, state: &mut LockedState, id: usize, children: bool) {
         match self.perform_action(id, ProcessAction::Pause, children) {
             Err(err) => error!("Failed pausing task {}: {:?}", id, err),
             Ok(success) => {
                 if success {
-                    let mut state = self.state.lock().unwrap();
                     state.change_status(id, TaskStatus::Paused);
                 }
             }
         }
     }
 
-    /// Handle the kill message:
-    /// 1. Kill specific tasks.
-    /// 2. Kill all tasks.
-    /// 3. Kill all tasks of a specific group.
-    /// 4. Kill all tasks of the default queue.
-    fn kill(&mut self, message: KillMessage) {
+    /// Kill specific tasks or groups.
+    ///
+    /// 1. If task_ids is not empty, kill specific tasks.
+    /// 2. If `all` is true, kill everything
+    /// 3. Kill a specific group.
+    ///
+    /// `children` decides, whether the kill signal will be send to child processes as well.
+    fn kill(&mut self, task_ids: Vec<usize>, group: String, all: bool, children: bool) {
+        let cloned_state_mutex = self.state.clone();
+        let mut state = cloned_state_mutex.lock().unwrap();
         // Get the keys of all tasks that should be resumed
         // These can either be
         // - Specific tasks
@@ -720,36 +757,31 @@ impl TaskHandler {
         // - The paused tasks of a group
         // - The paused tasks of the default queue
         // Only pause specific tasks
-        let task_ids: Vec<usize> = if !message.task_ids.is_empty() {
-            message.task_ids
-        } else if message.all {
+        let task_ids: Vec<usize> = if !task_ids.is_empty() {
+            task_ids
+        } else if all {
             // Pause all running tasks
-            let mut state = self.state.lock().unwrap();
             state.set_status_for_all_groups(GroupStatus::Paused);
 
             info!("Killing all running tasks");
             self.children.keys().cloned().collect()
         } else {
             // Ensure that a given group exists. (Might not happen due to concurrency)
-            let mut state = self.state.lock().unwrap();
-            if !state.groups.contains_key(&message.group) {
+            if !state.groups.contains_key(&group) {
                 return;
             }
             // Pause a specific group.
-            state
-                .groups
-                .insert(message.group.clone(), GroupStatus::Paused);
-            info!("Killing tasks of group {}", &message.group);
+            state.groups.insert(group.clone(), GroupStatus::Paused);
+            info!("Killing tasks of group {}", &group);
 
-            state.task_ids_in_group_with_stati(
-                &message.group,
-                vec![TaskStatus::Running, TaskStatus::Paused],
-            )
+            state
+                .task_ids_in_group_with_stati(&group, vec![TaskStatus::Running, TaskStatus::Paused])
         };
 
         for task_id in task_ids {
-            self.kill_task(task_id, message.children);
+            self.kill_task(task_id, children);
         }
+        ok_or_shutdown!(self, state.save());
     }
 
     /// Kill a specific task and handle it accordingly.
@@ -796,14 +828,7 @@ impl TaskHandler {
         }
 
         self.full_reset = true;
-
-        let message = KillMessage {
-            all: true,
-            children: kill_children,
-            ..Default::default()
-        };
-
-        self.kill(message);
+        self.kill(vec![], String::new(), true, kill_children);
     }
 
     /// Users can specify a callback that's fired whenever a task finishes.

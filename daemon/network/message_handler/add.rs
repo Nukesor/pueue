@@ -50,7 +50,7 @@ pub fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedSta
     task.dependencies.sort_unstable();
     task.dependencies.dedup();
 
-    // Add a task.
+    // Add a task. This also persists the state.
     let task_id = state.add_task(task);
 
     // Notify the task handler, in case the client wants to start the task immediately.

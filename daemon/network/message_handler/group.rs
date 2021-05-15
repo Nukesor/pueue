@@ -3,6 +3,9 @@ use pueue_lib::state::SharedState;
 
 use crate::network::response_helper::ensure_group_exists;
 
+use super::*;
+use crate::ok_or_return_failure_message;
+
 /// Invoked on `pueue groups`.
 /// Manage groups.
 /// - Show groups
@@ -19,7 +22,7 @@ pub fn group(message: GroupMessage, state: &SharedState) -> Message {
         state.create_group(&group);
 
         // Save the state and the settings file.
-        state.save();
+        ok_or_return_failure_message!(state.save());
         if let Err(error) = state.save_settings() {
             return create_failure_message(format!(
                 "Failed while saving the config file: {}",
@@ -41,7 +44,7 @@ pub fn group(message: GroupMessage, state: &SharedState) -> Message {
         }
 
         // Save the state and the settings file.
-        state.save();
+        ok_or_return_failure_message!(state.save());
         if let Err(error) = state.save_settings() {
             return create_failure_message(format!(
                 "Failed while saving the config file: {}",

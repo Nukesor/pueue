@@ -3,11 +3,15 @@ use pueue_lib::network::message::*;
 use pueue_lib::state::SharedState;
 use pueue_lib::task::{TaskResult, TaskStatus};
 
+use super::*;
+use crate::ok_or_return_failure_message;
+
 /// Invoked when calling `pueue clean`.
 /// Remove all failed or done tasks from the state.
 pub fn clean(message: CleanMessage, state: &SharedState) -> Message {
     let mut state = state.lock().unwrap();
-    state.backup();
+    ok_or_return_failure_message!(state.backup());
+
     let (matching, _) = state.tasks_in_statuses(vec![TaskStatus::Done], None);
 
     for task_id in &matching {
@@ -27,7 +31,7 @@ pub fn clean(message: CleanMessage, state: &SharedState) -> Message {
         clean_log_handles(*task_id, &state.settings.shared.pueue_directory());
     }
 
-    state.save();
+    ok_or_return_failure_message!(state.save());
 
     if message.successful_only {
         create_success_message("All successfully finished tasks have been removed")
