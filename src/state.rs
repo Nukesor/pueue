@@ -76,26 +76,22 @@ impl State {
     }
 
     /// Add a new task
-    pub fn add_task(&mut self, mut task: Task) -> Result<usize> {
+    pub fn add_task(&mut self, mut task: Task) -> usize {
         let next_id = match self.tasks.keys().max() {
             None => 0,
             Some(id) => id + 1,
         };
         task.id = next_id;
         self.tasks.insert(next_id, task);
-        self.save()?;
 
-        Ok(next_id)
+        next_id
     }
 
     /// A small helper to change the status of a specific task.
-    pub fn change_status(&mut self, id: usize, new_status: TaskStatus) -> Result<()> {
+    pub fn change_status(&mut self, id: usize, new_status: TaskStatus) {
         if let Some(ref mut task) = self.tasks.get_mut(&id) {
             task.status = new_status;
-            self.save()?;
         };
-
-        Ok(())
     }
 
     /// Set the time a specific task should be enqueued at.
@@ -140,12 +136,11 @@ impl State {
     }
 
     /// Set the group status (running/paused) for all groups including the default queue.
-    pub fn set_status_for_all_groups(&mut self, status: GroupStatus) -> Result<()> {
+    pub fn set_status_for_all_groups(&mut self, status: GroupStatus) {
         let keys = self.groups.keys().cloned().collect::<Vec<String>>();
         for key in keys {
             self.groups.insert(key, status.clone());
         }
-        self.save()
     }
 
     /// Get all ids of task with a specific state inside a specific group.
@@ -247,14 +242,12 @@ impl State {
     /// paused depending on the current settings.
     ///
     /// `group` should be the name of the failed task.
-    pub fn handle_task_failure(&mut self, group: String) -> Result<()> {
+    pub fn handle_task_failure(&mut self, group: String) {
         if self.settings.daemon.pause_group_on_failure {
             self.groups.insert(group, GroupStatus::Paused);
         } else if self.settings.daemon.pause_all_on_failure {
-            self.set_status_for_all_groups(GroupStatus::Paused)?;
+            self.set_status_for_all_groups(GroupStatus::Paused);
         }
-
-        Ok(())
     }
 
     /// Do a full reset of the state.
@@ -262,7 +255,9 @@ impl State {
     pub fn reset(&mut self) -> Result<()> {
         self.backup()?;
         self.tasks = BTreeMap::new();
-        self.set_status_for_all_groups(GroupStatus::Running)
+        self.set_status_for_all_groups(GroupStatus::Running);
+
+        self.save()
     }
 
     /// A small convenience wrapper for saving the settings to a file.

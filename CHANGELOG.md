@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Remove `require_config` flag from `Settings::read`, since it's implicitely `true`.
 - Rename `Settings::new`, to `Settings::read_with_defaults`.
 - Return errors via `Result` in `State` functions with io.
+- Don't write the State on every change. Users have to call `state::save()` manually from now on.
 
 ## Added
 
