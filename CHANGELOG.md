@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Automatically create `$pueue_directory/certs` directory on `create_certificates` if it doesn't exist yet.
 - Remove `require_config` flag from `Settings::read`, since it's implicitely `true`.
 - Rename `Settings::new`, to `Settings::read_with_defaults`.
+- Return errors via `Result` in `State` functions with io.
 
 ## Added
 
@@ -23,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - New function `read_last_log_file_lines` for [#196](https://github.com/Nukesor/pueue/issues/196).
 - Add `callback_log_lines` setting for Daemon, specifying the amount of lines returned to the callback. [#196](https://github.com/Nukesor/pueue/issues/196).
 - Support for other `apple` platforms by [althiometer](https://github.com/althiometer)
+- Added backward compatibility tests for v0.12.2 state.
 
 ## Fixed
 

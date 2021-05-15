@@ -1,0 +1,90 @@
+{
+    "max_id": 3,
+    "settings": {
+        "client": {
+            "read_local_logs": true,
+            "show_confirmation_questions": false,
+            "show_expanded_aliases": false,
+            "dark_mode": false,
+            "max_status_lines": null
+        },
+        "daemon": {
+            "default_parallel_tasks": 1,
+            "pause_group_on_failure": false,
+            "pause_all_on_failure": false,
+            "callback": "notify-send \"Task {{ id }}\nCommand: {{ command }}\nPath: {{ path }}\nFinished with status '{{ result }}'\nDuration: $(humanizer time -s $(bc <<< \"{{end}} - {{start}}\"))\"",
+            "groups": {
+                "default": 1,
+                "vagrant": 3
+            }
+        },
+        "shared": {
+            "pueue_directory": "~/.local/share/pueue",
+            "use_unix_socket": true,
+            "unix_socket_path": "~/.local/share/pueue/pueue_nuke.socket",
+            "host": "localhost",
+            "port": "6924",
+            "daemon_cert": "~/.local/share/pueue/certs/daemon.cert",
+            "daemon_key": "~/.local/share/pueue/certs/daemon.key",
+            "shared_secret_path": "~/.local/share/pueue/shared_secret"
+        }
+    },
+    "tasks": {
+        "0": {
+            "id": 0,
+            "original_command": "ls",
+            "command": "ls",
+            "path": "/home/nuke",
+            "envs": {
+                "LOGNAME": "nuke",
+                "NVIM": "/home/nuke/.config/nvim/"
+            },
+            "group": "default",
+            "enqueue_at": null,
+            "dependencies": [],
+            "label": null,
+            "status": "Done",
+            "prev_status": "Queued",
+            "result": "Success",
+            "start": "2021-05-14T23:54:22.943163348+02:00",
+            "end": "2021-05-14T23:54:23.143928920+02:00"
+        },
+        "1": {
+            "id": 1,
+            "original_command": "sleep 10",
+            "command": "sleep 10",
+            "path": "/home/nuke",
+            "envs": {},
+            "group": "default",
+            "enqueue_at": null,
+            "dependencies": [],
+            "label": null,
+            "status": "Done",
+            "prev_status": "Queued",
+            "result": "Success",
+            "start": "2021-05-14T23:54:28.150118864+02:00",
+            "end": "2021-05-14T23:54:38.356096149+02:00"
+        },
+        "2": {
+            "id": 2,
+            "original_command": "ls",
+            "command": "ls",
+            "path": "/home/nuke",
+            "envs": {},
+            "group": "default",
+            "enqueue_at": null,
+            "dependencies": [],
+            "label": null,
+            "status": "Done",
+            "prev_status": "Queued",
+            "result": "Success",
+            "start": "2021-05-15T17:07:52.177380626+02:00",
+            "end": "2021-05-15T17:07:52.378497109+02:00"
+        }
+    },
+    "groups": {
+        "default": "Running",
+        "vagrant": "Running"
+    },
+    "config_path": null
+}

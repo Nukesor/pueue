@@ -4,9 +4,9 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::time::SystemTime;
 
-use anyhow::{bail, Result};
+use anyhow::{bail, Context, Result};
 use chrono::prelude::*;
-use log::{debug, error, info, warn};
+use log::{debug, info};
 use serde_derive::{Deserialize, Serialize};
 
 use crate::settings::Settings;
@@ -76,24 +76,26 @@ impl State {
     }
 
     /// Add a new task
-    pub fn add_task(&mut self, mut task: Task) -> usize {
+    pub fn add_task(&mut self, mut task: Task) -> Result<usize> {
         let next_id = match self.tasks.keys().max() {
             None => 0,
             Some(id) => id + 1,
         };
         task.id = next_id;
         self.tasks.insert(next_id, task);
-        self.save();
+        self.save()?;
 
-        next_id
+        Ok(next_id)
     }
 
     /// A small helper to change the status of a specific task.
-    pub fn change_status(&mut self, id: usize, new_status: TaskStatus) {
+    pub fn change_status(&mut self, id: usize, new_status: TaskStatus) -> Result<()> {
         if let Some(ref mut task) = self.tasks.get_mut(&id) {
             task.status = new_status;
-            self.save();
+            self.save()?;
         };
+
+        Ok(())
     }
 
     /// Set the time a specific task should be enqueued at.
@@ -133,12 +135,12 @@ impl State {
             }
         }
 
-        self.save();
+        self.save()?;
         self.save_settings()
     }
 
     /// Set the group status (running/paused) for all groups including the default queue.
-    pub fn set_status_for_all_groups(&mut self, status: GroupStatus) {
+    pub fn set_status_for_all_groups(&mut self, status: GroupStatus) -> Result<()> {
         let keys = self.groups.keys().cloned().collect::<Vec<String>>();
         for key in keys {
             self.groups.insert(key, status.clone());
@@ -245,20 +247,22 @@ impl State {
     /// paused depending on the current settings.
     ///
     /// `group` should be the name of the failed task.
-    pub fn handle_task_failure(&mut self, group: String) {
+    pub fn handle_task_failure(&mut self, group: String) -> Result<()> {
         if self.settings.daemon.pause_group_on_failure {
             self.groups.insert(group, GroupStatus::Paused);
         } else if self.settings.daemon.pause_all_on_failure {
-            self.set_status_for_all_groups(GroupStatus::Paused);
+            self.set_status_for_all_groups(GroupStatus::Paused)?;
         }
+
+        Ok(())
     }
 
     /// Do a full reset of the state.
     /// This doesn't reset any processes!
-    pub fn reset(&mut self) {
-        self.backup();
+    pub fn reset(&mut self) -> Result<()> {
+        self.backup()?;
         self.tasks = BTreeMap::new();
-        self.set_status_for_all_groups(GroupStatus::Running);
+        self.set_status_for_all_groups(GroupStatus::Running)
     }
 
     /// A small convenience wrapper for saving the settings to a file.
@@ -267,18 +271,17 @@ impl State {
     }
 
     /// Convenience wrapper around save_to_file.
-    pub fn save(&self) {
-        self.save_to_file(false);
+    pub fn save(&self) -> Result<()> {
+        self.save_to_file(false)
     }
 
     /// Save the current current state in a file with a timestamp.
     /// At the same time remove old state logs from the log directory.
     /// This function is called, when large changes to the state are applied, e.g. clean/reset.
-    pub fn backup(&self) {
-        self.save_to_file(true);
-        if let Err(error) = self.rotate() {
-            error!("Failed to rotate files: {:?}", error);
-        };
+    pub fn backup(&self) -> Result<()> {
+        self.save_to_file(true)?;
+        self.rotate().context("Failed to rotate files: {:?}")?;
+        Ok(())
     }
 
     /// Save the current state to disk. \
@@ -287,11 +290,10 @@ impl State {
     ///
     /// In comparison to the daemon -> client communication, the state is saved
     /// as JSON for better readability and debug purposes.
-    fn save_to_file(&self, log: bool) {
+    fn save_to_file(&self, log: bool) -> Result<()> {
         let serialized = serde_json::to_string(&self);
         if let Err(error) = serialized {
-            error!("Failed to serialize state: {:?}", error);
-            return;
+            bail!("Failed to serialize state: {:?}", error);
         }
 
         let serialized = serialized.unwrap();
@@ -310,20 +312,12 @@ impl State {
 
         // Write to temporary log file first, to prevent loss due to crashes.
         if let Err(error) = fs::write(&temp, serialized) {
-            error!(
-                "Failed to write log to directory. File permissions? Error: {:?}",
-                error
-            );
-            return;
+            bail!("Failed to write log to directory. Error: {:?}", error);
         }
 
         // Overwrite the original with the temp file, if everything went fine.
         if let Err(error) = fs::rename(&temp, &real) {
-            error!(
-                "Failed to overwrite old log file. File permissions? Error: {:?}",
-                error
-            );
-            return;
+            bail!("Failed to overwrite old log file. Error: {:?}", error);
         }
 
         if log {
@@ -331,37 +325,35 @@ impl State {
         } else {
             debug!("State saved at: {:?}", real);
         }
+
+        Ok(())
     }
 
     /// Restore the last state from a previous session. \
     /// The state is stored as json in the log directory.
-    pub fn restore(&mut self) {
+    pub fn restore(&mut self) -> Result<()> {
         let path = Path::new(&self.settings.shared.pueue_directory()).join("state.json");
 
         // Ignore if the file doesn't exist. It doesn't have to.
         if !path.exists() {
-            info!(
+            bail!(
                 "Couldn't find state from previous session at location: {:?}",
                 path
             );
-            return;
         }
         info!("Start restoring state");
 
         // Try to load the file.
         let data = fs::read_to_string(&path);
         if let Err(error) = data {
-            error!("Failed to read previous state log: {:?}", error);
-            return;
+            bail!("Failed to read previous state log: {:?}", error);
         }
         let data = data.unwrap();
 
         // Try to deserialize the state file.
         let deserialized: Result<State, serde_json::error::Error> = serde_json::from_str(&data);
         if let Err(error) = deserialized {
-            warn!("Failed to deserialize previous state log: {:?}", error);
-            warn!("Discarding previous state. This is probably due to a new version.");
-            return;
+            bail!("Failed to deserialize previous state log: {:?}", error);
         }
         let mut state = deserialized.unwrap();
 
@@ -410,6 +402,8 @@ impl State {
 
             self.tasks.insert(*task_id, task.clone());
         }
+
+        Ok(())
     }
 
     /// Remove old logs that aren't needed any longer.
