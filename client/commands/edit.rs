@@ -48,7 +48,7 @@ pub async fn edit(stream: &mut GenericStream, task_id: usize, edit_path: bool) -
     });
     send_message(edit_message, stream).await?;
 
-    receive_message(stream).await
+    Ok(receive_message(stream).await?)
 }
 
 /// This function allows the user to edit a task's command or path.
