@@ -2,9 +2,10 @@ use std::fs::{read_dir, remove_file, File};
 use std::io::{self, BufReader, Cursor};
 use std::path::{Path, PathBuf};
 
-use anyhow::{bail, Context, Result};
 use log::error;
 use snap::write::FrameEncoder;
+
+use crate::error::Error;
 
 /// Return the paths to the `(stdout, stderr)` log files of a task.
 pub fn get_log_paths(task_id: usize, path: &Path) -> (PathBuf, PathBuf) {
@@ -15,7 +16,7 @@ pub fn get_log_paths(task_id: usize, path: &Path) -> (PathBuf, PathBuf) {
 }
 
 /// Create and return the file handle for the `(stdout, stderr)` log files of a task.
-pub fn create_log_file_handles(task_id: usize, path: &Path) -> Result<(File, File)> {
+pub fn create_log_file_handles(task_id: usize, path: &Path) -> Result<(File, File), Error> {
     let (out_path, err_path) = get_log_paths(task_id, path);
     let stdout = File::create(out_path)?;
     let stderr = File::create(err_path)?;
@@ -24,7 +25,7 @@ pub fn create_log_file_handles(task_id: usize, path: &Path) -> Result<(File, Fil
 }
 
 /// Return the file handle for the `(stdout, stderr)` log files of a task.
-pub fn get_log_file_handles(task_id: usize, path: &Path) -> Result<(File, File)> {
+pub fn get_log_file_handles(task_id: usize, path: &Path) -> Result<(File, File), Error> {
     let (out_path, err_path) = get_log_paths(task_id, path);
     let stdout = File::open(out_path)?;
     let stderr = File::open(err_path)?;
@@ -59,13 +60,8 @@ pub fn read_and_compress_log_files(
     task_id: usize,
     path: &Path,
     lines: Option<usize>,
-) -> Result<(Vec<u8>, Vec<u8>)> {
-    let (mut stdout_file, mut stderr_file) = match get_log_file_handles(task_id, path) {
-        Ok((stdout, stderr)) => (stdout, stderr),
-        Err(err) => {
-            bail!("Error while opening the output files: {}", err);
-        }
-    };
+) -> Result<(Vec<u8>, Vec<u8>), Error> {
+    let (mut stdout_file, mut stderr_file) = get_log_file_handles(task_id, path)?;
 
     let mut stdout = Vec::new();
     let mut stderr = Vec::new();
@@ -100,15 +96,14 @@ pub fn read_last_log_file_lines(
     task_id: usize,
     path: &Path,
     lines: usize,
-) -> Result<(String, String)> {
+) -> Result<(String, String), Error> {
     let (mut stdout_file, mut stderr_file) = match get_log_file_handles(task_id, path) {
         Ok((stdout, stderr)) => (stdout, stderr),
         Err(err) => {
-            bail!(
-                "Error while opening the log files for task {}: {}",
-                task_id,
-                err
-            );
+            return Err(Error::LogRead(format!(
+                "Error while opening log files for task {}: {}",
+                task_id, err
+            )));
         }
     };
 
@@ -120,10 +115,10 @@ pub fn read_last_log_file_lines(
 }
 
 /// Remove all files in the log directory.
-pub fn reset_task_log_directory(path: &Path) -> Result<()> {
+pub fn reset_task_log_directory(path: &Path) -> Result<(), Error> {
     let task_log_dir = path.join("task_logs");
 
-    let files = read_dir(task_log_dir).context("Failed to open pueue's task_logs directory")?;
+    let files = read_dir(task_log_dir)?;
 
     for file in files.flatten() {
         if let Err(err) = remove_file(file.path()) {

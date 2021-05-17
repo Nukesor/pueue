@@ -4,11 +4,11 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::time::SystemTime;
 
-use anyhow::{bail, Context, Result};
 use chrono::prelude::*;
 use log::{debug, info};
 use serde_derive::{Deserialize, Serialize};
 
+use crate::error::Error;
 use crate::settings::Settings;
 use crate::task::{Task, TaskResult, TaskStatus};
 
@@ -116,9 +116,11 @@ impl State {
     /// Remove a group.
     /// This also iterates through all tasks and sets any tasks' group
     /// to the `default` group if it matches the deleted group.
-    pub fn remove_group(&mut self, group: &str) -> Result<()> {
+    pub fn remove_group(&mut self, group: &str) -> Result<(), Error> {
         if group.eq("default") {
-            bail!("You cannot remove the default group.");
+            return Err(Error::Generic(
+                "You cannot remove the default group.".into(),
+            ));
         }
 
         self.settings.daemon.groups.remove(group);
@@ -252,7 +254,7 @@ impl State {
 
     /// Do a full reset of the state.
     /// This doesn't reset any processes!
-    pub fn reset(&mut self) -> Result<()> {
+    pub fn reset(&mut self) -> Result<(), Error> {
         self.backup()?;
         self.tasks = BTreeMap::new();
         self.set_status_for_all_groups(GroupStatus::Running);
@@ -261,21 +263,22 @@ impl State {
     }
 
     /// A small convenience wrapper for saving the settings to a file.
-    pub fn save_settings(&self) -> Result<()> {
+    pub fn save_settings(&self) -> Result<(), Error> {
         self.settings.save(&self.config_path)
     }
 
     /// Convenience wrapper around save_to_file.
-    pub fn save(&self) -> Result<()> {
+    pub fn save(&self) -> Result<(), Error> {
         self.save_to_file(false)
     }
 
     /// Save the current current state in a file with a timestamp.
     /// At the same time remove old state logs from the log directory.
     /// This function is called, when large changes to the state are applied, e.g. clean/reset.
-    pub fn backup(&self) -> Result<()> {
+    pub fn backup(&self) -> Result<(), Error> {
         self.save_to_file(true)?;
-        self.rotate().context("Failed to rotate files: {:?}")?;
+        self.rotate()
+            .map_err(|err| Error::Generic(format!("Failed to rotate old log files:\n{}", err)))?;
         Ok(())
     }
 
@@ -285,10 +288,13 @@ impl State {
     ///
     /// In comparison to the daemon -> client communication, the state is saved
     /// as JSON for better readability and debug purposes.
-    fn save_to_file(&self, log: bool) -> Result<()> {
+    fn save_to_file(&self, log: bool) -> Result<(), Error> {
         let serialized = serde_json::to_string(&self);
         if let Err(error) = serialized {
-            bail!("Failed to serialize state: {:?}", error);
+            return Err(Error::StateSave(format!(
+                "Failed to serialize state:\n\n{}",
+                error
+            )));
         }
 
         let serialized = serialized.unwrap();
@@ -306,14 +312,13 @@ impl State {
         };
 
         // Write to temporary log file first, to prevent loss due to crashes.
-        if let Err(error) = fs::write(&temp, serialized) {
-            bail!("Failed to write log to directory. Error: {:?}", error);
-        }
+        fs::write(&temp, serialized)
+            .map_err(|err| Error::StateSave(format!("Failed to write file:\n\n{}", err)))?;
 
         // Overwrite the original with the temp file, if everything went fine.
-        if let Err(error) = fs::rename(&temp, &real) {
-            bail!("Failed to overwrite old log file. Error: {:?}", error);
-        }
+        fs::rename(&temp, &real).map_err(|err| {
+            Error::StateSave(format!("Failed to overwrite old log file:\n\n{}", err))
+        })?;
 
         if log {
             debug!("State backup created at: {:?}", real);
@@ -326,31 +331,26 @@ impl State {
 
     /// Restore the last state from a previous session. \
     /// The state is stored as json in the log directory.
-    pub fn restore(&mut self) -> Result<()> {
+    pub fn restore(&mut self) -> Result<(), Error> {
         let path = Path::new(&self.settings.shared.pueue_directory()).join("state.json");
 
         // Ignore if the file doesn't exist. It doesn't have to.
         if !path.exists() {
-            bail!(
+            info!(
                 "Couldn't find state from previous session at location: {:?}",
                 path
             );
+            return Ok(());
         }
         info!("Start restoring state");
 
         // Try to load the file.
-        let data = fs::read_to_string(&path);
-        if let Err(error) = data {
-            bail!("Failed to read previous state log: {:?}", error);
-        }
-        let data = data.unwrap();
+        let data = fs::read_to_string(&path)
+            .map_err(|err| Error::StateSave(format!("Failed to read file:\n\n{}", err)))?;
 
         // Try to deserialize the state file.
-        let deserialized: Result<State, serde_json::error::Error> = serde_json::from_str(&data);
-        if let Err(error) = deserialized {
-            bail!("Failed to deserialize previous state log: {:?}", error);
-        }
-        let mut state = deserialized.unwrap();
+        let mut state: State = serde_json::from_str(&data)
+            .map_err(|err| Error::StateDeserialization(err.to_string()))?;
 
         // Copy group statuses from the previous state.
         for (group, _) in state.settings.daemon.groups {
@@ -402,7 +402,7 @@ impl State {
     }
 
     /// Remove old logs that aren't needed any longer.
-    fn rotate(&self) -> Result<()> {
+    fn rotate(&self) -> Result<(), Error> {
         let path = self.settings.shared.pueue_directory().join("log");
 
         // Get all log files in the directory with their respective system time.

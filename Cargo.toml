@@ -15,7 +15,7 @@ edition = "2018"
 maintenance = { status = "actively-developed" }
 
 [dependencies]
-anyhow = "1"
+thiserror = "1"
 dirs = "3"
 chrono = { version = "0.4", features = ["serde"] }
 rand = "0.8"
@@ -43,6 +43,8 @@ log = "0.4"
 whoami = "1"
 
 [dev-dependencies]
-tempdir = "0.3"
+anyhow = "1"
+better-panic = "0.2"
 pretty_assertions = "0.4.0"
 portpicker = "0.1"
+tempdir = "0.3"

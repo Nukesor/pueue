@@ -1,14 +1,14 @@
-use anyhow::{Context, Result};
 use async_std::io::{Read, Write};
 use async_std::net::{TcpListener, TcpStream};
 use async_tls::TlsAcceptor;
 use async_trait::async_trait;
 
+use crate::error::Error;
 use crate::network::tls::{get_tls_connector, get_tls_listener};
 use crate::settings::Shared;
 
 /// Windowsspecific cleanup handling when getting a SIGINT/SIGTERM.
-pub fn socket_cleanup(_settings: &Shared) -> Result<()> {
+pub fn socket_cleanup(_settings: &Shared) -> Result<(), Error> {
     Ok(())
 }
 
@@ -26,12 +26,12 @@ pub struct TlsTcpListener {
 /// This is necessary to easily write generic functions where both types can be used.
 #[async_trait]
 pub trait Listener: Sync + Send {
-    async fn accept<'a>(&'a self) -> Result<GenericStream>;
+    async fn accept<'a>(&'a self) -> Result<GenericStream, Error>;
 }
 
 #[async_trait]
 impl Listener for TlsTcpListener {
-    async fn accept<'a>(&'a self) -> Result<GenericStream> {
+    async fn accept<'a>(&'a self) -> Result<GenericStream, Error> {
         let (stream, _) = self.tcp_listener.accept().await?;
         Ok(Box::new(self.tls_acceptor.accept(stream).await?))
     }
@@ -49,35 +49,37 @@ pub type GenericStream = Box<dyn Stream>;
 
 /// Get a new stream for the client.
 /// This can either be a UnixStream or a Tls encrypted TCPStream, depending on the parameters.
-pub async fn get_client_stream(settings: &Shared) -> Result<GenericStream> {
+pub async fn get_client_stream(settings: &Shared) -> Result<GenericStream, Error> {
     // Connect to the daemon via TCP
     let address = format!("{}:{}", settings.host, settings.port);
-    let tcp_stream = TcpStream::connect(&address).await.context(format!(
-        "Failed to connect to the daemon on {}. Did you start it?",
-        &address
-    ))?;
+    let tcp_stream = TcpStream::connect(&address).await.map_err(|_| {
+        Error::Connection(format!(
+            "Failed to connect to the daemon on {}. Did you start it?",
+            &address
+        ))
+    })?;
 
     // Get the configured rustls TlsConnector
     let tls_connector = get_tls_connector(&settings)
         .await
-        .context("Failed to initialize TLS Connector")?;
+        .map_err(|err| Error::Connection(format!("Failed to initialize tls connector {}.", err)))?;
 
     // Initialize the TLS layer
     let stream = tls_connector
         .connect("pueue.local", tcp_stream)
         .await
-        .context("Failed to initialize TLS stream")?;
+        .map_err(|err| Error::Connection(format!("Failed to initialize tls {}.", err)))?;
 
     Ok(Box::new(stream))
 }
 
 /// Get a new tcp&tls listener for the daemon.
-pub async fn get_listener(settings: &Shared) -> Result<GenericListener> {
+pub async fn get_listener(settings: &Shared) -> Result<GenericListener, Error> {
     // This is the listener, which accepts low-level TCP connections
     let address = format!("{}:{}", settings.host, settings.port);
-    let tcp_listener = TcpListener::bind(&address)
-        .await
-        .context(format!("Failed to listen on address: {}", address))?;
+    let tcp_listener = TcpListener::bind(&address).await.map_err(|err| {
+        Error::Connection(format!("Failed to listen on address {}. {}", address, err))
+    })?;
 
     // This is the TLS acceptor, which initializes the TLS layer
     let tls_acceptor = get_tls_listener(&settings)?;

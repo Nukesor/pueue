@@ -2,13 +2,16 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
 
-use anyhow::{bail, Context, Result};
 use rand::{distributions::Alphanumeric, Rng};
 
+use crate::error::Error;
+
 /// Read the shared secret from a file.
-pub fn read_shared_secret(path: &Path) -> Result<Vec<u8>> {
+pub fn read_shared_secret(path: &Path) -> Result<Vec<u8>, Error> {
     if !path.exists() {
-        bail!("Couldn't find shared secret file. Did you start the daemon at least once?");
+        return Err(Error::FileNotFound(
+            "Secret. Did you start the daemon at least once?".into(),
+        ));
     }
 
     let mut file = File::open(path)?;
@@ -19,7 +22,7 @@ pub fn read_shared_secret(path: &Path) -> Result<Vec<u8>> {
 }
 
 /// Generate a random secret and write it to a file.
-pub fn init_shared_secret(path: &Path) -> Result<()> {
+pub fn init_shared_secret(path: &Path) -> Result<(), Error> {
     if path.exists() {
         return Ok(());
     }
@@ -42,11 +45,14 @@ pub fn init_shared_secret(path: &Path) -> Result<()> {
         use std::os::unix::fs::PermissionsExt;
         let mut permissions = file
             .metadata()
-            .context("Failed to set secret file permissions")?
+            .map_err(|err| {
+                Error::Generic(format!("Failed to set secret file permissions:\n{}", err))
+            })?
             .permissions();
         permissions.set_mode(0o640);
-        std::fs::set_permissions(path, permissions)
-            .context("Failed to set permissions on tls certificate")?;
+        std::fs::set_permissions(path, permissions).map_err(|err| {
+            Error::Generic(format!("Failed to set secret file permissions:\n{}", err))
+        })?;
     }
 
     Ok(())

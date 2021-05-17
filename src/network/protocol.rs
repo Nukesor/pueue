@@ -1,12 +1,12 @@
 use std::io::Cursor;
 
-use anyhow::{Context, Result};
 use async_std::prelude::*;
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use log::debug;
 use serde_cbor::de::from_slice;
 use serde_cbor::ser::to_vec;
 
+use crate::error::Error;
 use crate::network::message::*;
 
 // Reexport all stream/socket related stuff for convenience purposes
@@ -15,17 +15,17 @@ pub use super::platform::socket::*;
 
 /// Convenience wrapper around send_bytes.
 /// Deserialize a message and feed the bytes into send_bytes.
-pub async fn send_message(message: Message, stream: &mut GenericStream) -> Result<()> {
+pub async fn send_message(message: Message, stream: &mut GenericStream) -> Result<(), Error> {
     debug!("Sending message: {:?}", message);
     // Prepare command for transfer and determine message byte size
-    let payload = to_vec(&message).context("Failed to serialize message.")?;
+    let payload = to_vec(&message).map_err(|err| Error::MessageDeserialization(err.to_string()))?;
 
     send_bytes(&payload, stream).await
 }
 
 /// Send a Vec of bytes. Before the actual bytes are send, the size of the message
 /// is transmitted in an header of fixed size (u64).
-pub async fn send_bytes(payload: &[u8], stream: &mut GenericStream) -> Result<()> {
+pub async fn send_bytes(payload: &[u8], stream: &mut GenericStream) -> Result<(), Error> {
     let message_size = payload.len() as u64;
 
     let mut header = vec![];
@@ -49,7 +49,7 @@ pub async fn send_bytes(payload: &[u8], stream: &mut GenericStream) -> Result<()
 ///
 /// 1. The client sends a u64, which specifies the length of the payload.
 /// 2. Receive chunks of 1400 bytes until we finished all expected bytes
-pub async fn receive_bytes(stream: &mut GenericStream) -> Result<Vec<u8>> {
+pub async fn receive_bytes(stream: &mut GenericStream) -> Result<Vec<u8>, Error> {
     // Receive the header with the overall message size
     let mut header = vec![0; 8];
     stream.read(&mut header).await?;
@@ -85,14 +85,13 @@ pub async fn receive_bytes(stream: &mut GenericStream) -> Result<Vec<u8>> {
 }
 
 /// Convenience wrapper that receives a message and converts it into a Message.
-pub async fn receive_message(stream: &mut GenericStream) -> Result<Message> {
+pub async fn receive_message(stream: &mut GenericStream) -> Result<Message, Error> {
     let payload_bytes = receive_bytes(stream).await?;
     debug!("Received {} bytes", payload_bytes.len());
 
     // Deserialize the message.
-    let message: Message = from_slice(&payload_bytes).context(
-        "In case you updated Pueue, try restarting the daemon. Otherwise please report this",
-    )?;
+    let message: Message =
+        from_slice(&payload_bytes).map_err(|err| Error::MessageDeserialization(err.to_string()))?;
     debug!("Received message: {:?}", message);
 
     Ok(message)
@@ -111,7 +110,7 @@ mod test {
     // Implement generic Listener/Stream traits, so we can test stuff on normal TCP
     #[async_trait]
     impl Listener for TcpListener {
-        async fn accept<'a>(&'a self) -> Result<GenericStream> {
+        async fn accept<'a>(&'a self) -> Result<GenericStream, Error> {
             let (stream, _) = self.accept().await?;
             Ok(Box::new(stream))
         }
@@ -119,7 +118,7 @@ mod test {
     impl PueueStream for TcpStream {}
 
     #[async_std::test]
-    async fn test_single_huge_payload() -> Result<()> {
+    async fn test_single_huge_payload() -> Result<(), Error> {
         let listener = TcpListener::bind("127.0.0.1:0").await?;
         let addr = listener.local_addr()?;
 
@@ -148,7 +147,8 @@ mod test {
         // Create a client that sends a message and instantly receives it
         send_message(message, &mut client).await?;
         let response_bytes = receive_bytes(&mut client).await?;
-        let _message: Message = from_slice(&response_bytes)?;
+        let _message: Message = from_slice(&response_bytes)
+            .map_err(|err| Error::MessageDeserialization(err.to_string()))?;
 
         assert_eq!(response_bytes, original_bytes);
 

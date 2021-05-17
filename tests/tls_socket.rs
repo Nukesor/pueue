@@ -15,9 +15,12 @@ use pueue_lib::settings::Shared;
 #[async_std::test]
 /// This tests whether we can create a listener and client, that communicate via TLS sockets.
 async fn test_tls_socket() -> Result<()> {
+    better_panic::install();
     // Create a temporary directory used for testing.
-    let temp_dir = TempDir::new("pueue_lib")?;
+    let temp_dir = TempDir::new("pueue_lib").unwrap();
     let temp_dir_path = temp_dir.path().to_path_buf();
+
+    std::fs::create_dir(temp_dir_path.join("certs")).unwrap();
 
     let shared_settings = Shared {
         pueue_directory: temp_dir_path.clone(),
@@ -35,9 +38,9 @@ async fn test_tls_socket() -> Result<()> {
     };
 
     // Create new stub tls certificates/keys in our temp directory
-    create_certificates(&shared_settings)?;
+    create_certificates(&shared_settings).unwrap();
 
-    let listener = get_listener(&shared_settings).await?;
+    let listener = get_listener(&shared_settings).await.unwrap();
     let message = create_success_message("This is a test");
     let original_bytes = to_vec(&message).expect("Failed to serialize message.");
 
@@ -54,12 +57,12 @@ async fn test_tls_socket() -> Result<()> {
         send_message(message, &mut stream).await.unwrap();
     });
 
-    let mut client = get_client_stream(&shared_settings).await?;
+    let mut client = get_client_stream(&shared_settings).await.unwrap();
 
     // Create a client that sends a message and instantly receives it
-    send_message(message, &mut client).await?;
-    let response_bytes = receive_bytes(&mut client).await?;
-    let _message: Message = from_slice(&response_bytes)?;
+    send_message(message, &mut client).await.unwrap();
+    let response_bytes = receive_bytes(&mut client).await.unwrap();
+    let _message: Message = from_slice(&response_bytes).unwrap();
 
     assert_eq!(response_bytes, original_bytes);
 

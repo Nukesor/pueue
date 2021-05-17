@@ -12,6 +12,8 @@
 
 /// Contains helper for command aliasing. This will most likely be not interesting for you.
 pub mod aliasing;
+/// Pueue lib's own Error implementation.
+pub mod error;
 /// Helper classes to read and write log files of Pueue's tasks.
 pub mod log;
 /// Everything you need to communicate with either the daemon or the client.
