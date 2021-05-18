@@ -149,7 +149,11 @@ pub struct ResetMessage {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct CleanMessage {
+    #[serde(default = "false_default")]
     pub successful_only: bool,
+}
+fn false_default() -> bool {
+    false
 }
 
 /// `err` decides, whether you should stream stderr or stdout.
