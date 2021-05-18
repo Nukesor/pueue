@@ -6,6 +6,7 @@ use async_std::task;
 use clap::crate_version;
 use log::{debug, info, warn};
 
+use pueue_lib::error::Error;
 use pueue_lib::network::message::*;
 use pueue_lib::network::protocol::*;
 use pueue_lib::network::secret::read_shared_secret;
@@ -72,9 +73,9 @@ async fn handle_incoming(
             String::from_utf8(payload_bytes)?
         );
 
-        // Always wait for 1 second, when getting a invalid secret.
-        // This makes brute-forcing even more impossible and invalidates any timing attacks.
-        let remaining_sleep_time = Duration::from_secs(1)
+        // Wait for 1 second before closing the socket, when getting a invalid secret.
+        // This invalidates any timing attacks.
+        let remaining_sleep_time = Duration::from_millis(1)
             - SystemTime::now()
                 .duration_since(start)
                 .context("Couldn't calculate duration. Did the system time change?")?;
@@ -82,7 +83,9 @@ async fn handle_incoming(
         bail!("Received invalid secret");
     }
 
-    // Send a super short `ok` byte to the client, so it knows that the secret has been accepted.
+    // Send a short `ok` byte to the client, so it knows that the secret has been accepted.
+    // This is also the current version of the daemon, so the client can inform the user if the
+    // daemon needs a restart in case a version difference exists.
     send_bytes(crate_version!().as_bytes(), &mut stream).await?;
 
     // Save the directory for convenience purposes and to prevent continuously
@@ -94,7 +97,19 @@ async fn handle_incoming(
 
     loop {
         // Receive the actual instruction from the client
-        let message = receive_message(&mut stream).await?;
+        let message_result = receive_message(&mut stream).await;
+
+        // In case of a deserialization error, respond the error to the client and return early.
+        if let Err(Error::MessageDeserialization(err)) = message_result {
+            send_message(
+                create_failure_message(format!("Failed to deserialize message: {}", err)),
+                &mut stream,
+            )
+            .await?;
+            return Ok(());
+        }
+
+        let message = message_result?;
         debug!("Received instruction: {:?}", message);
 
         let response = if let Message::StreamRequest(message) = message {
