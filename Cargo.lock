@@ -367,9 +367,9 @@ dependencies = [
 
 [[package]]
 name = "config"
-version = "0.10.1"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "19b076e143e1d9538dde65da30f8481c2a6c44040edb8e02b9bf1351edb92ce3"
+checksum = "1b1b9d958c2b1368a663f05538fc1b5975adce1e19f435acceae987aceeeb369"
 dependencies = [
  "lazy_static",
  "nom",
@@ -615,9 +615,9 @@ dependencies = [
 
 [[package]]
 name = "getrandom"
-version = "0.2.2"
+version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c9495705279e7140bf035dde1f6e750c162df8b625267cd52cc44e0b156732c8"
+checksum = "7fcd999463524c52659517fe2cea98493cfe485d10565e7b0fb07dbba7ad2753"
 dependencies = [
  "cfg-if 1.0.0",
  "libc",
@@ -1079,9 +1079,9 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.26"
+version = "1.0.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a152013215dca273577e18d2bf00fa862b89b24169fb78c4c95aeb07992c9cec"
+checksum = "f0d8caf72986c1a598726adc988bb5984792ef84f5ee5aa50209145ee8077038"
 dependencies = [
  "unicode-xid",
 ]
@@ -1154,7 +1154,7 @@ dependencies = [
 [[package]]
 name = "pueue-lib"
 version = "0.12.3"
-source = "git+https://github.com/Nukesor/pueue-lib?branch=master#fbf9ad1e81e8e0444d37121a1867a017e0dfeb06"
+source = "git+https://github.com/Nukesor/pueue-lib?branch=master#67f79cd3d2c8d0be0955c42d11f2b5c196090c8c"
 dependencies = [
  "async-std",
  "async-tls",
@@ -1175,6 +1175,7 @@ dependencies = [
  "serde_yaml",
  "shellexpand",
  "snap",
+ "strum",
  "strum_macros",
  "thiserror",
  "whoami",

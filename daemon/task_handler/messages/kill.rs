@@ -1,6 +1,12 @@
-use super::*;
+use log::{error, info, warn};
+
+use pueue_lib::network::message::Signal;
+use pueue_lib::state::GroupStatus;
+use pueue_lib::task::TaskStatus;
 
 use crate::ok_or_shutdown;
+use crate::platform::process_helper::*;
+use crate::task_handler::TaskHandler;
 
 impl TaskHandler {
     /// Kill specific tasks or groups.
@@ -10,7 +16,14 @@ impl TaskHandler {
     /// 3. Kill a specific group.
     ///
     /// `children` decides, whether the kill signal will be send to child processes as well.
-    pub fn kill(&mut self, task_ids: Vec<usize>, group: String, all: bool, children: bool) {
+    pub fn kill(
+        &mut self,
+        task_ids: Vec<usize>,
+        group: String,
+        all: bool,
+        children: bool,
+        signal: Option<Signal>,
+    ) {
         let cloned_state_mutex = self.state.clone();
         let mut state = cloned_state_mutex.lock().unwrap();
         // Get the keys of all tasks that should be resumed
@@ -42,9 +55,33 @@ impl TaskHandler {
         };
 
         for task_id in task_ids {
-            self.kill_task(task_id, children);
+            if let Some(signal) = signal.clone() {
+                self.send_internal_signal(task_id, signal, children);
+            } else {
+                self.kill_task(task_id, children);
+            }
         }
         ok_or_shutdown!(self, state.save());
+    }
+
+    /// Send a signal to a specific child process.
+    /// This is a wrapper around [send_internal_signal_to_child], which does a little bit of
+    /// additional error handling.
+    pub fn send_internal_signal(&mut self, task_id: usize, signal: Signal, children: bool) {
+        let child = match self.children.get_mut(&task_id) {
+            Some(child) => child,
+            None => {
+                warn!("Tried to kill non-existing child: {}", task_id);
+                return;
+            }
+        };
+
+        if let Err(err) = send_internal_signal_to_child(child, signal, children) {
+            warn!(
+                "Failed to send signal to task {} with error: {}",
+                task_id, err
+            );
+        };
     }
 
     /// Kill a specific task and handle it accordingly.

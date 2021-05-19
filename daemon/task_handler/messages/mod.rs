@@ -1,4 +1,11 @@
-use super::*;
+use std::thread::sleep;
+use std::time::Duration;
+
+use log::info;
+
+use pueue_lib::network::message::*;
+
+use crate::task_handler::TaskHandler;
 
 mod kill;
 mod pause;
@@ -41,8 +48,9 @@ impl TaskHandler {
                 message.group,
                 message.all,
                 message.children,
+                message.signal,
             ),
-            Message::Send(message) => self.send(message),
+            Message::Send(message) => self.send(message.task_id, message.input),
             Message::Reset(message) => self.reset(message.children),
             Message::DaemonShutdown => {
                 info!("Killing all children due to graceful shutdown.");

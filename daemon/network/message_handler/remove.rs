@@ -3,7 +3,9 @@ use pueue_lib::network::message::*;
 use pueue_lib::state::SharedState;
 use pueue_lib::task::TaskStatus;
 
+use super::ok_or_failure_message;
 use crate::network::response_helper::*;
+use crate::ok_or_return_failure_message;
 
 /// Invoked when calling `pueue remove`.
 /// Remove tasks from the queue.
@@ -32,6 +34,8 @@ pub fn remove(task_ids: Vec<usize>, state: &SharedState) -> Message {
 
         clean_log_handles(*task_id, &state.settings.shared.pueue_directory());
     }
+
+    ok_or_return_failure_message!(state.save());
 
     let text = "Tasks removed from list";
     let response = compile_task_response(text, not_running, running);

@@ -7,7 +7,9 @@ impl TaskHandler {
     pub fn spawn_new(&mut self) {
         // Get the next task id that can be started
         if let Some(id) = self.get_next_task_id() {
-            self.start_process(id);
+            let cloned_state_mutex = self.state.clone();
+            let mut state = cloned_state_mutex.lock().unwrap();
+            self.start_process(id, &mut state);
         }
     }
 
@@ -83,13 +85,7 @@ impl TaskHandler {
 
     /// Actually spawn a new sub process
     /// The output of subprocesses is piped into a seperate file for easier access
-    pub fn start_process(&mut self, task_id: usize) {
-        // Already get the mutex here to ensure that the state won't be manipulated
-        // while we are looking for a task to start.
-        // Also clone the state ref, so we don't have two mutable borrows later on.
-        let state_ref = self.state.clone();
-        let mut state = state_ref.lock().unwrap();
-
+    pub fn start_process(&mut self, task_id: usize, state: &mut LockedState) {
         // Check if the task exists and can actually be spawned. Otherwise do an early return.
         match state.tasks.get(&task_id) {
             Some(task) => {

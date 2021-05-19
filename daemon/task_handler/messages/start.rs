@@ -1,6 +1,10 @@
-use super::*;
+use log::{error, info, warn};
+
+use pueue_lib::state::GroupStatus;
+use pueue_lib::task::TaskStatus;
 
 use crate::ok_or_shutdown;
+use crate::task_handler::{LockedState, ProcessAction, TaskHandler};
 
 impl TaskHandler {
     /// Start specific tasks or groups.
@@ -23,7 +27,7 @@ impl TaskHandler {
                     self.continue_task(&state, *id, children);
                 } else {
                     // Start processes for all tasks that haven't been started yet
-                    self.start_process(*id);
+                    self.start_process(*id, &mut state);
                 }
             }
             ok_or_shutdown!(self, state.save());

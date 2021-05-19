@@ -99,6 +99,11 @@ async fn handle_incoming(
         // Receive the actual instruction from the client
         let message_result = receive_message(&mut stream).await;
 
+        if let Err(Error::EmptyPayload) = message_result {
+            debug!("Client went away");
+            return Ok(());
+        }
+
         // In case of a deserialization error, respond the error to the client and return early.
         if let Err(Error::MessageDeserialization(err)) = message_result {
             send_message(
