@@ -26,6 +26,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Add `callback_log_lines` setting for Daemon, specifying the amount of lines returned to the callback. [#196](https://github.com/Nukesor/pueue/issues/196).
 - Support for other `apple` platforms by [althiometer](https://github.com/althiometer)
 - Added backward compatibility tests for v0.12.2 state.
+- Added SignalMessage and Signal enum for a list of all supported Unix signals.
 
 ## Fixed
 

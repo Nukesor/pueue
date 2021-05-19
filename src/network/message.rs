@@ -2,6 +2,7 @@ use std::collections::{BTreeMap, HashMap};
 
 use chrono::prelude::*;
 use serde_derive::{Deserialize, Serialize};
+use strum_macros::{Display, EnumString};
 
 use crate::state::{GroupStatus, State};
 use crate::task::Task;
@@ -20,6 +21,7 @@ pub enum Message {
     Restart(RestartMessage),
     Pause(PauseMessage),
     Kill(KillMessage),
+    Signal(SignalMessage),
 
     Send(SendMessage),
     EditRequest(usize),
@@ -114,6 +116,27 @@ pub struct KillMessage {
 pub struct SendMessage {
     pub task_id: usize,
     pub input: String,
+}
+
+/// This is a small custom Enum for all currently supported unix signals.
+/// Supporting all unix signals would be a mess, since there is a LOT of them.
+///
+/// This is also needed for usage in clap, since nix's Signal doesn't implement [Display] and
+/// [std::str::FromStr].
+#[derive(PartialEq, Clone, Debug, Deserialize, Serialize, Display, EnumString)]
+pub enum Signal {
+    SigTerm,
+    SigInt,
+    SigKill,
+    SigCont,
+    SigStop,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct SignalMessage {
+    pub signal: Signal,
+    pub task_ids: Vec<usize>,
+    pub children: bool,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
