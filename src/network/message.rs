@@ -110,10 +110,15 @@ pub struct PauseMessage {
 /// [std::str::FromStr].
 #[derive(PartialEq, Clone, Debug, Deserialize, Serialize, Display, EnumString)]
 pub enum Signal {
-    SigTerm,
+    #[strum(serialize = "SigInt", serialize = "sigint", serialize = "2")]
     SigInt,
+    #[strum(serialize = "SigKill", serialize = "sigkill", serialize = "9")]
     SigKill,
+    #[strum(serialize = "SigTerm", serialize = "sigterm", serialize = "15")]
+    SigTerm,
+    #[strum(serialize = "SigCont", serialize = "sigcont", serialize = "18")]
     SigCont,
+    #[strum(serialize = "SigStop", serialize = "sigstop", serialize = "19")]
     SigStop,
 }
 
