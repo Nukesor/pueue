@@ -16,6 +16,7 @@ use winapi::um::tlhelp32::{
 use winapi::um::winnt::{PROCESS_TERMINATE, THREAD_SUSPEND_RESUME};
 
 use crate::task_handler::ProcessAction;
+use pueue_lib::network::message::Signal as InternalSignal;
 
 pub fn compile_shell_command(command_string: &str) -> Command {
     // Chain two `powershell` commands, one that sets the output encoding to utf8 and then the user provided one.
@@ -28,12 +29,16 @@ pub fn compile_shell_command(command_string: &str) -> Command {
     command
 }
 
-/// Send a signal to a windows process.
-pub fn send_signal_to_child(
+pub fn send_internal_signal_to_child(
     child: &Child,
-    action: &ProcessAction,
-    _children: bool,
+    signal: InternalSignal,
+    send_to_children: bool,
 ) -> Result<bool> {
+    bail!("Trying to send unix signal on a windows machine. This isn't supported.");
+}
+
+/// Send a signal to a windows process.
+pub fn run_action_on_child(child: &Child, action: &ProcessAction, _children: bool) -> Result<bool> {
     let pids = get_cur_task_processes(child.id());
     if pids.is_empty() {
         bail!("Process has just gone away");
@@ -52,11 +57,6 @@ pub fn send_signal_to_child(
                 for thread in get_threads(pid) {
                     resume_thread(thread);
                 }
-            }
-        }
-        ProcessAction::Kill => {
-            for pid in pids {
-                terminate_process(pid);
             }
         }
     }

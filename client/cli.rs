@@ -5,6 +5,8 @@ use chrono::Duration;
 use chrono_english::*;
 use clap::Clap;
 
+use pueue_lib::network::message::Signal;
+
 #[derive(Clap, Debug)]
 pub enum SubCommand {
     /// Enqueue a task for execution.
@@ -213,6 +215,12 @@ pub enum SubCommand {
         /// Useful when working with shell scripts.
         #[clap(short, long)]
         children: bool,
+
+        /// Send a UNIX signal instead of simply killing the process.
+        /// DISCLAIMER: This bypasses Pueue's process handling logic!
+        ///     You might enter weird invalid states, use at your own descretion.
+        #[clap(short, long, case_insensitive(true))]
+        signal: Option<Signal>,
     },
 
     /// Send something to a task. Useful for sending confirmations such as 'y\n'.

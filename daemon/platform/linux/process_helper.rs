@@ -10,12 +10,52 @@ use nix::{
 use procfs::process::{all_processes, Process};
 
 use crate::task_handler::ProcessAction;
+use pueue_lib::network::message::Signal as InternalSignal;
 
 pub fn compile_shell_command(command_string: &str) -> Command {
     let mut command = Command::new("sh");
     command.arg("-c").arg(command_string);
 
     command
+}
+
+fn map_action_to_signal(action: &ProcessAction) -> Signal {
+    match action {
+        ProcessAction::Pause => Signal::SIGSTOP,
+        ProcessAction::Resume => Signal::SIGCONT,
+    }
+}
+
+fn map_internal_signal_to_nix_signal(signal: InternalSignal) -> Signal {
+    match signal {
+        InternalSignal::SigKill => Signal::SIGKILL,
+        InternalSignal::SigInt => Signal::SIGINT,
+        InternalSignal::SigTerm => Signal::SIGTERM,
+        InternalSignal::SigCont => Signal::SIGCONT,
+        InternalSignal::SigStop => Signal::SIGSTOP,
+    }
+}
+
+/// Convenience wrapper around `send_signal_to_child` for raw unix signals.
+/// Its purpose is to hide platform specific logic.
+pub fn send_internal_signal_to_child(
+    child: &Child,
+    signal: InternalSignal,
+    send_to_children: bool,
+) -> Result<bool> {
+    let signal = map_internal_signal_to_nix_signal(signal);
+    send_signal_to_child(child, signal, send_to_children)
+}
+
+/// Convenience wrapper around `send_signal_to_child` for internal actions on processes.
+/// Its purpose is to hide platform specific logic.
+pub fn run_action_on_child(
+    child: &Child,
+    action: &ProcessAction,
+    send_to_children: bool,
+) -> Result<bool> {
+    let signal = map_action_to_signal(action);
+    send_signal_to_child(child, signal, send_to_children)
 }
 
 /// Send a signal to one of Pueue's child process handles.
@@ -50,12 +90,7 @@ pub fn compile_shell_command(command_string: &str) -> Command {
 ///
 /// Returns `Ok(true)`, if everything went alright
 /// Returns `Ok(false)`, if the process went away while we tried to send the signal.
-pub fn send_signal_to_child(
-    child: &Child,
-    action: &ProcessAction,
-    send_to_children: bool,
-) -> Result<bool> {
-    let signal = get_signal_from_action(action);
+pub fn send_signal_to_child(child: &Child, signal: Signal, send_to_children: bool) -> Result<bool> {
     let pid: i32 = child.id().try_into().unwrap();
     // Check whether this process actually spawned a shell.
     let is_shell = if let Ok(is_shell) = did_process_spawn_shell(pid) {
@@ -70,18 +105,18 @@ pub fn send_signal_to_child(
         // If the `send_to_children` flag is given, the
 
         // Send the signal to the shell, don't propagate to its children yet.
-        send_signal_to_process(pid, action, false)?;
+        send_signal_to_process(pid, signal, false)?;
 
         // Now send the signal to the shells child processes and their respective
         // children if the user wants to do so.
         let shell_children = get_child_processes(pid);
         for shell_child in shell_children {
-            send_signal_to_process(shell_child.pid(), action, send_to_children)?;
+            send_signal_to_process(shell_child.pid(), signal, send_to_children)?;
         }
     } else {
         // If it isn't a shell, send the signal directly to the process.
         // Handle children normally.
-        send_signal_to_process(pid, action, send_to_children)?;
+        send_signal_to_process(pid, signal, send_to_children)?;
     }
 
     signal::kill(Pid::from_raw(pid), signal)?;
@@ -135,8 +170,7 @@ pub fn kill_child(task_id: usize, child: &mut Child, kill_children: bool) -> boo
         for child_process in child_processes {
             // Send the signal to each child process, show warning if this fails.
             let process_pid = child_process.pid();
-            if let Err(error) =
-                send_signal_to_process(process_pid, &ProcessAction::Kill, kill_children)
+            if let Err(error) = send_signal_to_process(process_pid, Signal::SIGKILL, kill_children)
             {
                 warn!(
                     "Failed to send kill to pid {} with error {:?}",
@@ -145,7 +179,7 @@ pub fn kill_child(task_id: usize, child: &mut Child, kill_children: bool) -> boo
             }
         }
     } else if kill_children {
-        send_signal_to_processes(child_processes, &ProcessAction::Kill);
+        send_signal_to_processes(child_processes, Signal::SIGKILL);
     }
 
     true
@@ -193,15 +227,14 @@ fn did_process_spawn_shell(pid: i32) -> Result<bool> {
 /// Send a signal to a unix process.
 fn send_signal_to_process(
     pid: i32,
-    action: &ProcessAction,
+    signal: Signal,
     send_to_children: bool,
 ) -> Result<bool, nix::Error> {
-    let signal = get_signal_from_action(action);
     debug!("Sending signal {} to {}", signal, pid);
 
     // Send the signal to all children, if that's what the user wants.
     if send_to_children {
-        send_signal_to_children(pid, action);
+        send_signal_to_children(pid, signal);
     }
 
     signal::kill(Pid::from_raw(pid), signal)?;
@@ -209,14 +242,13 @@ fn send_signal_to_process(
 }
 
 /// A small helper that sends a signal to all children of a specific process by id.
-fn send_signal_to_children(pid: i32, action: &ProcessAction) {
-    send_signal_to_processes(get_child_processes(pid), action);
+fn send_signal_to_children(pid: i32, signal: Signal) {
+    send_signal_to_processes(get_child_processes(pid), signal);
 }
 
 /// Send a signal to a list of processes.
 /// This is a convenience wrapper around `send_signal_to_process`.
-fn send_signal_to_processes(processes: Vec<Process>, action: &ProcessAction) {
-    let signal = get_signal_from_action(action);
+fn send_signal_to_processes(processes: Vec<Process>, signal: Signal) {
     for process in processes {
         // Process is no longer alive, skip this one.
         if !process.is_alive() {
@@ -247,14 +279,6 @@ fn get_child_processes(pid: i32) -> Vec<Process> {
         .into_iter()
         .filter(|process| process.stat.ppid == pid)
         .collect()
-}
-
-fn get_signal_from_action(action: &ProcessAction) -> Signal {
-    match action {
-        ProcessAction::Kill => Signal::SIGKILL,
-        ProcessAction::Pause => Signal::SIGSTOP,
-        ProcessAction::Resume => Signal::SIGCONT,
-    }
 }
 
 #[cfg(test)]

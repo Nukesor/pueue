@@ -406,6 +406,7 @@ impl Client {
                 group,
                 all,
                 children,
+                signal,
             } => {
                 if self.settings.client.show_confirmation_questions {
                     self.handle_user_confirmation("kill", task_ids)?;
@@ -416,6 +417,7 @@ impl Client {
                     group,
                     all: *all,
                     children: *children,
+                    signal: signal.clone(),
                 };
                 Ok(Message::Kill(message))
             }

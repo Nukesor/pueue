@@ -25,12 +25,23 @@ pub fn kill(message: KillMessage, sender: &Sender<Message>, state: &SharedState)
         return create_success_message(response);
     }
 
-    if message.all {
-        create_success_message("All tasks are being killed.")
+    if let Some(signal) = message.signal {
+        if message.all {
+            create_success_message(format!("Sending signal {} to all running tasks.", signal))
+        } else {
+            create_success_message(format!(
+                "Sending signal {} to all running tasks of group {}.",
+                signal, message.group
+            ))
+        }
     } else {
-        create_success_message(format!(
-            "All tasks of group \"{}\" are being killed.",
-            &message.group
-        ))
+        if message.all {
+            create_success_message("All tasks are being killed.")
+        } else {
+            create_success_message(format!(
+                "All tasks of group \"{}\" are being killed.",
+                message.group
+            ))
+        }
     }
 }

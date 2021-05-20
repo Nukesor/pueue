@@ -1,10 +1,8 @@
-use std::io::Write;
 use std::path::PathBuf;
 use std::process::Child;
 use std::process::Stdio;
 use std::sync::mpsc::Receiver;
-use std::thread::sleep;
-use std::time::Duration;
+
 use std::{
     collections::{BTreeMap, HashMap},
     sync::MutexGuard,
@@ -13,7 +11,7 @@ use std::{
 use anyhow::{Context, Result};
 use chrono::prelude::*;
 use handlebars::Handlebars;
-use log::{debug, error, info, warn};
+use log::{debug, error, info};
 
 use pueue_lib::log::*;
 use pueue_lib::network::message::*;
@@ -74,12 +72,11 @@ pub struct TaskHandler {
 /// Pueue directly interacts with processes.
 /// Since these interactions can vary depending on the current platform, this enum is introduced.
 /// The intend is to keep any platform specific code out of the top level code.
-/// Even if that implicates adding some layer of abstraction.
+/// Even if that implicates adding some layers of abstraction.
 #[derive(Debug)]
 pub enum ProcessAction {
     Pause,
     Resume,
-    Kill,
 }
 
 impl TaskHandler {
@@ -182,7 +179,7 @@ impl TaskHandler {
         }
 
         self.full_reset = true;
-        self.kill(vec![], String::new(), true, kill_children);
+        self.kill(vec![], String::new(), true, kill_children, None);
     }
 
     /// As time passes, some delayed tasks may need to be enqueued.
@@ -218,7 +215,7 @@ impl TaskHandler {
         match self.children.get(&id) {
             Some(child) => {
                 debug!("Executing action {:?} to {}", action, id);
-                send_signal_to_child(child, &action, children)?;
+                run_action_on_child(child, &action, children)?;
 
                 Ok(true)
             }
