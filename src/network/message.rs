@@ -21,7 +21,6 @@ pub enum Message {
     Restart(RestartMessage),
     Pause(PauseMessage),
     Kill(KillMessage),
-    Signal(SignalMessage),
 
     Send(SendMessage),
     EditRequest(usize),
@@ -104,20 +103,6 @@ pub struct PauseMessage {
     pub children: bool,
 }
 
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
-pub struct KillMessage {
-    pub task_ids: Vec<usize>,
-    pub group: String,
-    pub all: bool,
-    pub children: bool,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct SendMessage {
-    pub task_id: usize,
-    pub input: String,
-}
-
 /// This is a small custom Enum for all currently supported unix signals.
 /// Supporting all unix signals would be a mess, since there is a LOT of them.
 ///
@@ -132,11 +117,19 @@ pub enum Signal {
     SigStop,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct SignalMessage {
-    pub signal: Signal,
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+pub struct KillMessage {
     pub task_ids: Vec<usize>,
+    pub group: String,
+    pub all: bool,
     pub children: bool,
+    pub signal: Option<Signal>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct SendMessage {
+    pub task_id: usize,
+    pub input: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
