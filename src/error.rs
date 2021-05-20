@@ -22,6 +22,9 @@ pub enum Error {
     #[error("{}", .0)]
     Connection(String),
 
+    #[error("Got an empty payload")]
+    EmptyPayload,
+
     #[error("Couldn't deserialize message:\n{}", .0)]
     MessageDeserialization(String),
 

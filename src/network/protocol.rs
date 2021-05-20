@@ -52,33 +52,30 @@ pub async fn send_bytes(payload: &[u8], stream: &mut GenericStream) -> Result<()
 pub async fn receive_bytes(stream: &mut GenericStream) -> Result<Vec<u8>, Error> {
     // Receive the header with the overall message size
     let mut header = vec![0; 8];
-    stream.read(&mut header).await?;
+    stream.read_exact(&mut header).await?;
     let mut header = Cursor::new(header);
     let message_size = header.read_u64::<BigEndian>()? as usize;
 
     // Buffer for the whole payload
     let mut payload_bytes = Vec::with_capacity(message_size);
 
+    // Create a static buffer with our packet size.
+    let mut chunk_buffer: [u8; 1400] = [0; 1400];
+
     // Receive chunks until we reached the expected message size
     while payload_bytes.len() < message_size {
-        // Calculate the amount of bytes left
-        // By default try a buffer size of 1400 bytes
-        let mut chunk_size = message_size - payload_bytes.len();
-        if chunk_size > 1400 {
-            chunk_size = 1400;
-        }
-
         // Read data and get the amount of received bytes
-        let mut chunk = vec![0; chunk_size];
-        let received_bytes = stream.read(&mut chunk).await?;
+        let received_bytes = stream.read(&mut chunk_buffer).await?;
 
-        // If we received less bytes than the chunk buffer size,
-        // split the unneeded bytes, since they are filled with zeros
-        if received_bytes < chunk_size {
-            let _ = chunk.split_off(received_bytes);
+        if received_bytes == 0 {
+            return Err(Error::Connection(
+                "Connection went away while receiving payload.".into(),
+            ));
         }
 
-        payload_bytes.append(&mut chunk);
+        // Extend the total payload bytes by the part of the buffer that has been filled
+        // during this iteration.
+        payload_bytes.extend_from_slice(&chunk_buffer[0..received_bytes]);
     }
 
     Ok(payload_bytes)
@@ -88,6 +85,9 @@ pub async fn receive_bytes(stream: &mut GenericStream) -> Result<Vec<u8>, Error>
 pub async fn receive_message(stream: &mut GenericStream) -> Result<Message, Error> {
     let payload_bytes = receive_bytes(stream).await?;
     debug!("Received {} bytes", payload_bytes.len());
+    if payload_bytes.is_empty() {
+        return Err(Error::EmptyPayload);
+    }
 
     // Deserialize the message.
     let message: Message =
