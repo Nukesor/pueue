@@ -104,12 +104,13 @@ pub fn send_signal_to_child(child: &Child, signal: Signal, send_to_children: boo
         // There might be multiple children, for instance, when users use the `&` operator.
         // If the `send_to_children` flag is given, the
 
-        // Send the signal to the shell, don't propagate to its children yet.
-        send_signal_to_process(pid, signal, false)?;
-
         // Now send the signal to the shells child processes and their respective
         // children if the user wants to do so.
         let shell_children = get_child_processes(pid);
+
+        // Send the signal to the shell, don't propagate to its children yet.
+        send_signal_to_process(pid, signal, false)?;
+
         for shell_child in shell_children {
             send_signal_to_process(shell_child.pid(), signal, send_to_children)?;
         }
