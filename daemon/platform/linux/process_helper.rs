@@ -104,13 +104,15 @@ pub fn send_signal_to_child(child: &Child, signal: Signal, send_to_children: boo
         // There might be multiple children, for instance, when users use the `&` operator.
         // If the `send_to_children` flag is given, the
 
-        // Now send the signal to the shells child processes and their respective
-        // children if the user wants to do so.
+        // Get all children before sending the signal to the parent process.
+        // Otherwise the parent might go away and we'll no longer be able to access the children.
         let shell_children = get_child_processes(pid);
 
         // Send the signal to the shell, don't propagate to its children yet.
         send_signal_to_process(pid, signal, false)?;
 
+        // Now send the signal to the shells child processes and their respective
+        // children if the user wants to do so.
         for shell_child in shell_children {
             send_signal_to_process(shell_child.pid(), signal, send_to_children)?;
         }
@@ -226,6 +228,10 @@ fn did_process_spawn_shell(pid: i32) -> Result<bool> {
 }
 
 /// Send a signal to a unix process.
+/// In case the user wants to send the signal to all children as well:
+/// 1. Get the children before sending the signal to the parent (as it might go away)
+/// 2. Send the signal to the parent first, as it might spawn new children otherwise.
+/// 3. Send the signal to all children.
 fn send_signal_to_process(
     pid: i32,
     signal: Signal,
@@ -233,18 +239,14 @@ fn send_signal_to_process(
 ) -> Result<bool, nix::Error> {
     debug!("Sending signal {} to {}", signal, pid);
 
-    // Send the signal to all children, if that's what the user wants.
     if send_to_children {
-        send_signal_to_children(pid, signal);
+        let children = get_child_processes(pid);
+        signal::kill(Pid::from_raw(pid), signal)?;
+        send_signal_to_processes(children, signal);
+    } else {
+        signal::kill(Pid::from_raw(pid), signal)?;
     }
-
-    signal::kill(Pid::from_raw(pid), signal)?;
     Ok(true)
-}
-
-/// A small helper that sends a signal to all children of a specific process by id.
-fn send_signal_to_children(pid: i32, signal: Signal) {
-    send_signal_to_processes(get_child_processes(pid), signal);
 }
 
 /// Send a signal to a list of processes.
@@ -326,6 +328,39 @@ mod tests {
 
         // Kill the process and make sure it'll be killed.
         assert!(kill_child(0, &mut child, false));
+
+        // Sleep a little to give all processes time to shutdown.
+        sleep(Duration::from_millis(500));
+
+        // Assert that the direct child (sh -c) has been killed.
+        assert!(process_is_gone(pid));
+
+        // Assert that all child processes have been killed.
+        for child_process in child_processes {
+            assert!(process_is_gone(child_process.stat.pid));
+        }
+    }
+
+    #[test]
+    /// Ensure a `sh -c` command will be properly killed without detached processes when using unix
+    /// signals directly.
+    fn test_shell_command_is_killed_with_signal() {
+        let mut child = compile_shell_command("sleep 60 & sleep 60 && echo 'this is a test'")
+            .spawn()
+            .expect("Failed to spawn echo");
+        let pid: i32 = child.id().try_into().unwrap();
+        // Sleep a little to give everything a chance to spawn.
+        sleep(Duration::from_millis(500));
+
+        // Make sure the process indeed spawned a shell.
+        assert!(did_process_spawn_shell(pid).unwrap());
+
+        // Get all child processes, so we can make sure they no longer exist afterwards.
+        let child_processes = get_child_processes(pid);
+        assert_eq!(child_processes.len(), 2);
+
+        // Kill the process and make sure it'll be killed.
+        send_signal_to_child(&mut child, Signal::SIGKILL, false).unwrap();
 
         // Sleep a little to give all processes time to shutdown.
         sleep(Duration::from_millis(500));
