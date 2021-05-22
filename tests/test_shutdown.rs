@@ -1,7 +1,4 @@
-use async_std::task;
 use nix::sys::signal;
-
-use pueue_daemon_lib::run;
 
 mod helper;
 
@@ -9,14 +6,9 @@ mod helper;
 /// Spin up the daemon and send a SIGTERM shortly afterwards.
 /// This should trigger
 async fn test_ctrlc() {
-    let (_settings, tempdir) = helper::get_settings();
+    let (_settings, tempdir) = helper::base_setup();
 
-    // Start/spin off the daemon and get its PID
-    task::spawn(run(Some(tempdir.path().join("pueue.yml"))));
-    let pid = helper::get_pid(tempdir.path());
-
-    // Wait a little for the daemon to properly start
-    helper::sleep_ms(500);
+    let pid = helper::start_daemon(tempdir.path());
 
     // Send SIGTERM signal to process via nix
     let nix_pid = nix::unistd::Pid::from_raw(pid);

@@ -2,12 +2,25 @@ use std::fs::File;
 use std::path::Path;
 use std::{collections::BTreeMap, io::Read};
 
+use async_std::task;
 use tempdir::TempDir;
 
+use pueue_daemon_lib::run;
 use pueue_lib::settings::*;
 
 pub fn sleep_ms(ms: u64) {
     std::thread::sleep(std::time::Duration::from_millis(ms));
+}
+
+pub fn start_daemon(pueue_dir: &Path) -> i32 {
+    // Start/spin off the daemon and get its PID
+    task::spawn(run(Some(pueue_dir.join("pueue.yml"))));
+    let pid = get_pid(pueue_dir);
+
+    // Wait a little longer for the daemon to properly start
+    sleep_ms(500);
+
+    return pid;
 }
 
 /// Get a daemon pid from a specific pueue directory.
@@ -48,7 +61,7 @@ pub fn get_pid(pueue_dir: &Path) -> i32 {
     panic!("Couldn't find pid file after about 1 sec.");
 }
 
-pub fn get_settings() -> (Settings, TempDir) {
+pub fn base_setup() -> (Settings, TempDir) {
     // Create a temporary directory used for testing.
     let tempdir = TempDir::new("pueue_lib").unwrap();
     let tempdir_path = tempdir.path();
