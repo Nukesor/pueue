@@ -2,6 +2,7 @@ use std::fs::File;
 use std::path::Path;
 use std::{collections::BTreeMap, io::Read};
 
+use anyhow::{anyhow, Context, Result};
 use async_std::task;
 use tempdir::TempDir;
 
@@ -12,21 +13,21 @@ pub fn sleep_ms(ms: u64) {
     std::thread::sleep(std::time::Duration::from_millis(ms));
 }
 
-pub fn start_daemon(pueue_dir: &Path) -> i32 {
+pub fn start_daemon(pueue_dir: &Path) -> Result<i32> {
     // Start/spin off the daemon and get its PID
     task::spawn(run(Some(pueue_dir.join("pueue.yml"))));
-    let pid = get_pid(pueue_dir);
+    let pid = get_pid(pueue_dir)?;
 
     // Wait a little longer for the daemon to properly start
     sleep_ms(500);
 
-    return pid;
+    return Ok(pid);
 }
 
 /// Get a daemon pid from a specific pueue directory.
 /// This function gives the daemon a little time to boot up, but ultimately crashes if it takes too
 /// long.
-pub fn get_pid(pueue_dir: &Path) -> i32 {
+pub fn get_pid(pueue_dir: &Path) -> Result<i32> {
     let pid_file = pueue_dir.join("pueue.pid");
 
     // Give the daemon about 1 sec to boot and create the pid file.
@@ -41,10 +42,10 @@ pub fn get_pid(pueue_dir: &Path) -> i32 {
             continue;
         }
 
-        let mut file = File::open(&pid_file).expect("Couldn't open pid file");
+        let mut file = File::open(&pid_file).context("Couldn't open pid file")?;
         let mut content = String::new();
         file.read_to_string(&mut content)
-            .expect("Couldn't write to file");
+            .context("Couldn't write to file")?;
 
         // The file has been created but not yet been written to.
         if content.is_empty() {
@@ -53,15 +54,16 @@ pub fn get_pid(pueue_dir: &Path) -> i32 {
             continue;
         }
 
-        return content
+        let pid = content
             .parse::<i32>()
-            .expect(&format!("Couldn't parse value: {}", content));
+            .map_err(|_| anyhow!("Couldn't parse value: {}", content))?;
+        return Ok(pid);
     }
 
     panic!("Couldn't find pid file after about 1 sec.");
 }
 
-pub fn base_setup() -> (Settings, TempDir) {
+pub fn base_setup() -> Result<(Settings, TempDir)> {
     // Create a temporary directory used for testing.
     let tempdir = TempDir::new("pueue_lib").unwrap();
     let tempdir_path = tempdir.path();
@@ -110,7 +112,7 @@ pub fn base_setup() -> (Settings, TempDir) {
 
     settings
         .save(&Some(tempdir_path.join("pueue.yml")))
-        .expect("Couldn't write pueue config to temporary directory");
+        .context("Couldn't write pueue config to temporary directory")?;
 
-    (settings, tempdir)
+    Ok((settings, tempdir))
 }
