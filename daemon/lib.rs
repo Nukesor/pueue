@@ -71,11 +71,6 @@ pub async fn run(config_path: Option<PathBuf>) -> Result<()> {
     let sender_clone = sender.clone();
     let settings_clone = settings.clone();
     ctrlc::set_handler(move || {
-        if let Err(error) = pid::cleanup_pid_file(&settings_clone.shared.pueue_directory()) {
-            println!("Failed to cleanup pid after shutdown signal.");
-            println!("{}", error);
-        }
-
         if let Err(error) = socket_cleanup(&settings_clone.shared) {
             println!("Failed to cleanup socket after shutdown signal.");
             println!("{}", error);
