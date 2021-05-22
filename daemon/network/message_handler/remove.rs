@@ -44,15 +44,14 @@ pub fn remove(task_ids: Vec<usize>, state: &SharedState) -> Message {
 
 #[cfg(test)]
 mod tests {
-    use tempdir::TempDir;
+    
 
     use super::super::fixtures::*;
     use super::*;
 
     #[test]
     fn normal_remove() {
-        let tempdir = TempDir::new("pueue_test").expect("Failed to create test pueue directory");
-        let state = get_stub_state(tempdir.into_path());
+        let (state, _tempdir) = get_stub_state();
 
         // 3 and 4 aren't allowed to be removed, since they're running.
         // The rest will succeed.
@@ -73,8 +72,7 @@ mod tests {
 
     #[test]
     fn removal_of_dependencies() {
-        let tempdir = TempDir::new("pueue_test").expect("Failed to create test pueue directory");
-        let state = get_stub_state(tempdir.into_path());
+        let (state, _tempdir) = get_stub_state();
 
         {
             let mut state = state.lock().unwrap();

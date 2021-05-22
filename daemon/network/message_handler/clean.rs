@@ -42,8 +42,6 @@ pub fn clean(message: CleanMessage, state: &SharedState) -> Message {
 
 #[cfg(test)]
 mod tests {
-    use std::path::PathBuf;
-
     use super::super::fixtures::*;
     use super::*;
 
@@ -53,8 +51,8 @@ mod tests {
         CleanMessage { successful_only }
     }
 
-    fn get_clean_test_state(path: PathBuf) -> SharedState {
-        let state = get_state(path);
+    fn get_clean_test_state() -> (SharedState, TempDir) {
+        let (state, tempdir) = get_state();
 
         {
             let mut state = state.lock().unwrap();
@@ -83,13 +81,12 @@ mod tests {
             state.add_task(task);
         }
 
-        state
+        (state, tempdir)
     }
 
     #[test]
     fn clean_normal() {
-        let tempdir = TempDir::new("pueue_test").expect("Failed to create test pueue directory");
-        let state = get_stub_state(tempdir.into_path());
+        let (state, _tempdir) = get_stub_state();
 
         // Only task 1 will be removed, since it's the only TaskStatus with `Done`.
         let message = clean(get_message(false), &state);
@@ -107,8 +104,7 @@ mod tests {
 
     #[test]
     fn clean_normal_for_all_results() {
-        let tempdir = TempDir::new("pueue_test").expect("Failed to create test pueue directory");
-        let state = get_clean_test_state(tempdir.into_path());
+        let (state, _tempdir) = get_clean_test_state();
 
         // All finished tasks should removed when calling default `clean`.
         let message = clean(get_message(false), &state);
@@ -126,8 +122,7 @@ mod tests {
 
     #[test]
     fn clean_successful_only() {
-        let tempdir = TempDir::new("pueue_test").expect("Failed to create test pueue directory");
-        let state = get_clean_test_state(tempdir.into_path());
+        let (state, _tempdir) = get_clean_test_state();
 
         // Only successfully finished tasks should get removed when
         // calling `clean` with the `successful_only` flag.
