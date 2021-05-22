@@ -1,13 +1,10 @@
-use std::fs::create_dir_all;
 use std::path::Path;
-use std::process::Command;
 use std::sync::mpsc::channel;
 use std::sync::{Arc, Mutex};
+use std::{fs::create_dir_all, path::PathBuf};
 
 use anyhow::{bail, Result};
-use clap::Clap;
 use log::warn;
-use simplelog::{Config, LevelFilter, SimpleLogger};
 
 use pueue_lib::network::certificate::create_certificates;
 use pueue_lib::network::message::Message;
@@ -16,11 +13,10 @@ use pueue_lib::network::secret::init_shared_secret;
 use pueue_lib::settings::Settings;
 use pueue_lib::state::State;
 
-use crate::cli::CliArguments;
 use crate::network::socket::accept_incoming;
 use crate::task_handler::TaskHandler;
 
-mod cli;
+pub mod cli;
 mod network;
 mod platform;
 mod task_handler;
@@ -28,35 +24,19 @@ mod task_handler;
 /// The main entry point for the daemon logic.
 /// It's basically the `main`, but publicly exported as a library.
 /// That way we can properly do integration testing for the daemon.
-pub async fn run() -> Result<()> {
-    // Parse commandline options.
-    let opt = CliArguments::parse();
-
-    if opt.daemonize {
-        return fork_daemon(&opt);
-    }
-
-    // Set the verbosity level of the logger.
-    let level = match opt.verbose {
-        0 => LevelFilter::Error,
-        1 => LevelFilter::Warn,
-        2 => LevelFilter::Info,
-        _ => LevelFilter::Debug,
-    };
-    SimpleLogger::init(level, Config::default()).unwrap();
-
+pub async fn run(config_path: Option<PathBuf>) -> Result<()> {
     // Try to read settings from the configuration file.
-    let settings = match Settings::read(&opt.config) {
+    let settings = match Settings::read(&config_path) {
         Ok(settings) => settings,
         Err(_) => {
             // There's something wrong with the config file or something's missing.
             // Try to read the config and fill missing values with defaults.
             // This might be possible on version upgrade or first run.
-            let settings = Settings::read_with_defaults(false, &opt.config)?;
+            let settings = Settings::read_with_defaults(false, &config_path)?;
 
             // Since we needed to add values to the configuration, we have to save it.
             // This also creates the save file in case it didn't exist yet.
-            if let Err(error) = settings.save(&opt.config) {
+            if let Err(error) = settings.save(&config_path) {
                 bail!("Failed saving config file: {:?}.", error);
             }
             settings
@@ -69,7 +49,7 @@ pub async fn run() -> Result<()> {
     }
     init_shared_secret(&settings.shared.shared_secret_path())?;
 
-    let mut state = State::new(&settings, opt.config.clone());
+    let mut state = State::new(&settings, config_path.clone());
     // Restore the previous state and save any changes that might have happened during this process
     if let Err(error) = state.restore() {
         warn!("Failed to restore previous state:\n {:?}", error);
@@ -160,24 +140,4 @@ fn init_directories(pueue_dir: &Path) {
             );
         }
     }
-}
-
-/// This is a simple and cheap custom fork method.
-/// Simply spawn a new child with identical arguments and exit right away.
-fn fork_daemon(opt: &CliArguments) -> Result<()> {
-    let mut arguments = Vec::<String>::new();
-
-    if let Some(config) = &opt.config {
-        arguments.push("--config".to_string());
-        arguments.push(config.to_string_lossy().into_owned());
-    }
-
-    if opt.verbose > 0 {
-        arguments.push("-".to_string() + &" ".repeat(opt.verbose as usize));
-    }
-
-    Command::new("pueued").args(&arguments).spawn()?;
-
-    println!("Pueued is now running in the background");
-    Ok(())
 }
