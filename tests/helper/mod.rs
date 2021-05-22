@@ -6,6 +6,10 @@ use tempdir::TempDir;
 
 use pueue_lib::settings::*;
 
+pub fn sleep_ms(ms: u64) {
+    std::thread::sleep(std::time::Duration::from_millis(ms));
+}
+
 /// Get a daemon pid from a specific pueue directory.
 /// This function gives the daemon a little time to boot up, but ultimately crashes if it takes too
 /// long.
@@ -19,7 +23,7 @@ pub fn get_pid(pueue_dir: &Path) -> i32 {
     while current_try < tries {
         // The daemon didn't create the pid file yet. Wait for 100ms and try again.
         if !pid_file.exists() {
-            std::thread::sleep(std::time::Duration::from_millis(100));
+            sleep_ms(100);
             current_try += 1;
             continue;
         }
@@ -31,7 +35,7 @@ pub fn get_pid(pueue_dir: &Path) -> i32 {
 
         // The file has been created but not yet been written to.
         if content.is_empty() {
-            std::thread::sleep(std::time::Duration::from_millis(100));
+            sleep_ms(100);
             current_try += 1;
             continue;
         }
