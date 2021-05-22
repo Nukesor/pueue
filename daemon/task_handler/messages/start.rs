@@ -62,7 +62,6 @@ impl TaskHandler {
             self.continue_task(&state, id, children);
         }
 
-        let state = self.state.lock().unwrap();
         ok_or_shutdown!(self, state.save());
     }
 

@@ -61,6 +61,7 @@ impl TaskHandler {
                 self.kill_task(task_id, children);
             }
         }
+
         ok_or_shutdown!(self, state.save());
     }
 
