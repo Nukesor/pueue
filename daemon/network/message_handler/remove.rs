@@ -44,10 +44,10 @@ pub fn remove(task_ids: Vec<usize>, state: &SharedState) -> Message {
 
 #[cfg(test)]
 mod tests {
-    
-
     use super::super::fixtures::*;
     use super::*;
+
+    use pretty_assertions::assert_eq;
 
     #[test]
     fn normal_remove() {

@@ -53,6 +53,7 @@ pub fn switch(message: SwitchMessage, state: &SharedState) -> Message {
 
 #[cfg(test)]
 mod tests {
+    use pretty_assertions::assert_eq;
     use tempdir::TempDir;
 
     use super::super::fixtures::*;
