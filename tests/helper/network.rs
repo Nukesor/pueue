@@ -7,7 +7,7 @@ use pueue_lib::network::protocol::{
 };
 use pueue_lib::network::secret::read_shared_secret;
 use pueue_lib::settings::Shared;
-use pueue_lib::state::State;
+
 
 pub async fn send_message(shared: &Shared, message: Message) -> Result<Message> {
     let mut stream = get_authenticated_client(shared).await?;
@@ -49,30 +49,4 @@ pub async fn get_authenticated_client(shared: &Shared) -> Result<GenericStream> 
     }
 
     Ok(stream)
-}
-
-pub async fn get_state(shared: &Shared) -> Result<Box<State>> {
-    let response = send_message(shared, Message::Status).await?;
-    match response {
-        Message::StatusResponse(state) => Ok(state),
-        _ => bail!("Didn't get status response in get_state"),
-    }
-}
-
-//pub async fn pause_daemon(shared: &Shared) -> Message {
-//    let message = Message::Pause(PauseMessage {
-//        task_ids: vec![],
-//        group: "default".into(),
-//        wait: false,
-//        all: true,
-//        children: false,
-//    });
-//
-//    send_message(shared, message).await
-//}
-
-pub async fn shutdown(shared: &Shared) -> Result<()> {
-    send_message(shared, Message::DaemonShutdown).await?;
-
-    Ok(())
 }

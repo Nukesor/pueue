@@ -4,8 +4,9 @@ use anyhow::Result;
 use pueue_lib::network::message::*;
 use pueue_lib::task::*;
 
-mod fixtures;
 mod helper;
+
+use helper::*;
 
 #[async_std::test]
 /// Test if adding a normal task works as intended.
@@ -26,7 +27,7 @@ async fn test_normal_add() -> Result<()> {
         label: None,
         print_task_id: false,
     });
-    let response = fixtures::send_message(&settings.shared, message).await?;
+    let response = send_message(&settings.shared, message).await?;
     assert!(matches!(response, Message::Success(_)));
 
     // Slep a little so the taskhandler can spawn the program
