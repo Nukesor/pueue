@@ -1,8 +1,6 @@
 use std::path::PathBuf;
 use std::process::Child;
 use std::process::Stdio;
-use std::sync::mpsc::Receiver;
-
 use std::{
     collections::{BTreeMap, HashMap},
     sync::MutexGuard,
@@ -10,6 +8,7 @@ use std::{
 
 use anyhow::{Context, Result};
 use chrono::prelude::*;
+use crossbeam_channel::Receiver;
 use handlebars::Handlebars;
 use log::{debug, error, info};
 

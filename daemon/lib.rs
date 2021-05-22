@@ -1,9 +1,9 @@
 use std::path::Path;
-use std::sync::mpsc::channel;
 use std::sync::{Arc, Mutex};
 use std::{fs::create_dir_all, path::PathBuf};
 
 use anyhow::{bail, Result};
+use crossbeam_channel::unbounded;
 use log::warn;
 
 use pueue_lib::network::certificate::create_certificates;
@@ -60,7 +60,7 @@ pub async fn run(config_path: Option<PathBuf>) -> Result<()> {
     state.save()?;
     let state = Arc::new(Mutex::new(state));
 
-    let (sender, receiver) = channel();
+    let (sender, receiver) = unbounded();
     let mut task_handler = TaskHandler::new(state.clone(), receiver);
 
     // This section handles Shutdown via SigTerm/SigInt process signals

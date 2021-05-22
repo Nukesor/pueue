@@ -1,9 +1,9 @@
-use std::sync::mpsc::Sender;
 use std::time::{Duration, SystemTime};
 
 use anyhow::{bail, Context, Result};
 use async_std::task;
 use clap::crate_version;
+use crossbeam_channel::Sender;
 use log::{debug, info, warn};
 
 use pueue_lib::error::Error;

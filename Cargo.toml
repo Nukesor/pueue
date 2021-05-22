@@ -40,6 +40,7 @@ chrono-english = "0.1"
 shell-escape = "0.1"
 tempfile = "3"
 
+crossbeam-channel = "0.5"
 async-std = { version = "1", features = ["attributes", "std"] }
 snap = "1"
 serde = "1"

@@ -1,5 +1,5 @@
 use std::fmt::Display;
-use std::sync::mpsc::Sender;
+use crossbeam_channel::Sender;
 
 use pueue_lib::network::message::*;
 use pueue_lib::network::protocol::socket_cleanup;
@@ -110,7 +110,7 @@ macro_rules! ok_or_return_failure_message {
 #[cfg(test)]
 mod fixtures {
     use std::collections::HashMap;
-    pub use std::sync::mpsc::Sender;
+    pub use crossbeam_channel::Sender;
     use std::sync::{Arc, Mutex};
     use tempdir::TempDir;
 
