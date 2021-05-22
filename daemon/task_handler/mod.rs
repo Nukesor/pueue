@@ -163,8 +163,18 @@ impl TaskHandler {
             // Actually exit the program in case we're supposed to.
             // Depending on the current shutdown type, we exit with different exit codes.
             if self.graceful_shutdown {
+                if let Err(error) = crate::pid::cleanup_pid_file(&self.pueue_directory) {
+                    println!("Failed to cleanup pid after shutdown.");
+                    println!("{}", error);
+                }
+
                 std::process::exit(0);
             } else if self.emergency_shutdown {
+                if let Err(error) = crate::pid::cleanup_pid_file(&self.pueue_directory) {
+                    println!("Failed to cleanup pid after shutdown.");
+                    println!("{}", error);
+                }
+
                 std::process::exit(1);
             }
         }

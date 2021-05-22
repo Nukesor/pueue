@@ -18,6 +18,7 @@ use crate::task_handler::TaskHandler;
 
 pub mod cli;
 mod network;
+mod pid;
 mod platform;
 mod task_handler;
 
@@ -48,6 +49,7 @@ pub async fn run(config_path: Option<PathBuf>) -> Result<()> {
         create_certificates(&settings.shared)?;
     }
     init_shared_secret(&settings.shared.shared_secret_path())?;
+    pid::create_pid_file(&settings.shared.pueue_directory())?;
 
     let mut state = State::new(&settings, config_path.clone());
     // Restore the previous state and save any changes that might have happened during this process
@@ -69,10 +71,15 @@ pub async fn run(config_path: Option<PathBuf>) -> Result<()> {
     let sender_clone = sender.clone();
     let settings_clone = settings.clone();
     ctrlc::set_handler(move || {
+        if let Err(error) = pid::cleanup_pid_file(&settings_clone.shared.pueue_directory()) {
+            println!("Failed to cleanup pid after shutdown signal.");
+            println!("{}", error);
+        }
+
         if let Err(error) = socket_cleanup(&settings_clone.shared) {
             println!("Failed to cleanup socket after shutdown signal.");
             println!("{}", error);
-        };
+        }
 
         // Notify the task handler
         sender_clone
@@ -81,9 +88,19 @@ pub async fn run(config_path: Option<PathBuf>) -> Result<()> {
     })?;
 
     let orig_hook = std::panic::take_hook();
+    let settings_clone = settings.clone();
     std::panic::set_hook(Box::new(move |panic_info| {
         // invoke the default handler and exit the process
         orig_hook(panic_info);
+        if let Err(error) = pid::cleanup_pid_file(&settings_clone.shared.pueue_directory()) {
+            println!("Failed to cleanup pid after panic.");
+            println!("{}", error);
+        }
+        if let Err(error) = socket_cleanup(&settings_clone.shared) {
+            println!("Failed to cleanup socket after panic.");
+            println!("{}", error);
+        }
+
         std::process::exit(1);
     }));
 
