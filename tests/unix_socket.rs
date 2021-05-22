@@ -1,5 +1,6 @@
 use anyhow::Result;
 use async_std::task;
+use pretty_assertions::assert_eq;
 use serde_cbor::de::from_slice;
 use serde_cbor::ser::to_vec;
 

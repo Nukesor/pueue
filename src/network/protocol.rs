@@ -104,6 +104,7 @@ mod test {
     use async_std::net::{TcpListener, TcpStream};
     use async_std::task;
     use async_trait::async_trait;
+    use pretty_assertions::assert_eq;
 
     use crate::network::platform::socket::Stream as PueueStream;
 
