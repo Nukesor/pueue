@@ -1,41 +1,23 @@
-use std::path::PathBuf;
-
 use anyhow::Result;
 use async_std::task;
-use portpicker::pick_unused_port;
 use serde_cbor::de::from_slice;
 use serde_cbor::ser::to_vec;
-use tempdir::TempDir;
 
 use pueue_lib::network::certificate::create_certificates;
 use pueue_lib::network::message::*;
 use pueue_lib::network::protocol::*;
-use pueue_lib::settings::Shared;
+
+mod helper;
 
 #[async_std::test]
 /// This tests whether we can create a listener and client, that communicate via TLS sockets.
 async fn test_tls_socket() -> Result<()> {
     better_panic::install();
-    // Create a temporary directory used for testing.
-    let temp_dir = TempDir::new("pueue_lib").unwrap();
-    let temp_dir_path = temp_dir.path().to_path_buf();
-
-    std::fs::create_dir(temp_dir_path.join("certs")).unwrap();
-
-    let shared_settings = Shared {
-        pueue_directory: temp_dir_path.clone(),
-        #[cfg(not(target_os = "windows"))]
-        use_unix_socket: false,
-        #[cfg(not(target_os = "windows"))]
-        unix_socket_path: PathBuf::new(),
-        host: "localhost".to_string(),
-        port: pick_unused_port()
-            .expect("There should be a free port")
-            .to_string(),
-        daemon_cert: temp_dir_path.clone().join("certs").join("daemon.cert"),
-        daemon_key: temp_dir_path.clone().join("certs").join("daemon.key"),
-        shared_secret_path: temp_dir.path().to_path_buf().join("secret"),
-    };
+    let (mut shared_settings, _tempdir) = helper::get_shared_settings();
+    #[cfg(not(target_os = "windows"))]
+    {
+        shared_settings.use_unix_socket = false;
+    }
 
     // Create new stub tls certificates/keys in our temp directory
     create_certificates(&shared_settings).unwrap();

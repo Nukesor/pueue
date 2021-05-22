@@ -1,32 +1,19 @@
-use std::path::PathBuf;
-
 use anyhow::Result;
 use async_std::task;
 use serde_cbor::de::from_slice;
 use serde_cbor::ser::to_vec;
-use tempdir::TempDir;
 
 use pueue_lib::network::message::*;
 use pueue_lib::network::protocol::*;
-use pueue_lib::settings::Shared;
+
+mod helper;
 
 #[cfg(not(target_os = "windows"))]
 #[async_std::test]
 /// This tests whether we can create a listener and client, that communicate via unix sockets.
 async fn test_unix_socket() -> Result<()> {
     better_panic::install();
-    // Create a temporary directory used for testing.
-    let tempdir = TempDir::new("pueue_lib")?;
-    let shared_settings = Shared {
-        pueue_directory: tempdir.path().to_path_buf(),
-        use_unix_socket: true,
-        unix_socket_path: tempdir.path().to_path_buf().join("test.socket"),
-        host: "".to_string(),
-        port: "".to_string(),
-        daemon_cert: PathBuf::new(),
-        daemon_key: PathBuf::new(),
-        shared_secret_path: tempdir.into_path().join("secret"),
-    };
+    let (shared_settings, _tempdir) = helper::get_shared_settings();
 
     let listener = get_listener(&shared_settings).await?;
     let message = create_success_message("This is a test");
