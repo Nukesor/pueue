@@ -14,7 +14,7 @@ pub mod display;
 use crate::cli::{CliArguments, Shell, SubCommand};
 use crate::client::Client;
 
-#[async_std::main]
+#[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
     // Parse commandline options.
     let opt = CliArguments::parse();

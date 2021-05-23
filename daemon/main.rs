@@ -7,7 +7,7 @@ use simplelog::{Config, LevelFilter, SimpleLogger};
 use pueue_daemon_lib::cli::CliArguments;
 use pueue_daemon_lib::run;
 
-#[async_std::main]
+#[tokio::main(flavor = "multi_thread", worker_threads = 4)]
 async fn main() -> Result<()> {
     // Parse commandline options.
     let opt = CliArguments::parse();

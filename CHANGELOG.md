@@ -22,6 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Detection of old daemon versions on update.
 - Overall better debug messages.
 - Crash hard, if we fail to write the settings file.
+- Use tokio's async runtime and set a hardcoded limit of 4 worker threads, which already is more than enough.
 
 ### Fixed
 

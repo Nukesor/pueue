@@ -1,7 +1,6 @@
 use std::time::{Duration, SystemTime};
 
 use anyhow::{bail, Context, Result};
-use async_std::task;
 use clap::crate_version;
 use crossbeam_channel::Sender;
 use log::{debug, info, warn};
@@ -40,7 +39,7 @@ pub async fn accept_incoming(sender: Sender<Message>, state: SharedState) -> Res
         let sender_clone = sender.clone();
         let state_clone = state.clone();
         let secret_clone = secret.clone();
-        task::spawn(async move {
+        tokio::spawn(async move {
             let _result = handle_incoming(stream, sender_clone, state_clone, secret_clone).await;
         });
     }
