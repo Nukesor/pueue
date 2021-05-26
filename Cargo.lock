@@ -1255,7 +1255,6 @@ name = "pueue"
 version = "0.12.3-alpha.0"
 dependencies = [
  "anyhow",
- "async-std",
  "better-panic",
  "chrono",
  "chrono-english",
@@ -1802,16 +1801,10 @@ checksum = "bd3076b5c8cc18138b8f8814895c11eb4de37114a5d127bafdc5e55798ceef37"
 dependencies = [
  "autocfg",
  "bytes",
- "libc",
  "memchr",
- "mio",
  "num_cpus",
- "once_cell",
- "parking_lot",
  "pin-project-lite",
- "signal-hook-registry",
  "tokio-macros",
- "winapi",
 ]
 
 [[package]]
