@@ -1,25 +1,61 @@
 use std::fs::File;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::{collections::BTreeMap, io::Read};
 
-use anyhow::{anyhow, Context, Result};
-use async_std::task;
+use anyhow::{anyhow, bail, Context, Result};
 use tempdir::TempDir;
+use tokio::io::{self, AsyncWriteExt};
 
 use pueue_daemon_lib::run;
+use pueue_lib::network::message::*;
 use pueue_lib::settings::*;
+use pueue_lib::state::State;
 
+use super::network::*;
 use super::sleep_ms;
 
+async fn run_and_handle_error(pueue_dir: PathBuf) -> Result<()> {
+    if let Err(err) = run(Some(pueue_dir.join("pueue.yml"))).await {
+        let mut stdout = io::stdout();
+        stdout
+            .write_all(format!("Entcountered error: {:?}", err).as_bytes())
+            .await
+            .expect("Failed to write to stdout.");
+        stdout.flush().await?;
+
+        return Err(err);
+    }
+
+    Ok(())
+}
+
 pub fn start_daemon(pueue_dir: &Path) -> Result<i32> {
+    let path = pueue_dir.clone().to_path_buf();
     // Start/spin off the daemon and get its PID
-    task::spawn(run(Some(pueue_dir.join("pueue.yml"))));
+    tokio::spawn(run_and_handle_error(path));
     let pid = get_pid(pueue_dir)?;
 
     // Wait a little longer for the daemon to properly start
     sleep_ms(500);
 
     return Ok(pid);
+}
+
+/// A simple helper, which sends a a shutdown message and waits a little.
+/// After receiving the shutdown message, the daemon will exit with status 0 themselves.
+pub async fn shutdown(shared: &Shared) -> Result<()> {
+    send_message(shared, Message::DaemonShutdown).await?;
+
+    sleep_ms(500);
+    Ok(())
+}
+
+pub async fn get_state(shared: &Shared) -> Result<Box<State>> {
+    let response = send_message(shared, Message::Status).await?;
+    match response {
+        Message::StatusResponse(state) => Ok(state),
+        _ => bail!("Didn't get status response in get_state"),
+    }
 }
 
 /// Get a daemon pid from a specific pueue directory.
@@ -35,7 +71,7 @@ pub fn get_pid(pueue_dir: &Path) -> Result<i32> {
     while current_try < tries {
         // The daemon didn't create the pid file yet. Wait for 100ms and try again.
         if !pid_file.exists() {
-            sleep_ms(100);
+            sleep_ms(50);
             current_try += 1;
             continue;
         }
@@ -47,7 +83,7 @@ pub fn get_pid(pueue_dir: &Path) -> Result<i32> {
 
         // The file has been created but not yet been written to.
         if content.is_empty() {
-            sleep_ms(100);
+            sleep_ms(50);
             current_try += 1;
             continue;
         }

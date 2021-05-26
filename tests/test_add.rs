@@ -8,7 +8,7 @@ mod helper;
 
 use helper::*;
 
-#[async_std::test]
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Test if adding a normal task works as intended.
 async fn test_normal_add() -> Result<()> {
     let (settings, tempdir) = helper::base_setup()?;
@@ -30,19 +30,19 @@ async fn test_normal_add() -> Result<()> {
     let response = send_message(&settings.shared, message).await?;
     assert!(matches!(response, Message::Success(_)));
 
-    // Slep a little so the taskhandler can spawn the program
-    helper::sleep_ms(500);
+    // Wait until the task finished
+    wait_for_status(&settings.shared, 0, TaskStatus::Done).await?;
 
-    let state = fixtures::get_state(&settings.shared).await?;
-    fixtures::shutdown(&settings.shared).await?;
+    let state = get_state(&settings.shared).await?;
 
     // A task exists
-    assert_eq!(state.tasks.len(), 2);
+    assert_eq!(state.tasks.len(), 1);
 
     // The task finished succesfully
     let task = state.tasks.get(&0).unwrap();
     assert_eq!(task.status, TaskStatus::Done);
     assert_eq!(task.result, Some(TaskResult::Success));
 
+    shutdown(&settings.shared).await?;
     Ok(())
 }

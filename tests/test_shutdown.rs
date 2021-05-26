@@ -3,7 +3,7 @@ use nix::sys::signal;
 
 mod helper;
 
-#[async_std::test]
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Spin up the daemon and send a SIGTERM shortly afterwards.
 /// This should trigger
 async fn test_ctrlc() -> Result<()> {
@@ -19,6 +19,9 @@ async fn test_ctrlc() -> Result<()> {
     helper::sleep_ms(500);
 
     // Get all processes and make sure the process with our pid no longer exists
+    // However, since the daemon shuts down gracefully on SIGTERM, it'll exit the test.
+    // This is why the following code will never be reached or rather, if it will be reached, it'll
+    // fail.
     let processes = procfs::process::all_processes().context("Failed to get all processes")?;
     assert!(processes
         .iter()
