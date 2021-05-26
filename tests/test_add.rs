@@ -8,6 +8,7 @@ mod helper;
 
 use helper::*;
 
+#[cfg(target_os = "linux")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Test if adding a normal task works as intended.
 async fn test_normal_add() -> Result<()> {

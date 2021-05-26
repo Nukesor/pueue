@@ -1,8 +1,7 @@
 use anyhow::{Context, Result};
-use nix::sys::signal;
-
 mod helper;
 
+#[cfg(target_os = "linux")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Spin up the daemon and send a SIGTERM shortly afterwards.
 /// This should trigger
@@ -12,6 +11,7 @@ async fn test_ctrlc() -> Result<()> {
     let pid = helper::start_daemon(tempdir.path())?;
 
     // Send SIGTERM signal to process via nix
+    use nix::sys::signal;
     let nix_pid = nix::unistd::Pid::from_raw(pid);
     signal::kill(nix_pid, signal::Signal::SIGTERM).context("Failed to send SIGTERM to pid")?;
 
