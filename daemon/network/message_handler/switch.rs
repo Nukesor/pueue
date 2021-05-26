@@ -53,8 +53,7 @@ pub fn switch(message: SwitchMessage, state: &SharedState) -> Message {
 
 #[cfg(test)]
 mod tests {
-    use std::path::PathBuf;
-
+    use pretty_assertions::assert_eq;
     use tempdir::TempDir;
 
     use super::super::fixtures::*;
@@ -67,8 +66,8 @@ mod tests {
         }
     }
 
-    fn get_test_state(path: PathBuf) -> SharedState {
-        let state = get_state(path);
+    fn get_test_state() -> (SharedState, TempDir) {
+        let (state, tempdir) = get_state();
 
         {
             let mut state = state.lock().unwrap();
@@ -97,14 +96,13 @@ mod tests {
             state.add_task(task);
         }
 
-        state
+        (state, tempdir)
     }
 
     #[test]
     /// A normal switch between two id's works perfectly fine.
     fn switch_normal() {
-        let tempdir = TempDir::new("pueue_test").expect("Failed to create test pueue directory");
-        let state = get_test_state(tempdir.into_path());
+        let (state, _tempdir) = get_test_state();
 
         let message = switch(get_message(1, 2), &state);
 
@@ -123,8 +121,7 @@ mod tests {
     /// If any task that is specified as dependency get's switched,
     /// all dependants need to be updated.
     fn switch_task_with_dependant() {
-        let tempdir = TempDir::new("pueue_test").expect("Failed to create test pueue directory");
-        let state = get_test_state(tempdir.into_path());
+        let (state, _tempdir) = get_test_state();
 
         switch(get_message(0, 3), &state);
 
@@ -136,8 +133,7 @@ mod tests {
     /// A task with two dependencies shouldn't experience any change, if those two dependencies
     /// switched places.
     fn switch_double_dependency() {
-        let tempdir = TempDir::new("pueue_test").expect("Failed to create test pueue directory");
-        let state = get_test_state(tempdir.into_path());
+        let (state, _tempdir) = get_test_state();
 
         switch(get_message(1, 2), &state);
 
@@ -150,8 +146,7 @@ mod tests {
     /// You can only switch tasks that are either stashed or queued.
     /// Everything else should result in an error message.
     fn switch_invalid() {
-        let tempdir = TempDir::new("pueue_test").expect("Failed to create test pueue directory");
-        let state = get_state(tempdir.into_path());
+        let (state, _tempdir) = get_state();
 
         let combinations: Vec<(usize, usize)> = vec![
             (0, 1), // Queued + Done

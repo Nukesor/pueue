@@ -1,4 +1,4 @@
-use std::sync::mpsc::Sender;
+use crossbeam_channel::Sender;
 use std::sync::MutexGuard;
 
 use pueue_lib::aliasing::insert_alias;

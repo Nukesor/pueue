@@ -50,12 +50,19 @@ pub async fn wait(
             state.tasks.iter().map(|(_, task)| task.clone()).collect()
         } else {
             // Get all tasks of a specific group
-            state
+            let tasks = state
                 .tasks
                 .iter()
                 .filter(|(_, task)| task.group.eq(group))
                 .map(|(_, task)| task.clone())
-                .collect()
+                .collect::<Vec<Task>>();
+
+            if tasks.is_empty() {
+                println!("No tasks found for group {}", group);
+                return Ok(());
+            }
+
+            tasks
         };
 
         // Get current time for log output

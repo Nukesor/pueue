@@ -1,4 +1,3 @@
-use std::thread::sleep;
 use std::time::Duration;
 
 use log::info;
@@ -18,12 +17,7 @@ impl TaskHandler {
     pub fn receive_messages(&mut self) {
         // Sleep for a few milliseconds. We don't want to hurt the CPU.
         let timeout = Duration::from_millis(200);
-        // Don't use recv_timeout for now, until this bug get's fixed.
-        // https://github.com/rust-lang/rust/issues/39364
-        //match self.receiver.recv_timeout(timeout) {
-        sleep(timeout);
-
-        if let Ok(message) = self.receiver.try_recv() {
+        if let Ok(message) = self.receiver.recv_timeout(timeout) {
             self.handle_message(message);
         };
     }

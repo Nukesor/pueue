@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - `~` is respected in configuration paths by [dadav](https://github.com/dadav) for [#191](https://github.com/Nukesor/pueue/issues/191).
 - Support for other `apple` platforms. New build artifacts for `ios-aarch64`.
 - Use `pueue kill --signal SigTerm` to send Unix signals directly to Pueue's processes. [#202](https://github.com/Nukesor/pueue/issues/202)
+- Add a PID file to `$pueue_directory/pueue.pid`, which will be used to check whether there's a already running daemon.
 
 ### Changed
 
@@ -22,12 +23,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Detection of old daemon versions on update.
 - Overall better debug messages.
 - Crash hard, if we fail to write the settings file.
+- Use tokio's async runtime and set a hardcoded limit of 4 worker threads, which already is more than enough.
+- Add a debug message, when using `pueue wait` or `pueue wait -g some_group`, but there're no tasks in the group.
 
 ### Fixed
 
 - Handle very rare race-condition, where tasks with failed dependencies start anyway.
 - `pueue log --json` now works again.
     By default, only a few lines of output will be provided, but this can be configured via the `--full` and `--lines` option.
+- Use crossbeam mpsc channels, which results in faster response time for client connections.
 
 ## [0.12.2] - 20-04-2021
 

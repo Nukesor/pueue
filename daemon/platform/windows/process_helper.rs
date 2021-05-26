@@ -249,6 +249,8 @@ mod test {
     use std::thread::sleep;
     use std::time::Duration;
 
+    use pretty_assertions::assert_eq;
+
     use super::*;
 
     /// Assert that certain process id no longer exists
@@ -278,7 +280,7 @@ mod test {
 
     #[test]
     fn test_spawn_command() {
-        let mut child = compile_shell_command("echo 'this is a test'")
+        let mut child = compile_shell_command("sleep 0.1")
             .spawn()
             .expect("Failed to spawn echo");
 
