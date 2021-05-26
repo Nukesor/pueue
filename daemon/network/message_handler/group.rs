@@ -55,13 +55,6 @@ pub fn group(message: GroupMessage, state: &SharedState) -> Message {
         return create_success_message(format!("Group \"{}\" removed", group));
     }
 
-    // There are no groups yet.
-    if state.groups.is_empty() {
-        return create_success_message(
-            "There are no groups yet. You can add groups with the 'group --add' flag",
-        );
-    }
-
     // Return information about all groups to the client.
     Message::GroupResponse(GroupResponseMessage {
         groups: state.groups.clone(),

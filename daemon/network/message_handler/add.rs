@@ -62,6 +62,7 @@ pub fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedSta
             }))
             .expect(SENDER_ERR);
     }
+
     // Create the customized response for the client.
     let message = if message.print_task_id {
         task_id.to_string()

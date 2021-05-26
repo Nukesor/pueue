@@ -146,36 +146,38 @@ impl TaskHandler {
     /// This function checks, if all killed children have been handled.
     /// If that's the case, completely reset the state
     fn handle_reset(&mut self) {
-        // The daemon got a reset request and all children already finished
-        if self.full_reset && self.children.is_empty() {
-            let mut state = self.state.lock().unwrap();
-            if let Err(error) = state.reset() {
-                error!("Failed to reset state with error: {:?}", error);
-            };
-            state.set_status_for_all_groups(GroupStatus::Running);
+        // Don't do any reset logic, if we aren't in reset mode or if some children are still up.
+        if !self.full_reset || !self.children.is_empty() {
+            return;
+        }
 
-            if let Err(error) = reset_task_log_directory(&self.pueue_directory) {
-                panic!("Error while resetting task log directory: {}", error);
-            };
-            self.full_reset = false;
+        let mut state = self.state.lock().unwrap();
+        if let Err(error) = state.reset() {
+            error!("Failed to reset state with error: {:?}", error);
+        };
+        state.set_status_for_all_groups(GroupStatus::Running);
 
-            // Actually exit the program in case we're supposed to.
-            // Depending on the current shutdown type, we exit with different exit codes.
-            if self.graceful_shutdown {
-                if let Err(error) = crate::pid::cleanup_pid_file(&self.pueue_directory) {
-                    println!("Failed to cleanup pid after shutdown.");
-                    println!("{}", error);
-                }
+        if let Err(error) = reset_task_log_directory(&self.pueue_directory) {
+            panic!("Error while resetting task log directory: {}", error);
+        };
+        self.full_reset = false;
 
-                std::process::exit(0);
-            } else if self.emergency_shutdown {
-                if let Err(error) = crate::pid::cleanup_pid_file(&self.pueue_directory) {
-                    println!("Failed to cleanup pid after shutdown.");
-                    println!("{}", error);
-                }
-
-                std::process::exit(1);
+        // Actually exit the program in case we're supposed to.
+        // Depending on the current shutdown type, we exit with different exit codes.
+        if self.graceful_shutdown {
+            if let Err(error) = crate::pid::cleanup_pid_file(&self.pueue_directory) {
+                println!("Failed to cleanup pid after shutdown.");
+                println!("{}", error);
             }
+
+            std::process::exit(0);
+        } else if self.emergency_shutdown {
+            if let Err(error) = crate::pid::cleanup_pid_file(&self.pueue_directory) {
+                println!("Failed to cleanup pid after shutdown.");
+                println!("{}", error);
+            }
+
+            std::process::exit(1);
         }
     }
 
