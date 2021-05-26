@@ -297,7 +297,7 @@ mod test {
             .expect("Failed to spawn echo");
         let pid = child.id();
         // Sleep a little to give everything a chance to spawn.
-        sleep(Duration::from_millis(500));
+        sleep(Duration::from_millis(1000));
 
         // Get all processes, so we can make sure they no longer exist afterwards.
         let process_ids = get_cur_task_processes(pid);
@@ -327,7 +327,7 @@ mod test {
             .expect("Failed to spawn echo");
         let pid = child.id();
         // Sleep a little to give everything a chance to spawn.
-        sleep(Duration::from_millis(500));
+        sleep(Duration::from_millis(1000));
 
         let process_ids = get_cur_task_processes(pid);
         assert_eq!(process_ids.len(), 2);
