@@ -19,12 +19,17 @@ pub fn sleep_ms(ms: u64) {
     std::thread::sleep(std::time::Duration::from_millis(ms));
 }
 
-/// A small helper function, which instantly writes the given string to stdout.
+/// A small helper function, which instantly writes the given string to stdout with a newline.
 /// Useful for debugging async tests.
 pub async fn async_println(out: &str) -> Result<()> {
     let mut stdout = io::stdout();
     stdout
         .write_all(out.as_bytes())
+        .await
+        .expect("Failed to write to stdout.");
+
+    stdout
+        .write_all("\n".as_bytes())
         .await
         .expect("Failed to write to stdout.");
     stdout.flush().await?;
