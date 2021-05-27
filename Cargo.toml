@@ -70,10 +70,6 @@ whoami = "1"
 [target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]
 procfs = { version = "0.9", default-features = false }
 
-# Apple
-[target.'cfg(target_os = "apple")'.dependencies]
-psutil = "3"
-
 [build-dependencies]
 version_check = "0.9"
 

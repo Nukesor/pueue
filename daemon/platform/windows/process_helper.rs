@@ -244,6 +244,31 @@ fn terminate_process(pid: u32) {
     }
 }
 
+/// Assert that certain process id no longer exists
+pub fn process_exists(pid: u32) -> bool {
+    unsafe {
+        let handle = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+
+        let mut process_entry = PROCESSENTRY32::default();
+        process_entry.dwSize = std::mem::size_of::<PROCESSENTRY32>() as u32;
+
+        loop {
+            if process_entry.th32ProcessID == pid {
+                CloseHandle(handle);
+                return true;
+            }
+
+            if Process32Next(handle, &mut process_entry) == FALSE {
+                break;
+            }
+        }
+
+        CloseHandle(handle);
+    }
+
+    false
+}
+
 #[cfg(test)]
 mod test {
     use std::thread::sleep;
@@ -255,27 +280,7 @@ mod test {
 
     /// Assert that certain process id no longer exists
     fn process_is_gone(pid: u32) -> bool {
-        unsafe {
-            let handle = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-
-            let mut process_entry = PROCESSENTRY32::default();
-            process_entry.dwSize = std::mem::size_of::<PROCESSENTRY32>() as u32;
-
-            loop {
-                if process_entry.th32ProcessID == pid {
-                    CloseHandle(handle);
-                    return false;
-                }
-
-                if Process32Next(handle, &mut process_entry) == FALSE {
-                    break;
-                }
-            }
-
-            CloseHandle(handle);
-        }
-
-        true
+        !process_exists(pid)
     }
 
     #[test]

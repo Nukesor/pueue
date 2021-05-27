@@ -284,6 +284,14 @@ fn get_child_processes(pid: i32) -> Vec<Process> {
         .collect()
 }
 
+/// Check, whether a specific process is exists or not
+pub fn process_exists(pid: u32) -> bool {
+    match Process::new(pid as i32) {
+        Ok(process) => process.is_alive(),
+        Err(_) => false,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::thread::sleep;
@@ -295,10 +303,7 @@ mod tests {
 
     /// Assert that certain process id no longer exists
     fn process_is_gone(pid: i32) -> bool {
-        match Process::new(pid) {
-            Ok(process) => !process.is_alive(),
-            Err(_) => true,
-        }
+        !process_exists(pid as u32)
     }
 
     #[test]

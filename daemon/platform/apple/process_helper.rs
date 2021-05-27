@@ -1,4 +1,5 @@
 use std::convert::TryInto;
+use std::path::Path;
 use std::process::{Child, Command};
 
 use anyhow::Result;
@@ -92,22 +93,20 @@ fn send_signal_to_process(pid: u32, signal: Signal, _children: bool) -> Result<b
     Ok(true)
 }
 
+/// Check, whether a specific process is exists or not
+pub fn process_exists(pid: u32) -> bool {
+    Path::new(&format!("/proc/{}", pid)).exists()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use std::thread::sleep;
     use std::time::Duration;
 
-    /// THIS DOESN'T WORK YET
-    /// psutil doesn't really have a way to check whether a process is actually gone.
-    ///
     /// Assert that certain process id no longer exists
-    fn process_is_gone(_pid: u32) -> bool {
-        //match Process::new(pid) {
-        //    Ok(process) => !process.is_running(),
-        //    Err(_) => true,
-        //}
-        true
+    fn process_is_gone(pid: u32) -> bool {
+        !process_exists(pid)
     }
 
     #[test]
