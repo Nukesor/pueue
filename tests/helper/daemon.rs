@@ -2,18 +2,30 @@ use std::fs::File;
 use std::path::{Path, PathBuf};
 use std::{collections::BTreeMap, io::Read};
 
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{anyhow, Context, Result};
 use tempdir::TempDir;
 use tokio::io::{self, AsyncWriteExt};
 
 use pueue_daemon_lib::run;
-use pueue_lib::network::message::*;
 use pueue_lib::settings::*;
-use pueue_lib::state::State;
 
-use super::network::*;
 use super::sleep_ms;
 
+/// Spawn the daemon main logic in it's own async function.
+/// It'll be executed by the tokio multi-threaded executor.
+pub fn boot_daemon(pueue_dir: &Path) -> Result<i32> {
+    let path = pueue_dir.clone().to_path_buf();
+    // Start/spin off the daemon and get its PID
+    tokio::spawn(run_and_handle_error(path));
+    let pid = get_pid(pueue_dir)?;
+
+    // Wait a little longer for the daemon to properly start
+    sleep_ms(500);
+
+    return Ok(pid);
+}
+
+/// Internal helper function, which wraps the daemon main logic and prints any error.
 async fn run_and_handle_error(pueue_dir: PathBuf) -> Result<()> {
     if let Err(err) = run(Some(pueue_dir.join("pueue.yml"))).await {
         let mut stdout = io::stdout();
@@ -27,35 +39,6 @@ async fn run_and_handle_error(pueue_dir: PathBuf) -> Result<()> {
     }
 
     Ok(())
-}
-
-pub fn start_daemon(pueue_dir: &Path) -> Result<i32> {
-    let path = pueue_dir.clone().to_path_buf();
-    // Start/spin off the daemon and get its PID
-    tokio::spawn(run_and_handle_error(path));
-    let pid = get_pid(pueue_dir)?;
-
-    // Wait a little longer for the daemon to properly start
-    sleep_ms(500);
-
-    return Ok(pid);
-}
-
-/// A simple helper, which sends a a shutdown message and waits a little.
-/// After receiving the shutdown message, the daemon will exit with status 0 themselves.
-pub async fn shutdown(shared: &Shared) -> Result<()> {
-    send_message(shared, Message::DaemonShutdown).await?;
-
-    sleep_ms(500);
-    Ok(())
-}
-
-pub async fn get_state(shared: &Shared) -> Result<Box<State>> {
-    let response = send_message(shared, Message::Status).await?;
-    match response {
-        Message::StatusResponse(state) => Ok(state),
-        _ => bail!("Didn't get status response in get_state"),
-    }
 }
 
 /// Get a daemon pid from a specific pueue directory.

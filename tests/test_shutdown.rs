@@ -8,7 +8,7 @@ mod helper;
 async fn test_ctrlc() -> Result<()> {
     let (_settings, tempdir) = helper::base_setup()?;
 
-    let pid = helper::start_daemon(tempdir.path())?;
+    let pid = helper::boot_daemon(tempdir.path())?;
 
     // Send SIGTERM signal to process via nix
     use nix::sys::signal;

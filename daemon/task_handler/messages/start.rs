@@ -24,7 +24,7 @@ impl TaskHandler {
             for id in &task_ids {
                 // Continue all children that are simply paused
                 if self.children.contains_key(id) {
-                    self.continue_task(&state, *id, children);
+                    self.continue_task(&mut state, *id, children);
                 } else {
                     // Start processes for all tasks that haven't been started yet
                     self.start_process(*id, &mut state);
@@ -59,14 +59,14 @@ impl TaskHandler {
 
         // Resume all specified paused tasks
         for id in keys {
-            self.continue_task(&state, id, children);
+            self.continue_task(&mut state, id, children);
         }
 
         ok_or_shutdown!(self, state.save());
     }
 
     /// Send a start signal to a paused task to continue execution.
-    fn continue_task(&mut self, state: &LockedState, id: usize, children: bool) {
+    fn continue_task(&mut self, state: &mut LockedState, id: usize, children: bool) {
         // Task doesn't exist
         if !self.children.contains_key(&id) {
             return;
@@ -86,7 +86,6 @@ impl TaskHandler {
         };
 
         if success {
-            let mut state = self.state.lock().unwrap();
             state.change_status(id, TaskStatus::Running);
         }
     }
