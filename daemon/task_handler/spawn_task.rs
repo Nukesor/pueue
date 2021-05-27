@@ -5,10 +5,10 @@ use crate::ok_or_shutdown;
 impl TaskHandler {
     /// See if we can start a new queued task.
     pub fn spawn_new(&mut self) {
+        let cloned_state_mutex = self.state.clone();
+        let mut state = cloned_state_mutex.lock().unwrap();
         // Get the next task id that can be started
-        if let Some(id) = self.get_next_task_id() {
-            let cloned_state_mutex = self.state.clone();
-            let mut state = cloned_state_mutex.lock().unwrap();
+        if let Some(id) = self.get_next_task_id(&state) {
             self.start_process(id, &mut state);
         }
     }
@@ -19,8 +19,7 @@ impl TaskHandler {
     /// - There are free slots in the task's group
     /// - The group is running
     /// - has all its dependencies in `Done` state
-    pub fn get_next_task_id(&mut self) -> Option<usize> {
-        let state = self.state.lock().unwrap();
+    pub fn get_next_task_id(&mut self, state: &LockedState) -> Option<usize> {
         // Check how many tasks are running in each group
         let mut running_tasks_per_group: HashMap<String, usize> = HashMap::new();
 
