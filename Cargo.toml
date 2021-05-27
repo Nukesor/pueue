@@ -54,7 +54,7 @@ clap_generate = "3.0.0-beta.2"
 crossterm = "0.19"
 comfy-table= "2"
 
-handlebars = "3"
+handlebars = "4"
 ctrlc = { version = "3", features = ["termination"] }
 
 # Windows
