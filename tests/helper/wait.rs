@@ -3,7 +3,7 @@ use anyhow::{bail, Result};
 use pueue_lib::settings::Shared;
 use pueue_lib::task::TaskStatus;
 
-use super::{async_println, get_state, sleep_ms};
+use super::{get_state, sleep_ms};
 
 /// This is a small helper function, which checks in very short intervals, whether a task showed up
 /// in the daemon or not. This is necessary to prevent always long or potentially flaky timeouts in
@@ -25,12 +25,7 @@ pub async fn wait_for_task(shared: &Shared, task_id: usize) -> Result<()> {
         return Ok(());
     }
 
-    async_println(&format!(
-        "Task {} didn't show up in about 1 second.",
-        task_id
-    ))
-    .await?;
-    bail!("")
+    bail!("Task {} didn't show up in about 1 second.", task_id)
 }
 
 /// This is a small helper function, which checks in very short intervals, whether a task changed
@@ -61,22 +56,15 @@ pub async fn wait_for_status_change(
                 continue;
             }
             None => {
-                async_println(&format!(
+                bail!(
                     "Couldn't find task {} while waiting for status change",
                     task_id
-                ))
-                .await?;
-                bail!("")
+                )
             }
         }
     }
 
-    async_println(&format!(
-        "Task {} didn't change state in about 1 second.",
-        task_id
-    ))
-    .await?;
-    bail!("")
+    bail!("Task {} didn't change state in about 1 second.", task_id)
 }
 
 /// This is a small helper function, which checks in very short intervals, whether a task changed
@@ -107,20 +95,16 @@ pub async fn wait_for_status(
                 continue;
             }
             None => {
-                async_println(&format!(
+                bail!(
                     "Couldn't find task {} while waiting for task status",
                     task_id
-                ))
-                .await?;
-                bail!("")
+                )
             }
         }
     }
-    async_println(&format!(
+    bail!(
         "Task {} didn't change to state {} in about 1 second.",
-        task_id, target_status
-    ))
-    .await?;
-
-    bail!("")
+        task_id,
+        target_status
+    )
 }

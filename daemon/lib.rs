@@ -70,6 +70,7 @@ pub async fn run(config_path: Option<PathBuf>, test: bool) -> Result<()> {
 
     // Don't set ctrlc handler during testing.
     // This is necessary for multithreaded integration testing.
+    // On top of this, ctrlc also somehow breaks test error output.
     if !test {
         // This section handles Shutdown via SigTerm/SigInt process signals
         // 1. Remove the unix socket (if it exists).
