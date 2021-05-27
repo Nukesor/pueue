@@ -1,15 +1,46 @@
 use anyhow::Result;
 use pueue_lib::network::message::*;
 use pueue_lib::task::*;
+use rstest::rstest;
 
 mod helper;
 
 use helper::*;
 
 #[cfg(target_os = "linux")]
+#[rstest]
+#[case(
+    Message::Start(StartMessage {
+        task_ids: vec![],
+        group: "default".into(),
+        all: true,
+        children: false,
+    })
+)]
+#[case(
+    Message::Start(StartMessage {
+        task_ids: vec![],
+        group: "default".into(),
+        all: false,
+        children: false,
+    })
+)]
+#[case(
+    Message::Start(StartMessage {
+        task_ids: vec![0, 1, 2],
+        group: "default".into(),
+        all: false,
+        children: false,
+    })
+)]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-/// Test if explicitely starting and continuing tasks works as intended.
-async fn test_start_tasks() -> Result<()> {
+/// Test if explicitely starting tasks and resuming tasks works as intended.
+///
+/// We test different ways of resumes tasks.
+/// - Via the --all flag, which resumes everything.
+/// - Via the --group flag, which resumes everything in a specific group (in our case 'default').
+/// - Via specific ids.
+async fn test_start_tasks(#[case] start_message: Message) -> Result<()> {
     let (settings, tempdir) = helper::base_setup()?;
     let shared = &settings.shared;
     let _pid = helper::boot_daemon(tempdir.path())?;
@@ -38,21 +69,12 @@ async fn test_start_tasks() -> Result<()> {
         wait_for_status(shared, id, TaskStatus::Paused).await?;
     }
 
-    // Continue all tasks again
-    continue_daemon(shared).await?;
-    // Wait until the task are running again
+    // Send the kill message
+    send_message(shared, start_message).await?;
+
+    // Ensure all tasks are running
     for id in 0..3 {
         wait_for_status(shared, id, TaskStatus::Running).await?;
     }
-
-    // All tasks should be up and running
-    let state = get_state(shared).await?;
-    for id in 0..3 {
-        let task = state.tasks.get(&id).unwrap();
-        assert_eq!(task.status, TaskStatus::Running);
-        assert_eq!(task.result, None);
-    }
-
-    shutdown(shared).await?;
     Ok(())
 }

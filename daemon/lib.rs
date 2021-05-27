@@ -25,7 +25,12 @@ mod task_handler;
 /// The main entry point for the daemon logic.
 /// It's basically the `main`, but publicly exported as a library.
 /// That way we can properly do integration testing for the daemon.
-pub async fn run(config_path: Option<PathBuf>) -> Result<()> {
+///
+/// For the purpose of testing, some things shouldn't be run during tests.
+/// There are some global operations that crash during tests, such as the ctlc handler.
+/// This is due to the fact, that tests in the same file are executed in multiple threads.
+/// Since the threads own the same global space, this would crash.
+pub async fn run(config_path: Option<PathBuf>, test: bool) -> Result<()> {
     // Try to read settings from the configuration file.
     let settings = match Settings::read(&config_path) {
         Ok(settings) => settings,
@@ -63,41 +68,50 @@ pub async fn run(config_path: Option<PathBuf>) -> Result<()> {
     let (sender, receiver) = unbounded();
     let mut task_handler = TaskHandler::new(state.clone(), receiver);
 
-    // This section handles Shutdown via SigTerm/SigInt process signals
-    // 1. Remove the unix socket (if it exists).
-    // 2. Notify the TaskHandler, so it can shutdown gracefully.
-    //
-    // The actual program exit will be done via the TaskHandler.
-    let sender_clone = sender.clone();
-    let settings_clone = settings.clone();
-    ctrlc::set_handler(move || {
-        if let Err(error) = socket_cleanup(&settings_clone.shared) {
-            println!("Failed to cleanup socket after shutdown signal.");
-            println!("{}", error);
-        }
+    // Don't set ctrlc handler during testing.
+    // This is necessary for multithreaded integration testing.
+    if !test {
+        // This section handles Shutdown via SigTerm/SigInt process signals
+        // 1. Remove the unix socket (if it exists).
+        // 2. Notify the TaskHandler, so it can shutdown gracefully.
+        //
+        // The actual program exit will be done via the TaskHandler.
+        let sender_clone = sender.clone();
+        let settings_clone = settings.clone();
+        ctrlc::set_handler(move || {
+            if let Err(error) = socket_cleanup(&settings_clone.shared) {
+                println!("Failed to cleanup socket after shutdown signal.");
+                println!("{}", error);
+            }
 
-        // Notify the task handler
-        sender_clone
-            .send(Message::DaemonShutdown)
-            .expect("Failed to send Message to TaskHandler on Shutdown");
-    })?;
+            // Notify the task handler
+            sender_clone
+                .send(Message::DaemonShutdown)
+                .expect("Failed to send Message to TaskHandler on Shutdown");
+        })?;
+    }
 
     let orig_hook = std::panic::take_hook();
     let settings_clone = settings.clone();
-    std::panic::set_hook(Box::new(move |panic_info| {
-        // invoke the default handler and exit the process
-        orig_hook(panic_info);
-        if let Err(error) = pid::cleanup_pid_file(&settings_clone.shared.pueue_directory()) {
-            println!("Failed to cleanup pid after panic.");
-            println!("{}", error);
-        }
-        if let Err(error) = socket_cleanup(&settings_clone.shared) {
-            println!("Failed to cleanup socket after panic.");
-            println!("{}", error);
-        }
 
-        std::process::exit(1);
-    }));
+    // Don't set panic hook during testing.
+    // This is necessary for multithreaded integration testing.
+    if !test {
+        std::panic::set_hook(Box::new(move |panic_info| {
+            // invoke the default handler and exit the process
+            orig_hook(panic_info);
+            if let Err(error) = pid::cleanup_pid_file(&settings_clone.shared.pueue_directory()) {
+                println!("Failed to cleanup pid after panic.");
+                println!("{}", error);
+            }
+            if let Err(error) = socket_cleanup(&settings_clone.shared) {
+                println!("Failed to cleanup socket after panic.");
+                println!("{}", error);
+            }
+
+            std::process::exit(1);
+        }));
+    }
 
     std::thread::spawn(move || {
         task_handler.run();

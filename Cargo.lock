@@ -1399,7 +1399,7 @@ version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "041bb0202c14f6a158bbbf086afb03d0c6e975c2dec7d4912f8061ed44f290af"
 dependencies = [
- "cfg-if 1.0.0",
+ "cfg-if",
  "proc-macro2",
  "quote",
  "rustc_version",

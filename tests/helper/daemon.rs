@@ -16,7 +16,7 @@ use super::sleep_ms;
 pub fn boot_daemon(pueue_dir: &Path) -> Result<i32> {
     let path = pueue_dir.clone().to_path_buf();
     // Start/spin off the daemon and get its PID
-    tokio::spawn(run_and_handle_error(path));
+    tokio::spawn(run_and_handle_error(path, true));
     let pid = get_pid(pueue_dir)?;
 
     // Wait a little longer for the daemon to properly start
@@ -26,8 +26,8 @@ pub fn boot_daemon(pueue_dir: &Path) -> Result<i32> {
 }
 
 /// Internal helper function, which wraps the daemon main logic and prints any error.
-async fn run_and_handle_error(pueue_dir: PathBuf) -> Result<()> {
-    if let Err(err) = run(Some(pueue_dir.join("pueue.yml"))).await {
+pub async fn run_and_handle_error(pueue_dir: PathBuf, test: bool) -> Result<()> {
+    if let Err(err) = run(Some(pueue_dir.join("pueue.yml")), test).await {
         let mut stdout = io::stdout();
         stdout
             .write_all(format!("Entcountered error: {:?}", err).as_bytes())

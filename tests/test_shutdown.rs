@@ -1,14 +1,21 @@
 use anyhow::{Context, Result};
 mod helper;
 
+use helper::*;
+
 #[cfg(target_os = "linux")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Spin up the daemon and send a SIGTERM shortly afterwards.
-/// This should trigger
+/// This should trigger the graceful shutdown and kill the process.
 async fn test_ctrlc() -> Result<()> {
     let (_settings, tempdir) = helper::base_setup()?;
 
-    let pid = helper::boot_daemon(tempdir.path())?;
+    // Same as boot_daemon, but starts the daemon in non test mode
+    tokio::spawn(run_and_handle_error(
+        tempdir.path().clone().to_path_buf(),
+        false,
+    ));
+    let pid = get_pid(tempdir.path())?;
 
     // Send SIGTERM signal to process via nix
     use nix::sys::signal;

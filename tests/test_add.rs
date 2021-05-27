@@ -27,6 +27,5 @@ async fn test_normal_add() -> Result<()> {
     assert_eq!(task.status, TaskStatus::Done);
     assert_eq!(task.result, Some(TaskResult::Success));
 
-    shutdown(shared).await?;
     Ok(())
 }
