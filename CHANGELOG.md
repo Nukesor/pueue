@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [1.0.0] - 
 
+A lot of things happened during this release.
+Even though a few new features were added, the main effort went into increasing stability and inter-version compatibility.
+
+The goal of this release is to push the code-quality, error handling, test coverage and stability to a level that justifies a v1.0 release. \
+Since this project follows semantic versioning, this includes no breaking changes and backward-compatibility on version upgrades. \
+It also includes, that I'm quite certain there are no critical bugs in the project and that all important and planned features have been implemented.
+
+Unless some critical issues pop up, this can be seen as a finished version of the project!
+
+**Disclaimer:** This project is mainly developed for Linux.
+Windows and MacOS/Apple platforms are partially supported, but this is a community effort.
+Thereby, v1.0 might be misleading for those. \
+I hope you understand, that I cannot wait a few years for someone to implement missing features for these platforms.
+I want this project to move forward.
+
 ### Added
 
 - The last lines of `stderr` and `stdout` are now available in the callback command. [#196](https://github.com/Nukesor/pueue/issues/196).
@@ -13,7 +28,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - `~` is respected in configuration paths by [dadav](https://github.com/dadav) for [#191](https://github.com/Nukesor/pueue/issues/191).
 - Support for other `apple` platforms. New build artifacts for `ios-aarch64`.
 - Use `pueue kill --signal SigTerm` to send Unix signals directly to Pueue's processes. [#202](https://github.com/Nukesor/pueue/issues/202)
-- Add a PID file to `$pueue_directory/pueue.pid`, which will be used to check whether there's a already running daemon.
+- Add a PID file to `$pueue_directory/pueue.pid`, which will be used to check whether there's an already running daemon.
 
 ### Changed
 
@@ -23,7 +38,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Detection of old daemon versions on update.
 - Overall better debug messages.
 - Crash hard, if we fail to write the settings file.
-- Use tokio's async runtime and set a hardcoded limit of 4 worker threads, which already is more than enough.
+- Use tokio's async runtime and set a hardcoded limit of 4 worker threads, which is already more than enough.
 - Add a debug message, when using `pueue wait` or `pueue wait -g some_group`, but there're no tasks in the group.
 
 ### Fixed

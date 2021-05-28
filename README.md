@@ -51,11 +51,10 @@ The queue will be continuously processed, even if you no longer have any active 
     * Convenient methods for scripting
 - A lot more. Check the -h options for each subcommand for detailed options.
 - Linux is fully supported and battle-tested.
-- Windows has all features, but process handling is **experimental**.
-- MacOS only has **rudimentary** process handling (A few things don't work).
-  It's still usable, though.
+- Windows has all features, but process handling is [relatively new](https://github.com/Nukesor/pueue/pull/59).
+- MacOS only has **rudimentary** process handling, but it's still usable.
+    Check this [issue](https://github.com/Nukesor/pueue/issues/115) to find out what's missing.
 
-Check these issues to find out what's missing for MacOs (#115) and Windows (#114).
 
 ## Why should I use it
 
