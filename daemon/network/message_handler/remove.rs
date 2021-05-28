@@ -3,7 +3,9 @@ use pueue_lib::network::message::*;
 use pueue_lib::state::SharedState;
 use pueue_lib::task::TaskStatus;
 
+use super::ok_or_failure_message;
 use crate::network::response_helper::*;
+use crate::ok_or_return_failure_message;
 
 /// Invoked when calling `pueue remove`.
 /// Remove tasks from the queue.
@@ -30,8 +32,10 @@ pub fn remove(task_ids: Vec<usize>, state: &SharedState) -> Message {
     for task_id in &not_running {
         state.tasks.remove(task_id);
 
-        clean_log_handles(*task_id, &state.settings.shared.pueue_directory);
+        clean_log_handles(*task_id, &state.settings.shared.pueue_directory());
     }
+
+    ok_or_return_failure_message!(state.save());
 
     let text = "Tasks removed from list";
     let response = compile_task_response(text, not_running, running);
@@ -43,9 +47,11 @@ mod tests {
     use super::super::fixtures::*;
     use super::*;
 
+    use pretty_assertions::assert_eq;
+
     #[test]
     fn normal_remove() {
-        let state = get_stub_state();
+        let (state, _tempdir) = get_stub_state();
 
         // 3 and 4 aren't allowed to be removed, since they're running.
         // The rest will succeed.
@@ -66,7 +72,7 @@ mod tests {
 
     #[test]
     fn removal_of_dependencies() {
-        let state = get_stub_state();
+        let (state, _tempdir) = get_stub_state();
 
         {
             let mut state = state.lock().unwrap();

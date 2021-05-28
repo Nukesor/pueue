@@ -16,6 +16,7 @@ use winapi::um::tlhelp32::{
 use winapi::um::winnt::{PROCESS_TERMINATE, THREAD_SUSPEND_RESUME};
 
 use crate::task_handler::ProcessAction;
+use pueue_lib::network::message::Signal as InternalSignal;
 
 pub fn compile_shell_command(command_string: &str) -> Command {
     // Chain two `powershell` commands, one that sets the output encoding to utf8 and then the user provided one.
@@ -28,12 +29,16 @@ pub fn compile_shell_command(command_string: &str) -> Command {
     command
 }
 
-/// Send a signal to a windows process.
-pub fn send_signal_to_child(
+pub fn send_internal_signal_to_child(
     child: &Child,
-    action: &ProcessAction,
-    _children: bool,
+    signal: InternalSignal,
+    send_to_children: bool,
 ) -> Result<bool> {
+    bail!("Trying to send unix signal on a windows machine. This isn't supported.");
+}
+
+/// Send a signal to a windows process.
+pub fn run_action_on_child(child: &Child, action: &ProcessAction, _children: bool) -> Result<bool> {
     let pids = get_cur_task_processes(child.id());
     if pids.is_empty() {
         bail!("Process has just gone away");
@@ -52,11 +57,6 @@ pub fn send_signal_to_child(
                 for thread in get_threads(pid) {
                     resume_thread(thread);
                 }
-            }
-        }
-        ProcessAction::Kill => {
-            for pid in pids {
-                terminate_process(pid);
             }
         }
     }
@@ -244,41 +244,48 @@ fn terminate_process(pid: u32) {
     }
 }
 
+/// Assert that certain process id no longer exists
+pub fn process_exists(pid: u32) -> bool {
+    unsafe {
+        let handle = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+
+        let mut process_entry = PROCESSENTRY32::default();
+        process_entry.dwSize = std::mem::size_of::<PROCESSENTRY32>() as u32;
+
+        loop {
+            if process_entry.th32ProcessID == pid {
+                CloseHandle(handle);
+                return true;
+            }
+
+            if Process32Next(handle, &mut process_entry) == FALSE {
+                break;
+            }
+        }
+
+        CloseHandle(handle);
+    }
+
+    false
+}
+
 #[cfg(test)]
 mod test {
     use std::thread::sleep;
     use std::time::Duration;
 
+    use pretty_assertions::assert_eq;
+
     use super::*;
 
     /// Assert that certain process id no longer exists
     fn process_is_gone(pid: u32) -> bool {
-        unsafe {
-            let handle = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-
-            let mut process_entry = PROCESSENTRY32::default();
-            process_entry.dwSize = std::mem::size_of::<PROCESSENTRY32>() as u32;
-
-            loop {
-                if process_entry.th32ProcessID == pid {
-                    CloseHandle(handle);
-                    return false;
-                }
-
-                if Process32Next(handle, &mut process_entry) == FALSE {
-                    break;
-                }
-            }
-
-            CloseHandle(handle);
-        }
-
-        true
+        !process_exists(pid)
     }
 
     #[test]
     fn test_spawn_command() {
-        let mut child = compile_shell_command("echo 'this is a test'")
+        let mut child = compile_shell_command("sleep 0.1")
             .spawn()
             .expect("Failed to spawn echo");
 
@@ -295,7 +302,7 @@ mod test {
             .expect("Failed to spawn echo");
         let pid = child.id();
         // Sleep a little to give everything a chance to spawn.
-        sleep(Duration::from_millis(500));
+        sleep(Duration::from_millis(1000));
 
         // Get all processes, so we can make sure they no longer exist afterwards.
         let process_ids = get_cur_task_processes(pid);
@@ -325,7 +332,7 @@ mod test {
             .expect("Failed to spawn echo");
         let pid = child.id();
         // Sleep a little to give everything a chance to spawn.
-        sleep(Duration::from_millis(500));
+        sleep(Duration::from_millis(1000));
 
         let process_ids = get_cur_task_processes(pid);
         assert_eq!(process_ids.len(), 2);

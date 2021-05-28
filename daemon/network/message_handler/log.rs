@@ -7,28 +7,12 @@ use pueue_lib::state::SharedState;
 /// Invoked when calling `pueue log`.
 /// Return the current state and the stdou/stderr of all tasks to the client.
 pub fn get_log(message: LogRequestMessage, state: &SharedState) -> Message {
-    let state = state.lock().unwrap().clone();
+    let state = { state.lock().unwrap().clone() };
     // Return all logs, if no specific task id is specified.
     let task_ids = if message.task_ids.is_empty() {
         state.tasks.keys().cloned().collect()
     } else {
         message.task_ids
-    };
-
-    // Determine, whether we should draw everything or only a part of the log output.
-    // None implicates that all lines are printed
-    let lines = if message.full {
-        None
-    } else if let Some(lines) = message.lines {
-        Some(lines)
-    } else {
-        // By default only some lines are shown per task, if multiple tasks exist.
-        // For a single task, the whole log output is shown.
-        if task_ids.len() > 1 {
-            Some(15)
-        } else {
-            None
-        }
     };
 
     let mut tasks = BTreeMap::new();
@@ -40,8 +24,8 @@ pub fn get_log(message: LogRequestMessage, state: &SharedState) -> Message {
             let (stdout, stderr) = if message.send_logs {
                 match read_and_compress_log_files(
                     *task_id,
-                    &state.settings.shared.pueue_directory,
-                    lines,
+                    &state.settings.shared.pueue_directory(),
+                    message.lines,
                 ) {
                     Ok((stdout, stderr)) => (Some(stdout), Some(stderr)),
                     Err(err) => {

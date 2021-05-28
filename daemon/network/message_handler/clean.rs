@@ -3,11 +3,15 @@ use pueue_lib::network::message::*;
 use pueue_lib::state::SharedState;
 use pueue_lib::task::{TaskResult, TaskStatus};
 
+use super::*;
+use crate::ok_or_return_failure_message;
+
 /// Invoked when calling `pueue clean`.
 /// Remove all failed or done tasks from the state.
 pub fn clean(message: CleanMessage, state: &SharedState) -> Message {
     let mut state = state.lock().unwrap();
-    state.backup();
+    ok_or_return_failure_message!(state.backup());
+
     let (matching, _) = state.tasks_in_statuses(vec![TaskStatus::Done], None);
 
     for task_id in &matching {
@@ -24,10 +28,10 @@ pub fn clean(message: CleanMessage, state: &SharedState) -> Message {
             }
         }
         let _ = state.tasks.remove(task_id).unwrap();
-        clean_log_handles(*task_id, &state.settings.shared.pueue_directory);
+        clean_log_handles(*task_id, &state.settings.shared.pueue_directory());
     }
 
-    state.save();
+    ok_or_return_failure_message!(state.save());
 
     if message.successful_only {
         create_success_message("All successfully finished tasks have been removed")
@@ -41,12 +45,15 @@ mod tests {
     use super::super::fixtures::*;
     use super::*;
 
+    use pretty_assertions::assert_eq;
+    use tempdir::TempDir;
+
     fn get_message(successful_only: bool) -> CleanMessage {
         CleanMessage { successful_only }
     }
 
-    fn get_clean_test_state() -> SharedState {
-        let state = get_state();
+    fn get_clean_test_state() -> (SharedState, TempDir) {
+        let (state, tempdir) = get_state();
 
         {
             let mut state = state.lock().unwrap();
@@ -75,17 +82,18 @@ mod tests {
             state.add_task(task);
         }
 
-        state
+        (state, tempdir)
     }
 
     #[test]
     fn clean_normal() {
-        let state = get_stub_state();
+        let (state, _tempdir) = get_stub_state();
 
         // Only task 1 will be removed, since it's the only TaskStatus with `Done`.
         let message = clean(get_message(false), &state);
 
         // Return message is correct
+        println!("{:?}", message);
         assert!(matches!(message, Message::Success(_)));
         if let Message::Success(text) = message {
             assert_eq!(text, "All finished tasks have been removed");
@@ -97,12 +105,13 @@ mod tests {
 
     #[test]
     fn clean_normal_for_all_results() {
-        let state = get_clean_test_state();
+        let (state, _tempdir) = get_clean_test_state();
 
         // All finished tasks should removed when calling default `clean`.
         let message = clean(get_message(false), &state);
 
         // Return message is correct
+        println!("{:?}", message);
         assert!(matches!(message, Message::Success(_)));
         if let Message::Success(text) = message {
             assert_eq!(text, "All finished tasks have been removed");
@@ -114,13 +123,14 @@ mod tests {
 
     #[test]
     fn clean_successful_only() {
-        let state = get_clean_test_state();
+        let (state, _tempdir) = get_clean_test_state();
 
         // Only successfully finished tasks should get removed when
         // calling `clean` with the `successful_only` flag.
         let message = clean(get_message(true), &state);
 
         // Return message is correct
+        println!("{:?}", message);
         assert!(matches!(message, Message::Success(_)));
         if let Message::Success(text) = message {
             assert_eq!(text, "All successfully finished tasks have been removed");

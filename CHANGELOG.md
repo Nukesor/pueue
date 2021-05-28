@@ -4,11 +4,34 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.12.3] - 
+## [1.0.0] - 
+
+### Added
+
+- The last lines of `stderr` and `stdout` are now available in the callback command. [#196](https://github.com/Nukesor/pueue/issues/196).
+- Add `callback_log_lines` setting for the daemon, specifying the amount of lines returned to the callback. [#196](https://github.com/Nukesor/pueue/issues/196).
+- `~` is respected in configuration paths by [dadav](https://github.com/dadav) for [#191](https://github.com/Nukesor/pueue/issues/191).
+- Support for other `apple` platforms. New build artifacts for `ios-aarch64`.
+- Use `pueue kill --signal SigTerm` to send Unix signals directly to Pueue's processes. [#202](https://github.com/Nukesor/pueue/issues/202)
+- Add a PID file to `$pueue_directory/pueue.pid`, which will be used to check whether there's a already running daemon.
+
+### Changed
+
+- Use the next available id instead of constantly increasing id's.
+    This results in ids being reused, on `pueue clean` or `pueue remove` of the last tasks in a queue.
+- Backward compatible protocol for stable version changes with `serde_cbor`.
+- Detection of old daemon versions on update.
+- Overall better debug messages.
+- Crash hard, if we fail to write the settings file.
+- Use tokio's async runtime and set a hardcoded limit of 4 worker threads, which already is more than enough.
+- Add a debug message, when using `pueue wait` or `pueue wait -g some_group`, but there're no tasks in the group.
 
 ### Fixed
 
 - Handle very rare race-condition, where tasks with failed dependencies start anyway.
+- `pueue log --json` now works again.
+    By default, only a few lines of output will be provided, but this can be configured via the `--full` and `--lines` option.
+- Use crossbeam mpsc channels, which results in faster response time for client connections.
 
 ## [0.12.2] - 20-04-2021
 

@@ -1,4 +1,4 @@
-use std::sync::mpsc::Sender;
+use crossbeam_channel::Sender;
 
 use pueue_lib::network::message::*;
 use pueue_lib::state::SharedState;
@@ -25,12 +25,25 @@ pub fn kill(message: KillMessage, sender: &Sender<Message>, state: &SharedState)
         return create_success_message(response);
     }
 
+    // Special response for signal handling.
+    if let Some(signal) = message.signal {
+        return if message.all {
+            create_success_message(format!("Sending signal {} to all running tasks.", signal))
+        } else {
+            create_success_message(format!(
+                "Sending signal {} to all running tasks of group {}.",
+                signal, message.group
+            ))
+        };
+    }
+
+    // Response for normal kill logic.
     if message.all {
         create_success_message("All tasks are being killed.")
     } else {
         create_success_message(format!(
             "All tasks of group \"{}\" are being killed.",
-            &message.group
+            message.group
         ))
     }
 }

@@ -1,7 +1,7 @@
 [package]
 name = "pueue"
 description = "A cli tool for managing long running shell commands."
-version = "0.12.3-alpha.0"
+version = "1.0.0-alpha.0"
 authors = ["Arne Beer <contact@arne.beer>"]
 homepage = "https://github.com/nukesor/pueue"
 repository = "https://github.com/nukesor/pueue"
@@ -18,13 +18,21 @@ maintenance = { status = "actively-developed" }
 name = "pueue"
 path = "client/main.rs"
 
+# Split the daemon logic in a lib and bin crate.
+# The bin crate uses the lib to for all logic, but using a lib allows
+# us to do proper integration testing.
+[lib]
+name = "pueue_daemon_lib"
+path = "daemon/lib.rs"
+
 [[bin]]
 name = "pueued"
 path = "daemon/main.rs"
 
 [dependencies]
-pueue-lib = "0.12.2"
-#pueue-lib = { path = "../pueue-lib" }
+pueue-lib = "0.13"
+#pueue-lib = { git = "https://github.com/Nukesor/pueue-lib", branch = "master" }
+#pueue-lib = { path = "../../libraries/pueue-lib" }
 
 anyhow = "1"
 chrono = { version = "0.4", features = ["serde"] }
@@ -32,9 +40,12 @@ chrono-english = "0.1"
 shell-escape = "0.1"
 tempfile = "3"
 
-async-std = { version = "1", features = ["attributes", "std"] }
+crossbeam-channel = "0.5"
+tokio = { version = "1", features = ["rt-multi-thread", "time", "macros", "io-std", "io-util"] }
 snap = "1"
+serde = "1"
 serde_json = "1"
+serde_derive = "1"
 
 log = "0.4"
 simplelog = { version = "0.10", default-features = false }
@@ -43,21 +54,28 @@ clap_generate = "3.0.0-beta.2"
 crossterm = "0.19"
 comfy-table= "2"
 
-handlebars = "3"
+handlebars = "4"
 ctrlc = { version = "3", features = ["termination"] }
 
+# Windows
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3", features = ["tlhelp32", "handleapi", "processthreadsapi", "minwindef", "impl-default"] }
 
+# Unix
 [target.'cfg(not(windows))'.dependencies]
 nix = "0.20"
 whoami = "1"
 
+# Linux / Freebsd
 [target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]
 procfs = { version = "0.9", default-features = false }
 
-[target.'cfg(target_os = "macos")'.dependencies]
-psutil = "3"
-
 [build-dependencies]
 version_check = "0.9"
+
+[dev-dependencies]
+anyhow = "1"
+better-panic = "0.2"
+pretty_assertions = "0.7"
+tempdir = "0.3"
+rstest = "0.10"

@@ -14,7 +14,7 @@ pub mod display;
 use crate::cli::{CliArguments, Shell, SubCommand};
 use crate::client::Client;
 
-#[async_std::main]
+#[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
     // Parse commandline options.
     let opt = CliArguments::parse();
@@ -48,7 +48,7 @@ async fn main() -> Result<()> {
     SimpleLogger::init(level, Config::default()).unwrap();
 
     // Try to read settings from the configuration file.
-    let settings = Settings::new(true, &opt.config)?;
+    let settings = Settings::read_with_defaults(true, &opt.config)?;
 
     // Create client to talk with the daemon and connect.
     let mut client = Client::new(settings, opt).await?;

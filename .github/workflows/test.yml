@@ -9,21 +9,56 @@ on:
       - 'Cargo.toml'
       - 'Cargo.lock'
   pull_request:
-    branches: [master]
     paths:
       - '.github/**/*'
       - '**.rs'
       - 'Cargo.toml'
       - 'Cargo.lock'
 
+
 jobs:
   publish:
-    name: Test on ${{ matrix.os }} for ${{ matrix.toolchain }}
+    name: Test on ${{ matrix.os }} for ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        toolchain: [stable, nightly]
+        target:
+            - x86_64-unknown-linux-gnu
+            - aarch64-unknown-linux-musl
+            - armv7-unknown-linux-musleabihf
+            - arm-unknown-linux-musleabihf
+            - x86_64-pc-windows-msvc
+            - x86_64-apple-darwin
+            - aarch64-apple-ios
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            cross: false
+            strip: true
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-musl
+            cross: true
+            strip: false
+          - os: ubuntu-latest
+            target: armv7-unknown-linux-musleabihf
+            cross: true
+            strip: false
+          - os: ubuntu-latest
+            target: arm-unknown-linux-musleabihf
+            cross: true
+            strip: false
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            cross: false
+            strip: true
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            cross: false
+            strip: true
+          - os: macos-latest
+            target: aarch64-apple-ios
+            cross: true
+            strip: true
 
     steps:
       - name: Checkout code
@@ -32,8 +67,7 @@ jobs:
       - name: Setup Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
-          profile: minimal
-          toolchain: ${{ matrix.toolchain }}
+          toolchain: stable
           override: true
           components: rustfmt, clippy
 
@@ -41,22 +75,27 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
+          args: --target=${{ matrix.target }}
+          use-cross: ${{ matrix.cross }}
 
       - name: cargo test
         uses: actions-rs/cargo@v1
+        if: ${{ !matrix.cross }}
         with:
           command: test
+          args: --target=${{ matrix.target }}
+          use-cross: ${{ matrix.cross }}
 
       - name: cargo fmt
         uses: actions-rs/cargo@v1
+        if: matrix.os == 'ubuntu-latest' && matrix.target == 'x86_64-unknown-linux-musl'
         with:
           command: fmt
           args: --all -- --check
-        if: matrix.os == 'ubuntu-latest' && matrix.toolchain == 'stable'
 
       - name: cargo clippy
         uses: actions-rs/cargo@v1
-        if: matrix.os == 'ubuntu-latest' && matrix.toolchain == 'stable'
+        if: matrix.os == 'ubuntu-latest' && matrix.target == 'x86_64-unknown-linux-musl'
         with:
           command: clippy
           args: -- -D warnings

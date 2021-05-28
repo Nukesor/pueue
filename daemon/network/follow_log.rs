@@ -3,7 +3,6 @@ use std::time::Duration;
 use std::{fs::File, path::Path};
 
 use anyhow::Result;
-use async_std::task::sleep;
 
 use pueue_lib::log::*;
 use pueue_lib::network::message::*;
@@ -92,6 +91,6 @@ pub async fn handle_follow(
         // Send the new chunk and wait for 1 second.
         let response = Message::Stream(text);
         send_message(response, stream).await?;
-        sleep(Duration::from_millis(1000)).await;
+        tokio::time::sleep(Duration::from_millis(1000)).await;
     }
 }

@@ -3,6 +3,9 @@ use pueue_lib::network::message::*;
 use pueue_lib::state::SharedState;
 use pueue_lib::task::TaskStatus;
 
+use super::*;
+use crate::ok_or_return_failure_message;
+
 /// Invoked when calling `pueue edit`.
 /// If a user wants to edit a message, we need to send him the current command.
 /// Lock the task to prevent execution, before the user has finished editing the command.
@@ -43,7 +46,7 @@ pub fn edit(message: EditMessage, state: &SharedState) -> Message {
             task.original_command = message.command.clone();
             task.command = insert_alias(message.command.clone());
             task.path = message.path.clone();
-            state.save();
+            ok_or_return_failure_message!(state.save());
 
             create_success_message("Command has been updated")
         }

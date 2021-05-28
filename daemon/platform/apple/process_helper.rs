@@ -1,4 +1,5 @@
 use std::convert::TryInto;
+use std::path::Path;
 use std::process::{Child, Command};
 
 use anyhow::Result;
@@ -9,6 +10,7 @@ use nix::{
 };
 
 use crate::task_handler::ProcessAction;
+use pueue_lib::network::message::Signal as InternalSignal;
 
 pub fn compile_shell_command(command_string: &str) -> Command {
     let mut command = Command::new("sh");
@@ -17,17 +19,55 @@ pub fn compile_shell_command(command_string: &str) -> Command {
     command
 }
 
+fn map_action_to_signal(action: &ProcessAction) -> Signal {
+    match action {
+        ProcessAction::Pause => Signal::SIGSTOP,
+        ProcessAction::Resume => Signal::SIGCONT,
+    }
+}
+
+fn map_internal_signal_to_nix_signal(signal: InternalSignal) -> Signal {
+    match signal {
+        InternalSignal::SigKill => Signal::SIGKILL,
+        InternalSignal::SigInt => Signal::SIGINT,
+        InternalSignal::SigTerm => Signal::SIGTERM,
+        InternalSignal::SigCont => Signal::SIGCONT,
+        InternalSignal::SigStop => Signal::SIGSTOP,
+    }
+}
+
+/// Convenience wrapper around `send_signal_to_child` for raw unix signals.
+/// Its purpose is to hide platform specific logic.
+pub fn send_internal_signal_to_child(
+    child: &Child,
+    signal: InternalSignal,
+    send_to_children: bool,
+) -> Result<bool> {
+    let signal = map_internal_signal_to_nix_signal(signal);
+    send_signal_to_child(child, signal, send_to_children)
+}
+
+/// Convenience wrapper around `send_signal_to_child` for internal actions on processes.
+/// Its purpose is to hide platform specific logic.
+pub fn run_action_on_child(
+    child: &Child,
+    action: &ProcessAction,
+    send_to_children: bool,
+) -> Result<bool> {
+    let signal = map_action_to_signal(action);
+    send_signal_to_child(child, signal, send_to_children)
+}
+
 /// Send a signal to one of Pueue's child process handles.
 /// We need a special since we assume that there's also a `sh -c` around the actuall process.
 pub fn send_signal_to_child(
     child: &Child,
-    action: &ProcessAction,
+    signal: Signal,
     _send_to_children: bool,
 ) -> Result<bool> {
-    let signal = get_signal_from_action(action);
     let pid = child.id();
     // Send the signal to the shell, don't propagate to its children yet.
-    send_signal_to_process(pid, action, false)?;
+    send_signal_to_process(pid, signal, false)?;
 
     signal::kill(Pid::from_raw(pid.try_into().unwrap()), signal)?;
     Ok(true)
@@ -46,24 +86,16 @@ pub fn kill_child(task_id: usize, child: &mut Child, _kill_children: bool) -> bo
 }
 
 /// Send a signal to a unix process.
-fn send_signal_to_process(
-    pid: u32,
-    action: &ProcessAction,
-    _children: bool,
-) -> Result<bool, nix::Error> {
-    let signal = get_signal_from_action(action);
+fn send_signal_to_process(pid: u32, signal: Signal, _children: bool) -> Result<bool, nix::Error> {
     debug!("Sending signal {} to {}", signal, pid);
 
     signal::kill(Pid::from_raw(pid.try_into().unwrap()), signal)?;
     Ok(true)
 }
 
-fn get_signal_from_action(action: &ProcessAction) -> Signal {
-    match action {
-        ProcessAction::Kill => Signal::SIGKILL,
-        ProcessAction::Pause => Signal::SIGSTOP,
-        ProcessAction::Resume => Signal::SIGCONT,
-    }
+/// Check, whether a specific process is exists or not
+pub fn process_exists(pid: u32) -> bool {
+    Path::new(&format!("/proc/{}", pid)).exists()
 }
 
 #[cfg(test)]
@@ -72,22 +104,15 @@ mod tests {
     use std::thread::sleep;
     use std::time::Duration;
 
-    /// THIS DOESN'T WORK YET
-    /// psutil doesn't really have a way to check whether a process is actually gone.
-    ///
     /// Assert that certain process id no longer exists
-    fn process_is_gone(_pid: u32) -> bool {
-        //match Process::new(pid) {
-        //    Ok(process) => !process.is_running(),
-        //    Err(_) => true,
-        //}
-        true
+    fn process_is_gone(pid: u32) -> bool {
+        !process_exists(pid)
     }
 
     #[test]
     /// Simply check, whether spawning of a shell command works
     fn test_spawn_command() {
-        let mut child = compile_shell_command("echo 'this is a test'")
+        let mut child = compile_shell_command("sleep 0.1")
             .spawn()
             .expect("Failed to spawn echo");
 

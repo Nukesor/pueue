@@ -5,6 +5,8 @@ use chrono::Duration;
 use chrono_english::*;
 use clap::Clap;
 
+use pueue_lib::network::message::Signal;
+
 #[derive(Clap, Debug)]
 pub enum SubCommand {
     /// Enqueue a task for execution.
@@ -213,6 +215,12 @@ pub enum SubCommand {
         /// Useful when working with shell scripts.
         #[clap(short, long)]
         children: bool,
+
+        /// Send a UNIX signal instead of simply killing the process.
+        /// DISCLAIMER: This bypasses Pueue's process handling logic!
+        ///     You might enter weird invalid states, use at your own descretion.
+        #[clap(short, long, case_insensitive(true))]
+        signal: Option<Signal>,
     },
 
     /// Send something to a task. Useful for sending confirmations such as 'y\n'.
@@ -270,7 +278,9 @@ pub enum SubCommand {
         /// View the task output of these specific tasks.
         task_ids: Vec<usize>,
         /// Print the resulting tasks and output as json.
-        /// Can be very large!
+        /// By default only the last stdout/-err lines will be returned unless --full is provided.
+        /// Take care, as the json cannot be streamed!
+        /// If your logs are really huge, using --full can use all of your machine's RAM.
         #[clap(short, long)]
         json: bool,
 

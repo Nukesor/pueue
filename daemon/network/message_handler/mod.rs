@@ -1,4 +1,5 @@
-use std::sync::mpsc::Sender;
+use crossbeam_channel::Sender;
+use std::fmt::Display;
 
 use pueue_lib::network::message::*;
 use pueue_lib::network::protocol::socket_cleanup;
@@ -74,7 +75,10 @@ fn shutdown(sender: &Sender<Message>, state: &SharedState) -> Message {
     // Do some socket cleanup (unix socket).
     {
         let state = state.lock().unwrap();
-        socket_cleanup(&state.settings.shared);
+        if let Err(error) = socket_cleanup(&state.settings.shared) {
+            println!("Failed to cleanup socket after shutdown.");
+            println!("{}", error);
+        };
     }
 
     // Notify the task handler.
@@ -83,34 +87,68 @@ fn shutdown(sender: &Sender<Message>, state: &SharedState) -> Message {
     create_success_message("Daemon is shutting down")
 }
 
+fn ok_or_failure_message<T, E: Display>(result: Result<T, E>) -> Result<T, Message> {
+    match result {
+        Ok(inner) => Ok(inner),
+        Err(error) => Err(create_failure_message(format!(
+            "Failed to save state. This is a bug: {}",
+            error
+        ))),
+    }
+}
+
+#[macro_export]
+macro_rules! ok_or_return_failure_message {
+    ($expression:expr) => {
+        match ok_or_failure_message($expression) {
+            Ok(task_id) => task_id,
+            Err(error) => return error,
+        }
+    };
+}
+
 #[cfg(test)]
 mod fixtures {
+    pub use crossbeam_channel::Sender;
     use std::collections::HashMap;
-    pub use std::sync::mpsc::Sender;
     use std::sync::{Arc, Mutex};
+    use tempdir::TempDir;
 
     pub use pueue_lib::network::message::*;
     pub use pueue_lib::network::protocol::socket_cleanup;
     pub use pueue_lib::settings::Settings;
     pub use pueue_lib::state::{SharedState, State};
-    pub use pueue_lib::task::TaskResult;
-
-    pub use pueue_lib::task::{Task, TaskStatus};
+    pub use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
     pub use super::*;
     pub use crate::network::response_helper::*;
 
-    pub fn get_settings() -> Settings {
-        Settings::default_config()
+    pub fn get_settings() -> (Settings, TempDir) {
+        let tempdir = TempDir::new("pueued_test").expect("Failed to create test pueue directory");
+        let mut settings: Settings = Settings::default_config()
             .expect("Failed to get default config")
             .try_into()
-            .expect("Failed to get test settings")
+            .expect("Failed to get test settings");
+        settings.shared.pueue_directory = tempdir.path().clone().to_owned();
+
+        (settings, tempdir)
     }
 
-    pub fn get_state() -> SharedState {
-        let settings = get_settings();
+    pub fn get_state() -> (SharedState, TempDir) {
+        let (settings, tempdir) = get_settings();
+
+        // Create the normal pueue directories.
+        let log_dir = tempdir.path().join("log");
+        if !log_dir.exists() {
+            std::fs::create_dir(log_dir).expect("Failed to create test log dir");
+        }
+        let task_log_dir = tempdir.path().join("task_log");
+        if !task_log_dir.exists() {
+            std::fs::create_dir(task_log_dir).expect("Failed to create test task log dir");
+        }
+
         let state = State::new(&settings, None);
-        Arc::new(Mutex::new(state))
+        (Arc::new(Mutex::new(state)), tempdir)
     }
 
     /// Create a new task with stub data
@@ -127,8 +165,8 @@ mod fixtures {
         )
     }
 
-    pub fn get_stub_state() -> SharedState {
-        let state = get_state();
+    pub fn get_stub_state() -> (SharedState, TempDir) {
+        let (state, tempdir) = get_state();
         {
             // Queued task
             let mut state = state.lock().unwrap();
@@ -153,6 +191,6 @@ mod fixtures {
             state.add_task(task);
         }
 
-        state
+        (state, tempdir)
     }
 }
