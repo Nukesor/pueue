@@ -1162,7 +1162,7 @@ dependencies = [
 
 [[package]]
 name = "pueue"
-version = "0.12.3-alpha.0"
+version = "1.0.0-alpha.0"
 dependencies = [
  "anyhow",
  "better-panic",
@@ -1197,8 +1197,9 @@ dependencies = [
 
 [[package]]
 name = "pueue-lib"
-version = "0.12.3"
-source = "git+https://github.com/Nukesor/pueue-lib?branch=master#91150a04ad7e8625bdb0959951c8c924437b6144"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "efcaa727d53c8ab2d6462162a0ea29fb26a800a7908daf9595a1ce09fb72183f"
 dependencies = [
  "async-std",
  "async-tls",
