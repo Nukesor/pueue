@@ -9,8 +9,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 A lot of things happened during this release.
 Even though a few new features were added, the main effort went into increasing stability and inter-version compatibility.
 
-The goal of this release is to push the code-quality, error handling, test coverage and stability to a level that justifies a v1.0 release. \
-Since this project follows semantic versioning, this includes no breaking changes and backward-compatibility on version upgrades. \
+The goal of this release is to push the code quality, error handling, test coverage and stability to a level that justifies a v1.0 release. \
+Since this project follows semantic versioning, this includes no breaking changes and backward compatibility on version upgrades. \
 It also includes, that I'm quite certain there are no critical bugs in the project and that all important and planned features have been implemented.
 
 Unless some critical issues pop up, this can be seen as a finished version of the project!

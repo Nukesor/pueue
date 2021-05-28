@@ -2,7 +2,7 @@ use std::fs::File;
 use std::path::{Path, PathBuf};
 use std::{collections::BTreeMap, io::Read};
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{anyhow, bail, Context, Result};
 use tempdir::TempDir;
 use tokio::io::{self, AsyncWriteExt};
 
@@ -19,10 +19,21 @@ pub fn boot_daemon(pueue_dir: &Path) -> Result<i32> {
     tokio::spawn(run_and_handle_error(path, true));
     let pid = get_pid(pueue_dir)?;
 
-    // Wait a little longer for the daemon to properly start
-    sleep_ms(500);
+    let tries = 20;
+    let mut current_try = 0;
 
-    return Ok(pid);
+    // Wait up to 1s for the unix socket to pop up.
+    let socket_path = pueue_dir.join("pueue.pid");
+    while current_try < tries {
+        sleep_ms(50);
+        if socket_path.exists() {
+            return Ok(pid);
+        }
+
+        current_try += 1;
+    }
+
+    bail!("Daemon didn't boot after 1sec")
 }
 
 /// Internal helper function, which wraps the daemon main logic and prints any error.
@@ -77,7 +88,7 @@ pub fn get_pid(pueue_dir: &Path) -> Result<i32> {
         return Ok(pid);
     }
 
-    panic!("Couldn't find pid file after about 1 sec.");
+    bail!("Couldn't find pid file after about 1 sec.");
 }
 
 pub fn base_setup() -> Result<(Settings, TempDir)> {

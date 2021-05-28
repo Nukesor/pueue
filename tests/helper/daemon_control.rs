@@ -49,15 +49,6 @@ pub async fn pause_daemon(shared: &Shared) -> Result<Message> {
         .context("Failed to send Pause message")
 }
 
-/// A simple helper, which sends a a shutdown message and waits a little.
-/// After receiving the shutdown message, the daemon will exit with status 0 themselves.
-pub async fn shutdown(shared: &Shared) -> Result<()> {
-    send_message(shared, Message::DaemonShutdown).await?;
-
-    sleep_ms(500);
-    Ok(())
-}
-
 pub async fn get_state(shared: &Shared) -> Result<Box<State>> {
     let response = send_message(shared, Message::Status).await?;
     match response {
