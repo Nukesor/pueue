@@ -29,7 +29,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Fixed
 
 - Handle very rare race-condition, where tasks with failed dependencies start anyway.
-- `pueue log --json` now works again.
+- `pueue log --json` now works again. [#186](https://github.com/Nukesor/pueue/issues/186)
     By default, only a few lines of output will be provided, but this can be configured via the `--full` and `--lines` option.
 - Use crossbeam mpsc channels, which results in faster response time for client connections.
 
