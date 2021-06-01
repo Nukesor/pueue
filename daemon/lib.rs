@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use std::{fs::create_dir_all, path::PathBuf};
 
 use anyhow::{bail, Result};
-use crossbeam_channel::unbounded;
+use crossbeam_channel::{unbounded, Sender};
 use log::warn;
 
 use pueue_lib::network::certificate::create_certificates;
@@ -68,50 +68,11 @@ pub async fn run(config_path: Option<PathBuf>, test: bool) -> Result<()> {
     let (sender, receiver) = unbounded();
     let mut task_handler = TaskHandler::new(state.clone(), receiver);
 
-    // Don't set ctrlc handler during testing.
-    // This is necessary for multithreaded integration testing.
-    // On top of this, ctrlc also somehow breaks test error output.
+    // Don't set ctrlc and panic handlers during testing.
+    // This is necessary for multithreaded integration testing, since multiple listener per process
+    // aren't prophibited. On top of this, ctrlc also somehow breaks test error output.
     if !test {
-        // This section handles Shutdown via SigTerm/SigInt process signals
-        // 1. Remove the unix socket (if it exists).
-        // 2. Notify the TaskHandler, so it can shutdown gracefully.
-        //
-        // The actual program exit will be done via the TaskHandler.
-        let sender_clone = sender.clone();
-        let settings_clone = settings.clone();
-        ctrlc::set_handler(move || {
-            if let Err(error) = socket_cleanup(&settings_clone.shared) {
-                println!("Failed to cleanup socket after shutdown signal.");
-                println!("{}", error);
-            }
-
-            // Notify the task handler
-            sender_clone
-                .send(Message::DaemonShutdown)
-                .expect("Failed to send Message to TaskHandler on Shutdown");
-        })?;
-    }
-
-    let orig_hook = std::panic::take_hook();
-    let settings_clone = settings.clone();
-
-    // Don't set panic hook during testing.
-    // This is necessary for multithreaded integration testing.
-    if !test {
-        std::panic::set_hook(Box::new(move |panic_info| {
-            // invoke the default handler and exit the process
-            orig_hook(panic_info);
-            if let Err(error) = pid::cleanup_pid_file(&settings_clone.shared.pueue_directory()) {
-                println!("Failed to cleanup pid after panic.");
-                println!("{}", error);
-            }
-            if let Err(error) = socket_cleanup(&settings_clone.shared) {
-                println!("Failed to cleanup socket after panic.");
-                println!("{}", error);
-            }
-
-            std::process::exit(1);
-        }));
+        setup_signal_panic_handling(&settings, &sender)?;
     }
 
     std::thread::spawn(move || {
@@ -167,4 +128,51 @@ fn init_directories(pueue_dir: &Path) {
             );
         }
     }
+}
+
+/// Setup signal handling and panic handling.
+///
+/// On SIGINT and SIGTERM, we exit gracefully by sending a DaemonShutdown message to the
+/// TaskHandler. This is to prevent dangling processes and other weird edge-cases.
+///
+/// On panic, we want to cleanup existing unix sockets and the PID file.
+fn setup_signal_panic_handling(settings: &Settings, sender: &Sender<Message>) -> Result<()> {
+    let sender_clone = sender.clone();
+    let settings_clone = settings.clone();
+
+    // This section handles Shutdown via SigTerm/SigInt process signals
+    // 1. Remove the unix socket (if it exists).
+    // 2. Notify the TaskHandler, so it can shutdown gracefully.
+    //
+    // The actual program exit will be done via the TaskHandler.
+    ctrlc::set_handler(move || {
+        if let Err(error) = socket_cleanup(&settings_clone.shared) {
+            println!("Failed to cleanup socket after shutdown signal.");
+            println!("{}", error);
+        }
+
+        // Notify the task handler
+        sender_clone
+            .send(Message::DaemonShutdown)
+            .expect("Failed to send Message to TaskHandler on Shutdown");
+    })?;
+
+    let settings_clone = settings.clone();
+    let orig_hook = std::panic::take_hook();
+    std::panic::set_hook(Box::new(move |panic_info| {
+        // invoke the default handler and exit the process
+        orig_hook(panic_info);
+        if let Err(error) = pid::cleanup_pid_file(&settings_clone.shared.pueue_directory()) {
+            println!("Failed to cleanup pid after panic.");
+            println!("{}", error);
+        }
+        if let Err(error) = socket_cleanup(&settings_clone.shared) {
+            println!("Failed to cleanup socket after panic.");
+            println!("{}", error);
+        }
+
+        std::process::exit(1);
+    }));
+
+    Ok(())
 }
