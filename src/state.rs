@@ -180,6 +180,39 @@ impl State {
             None => self.tasks.keys().cloned().collect(),
         };
 
+        self.task_ids_in_statuses(task_ids, statuses)
+    }
+
+    /// Same as [tasks_in_statuses], but only checks for tasks of a specific group.
+    pub fn tasks_of_group_in_statuses(
+        &self,
+        statuses: Vec<TaskStatus>,
+        group: &str,
+    ) -> (Vec<usize>, Vec<usize>) {
+        // Return empty vectors, if there's no such group.
+        if !self.groups.contains_key(group) {
+            return (vec![], vec![]);
+        }
+
+        // Filter all task ids of tasks that match the given group.
+        let task_ids = self
+            .tasks
+            .iter()
+            .filter(|(_, task)| task.group == group)
+            .map(|(id, _)| *id)
+            .collect();
+
+        self.task_ids_in_statuses(task_ids, statuses)
+    }
+
+    /// Internal function used to check which of the given tasks are in one of the given statuses.
+    ///
+    /// Returns a tuple of all (matching_task_ids, non_matching_task_ids).
+    fn task_ids_in_statuses(
+        &self,
+        task_ids: Vec<usize>,
+        statuses: Vec<TaskStatus>,
+    ) -> (Vec<usize>, Vec<usize>) {
         let mut matching = Vec::new();
         let mut mismatching = Vec::new();
 
