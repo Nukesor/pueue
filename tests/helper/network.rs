@@ -8,7 +8,6 @@ use pueue_lib::network::protocol::{
 use pueue_lib::network::secret::read_shared_secret;
 use pueue_lib::settings::Shared;
 
-
 pub async fn send_message(shared: &Shared, message: Message) -> Result<Message> {
     let mut stream = get_authenticated_client(shared).await?;
 

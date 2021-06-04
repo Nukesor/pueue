@@ -141,7 +141,18 @@ pub enum SubCommand {
         /// Restart these specific tasks.
         task_ids: Vec<usize>,
 
-        /// Immediately start the tasks.
+        /// Restart all failed tasks accross all groups.
+        /// Nice to use in combination with `-i/--in-place`.
+        #[clap(short, long)]
+        all_failed: bool,
+
+        /// Like `--all-failed`, but only restart tasks failed tasks of a specific group.
+        /// The group will be set to running and its paused tasks will be resumed.
+        #[clap(short = 'g', long, conflicts_with = "all_failed")]
+        failed_in_group: Option<String>,
+
+        /// Immediately start the tasks, no matter how many open slots there are.
+        /// This will ignore any dependencies tasks may have.
         #[clap(short = 'k', long, conflicts_with = "stashed")]
         start_immediately: bool,
 
@@ -154,10 +165,6 @@ pub enum SubCommand {
         /// This will overwrite any previous logs of the restarted tasks.
         #[clap(short, long)]
         in_place: bool,
-
-        /// Restart all failed tasks.
-        #[clap(short, long)]
-        all_failed: bool,
 
         /// Edit the tasks' command before restarting.
         #[clap(short, long)]

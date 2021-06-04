@@ -16,12 +16,13 @@ use crate::commands::get_state;
 pub async fn restart(
     stream: &mut GenericStream,
     task_ids: Vec<usize>,
+    all_failed: bool,
+    failed_in_group: Option<String>,
     start_immediately: bool,
     stashed: bool,
+    in_place: bool,
     edit_command: bool,
     edit_path: bool,
-    in_place: bool,
-    all_failed: bool,
 ) -> Result<()> {
     let new_status = if stashed {
         TaskStatus::Stashed
@@ -30,12 +31,17 @@ pub async fn restart(
     };
 
     let state = get_state(stream).await?;
-    let (matching, mismatching) = if all_failed {
-        // All failed tasks need to be restarted.
-        // First we have to get all finished tasks (Done)
-        let (matching, _) = state.tasks_in_statuses(vec![TaskStatus::Done], None);
+    let (matching, mismatching) = if all_failed || failed_in_group.is_some() {
+        // Either all failed tasks or all failed tasks of a specific group need to be restarted.
 
-        // Now remove all tasks that finished succesfully
+        // First we have to get all finished tasks (Done)
+        let (matching, _) = if let Some(group) = failed_in_group {
+            state.tasks_of_group_in_statuses(vec![TaskStatus::Done], &group)
+        } else {
+            state.tasks_in_statuses(vec![TaskStatus::Done], None)
+        };
+
+        // now pick the failed tasks
         let failed = matching
             .into_iter()
             .filter(|task_id| {

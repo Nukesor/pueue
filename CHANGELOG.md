@@ -29,6 +29,7 @@ I want this project to move forward.
 - Support for other `apple` platforms. New build artifacts for `ios-aarch64`.
 - Use `pueue kill --signal SigTerm` to send Unix signals directly to Pueue's processes. [#202](https://github.com/Nukesor/pueue/issues/202)
 - Add a PID file to `$pueue_directory/pueue.pid`, which will be used to check whether there's an already running daemon.
+- `--failed-in-group [group_name]` for `restart`. That way you can restart all failed tasks of a specific group [#211](https://github.com/Nukesor/pueue/issues/211)
 
 ### Changed
 

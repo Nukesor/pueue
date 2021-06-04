@@ -156,22 +156,24 @@ impl Client {
             }
             SubCommand::Restart {
                 task_ids,
+                all_failed,
+                failed_in_group,
                 start_immediately,
                 stashed,
+                in_place,
                 edit,
                 edit_path,
-                in_place,
-                all_failed,
             } => {
                 restart(
                     &mut self.stream,
                     task_ids.clone(),
+                    *all_failed,
+                    failed_in_group.clone(),
                     *start_immediately,
                     *stashed,
+                    *in_place,
                     *edit,
                     *edit_path,
-                    *in_place,
-                    *all_failed,
                 )
                 .await?;
                 Ok(true)
