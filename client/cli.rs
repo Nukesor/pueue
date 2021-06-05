@@ -148,7 +148,7 @@ pub enum SubCommand {
 
         /// Like `--all-failed`, but only restart tasks failed tasks of a specific group.
         /// The group will be set to running and its paused tasks will be resumed.
-        #[clap(short = 'g', long, conflicts_with = "all_failed")]
+        #[clap(short = 'g', long, conflicts_with = "all-failed")]
         failed_in_group: Option<String>,
 
         /// Immediately start the tasks, no matter how many open slots there are.
