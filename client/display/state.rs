@@ -217,7 +217,7 @@ fn print_table(tasks: &BTreeMap<usize, Task>, colors: &Colors, settings: &Settin
         row.add_cell(exit_code_cell);
         if has_labels {
             if let Some(label) = &task.label {
-                row.add_cell(label.to_cell());
+                row.add_cell(label.into());
             } else {
                 row.add_cell(Cell::new(""));
             }

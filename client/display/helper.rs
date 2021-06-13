@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 use std::io::stdout;
 
-use crossterm::style::{style, Attribute, Color};
+use crossterm::style::{style, Attribute, Color, Stylize};
 use crossterm::tty::IsTty;
 
 use pueue_lib::state::GroupStatus;

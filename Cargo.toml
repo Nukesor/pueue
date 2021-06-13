@@ -51,8 +51,8 @@ log = "0.4"
 simplelog = { version = "0.10", default-features = false }
 clap = "3.0.0-beta.2"
 clap_generate = "3.0.0-beta.2"
-crossterm = "0.19"
-comfy-table= "2"
+crossterm = "0.20"
+comfy-table= "3"
 
 handlebars = "4"
 ctrlc = { version = "3", features = ["termination"] }
