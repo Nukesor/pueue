@@ -20,8 +20,8 @@ dirs = "3"
 chrono = { version = "0.4", features = ["serde"] }
 rand = "0.8"
 shellexpand = "2.1"
-strum = "0.20"
-strum_macros = "0.20"
+strum = "0.21"
+strum_macros = "0.21"
 
 async-std = { version = "1", features = ["attributes", "std"] }
 async-tls = "0.11"
