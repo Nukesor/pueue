@@ -6,7 +6,7 @@ use pueue_lib::task::TaskStatus;
 
 use crate::ok_or_shutdown;
 use crate::platform::process_helper::*;
-use crate::task_handler::TaskHandler;
+use crate::task_handler::{Shutdown, TaskHandler};
 
 impl TaskHandler {
     /// Kill specific tasks or groups.

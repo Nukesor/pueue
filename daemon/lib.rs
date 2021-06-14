@@ -138,34 +138,31 @@ fn init_directories(pueue_dir: &Path) {
 /// On panic, we want to cleanup existing unix sockets and the PID file.
 fn setup_signal_panic_handling(settings: &Settings, sender: &Sender<Message>) -> Result<()> {
     let sender_clone = sender.clone();
-    let settings_clone = settings.clone();
 
     // This section handles Shutdown via SigTerm/SigInt process signals
-    // 1. Remove the unix socket (if it exists).
-    // 2. Notify the TaskHandler, so it can shutdown gracefully.
-    //
+    // Notify the TaskHandler, so it can shutdown gracefully.
     // The actual program exit will be done via the TaskHandler.
     ctrlc::set_handler(move || {
-        if let Err(error) = socket_cleanup(&settings_clone.shared) {
-            println!("Failed to cleanup socket after shutdown signal.");
-            println!("{}", error);
-        }
-
         // Notify the task handler
         sender_clone
             .send(Message::DaemonShutdown)
             .expect("Failed to send Message to TaskHandler on Shutdown");
     })?;
 
+    // Try to do some final cleanup, even if we panic.
     let settings_clone = settings.clone();
     let orig_hook = std::panic::take_hook();
     std::panic::set_hook(Box::new(move |panic_info| {
         // invoke the default handler and exit the process
         orig_hook(panic_info);
+
+        // Cleanup the pid file
         if let Err(error) = pid::cleanup_pid_file(&settings_clone.shared.pueue_directory()) {
             println!("Failed to cleanup pid after panic.");
             println!("{}", error);
         }
+
+        // Remove the unix socket.
         if let Err(error) = socket_cleanup(&settings_clone.shared) {
             println!("Failed to cleanup socket after panic.");
             println!("{}", error);

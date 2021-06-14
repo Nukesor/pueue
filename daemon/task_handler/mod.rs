@@ -14,6 +14,7 @@ use log::{debug, error, info};
 
 use pueue_lib::log::*;
 use pueue_lib::network::message::*;
+use pueue_lib::network::protocol::socket_cleanup;
 use pueue_lib::state::{GroupStatus, SharedState, State};
 use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
@@ -46,7 +47,7 @@ macro_rules! ok_or_shutdown {
                     "Initializing graceful shutdown. Encountered error in TaskManager: {}",
                     err
                 );
-                $task_manager.emergency_shutdown = true;
+                $task_manager.initiate_shutdown(Shutdown::Emergency);
                 return;
             }
             Ok(inner) => inner,
@@ -60,12 +61,19 @@ pub struct TaskHandler {
     children: BTreeMap<usize, Child>,
     callbacks: Vec<Child>,
     full_reset: bool,
-    graceful_shutdown: bool,
-    emergency_shutdown: bool,
+    shutdown: Option<Shutdown>,
     // Some static settings that are extracted from `state.settings` for convenience purposes.
     pueue_directory: PathBuf,
     callback: Option<String>,
     callback_log_lines: usize,
+}
+
+/// Which type of shutdown we're dealing with.
+pub enum Shutdown {
+    /// Emergency is most likely a system unix signal or a CTRL+C in a terminal.
+    Emergency,
+    /// Graceful is user initiated and expected.
+    Graceful,
 }
 
 /// Pueue directly interacts with processes.
@@ -97,8 +105,7 @@ impl TaskHandler {
             children: BTreeMap::new(),
             callbacks: Vec::new(),
             full_reset: false,
-            graceful_shutdown: false,
-            emergency_shutdown: false,
+            shutdown: None,
             pueue_directory,
             callback,
             callback_log_lines,
@@ -110,34 +117,77 @@ impl TaskHandler {
     ///
     /// - Receive and handle instructions from the client.
     /// - Handle finished tasks, i.e. cleanup processes, update statuses.
-    /// - If the client requested a reset: reset the state if all children have been killed and handled.
     /// - Callback handling logic. This is rather uncritical.
     /// - Enqueue any stashed processes which are ready for being queued.
     /// - Ensure tasks with dependencies have no failed ancestors
+    /// - Whether whe should perform a shutdown.
+    /// - If the client requested a reset: reset the state if all children have been killed and handled.
     /// - Check whether we can spawn new tasks.
     pub fn run(&mut self) {
         loop {
-            self.handle_emergency_shutdown();
             self.receive_messages();
             self.handle_finished_tasks();
-            self.handle_reset();
             self.check_callbacks();
             self.enqueue_delayed_tasks();
             self.check_failed_dependencies();
 
-            // Don't start new tasks, if we're in the middle of a reset or shutdown.
-            if !self.full_reset && !self.graceful_shutdown && !self.emergency_shutdown {
+            if self.shutdown.is_some() {
+                // Check if we're in shutdown.
+                // If all tasks are killed, we do some cleanup and exit.
+                self.handle_shutdown();
+            } else if self.full_reset {
+                // Wait until all tasks are killed.
+                // Once they are, reset everything and go back to normal
+                self.handle_reset();
+            } else {
+                // Only start new tasks, if we aren't in the middle of a reset or shutdown.
                 self.spawn_new();
             }
         }
     }
 
-    /// We encountered an error and the daemon needs to gracefully shutdown.
-    /// Initiate a full reset.
-    fn handle_emergency_shutdown(&mut self) {
-        if self.emergency_shutdown && !self.full_reset {
-            self.reset(false);
+    /// Initiate shutdown, if we're supposed to and didn't already do so.
+    fn initiate_shutdown(&mut self, shutdown: Shutdown) {
+        self.shutdown = Some(shutdown);
+        info!("Pausing groups and killing all children due to shutdown.");
+        {
+            let mut state = self.state.lock().unwrap();
+            state.set_status_for_all_groups(GroupStatus::Paused);
         }
+
+        self.kill(vec![], String::new(), true, false, None);
+    }
+
+    /// Check if all tasks are killed.
+    /// If they aren't, we'll wait a little longer.
+    /// Once they're, we do some cleanup and exit.
+    fn handle_shutdown(&mut self) {
+        // There are still active tasks. Continue waiting.
+        if !self.children.is_empty() {
+            return;
+        }
+
+        // Lock the state. This prevents any further connections/alterations from this point on.
+        let state = self.state.lock().unwrap();
+
+        // Remove the unix socket.
+        if let Err(error) = socket_cleanup(&state.settings.shared) {
+            println!("Failed to cleanup socket during shutdown.");
+            println!("{}", error);
+        }
+
+        // Cleanup the pid file
+        if let Err(error) = crate::pid::cleanup_pid_file(&self.pueue_directory) {
+            println!("Failed to cleanup pid during shutdown.");
+            println!("{}", error);
+        }
+
+        // Actually exit the program the way we're supposed to.
+        // Depending on the current shutdown type, we exit with different exit codes.
+        if matches!(self.shutdown, Some(Shutdown::Emergency)) {
+            std::process::exit(1);
+        }
+        std::process::exit(0);
     }
 
     /// Users can issue to reset the daemon.
@@ -147,7 +197,7 @@ impl TaskHandler {
     /// If that's the case, completely reset the state
     fn handle_reset(&mut self) {
         // Don't do any reset logic, if we aren't in reset mode or if some children are still up.
-        if !self.full_reset || !self.children.is_empty() {
+        if !self.children.is_empty() {
             return;
         }
 
@@ -161,24 +211,6 @@ impl TaskHandler {
             panic!("Error while resetting task log directory: {}", error);
         };
         self.full_reset = false;
-
-        // Actually exit the program in case we're supposed to.
-        // Depending on the current shutdown type, we exit with different exit codes.
-        if self.graceful_shutdown {
-            if let Err(error) = crate::pid::cleanup_pid_file(&self.pueue_directory) {
-                println!("Failed to cleanup pid after shutdown.");
-                println!("{}", error);
-            }
-
-            std::process::exit(0);
-        } else if self.emergency_shutdown {
-            if let Err(error) = crate::pid::cleanup_pid_file(&self.pueue_directory) {
-                println!("Failed to cleanup pid after shutdown.");
-                println!("{}", error);
-            }
-
-            std::process::exit(1);
-        }
     }
 
     /// Kill all children by using the `kill` function.
@@ -196,7 +228,8 @@ impl TaskHandler {
     /// As time passes, some delayed tasks may need to be enqueued.
     /// Gather all stashed tasks and enqueue them if it is after the task's enqueue_at
     fn enqueue_delayed_tasks(&mut self) {
-        let mut state = self.state.lock().unwrap();
+        let state_clone = self.state.clone();
+        let mut state = state_clone.lock().unwrap();
 
         let mut changed = false;
         for (_, task) in state.tasks.iter_mut() {
