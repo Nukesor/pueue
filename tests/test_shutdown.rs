@@ -2,8 +2,6 @@ use assert_cmd::prelude::*;
 use std::process::{Command, Stdio};
 
 use anyhow::{Context, Result};
-use nix::sys::signal::{kill, Signal};
-use nix::unistd::Pid;
 
 mod helper;
 
@@ -25,8 +23,9 @@ fn test_ctrlc() -> Result<()> {
 
     let pid = get_pid(tempdir.path())?;
 
+    use nix::sys::signal::{kill, Signal};
     // Send SIGTERM signal to process via nix
-    let nix_pid = Pid::from_raw(pid);
+    let nix_pid = nix::unistd::Pid::from_raw(pid);
     kill(nix_pid, Signal::SIGTERM).context("Failed to send SIGTERM to pid")?;
 
     // Sleep for 500ms and give the daemon time to shut down
