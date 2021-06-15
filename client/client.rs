@@ -477,7 +477,7 @@ impl Client {
                 };
                 Ok(Message::Reset(message))
             }
-            SubCommand::Shutdown => Ok(Message::DaemonShutdown),
+            SubCommand::Shutdown => Ok(Message::DaemonShutdown(Shutdown::Graceful)),
             SubCommand::Parallel {
                 parallel_tasks,
                 group,

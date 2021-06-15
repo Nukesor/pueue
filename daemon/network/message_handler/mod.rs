@@ -2,7 +2,6 @@ use crossbeam_channel::Sender;
 use std::fmt::Display;
 
 use pueue_lib::network::message::*;
-use pueue_lib::network::protocol::socket_cleanup;
 use pueue_lib::state::SharedState;
 
 use crate::network::response_helper::*;
@@ -45,7 +44,7 @@ pub fn handle_message(message: Message, sender: &Sender<Message>, state: &Shared
         Message::Stash(task_ids) => stash::stash(task_ids, state),
         Message::Switch(message) => switch::switch(message, state),
         Message::Status => get_status(state),
-        Message::DaemonShutdown => shutdown(sender, state),
+        Message::DaemonShutdown(shutdown_type) => shutdown(sender, shutdown_type),
         _ => create_failure_message("Not implemented yet"),
     }
 }
@@ -71,18 +70,11 @@ fn get_status(state: &SharedState) -> Message {
 /// Next, the DaemonShutdown Message will be forwarded to the TaskHandler.
 /// The TaskHandler then gracefully shuts down all child processes
 /// and exits with std::proces::exit(0).
-fn shutdown(sender: &Sender<Message>, state: &SharedState) -> Message {
-    // Do some socket cleanup (unix socket).
-    {
-        let state = state.lock().unwrap();
-        if let Err(error) = socket_cleanup(&state.settings.shared) {
-            println!("Failed to cleanup socket after shutdown.");
-            println!("{}", error);
-        };
-    }
-
+fn shutdown(sender: &Sender<Message>, shutdown_type: Shutdown) -> Message {
     // Notify the task handler.
-    sender.send(Message::DaemonShutdown).expect(SENDER_ERR);
+    sender
+        .send(Message::DaemonShutdown(shutdown_type))
+        .expect(SENDER_ERR);
 
     create_success_message("Daemon is shutting down")
 }

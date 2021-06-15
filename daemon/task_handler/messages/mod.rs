@@ -4,7 +4,7 @@ use log::info;
 
 use pueue_lib::network::message::*;
 
-use crate::task_handler::{Shutdown, TaskHandler};
+use crate::task_handler::TaskHandler;
 
 mod kill;
 mod pause;
@@ -46,8 +46,8 @@ impl TaskHandler {
             ),
             Message::Send(message) => self.send(message.task_id, message.input),
             Message::Reset(message) => self.reset(message.children),
-            Message::DaemonShutdown => {
-                self.initiate_shutdown(Shutdown::Graceful);
+            Message::DaemonShutdown(shutdown) => {
+                self.initiate_shutdown(shutdown);
             }
             _ => info!("Received unhandled message {:?}", message),
         }

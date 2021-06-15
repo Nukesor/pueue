@@ -7,7 +7,7 @@ use crossbeam_channel::{unbounded, Sender};
 use log::warn;
 
 use pueue_lib::network::certificate::create_certificates;
-use pueue_lib::network::message::Message;
+use pueue_lib::network::message::{Message, Shutdown};
 use pueue_lib::network::protocol::socket_cleanup;
 use pueue_lib::network::secret::init_shared_secret;
 use pueue_lib::settings::Settings;
@@ -145,7 +145,7 @@ fn setup_signal_panic_handling(settings: &Settings, sender: &Sender<Message>) ->
     ctrlc::set_handler(move || {
         // Notify the task handler
         sender_clone
-            .send(Message::DaemonShutdown)
+            .send(Message::DaemonShutdown(Shutdown::Emergency))
             .expect("Failed to send Message to TaskHandler on Shutdown");
     })?;
 

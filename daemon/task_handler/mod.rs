@@ -18,6 +18,7 @@ use pueue_lib::network::protocol::socket_cleanup;
 use pueue_lib::state::{GroupStatus, SharedState, State};
 use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
+use crate::pid::cleanup_pid_file;
 use crate::platform::process_helper::*;
 
 mod callback;
@@ -66,14 +67,6 @@ pub struct TaskHandler {
     pueue_directory: PathBuf,
     callback: Option<String>,
     callback_log_lines: usize,
-}
-
-/// Which type of shutdown we're dealing with.
-pub enum Shutdown {
-    /// Emergency is most likely a system unix signal or a CTRL+C in a terminal.
-    Emergency,
-    /// Graceful is user initiated and expected.
-    Graceful,
 }
 
 /// Pueue directly interacts with processes.
@@ -146,14 +139,11 @@ impl TaskHandler {
         }
     }
 
-    /// Initiate shutdown, if we're supposed to and didn't already do so.
+    /// Initiate shutdown, which includes killing all children and pausing all groups.
+    /// We don't have to pause any groups, as no new tasks will be spawned during shutdown anyway.
+    /// Any groups with queued tasks, will be automatically paused on state-restoration.
     fn initiate_shutdown(&mut self, shutdown: Shutdown) {
         self.shutdown = Some(shutdown);
-        info!("Pausing groups and killing all children due to shutdown.");
-        {
-            let mut state = self.state.lock().unwrap();
-            state.set_status_for_all_groups(GroupStatus::Paused);
-        }
 
         self.kill(vec![], String::new(), true, false, None);
     }
@@ -177,7 +167,7 @@ impl TaskHandler {
         }
 
         // Cleanup the pid file
-        if let Err(error) = crate::pid::cleanup_pid_file(&self.pueue_directory) {
+        if let Err(error) = cleanup_pid_file(&self.pueue_directory) {
             println!("Failed to cleanup pid during shutdown.");
             println!("{}", error);
         }
