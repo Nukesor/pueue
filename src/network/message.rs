@@ -38,7 +38,7 @@ pub enum Message {
     /// The boolean decides, whether the children should be get a SIGTERM as well.
     Reset(ResetMessage),
     Clean(CleanMessage),
-    DaemonShutdown,
+    DaemonShutdown(Shutdown),
 
     Success(String),
     Failure(String),
@@ -175,6 +175,15 @@ pub struct CleanMessage {
 }
 fn false_default() -> bool {
     false
+}
+
+/// Determines which type of shutdown we're dealing with.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub enum Shutdown {
+    /// Emergency is most likely a system unix signal or a CTRL+C in a terminal.
+    Emergency,
+    /// Graceful is user initiated and expected.
+    Graceful,
 }
 
 /// `err` decides, whether you should stream stderr or stdout.

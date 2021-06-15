@@ -363,7 +363,10 @@ impl State {
     }
 
     /// Restore the last state from a previous session. \
-    /// The state is stored as json in the log directory.
+    /// The state is stored as json in the `pueue_directory`.
+    ///
+    /// If the state cannot be deserialized, an empty default state will be used instead. \
+    /// All groups with queued tasks will be automatically paused to prevent unwanted execution.
     pub fn restore(&mut self) -> Result<(), Error> {
         let path = Path::new(&self.settings.shared.pueue_directory()).join("state.json");
 
