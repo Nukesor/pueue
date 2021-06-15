@@ -2,17 +2,14 @@ use anyhow::Result;
 use pueue_lib::network::message::*;
 use pueue_lib::task::*;
 
-mod helper;
+use crate::helper::*;
 
-use helper::*;
-
-#[cfg(target_os = "linux")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Test if adding a normal task works as intended.
 async fn test_normal_add() -> Result<()> {
-    let (settings, tempdir) = helper::base_setup()?;
+    let (settings, tempdir) = base_setup()?;
     let shared = &settings.shared;
-    let _pid = helper::boot_daemon(tempdir.path())?;
+    let _pid = boot_daemon(tempdir.path())?;
 
     // Add a task that instantly finishes
     let response = fixtures::add_task(shared, "sleep 0.01", true).await?;

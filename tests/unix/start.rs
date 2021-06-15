@@ -3,11 +3,8 @@ use pueue_lib::network::message::*;
 use pueue_lib::task::*;
 use rstest::rstest;
 
-mod helper;
+use crate::helper::*;
 
-use helper::*;
-
-#[cfg(target_os = "linux")]
 #[rstest]
 #[case(
     Message::Start(StartMessage {
@@ -41,9 +38,9 @@ use helper::*;
 /// - Via the --group flag, which resumes everything in a specific group (in our case 'default').
 /// - Via specific ids.
 async fn test_start_tasks(#[case] start_message: Message) -> Result<()> {
-    let (settings, tempdir) = helper::base_setup()?;
+    let (settings, tempdir) = base_setup()?;
     let shared = &settings.shared;
-    let _pid = helper::boot_daemon(tempdir.path())?;
+    let _pid = boot_daemon(tempdir.path())?;
 
     // Add multiple tasks only a single one will be started by default
     for _ in 0..3 {

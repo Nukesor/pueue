@@ -3,16 +3,13 @@ use std::process::{Command, Stdio};
 
 use anyhow::{Context, Result};
 
-mod helper;
+use crate::helper::*;
 
-use helper::*;
-
-#[cfg(target_os = "linux")]
 #[test]
 /// Spin up the daemon and send a SIGTERM shortly afterwards.
 /// This should trigger the graceful shutdown and kill the process.
 fn test_ctrlc() -> Result<()> {
-    let (_settings, tempdir) = helper::base_setup()?;
+    let (_settings, tempdir) = base_setup()?;
 
     let mut child = Command::cargo_bin("pueued")?
         .arg("--config")
@@ -29,7 +26,7 @@ fn test_ctrlc() -> Result<()> {
     kill(nix_pid, Signal::SIGTERM).context("Failed to send SIGTERM to pid")?;
 
     // Sleep for 500ms and give the daemon time to shut down
-    helper::sleep_ms(500);
+    sleep_ms(500);
 
     let result = child.try_wait();
     assert!(matches!(result, Ok(Some(_))));
