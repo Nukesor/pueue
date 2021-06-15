@@ -9,6 +9,7 @@ mod helper;
 
 use helper::*;
 
+#[cfg(target_os = "linux")]
 #[test]
 /// Spin up the daemon and send a SIGTERM shortly afterwards.
 /// This should trigger the graceful shutdown and kill the process.
