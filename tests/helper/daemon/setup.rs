@@ -1,15 +1,16 @@
-use std::fs::File;
+use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
-use std::{collections::BTreeMap, io::Read};
+use std::process::{Child, Command, Stdio};
 
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{bail, Context, Result};
+use assert_cmd::prelude::*;
 use tempdir::TempDir;
 use tokio::io::{self, AsyncWriteExt};
 
 use pueue_daemon_lib::run;
 use pueue_lib::settings::*;
 
-use super::sleep_ms;
+use super::{get_pid, sleep_ms};
 
 /// Spawn the daemon main logic in it's own async function.
 /// It'll be executed by the tokio multi-threaded executor.
@@ -36,8 +37,35 @@ pub fn boot_daemon(pueue_dir: &Path) -> Result<i32> {
     bail!("Daemon didn't boot after 1sec")
 }
 
-/// Internal helper function, which wraps the daemon main logic and prints any error.
-pub async fn run_and_handle_error(pueue_dir: PathBuf, test: bool) -> Result<()> {
+/// Spawn the daemon by calling the actual pueued binary.
+/// This function also checks for the pid file and the unix socket to pop-up.
+pub fn boot_standalone_daemon(pueue_dir: &Path) -> Result<Child> {
+    let child = Command::cargo_bin("pueued")?
+        .arg("--config")
+        .arg(pueue_dir.join("pueue.yml").to_str().unwrap())
+        .arg("-vvv")
+        .stdout(Stdio::piped())
+        .spawn()?;
+
+    let tries = 20;
+    let mut current_try = 0;
+
+    // Wait up to 1s for the unix socket to pop up.
+    let socket_path = pueue_dir.join("pueue.pid");
+    while current_try < tries {
+        sleep_ms(50);
+        if socket_path.exists() {
+            return Ok(child);
+        }
+
+        current_try += 1;
+    }
+
+    bail!("Daemon didn't boot in stand-alone mode after 1sec")
+}
+
+/// Internal helper function, which wraps the daemon main logic and prints any errors.
+async fn run_and_handle_error(pueue_dir: PathBuf, test: bool) -> Result<()> {
     if let Err(err) = run(Some(pueue_dir.join("pueue.yml")), test).await {
         let mut stdout = io::stdout();
         stdout
@@ -50,45 +78,6 @@ pub async fn run_and_handle_error(pueue_dir: PathBuf, test: bool) -> Result<()> 
     }
 
     Ok(())
-}
-
-/// Get a daemon pid from a specific pueue directory.
-/// This function gives the daemon a little time to boot up, but ultimately crashes if it takes too
-/// long.
-pub fn get_pid(pueue_dir: &Path) -> Result<i32> {
-    let pid_file = pueue_dir.join("pueue.pid");
-
-    // Give the daemon about 1 sec to boot and create the pid file.
-    let tries = 10;
-    let mut current_try = 0;
-
-    while current_try < tries {
-        // The daemon didn't create the pid file yet. Wait for 100ms and try again.
-        if !pid_file.exists() {
-            sleep_ms(50);
-            current_try += 1;
-            continue;
-        }
-
-        let mut file = File::open(&pid_file).context("Couldn't open pid file")?;
-        let mut content = String::new();
-        file.read_to_string(&mut content)
-            .context("Couldn't write to file")?;
-
-        // The file has been created but not yet been written to.
-        if content.is_empty() {
-            sleep_ms(50);
-            current_try += 1;
-            continue;
-        }
-
-        let pid = content
-            .parse::<i32>()
-            .map_err(|_| anyhow!("Couldn't parse value: {}", content))?;
-        return Ok(pid);
-    }
-
-    bail!("Couldn't find pid file after about 1 sec.");
 }
 
 pub fn base_setup() -> Result<(Settings, TempDir)> {

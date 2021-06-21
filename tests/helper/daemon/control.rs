@@ -49,6 +49,15 @@ pub async fn pause_daemon(shared: &Shared) -> Result<Message> {
         .context("Failed to send Pause message")
 }
 
+/// Helper to pause the whole daemon
+pub async fn shutdown_daemon(shared: &Shared) -> Result<Message> {
+    let message = Message::DaemonShutdown(Shutdown::Graceful);
+
+    send_message(shared, message)
+        .await
+        .context("Failed to send Shutdown message")
+}
+
 pub async fn get_state(shared: &Shared) -> Result<Box<State>> {
     let response = send_message(shared, Message::Status).await?;
     match response {

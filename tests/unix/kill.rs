@@ -1,7 +1,10 @@
 use anyhow::Result;
-use pueue_lib::network::message::*;
-use pueue_lib::task::*;
+use pretty_assertions::assert_eq;
 use rstest::rstest;
+
+use pueue_lib::network::message::*;
+use pueue_lib::state::GroupStatus;
+use pueue_lib::task::*;
 
 use crate::helper::*;
 
@@ -13,7 +16,7 @@ use crate::helper::*;
         all: true,
         children: false,
         signal: None,
-    })
+    }), true
 )]
 #[case(
     Message::Kill(KillMessage {
@@ -22,7 +25,7 @@ use crate::helper::*;
         all: false,
         children: false,
         signal: None,
-    })
+    }), true
 )]
 #[case(
     Message::Kill(KillMessage {
@@ -31,7 +34,7 @@ use crate::helper::*;
         all: false,
         children: false,
         signal: None,
-    })
+    }), false
 )]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Test if killing running tasks works as intended.
@@ -40,7 +43,13 @@ use crate::helper::*;
 /// - Via the --all flag, which just kills everything.
 /// - Via the --group flag, which just kills everything in the default group.
 /// - Via specific ids.
-async fn test_kill_tasks(#[case] kill_message: Message) -> Result<()> {
+///
+/// If a whole group or everything is killed, the respective groups should also be paused!
+/// This is security measure to prevent unwanted task execution in an emergency.
+async fn test_kill_tasks(
+    #[case] kill_message: Message,
+    #[case] group_should_pause: bool,
+) -> Result<()> {
     let (settings, tempdir) = base_setup()?;
     let shared = &settings.shared;
     let _pid = boot_daemon(tempdir.path())?;
@@ -69,6 +78,11 @@ async fn test_kill_tasks(#[case] kill_message: Message) -> Result<()> {
         let task = state.tasks.get(&id).unwrap();
         assert_eq!(task.status, TaskStatus::Done);
         assert_eq!(task.result, Some(TaskResult::Killed));
+    }
+
+    // Groups should be paused in specific modes.
+    if group_should_pause {
+        assert_eq!(state.groups.get("default").unwrap(), &GroupStatus::Paused);
     }
 
     Ok(())
