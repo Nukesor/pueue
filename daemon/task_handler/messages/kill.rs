@@ -11,17 +11,21 @@ use crate::task_handler::{Shutdown, TaskHandler};
 impl TaskHandler {
     /// Kill specific tasks or groups.
     ///
-    /// 1. If task_ids is not empty, kill specific tasks.
-    /// 2. If `all` is true, kill everything
-    /// 3. Kill a specific group.
+    /// `task_ids` These specific ids will be killed.
+    /// `all` If true, kill everything.
+    /// `group` Kill a specific group.
+    /// `children` Kill all direct child processes as well
+    /// `pause_groups` If `group` or `all` is given, the groups should be paused under some
+    ///     circumstances. This is mostly to prevent any further task execution during an emergency
+    /// `signal` Don't kill the task as usual, but rather send a unix process signal.
     ///
-    /// `children` decides, whether the kill signal will be send to child processes as well.
     pub fn kill(
         &mut self,
         task_ids: Vec<usize>,
         group: String,
         all: bool,
         children: bool,
+        pause_groups: bool,
         signal: Option<Signal>,
     ) {
         let cloned_state_mutex = self.state.clone();
@@ -37,7 +41,9 @@ impl TaskHandler {
             task_ids
         } else if all {
             // Pause all running tasks
-            state.set_status_for_all_groups(GroupStatus::Paused);
+            if pause_groups {
+                state.set_status_for_all_groups(GroupStatus::Paused);
+            }
 
             info!("Killing all running tasks");
             self.children.keys().cloned().collect()
@@ -46,8 +52,10 @@ impl TaskHandler {
             if !state.groups.contains_key(&group) {
                 return;
             }
-            // Pause a specific group.
-            state.groups.insert(group.clone(), GroupStatus::Paused);
+            // Pause this specific group.
+            if pause_groups {
+                state.groups.insert(group.clone(), GroupStatus::Paused);
+            }
             info!("Killing tasks of group {}", &group);
 
             state

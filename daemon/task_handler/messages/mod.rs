@@ -42,6 +42,7 @@ impl TaskHandler {
                 message.group,
                 message.all,
                 message.children,
+                true,
                 message.signal,
             ),
             Message::Send(message) => self.send(message.task_id, message.input),
