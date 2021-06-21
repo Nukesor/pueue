@@ -12,7 +12,7 @@ use crate::error::Error;
 use crate::platform::directories::*;
 
 /// All settings which are used by both, the client and the daemon
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
 pub struct Shared {
     /// Don't access this property directly, but rather use the getter with the same name.
     /// It's only public to allow proper integration testing.
@@ -54,7 +54,7 @@ pub struct Shared {
 }
 
 /// All settings which are used by the client
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
 pub struct Client {
     /// Whether the client should read the logs directly from disk or whether it should
     /// request the data from the daemon via socket.
@@ -72,7 +72,7 @@ pub struct Client {
 }
 
 /// All settings which are used by the daemon
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
 pub struct Daemon {
     /// How many parallel tasks a group should have by default
     pub default_parallel_tasks: usize,
@@ -92,7 +92,7 @@ pub struct Daemon {
 
 /// The parent settings struct. \
 /// This contains all other setting structs.
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
 pub struct Settings {
     pub client: Client,
     pub daemon: Daemon,

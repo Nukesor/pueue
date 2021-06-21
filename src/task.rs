@@ -8,7 +8,7 @@ use crate::aliasing::insert_alias;
 
 /// This enum represents the status of the internal task handling of Pueue.
 /// They basically represent the internal task life-cycle.
-#[derive(Clone, Debug, Display, PartialEq, Serialize, Deserialize)]
+#[derive(PartialEq, Clone, Debug, Display, Serialize, Deserialize)]
 pub enum TaskStatus {
     /// The task is queued and waiting for a free slot
     Queued,
@@ -26,7 +26,7 @@ pub enum TaskStatus {
 
 /// This enum represents the exit status of an actually spawned program.
 /// It's only used, once a task finished or failed in some kind of way.
-#[derive(Clone, Debug, Display, PartialEq, Serialize, Deserialize)]
+#[derive(PartialEq, Clone, Debug, Display, Serialize, Deserialize)]
 pub enum TaskResult {
     /// Task exited with 0
     Success,
@@ -45,7 +45,7 @@ pub enum TaskResult {
 /// Representation of a task.
 /// start will be set the second the task starts processing.
 /// `result`, `output` and `end` won't be initialized, until the task has finished.
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
 pub struct Task {
     pub id: usize,
     pub original_command: String,
