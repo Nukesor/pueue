@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 use std::string::ToString;
 
+use chrono::{Duration, Local};
 use comfy_table::presets::UTF8_HORIZONTAL_BORDERS_ONLY;
 use comfy_table::*;
 
@@ -191,7 +192,15 @@ fn print_table(tasks: &BTreeMap<usize, Task>, colors: &Colors, settings: &Settin
                 enqueue_at: Some(enqueue_at),
             } = task.status
             {
-                row.add_cell(Cell::new(enqueue_at.format("%Y-%m-%d\n%H:%M:%S")));
+                // Only show the date if the task is supposed to be enqueued today.
+                let enqueue_today =
+                    enqueue_at <= Local::today().and_hms(0, 0, 0) + Duration::days(1);
+                let formatted_enqueue_at = if enqueue_today {
+                    enqueue_at.format(&settings.client.status_time_format)
+                } else {
+                    enqueue_at.format(&settings.client.status_datetime_format)
+                };
+                row.add_cell(Cell::new(formatted_enqueue_at));
             } else {
                 row.add_cell(Cell::new(""));
             }
@@ -233,25 +242,61 @@ fn print_table(tasks: &BTreeMap<usize, Task>, colors: &Colors, settings: &Settin
         }
         row.add_cell(Cell::new(&task.path));
 
-        // Add start time, if already set.
-        if let Some(start) = task.start {
-            let formatted = start.format("%H:%M").to_string();
-            row.add_cell(Cell::new(&formatted));
-        } else {
-            row.add_cell(Cell::new(""));
-        }
-
-        // Add finish time, if already set.
-        if let Some(end) = task.end {
-            let formatted = end.format("%H:%M").to_string();
-            row.add_cell(Cell::new(&formatted));
-        } else {
-            row.add_cell(Cell::new(""));
-        }
+        // Add start and end info
+        let (start, end) = formatted_start_end(task, settings);
+        row.add_cell(Cell::new(start));
+        row.add_cell(Cell::new(end));
 
         table.add_row(row);
     }
 
     // Print the table.
     println!("{}", table);
+}
+
+/// Returns the formatted `start` and `end` text for a given task.
+///
+/// 1. If the start || end is today, skip the date.
+/// 2. Otherwise show the date in both.
+///
+/// If the task doesn't have a start and/or end yet, an empty string will be returned
+/// for the respective field.
+fn formatted_start_end(task: &Task, settings: &Settings) -> (String, String) {
+    // Get the start time.
+    // If the task didn't start yet, just return two empty strings.
+    let start = match task.start {
+        Some(start) => start,
+        None => return ("".into(), "".into()),
+    };
+
+    // If the task started today, just show the time.
+    // Otherwise show the full date and time.
+    let started_today = start >= Local::today().and_hms(0, 0, 0);
+    let formatted_start = if started_today {
+        start
+            .format(&settings.client.status_time_format)
+            .to_string()
+    } else {
+        start
+            .format(&settings.client.status_datetime_format)
+            .to_string()
+    };
+
+    // Get finish time, if already set. Otherwise only return the formatted start.
+    let end = match task.end {
+        Some(end) => end,
+        None => return (formatted_start, "".into()),
+    };
+
+    // If the task ended today we only show the time.
+    // In all other circumstances, we show the full date.
+    let finished_today = end >= Local::today().and_hms(0, 0, 0);
+    let formatted_end = if finished_today {
+        end.format(&settings.client.status_time_format).to_string()
+    } else {
+        end.format(&settings.client.status_datetime_format)
+            .to_string()
+    };
+
+    (formatted_start, formatted_end)
 }

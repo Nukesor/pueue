@@ -35,6 +35,7 @@ I want this project to move forward.
 
 - Use the next available id instead of constantly increasing id's.
     This results in ids being reused, on `pueue clean` or `pueue remove` of the last tasks in a queue.
+- Show the date in `pueue status` for the `start` and `end` fields, if the task didn't start today.
 - Backward compatible protocol for stable version changes with `serde_cbor`.
 - Detection of old daemon versions on update.
 - Overall better debug messages.
