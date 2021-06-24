@@ -31,7 +31,7 @@ path = "daemon/main.rs"
 
 [dependencies]
 pueue-lib = "0.16.0"
-#pueue-lib = { git = "https://github.com/Nukesor/pueue-lib", branch = "cleanup_state" }
+#pueue-lib = { git = "https://github.com/Nukesor/pueue-lib", branch = "master" }
 #pueue-lib = { path = "../../libraries/pueue-lib" }
 
 anyhow = "1"
@@ -52,7 +52,7 @@ simplelog = { version = "0.10", default-features = false }
 clap = "3.0.0-beta.2"
 clap_generate = "3.0.0-beta.2"
 crossterm = "0.20"
-comfy-table= "3"
+comfy-table= "4"
 
 handlebars = "4"
 ctrlc = { version = "3", features = ["termination"] }
