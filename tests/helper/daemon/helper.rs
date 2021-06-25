@@ -20,7 +20,7 @@ pub fn get_pid(pueue_dir: &Path) -> Result<i32> {
     let pid_file = pueue_dir.join("pueue.pid");
 
     // Give the daemon about 1 sec to boot and create the pid file.
-    let tries = 10;
+    let tries = 20;
     let mut current_try = 0;
 
     while current_try < tries {
@@ -62,7 +62,7 @@ pub fn wait_for_shutdown(pid: i32) -> Result<()> {
     };
 
     // Give the daemon about 1 sec to shutdown.
-    let tries = 10;
+    let tries = 40;
     let mut current_try = 0;
 
     while current_try < tries {
@@ -76,7 +76,7 @@ pub fn wait_for_shutdown(pid: i32) -> Result<()> {
         return Ok(());
     }
 
-    bail!("Couldn't find pid file after about 1 sec.");
+    bail!("Couldn't find pid file after about 2 sec.");
 }
 
 pub fn kill_and_print_output(mut child: Child) -> Result<()> {
