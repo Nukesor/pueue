@@ -4,10 +4,31 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.15.0] - 
 
-## [0.13.0] - 
+### Changed
 
-## Changed
+- Remove `tasks_of_group_in_statuses` and `tasks_in_statuses` in favor of generic filter functions `filter_tasks_of_group` and `filter_tasks`.
+- Move `TaskResult` into `TaskStatus::Done(TaskResult)` to prevent impossible states.
+
+## [0.14.1] - 2021-06-21
+
+### Added
+- Messages now have PartialEq for better testability
+
+## [0.14.0] - 2021-06-15
+
+### Changed
+
+- Add `ShutdownType` to `DaemonShutdownMessage`
+
+## [0.13.1] - 2021-06-04
+
+- Add `State::tasks_of_group_in_statuses`
+
+## [0.13.0] - 2021-05-28
+
+### Changed
 
 - Use `serde_cbor` instead of `bincode` to allow protocol backward compatibility between versions
 - Use the next id that's available. This results in ids being reused, on `pueue clean` or `pueue remove` of the last tasks in a queue.
@@ -19,7 +40,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Return errors via `Result` in `State` functions with io.
 - Don't write the State on every change. Users have to call `state::save()` manually from now on.
 
-## Added
+### Added
 
 - `~` is now respected in configuration paths by [dadav](https://github.com/dadav) for [Pueue #191](https://github.com/Nukesor/pueue/issues/191).
 - New function `read_last_log_file_lines` for [#196](https://github.com/Nukesor/pueue/issues/196).
@@ -28,13 +49,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Added backward compatibility tests for v0.12.2 state.
 - Added SignalMessage and Signal enum for a list of all supported Unix signals.
 
-## Fixed
+### Fixed
 
 - Only try to remove log files, if they actually exist.
 
 ## [0.12.2] - 30-03-2021
 
-## Changed
+### Changed
 
 - Clippy adjustment: Transform `&PathBuf` to `&Path` in function parameter types.
     This should be reverse-compatible, since `&PathBuf` dereferences to `&Path`.

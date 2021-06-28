@@ -164,31 +164,34 @@ impl State {
             .collect()
     }
 
-    /// This checks, whether some tasks have one of the specified statuses. \
+    /// This checks, whether some tasks match the expected filter criteria. \
     /// The first result is the list of task_ids that match these statuses. \
     /// The second result is the list of task_ids that don't match these statuses. \
     ///
     /// By default, this checks all tasks in the current state. If a list of task_ids is
     /// provided as the third parameter, only those tasks will be checked.
-    pub fn tasks_in_statuses(
+    pub fn filter_tasks<F>(
         &self,
-        statuses: Vec<TaskStatus>,
+        filter: F,
         task_ids: Option<Vec<usize>>,
-    ) -> (Vec<usize>, Vec<usize>) {
+    ) -> (Vec<usize>, Vec<usize>)
+    where
+        F: Fn(&Task) -> bool,
+    {
+        // Either use all tasks or only the exlicitely specified ones.
         let task_ids = match task_ids {
             Some(ids) => ids,
             None => self.tasks.keys().cloned().collect(),
         };
 
-        self.task_ids_in_statuses(task_ids, statuses)
+        self.filter_task_ids(task_ids, filter)
     }
 
     /// Same as [tasks_in_statuses], but only checks for tasks of a specific group.
-    pub fn tasks_of_group_in_statuses(
-        &self,
-        statuses: Vec<TaskStatus>,
-        group: &str,
-    ) -> (Vec<usize>, Vec<usize>) {
+    pub fn filter_tasks_of_group<F>(&self, filter: F, group: &str) -> (Vec<usize>, Vec<usize>)
+    where
+        F: Fn(&Task) -> bool,
+    {
         // Return empty vectors, if there's no such group.
         if !self.groups.contains_key(group) {
             return (vec![], vec![]);
@@ -202,17 +205,16 @@ impl State {
             .map(|(id, _)| *id)
             .collect();
 
-        self.task_ids_in_statuses(task_ids, statuses)
+        self.filter_task_ids(task_ids, filter)
     }
 
-    /// Internal function used to check which of the given tasks are in one of the given statuses.
+    /// Internal function used to check which of the given tasks match the provided filter.
     ///
     /// Returns a tuple of all (matching_task_ids, non_matching_task_ids).
-    fn task_ids_in_statuses(
-        &self,
-        task_ids: Vec<usize>,
-        statuses: Vec<TaskStatus>,
-    ) -> (Vec<usize>, Vec<usize>) {
+    fn filter_task_ids<F>(&self, task_ids: Vec<usize>, filter: F) -> (Vec<usize>, Vec<usize>)
+    where
+        F: Fn(&Task) -> bool,
+    {
         let mut matching = Vec::new();
         let mut mismatching = Vec::new();
 
@@ -225,8 +227,8 @@ impl State {
                     continue;
                 }
                 Some(task) => {
-                    // Check whether the task status matches the specified statuses.
-                    if statuses.contains(&task.status) {
+                    // Check whether the task status matches the filter.
+                    if filter(task) {
                         matching.push(*task_id);
                     } else {
                         mismatching.push(*task_id);
