@@ -250,7 +250,7 @@ impl State {
             .tasks
             .iter()
             .filter(|(_, task)| {
-                task.dependencies.contains(&task_id) && task.status != TaskStatus::Done
+                task.dependencies.contains(&task_id) && matches!(task.status, TaskStatus::Done(_))
             })
             .map(|(_, task)| task.id)
             .collect();
@@ -406,8 +406,7 @@ impl State {
                     task.status,
                     TaskResult::Killed
                 );
-                task.status = TaskStatus::Done;
-                task.result = Some(TaskResult::Killed);
+                task.status = TaskStatus::Done(TaskResult::Killed);
             }
 
             // Handle crash during editing of the task command.

@@ -19,7 +19,7 @@ pub enum TaskStatus {
     /// A previously running task has been paused
     Paused,
     /// Task finished. The actual result of the task is handled by the [TaskResult] enum.
-    Done,
+    Done(TaskResult),
     /// Used while the command of a task is edited (to prevent starting the task)
     Locked,
 }
@@ -61,7 +61,6 @@ pub struct Task {
     /// It's necessary, since we enter the `Locked` state during editing.
     /// However, we have to go back to the previous state after we finished editing.
     pub prev_status: TaskStatus,
-    pub result: Option<TaskResult>,
     pub start: Option<DateTime<Local>>,
     pub end: Option<DateTime<Local>>,
 }
@@ -92,7 +91,6 @@ impl Task {
             label,
             status: starting_status.clone(),
             prev_status: starting_status,
-            result: None,
             start: None,
             end: None,
         }
@@ -112,7 +110,6 @@ impl Task {
             label: task.label.clone(),
             status: TaskStatus::Queued,
             prev_status: TaskStatus::Queued,
-            result: None,
             start: None,
             end: None,
         }
@@ -125,17 +122,20 @@ impl Task {
 
     /// Whether the task's process finished.
     pub fn is_done(&self) -> bool {
-        self.status == TaskStatus::Done
+        matches!(self.status, TaskStatus::Done(_))
     }
 
     /// Check if the task errored. \
-    /// It either didn't run yet or finished successfully.
+    /// It either:
+    /// 1. Finished successfully
+    /// 2. Didn't finish yet.
     pub fn failed(&self) -> bool {
-        !matches!(self.result, None | Some(TaskResult::Success))
+        matches!(self.status, TaskStatus::Done(TaskResult::Success))
+            || !matches!(self.status, TaskStatus::Done(_))
     }
 
     pub fn is_queued(&self) -> bool {
-        self.status == TaskStatus::Queued || self.status == TaskStatus::Stashed
+        matches!(self.status, TaskStatus::Queued | TaskStatus::Stashed)
     }
 
     /// Small convenience function to set the task's group to the default group.
