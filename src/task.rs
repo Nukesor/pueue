@@ -13,7 +13,7 @@ pub enum TaskStatus {
     /// The task is queued and waiting for a free slot
     Queued,
     /// The task has been manually stashed. It won't be executed until it's manually enqueued
-    Stashed,
+    Stashed { enqueue_at: Option<DateTime<Local>> },
     /// The task is started and running
     Running,
     /// A previously running task has been paused
@@ -53,7 +53,6 @@ pub struct Task {
     pub path: String,
     pub envs: HashMap<String, String>,
     pub group: String,
-    pub enqueue_at: Option<DateTime<Local>>,
     pub dependencies: Vec<usize>,
     pub label: Option<String>,
     pub status: TaskStatus,
@@ -73,7 +72,6 @@ impl Task {
         envs: HashMap<String, String>,
         group: String,
         starting_status: TaskStatus,
-        enqueue_at: Option<DateTime<Local>>,
         dependencies: Vec<usize>,
         label: Option<String>,
     ) -> Task {
@@ -86,7 +84,6 @@ impl Task {
             path,
             envs,
             group,
-            enqueue_at,
             dependencies,
             label,
             status: starting_status.clone(),
@@ -105,7 +102,6 @@ impl Task {
             path: task.path.clone(),
             envs: task.envs.clone(),
             group: "default".to_string(),
-            enqueue_at: None,
             dependencies: Vec::new(),
             label: task.label.clone(),
             status: TaskStatus::Queued,
@@ -135,7 +131,7 @@ impl Task {
     }
 
     pub fn is_queued(&self) -> bool {
-        matches!(self.status, TaskStatus::Queued | TaskStatus::Stashed)
+        matches!(self.status, TaskStatus::Queued | TaskStatus::Stashed { .. })
     }
 
     /// Small convenience function to set the task's group to the default group.

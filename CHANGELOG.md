@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Remove `tasks_of_group_in_statuses` and `tasks_in_statuses` in favor of generic filter functions `filter_tasks_of_group` and `filter_tasks`.
 - Move `TaskResult` into `TaskStatus::Done(TaskResult)` to prevent impossible states.
+- Move `enqueue_at` into `TaskStatus::Stashed{enqueue_at: Option<DateTime<Local>>}` for better contextual data structure.
 
 ## [0.14.1] - 2021-06-21
 

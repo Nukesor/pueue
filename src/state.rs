@@ -94,13 +94,6 @@ impl State {
         };
     }
 
-    /// Set the time a specific task should be enqueued at.
-    pub fn set_enqueue_at(&mut self, id: usize, enqueue_at: Option<DateTime<Local>>) {
-        if let Some(ref mut task) = self.tasks.get_mut(&id) {
-            task.enqueue_at = enqueue_at;
-        }
-    }
-
     /// Add a new group to the daemon. \
     /// This also check if the given group already exists.
     /// Create a state.group entry and a settings.group entry, if it doesn't.
@@ -413,7 +406,7 @@ impl State {
 
             // Handle crash during editing of the task command.
             if task.status == TaskStatus::Locked {
-                task.status = TaskStatus::Stashed;
+                task.status = TaskStatus::Stashed { enqueue_at: None };
             }
 
             // Go trough all tasks and set all groups that are no longer
