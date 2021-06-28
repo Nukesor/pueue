@@ -17,7 +17,9 @@ pub fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedSta
     }
 
     let starting_status = if message.stashed || message.enqueue_at.is_some() {
-        TaskStatus::Stashed
+        TaskStatus::Stashed {
+            enqueue_at: message.enqueue_at,
+        }
     } else {
         TaskStatus::Queued
     };
@@ -42,7 +44,6 @@ pub fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedSta
         message.envs,
         message.group,
         starting_status,
-        message.enqueue_at,
         message.dependencies,
         message.label,
     );

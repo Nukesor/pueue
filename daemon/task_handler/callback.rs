@@ -19,13 +19,16 @@ impl TaskHandler {
         parameters.insert("id", task.id.to_string());
         parameters.insert("command", task.command.clone());
         parameters.insert("path", task.path.clone());
-        parameters.insert("result", task.result.clone().unwrap().to_string());
+        if let TaskStatus::Done(result) = &task.status {
+            parameters.insert("result", result.to_string());
+        } else {
+            parameters.insert("result", "None".into());
+        }
 
         let print_time = |time: Option<DateTime<Local>>| {
             time.map(|time| time.timestamp().to_string())
                 .unwrap_or_else(String::new)
         };
-        parameters.insert("enqueue", print_time(task.enqueue_at));
         parameters.insert("start", print_time(task.start));
         parameters.insert("end", print_time(task.end));
         parameters.insert("group", task.group.clone());
@@ -41,10 +44,12 @@ impl TaskHandler {
             parameters.insert("stderr", "".to_string());
         }
 
-        if let Some(TaskResult::Success) = &task.result {
-            parameters.insert("exit_code", "0".into());
-        } else if let Some(TaskResult::Failed(code)) = &task.result {
-            parameters.insert("exit_code", code.to_string());
+        if let TaskStatus::Done(result) = &task.status {
+            match result {
+                TaskResult::Success => parameters.insert("exit_code", "0".into()),
+                TaskResult::Failed(code) => parameters.insert("exit_code", code.to_string()),
+                _ => parameters.insert("exit_code", "None".into()),
+            };
         } else {
             parameters.insert("exit_code", "None".into());
         }

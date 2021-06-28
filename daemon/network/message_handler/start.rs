@@ -23,7 +23,12 @@ pub fn start(message: StartMessage, sender: &Sender<Message>, state: &SharedStat
         let response = task_response_helper(
             "Tasks are being started",
             message.task_ids,
-            vec![TaskStatus::Paused, TaskStatus::Queued, TaskStatus::Stashed],
+            |task| {
+                matches!(
+                    task.status,
+                    TaskStatus::Paused | TaskStatus::Queued | TaskStatus::Stashed { .. }
+                )
+            },
             &state,
         );
         return create_success_message(response);

@@ -19,7 +19,7 @@ pub fn kill(message: KillMessage, sender: &Sender<Message>, state: &SharedState)
         let response = task_response_helper(
             "Tasks are being killed",
             message.task_ids,
-            vec![TaskStatus::Running, TaskStatus::Paused],
+            |task| matches!(task.status, TaskStatus::Running | TaskStatus::Paused),
             &state,
         );
         return create_success_message(response);

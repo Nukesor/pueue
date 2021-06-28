@@ -173,24 +173,24 @@ fn print_table(tasks: &BTreeMap<usize, Task>, colors: &Colors, settings: &Settin
 
         // Determine the human readable task status representation and the respective color.
         let status_string = task.status.to_string();
-        let (status_text, color) = match task.status {
+        let (status_text, color) = match &task.status {
             TaskStatus::Running => (status_string, colors.green()),
             TaskStatus::Paused | TaskStatus::Locked => (status_string, colors.white()),
-            TaskStatus::Done => match &task.result {
-                Some(TaskResult::Success) => (TaskResult::Success.to_string(), colors.green()),
-                Some(TaskResult::DependencyFailed) => {
-                    ("Dependency failed".to_string(), colors.red())
-                }
-                Some(TaskResult::FailedToSpawn(_)) => ("Failed to spawn".to_string(), colors.red()),
-                Some(result) => (result.to_string(), colors.red()),
-                None => panic!("Got a 'Done' task without a task result. Please report this bug."),
+            TaskStatus::Done(result) => match result {
+                TaskResult::Success => (TaskResult::Success.to_string(), colors.green()),
+                TaskResult::DependencyFailed => ("Dependency failed".to_string(), colors.red()),
+                TaskResult::FailedToSpawn(_) => ("Failed to spawn".to_string(), colors.red()),
+                _ => (result.to_string(), colors.red()),
             },
             _ => (status_string, colors.yellow()),
         };
         row.add_cell(Cell::new(status_text).fg(color));
 
         if has_delayed_tasks {
-            if let Some(enqueue_at) = task.enqueue_at {
+            if let TaskStatus::Stashed {
+                enqueue_at: Some(enqueue_at),
+            } = task.status
+            {
                 row.add_cell(Cell::new(enqueue_at.format("%Y-%m-%d\n%H:%M:%S")));
             } else {
                 row.add_cell(Cell::new(""));
@@ -209,9 +209,11 @@ fn print_table(tasks: &BTreeMap<usize, Task>, colors: &Colors, settings: &Settin
 
         // Match the color of the exit code.
         // If the exit_code is none, it has been killed by the task handler.
-        let exit_code_cell = match task.result {
-            Some(TaskResult::Success) => Cell::new("0").fg(colors.green()),
-            Some(TaskResult::Failed(code)) => Cell::new(&code.to_string()).fg(colors.red()),
+        let exit_code_cell = match task.status {
+            TaskStatus::Done(TaskResult::Success) => Cell::new("0").fg(colors.green()),
+            TaskStatus::Done(TaskResult::Failed(code)) => {
+                Cell::new(&code.to_string()).fg(colors.red())
+            }
             _ => Cell::new(""),
         };
         row.add_cell(exit_code_cell);

@@ -23,7 +23,7 @@ pub fn pause(message: PauseMessage, sender: &Sender<Message>, state: &SharedStat
         let response = task_response_helper(
             "Tasks are being paused",
             message.task_ids,
-            vec![TaskStatus::Running],
+            |task| matches!(task.status, TaskStatus::Running),
             &state,
         );
         return create_success_message(response);

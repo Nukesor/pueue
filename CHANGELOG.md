@@ -42,6 +42,7 @@ I want this project to move forward.
 - Use tokio's async runtime and set a hardcoded limit of 4 worker threads, which is already more than enough.
 - Add a debug message, when using `pueue wait` or `pueue wait -g some_group`, but there're no tasks in the group.
 - Reworked shutdown, restoration and cleanup logic.
+- Json output of `Task` changed significantly. Its whole structure has been modified to disallow impossible/invalid states.
 
 ### Fixed
 
@@ -49,6 +50,10 @@ I want this project to move forward.
 - `pueue log --json` now works again. [#186](https://github.com/Nukesor/pueue/issues/186)
     By default, only a few lines of output will be provided, but this can be configured via the `--full` and `--lines` option.
 - Use crossbeam mpsc channels, which results in faster response time for client connections.
+
+### Removed
+
+- Removed the `enqueue` parameter from callback, as the callback is only fired on finished commands.
 
 ## [0.12.2] - 20-04-2021
 

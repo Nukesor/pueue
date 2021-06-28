@@ -28,10 +28,9 @@ impl TaskHandler {
 
                 let group = {
                     let mut task = state.tasks.get_mut(task_id).unwrap();
-                    task.status = TaskStatus::Done;
+                    task.status = TaskStatus::Done(TaskResult::Errored);
                     task.end = Some(Local::now());
-                    task.result = Some(TaskResult::Errored);
-                    self.spawn_callback(&task);
+                    self.spawn_callback(task);
 
                     task.group.clone()
                 };
@@ -62,9 +61,9 @@ impl TaskHandler {
             // Processes with exit code 0 exited successfully
             // Processes with `None` have been killed by a Signal
             let result = match exit_code {
-                Some(0) => Some(TaskResult::Success),
-                Some(exit_code) => Some(TaskResult::Failed(exit_code)),
-                None => Some(TaskResult::Killed),
+                Some(0) => TaskResult::Success,
+                Some(exit_code) => TaskResult::Failed(exit_code),
+                None => TaskResult::Killed,
             };
 
             // Update all properties on the task and get the group for later
@@ -74,15 +73,14 @@ impl TaskHandler {
                     .get_mut(task_id)
                     .expect("Task was removed before child process has finished!");
 
-                task.status = TaskStatus::Done;
+                task.status = TaskStatus::Done(result.clone());
                 task.end = Some(Local::now());
-                task.result = result.clone();
                 self.spawn_callback(task);
 
                 task.group.clone()
             };
 
-            if let Some(TaskResult::Failed(_)) = result {
+            if let TaskResult::Failed(_) = result {
                 state.handle_task_failure(group);
             }
 

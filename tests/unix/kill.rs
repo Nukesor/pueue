@@ -61,7 +61,10 @@ async fn test_kill_tasks(
     }
     // Wait until all tasks are running
     for id in 0..3 {
-        wait_for_status(shared, id, TaskStatus::Running).await?;
+        wait_for_task_condition(shared, id, |task| {
+            matches!(task.status, TaskStatus::Running)
+        })
+        .await?;
     }
 
     // Send the kill message
@@ -69,15 +72,17 @@ async fn test_kill_tasks(
 
     // Wait until the task are finished
     for id in 0..3 {
-        wait_for_status(shared, id, TaskStatus::Done).await?;
+        wait_for_task_condition(shared, id, |task| {
+            matches!(task.status, TaskStatus::Done(_))
+        })
+        .await?;
     }
 
     // Make sure the tasks have been killed
     let state = get_state(shared).await?;
     for id in 0..3 {
         let task = state.tasks.get(&id).unwrap();
-        assert_eq!(task.status, TaskStatus::Done);
-        assert_eq!(task.result, Some(TaskResult::Killed));
+        assert_eq!(task.status, TaskStatus::Done(TaskResult::Killed));
     }
 
     // Groups should be paused in specific modes.

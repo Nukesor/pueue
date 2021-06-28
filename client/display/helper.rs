@@ -5,7 +5,7 @@ use crossterm::style::{style, Attribute, Color, Stylize};
 use crossterm::tty::IsTty;
 
 use pueue_lib::state::GroupStatus;
-use pueue_lib::task::Task;
+use pueue_lib::task::{Task, TaskStatus};
 
 use super::colors::Colors;
 
@@ -38,7 +38,14 @@ pub fn style_text<T: ToString>(
 /// This function determines, which of those columns actually need to be shown.
 pub fn has_special_columns(tasks: &BTreeMap<usize, Task>) -> (bool, bool, bool) {
     // Check whether there are any delayed tasks.
-    let has_delayed_tasks = tasks.iter().any(|(_id, task)| task.enqueue_at.is_some());
+    let has_delayed_tasks = tasks.iter().any(|(_, task)| {
+        matches!(
+            task.status,
+            TaskStatus::Stashed {
+                enqueue_at: Some(_)
+            }
+        )
+    });
 
     // Check whether there are any tasks with dependencies.
     let has_dependencies = tasks

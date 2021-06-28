@@ -45,8 +45,7 @@ impl TaskHandler {
             }
 
             let task = state.tasks.get_mut(&id).unwrap();
-            task.status = TaskStatus::Done;
-            task.result = Some(TaskResult::DependencyFailed);
+            task.status = TaskStatus::Done(TaskResult::DependencyFailed);
             task.start = Some(Local::now());
             task.end = Some(Local::now());
             self.spawn_callback(task);
