@@ -217,16 +217,14 @@ impl TaskHandler {
 
         let mut changed = false;
         for (_, task) in state.tasks.iter_mut() {
-            if task.status != TaskStatus::Stashed {
-                continue;
-            }
-
-            if let Some(time) = task.enqueue_at {
+            if let TaskStatus::Stashed {
+                enqueue_at: Some(time),
+            } = task.status
+            {
                 if time <= Local::now() {
                     info!("Enqueuing delayed task : {}", task.id);
 
                     task.status = TaskStatus::Queued;
-                    task.enqueue_at = None;
                     changed = true;
                 }
             }

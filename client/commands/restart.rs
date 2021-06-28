@@ -25,20 +25,24 @@ pub async fn restart(
     edit_path: bool,
 ) -> Result<()> {
     let new_status = if stashed {
-        TaskStatus::Stashed
+        TaskStatus::Stashed { enqueue_at: None }
     } else {
         TaskStatus::Queued
     };
 
     let state = get_state(stream).await?;
+
+    // Filter to get done tasks
+    let done_filter = |task: &Task| matches!(task.status, TaskStatus::Done(_));
+
     let (matching, mismatching) = if all_failed || failed_in_group.is_some() {
         // Either all failed tasks or all failed tasks of a specific group need to be restarted.
 
         // First we have to get all finished tasks (Done)
         let (matching, _) = if let Some(group) = failed_in_group {
-            state.tasks_of_group_in_statuses(vec![TaskStatus::Done], &group)
+            state.filter_tasks_of_group(done_filter, &group)
         } else {
-            state.tasks_in_statuses(vec![TaskStatus::Done], None)
+            state.filter_tasks(done_filter, None)
         };
 
         // now pick the failed tasks
@@ -46,7 +50,7 @@ pub async fn restart(
             .into_iter()
             .filter(|task_id| {
                 let task = state.tasks.get(task_id).unwrap();
-                !matches!(task.result.as_ref().unwrap(), TaskResult::Success)
+                !matches!(task.status, TaskStatus::Done(TaskResult::Success))
             })
             .collect();
 
@@ -56,7 +60,7 @@ pub async fn restart(
     } else if task_ids.is_empty() {
         bail!("Please provide the ids of the tasks you want to restart.");
     } else {
-        state.tasks_in_statuses(vec![TaskStatus::Done], Some(task_ids))
+        state.filter_tasks(done_filter, Some(task_ids))
     };
 
     // Build a RestartMessage, if the tasks should be replaced instead of creating a copy of the

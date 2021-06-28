@@ -151,7 +151,6 @@ mod fixtures {
             HashMap::new(),
             "default".to_string(),
             status,
-            None,
             Vec::new(),
             None,
         )
@@ -166,12 +165,11 @@ mod fixtures {
             state.add_task(task);
 
             // Finished task
-            let mut task = get_stub_task("1", TaskStatus::Done);
-            task.result = Some(TaskResult::Success);
+            let task = get_stub_task("1", TaskStatus::Done(TaskResult::Success));
             state.add_task(task);
 
             // Stashed task
-            let task = get_stub_task("2", TaskStatus::Stashed);
+            let task = get_stub_task("2", TaskStatus::Stashed { enqueue_at: None });
             state.add_task(task);
 
             // Running task

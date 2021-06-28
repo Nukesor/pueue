@@ -1,7 +1,7 @@
 use pueue_lib::log::clean_log_handles;
 use pueue_lib::network::message::*;
 use pueue_lib::state::SharedState;
-use pueue_lib::task::TaskStatus;
+use pueue_lib::task::{Task, TaskStatus};
 
 use super::ok_or_failure_message;
 use crate::network::response_helper::*;
@@ -12,13 +12,16 @@ use crate::ok_or_return_failure_message;
 /// We have to ensure that those tasks aren't running!
 pub fn remove(task_ids: Vec<usize>, state: &SharedState) -> Message {
     let mut state = state.lock().unwrap();
-    let statuses = vec![
-        TaskStatus::Queued,
-        TaskStatus::Stashed,
-        TaskStatus::Done,
-        TaskStatus::Locked,
-    ];
-    let (mut not_running, mut running) = state.tasks_in_statuses(statuses, Some(task_ids));
+    let filter = |task: &Task| {
+        matches!(
+            task.status,
+            TaskStatus::Queued
+                | TaskStatus::Stashed { .. }
+                | TaskStatus::Done(_)
+                | TaskStatus::Locked
+        )
+    };
+    let (mut not_running, mut running) = state.filter_tasks(filter, Some(task_ids));
 
     // Don't delete tasks, if there are other tasks that depend on this one.
     // However, we allow to delete those tasks, if they're supposed to be deleted as well.

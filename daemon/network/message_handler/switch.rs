@@ -9,10 +9,13 @@ use crate::ok_or_return_failure_message;
 /// Switch the position of two tasks in the upcoming queue.
 /// We have to ensure that those tasks are either `Queued` or `Stashed`
 pub fn switch(message: SwitchMessage, state: &SharedState) -> Message {
-    let task_ids = vec![message.task_id_1, message.task_id_2];
-    let statuses = vec![TaskStatus::Queued, TaskStatus::Stashed];
     let mut state = state.lock().unwrap();
-    let (_, mismatching) = state.tasks_in_statuses(statuses, Some(task_ids.to_vec()));
+
+    let task_ids = vec![message.task_id_1, message.task_id_2];
+    let (_, mismatching) = state.filter_tasks(
+        |task| matches!(task.status, TaskStatus::Queued | TaskStatus::Stashed { .. }),
+        Some(task_ids.to_vec()),
+    );
     if !mismatching.is_empty() {
         return create_failure_message("Tasks have to be either queued or stashed.");
     }
@@ -74,20 +77,20 @@ mod tests {
             let task = get_stub_task("0", TaskStatus::Queued);
             state.add_task(task);
 
-            let task = get_stub_task("1", TaskStatus::Stashed);
+            let task = get_stub_task("1", TaskStatus::Stashed { enqueue_at: None });
             state.add_task(task);
 
             let task = get_stub_task("2", TaskStatus::Queued);
             state.add_task(task);
 
-            let task = get_stub_task("3", TaskStatus::Stashed);
+            let task = get_stub_task("3", TaskStatus::Stashed { enqueue_at: None });
             state.add_task(task);
 
             let mut task = get_stub_task("4", TaskStatus::Queued);
             task.dependencies = vec![0, 3];
             state.add_task(task);
 
-            let mut task = get_stub_task("5", TaskStatus::Stashed);
+            let mut task = get_stub_task("5", TaskStatus::Stashed { enqueue_at: None });
             task.dependencies = vec![1];
             state.add_task(task);
 

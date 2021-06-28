@@ -2,7 +2,7 @@ use std::sync::MutexGuard;
 
 use pueue_lib::network::message::{create_failure_message, Message};
 use pueue_lib::state::State;
-use pueue_lib::task::TaskStatus;
+use pueue_lib::task::Task;
 
 /// Check whether the given group exists. Return an failure message if it doesn't.
 pub fn ensure_group_exists(state: &MutexGuard<State>, group: &str) -> Result<(), Message> {
@@ -17,14 +17,17 @@ pub fn ensure_group_exists(state: &MutexGuard<State>, group: &str) -> Result<(),
     Ok(())
 }
 
-pub fn task_response_helper(
+pub fn task_response_helper<F>(
     message: &str,
     task_ids: Vec<usize>,
-    statuses: Vec<TaskStatus>,
+    filter: F,
     state: &MutexGuard<State>,
-) -> String {
+) -> String
+where
+    F: Fn(&Task) -> bool,
+{
     // Get all matching/mismatching task_ids for all given ids and statuses.
-    let (matching, mismatching) = state.tasks_in_statuses(statuses, Some(task_ids));
+    let (matching, mismatching) = state.filter_tasks(filter, Some(task_ids));
 
     compile_task_response(message, matching, mismatching)
 }

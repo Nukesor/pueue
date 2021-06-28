@@ -12,7 +12,7 @@ pub fn clean(message: CleanMessage, state: &SharedState) -> Message {
     let mut state = state.lock().unwrap();
     ok_or_return_failure_message!(state.backup());
 
-    let (matching, _) = state.tasks_in_statuses(vec![TaskStatus::Done], None);
+    let (matching, _) = state.filter_tasks(|task| matches!(task.status, TaskStatus::Done(_)), None);
 
     for task_id in &matching {
         // Ensure the task is removable, i.e. there are no dependant tasks.
@@ -22,7 +22,7 @@ pub fn clean(message: CleanMessage, state: &SharedState) -> Message {
         // Check if we should ignore this task, if only successful tasks should be removed.
         if message.successful_only {
             if let Some(task) = state.tasks.get(task_id) {
-                if task.result != Some(TaskResult::Success) {
+                if !matches!(task.status, TaskStatus::Done(TaskResult::Success)) {
                     continue;
                 }
             }
@@ -57,28 +57,25 @@ mod tests {
 
         {
             let mut state = state.lock().unwrap();
-            let mut task = get_stub_task("0", TaskStatus::Done);
-            task.result = Some(TaskResult::Success);
+            let task = get_stub_task("0", TaskStatus::Done(TaskResult::Success));
             state.add_task(task);
 
-            let mut task = get_stub_task("1", TaskStatus::Done);
-            task.result = Some(TaskResult::Failed(1));
+            let task = get_stub_task("1", TaskStatus::Done(TaskResult::Failed(1)));
             state.add_task(task);
 
-            let mut task = get_stub_task("2", TaskStatus::Done);
-            task.result = Some(TaskResult::FailedToSpawn("error".to_string()));
+            let task = get_stub_task(
+                "2",
+                TaskStatus::Done(TaskResult::FailedToSpawn("error".to_string())),
+            );
             state.add_task(task);
 
-            let mut task = get_stub_task("3", TaskStatus::Done);
-            task.result = Some(TaskResult::Killed);
+            let task = get_stub_task("3", TaskStatus::Done(TaskResult::Killed));
             state.add_task(task);
 
-            let mut task = get_stub_task("4", TaskStatus::Done);
-            task.result = Some(TaskResult::Errored);
+            let task = get_stub_task("4", TaskStatus::Done(TaskResult::Errored));
             state.add_task(task);
 
-            let mut task = get_stub_task("5", TaskStatus::Done);
-            task.result = Some(TaskResult::DependencyFailed);
+            let task = get_stub_task("5", TaskStatus::Done(TaskResult::DependencyFailed));
             state.add_task(task);
         }
 

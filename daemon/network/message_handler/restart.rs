@@ -44,7 +44,7 @@ fn restart(state: &mut MutexGuard<State>, to_restart: &TasksToRestart, stashed: 
 
     // Either enqueue the task or stash it.
     task.status = if stashed {
-        TaskStatus::Stashed
+        TaskStatus::Stashed { enqueue_at: None }
     } else {
         TaskStatus::Queued
     };
@@ -55,7 +55,6 @@ fn restart(state: &mut MutexGuard<State>, to_restart: &TasksToRestart, stashed: 
     task.path = to_restart.path.clone();
 
     // Reset all variables of any previous run.
-    task.result = None;
     task.start = None;
     task.end = None;
 }

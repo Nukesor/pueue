@@ -97,9 +97,10 @@ pub fn print_logs(
 
         // Add a newline if there is another task that's going to be printed.
         if let Some((_, task_log)) = task_iter.peek() {
-            if vec![TaskStatus::Done, TaskStatus::Running, TaskStatus::Paused]
-                .contains(&task_log.task.status)
-            {
+            if matches!(
+                &task_log.task.status,
+                TaskStatus::Done(_) | TaskStatus::Running | TaskStatus::Paused,
+            ) {
                 println!();
             }
         }
@@ -121,7 +122,10 @@ fn print_log(
 ) {
     let task = &message.task;
     // We only show logs of finished or running tasks.
-    if !vec![TaskStatus::Done, TaskStatus::Running, TaskStatus::Paused].contains(&task.status) {
+    if !matches!(
+        task.status,
+        TaskStatus::Done(_) | TaskStatus::Running | TaskStatus::Paused
+    ) {
         return;
     }
 
@@ -141,20 +145,20 @@ fn print_task_info(task: &Task, colors: &Colors) {
     // Print task id and exit code.
     let task_cell = Cell::new(format!("Task {}: ", task.id)).add_attribute(Attribute::Bold);
 
-    let (exit_status, color) = match &task.result {
-        Some(TaskResult::Success) => ("completed successfully".into(), colors.green()),
-        Some(TaskResult::Failed(exit_code)) => {
-            (format!("failed with exit code {}", exit_code), colors.red())
-        }
-        Some(TaskResult::FailedToSpawn(err)) => (format!("failed to spawn: {}", err), colors.red()),
-        Some(TaskResult::Killed) => ("killed by system or user".into(), colors.red()),
-        Some(TaskResult::Errored) => ("some IO error.\n Check daemon log.".into(), colors.red()),
-        Some(TaskResult::DependencyFailed) => ("dependency failed".into(), colors.red()),
-        None => match &task.status {
-            TaskStatus::Paused => ("paused".into(), colors.white()),
-            TaskStatus::Running => ("running".into(), colors.yellow()),
-            _ => (task.status.to_string(), colors.white()),
+    let (exit_status, color) = match &task.status {
+        TaskStatus::Paused => ("paused".into(), colors.white()),
+        TaskStatus::Running => ("running".into(), colors.yellow()),
+        TaskStatus::Done(result) => match result {
+            TaskResult::Success => ("completed successfully".into(), colors.green()),
+            TaskResult::Failed(exit_code) => {
+                (format!("failed with exit code {}", exit_code), colors.red())
+            }
+            TaskResult::FailedToSpawn(err) => (format!("failed to spawn: {}", err), colors.red()),
+            TaskResult::Killed => ("killed by system or user".into(), colors.red()),
+            TaskResult::Errored => ("some IO error.\n Check daemon log.".into(), colors.red()),
+            TaskResult::DependencyFailed => ("dependency failed".into(), colors.red()),
         },
+        _ => (task.status.to_string(), colors.white()),
     };
     let status_cell = Cell::new(exit_status).fg(color);
 

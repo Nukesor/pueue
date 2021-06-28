@@ -29,7 +29,7 @@ impl TaskHandler {
         // Walk through all tasks and save the number of running tasks by group
         for (_, task) in state.tasks.iter() {
             // We are only interested in currently running tasks.
-            if ![TaskStatus::Running, TaskStatus::Paused].contains(&task.status) {
+            if !matches!(task.status, TaskStatus::Running | TaskStatus::Paused) {
                 continue;
             }
 
@@ -77,7 +77,7 @@ impl TaskHandler {
                 task.dependencies
                     .iter()
                     .flat_map(|id| state.tasks.get(id))
-                    .all(|task| task.status == TaskStatus::Done && !task.failed())
+                    .all(|task| matches!(task.status, TaskStatus::Done(TaskResult::Success)))
             })
             .map(|(id, _)| *id)
     }
@@ -88,9 +88,10 @@ impl TaskHandler {
         // Check if the task exists and can actually be spawned. Otherwise do an early return.
         match state.tasks.get(&task_id) {
             Some(task) => {
-                if !vec![TaskStatus::Stashed, TaskStatus::Queued, TaskStatus::Paused]
-                    .contains(&task.status)
-                {
+                if !matches!(
+                    &task.status,
+                    TaskStatus::Stashed { .. } | TaskStatus::Queued | TaskStatus::Paused
+                ) {
                     info!("Tried to start task with status: {}", task.status);
                     return;
                 }
@@ -140,11 +141,9 @@ impl TaskHandler {
                 // Update all necessary fields on the task.
                 let group = {
                     let task = state.tasks.get_mut(&task_id).unwrap();
-                    task.status = TaskStatus::Done;
-                    task.result = Some(TaskResult::FailedToSpawn(error));
+                    task.status = TaskStatus::Done(TaskResult::FailedToSpawn(error));
                     task.start = Some(Local::now());
                     task.end = Some(Local::now());
-                    task.enqueue_at = None;
                     self.spawn_callback(task);
 
                     task.group.clone()
@@ -161,7 +160,6 @@ impl TaskHandler {
 
         task.start = Some(Local::now());
         task.status = TaskStatus::Running;
-        task.enqueue_at = None;
 
         info!("Started task: {}", task.command);
         ok_or_shutdown!(self, state.save());

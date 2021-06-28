@@ -106,7 +106,9 @@ pub async fn wait(
         // We can stop waiting, if every task is on `Done`
         // Always check the actual task list instead of the watched_tasks list.
         // Otherwise we get locked if tasks get removed.
-        let all_finished = tasks.iter().all(|task| task.status == TaskStatus::Done);
+        let all_finished = tasks
+            .iter()
+            .all(|task| matches!(task.status, TaskStatus::Done(_)));
 
         if all_finished {
             break;
@@ -127,16 +129,16 @@ fn log_status_change(
     colors: &Colors,
 ) {
     // Finishing tasks get some special handling
-    if task.status == TaskStatus::Done {
-        let text = match task.result {
-            Some(TaskResult::Success) => {
+    if let TaskStatus::Done(result) = &task.status {
+        let text = match result {
+            TaskResult::Success => {
                 format!(
                     "Task {} succeeded with {}",
                     style_text(task.id, None, Some(Attribute::Bold)),
                     style_text("0", Some(colors.green()), None)
                 )
             }
-            Some(TaskResult::DependencyFailed) => {
+            TaskResult::DependencyFailed => {
                 format!(
                     "Task {} failed due to {}",
                     style_text(task.id, None, Some(Attribute::Bold)),
@@ -144,35 +146,34 @@ fn log_status_change(
                 )
             }
 
-            Some(TaskResult::FailedToSpawn(_)) => {
+            TaskResult::FailedToSpawn(_) => {
                 format!(
                     "Task {} {}",
                     style_text(task.id, None, Some(Attribute::Bold)),
                     style_text("failed to spawn", Some(colors.red()), None)
                 )
             }
-            Some(TaskResult::Failed(exit_code)) => {
+            TaskResult::Failed(exit_code) => {
                 format!(
                     "Task {} failed with {}",
                     style_text(task.id, None, Some(Attribute::Bold)),
                     style_text(exit_code, Some(colors.red()), Some(Attribute::Bold))
                 )
             }
-            Some(TaskResult::Errored) => {
+            TaskResult::Errored => {
                 format!(
                     "Task {} experienced an {}.",
                     style_text(task.id, None, Some(Attribute::Bold)),
                     style_text("IO error", Some(colors.red()), Some(Attribute::Bold))
                 )
             }
-            Some(TaskResult::Killed) => {
+            TaskResult::Killed => {
                 format!(
                     "Task {} has been {}",
                     style_text(task.id, None, Some(Attribute::Bold)),
                     style_text("killed", Some(colors.red()), None)
                 )
             }
-            None => panic!("Got a 'Done' task without a task result. Please report this bug."),
         };
         println!("{} - {}", current_time, text);
 
@@ -192,7 +193,7 @@ fn log_status_change(
 
 fn get_color_for_status(task_status: &TaskStatus, colors: &Colors) -> Color {
     match task_status {
-        TaskStatus::Running | TaskStatus::Done => colors.green(),
+        TaskStatus::Running | TaskStatus::Done(_) => colors.green(),
         TaskStatus::Paused | TaskStatus::Locked => colors.white(),
         _ => colors.white(),
     }
