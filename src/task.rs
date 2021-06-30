@@ -126,8 +126,10 @@ impl Task {
     /// 1. Finished successfully
     /// 2. Didn't finish yet.
     pub fn failed(&self) -> bool {
-        matches!(self.status, TaskStatus::Done(TaskResult::Success))
-            || !matches!(self.status, TaskStatus::Done(_))
+        match &self.status {
+            TaskStatus::Done(result) => !matches!(result, TaskResult::Success),
+            _ => false,
+        }
     }
 
     pub fn is_queued(&self) -> bool {
