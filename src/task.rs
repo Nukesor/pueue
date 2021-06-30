@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use chrono::prelude::*;
+use serde::{Deserialize, Deserializer};
 use serde_derive::{Deserialize, Serialize};
 use strum_macros::Display;
 
@@ -13,6 +14,7 @@ pub enum TaskStatus {
     /// The task is queued and waiting for a free slot
     Queued,
     /// The task has been manually stashed. It won't be executed until it's manually enqueued
+    #[serde(deserialize_with = "enqueue_at_or_default")]
     Stashed { enqueue_at: Option<DateTime<Local>> },
     /// The task is started and running
     Running,
@@ -22,6 +24,15 @@ pub enum TaskStatus {
     Done(TaskResult),
     /// Used while the command of a task is edited (to prevent starting the task)
     Locked,
+}
+
+fn enqueue_at_or_default<'de, T, D>(deserializer: D) -> Result<T, D::Error>
+where
+    T: Deserialize<'de> + Default,
+    D: Deserializer<'de>,
+{
+    let v: Value = Deserialize::deserialize(deserializer)?;
+    Ok(T::deserialize(v).unwrap_or_default())
 }
 
 /// This enum represents the exit status of an actually spawned program.
