@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [0.15.0] - 
 
+Several non-backward compatible breaking API changes.
+
 ### Changed
 
 - Remove `tasks_of_group_in_statuses` and `tasks_in_statuses` in favor of generic filter functions `filter_tasks_of_group` and `filter_tasks`.
