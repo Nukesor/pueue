@@ -88,14 +88,14 @@ jobs:
 
       - name: cargo fmt
         uses: actions-rs/cargo@v1
-        if: matrix.os == 'ubuntu-latest' && matrix.target == 'x86_64-unknown-linux-musl'
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.target == 'x86_64-unknown-linux-gnu' }}
         with:
           command: fmt
           args: --all -- --check
 
       - name: cargo clippy
         uses: actions-rs/cargo@v1
-        if: matrix.os == 'ubuntu-latest' && matrix.target == 'x86_64-unknown-linux-musl'
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.target == 'x86_64-unknown-linux-gnu' }}
         with:
           command: clippy
           args: -- -D warnings
