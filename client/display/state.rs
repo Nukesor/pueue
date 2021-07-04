@@ -49,7 +49,7 @@ fn print_single_group(
     let tasks = sorted_tasks.entry(group.clone()).or_default();
     let headline = get_group_headline(
         &group,
-        &state.groups.get(&group).unwrap(),
+        state.groups.get(&group).unwrap(),
         *state.settings.daemon.groups.get(&group).unwrap(),
         colors,
     );
@@ -63,7 +63,7 @@ fn print_single_group(
         );
         return;
     }
-    print_table(&tasks, colors, settings);
+    print_table(tasks, colors, settings);
 }
 
 fn print_all_groups(
@@ -77,8 +77,8 @@ fn print_all_groups(
     // see most of the time anyway.
     if state.tasks.is_empty() {
         let headline = get_group_headline(
-            &"default",
-            &state.groups.get("default").unwrap(),
+            "default",
+            state.groups.get("default").unwrap(),
             *state.settings.daemon.groups.get("default").unwrap(),
             colors,
         );
@@ -91,13 +91,13 @@ fn print_all_groups(
     if sorted_tasks.get("default").is_some() {
         let tasks = sorted_tasks.get("default").unwrap();
         let headline = get_group_headline(
-            &"default",
-            &state.groups.get("default").unwrap(),
+            "default",
+            state.groups.get("default").unwrap(),
             *state.settings.daemon.groups.get("default").unwrap(),
             colors,
         );
         println!("{}", headline);
-        print_table(&tasks, colors, settings);
+        print_table(tasks, colors, settings);
 
         // Add a newline if there are further groups to be printed
         if sorted_tasks.len() > 1 {
@@ -115,13 +115,13 @@ fn print_all_groups(
         }
 
         let headline = get_group_headline(
-            &group,
-            &state.groups.get(group).unwrap(),
+            group,
+            state.groups.get(group).unwrap(),
             *state.settings.daemon.groups.get(group).unwrap(),
             colors,
         );
         println!("{}", headline);
-        print_table(&tasks, colors, settings);
+        print_table(tasks, colors, settings);
 
         // Add a newline between groups
         if sorted_iter.peek().is_some() {

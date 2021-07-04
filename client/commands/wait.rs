@@ -99,7 +99,7 @@ pub async fn wait(
             // Update the (previous) task status and log any changes
             watched_tasks.insert(task.id, task.status.clone());
             if !quiet {
-                log_status_change(&current_time, previous_status, &task, colors);
+                log_status_change(&current_time, previous_status, task, colors);
             }
         }
 

@@ -49,7 +49,7 @@ impl TaskHandler {
             task.result = Some(TaskResult::DependencyFailed);
             task.start = Some(Local::now());
             task.end = Some(Local::now());
-            self.spawn_callback(&task);
+            self.spawn_callback(task);
         }
     }
 }

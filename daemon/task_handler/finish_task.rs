@@ -27,7 +27,7 @@ impl TaskHandler {
                     .expect("Errored child went missing while handling finished task.");
 
                 let group = {
-                    let mut task = state.tasks.get_mut(&task_id).unwrap();
+                    let mut task = state.tasks.get_mut(task_id).unwrap();
                     task.status = TaskStatus::Done;
                     task.end = Some(Local::now());
                     task.result = Some(TaskResult::Errored);
@@ -71,13 +71,13 @@ impl TaskHandler {
             let group = {
                 let mut task = state
                     .tasks
-                    .get_mut(&task_id)
+                    .get_mut(task_id)
                     .expect("Task was removed before child process has finished!");
 
                 task.status = TaskStatus::Done;
                 task.end = Some(Local::now());
                 task.result = result.clone();
-                self.spawn_callback(&task);
+                self.spawn_callback(task);
 
                 task.group.clone()
             };

@@ -145,7 +145,7 @@ impl TaskHandler {
                     task.start = Some(Local::now());
                     task.end = Some(Local::now());
                     task.enqueue_at = None;
-                    self.spawn_callback(&task);
+                    self.spawn_callback(task);
 
                     task.group.clone()
                 };

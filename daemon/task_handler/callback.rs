@@ -49,7 +49,7 @@ impl TaskHandler {
             parameters.insert("exit_code", "None".into());
         }
 
-        let callback_command = match handlebars.render_template(&callback, &parameters) {
+        let callback_command = match handlebars.render_template(callback, &parameters) {
             Ok(callback_command) => callback_command,
             Err(err) => {
                 error!(
