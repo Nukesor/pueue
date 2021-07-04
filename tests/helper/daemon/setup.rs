@@ -106,6 +106,8 @@ pub fn base_setup() -> Result<(Settings, TempDir)> {
         show_expanded_aliases: false,
         dark_mode: false,
         max_status_lines: Some(15),
+        status_time_format: "%H:%M:%S".into(),
+        status_datetime_format: "%Y-%m-%d\n%H:%M:%S".into(),
     };
 
     let mut groups = BTreeMap::new();
