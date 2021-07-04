@@ -81,22 +81,22 @@ jobs:
 
       - name: cargo test
         uses: actions-rs/cargo@v1
+        if: matrix.cross == false
         with:
           command: test
           args: --target=${{ matrix.target }}
           use-cross: ${{ matrix.cross }}
-        if: matrix.cross == false
 
       - name: cargo fmt
         uses: actions-rs/cargo@v1
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.target == 'x86_64-unknown-linux-musl' }}
         with:
           command: fmt
           args: --all -- --check
-          if: matrix.os == 'ubuntu-latest' && matrix.target == 'x86_64-unknown-linux-musl'
 
       - name: cargo clippy
         uses: actions-rs/cargo@v1
-        if: matrix.os == 'ubuntu-latest' && matrix.target == 'x86_64-unknown-linux-musl'
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.target == 'x86_64-unknown-linux-musl' }}
         with:
           command: clippy
           args: -- -D warnings
