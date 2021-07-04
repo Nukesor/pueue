@@ -1,10 +1,7 @@
+use std::collections::{BTreeMap, HashMap};
 use std::path::PathBuf;
 use std::process::Child;
 use std::process::Stdio;
-use std::{
-    collections::{BTreeMap, HashMap},
-    sync::MutexGuard,
-};
 
 use anyhow::{Context, Result};
 use chrono::prelude::*;
@@ -15,11 +12,12 @@ use log::{debug, error, info};
 use pueue_lib::log::*;
 use pueue_lib::network::message::*;
 use pueue_lib::network::protocol::socket_cleanup;
-use pueue_lib::state::{GroupStatus, SharedState, State};
+use pueue_lib::state::{GroupStatus, SharedState};
 use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
 use crate::pid::cleanup_pid_file;
 use crate::platform::process_helper::*;
+use crate::state_helper::{reset_state, save_state};
 
 mod callback;
 /// Logic for handling dependencies
@@ -31,8 +29,6 @@ mod finish_task;
 mod messages;
 /// Everything regarding actually spawning task processes.
 mod spawn_task;
-
-type LockedState<'a> = MutexGuard<'a, State>;
 
 /// This is a little helper macro, which looks at a critical result and shuts the
 /// TaskHandler down, if an error occurred. This is mostly used if the state cannot.
@@ -192,7 +188,7 @@ impl TaskHandler {
         }
 
         let mut state = self.state.lock().unwrap();
-        if let Err(error) = state.reset() {
+        if let Err(error) = reset_state(&mut state) {
             error!("Failed to reset state with error: {:?}", error);
         };
 
@@ -231,7 +227,7 @@ impl TaskHandler {
         }
         // Save the state if a task has been enqueued
         if changed {
-            ok_or_shutdown!(self, state.save());
+            ok_or_shutdown!(self, save_state(&state));
         }
     }
 

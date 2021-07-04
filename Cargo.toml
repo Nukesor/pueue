@@ -30,8 +30,8 @@ name = "pueued"
 path = "daemon/main.rs"
 
 [dependencies]
-pueue-lib = "0.15.0"
-#pueue-lib = { git = "https://github.com/Nukesor/pueue-lib", branch = "master" }
+pueue-lib = "0.16.0"
+#pueue-lib = { git = "https://github.com/Nukesor/pueue-lib", branch = "cleanup_state" }
 #pueue-lib = { path = "../../libraries/pueue-lib" }
 
 anyhow = "1"

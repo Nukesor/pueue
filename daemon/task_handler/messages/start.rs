@@ -4,7 +4,8 @@ use pueue_lib::state::GroupStatus;
 use pueue_lib::task::TaskStatus;
 
 use crate::ok_or_shutdown;
-use crate::task_handler::{LockedState, ProcessAction, Shutdown, TaskHandler};
+use crate::state_helper::{save_state, LockedState};
+use crate::task_handler::{ProcessAction, Shutdown, TaskHandler};
 
 impl TaskHandler {
     /// Start specific tasks or groups.
@@ -30,7 +31,7 @@ impl TaskHandler {
                     self.start_process(*id, &mut state);
                 }
             }
-            ok_or_shutdown!(self, state.save());
+            ok_or_shutdown!(self, save_state(&state));
             return;
         }
 
@@ -54,7 +55,9 @@ impl TaskHandler {
             state.groups.insert(group.clone(), GroupStatus::Running);
             info!("Resuming group {}", &group);
 
-            state.task_ids_in_group_with_stati(&group, vec![TaskStatus::Paused])
+            let (matching, _) = state
+                .filter_tasks_of_group(|task| matches!(task.status, TaskStatus::Paused), &group);
+            matching
         };
 
         // Resume all specified paused tasks
@@ -62,7 +65,7 @@ impl TaskHandler {
             self.continue_task(&mut state, id, children);
         }
 
-        ok_or_shutdown!(self, state.save());
+        ok_or_shutdown!(self, save_state(&state));
     }
 
     /// Send a start signal to a paused task to continue execution.

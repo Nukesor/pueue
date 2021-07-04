@@ -4,6 +4,7 @@ use pueue_lib::task::TaskStatus;
 
 use super::ok_or_failure_message;
 use crate::ok_or_return_failure_message;
+use crate::state_helper::save_state;
 
 /// Invoked when calling `pueue switch`.
 /// Switch the position of two tasks in the upcoming queue.
@@ -50,7 +51,7 @@ pub fn switch(message: SwitchMessage, state: &SharedState) -> Message {
         }
     }
 
-    ok_or_return_failure_message!(state.save());
+    ok_or_return_failure_message!(save_state(&state));
     create_success_message("Tasks have been switched")
 }
 

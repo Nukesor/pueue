@@ -1,6 +1,7 @@
 use super::*;
 
 use crate::ok_or_shutdown;
+use crate::state_helper::{pause_on_failure, save_state};
 
 impl TaskHandler {
     /// Check whether there are any finished processes
@@ -36,7 +37,7 @@ impl TaskHandler {
                 };
                 error!("Child {} failed with io::Error: {:?}", task_id, error);
 
-                state.handle_task_failure(group);
+                pause_on_failure(&mut state, group);
                 continue;
             }
 
@@ -81,7 +82,7 @@ impl TaskHandler {
             };
 
             if let TaskResult::Failed(_) = result {
-                state.handle_task_failure(group);
+                pause_on_failure(&mut state, group);
             }
 
             // Already remove the output files, if the daemon is being reset anyway
@@ -90,7 +91,7 @@ impl TaskHandler {
             }
         }
 
-        ok_or_shutdown!(self, state.save());
+        ok_or_shutdown!(self, save_state(&state));
     }
 
     /// Gather all finished tasks and sort them by finished and errored.
