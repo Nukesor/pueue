@@ -40,6 +40,9 @@ async fn test_graceful_shutdown() -> Result<()> {
     assert_success(shutdown_daemon(&settings.shared).await?);
     wait_for_shutdown(child.id().try_into()?)?;
 
+    // Sleep for 500ms and give the daemon time to shut down
+    sleep_ms(500);
+
     let result = child.try_wait();
     assert!(matches!(result, Ok(Some(_))));
     let code = result.unwrap().unwrap();
