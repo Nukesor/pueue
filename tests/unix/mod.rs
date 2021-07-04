@@ -5,3 +5,4 @@ mod restore;
 /// Tests for shutting down the daemon
 mod shutdown;
 mod start;
+mod stashed;
