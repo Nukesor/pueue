@@ -4,7 +4,8 @@ use pueue_lib::state::GroupStatus;
 use pueue_lib::task::TaskStatus;
 
 use crate::ok_or_shutdown;
-use crate::task_handler::{LockedState, ProcessAction, Shutdown, TaskHandler};
+use crate::state_helper::{save_state, LockedState};
+use crate::task_handler::{ProcessAction, Shutdown, TaskHandler};
 
 impl TaskHandler {
     /// Pause specific tasks or groups.
@@ -49,7 +50,9 @@ impl TaskHandler {
             state.groups.insert(group.clone(), GroupStatus::Paused);
             info!("Pausing group {}", &group);
 
-            state.task_ids_in_group_with_stati(&group, vec![TaskStatus::Running])
+            let (matching, _) = state
+                .filter_tasks_of_group(|task| matches!(task.status, TaskStatus::Running), &group);
+            matching
         };
 
         // Pause all tasks that were found.
@@ -59,7 +62,7 @@ impl TaskHandler {
             }
         }
 
-        ok_or_shutdown!(self, state.save());
+        ok_or_shutdown!(self, save_state(&state));
     }
     /// Pause a specific task.
     /// Send a signal to the process to actually pause the OS process.

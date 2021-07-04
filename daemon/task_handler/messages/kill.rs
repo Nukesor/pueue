@@ -6,6 +6,7 @@ use pueue_lib::task::TaskStatus;
 
 use crate::ok_or_shutdown;
 use crate::platform::process_helper::*;
+use crate::state_helper::save_state;
 use crate::task_handler::{Shutdown, TaskHandler};
 
 impl TaskHandler {
@@ -58,8 +59,11 @@ impl TaskHandler {
             }
             info!("Killing tasks of group {}", &group);
 
-            state
-                .task_ids_in_group_with_stati(&group, vec![TaskStatus::Running, TaskStatus::Paused])
+            let (matching, _) = state.filter_tasks_of_group(
+                |task| matches!(task.status, TaskStatus::Running | TaskStatus::Paused),
+                &group,
+            );
+            matching
         };
 
         for task_id in task_ids {
@@ -70,7 +74,7 @@ impl TaskHandler {
             }
         }
 
-        ok_or_shutdown!(self, state.save());
+        ok_or_shutdown!(self, save_state(&state));
     }
 
     /// Send a signal to a specific child process.

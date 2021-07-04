@@ -1,6 +1,7 @@
 use super::*;
 
 use crate::ok_or_shutdown;
+use crate::state_helper::{pause_on_failure, save_state, LockedState};
 
 impl TaskHandler {
     /// See if we can start a new queued task.
@@ -149,8 +150,8 @@ impl TaskHandler {
                     task.group.clone()
                 };
 
-                state.handle_task_failure(group);
-                ok_or_shutdown!(self, state.save());
+                pause_on_failure(state, group);
+                ok_or_shutdown!(self, save_state(state));
                 return;
             }
         };
@@ -162,6 +163,6 @@ impl TaskHandler {
         task.status = TaskStatus::Running;
 
         info!("Started task: {}", task.command);
-        ok_or_shutdown!(self, state.save());
+        ok_or_shutdown!(self, save_state(state));
     }
 }

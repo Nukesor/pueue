@@ -2,6 +2,7 @@ use pueue_lib::network::message::*;
 use pueue_lib::state::SharedState;
 
 use crate::network::response_helper::ensure_group_exists;
+use crate::state_helper::{save_settings, save_state};
 
 use super::*;
 use crate::ok_or_return_failure_message;
@@ -22,8 +23,8 @@ pub fn group(message: GroupMessage, state: &SharedState) -> Message {
         state.create_group(&group);
 
         // Save the state and the settings file.
-        ok_or_return_failure_message!(state.save());
-        if let Err(error) = state.save_settings() {
+        ok_or_return_failure_message!(save_state(&state));
+        if let Err(error) = save_settings(&state) {
             return create_failure_message(format!(
                 "Failed while saving the config file: {}",
                 error
@@ -44,8 +45,8 @@ pub fn group(message: GroupMessage, state: &SharedState) -> Message {
         }
 
         // Save the state and the settings file.
-        ok_or_return_failure_message!(state.save());
-        if let Err(error) = state.save_settings() {
+        ok_or_return_failure_message!(save_state(&state));
+        if let Err(error) = save_settings(&state) {
             return create_failure_message(format!(
                 "Failed while saving the config file: {}",
                 error

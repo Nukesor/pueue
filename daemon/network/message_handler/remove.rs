@@ -6,6 +6,7 @@ use pueue_lib::task::{Task, TaskStatus};
 use super::ok_or_failure_message;
 use crate::network::response_helper::*;
 use crate::ok_or_return_failure_message;
+use crate::state_helper::{is_task_removable, save_state};
 
 /// Invoked when calling `pueue remove`.
 /// Remove tasks from the queue.
@@ -26,7 +27,7 @@ pub fn remove(task_ids: Vec<usize>, state: &SharedState) -> Message {
     // Don't delete tasks, if there are other tasks that depend on this one.
     // However, we allow to delete those tasks, if they're supposed to be deleted as well.
     for task_id in not_running.clone() {
-        if !state.is_task_removable(&task_id, &not_running) {
+        if !is_task_removable(&state, &task_id, &not_running) {
             running.push(task_id);
             not_running.retain(|id| id != &task_id);
         };
@@ -38,7 +39,7 @@ pub fn remove(task_ids: Vec<usize>, state: &SharedState) -> Message {
         clean_log_handles(*task_id, &state.settings.shared.pueue_directory());
     }
 
-    ok_or_return_failure_message!(state.save());
+    ok_or_return_failure_message!(save_state(&state));
 
     let text = "Tasks removed from list";
     let response = compile_task_response(text, not_running, running);

@@ -5,18 +5,19 @@ use pueue_lib::task::{TaskResult, TaskStatus};
 
 use super::*;
 use crate::ok_or_return_failure_message;
+use crate::state_helper::{is_task_removable, save_state};
 
 /// Invoked when calling `pueue clean`.
 /// Remove all failed or done tasks from the state.
 pub fn clean(message: CleanMessage, state: &SharedState) -> Message {
     let mut state = state.lock().unwrap();
-    ok_or_return_failure_message!(state.backup());
+    ok_or_return_failure_message!(save_state(&state));
 
     let (matching, _) = state.filter_tasks(|task| matches!(task.status, TaskStatus::Done(_)), None);
 
     for task_id in &matching {
         // Ensure the task is removable, i.e. there are no dependant tasks.
-        if !state.is_task_removable(task_id, &[]) {
+        if !is_task_removable(&state, task_id, &[]) {
             continue;
         }
         // Check if we should ignore this task, if only successful tasks should be removed.
@@ -31,7 +32,7 @@ pub fn clean(message: CleanMessage, state: &SharedState) -> Message {
         clean_log_handles(*task_id, &state.settings.shared.pueue_directory());
     }
 
-    ok_or_return_failure_message!(state.save());
+    ok_or_return_failure_message!(save_state(&state));
 
     if message.successful_only {
         create_success_message("All successfully finished tasks have been removed")
