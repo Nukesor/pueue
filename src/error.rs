@@ -10,15 +10,6 @@ pub enum Error {
     #[error("Invalid or malformed certificate: {}", .0)]
     CertificateFailure(String),
 
-    #[error("Couldn't write state. {}", .0)]
-    StateSave(String),
-
-    #[error("Couldn't restore previous state. {}", .0)]
-    StateRestore(String),
-
-    #[error("Couldn't deserialize previous state:\n\n{}", .0)]
-    StateDeserialization(String),
-
     #[error("{}", .0)]
     Connection(String),
 

@@ -91,7 +91,7 @@ pub async fn get_client_stream(settings: &Shared) -> Result<GenericStream, Error
     })?;
 
     // Get the configured rustls TlsConnector
-    let tls_connector = get_tls_connector(&settings)
+    let tls_connector = get_tls_connector(settings)
         .await
         .map_err(|err| Error::Connection(format!("Failed to initialize tls connector {}.", err)))?;
 
@@ -113,7 +113,7 @@ pub async fn get_listener(settings: &Shared) -> Result<GenericListener, Error> {
         // If it is, we have to throw an error, because another daemon is already running.
         // Otherwise, we can simply remove it.
         if PathBuf::from(&settings.unix_socket_path()).exists() {
-            if get_client_stream(&settings).await.is_ok() {
+            if get_client_stream(settings).await.is_ok() {
                 return Err(Error::UnixSocketExists);
             }
 
@@ -130,7 +130,7 @@ pub async fn get_listener(settings: &Shared) -> Result<GenericListener, Error> {
     let tcp_listener = TcpListener::bind(&address).await?;
 
     // This is the TLS acceptor, which initializes the TLS layer
-    let tls_acceptor = get_tls_listener(&settings)?;
+    let tls_acceptor = get_tls_listener(settings)?;
 
     // Create a struct, which accepts connections and initializes a TLS layer in one go.
     let tls_listener = TlsTcpListener {

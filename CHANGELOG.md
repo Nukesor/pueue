@@ -4,9 +4,25 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.0] - 2021-07-04
+
+This release aims to remove non-generic logic from `State`, that should be moved to the `Pueue` project.
+
+### Changed
+
+- Make `State::config_path` public.
+
+### Removed
+
+- `State::handle_task_failure`
+- `State::is_task_removable`
+- `State::task_ids_in_group_with_stati` in favor of `State::filter_tasks_of_group`
+- `State::save`, `State::backup`, `State::restore` and all related functions.
+- State related errors from the custom `Error` type.
+
 ## [0.15.0] - 2021-07-03
 
-Several non-backward compatible breaking API changes.
+Several non-backward compatible breaking API changes to prevent impossible states.
 
 ### Changed
 
