@@ -69,6 +69,12 @@ pub struct Client {
     pub dark_mode: bool,
     /// The max amount of lines each task get's in the `pueue status` view.
     pub max_status_lines: Option<usize>,
+    #[serde(default = "default_status_time_format")]
+    /// The format that will be used to display time formats in `pueue status`.
+    pub status_time_format: String,
+    #[serde(default = "default_status_datetime_format")]
+    /// The format that will be used to display datetime formats in `pueue status`.
+    pub status_datetime_format: String,
 }
 
 /// All settings which are used by the daemon
@@ -197,6 +203,9 @@ impl Settings {
         config
             .set_default("client.max_status_lines", None::<i64>)
             .unwrap();
+        config
+            .set_default("client.newline_between_date_and_time", false)
+            .unwrap();
 
         // Daemon specific config
         config
@@ -306,6 +315,16 @@ fn parse_config(
 /// Needed to keep backward compatibility between v0.11 and v0.12
 fn default_dark_mode() -> bool {
     false
+}
+
+/// The default value for the `time_format` client settings.
+fn default_status_time_format() -> String {
+    "%H:%M:%S".into()
+}
+
+/// The default value for the `datetime_format` client settings.
+fn default_status_datetime_format() -> String {
+    "%Y-%m-%d\n%H:%M:%S".into()
 }
 
 /// The default value for the `dark_mode` client settings.
