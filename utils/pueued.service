@@ -7,9 +7,7 @@ Description=Pueue Daemon - CLI process scheduler and manager
 
 [Service]
 Restart=no
-Environment=ASYNC_STD_THREAD_COUNT=4
-ExecStart=/usr/bin/pueued
-ExecReload=/usr/bin/pueued
+ExecStart=/usr/bin/pueued -vv
 
 [Install]
 WantedBy=default.target
