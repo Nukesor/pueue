@@ -30,6 +30,7 @@ I want this project to move forward.
 - Use `pueue kill --signal SigTerm` to send Unix signals directly to Pueue's processes. [#202](https://github.com/Nukesor/pueue/issues/202)
 - Add a PID file to `$pueue_directory/pueue.pid`, which will be used to check whether there's an already running daemon.
 - `--failed-in-group [group_name]` for `restart`. That way you can restart all failed tasks of a specific group [#211](https://github.com/Nukesor/pueue/issues/211)
+- Options to configure the time and datetime format in `pueue status` for [##212](https://github.com/Nukesor/pueue/issues/212).
 
 ### Changed
 
