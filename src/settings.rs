@@ -65,14 +65,11 @@ pub struct Client {
     /// or shown in their short form.
     pub show_expanded_aliases: bool,
     /// Whether the client should use dark shades instead of regular colors.
-    #[serde(default = "default_dark_mode")]
     pub dark_mode: bool,
     /// The max amount of lines each task get's in the `pueue status` view.
     pub max_status_lines: Option<usize>,
-    #[serde(default = "default_status_time_format")]
     /// The format that will be used to display time formats in `pueue status`.
     pub status_time_format: String,
-    #[serde(default = "default_status_datetime_format")]
     /// The format that will be used to display datetime formats in `pueue status`.
     pub status_datetime_format: String,
 }
@@ -89,7 +86,6 @@ pub struct Daemon {
     /// The callback that's called whenever a task finishes.
     pub callback: Option<String>,
     /// The amount of log lines from stdout/stderr that are passed to the callback command.
-    #[serde(default = "default_callback_log_lines")]
     pub callback_log_lines: usize,
     /// This shouldn't be manipulated manually if the daemon is running.
     /// This represents all known groups and their amount of parallel tasks.
@@ -309,26 +305,4 @@ fn parse_config(
 
     // Try to can deserialize the entire configuration
     Ok(config.try_into()?)
-}
-
-/// The default value for the `dark_mode` client settings.
-/// Needed to keep backward compatibility between v0.11 and v0.12
-fn default_dark_mode() -> bool {
-    false
-}
-
-/// The default value for the `time_format` client settings.
-fn default_status_time_format() -> String {
-    "%H:%M:%S".into()
-}
-
-/// The default value for the `datetime_format` client settings.
-fn default_status_datetime_format() -> String {
-    "%Y-%m-%d\n%H:%M:%S".into()
-}
-
-/// The default value for the `dark_mode` client settings.
-/// Needed to keep backward compatibility between v0.11 and v0.12
-fn default_callback_log_lines() -> usize {
-    10
 }

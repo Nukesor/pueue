@@ -1,10 +1,13 @@
 ---
 client:
+  bogus_settings: ~
+  restart_in_place: false
   read_local_logs: true
   show_confirmation_questions: false
   show_expanded_aliases: false
   max_status_lines: ~
-  bogus_settings: ~
+  status_time_format: "%H:%M:%S"
+  status_datetime_format: "%Y-%m-%d\n%H:%M:%S"
 daemon:
   default_parallel_tasks: 1
   pause_group_on_failure: false
@@ -23,4 +26,3 @@ shared:
   daemon_cert: ~/.local/share/pueue/certs/daemon.cert
   daemon_key: ~/.local/share/pueue/certs/daemon.key
   shared_secret_path: ~/.local/share/pueue/shared_secret
-  bogus_settings_2: some_text

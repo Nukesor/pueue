@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.17.0] -
+
+### Changed
+
+Remove defaults for backward compatibility.
+We broke that in the last version anyway, so we can use this opportunity and clean up a little.
+
 ## [0.16.0] - 2021-07-05
 
 This release aims to remove non-generic logic from `State`, that should be moved to the `Pueue` project.
