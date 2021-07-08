@@ -56,6 +56,10 @@ pub struct Shared {
 /// All settings which are used by the client
 #[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
 pub struct Client {
+    /// If set to true, all tasks will be restart in place, instead of creating a new task.
+    /// False is the default, as you'll lose the logs of the previously failed tasks when
+    /// restarting tasks in place.
+    pub restart_in_place: bool,
     /// Whether the client should read the logs directly from disk or whether it should
     /// request the data from the daemon via socket.
     pub read_local_logs: bool,
@@ -188,6 +192,7 @@ impl Settings {
             .unwrap();
 
         // Client specific config
+        config.set_default("client.restart_in_place", true).unwrap();
         config.set_default("client.read_local_logs", true).unwrap();
         config
             .set_default("client.show_expanded_aliases", false)
