@@ -207,6 +207,15 @@ impl Settings {
         config
             .set_default("client.newline_between_date_and_time", false)
             .unwrap();
+        config
+            .set_default("client.status_time_format", "%H:%M:%S".to_string())
+            .unwrap();
+        config
+            .set_default(
+                "client.status_datetime_format",
+                "%Y-%m-%d\n%H:%M:%S".to_string(),
+            )
+            .unwrap();
 
         // Daemon specific config
         config
