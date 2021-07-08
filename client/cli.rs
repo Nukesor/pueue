@@ -166,6 +166,11 @@ pub enum SubCommand {
         #[clap(short, long)]
         in_place: bool,
 
+        /// Restart the task by creating a new identical tasks.
+        /// Only applies, if you have the restart_in_place configuration set to true.
+        #[clap(long)]
+        not_in_place: bool,
+
         /// Edit the tasks' command before restarting.
         #[clap(short, long)]
         edit: bool,
