@@ -192,7 +192,9 @@ impl Settings {
             .unwrap();
 
         // Client specific config
-        config.set_default("client.restart_in_place", true).unwrap();
+        config
+            .set_default("client.restart_in_place", false)
+            .unwrap();
         config.set_default("client.read_local_logs", true).unwrap();
         config
             .set_default("client.show_expanded_aliases", false)
