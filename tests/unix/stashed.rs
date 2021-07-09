@@ -62,11 +62,10 @@ async fn test_enqueued_tasks(
 
     // Assert the correct point in time has been set, in case `enqueue_at` is specific.
     if enqueue_at.is_some() {
-        let state = get_state(shared).await?;
-        let task = state.tasks.get(&0).unwrap();
-        assert!(matches!(task.status, TaskStatus::Stashed { .. }));
+        let status = get_task_status(shared, 0).await?;
+        assert!(matches!(status, TaskStatus::Stashed { .. }));
 
-        if let TaskStatus::Stashed { enqueue_at: inner } = task.status {
+        if let TaskStatus::Stashed { enqueue_at: inner } = status {
             assert_eq!(inner, enqueue_at);
         }
     }
