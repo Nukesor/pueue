@@ -161,9 +161,13 @@ impl Client {
                 start_immediately,
                 stashed,
                 in_place,
+                not_in_place,
                 edit,
                 edit_path,
             } => {
+                // `not_in_place` superseeds both other configs
+                let in_place =
+                    (self.settings.client.restart_in_place || *in_place) && !*not_in_place;
                 restart(
                     &mut self.stream,
                     task_ids.clone(),
@@ -171,7 +175,7 @@ impl Client {
                     failed_in_group.clone(),
                     *start_immediately,
                     *stashed,
-                    *in_place,
+                    in_place,
                     *edit,
                     *edit_path,
                 )

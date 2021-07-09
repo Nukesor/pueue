@@ -101,6 +101,7 @@ pub fn base_setup() -> Result<(Settings, TempDir)> {
     };
 
     let client = Client {
+        restart_in_place: false,
         read_local_logs: true,
         show_confirmation_questions: false,
         show_expanded_aliases: false,

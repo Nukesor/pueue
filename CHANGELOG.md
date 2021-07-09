@@ -31,6 +31,7 @@ I want this project to move forward.
 - Add a PID file to `$pueue_directory/pueue.pid`, which will be used to check whether there's an already running daemon.
 - `--failed-in-group [group_name]` for `restart`. That way you can restart all failed tasks of a specific group [#211](https://github.com/Nukesor/pueue/issues/211)
 - Options to configure the time and datetime format in `pueue status` for [##212](https://github.com/Nukesor/pueue/issues/212).
+- Option to use the `--in-place` flag on `restart` by default.
 
 ### Changed
 

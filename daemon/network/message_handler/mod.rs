@@ -45,7 +45,7 @@ pub fn handle_message(message: Message, sender: &Sender<Message>, state: &Shared
         Message::Switch(message) => switch::switch(message, state),
         Message::Status => get_status(state),
         Message::DaemonShutdown(shutdown_type) => shutdown(sender, shutdown_type),
-        _ => create_failure_message("Not implemented yet"),
+        _ => create_failure_message("Not yet implemented"),
     }
 }
 

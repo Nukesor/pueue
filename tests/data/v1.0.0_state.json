@@ -1,11 +1,14 @@
 {
     "settings": {
         "client": {
+            "restart_in_place": false,
             "read_local_logs": true,
             "show_confirmation_questions": false,
             "show_expanded_aliases": false,
             "dark_mode": false,
-            "max_status_lines": null
+            "max_status_lines": null,
+            "status_time_format": "%H:%M:%S",
+            "status_datetime_format": "%Y-%m-%d\n%H:%M:%S"
         },
         "daemon": {
             "default_parallel_tasks": 1,

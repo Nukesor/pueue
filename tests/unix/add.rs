@@ -20,11 +20,12 @@ async fn test_normal_add() -> Result<()> {
         matches!(task.status, TaskStatus::Done(_))
     })
     .await?;
-    let state = get_state(shared).await?;
 
     // The task finished succesfully
-    let task = state.tasks.get(&0).unwrap();
-    assert_eq!(task.status, TaskStatus::Done(TaskResult::Success));
+    assert_eq!(
+        get_task_status(shared, 0).await?,
+        TaskStatus::Done(TaskResult::Success)
+    );
 
     Ok(())
 }
