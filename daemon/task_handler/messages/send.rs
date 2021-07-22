@@ -7,7 +7,7 @@ use crate::task_handler::TaskHandler;
 impl TaskHandler {
     /// Send some input to a child process' stdin.
     pub fn send(&mut self, task_id: usize, input: String) {
-        let child = match self.children.get_mut(&task_id) {
+        let child = match self.children.get_child_mut(task_id) {
             Some(child) => child,
             None => {
                 warn!(

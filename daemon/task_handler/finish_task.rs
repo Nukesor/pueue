@@ -1,3 +1,5 @@
+use anyhow::Context;
+
 use super::*;
 
 use crate::ok_or_shutdown;
@@ -17,14 +19,20 @@ impl TaskHandler {
         // Clone the state ref, so we don't have two mutable borrows later on.
         let state_ref = self.state.clone();
         let mut state = state_ref.lock().unwrap();
+        println!("{:?}", finished);
+        println!("{:?}", &self.children.0.keys());
+        println!("{:?}", &self.children.0.get("default").unwrap().keys());
 
-        for (task_id, error) in finished.iter() {
+        for ((task_id, group, worker_id), error) in finished.iter() {
             // Handle std::io errors on child processes.
             // I have never seen something like this, but it might happen.
             if let Some(error) = error {
-                let _child = self
+                let (_taks_id, _child) = self
                     .children
-                    .remove(task_id)
+                    .0
+                    .get_mut(group)
+                    .expect("Worker group must exist when handling finished tasks.")
+                    .remove(worker_id)
                     .expect("Errored child went missing while handling finished task.");
 
                 let group = {
@@ -42,9 +50,12 @@ impl TaskHandler {
             }
 
             // Handle any tasks that exited with some kind of exit code
-            let mut child = self
+            let (_task_id, mut child) = self
                 .children
-                .remove(task_id)
+                .0
+                .get_mut(group)
+                .expect("Worker group must exist when handling finished tasks.")
+                .remove(worker_id)
                 .expect("Child of task {} went away while handling finished task.");
 
             // Get the exit code of the child.
@@ -96,19 +107,21 @@ impl TaskHandler {
 
     /// Gather all finished tasks and sort them by finished and errored.
     /// Returns a list of finished task ids and whether they errored or not.
-    fn get_finished(&mut self) -> Vec<(usize, Option<std::io::Error>)> {
+    fn get_finished(&mut self) -> Vec<((usize, String, usize), Option<std::io::Error>)> {
         let mut finished = Vec::new();
-        for (id, child) in self.children.iter_mut() {
-            match child.try_wait() {
-                // Handle a child error.
-                Err(error) => {
-                    finished.push((*id, Some(error)));
-                }
-                // Child process did not exit yet
-                Ok(None) => continue,
-                Ok(_exit_status) => {
-                    info!("Task {} just finished", id);
-                    finished.push((*id, None));
+        for (group, children) in self.children.0.iter_mut() {
+            for (worker_id, (task_id, child)) in children.iter_mut() {
+                match child.try_wait() {
+                    // Handle a child error.
+                    Err(error) => {
+                        finished.push(((*task_id, group.clone(), *worker_id), Some(error)));
+                    }
+                    // Child process did not exit yet
+                    Ok(None) => continue,
+                    Ok(_exit_status) => {
+                        info!("Task {} just finished", task_id);
+                        finished.push(((*task_id, group.clone(), *worker_id), None));
+                    }
                 }
             }
         }

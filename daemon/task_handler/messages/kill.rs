@@ -55,7 +55,7 @@ impl TaskHandler {
                 }
 
                 info!("Killing all running tasks");
-                self.children.keys().cloned().collect()
+                self.children.all_task_ids()
             }
         };
 
@@ -74,7 +74,7 @@ impl TaskHandler {
     /// This is a wrapper around [send_internal_signal_to_child], which does a little bit of
     /// additional error handling.
     pub fn send_internal_signal(&mut self, task_id: usize, signal: Signal, children: bool) {
-        let child = match self.children.get_mut(&task_id) {
+        let child = match self.children.get_child_mut(task_id) {
             Some(child) => child,
             None => {
                 warn!("Tried to kill non-existing child: {}", task_id);
@@ -93,7 +93,7 @@ impl TaskHandler {
     /// Kill a specific task and handle it accordingly.
     /// Triggered on `reset` and `kill`.
     pub fn kill_task(&mut self, task_id: usize, kill_children: bool) {
-        if let Some(mut child) = self.children.get_mut(&task_id) {
+        if let Some(mut child) = self.children.get_child_mut(task_id) {
             kill_child(task_id, &mut child, kill_children);
         } else {
             warn!("Tried to kill non-existing child: {}", task_id);
