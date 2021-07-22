@@ -53,12 +53,22 @@ macro_rules! ok_or_shutdown {
 }
 
 pub struct TaskHandler {
+    /// The state that's shared between the TaskHandler and the message handling logic.
     state: SharedState,
+    /// The receiver for the MPSC channel that's used to push notificatoins from our message
+    /// handling to the TaskHandler.
     receiver: Receiver<Message>,
+    /// A map of `task_id` to "spawned task subprocess handle".
     children: BTreeMap<usize, Child>,
+    /// These are the currently running callbacks. They're usually very short-lived.
     callbacks: Vec<Child>,
+    /// A simple flag which is used to signal that we're currently doing a full reset of the daemon.
+    /// This flag prevents new tasks from being spawned.
     full_reset: bool,
+    /// Whether we're currently in the process of a graceful shutdown.
+    /// Depending on the shutdown type, we're exiting with different exitcodes.
     shutdown: Option<Shutdown>,
+
     // Some static settings that are extracted from `state.settings` for convenience purposes.
     pueue_directory: PathBuf,
     callback: Option<String>,
