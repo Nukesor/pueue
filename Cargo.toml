@@ -1,3 +1,5 @@
+cargo-features = ["edition2021"]
+
 [package]
 name = "pueue"
 description = "A cli tool for managing long running shell commands."
@@ -9,7 +11,7 @@ documentation = "https://docs.rs/pueue/"
 license = "MIT"
 keywords = ["shell", "command", "parallel", "task", "queue"]
 readme = "README.md"
-edition = "2018"
+edition = "2021"
 
 [badges]
 maintenance = { status = "actively-developed" }
