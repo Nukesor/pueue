@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Change
 
 - Make `GroupMessage` an enum to prevent impossible states.
+- Introduce `TaskSelection` enum to prevent impossible states in Kill-/Start-/PauseMessage structs.
 
 ## [0.17.2] - 2021-07-09
 

@@ -113,7 +113,7 @@ impl Task {
 
     /// Whether the task is having a running process managed by the TaskHandler
     pub fn is_running(&self) -> bool {
-        self.status == TaskStatus::Running || self.status == TaskStatus::Paused
+        matches!(self.status, TaskStatus::Running | TaskStatus::Paused)
     }
 
     /// Whether the task's process finished.
