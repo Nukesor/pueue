@@ -435,11 +435,13 @@ impl Client {
                 Ok(Message::Send(message))
             }
             SubCommand::Group { add, remove } => {
-                let message = GroupMessage {
-                    add: add.clone(),
-                    remove: remove.clone(),
-                };
-                Ok(Message::Group(message))
+                if let Some(group) = add {
+                    Ok(Message::Group(GroupMessage::Add(group.clone())))
+                } else if let Some(group) = remove {
+                    Ok(Message::Group(GroupMessage::Remove(group.clone())))
+                } else {
+                    Ok(Message::Group(GroupMessage::List))
+                }
             }
             SubCommand::Status { .. } => Ok(Message::Status),
             SubCommand::Log {
