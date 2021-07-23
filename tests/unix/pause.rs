@@ -37,7 +37,7 @@ async fn test_pause_running_task() -> Result<()> {
 
     // Start a long running task and make sure it's started
     add_task(shared, "sleep 60", false).await?;
-    wait_for_task_condition(shared, 0, |task| matches!(task.status, TaskStatus::Running)).await?;
+    wait_for_task_condition(shared, 0, |task| task.is_running()).await?;
 
     // This pauses the daemon
     pause_tasks(shared, TaskSelection::All).await?;
@@ -59,7 +59,7 @@ async fn test_pause_with_wait() -> Result<()> {
 
     // Start a long running task and make sure it's started
     add_task(shared, "sleep 60", false).await?;
-    wait_for_task_condition(shared, 0, |task| matches!(task.status, TaskStatus::Running)).await?;
+    wait_for_task_condition(shared, 0, |task| task.is_running()).await?;
 
     // Pauses the default queue while waiting for tasks
     let message = Message::Pause(PauseMessage {

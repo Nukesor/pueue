@@ -55,10 +55,7 @@ async fn test_kill_tasks(
     }
     // Wait until all tasks are running
     for id in 0..3 {
-        wait_for_task_condition(shared, id, |task| {
-            matches!(task.status, TaskStatus::Running)
-        })
-        .await?;
+        wait_for_task_condition(shared, id, |task| task.is_running()).await?;
     }
 
     // Send the kill message

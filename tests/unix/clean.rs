@@ -1,6 +1,5 @@
 use anyhow::Result;
 use pueue_lib::network::message::*;
-use pueue_lib::task::*;
 
 use crate::helper::*;
 
@@ -19,7 +18,7 @@ async fn test_normal_clean() -> Result<()> {
     // Wait for task2 to start. This implies task[0,1] being finished.
     wait_for_task_condition(shared, 2, |task| task.is_running()).await?;
 
-    // Send the kill message
+    // Send the clean message
     let clean_message = CleanMessage {
         successful_only: false,
     };
@@ -48,7 +47,7 @@ async fn test_successful_only_clean() -> Result<()> {
     // Wait for task2 to start. This implies task[0,1] being finished.
     wait_for_task_condition(shared, 1, |task| task.is_done()).await?;
 
-    // Send the kill message
+    // Send the clean message
     let clean_message = CleanMessage {
         successful_only: true,
     };
