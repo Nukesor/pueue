@@ -1,6 +1,7 @@
 mod add;
 mod clean;
 mod edit;
+mod group;
 mod kill;
 mod pause;
 mod remove;
