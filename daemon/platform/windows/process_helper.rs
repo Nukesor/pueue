@@ -228,7 +228,6 @@ fn resume_thread(tid: u32) {
 /// [TerminateProcess](https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-terminateprocess)
 fn terminate_process(pid: u32) {
     unsafe {
-        println!("{}", pid);
         // Get a handle for the target process
         let process_handle = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
         // If TerminateProcess fails, the return value is zero.
