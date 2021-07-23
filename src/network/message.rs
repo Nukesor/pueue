@@ -130,9 +130,7 @@ pub enum Signal {
 
 #[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
 pub struct KillMessage {
-    pub task_ids: Vec<usize>,
-    pub group: String,
-    pub all: bool,
+    pub tasks: TaskSelection,
     pub children: bool,
     pub signal: Option<Signal>,
 }
