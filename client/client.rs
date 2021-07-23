@@ -39,6 +39,25 @@ pub fn group_or_default(group: &Option<String>) -> String {
     group.clone().unwrap_or_else(|| "default".to_string())
 }
 
+/// This is a small helper which determines the selection depending on given commandline
+/// parameters.
+/// If no parameters are given, it returns to the default, which is the "default" group.
+pub fn selection_from_params(
+    all: bool,
+    group: &Option<String>,
+    task_ids: &[usize],
+) -> TaskSelection {
+    if all {
+        TaskSelection::All
+    } else if let Some(group) = group {
+        TaskSelection::Group(group.clone())
+    } else if !task_ids.is_empty() {
+        TaskSelection::TaskIds(task_ids.to_owned())
+    } else {
+        TaskSelection::Group("default".into())
+    }
+}
+
 impl Client {
     /// Connect to the daemon, authorize via secret and return a new initialized Client.
     pub async fn new(settings: Settings, opt: CliArguments) -> Result<Self> {
@@ -381,11 +400,9 @@ impl Client {
                 all,
                 children,
             } => {
-                let group = group_or_default(group);
+                let selection = selection_from_params(*all, group, task_ids);
                 let message = StartMessage {
-                    task_ids: task_ids.clone(),
-                    group,
-                    all: *all,
+                    tasks: selection,
                     children: *children,
                 };
                 Ok(Message::Start(message))
@@ -397,12 +414,10 @@ impl Client {
                 all,
                 children,
             } => {
-                let group = group_or_default(group);
+                let selection = selection_from_params(*all, group, task_ids);
                 let message = PauseMessage {
-                    task_ids: task_ids.clone(),
-                    group,
+                    tasks: selection,
                     wait: *wait,
-                    all: *all,
                     children: *children,
                 };
                 Ok(Message::Pause(message))
@@ -417,11 +432,9 @@ impl Client {
                 if self.settings.client.show_confirmation_questions {
                     self.handle_user_confirmation("kill", task_ids)?;
                 }
-                let group = group_or_default(group);
+                let selection = selection_from_params(*all, group, task_ids);
                 let message = KillMessage {
-                    task_ids: task_ids.clone(),
-                    group,
-                    all: *all,
+                    tasks: selection,
                     children: *children,
                     signal: signal.clone(),
                 };

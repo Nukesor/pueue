@@ -11,27 +11,21 @@ use crate::helper::*;
 #[rstest]
 #[case(
     Message::Kill(KillMessage {
-        task_ids: vec![],
-        group: "default".into(),
-        all: true,
+        tasks: TaskSelection::All,
         children: false,
         signal: None,
     }), true
 )]
 #[case(
     Message::Kill(KillMessage {
-        task_ids: vec![],
-        group: "default".into(),
-        all: false,
+        tasks: TaskSelection::Group("default".into()),
         children: false,
         signal: None,
     }), true
 )]
 #[case(
     Message::Kill(KillMessage {
-        task_ids: vec![0, 1, 2],
-        group: "default".into(),
-        all: false,
+        tasks: TaskSelection::TaskIds(vec![0, 1, 2]),
         children: false,
         signal: None,
     }), false

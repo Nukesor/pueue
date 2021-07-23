@@ -8,25 +8,19 @@ use crate::helper::*;
 #[rstest]
 #[case(
     Message::Start(StartMessage {
-        task_ids: vec![],
-        group: "default".into(),
-        all: true,
+        tasks: TaskSelection::All,
         children: false,
     })
 )]
 #[case(
     Message::Start(StartMessage {
-        task_ids: vec![],
-        group: "default".into(),
-        all: false,
+        tasks: TaskSelection::Group("default".into()),
         children: false,
     })
 )]
 #[case(
     Message::Start(StartMessage {
-        task_ids: vec![0, 1, 2],
-        group: "default".into(),
-        all: false,
+        tasks: TaskSelection::TaskIds(vec![0, 1, 2]),
         children: false,
     })
 )]
@@ -53,7 +47,7 @@ async fn test_start_tasks(#[case] start_message: Message) -> Result<()> {
     wait_for_task_condition(shared, 0, |task| matches!(task.status, TaskStatus::Running)).await?;
 
     // Start tasks 1 and 2 manually
-    start_tasks(shared, vec![1, 2]).await?;
+    start_tasks(shared, TaskSelection::TaskIds(vec![1, 2])).await?;
 
     // Wait until all tasks are running
     for id in 0..3 {
@@ -64,7 +58,7 @@ async fn test_start_tasks(#[case] start_message: Message) -> Result<()> {
     }
 
     // Pause the whole daemon and wait until all tasks are paused
-    pause_daemon(shared).await?;
+    pause_tasks(shared, TaskSelection::All).await?;
     for id in 0..3 {
         wait_for_task_condition(shared, id, |task| matches!(task.status, TaskStatus::Paused))
             .await?;

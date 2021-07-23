@@ -13,8 +13,8 @@ async fn test_pause_daemon() -> Result<()> {
     let shared = &settings.shared;
     let _pid = boot_daemon(tempdir.path())?;
 
-    // This pauses the default queue
-    pause_daemon(shared).await?;
+    // This pauses the daemon
+    pause_tasks(shared, TaskSelection::All).await?;
     // Make sure the default group get's paused
     wait_for_group_status(shared, "default", GroupStatus::Paused).await?;
 
@@ -39,8 +39,8 @@ async fn test_pause_running_task() -> Result<()> {
     add_task(shared, "sleep 60", false).await?;
     wait_for_task_condition(shared, 0, |task| matches!(task.status, TaskStatus::Running)).await?;
 
-    // This pauses the default queue
-    pause_daemon(shared).await?;
+    // This pauses the daemon
+    pause_tasks(shared, TaskSelection::All).await?;
 
     // Make sure the task as well as the default group get paused
     wait_for_task_condition(shared, 0, |task| matches!(task.status, TaskStatus::Paused)).await?;
@@ -63,13 +63,10 @@ async fn test_pause_with_wait() -> Result<()> {
 
     // Pauses the default queue while waiting for tasks
     let message = Message::Pause(PauseMessage {
-        task_ids: vec![],
-        group: "default".into(),
+        tasks: TaskSelection::Group("default".into()),
         wait: true,
-        all: false,
         children: false,
     });
-
     send_message(shared, message)
         .await
         .context("Failed to send message")?;

@@ -151,7 +151,7 @@ impl TaskHandler {
     fn initiate_shutdown(&mut self, shutdown: Shutdown) {
         self.shutdown = Some(shutdown);
 
-        self.kill(vec![], String::new(), true, false, false, None);
+        self.kill(TaskSelection::All, false, false, None);
     }
 
     /// Check if all tasks are killed.
@@ -212,7 +212,7 @@ impl TaskHandler {
     /// Set the respective group's statuses to `Reset`. This will prevent new tasks from being spawned.
     fn reset(&mut self, kill_children: bool) {
         self.full_reset = true;
-        self.kill(vec![], String::new(), true, kill_children, false, None);
+        self.kill(TaskSelection::All, kill_children, false, None);
     }
 
     /// As time passes, some delayed tasks may need to be enqueued.

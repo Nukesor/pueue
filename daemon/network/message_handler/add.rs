@@ -59,8 +59,8 @@ pub fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedSta
     if message.start_immediately {
         sender
             .send(Message::Start(StartMessage {
-                task_ids: vec![task_id],
-                ..Default::default()
+                tasks: TaskSelection::TaskIds(vec![task_id]),
+                children: false,
             }))
             .expect(SENDER_ERR);
     }

@@ -32,7 +32,7 @@ async fn test_edit_flow() -> Result<()> {
     let _pid = boot_daemon(tempdir.path())?;
 
     // Pause the daemon. That way the command won't be started.
-    pause_daemon(shared).await?;
+    pause_tasks(shared, TaskSelection::All).await?;
     wait_for_group_status(shared, "default", GroupStatus::Paused).await?;
 
     let response = create_edited_task(shared).await?;
@@ -44,7 +44,7 @@ async fn test_edit_flow() -> Result<()> {
     assert_eq!(get_task_status(shared, 0).await?, TaskStatus::Locked);
 
     // You cannot start a locked task. It should still be locked afterwards.
-    start_tasks(shared, vec![0]).await?;
+    start_tasks(shared, TaskSelection::TaskIds(vec![0])).await?;
     assert_eq!(get_task_status(shared, 0).await?, TaskStatus::Locked);
 
     // Send the final message of the protocol and actually change the task.

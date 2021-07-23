@@ -1,6 +1,6 @@
 use log::{error, info, warn};
 
-use pueue_lib::network::message::Signal;
+use pueue_lib::network::message::{Signal, TaskSelection};
 use pueue_lib::state::GroupStatus;
 use pueue_lib::task::TaskStatus;
 
@@ -12,19 +12,16 @@ use crate::task_handler::{Shutdown, TaskHandler};
 impl TaskHandler {
     /// Kill specific tasks or groups.
     ///
-    /// `task_ids` These specific ids will be killed.
-    /// `all` If true, kill everything.
-    /// `group` Kill a specific group.
+    /// By default, this kills tasks with Rust's subprocess handling "kill" logic.
+    /// However, the user can decide to send unix signals to the processes as well.
+    ///
     /// `children` Kill all direct child processes as well
     /// `pause_groups` If `group` or `all` is given, the groups should be paused under some
     ///     circumstances. This is mostly to prevent any further task execution during an emergency
     /// `signal` Don't kill the task as usual, but rather send a unix process signal.
-    ///
     pub fn kill(
         &mut self,
-        task_ids: Vec<usize>,
-        group: String,
-        all: bool,
+        tasks: TaskSelection,
         children: bool,
         pause_groups: bool,
         signal: Option<Signal>,
@@ -32,38 +29,34 @@ impl TaskHandler {
         let cloned_state_mutex = self.state.clone();
         let mut state = cloned_state_mutex.lock().unwrap();
         // Get the keys of all tasks that should be resumed
-        // These can either be
-        // - Specific tasks
-        // - All running tasks
-        // - The paused tasks of a group
-        // - The paused tasks of the default queue
-        // Only pause specific tasks
-        let task_ids: Vec<usize> = if !task_ids.is_empty() {
-            task_ids
-        } else if all {
-            // Pause all running tasks
-            if pause_groups {
-                state.set_status_for_all_groups(GroupStatus::Paused);
-            }
+        let task_ids = match tasks {
+            TaskSelection::TaskIds(task_ids) => task_ids,
+            TaskSelection::Group(group) => {
+                // Ensure that a given group exists. (Might not happen due to concurrency)
+                if !state.groups.contains_key(&group) {
+                    return;
+                }
+                // Pause this specific group.
+                if pause_groups {
+                    state.groups.insert(group.clone(), GroupStatus::Paused);
+                }
+                info!("Killing tasks of group {}", &group);
 
-            info!("Killing all running tasks");
-            self.children.keys().cloned().collect()
-        } else {
-            // Ensure that a given group exists. (Might not happen due to concurrency)
-            if !state.groups.contains_key(&group) {
-                return;
+                let (matching, _) = state.filter_tasks_of_group(
+                    |task| matches!(task.status, TaskStatus::Running | TaskStatus::Paused),
+                    &group,
+                );
+                matching
             }
-            // Pause this specific group.
-            if pause_groups {
-                state.groups.insert(group.clone(), GroupStatus::Paused);
-            }
-            info!("Killing tasks of group {}", &group);
+            TaskSelection::All => {
+                // Pause all running tasks
+                if pause_groups {
+                    state.set_status_for_all_groups(GroupStatus::Paused);
+                }
 
-            let (matching, _) = state.filter_tasks_of_group(
-                |task| matches!(task.status, TaskStatus::Running | TaskStatus::Paused),
-                &group,
-            );
-            matching
+                info!("Killing all running tasks");
+                self.children.keys().cloned().collect()
+            }
         };
 
         for task_id in task_ids {

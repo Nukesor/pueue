@@ -21,10 +21,11 @@ pub fn restart_multiple(
 
     // Tell the task manager to start the task immediately, if it's requested.
     if message.start_immediately {
+        let task_ids = message.tasks.iter().map(|task| task.task_id).collect();
         sender
             .send(Message::Start(StartMessage {
-                task_ids: message.tasks.iter().map(|task| task.task_id).collect(),
-                ..Default::default()
+                tasks: TaskSelection::TaskIds(task_ids),
+                children: false,
             }))
             .expect(SENDER_ERR);
     }

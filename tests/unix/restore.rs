@@ -3,6 +3,7 @@ use std::convert::TryInto;
 use anyhow::Result;
 use pretty_assertions::assert_eq;
 
+use pueue_lib::network::message::TaskSelection;
 use pueue_lib::state::GroupStatus;
 
 use crate::helper::*;
@@ -40,8 +41,8 @@ async fn test_start_paused() -> Result<()> {
 
     let child = boot_standalone_daemon(tempdir.path())?;
 
-    // Pause the daemon
-    pause_daemon(shared).await?;
+    // This pauses the daemon
+    pause_tasks(shared, TaskSelection::All).await?;
 
     // Kill the daemon and wait for it to shut down.
     assert_success(shutdown_daemon(&shared).await?);

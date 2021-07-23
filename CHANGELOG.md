@@ -45,7 +45,16 @@ I want this project to move forward.
 - Use tokio's async runtime and set a hardcoded limit of 4 worker threads, which is already more than enough.
 - Add a debug message, when using `pueue wait` or `pueue wait -g some_group`, but there're no tasks in the group.
 - Reworked shutdown, restoration and cleanup logic.
-- Json output of `Task` changed significantly. Its whole structure has been modified to disallow impossible/invalid states.
+
+### Datastructures
+
+A whole lot of Pueue's internal datastructures have been refactored.
+The main goal of this was to prevent impossible/invalid states wherever possible.
+
+Overall, this resulted in sleaker und much better maintainable code. However, this broke backwards compatibility to pre-v1.0 at numerous places.
+
+- Json structure of the `Task` struct changed significantly, as data depending on the current status has been moved into the `TaskStatus` enum.
+- Many messages have been touched, as several new enums have been introduced and many fields have been removed.
 
 ### Fixed
 
