@@ -44,3 +44,16 @@ async fn test_cannot_delete_default() -> Result<()> {
 
     Ok(())
 }
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+/// Users cannot delete the default group.
+async fn test_cannot_delete_non_existing() -> Result<()> {
+    let (settings, tempdir) = base_setup()?;
+    let shared = &settings.shared;
+    let _pid = boot_daemon(tempdir.path())?;
+
+    let pause_message = Message::Group(GroupMessage::Remove("doesnt_exist".to_string()));
+    assert_failure(send_message(shared, pause_message).await?);
+
+    Ok(())
+}
