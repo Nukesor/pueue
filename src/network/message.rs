@@ -46,6 +46,16 @@ pub enum Message {
     Parallel(ParallelMessage),
 }
 
+/// This enum is used to express a selection of tasks.
+/// As commands can be executed on various sets of tasks, we need some kind of datastructure to
+/// explicitly and unambiguously specify the selection.
+#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
+pub enum TaskSelection {
+    TaskIds(Vec<usize>),
+    Group(String),
+    All,
+}
+
 #[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
 pub struct AddMessage {
     pub command: String,
@@ -72,34 +82,30 @@ pub struct EnqueueMessage {
     pub enqueue_at: Option<DateTime<Local>>,
 }
 
-#[derive(PartialEq, Clone, Debug, Default, Deserialize, Serialize)]
+#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
 pub struct StartMessage {
-    pub task_ids: Vec<usize>,
-    pub group: String,
-    pub all: bool,
+    pub tasks: TaskSelection,
     pub children: bool,
 }
 
-#[derive(PartialEq, Clone, Debug, Default, Deserialize, Serialize)]
+#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
 pub struct RestartMessage {
     pub tasks: Vec<TasksToRestart>,
     pub start_immediately: bool,
     pub stashed: bool,
 }
 
-#[derive(PartialEq, Clone, Debug, Default, Deserialize, Serialize)]
+#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
 pub struct TasksToRestart {
     pub task_id: usize,
     pub command: String,
     pub path: String,
 }
 
-#[derive(PartialEq, Clone, Debug, Default, Deserialize, Serialize)]
+#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
 pub struct PauseMessage {
-    pub task_ids: Vec<usize>,
-    pub group: String,
+    pub tasks: TaskSelection,
     pub wait: bool,
-    pub all: bool,
     pub children: bool,
 }
 
@@ -122,7 +128,7 @@ pub enum Signal {
     SigStop,
 }
 
-#[derive(PartialEq, Clone, Debug, Default, Deserialize, Serialize)]
+#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
 pub struct KillMessage {
     pub task_ids: Vec<usize>,
     pub group: String,
