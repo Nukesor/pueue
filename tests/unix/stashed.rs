@@ -51,8 +51,7 @@ async fn test_enqueued_tasks(
     let shared = &settings.shared;
     let _pid = boot_daemon(tempdir.path())?;
 
-    let response = add_stashed_task(shared, "sleep 10", stashed, enqueue_at).await?;
-    assert!(matches!(response, Message::Success(_)));
+    assert_success(add_stashed_task(shared, "sleep 10", stashed, enqueue_at).await?);
 
     // The task should be added in stashed state.
     wait_for_task_condition(shared, 0, |task| {

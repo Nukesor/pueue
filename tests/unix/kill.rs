@@ -50,8 +50,7 @@ async fn test_kill_tasks(
 
     // Add multiple tasks and start them immediately
     for _ in 0..3 {
-        let response = fixtures::add_task(shared, "sleep 60", true).await?;
-        assert!(matches!(response, Message::Success(_)));
+        assert_success(fixtures::add_task(shared, "sleep 60", true).await?);
     }
     // Wait until all tasks are running
     for id in 0..3 {

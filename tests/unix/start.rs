@@ -38,8 +38,7 @@ async fn test_start_tasks(#[case] start_message: Message) -> Result<()> {
 
     // Add multiple tasks only a single one will be started by default
     for _ in 0..3 {
-        let response = fixtures::add_task(shared, "sleep 60", false).await?;
-        assert!(matches!(response, Message::Success(_)));
+        assert_success(fixtures::add_task(shared, "sleep 60", false).await?);
     }
     // Wait for task 0 to start on its own.
     // We have to do this, otherwise we'll start task 1/2 beforehand, which prevents task 0 to be

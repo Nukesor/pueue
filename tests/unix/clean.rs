@@ -12,8 +12,7 @@ async fn test_normal_clean() -> Result<()> {
 
     // This should result in one failed, one finished, one running and one queued task.
     for command in vec!["failing", "ls", "sleep 60", "ls"] {
-        let response = fixtures::add_task(shared, command, false).await?;
-        assert!(matches!(response, Message::Success(_)));
+        assert_success(fixtures::add_task(shared, command, false).await?);
     }
     // Wait for task2 to start. This implies task[0,1] being finished.
     wait_for_task_condition(shared, 2, |task| task.is_running()).await?;
@@ -41,8 +40,7 @@ async fn test_successful_only_clean() -> Result<()> {
 
     // This should result in one failed, one finished, one running and one queued task.
     for command in vec!["failing", "ls"] {
-        let response = fixtures::add_task(shared, command, false).await?;
-        assert!(matches!(response, Message::Success(_)));
+        assert_success(fixtures::add_task(shared, command, false).await?);
     }
     // Wait for task2 to start. This implies task[0,1] being finished.
     wait_for_task_condition(shared, 1, |task| task.is_done()).await?;

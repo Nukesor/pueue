@@ -9,8 +9,7 @@ use crate::helper::*;
 
 async fn create_edited_task(shared: &Shared) -> Result<EditResponseMessage> {
     // Add a task
-    let response = fixtures::add_task(shared, "ls", false).await?;
-    assert!(matches!(response, Message::Success(_)));
+    assert_success(fixtures::add_task(shared, "ls", false).await?);
 
     // The task should now be queued
     assert_eq!(get_task_status(shared, 0).await?, TaskStatus::Queued);
@@ -57,7 +56,7 @@ async fn test_edit_flow() -> Result<()> {
         }),
     )
     .await?;
-    assert!(matches!(response, Message::Success(_)));
+    assert_success(response);
 
     // Make sure the task has been changed and enqueued.
     let task = get_task(shared, 0).await?;

@@ -15,6 +15,10 @@ pub fn assert_success(message: Message) {
     assert!(matches!(message, Message::Success(_)));
 }
 
+pub fn assert_failure(message: Message) {
+    assert!(matches!(message, Message::Failure(_)));
+}
+
 /// Get a daemon pid from a specific pueue directory.
 /// This function gives the daemon a little time to boot up, but ultimately crashes if it takes too
 /// long.

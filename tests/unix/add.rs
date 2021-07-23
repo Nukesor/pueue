@@ -1,5 +1,4 @@
 use anyhow::Result;
-use pueue_lib::network::message::*;
 use pueue_lib::task::*;
 
 use crate::helper::*;
@@ -12,8 +11,7 @@ async fn test_normal_add() -> Result<()> {
     let _pid = boot_daemon(tempdir.path())?;
 
     // Add a task that instantly finishes
-    let response = fixtures::add_task(shared, "sleep 0.01", true).await?;
-    assert!(matches!(response, Message::Success(_)));
+    assert_success(fixtures::add_task(shared, "sleep 0.01", true).await?);
 
     // Wait until the task finished and get state
     wait_for_task_condition(&settings.shared, 0, |task| {
