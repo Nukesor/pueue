@@ -8,8 +8,9 @@ impl TaskHandler {
     pub fn spawn_new(&mut self) {
         let cloned_state_mutex = self.state.clone();
         let mut state = cloned_state_mutex.lock().unwrap();
-        // Get the next task id that can be started
-        if let Some(id) = self.get_next_task_id(&state) {
+        // Check whether a new task can be started.
+        // Spawn tasks until we no longer have free slots available.
+        while let Some(id) = self.get_next_task_id(&state) {
             self.start_process(id, &mut state);
         }
     }
