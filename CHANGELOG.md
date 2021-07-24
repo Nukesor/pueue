@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [1.0.0] - 
 
 A lot of things happened during this release.
-Even though a few new features were added, the main effort went into increasing stability and inter-version compatibility.
+Even though quite a few new features were added, the main effort went into increasing stability and inter-version compatibility.
 
 The goal of this release is to push the code quality, error handling, test coverage and stability to a level that justifies a v1.0 release. \
 Since this project follows semantic versioning, this includes no breaking changes and backward compatibility on version upgrades. \
@@ -47,6 +47,7 @@ I want this project to move forward.
 - Reworked shutdown, restoration and cleanup logic.
 - Rename `Index` to `Id` in `pueue status` to free up screen space.
 - Remove `Exitcode` column in `pueue status` and include exitcode into `Failed` status to free up screen space.
+- You can no longer remove groups, if there are still tasks assigned to that group.
 
 ### Datastructures
 

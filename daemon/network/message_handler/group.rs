@@ -43,6 +43,13 @@ pub fn group(message: GroupMessage, sender: &Sender<Message>, state: &SharedStat
                 return create_failure_message(format!("You cannot delete the default group"));
             }
 
+            // Make sure there are no tasks in that group.
+            if state.tasks.iter().any(|(_, task)| task.group == group) {
+                return create_failure_message(format!(
+                    "You cannot remove a group, if there're still tasks in it."
+                ));
+            }
+
             // Propagate the message to the TaskHandler, which is responsible for actually
             // manipulating our internal data
             let result = sender.send(Message::Group(GroupMessage::Remove(group.clone())));

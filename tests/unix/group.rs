@@ -46,13 +46,34 @@ async fn test_cannot_delete_default() -> Result<()> {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-/// Users cannot delete the default group.
+/// Users cannot delete a non-existing group.
 async fn test_cannot_delete_non_existing() -> Result<()> {
     let (settings, tempdir) = base_setup()?;
     let shared = &settings.shared;
     let _pid = boot_daemon(tempdir.path())?;
 
     let pause_message = Message::Group(GroupMessage::Remove("doesnt_exist".to_string()));
+    assert_failure(send_message(shared, pause_message).await?);
+
+    Ok(())
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+/// Groups with tasks shouldn't be able to be removed.
+async fn test_cannot_delete_group_with_tasks() -> Result<()> {
+    let (settings, tempdir) = base_setup()?;
+    let shared = &settings.shared;
+    let _pid = boot_daemon(tempdir.path())?;
+
+    // Add a new group
+    let add_message = Message::Group(GroupMessage::Add("testgroup".to_string()));
+    assert_success(send_message(shared, add_message.clone()).await?);
+
+    // Add a task
+    assert_success(fixtures::add_task_to_group(shared, "sleep 10", "testgroup").await?);
+
+    // We shouldn't be capable of removing that group
+    let pause_message = Message::Group(GroupMessage::Remove("testgroup".to_string()));
     assert_failure(send_message(shared, pause_message).await?);
 
     Ok(())

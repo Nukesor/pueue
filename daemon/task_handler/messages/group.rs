@@ -37,7 +37,14 @@ impl TaskHandler {
                     error!("Group \"{}\" to be remove doesn't exists", group);
                 }
 
-                if !state.groups.contains_key(&group) {}
+                // Make sure there are no tasks in that group.
+                if state.tasks.iter().any(|(_, task)| task.group == group) {
+                    error!(
+                        "Tried to remove group \"{}\", while it still contained tasks.",
+                        group
+                    );
+                    return;
+                }
 
                 if let Err(error) = state.remove_group(&group) {
                     error!("Error while removing group: \"{}\"", error);
