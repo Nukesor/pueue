@@ -11,14 +11,14 @@ pub struct Children(pub BTreeMap<String, BTreeMap<usize, (usize, Child)>>);
 impl Children {
     /// Returns whether there are any active tasks across all groups.
     pub fn has_active_tasks(&self) -> bool {
-        self.0.iter().any(|(_, children)| !children.is_empty())
+        self.0.iter().any(|(_, pool)| !pool.is_empty())
     }
 
     /// A convenience function to check whether there's child with a given task_id.
     /// We have to do a nested linear search, as these datastructure aren't indexed via task_ids.
     pub fn has_child(&self, task_id: usize) -> bool {
-        for (_, children) in self.0.iter() {
-            for (_, (child_task_id, _)) in children.iter() {
+        for (_, pool) in self.0.iter() {
+            for (_, (child_task_id, _)) in pool.iter() {
                 if child_task_id == &task_id {
                     return true;
                 }
@@ -31,8 +31,8 @@ impl Children {
     /// A convenience function to get a child by its respective task_id.
     /// We have to do a nested linear search, as these datastructure aren't indexed via task_ids.
     pub fn get_child(&self, task_id: usize) -> Option<&Child> {
-        for (_, children) in self.0.iter() {
-            for (_, (child_task_id, child)) in children.iter() {
+        for (_, pool) in self.0.iter() {
+            for (_, (child_task_id, child)) in pool.iter() {
                 if child_task_id == &task_id {
                     return Some(child);
                 }
@@ -45,8 +45,8 @@ impl Children {
     /// A convenience function to get a child by its respective task_id.
     /// We have to do a nested linear search, as these datastructure aren't indexed via task_ids.
     pub fn get_child_mut(&mut self, task_id: usize) -> Option<&mut Child> {
-        for (_, children) in self.0.iter_mut() {
-            for (_, (child_task_id, child)) in children.iter_mut() {
+        for (_, pool) in self.0.iter_mut() {
+            for (_, (child_task_id, child)) in pool.iter_mut() {
                 if child_task_id == &task_id {
                     return Some(child);
                 }
@@ -59,8 +59,8 @@ impl Children {
     /// A convenience function to get a list with all task_ids of all children.
     pub fn all_task_ids(&self) -> Vec<usize> {
         let mut task_ids = Vec::new();
-        for (_, children) in self.0.iter() {
-            for (_, (task_id, _)) in children.iter() {
+        for (_, pool) in self.0.iter() {
+            for (_, (task_id, _)) in pool.iter() {
                 task_ids.push(*task_id)
             }
         }
@@ -76,7 +76,7 @@ impl Children {
     /// At this point, we're sure that the worker pool for the given group already exists, hence
     /// the expect call.
     pub fn get_next_group_worker(&self, group: &str) -> usize {
-        let process_group = self
+        let pool = self
             .0
             .get(group)
             .expect("The worker pool should be initialized when getting the next worker id.");
@@ -90,7 +90,7 @@ impl Children {
         // If the second slot is free, we increment once, break the loop in the second iteration
         // and return the new id.
         let mut next_worker_id = 0;
-        for worker_id in process_group.keys() {
+        for worker_id in pool.keys() {
             if worker_id != &next_worker_id {
                 break;
             }
@@ -106,11 +106,11 @@ impl Children {
     /// At this point, we're sure that the worker pool for the given group already exists, hence
     /// the expect call.
     pub fn add_child(&mut self, group: &str, worker_id: usize, task_id: usize, child: Child) {
-        let process_group = self
+        let pool = self
             .0
             .get_mut(group)
             .expect("The worker pool should be initialized when inserting a new child.");
 
-        process_group.insert(worker_id, (task_id, child));
+        pool.insert(worker_id, (task_id, child));
     }
 }

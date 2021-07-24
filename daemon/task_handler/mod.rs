@@ -98,15 +98,15 @@ impl TaskHandler {
         let state = state_clone.lock().unwrap();
 
         // Initialize the subprocess management structure.
-        let mut children = BTreeMap::new();
+        let mut pools = BTreeMap::new();
         for group in state.settings.daemon.groups.keys() {
-            children.insert(group.clone(), BTreeMap::new());
+            pools.insert(group.clone(), BTreeMap::new());
         }
 
         TaskHandler {
             state: shared_state,
             receiver,
-            children: Children(children),
+            children: Children(pools),
             callbacks: Vec::new(),
             full_reset: false,
             shutdown: None,

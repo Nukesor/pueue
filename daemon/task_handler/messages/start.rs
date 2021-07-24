@@ -15,9 +15,9 @@ impl TaskHandler {
     /// However, if specific task_ids are provided, tasks can actually be force-started.
     /// Of course, they can only be started if they're in a valid status, i.e. Queued/Stashed.
     ///
-    /// `children` decides, whether the resume Signal will be send to child processes as well.
+    /// `start_children` decides, whether the resume Signal will be send to child processes as well.
     ///     Of course, this only applies to processes that are resumend and not force-spawned.
-    pub fn start(&mut self, tasks: TaskSelection, children: bool) {
+    pub fn start(&mut self, tasks: TaskSelection, start_children: bool) {
         let cloned_state_mutex = self.state.clone();
         let mut state = cloned_state_mutex.lock().unwrap();
 
@@ -29,7 +29,7 @@ impl TaskHandler {
                 for task_id in task_ids {
                     // Continue all children that are simply paused
                     if self.children.has_child(task_id) {
-                        self.continue_task(&mut state, task_id, children);
+                        self.continue_task(&mut state, task_id, start_children);
                     } else {
                         // Start processes for all tasks that haven't been started yet
                         self.start_process(task_id, &mut state);
@@ -64,14 +64,14 @@ impl TaskHandler {
 
         // Resume all specified paused tasks
         for task_id in task_ids {
-            self.continue_task(&mut state, task_id, children);
+            self.continue_task(&mut state, task_id, start_children);
         }
 
         ok_or_shutdown!(self, save_state(&state));
     }
 
     /// Send a start signal to a paused task to continue execution.
-    fn continue_task(&mut self, state: &mut LockedState, task_id: usize, children: bool) {
+    fn continue_task(&mut self, state: &mut LockedState, task_id: usize, start_children: bool) {
         // Task doesn't exist
         if !self.children.has_child(task_id) {
             return;
@@ -82,7 +82,7 @@ impl TaskHandler {
             return;
         }
 
-        let success = match self.perform_action(task_id, ProcessAction::Resume, children) {
+        let success = match self.perform_action(task_id, ProcessAction::Resume, start_children) {
             Err(err) => {
                 warn!("Failed to resume task {}: {:?}", task_id, err);
                 false
