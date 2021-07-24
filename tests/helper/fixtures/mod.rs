@@ -24,5 +24,25 @@ pub async fn add_task(shared: &Shared, command: &str, start_immediately: bool) -
 
     send_message(shared, message)
         .await
-        .context("Failed to to add task message")
+        .context("Failed to to add task.")
+}
+
+/// Helper to pause the whole daemon
+pub async fn add_task_to_group(shared: &Shared, command: &str, group: &str) -> Result<Message> {
+    let message = Message::Add(AddMessage {
+        command: command.into(),
+        path: shared.pueue_directory().to_str().unwrap().to_string(),
+        envs: HashMap::new(),
+        start_immediately: false,
+        stashed: false,
+        group: group.to_owned(),
+        enqueue_at: None,
+        dependencies: vec![],
+        label: None,
+        print_task_id: false,
+    });
+
+    send_message(shared, message)
+        .await
+        .context("Failed to to add task to group.")
 }

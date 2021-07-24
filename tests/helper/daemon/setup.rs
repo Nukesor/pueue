@@ -113,7 +113,9 @@ pub fn base_setup() -> Result<(Settings, TempDir)> {
 
     let mut groups = BTreeMap::new();
     groups.insert("default".to_string(), 1);
-    groups.insert("test".to_string(), 3);
+    groups.insert("test_2".to_string(), 2);
+    groups.insert("test_3".to_string(), 3);
+    groups.insert("test_5".to_string(), 5);
 
     let daemon = Daemon {
         default_parallel_tasks: 1,
