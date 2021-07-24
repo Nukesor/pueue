@@ -46,3 +46,21 @@ pub async fn add_task_to_group(shared: &Shared, command: &str, group: &str) -> R
         .await
         .context("Failed to to add task to group.")
 }
+
+/// Mini wrapper around add_task, which always makes processes print their worker envs as well.
+pub async fn add_env_task(shared: &Shared, command: &str) -> Result<Message> {
+    let command = format!(
+        "echo WORKER_ID: $PUEUE_WORKER_ID; echo GROUP: $PUEUE_GROUP; {}",
+        command
+    );
+    fixtures::add_task(shared, &command, false).await
+}
+
+/// Just like [add_env_task], but task get's added to specific group.
+pub async fn add_env_task_to_group(shared: &Shared, command: &str, group: &str) -> Result<Message> {
+    let command = format!(
+        "echo WORKER_ID: $PUEUE_WORKER_ID; echo GROUP: $PUEUE_GROUP; {}",
+        command
+    );
+    fixtures::add_task_to_group(shared, &command, group).await
+}

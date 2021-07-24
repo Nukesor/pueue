@@ -12,11 +12,19 @@ use pueue_lib::state::GroupStatus;
 use super::{get_state, sleep_ms};
 
 pub fn assert_success(message: Message) {
-    assert!(matches!(message, Message::Success(_)));
+    assert!(
+        matches!(message, Message::Success(_)),
+        "Expected to get SuccessMessage, got {:?}",
+        message
+    );
 }
 
 pub fn assert_failure(message: Message) {
-    assert!(matches!(message, Message::Failure(_)));
+    assert!(
+        matches!(message, Message::Failure(_)),
+        "Expected to get FailureMessage, got {:?}",
+        message
+    );
 }
 
 /// Get a daemon pid from a specific pueue directory.
