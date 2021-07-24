@@ -14,6 +14,7 @@ async fn test_add_and_remove() -> Result<()> {
     // Add a new group
     let add_message = Message::Group(GroupMessage::Add("testgroup".to_string()));
     assert_success(send_message(shared, add_message.clone()).await?);
+    wait_for_group(shared, "testgroup").await?;
 
     // Make sure it got added
     let state = get_state(shared).await?;
@@ -69,6 +70,7 @@ async fn test_cannot_delete_group_with_tasks() -> Result<()> {
     // Add a new group
     let add_message = Message::Group(GroupMessage::Add("testgroup".to_string()));
     assert_success(send_message(shared, add_message.clone()).await?);
+    wait_for_group(shared, "testgroup").await?;
 
     // Add a task
     assert_success(fixtures::add_task_to_group(shared, "ls", "testgroup").await?);

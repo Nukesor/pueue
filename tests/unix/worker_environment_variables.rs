@@ -78,6 +78,7 @@ async fn test_worker_for_new_pool() -> Result<()> {
     // Add a new group
     let add_message = Message::Group(GroupMessage::Add("testgroup".to_string()));
     assert_success(send_message(shared, add_message.clone()).await?);
+    wait_for_group(shared, "testgroup").await?;
 
     // Add some tasks that instantly finish.
     assert_success(add_env_task_to_group(shared, "sleep 0.1", "testgroup").await?);
