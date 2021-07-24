@@ -24,7 +24,7 @@ pub fn boot_daemon(pueue_dir: &Path) -> Result<i32> {
     let mut current_try = 0;
 
     // Wait up to 1s for the unix socket to pop up.
-    let socket_path = pueue_dir.join("pueue.pid");
+    let socket_path = pueue_dir.join("test.socket");
     while current_try < tries {
         sleep_ms(50);
         if socket_path.exists() {
@@ -51,7 +51,7 @@ pub fn boot_standalone_daemon(pueue_dir: &Path) -> Result<Child> {
     let mut current_try = 0;
 
     // Wait up to 1s for the unix socket to pop up.
-    let socket_path = pueue_dir.join("pueue.pid");
+    let socket_path = pueue_dir.join("test.socket");
     while current_try < tries {
         sleep_ms(50);
         if socket_path.exists() {
