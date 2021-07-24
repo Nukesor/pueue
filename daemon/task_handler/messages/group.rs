@@ -32,7 +32,7 @@ impl TaskHandler {
                 info!("New group \"{}\" has been created", &group);
 
                 // Create the worker pool.
-                self.children.0.insert(group.clone(), BTreeMap::new());
+                self.children.0.insert(group, BTreeMap::new());
 
                 // Save the state and the settings file.
                 ok_or_shutdown!(self, save_state(&state));

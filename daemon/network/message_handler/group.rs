@@ -41,14 +41,14 @@ pub fn group(message: GroupMessage, sender: &Sender<Message>, state: &SharedStat
             }
 
             if group == "default" {
-                return create_failure_message(format!("You cannot delete the default group"));
+                return create_failure_message("You cannot delete the default group".to_string());
             }
 
             // Make sure there are no tasks in that group.
             if state.tasks.iter().any(|(_, task)| task.group == group) {
-                return create_failure_message(format!(
-                    "You cannot remove a group, if there're still tasks in it."
-                ));
+                return create_failure_message(
+                    "You cannot remove a group, if there're still tasks in it.".to_string(),
+                );
             }
 
             // Propagate the message to the TaskHandler, which is responsible for actually
