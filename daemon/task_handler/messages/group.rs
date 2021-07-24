@@ -1,3 +1,6 @@
+use std::collections::BTreeMap;
+
+use anyhow::anyhow;
 use log::{error, info};
 
 use pueue_lib::network::message::GroupMessage;
@@ -28,6 +31,9 @@ impl TaskHandler {
                 state.create_group(&group);
                 info!("New group \"{}\" has been created", &group);
 
+                // Create the worker pool.
+                self.children.0.insert(group.clone(), BTreeMap::new());
+
                 // Save the state and the settings file.
                 ok_or_shutdown!(self, save_state(&state));
                 ok_or_shutdown!(self, save_settings(&state));
@@ -35,6 +41,7 @@ impl TaskHandler {
             GroupMessage::Remove(group) => {
                 if !state.groups.contains_key(&group) {
                     error!("Group \"{}\" to be remove doesn't exists", group);
+                    return;
                 }
 
                 // Make sure there are no tasks in that group.
@@ -50,6 +57,24 @@ impl TaskHandler {
                     error!("Error while removing group: \"{}\"", error);
                     return;
                 }
+
+                // Make sure the worker pool exists and is empty.
+                // There shouldn't be any children, if there are no tasks in this group.
+                // Those are critical errors, as they indicate desynchronization inside our
+                // internal datastructures, which is really bad.
+                if let Some(pool) = self.children.0.get(&group) {
+                    if !pool.is_empty() {
+                        anyhow!("Encountered a non-empty worker pool, while removing a group. This is a critical error. Please report this bug.");
+                        self.initiate_shutdown(Shutdown::Emergency);
+                        return;
+                    }
+                } else {
+                    anyhow!("Encountered an group without an worker pool, while removing a group. This is a critical error. Please report this bug.");
+                    self.initiate_shutdown(Shutdown::Emergency);
+                    return;
+                }
+                // Actually remove the worker pool.
+                self.children.0.remove(&group);
 
                 // Save the state and the settings file.
                 ok_or_shutdown!(self, save_state(&state));
