@@ -1,5 +1,7 @@
 use anyhow::Result;
 
+use pueue_lib::network::message::*;
+
 use crate::helper::fixtures::*;
 use crate::helper::*;
 
@@ -61,6 +63,29 @@ async fn test_multiple_worker() -> Result<()> {
     assert_worker_envs(shared, &state, 3, 0, "test_3").await?;
     // Task4 gets task1's slot
     assert_worker_envs(shared, &state, 4, 1, "test_3").await?;
+
+    Ok(())
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+/// Make sure the worker pools are properly initialized when maually adding a new group.
+async fn test_worker_for_new_pool() -> Result<()> {
+    better_panic::debug_install();
+    let (settings, tempdir) = base_setup()?;
+    let shared = &settings.shared;
+    let _pid = boot_daemon(tempdir.path())?;
+
+    // Add a new group
+    let add_message = Message::Group(GroupMessage::Add("testgroup".to_string()));
+    assert_success(send_message(shared, add_message.clone()).await?);
+
+    // Add some tasks that instantly finish.
+    assert_success(add_env_task_to_group(shared, "sleep 0.1", "testgroup").await?);
+    wait_for_task_condition(&settings.shared, 0, |task| task.is_done()).await?;
+
+    // The task should have the correct worker id + group.
+    let state = get_state(shared).await?;
+    assert_worker_envs(shared, &state, 0, 0, "testgroup").await?;
 
     Ok(())
 }
