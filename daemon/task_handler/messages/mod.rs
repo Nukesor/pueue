@@ -6,6 +6,7 @@ use pueue_lib::network::message::*;
 
 use crate::task_handler::TaskHandler;
 
+mod group;
 mod kill;
 mod pause;
 mod send;
@@ -31,6 +32,7 @@ impl TaskHandler {
             }
             Message::Send(message) => self.send(message.task_id, message.input),
             Message::Reset(message) => self.reset(message.children),
+            Message::Group(message) => self.handle_group_message(message),
             Message::DaemonShutdown(shutdown) => {
                 self.initiate_shutdown(shutdown);
             }
