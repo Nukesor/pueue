@@ -1,3 +1,5 @@
+use handlebars::RenderError;
+
 use super::*;
 
 impl TaskHandler {
@@ -5,56 +7,14 @@ impl TaskHandler {
     /// Execute the callback by spawning a new subprocess.
     pub fn spawn_callback(&mut self, task: &Task) {
         // Return early, if there's no callback specified
-        let callback = if let Some(callback) = &self.callback {
+        let template_string = if let Some(callback) = &self.callback {
             callback
         } else {
             return;
         };
 
-        // Build the callback command from the given template.
-        let mut handlebars = Handlebars::new();
-        handlebars.set_strict_mode(true);
-        // Build templating variables.
-        let mut parameters = HashMap::new();
-        parameters.insert("id", task.id.to_string());
-        parameters.insert("command", task.command.clone());
-        parameters.insert("path", task.path.clone());
-        if let TaskStatus::Done(result) = &task.status {
-            parameters.insert("result", result.to_string());
-        } else {
-            parameters.insert("result", "None".into());
-        }
-
-        let print_time = |time: Option<DateTime<Local>>| {
-            time.map(|time| time.timestamp().to_string())
-                .unwrap_or_else(String::new)
-        };
-        parameters.insert("start", print_time(task.start));
-        parameters.insert("end", print_time(task.end));
-        parameters.insert("group", task.group.clone());
-
-        // Read the last 10 lines of output and make it available.
-        if let Ok((stdout, stderr)) =
-            read_last_log_file_lines(task.id, &self.pueue_directory, self.callback_log_lines)
-        {
-            parameters.insert("stdout", stdout);
-            parameters.insert("stderr", stderr);
-        } else {
-            parameters.insert("stdout", "".to_string());
-            parameters.insert("stderr", "".to_string());
-        }
-
-        if let TaskStatus::Done(result) = &task.status {
-            match result {
-                TaskResult::Success => parameters.insert("exit_code", "0".into()),
-                TaskResult::Failed(code) => parameters.insert("exit_code", code.to_string()),
-                _ => parameters.insert("exit_code", "None".into()),
-            };
-        } else {
-            parameters.insert("exit_code", "None".into());
-        }
-
-        let callback_command = match handlebars.render_template(callback, &parameters) {
+        // Build the command to be called from the template string in the configuration file.
+        let callback_command = match self.build_callback_command(task, &template_string) {
             Ok(callback_command) => callback_command,
             Err(err) => {
                 error!(
@@ -79,6 +39,64 @@ impl TaskHandler {
 
         debug!("Spawned callback for task {}", task.id);
         self.callbacks.push(child);
+    }
+
+    /// Take the callback template string from the configuration and insert all parameters from the
+    /// finished task.
+    pub fn build_callback_command(
+        &self,
+        task: &Task,
+        template_string: &str,
+    ) -> Result<String, RenderError> {
+        // Init Handlebars. We set to strict, as we want to show an error on missing variables.
+        let mut handlebars = Handlebars::new();
+        handlebars.set_strict_mode(true);
+
+        // Add templating variables.
+        let mut parameters = HashMap::new();
+        parameters.insert("id", task.id.to_string());
+        parameters.insert("command", task.command.clone());
+        parameters.insert("path", task.path.clone());
+        parameters.insert("group", task.group.clone());
+
+        // Result takes the TaskResult Enum strings, unless it didn't finish yet.
+        if let TaskStatus::Done(result) = &task.status {
+            parameters.insert("result", result.to_string());
+        } else {
+            parameters.insert("result", "None".into());
+        }
+
+        // Format and insert start and end times.
+        let print_time = |time: Option<DateTime<Local>>| {
+            time.map(|time| time.timestamp().to_string())
+                .unwrap_or_else(String::new)
+        };
+        parameters.insert("start", print_time(task.start));
+        parameters.insert("end", print_time(task.end));
+
+        // Read the last lines of the process' output and make it available.
+        if let Ok((stdout, stderr)) =
+            read_last_log_file_lines(task.id, &self.pueue_directory, self.callback_log_lines)
+        {
+            parameters.insert("stdout", stdout);
+            parameters.insert("stderr", stderr);
+        } else {
+            parameters.insert("stdout", "".to_string());
+            parameters.insert("stderr", "".to_string());
+        }
+
+        // Get the exit code
+        if let TaskStatus::Done(result) = &task.status {
+            match result {
+                TaskResult::Success => parameters.insert("exit_code", "0".into()),
+                TaskResult::Failed(code) => parameters.insert("exit_code", code.to_string()),
+                _ => parameters.insert("exit_code", "None".into()),
+            };
+        } else {
+            parameters.insert("exit_code", "None".into());
+        }
+
+        handlebars.render_template(template_string, &parameters)
     }
 
     /// Look at all running callbacks and log any errors.
