@@ -22,10 +22,17 @@ pub enum Message {
     Pause(PauseMessage),
     Kill(KillMessage),
 
+    /// Used to send some input to a process's stdin
     Send(SendMessage),
+
+    /// The first part of the three-step protocol to edit a task.
+    /// This one requests an edit from the daemon.
     EditRequest(usize),
+    /// The daemon locked the task and responds with the task's details.
     EditResponse(EditResponseMessage),
+    /// The client sends the edited details to the daemon.
     Edit(EditMessage),
+
     Group(GroupMessage),
     GroupResponse(GroupResponseMessage),
 
@@ -33,8 +40,12 @@ pub enum Message {
     StatusResponse(Box<State>),
     Log(LogRequestMessage),
     LogResponse(BTreeMap<usize, TaskLogMessage>),
-    Stream(String),
+
+    /// The client requests a continuous stream of a task's log.
     StreamRequest(StreamRequestMessage),
+    /// The next chunk of output, that's send to the client.
+    Stream(String),
+
     /// The boolean decides, whether the children should be get a SIGTERM as well.
     Reset(ResetMessage),
     Clean(CleanMessage),
