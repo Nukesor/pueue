@@ -14,7 +14,7 @@ impl TaskHandler {
         };
 
         // Build the command to be called from the template string in the configuration file.
-        let callback_command = match self.build_callback_command(task, &template_string) {
+        let callback_command = match self.build_callback_command(task, template_string) {
             Ok(callback_command) => callback_command,
             Err(err) => {
                 error!(
