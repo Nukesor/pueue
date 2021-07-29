@@ -45,6 +45,7 @@ I want this project to move forward.
 - Use tokio's async runtime and set a hardcoded limit of 4 worker threads, which is already more than enough.
 - Add a debug message, when using `pueue wait` or `pueue wait -g some_group`, but there're no tasks in the group.
 - Reworked shutdown, restoration and cleanup logic.
+- Rename `Index` to `Id` in `pueue status` to free up screen space.
 
 ### Datastructures
 

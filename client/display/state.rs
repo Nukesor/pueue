@@ -136,7 +136,7 @@ fn print_table(tasks: &BTreeMap<usize, Task>, colors: &Colors, settings: &Settin
     let (has_delayed_tasks, has_dependencies, has_labels) = has_special_columns(tasks);
 
     // Create table header row
-    let mut headers = vec![Cell::new("Index"), Cell::new("Status")];
+    let mut headers = vec![Cell::new("Id"), Cell::new("Status")];
     if has_delayed_tasks {
         headers.push(Cell::new("Enqueue At"));
     }
