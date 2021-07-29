@@ -46,6 +46,7 @@ I want this project to move forward.
 - Add a debug message, when using `pueue wait` or `pueue wait -g some_group`, but there're no tasks in the group.
 - Reworked shutdown, restoration and cleanup logic.
 - Rename `Index` to `Id` in `pueue status` to free up screen space.
+- Remove `Exitcode` column in `pueue status` and include exitcode into `Failed` status to free up screen space.
 
 ### Datastructures
 

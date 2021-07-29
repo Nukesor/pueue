@@ -137,15 +137,13 @@ fn print_table(tasks: &BTreeMap<usize, Task>, colors: &Colors, settings: &Settin
 
     // Create table header row
     let mut headers = vec![Cell::new("Id"), Cell::new("Status")];
+
     if has_delayed_tasks {
         headers.push(Cell::new("Enqueue At"));
     }
     if has_dependencies {
         headers.push(Cell::new("Deps"));
     }
-
-    headers.push(Cell::new("Exitcode"));
-
     if has_labels {
         headers.push(Cell::new("Label"));
     }
@@ -181,6 +179,7 @@ fn print_table(tasks: &BTreeMap<usize, Task>, colors: &Colors, settings: &Settin
                 TaskResult::Success => (TaskResult::Success.to_string(), colors.green()),
                 TaskResult::DependencyFailed => ("Dependency failed".to_string(), colors.red()),
                 TaskResult::FailedToSpawn(_) => ("Failed to spawn".to_string(), colors.red()),
+                TaskResult::Failed(code) => (format!("Failed ({})", code), colors.red()),
                 _ => (result.to_string(), colors.red()),
             },
             _ => (status_string, colors.yellow()),
@@ -216,16 +215,6 @@ fn print_table(tasks: &BTreeMap<usize, Task>, colors: &Colors, settings: &Settin
             row.add_cell(Cell::new(text));
         }
 
-        // Match the color of the exit code.
-        // If the exit_code is none, it has been killed by the task handler.
-        let exit_code_cell = match task.status {
-            TaskStatus::Done(TaskResult::Success) => Cell::new("0").fg(colors.green()),
-            TaskStatus::Done(TaskResult::Failed(code)) => {
-                Cell::new(&code.to_string()).fg(colors.red())
-            }
-            _ => Cell::new(""),
-        };
-        row.add_cell(exit_code_cell);
         if has_labels {
             if let Some(label) = &task.label {
                 row.add_cell(label.into());
