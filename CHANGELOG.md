@@ -7,11 +7,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [1.0.0] - 
 
 A lot of things happened during this release.
-Even though a few new features were added, the main effort went into increasing stability and inter-version compatibility.
+Even though quite a few new features were added, the main effort went into increasing stability and inter-version compatibility.
 
 The goal of this release is to push the code quality, error handling, test coverage and stability to a level that justifies a v1.0 release. \
-Since this project follows semantic versioning, this includes no breaking changes and backward compatibility on version upgrades. \
-It also includes, that I'm quite certain there are no critical bugs in the project and that all important and planned features have been implemented.
+Since this project follows semantic versioning, this includes no breaking changes and backward compatibility on minor version upgrades. \
+This also means, that I'm quite certain that there are no critical bugs in the project and that all important and planned features have been implemented.
 
 Unless some critical issues pop up, this can be seen as a finished version of the project!
 
@@ -30,8 +30,15 @@ I want this project to move forward.
 - Use `pueue kill --signal SigTerm` to send Unix signals directly to Pueue's processes. [#202](https://github.com/Nukesor/pueue/issues/202)
 - Add a PID file to `$pueue_directory/pueue.pid`, which will be used to check whether there's an already running daemon.
 - `--failed-in-group [group_name]` for `restart`. That way you can restart all failed tasks of a specific group [#211](https://github.com/Nukesor/pueue/issues/211)
-- Options to configure the time and datetime format in `pueue status` for [##212](https://github.com/Nukesor/pueue/issues/212).
-- Option to use the `--in-place` flag on `restart` by default.
+- Options in config file to configure the time and datetime format in `pueue status` for [#212](https://github.com/Nukesor/pueue/issues/212).
+- Option in config file to use the `--in-place` flag on `restart` by default.
+- Add a worker pool representation for groups to Pueue [#218](https://github.com/Nukesor/pueue/issues/218).
+    The task's group name and the pool's worker id for a given task are then injected into the environment variables of the subprocess.
+    This allows users to map Pueue's internal group and pool logic to external resources:
+    ```
+    ./run_on_gpu_pool --gpu $PUEUE_WORKER_ID --pool $PUEUE_GROUP`
+    ```
+
 
 ### Changed
 
@@ -47,6 +54,7 @@ I want this project to move forward.
 - Reworked shutdown, restoration and cleanup logic.
 - Rename `Index` to `Id` in `pueue status` to free up screen space.
 - Remove `Exitcode` column in `pueue status` and include exitcode into `Failed` status to free up screen space.
+- You can no longer remove groups, if there are still tasks assigned to that group.
 
 ### Datastructures
 

@@ -31,7 +31,7 @@ pub fn handle_message(message: Message, sender: &Sender<Message>, state: &Shared
         Message::Edit(message) => edit::edit(message, state),
         Message::EditRequest(task_id) => edit::edit_request(task_id, state),
         Message::Enqueue(message) => enqueue::enqueue(message, state),
-        Message::Group(message) => group::group(message, state),
+        Message::Group(message) => group::group(message, sender, state),
         Message::Kill(message) => kill::kill(message, sender, state),
         Message::Log(message) => log::get_log(message, state),
         Message::Parallel(message) => parallel::set_parallel_tasks(message, state),

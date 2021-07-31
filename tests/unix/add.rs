@@ -14,10 +14,7 @@ async fn test_normal_add() -> Result<()> {
     assert_success(fixtures::add_task(shared, "sleep 0.01", true).await?);
 
     // Wait until the task finished and get state
-    wait_for_task_condition(&settings.shared, 0, |task| {
-        matches!(task.status, TaskStatus::Done(_))
-    })
-    .await?;
+    wait_for_task_condition(&settings.shared, 0, |task| task.is_done()).await?;
 
     // The task finished succesfully
     assert_eq!(

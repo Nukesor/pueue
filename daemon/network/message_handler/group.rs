@@ -1,10 +1,10 @@
+use crossbeam_channel::Sender;
+
 use pueue_lib::network::message::*;
 use pueue_lib::state::SharedState;
 
+use crate::network::message_handler::ok_or_failure_message;
 use crate::network::response_helper::ensure_group_exists;
-use crate::state_helper::{save_settings, save_state};
-
-use super::*;
 use crate::ok_or_return_failure_message;
 
 /// Invoked on `pueue groups`.
@@ -12,8 +12,8 @@ use crate::ok_or_return_failure_message;
 /// - Show groups
 /// - Add group
 /// - Remove group
-pub fn group(message: GroupMessage, state: &SharedState) -> Message {
-    let mut state = state.lock().unwrap();
+pub fn group(message: GroupMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
+    let state = state.lock().unwrap();
 
     match message {
         GroupMessage::List => {
@@ -27,38 +27,34 @@ pub fn group(message: GroupMessage, state: &SharedState) -> Message {
             if state.groups.contains_key(&group) {
                 return create_failure_message(format!("Group \"{}\" already exists", group));
             }
-            state.create_group(&group);
 
-            // Save the state and the settings file.
-            ok_or_return_failure_message!(save_state(&state));
-            if let Err(error) = save_settings(&state) {
-                return create_failure_message(format!(
-                    "Failed while saving the config file: {}",
-                    error
-                ));
-            }
+            // Propagate the message to the TaskHandler, which is responsible for actually
+            // manipulating our internal data
+            let result = sender.send(Message::Group(GroupMessage::Add(group.clone())));
+            ok_or_return_failure_message!(result);
 
-            create_success_message(format!("Group \"{}\" created", group))
+            create_success_message(format!("Group \"{}\" is being created", group))
         }
-
-        // Remove an existing group.
         GroupMessage::Remove(group) => {
             if let Err(message) = ensure_group_exists(&state, &group) {
                 return message;
             }
 
-            if let Err(error) = state.remove_group(&group) {
-                return create_failure_message(format!("{}", error));
+            if group == "default" {
+                return create_failure_message("You cannot delete the default group".to_string());
             }
 
-            // Save the state and the settings file.
-            ok_or_return_failure_message!(save_state(&state));
-            if let Err(error) = save_settings(&state) {
-                return create_failure_message(format!(
-                    "Failed while saving the config file: {}",
-                    error
-                ));
+            // Make sure there are no tasks in that group.
+            if state.tasks.iter().any(|(_, task)| task.group == group) {
+                return create_failure_message(
+                    "You cannot remove a group, if there're still tasks in it.".to_string(),
+                );
             }
+
+            // Propagate the message to the TaskHandler, which is responsible for actually
+            // manipulating our internal data
+            let result = sender.send(Message::Group(GroupMessage::Remove(group.clone())));
+            ok_or_return_failure_message!(result);
 
             create_success_message(format!("Group \"{}\" removed", group))
         }

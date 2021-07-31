@@ -22,29 +22,6 @@ impl TaskHandler {
     /// - The group is running
     /// - has all its dependencies in `Done` state
     pub fn get_next_task_id(&mut self, state: &LockedState) -> Option<usize> {
-        // Check how many tasks are running in each group
-        let mut running_tasks_per_group: HashMap<String, usize> = HashMap::new();
-
-        // Create a default group for tasks without an explicit group
-        running_tasks_per_group.insert("default".into(), 0);
-
-        // Walk through all tasks and save the number of running tasks by group
-        for (_, task) in state.tasks.iter() {
-            // We are only interested in currently running tasks.
-            if !matches!(task.status, TaskStatus::Running | TaskStatus::Paused) {
-                continue;
-            }
-
-            match running_tasks_per_group.get_mut(&task.group) {
-                Some(count) => {
-                    *count += 1;
-                }
-                None => {
-                    running_tasks_per_group.insert(task.group.clone(), 1);
-                }
-            }
-        }
-
         state
             .tasks
             .iter()
@@ -56,22 +33,28 @@ impl TaskHandler {
                     return false;
                 }
 
-                // If there's no running task for the group yet, we can safely return true
-                //
-                // If there are running tasks for this group, we have to ensure that there are
-                // fewer running tasks than allowed for this group.
-                match running_tasks_per_group.get(&task.group) {
-                    None => true,
-                    Some(count) => match state.settings.daemon.groups.get(&task.group) {
-                        Some(allowed) => count < allowed,
-                        None => {
-                            error!(
-                                "Got task with unknown group {}. Please report this!",
-                                &task.group
-                            );
-                            false
-                        }
-                    },
+                // Get the currently running tasks by looking at the actually running processes.
+                // They're sorted by group, which makes this quite convenient.
+                let running_tasks = match self.children.0.get(&task.group) {
+                    Some(children) => children.len(),
+                    None => {
+                        error!(
+                            "Got valid group {}, but no worker pool has been initialized. This is a bug!",
+                            &task.group
+                        );
+                        return false
+                    }
+                };
+
+                match state.settings.daemon.groups.get(&task.group) {
+                    Some(allowed) => running_tasks < *allowed,
+                    None => {
+                        error!(
+                            "Got task with unknown group {}. Please report this!",
+                            &task.group
+                        );
+                        false
+                    }
                 }
             })
             .find(|(_, task)| {
@@ -116,18 +99,30 @@ impl TaskHandler {
         };
 
         // Get all necessary info for starting the task
-        let (command, path, envs) = {
+        let (command, path, group, mut envs) = {
             let task = state.tasks.get(&task_id).unwrap();
-            (task.command.clone(), task.path.clone(), task.envs.clone())
+            (
+                task.command.clone(),
+                task.path.clone(),
+                task.group.clone(),
+                task.envs.clone(),
+            )
         };
 
-        // Spawn the actual subprocess
+        // Build the shell command that should be executed.
         let mut command = compile_shell_command(&command);
 
+        // Determine the worker's id depending on the current group.
+        // Inject that info into the environment.
+        let worker_id = self.children.get_next_group_worker(&group);
+        envs.insert("PUEUE_GROUP".into(), group.clone());
+        envs.insert("PUEUE_WORKER_ID".into(), worker_id.to_string());
+
+        // Spawn the actual subprocess
         let spawned_command = command
             .current_dir(path)
             .stdin(Stdio::piped())
-            .envs(envs)
+            .envs(envs.clone())
             .stdout(Stdio::from(stdout_log))
             .stderr(Stdio::from(stderr_log))
             .spawn();
@@ -156,12 +151,16 @@ impl TaskHandler {
                 return;
             }
         };
-        self.children.insert(task_id, child);
+
+        // Save the process handle in our self.children datastructure.
+        self.children.add_child(&group, worker_id, task_id, child);
 
         let task = state.tasks.get_mut(&task_id).unwrap();
-
         task.start = Some(Local::now());
         task.status = TaskStatus::Running;
+        // Overwrite the task's environment variables with the new ones, containing the
+        // PUEUE_WORKER_ID and PUEUE_GROUP variables.
+        task.envs = envs;
 
         info!("Started task: {}", task.command);
         ok_or_shutdown!(self, save_state(state));

@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use std::process::Child;
 use std::process::Stdio;
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use chrono::prelude::*;
 use crossbeam_channel::Receiver;
 use handlebars::Handlebars;
@@ -20,6 +20,9 @@ use crate::platform::process_helper::*;
 use crate::state_helper::{reset_state, save_state};
 
 mod callback;
+/// A helper newtype struct, which implements convenience methods for our child process management
+/// datastructure.
+mod children;
 /// Logic for handling dependencies
 mod dependencies;
 /// Logic for finishing and cleaning up completed tasks.
@@ -29,6 +32,8 @@ mod finish_task;
 mod messages;
 /// Everything regarding actually spawning task processes.
 mod spawn_task;
+
+use children::Children;
 
 /// This is a little helper macro, which looks at a critical result and shuts the
 /// TaskHandler down, if an error occurred. This is mostly used if the state cannot.
@@ -41,7 +46,7 @@ macro_rules! ok_or_shutdown {
         match $result {
             Err(err) => {
                 error!(
-                    "Initializing graceful shutdown. Encountered error in TaskManager: {}",
+                    "Initializing graceful shutdown. Encountered error in TaskHandler: {}",
                     err
                 );
                 $task_manager.initiate_shutdown(Shutdown::Emergency);
@@ -58,8 +63,9 @@ pub struct TaskHandler {
     /// The receiver for the MPSC channel that's used to push notificatoins from our message
     /// handling to the TaskHandler.
     receiver: Receiver<Message>,
-    /// A map of `task_id` to "spawned task subprocess handle".
-    children: BTreeMap<usize, Child>,
+    /// A mapping with this structure:
+    /// BTreeMap<group, BTreeMap<group_worker_id, (task_id, Subprocess handle)>
+    children: Children,
     /// These are the currently running callbacks. They're usually very short-lived.
     callbacks: Vec<Child>,
     /// A simple flag which is used to signal that we're currently doing a full reset of the daemon.
@@ -86,28 +92,27 @@ pub enum ProcessAction {
 }
 
 impl TaskHandler {
-    pub fn new(state: SharedState, receiver: Receiver<Message>) -> Self {
-        // Extract some static settings we often need.
-        // This prevents locking the State all the time.
-        let (pueue_directory, callback, callback_log_lines) = {
-            let state = state.lock().unwrap();
-            (
-                state.settings.shared.pueue_directory(),
-                state.settings.daemon.callback.clone(),
-                state.settings.daemon.callback_log_lines,
-            )
-        };
+    pub fn new(shared_state: SharedState, receiver: Receiver<Message>) -> Self {
+        // Clone the pointer, as we need to access it, but also put it into the TaskHandler.
+        let state_clone = shared_state.clone();
+        let state = state_clone.lock().unwrap();
+
+        // Initialize the subprocess management structure.
+        let mut pools = BTreeMap::new();
+        for group in state.settings.daemon.groups.keys() {
+            pools.insert(group.clone(), BTreeMap::new());
+        }
 
         TaskHandler {
-            state,
+            state: shared_state,
             receiver,
-            children: BTreeMap::new(),
+            children: Children(pools),
             callbacks: Vec::new(),
             full_reset: false,
             shutdown: None,
-            pueue_directory,
-            callback,
-            callback_log_lines,
+            pueue_directory: state.settings.shared.pueue_directory(),
+            callback: state.settings.daemon.callback.clone(),
+            callback_log_lines: state.settings.daemon.callback_log_lines,
         }
     }
 
@@ -158,8 +163,8 @@ impl TaskHandler {
     /// If they aren't, we'll wait a little longer.
     /// Once they're, we do some cleanup and exit.
     fn handle_shutdown(&mut self) {
-        // There are still active tasks. Continue waiting.
-        if !self.children.is_empty() {
+        // There are still active tasks. Continue waiting until they're killed and cleaned up.
+        if self.children.has_active_tasks() {
             return;
         }
 
@@ -193,7 +198,7 @@ impl TaskHandler {
     /// If that's the case, completely reset the state
     fn handle_reset(&mut self) {
         // Don't do any reset logic, if we aren't in reset mode or if some children are still up.
-        if !self.children.is_empty() {
+        if self.children.has_active_tasks() {
             return;
         }
 
@@ -244,7 +249,7 @@ impl TaskHandler {
     /// This is a small wrapper around the real platform dependant process handling logic
     /// It only ensures, that the process we want to manipulate really does exists.
     fn perform_action(&mut self, id: usize, action: ProcessAction, children: bool) -> Result<bool> {
-        match self.children.get(&id) {
+        match self.children.get_child(id) {
             Some(child) => {
                 debug!("Executing action {:?} to {}", action, id);
                 run_action_on_child(child, &action, children)?;

@@ -3,11 +3,13 @@ use anyhow::Result;
 use tokio::io::{self, AsyncWriteExt};
 
 pub mod daemon;
+pub mod envs;
 pub mod fixtures;
 pub mod network;
 pub mod wait;
 
 pub use daemon::*;
+pub use envs::*;
 pub use network::*;
 pub use wait::*;
 
