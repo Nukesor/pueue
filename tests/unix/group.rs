@@ -23,9 +23,10 @@ async fn test_add_and_remove() -> Result<()> {
     // Try to add the same group again. This should fail
     assert_failure(send_message(shared, add_message).await?);
 
-    // Remove the newly added group
+    // Remove the newly added group and wait for the deletion to be processed.
     let remove_message = Message::Group(GroupMessage::Remove("testgroup".to_string()));
     assert_success(send_message(shared, remove_message.clone()).await?);
+    wait_for_group_absence(shared, "testgroup").await?;
 
     // Make sure it got removed
     let state = get_state(shared).await?;
