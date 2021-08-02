@@ -19,9 +19,6 @@ impl TaskHandler {
         // Clone the state ref, so we don't have two mutable borrows later on.
         let state_ref = self.state.clone();
         let mut state = state_ref.lock().unwrap();
-        println!("{:?}", finished);
-        println!("{:?}", &self.children.0.keys());
-        println!("{:?}", &self.children.0.get("default").unwrap().keys());
 
         for ((task_id, group, worker_id), error) in finished.iter() {
             // Handle std::io errors on child processes.

@@ -1,7 +1,6 @@
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
-use std::process::Child;
 
 use anyhow::{anyhow, bail, Context, Result};
 use procfs::process::Process;
@@ -122,14 +121,4 @@ pub async fn wait_for_group_status(
         group,
         _expected_status
     );
-}
-
-pub fn kill_and_print_output(mut child: Child) -> Result<()> {
-    let _ = child.kill();
-    let output = child.wait_with_output()?;
-    println!("Stdout: \n{:?}", String::from_utf8_lossy(&output.stdout));
-
-    println!("Stderr: \n{:?}", String::from_utf8_lossy(&output.stderr));
-
-    Ok(())
 }
