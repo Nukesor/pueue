@@ -10,7 +10,9 @@ async fn test_normal_clean() -> Result<()> {
     let shared = &settings.shared;
     let _pid = boot_daemon(tempdir.path())?;
 
-    // We'll add some tasks. Some statuses will be adjusted lateron.
+    // We'll add some tasks.
+    // Task 0-2 will be immediately handled by the daemon, the other three tasks are queued for
+    // now. However, we'll manipulate them in such a way, that we'll end up with this mapping:
     // 0 -> failed
     // 1 -> success
     // 2 -> running
@@ -36,7 +38,7 @@ async fn test_normal_clean() -> Result<()> {
     let remove_message = Message::Remove(vec![0, 1, 2, 3, 4, 5]);
     send_message(shared, remove_message).await?;
 
-    // Every task that isn't currently running can be removed
+    // Ensure that every task that isn't currently running can be removed
     let state = get_state(shared).await?;
     assert!(!state.tasks.contains_key(&0));
     assert!(!state.tasks.contains_key(&1));

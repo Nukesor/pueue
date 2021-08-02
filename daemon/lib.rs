@@ -12,8 +12,8 @@ use pueue_lib::network::protocol::socket_cleanup;
 use pueue_lib::network::secret::init_shared_secret;
 use pueue_lib::settings::Settings;
 use pueue_lib::state::State;
-use state_helper::{restore_state, save_state};
 
+use self::state_helper::{restore_state, save_state};
 use crate::network::socket::accept_incoming;
 use crate::task_handler::TaskHandler;
 
