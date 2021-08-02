@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use anyhow::{Context, Result};
 use chrono::{DateTime, Duration, Local};
 use rstest::rstest;
@@ -17,18 +15,10 @@ pub async fn add_stashed_task(
     stashed: bool,
     enqueue_at: Option<DateTime<Local>>,
 ) -> Result<Message> {
-    let message = Message::Add(AddMessage {
-        command: command.into(),
-        path: shared.pueue_directory().to_str().unwrap().to_string(),
-        envs: HashMap::new(),
-        start_immediately: false,
-        stashed,
-        group: "default".into(),
-        enqueue_at,
-        dependencies: vec![],
-        label: None,
-        print_task_id: false,
-    });
+    let mut inner_message = fixtures::add_message(shared, command);
+    inner_message.stashed = stashed;
+    inner_message.enqueue_at = enqueue_at;
+    let message = Message::Add(inner_message);
 
     send_message(shared, message)
         .await
@@ -84,8 +74,8 @@ async fn test_enqueued_tasks(
     Ok(())
 }
 
-/// Delayed stashed tasks will be enqueued.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+/// Delayed stashed tasks will be enqueued.
 async fn test_delayed_tasks() -> Result<()> {
     let (settings, tempdir) = base_setup()?;
     let shared = &settings.shared;
