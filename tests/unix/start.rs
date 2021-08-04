@@ -43,17 +43,14 @@ async fn test_start_tasks(#[case] start_message: Message) -> Result<()> {
     // Wait for task 0 to start on its own.
     // We have to do this, otherwise we'll start task 1/2 beforehand, which prevents task 0 to be
     // started on its own.
-    wait_for_task_condition(shared, 0, |task| matches!(task.status, TaskStatus::Running)).await?;
+    wait_for_task_condition(shared, 0, |task| task.is_running()).await?;
 
     // Start tasks 1 and 2 manually
     start_tasks(shared, TaskSelection::TaskIds(vec![1, 2])).await?;
 
     // Wait until all tasks are running
     for id in 0..3 {
-        wait_for_task_condition(shared, id, |task| {
-            matches!(task.status, TaskStatus::Running)
-        })
-        .await?;
+        wait_for_task_condition(shared, id, |task| task.is_running()).await?;
     }
 
     // Pause the whole daemon and wait until all tasks are paused
@@ -68,10 +65,7 @@ async fn test_start_tasks(#[case] start_message: Message) -> Result<()> {
 
     // Ensure all tasks are running
     for id in 0..3 {
-        wait_for_task_condition(shared, id, |task| {
-            matches!(task.status, TaskStatus::Running)
-        })
-        .await?;
+        wait_for_task_condition(shared, id, |task| task.is_running()).await?;
     }
     Ok(())
 }

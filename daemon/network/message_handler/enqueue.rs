@@ -41,6 +41,5 @@ pub fn enqueue(message: EnqueueMessage, state: &SharedState) -> Message {
         String::from("Tasks are enqueued")
     };
 
-    let response = compile_task_response(text.as_str(), matching, mismatching);
-    create_success_message(response)
+    compile_task_response(&text, matching, mismatching)
 }

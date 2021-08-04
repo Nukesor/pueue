@@ -25,20 +25,17 @@ pub fn start(message: StartMessage, sender: &Sender<Message>, state: &SharedStat
 
     // Return a response depending on the selected tasks.
     match message.tasks {
-        TaskSelection::TaskIds(task_ids) => {
-            let response = task_response_helper(
-                "Tasks are being started",
-                task_ids,
-                |task| {
-                    matches!(
-                        task.status,
-                        TaskStatus::Paused | TaskStatus::Queued | TaskStatus::Stashed { .. }
-                    )
-                },
-                &state,
-            );
-            create_success_message(response)
-        }
+        TaskSelection::TaskIds(task_ids) => task_action_response_helper(
+            "Tasks are being started",
+            task_ids,
+            |task| {
+                matches!(
+                    task.status,
+                    TaskStatus::Paused | TaskStatus::Queued | TaskStatus::Stashed { .. }
+                )
+            },
+            &state,
+        ),
         TaskSelection::Group(group) => {
             create_success_message(format!("Group \"{}\" is being resumed.", &group))
         }

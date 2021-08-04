@@ -55,6 +55,7 @@ I want this project to move forward.
 - Rename `Index` to `Id` in `pueue status` to free up screen space.
 - Remove `Exitcode` column in `pueue status` and include exitcode into `Failed` status to free up screen space.
 - You can no longer remove groups, if there are still tasks assigned to that group.
+- A non-zero exit code will be returned, if no tasks were affected by an action.
 
 ### Datastructures
 

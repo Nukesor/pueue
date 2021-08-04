@@ -41,9 +41,7 @@ pub fn remove(task_ids: Vec<usize>, state: &SharedState) -> Message {
 
     ok_or_return_failure_message!(save_state(&state));
 
-    let text = "Tasks removed from list";
-    let response = compile_task_response(text, not_running, running);
-    create_success_message(response)
+    compile_task_response("Tasks removed from list", not_running, running)
 }
 
 #[cfg(test)]
@@ -95,8 +93,8 @@ mod tests {
         let message = remove(vec![1], &state);
 
         // Return message is correct
-        assert!(matches!(message, Message::Success(_)));
-        if let Message::Success(text) = message {
+        assert!(matches!(message, Message::Failure(_)));
+        if let Message::Failure(text) = message {
             assert_eq!(text, "The command failed for tasks: 1");
         };
 
@@ -109,8 +107,8 @@ mod tests {
         let message = remove(vec![1, 5], &state);
 
         // Return message is correct
-        assert!(matches!(message, Message::Success(_)));
-        if let Message::Success(text) = message {
+        assert!(matches!(message, Message::Failure(_)));
+        if let Message::Failure(text) = message {
             assert_eq!(text, "The command failed for tasks: 1, 5");
         };
 

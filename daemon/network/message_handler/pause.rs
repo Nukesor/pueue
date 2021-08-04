@@ -25,15 +25,12 @@ pub fn pause(message: PauseMessage, sender: &Sender<Message>, state: &SharedStat
 
     // Return a response depending on the selected tasks.
     match message.tasks {
-        TaskSelection::TaskIds(task_ids) => {
-            let response = task_response_helper(
-                "Tasks are being paused",
-                task_ids,
-                |task| matches!(task.status, TaskStatus::Running),
-                &state,
-            );
-            create_success_message(response)
-        }
+        TaskSelection::TaskIds(task_ids) => task_action_response_helper(
+            "Tasks are being paused",
+            task_ids,
+            |task| matches!(task.status, TaskStatus::Running),
+            &state,
+        ),
         TaskSelection::Group(group) => {
             create_success_message(format!("Group \"{}\" is being paused.", &group))
         }

@@ -22,7 +22,5 @@ pub fn stash(task_ids: Vec<usize>, state: &SharedState) -> Message {
         (matching, mismatching)
     };
 
-    let text = "Tasks are stashed";
-    let response = compile_task_response(text, matching, mismatching);
-    create_success_message(response)
+    compile_task_response("Tasks are stashed", matching, mismatching)
 }

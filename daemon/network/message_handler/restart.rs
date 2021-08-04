@@ -6,7 +6,7 @@ use pueue_lib::network::message::*;
 use pueue_lib::state::{SharedState, State};
 use pueue_lib::task::TaskStatus;
 
-use super::SENDER_ERR;
+use super::{task_action_response_helper, SENDER_ERR};
 
 /// This is a small wrapper around the actual in-place task `restart` functionality.
 pub fn restart_multiple(
@@ -14,6 +14,7 @@ pub fn restart_multiple(
     sender: &Sender<Message>,
     state: &SharedState,
 ) -> Message {
+    let task_ids: Vec<usize> = message.tasks.iter().map(|task| task.task_id).collect();
     let mut state = state.lock().unwrap();
     for task in message.tasks.iter() {
         restart(&mut state, task, message.stashed);
@@ -21,16 +22,15 @@ pub fn restart_multiple(
 
     // Tell the task manager to start the task immediately, if it's requested.
     if message.start_immediately {
-        let task_ids = message.tasks.iter().map(|task| task.task_id).collect();
         sender
             .send(Message::Start(StartMessage {
-                tasks: TaskSelection::TaskIds(task_ids),
+                tasks: TaskSelection::TaskIds(task_ids.clone()),
                 children: false,
             }))
             .expect(SENDER_ERR);
     }
 
-    create_success_message("Tasks restarted")
+    task_action_response_helper("Tasks restarted", task_ids, |task| task.is_done(), &state)
 }
 
 /// This is invoked, whenever a task is actually restarted (in-place) without creating a new task.
