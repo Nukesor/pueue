@@ -33,7 +33,7 @@ pub async fn restart(
     let state = get_state(stream).await?;
 
     // Filter to get done tasks
-    let done_filter = |task: &Task| matches!(task.status, TaskStatus::Done(_));
+    let done_filter = |task: &Task| task.is_done();
 
     let (matching, mismatching) = if all_failed || failed_in_group.is_some() {
         // Either all failed tasks or all failed tasks of a specific group need to be restarted.
