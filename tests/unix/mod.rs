@@ -3,6 +3,7 @@ mod clean;
 mod edit;
 mod group;
 mod kill;
+mod parallel_tasks;
 mod pause;
 mod remove;
 /// Tests regarding state restoration from a previous run.

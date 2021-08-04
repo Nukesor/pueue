@@ -12,15 +12,10 @@ async fn test_add_and_remove() -> Result<()> {
     let _pid = boot_daemon(tempdir.path())?;
 
     // Add a new group
-    let add_message = Message::Group(GroupMessage::Add("testgroup".to_string()));
-    assert_success(send_message(shared, add_message.clone()).await?);
-    wait_for_group(shared, "testgroup").await?;
-
-    // Make sure it got added
-    let state = get_state(shared).await?;
-    assert!(state.groups.contains_key("testgroup"));
+    add_group_with_slots(shared, "testgroup", 1).await?;
 
     // Try to add the same group again. This should fail
+    let add_message = Message::Group(GroupMessage::Add("testgroup".to_string()));
     assert_failure(send_message(shared, add_message).await?);
 
     // Remove the newly added group and wait for the deletion to be processed.
@@ -69,9 +64,7 @@ async fn test_cannot_delete_group_with_tasks() -> Result<()> {
     let _pid = boot_daemon(tempdir.path())?;
 
     // Add a new group
-    let add_message = Message::Group(GroupMessage::Add("testgroup".to_string()));
-    assert_success(send_message(shared, add_message.clone()).await?);
-    wait_for_group(shared, "testgroup").await?;
+    add_group_with_slots(shared, "testgroup", 1).await?;
 
     // Add a task
     assert_success(fixtures::add_task_to_group(shared, "ls", "testgroup").await?);

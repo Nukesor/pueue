@@ -70,3 +70,17 @@ pub async fn add_env_task_to_group(shared: &Shared, command: &str, group: &str) 
     );
     fixtures::add_task_to_group(shared, &command, group).await
 }
+
+/// Create a new group with a specific amount of slots.
+pub async fn add_group_with_slots(shared: &Shared, group_name: &str, slots: usize) -> Result<()> {
+    let add_message = Message::Group(GroupMessage::Add(group_name.to_string()));
+    assert_success(send_message(shared, add_message.clone()).await?);
+    wait_for_group(shared, group_name).await?;
+    let add_message = Message::Parallel(ParallelMessage {
+        parallel_tasks: slots,
+        group: group_name.to_string(),
+    });
+    assert_success(send_message(shared, add_message.clone()).await?);
+
+    Ok(())
+}

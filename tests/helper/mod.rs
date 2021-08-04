@@ -10,6 +10,7 @@ pub mod wait;
 
 pub use daemon::*;
 pub use envs::*;
+pub use fixtures::*;
 pub use network::*;
 pub use wait::*;
 

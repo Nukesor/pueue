@@ -1,7 +1,5 @@
 use anyhow::Result;
 
-use pueue_lib::network::message::*;
-
 use crate::helper::fixtures::*;
 use crate::helper::*;
 
@@ -76,9 +74,7 @@ async fn test_worker_for_new_pool() -> Result<()> {
     let _pid = boot_daemon(tempdir.path())?;
 
     // Add a new group
-    let add_message = Message::Group(GroupMessage::Add("testgroup".to_string()));
-    assert_success(send_message(shared, add_message.clone()).await?);
-    wait_for_group(shared, "testgroup").await?;
+    add_group_with_slots(shared, "testgroup", 1).await?;
 
     // Add some tasks that instantly finish.
     assert_success(add_env_task_to_group(shared, "sleep 0.1", "testgroup").await?);
