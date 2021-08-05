@@ -73,7 +73,7 @@ Overall, this resulted in sleaker und much better maintainable code. However, th
 - `pueue log --json` now works again. [#186](https://github.com/Nukesor/pueue/issues/186)
     By default, only a few lines of output will be provided, but this can be configured via the `--full` and `--lines` option.
 - Use crossbeam mpsc channels, which results in faster response time for client connections.
-- Fix issue where the daemon was shutting down so fast, there wasn't enough time to respond the client it's actually shutting down.
+- Fix issue where the daemon was shutting down so fast, there wasn't enough time to respond the client that it's actually shutting down.
 
 ### Removed
 

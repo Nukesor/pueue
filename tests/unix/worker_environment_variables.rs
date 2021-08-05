@@ -44,12 +44,11 @@ async fn test_multiple_worker() -> Result<()> {
     let shared = &settings.shared;
     let _pid = boot_daemon(tempdir.path())?;
 
-    for _ in 0..5 {
-        assert_success(add_env_task_to_group(shared, "sleep 0.2", "test_3").await?);
+    // Spawn three tasks and wait for them
+    for _ in 0..3 {
+        assert_success(add_env_task_to_group(shared, "sleep 0.1", "test_3").await?);
     }
-
-    // Wait for the last task to finish.
-    wait_for_task_condition(&settings.shared, 4, |task| task.is_done()).await?;
+    wait_for_task_condition(&settings.shared, 2, |task| task.is_done()).await?;
 
     // The first three tasks should have the same worker id's as the task ids.
     let state = get_state(shared).await?;
@@ -57,9 +56,16 @@ async fn test_multiple_worker() -> Result<()> {
         assert_worker_envs(shared, &state, task_id, task_id, "test_3").await?;
     }
 
-    // Task3 gets task0's slot
+    // Spawn to more tasks and wait for them
+    for _ in 0..2 {
+        assert_success(add_env_task_to_group(shared, "sleep 0.1", "test_3").await?);
+    }
+    wait_for_task_condition(&settings.shared, 4, |task| task.is_done()).await?;
+
+    let state = get_state(shared).await?;
+    // Task3 gets worker0
     assert_worker_envs(shared, &state, 3, 0, "test_3").await?;
-    // Task4 gets task1's slot
+    // Task4 gets worker1
     assert_worker_envs(shared, &state, 4, 1, "test_3").await?;
 
     Ok(())
