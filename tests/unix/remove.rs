@@ -6,9 +6,8 @@ use crate::helper::*;
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Ensure that clean only removes finished tasks
 async fn test_normal_clean() -> Result<()> {
-    let (settings, tempdir) = base_setup()?;
+    let (settings, _tempdir, _pid) = threaded_setup()?;
     let shared = &settings.shared;
-    let _pid = boot_daemon(tempdir.path())?;
 
     // We'll add some tasks.
     // Task 0-2 will be immediately handled by the daemon, the other three tasks are queued for

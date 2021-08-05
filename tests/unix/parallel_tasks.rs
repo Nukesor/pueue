@@ -11,9 +11,8 @@ use crate::helper::*;
 /// For each group, Pueue should start tasks until all slots are filled.
 async fn test_parallel_tasks() -> Result<()> {
     better_panic::debug_install();
-    let (settings, tempdir) = base_setup()?;
+    let (settings, _tempdir, _pid) = threaded_setup()?;
     let shared = &settings.shared;
-    let _pid = boot_daemon(tempdir.path())?;
 
     // ---- First group ----
     // Add a new group with 3 slots
@@ -26,7 +25,7 @@ async fn test_parallel_tasks() -> Result<()> {
 
     // Ensure those three tasks are started.
     for task_id in 0..3 {
-        wait_for_task_condition(&settings.shared, task_id, |task| task.is_running()).await?;
+        wait_for_task_condition(&shared, task_id, |task| task.is_running()).await?;
     }
 
     // Tasks 4-5 should still be queued
@@ -47,7 +46,7 @@ async fn test_parallel_tasks() -> Result<()> {
 
     // Ensure only two tasks are started.
     for task_id in 5..7 {
-        wait_for_task_condition(&settings.shared, task_id, |task| task.is_running()).await?;
+        wait_for_task_condition(&shared, task_id, |task| task.is_running()).await?;
     }
 
     // Tasks 8-10 should still be queued

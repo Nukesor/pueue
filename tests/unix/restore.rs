@@ -13,9 +13,8 @@ use crate::helper::*;
 /// This function tests for the running state.
 async fn test_start_running() -> Result<()> {
     let (settings, tempdir) = base_setup()?;
-    let shared = &settings.shared;
-
     let child = boot_standalone_daemon(tempdir.path())?;
+    let shared = &settings.shared;
 
     // Kill the daemon and wait for it to shut down.
     assert_success(shutdown_daemon(&shared).await?);
@@ -37,9 +36,8 @@ async fn test_start_running() -> Result<()> {
 /// This function tests for the paused state.
 async fn test_start_paused() -> Result<()> {
     let (settings, tempdir) = base_setup()?;
-    let shared = &settings.shared;
-
     let child = boot_standalone_daemon(tempdir.path())?;
+    let shared = &settings.shared;
 
     // This pauses the daemon
     pause_tasks(shared, TaskSelection::All).await?;

@@ -44,9 +44,8 @@ async fn test_kill_tasks(
     #[case] kill_message: Message,
     #[case] group_should_pause: bool,
 ) -> Result<()> {
-    let (settings, tempdir) = base_setup()?;
+    let (settings, _tempdir, _pid) = threaded_setup()?;
     let shared = &settings.shared;
-    let _pid = boot_daemon(tempdir.path())?;
 
     // Add multiple tasks and start them immediately
     for _ in 0..3 {

@@ -37,9 +37,8 @@ async fn test_enqueued_tasks(
     #[case] stashed: bool,
     #[case] enqueue_at: Option<DateTime<Local>>,
 ) -> Result<()> {
-    let (settings, tempdir) = base_setup()?;
+    let (settings, _tempdir, _pid) = threaded_setup()?;
     let shared = &settings.shared;
-    let _pid = boot_daemon(tempdir.path())?;
 
     assert_success(add_stashed_task(shared, "sleep 10", stashed, enqueue_at).await?);
 
@@ -69,7 +68,7 @@ async fn test_enqueued_tasks(
         .context("Failed to to add task message")?;
 
     // Make sure the task is started after being enqueued
-    wait_for_task_condition(shared, 0, |task| matches!(task.status, TaskStatus::Running)).await?;
+    wait_for_task_condition(shared, 0, |task| task.is_running()).await?;
 
     Ok(())
 }
@@ -77,9 +76,8 @@ async fn test_enqueued_tasks(
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Delayed stashed tasks will be enqueued.
 async fn test_delayed_tasks() -> Result<()> {
-    let (settings, tempdir) = base_setup()?;
+    let (settings, _tempdir, _pid) = threaded_setup()?;
     let shared = &settings.shared;
-    let _pid = boot_daemon(tempdir.path())?;
 
     // The task will be stashed and automatically enqueued after about 1 second.
     let response = add_stashed_task(
@@ -89,7 +87,7 @@ async fn test_delayed_tasks() -> Result<()> {
         Some(Local::now() + Duration::seconds(1)),
     )
     .await?;
-    assert!(matches!(response, Message::Success(_)));
+    assert_success(response);
 
     // The task should be added in stashed state for about 1 second.
     wait_for_task_condition(shared, 0, |task| {
@@ -99,7 +97,7 @@ async fn test_delayed_tasks() -> Result<()> {
 
     // Make sure the task is started after being automatically enqueued.
     sleep_ms(800);
-    wait_for_task_condition(shared, 0, |task| matches!(task.status, TaskStatus::Running)).await?;
+    wait_for_task_condition(shared, 0, |task| task.is_running()).await?;
 
     Ok(())
 }

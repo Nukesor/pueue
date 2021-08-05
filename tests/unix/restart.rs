@@ -7,9 +7,8 @@ use crate::helper::*;
 /// Ensure that restarting a task in-place, resets it's state and possibly updates the command and
 /// path to the new values.
 async fn test_restart_in_place() -> Result<()> {
-    let (settings, tempdir) = base_setup()?;
+    let (settings, _tempdir, _pid) = threaded_setup()?;
     let shared = &settings.shared;
-    let _pid = boot_daemon(tempdir.path())?;
 
     // Add a single task that instantly finishes.
     assert_success(fixtures::add_task(shared, "sleep 0.1", false).await?);
@@ -47,9 +46,8 @@ async fn test_restart_in_place() -> Result<()> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Ensure that running task cannot be restarted.
 async fn test_cannot_restart_running() -> Result<()> {
-    let (settings, tempdir) = base_setup()?;
+    let (settings, _tempdir, _pid) = threaded_setup()?;
     let shared = &settings.shared;
-    let _pid = boot_daemon(tempdir.path())?;
 
     // Add a single task that instantly finishes.
     assert_success(fixtures::add_task(shared, "sleep 60", false).await?);

@@ -9,7 +9,6 @@ use crate::helper::*;
 /// This should trigger the graceful shutdown and kill the process.
 fn test_ctrlc() -> Result<()> {
     let (_settings, tempdir) = base_setup()?;
-
     let mut child = boot_standalone_daemon(tempdir.path())?;
 
     use nix::sys::signal::{kill, Signal};
@@ -33,7 +32,6 @@ fn test_ctrlc() -> Result<()> {
 /// The daemon should shutdown normally and exit with a 0.
 async fn test_graceful_shutdown() -> Result<()> {
     let (settings, tempdir) = base_setup()?;
-
     let mut child = boot_standalone_daemon(tempdir.path())?;
 
     // Kill the daemon gracefully and wait for it to shut down.

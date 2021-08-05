@@ -9,9 +9,8 @@ use crate::helper::*;
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Make sure that no tasks will be started in a paused queue
 async fn test_pause_daemon() -> Result<()> {
-    let (settings, tempdir) = base_setup()?;
+    let (settings, _tempdir, _pid) = threaded_setup()?;
     let shared = &settings.shared;
-    let _pid = boot_daemon(tempdir.path())?;
 
     // This pauses the daemon
     pause_tasks(shared, TaskSelection::All).await?;
@@ -31,9 +30,8 @@ async fn test_pause_daemon() -> Result<()> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Make sure that running tasks will be properly paused
 async fn test_pause_running_task() -> Result<()> {
-    let (settings, tempdir) = base_setup()?;
+    let (settings, _tempdir, _pid) = threaded_setup()?;
     let shared = &settings.shared;
-    let _pid = boot_daemon(tempdir.path())?;
 
     // Start a long running task and make sure it's started
     add_task(shared, "sleep 60", false).await?;
@@ -53,9 +51,8 @@ async fn test_pause_running_task() -> Result<()> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// A queue can get paused, while the tasks may finish on their own.
 async fn test_pause_with_wait() -> Result<()> {
-    let (settings, tempdir) = base_setup()?;
+    let (settings, _tempdir, _pid) = threaded_setup()?;
     let shared = &settings.shared;
-    let _pid = boot_daemon(tempdir.path())?;
 
     // Start a long running task and make sure it's started
     add_task(shared, "sleep 60", false).await?;

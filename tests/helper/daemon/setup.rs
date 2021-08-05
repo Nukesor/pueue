@@ -12,6 +12,16 @@ use pueue_lib::settings::*;
 
 use super::{get_pid, sleep_ms};
 
+/// A helper function which, creates some test config, sets up a temporary directory and boots a
+/// daemon in a async tokio thread.
+/// This is done in 90% of our tests, thereby this convenience helper.
+pub fn threaded_setup() -> Result<(Settings, TempDir, i32)> {
+    let (settings, tempdir) = base_setup()?;
+    let pid = boot_daemon(tempdir.path())?;
+
+    Ok((settings, tempdir, pid))
+}
+
 /// Spawn the daemon main logic in it's own async function.
 /// It'll be executed by the tokio multi-threaded executor.
 pub fn boot_daemon(pueue_dir: &Path) -> Result<i32> {

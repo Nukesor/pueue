@@ -26,9 +26,8 @@ async fn create_edited_task(shared: &Shared) -> Result<EditResponseMessage> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Test if adding a normal task works as intended.
 async fn test_edit_flow() -> Result<()> {
-    let (settings, tempdir) = base_setup()?;
+    let (settings, tempdir, _pid) = threaded_setup()?;
     let shared = &settings.shared;
-    let _pid = boot_daemon(tempdir.path())?;
 
     // Pause the daemon. That way the command won't be started.
     pause_tasks(shared, TaskSelection::All).await?;

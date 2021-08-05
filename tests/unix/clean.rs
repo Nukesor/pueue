@@ -6,9 +6,8 @@ use crate::helper::*;
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Ensure that clean only removes finished tasks
 async fn test_normal_clean() -> Result<()> {
-    let (settings, tempdir) = base_setup()?;
+    let (settings, _tempdir, _pid) = threaded_setup()?;
     let shared = &settings.shared;
-    let _pid = boot_daemon(tempdir.path())?;
 
     // This should result in one failed, one finished, one running and one queued task.
     for command in vec!["failing", "ls", "sleep 60", "ls"] {
@@ -34,9 +33,8 @@ async fn test_normal_clean() -> Result<()> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Ensure only successful tasks are removed, if the `-s` flag is set.
 async fn test_successful_only_clean() -> Result<()> {
-    let (settings, tempdir) = base_setup()?;
+    let (settings, _tempdir, _pid) = threaded_setup()?;
     let shared = &settings.shared;
-    let _pid = boot_daemon(tempdir.path())?;
 
     // This should result in one failed, one finished, one running and one queued task.
     for command in vec!["failing", "ls"] {
