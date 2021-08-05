@@ -12,7 +12,7 @@ use pueue_lib::network::secret::read_shared_secret;
 use pueue_lib::state::SharedState;
 
 use crate::network::follow_log::handle_follow;
-use crate::network::message_handler::handle_message;
+use crate::network::message_handler::{handle_message, SENDER_ERR};
 
 /// Poll the listener and accept new incoming connections.
 /// Create a new future to handle the message and spawn it.
@@ -116,13 +116,34 @@ async fn handle_incoming(
         let message = message_result?;
         debug!("Received instruction: {:?}", message);
 
-        let response = if let Message::StreamRequest(message) = message {
+        let response = match message {
             // The client requested the output of a task.
-            // Since we allow streaming, this needs to be handled seperately.
-            handle_follow(&pueue_directory, &mut stream, &state, message).await?
-        } else {
-            // Process a normal message.
-            handle_message(message, &sender, &state)
+            // Since this involves streaming content, we have to do some special handling.
+            Message::StreamRequest(message) => {
+                handle_follow(&pueue_directory, &mut stream, &state, message).await?
+            }
+            // Initialize the shutdown procedure.
+            // The message is forwarded to the TaskHandler, which is responsible for
+            // gracefully shutting down.
+            //
+            // This is an edge-case as we have respond to the client first.
+            // Otherwise it might happen, that the daemon shuts down too fast and we aren't
+            // capable of actually sending the message back to the client.
+            Message::DaemonShutdown(shutdown_type) => {
+                let response = create_success_message("Daemon is shutting down");
+                send_message(response, &mut stream).await?;
+
+                // Notify the task handler.
+                sender
+                    .send(Message::DaemonShutdown(shutdown_type))
+                    .expect(SENDER_ERR);
+
+                return Ok(());
+            }
+            _ => {
+                // Process a normal message.
+                handle_message(message, &sender, &state)
+            }
         };
 
         // Respond to the client.

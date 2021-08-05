@@ -22,7 +22,7 @@ mod start;
 mod stash;
 mod switch;
 
-static SENDER_ERR: &str = "Failed to send message to task handler thread";
+pub static SENDER_ERR: &str = "Failed to send message to task handler thread";
 
 pub fn handle_message(message: Message, sender: &Sender<Message>, state: &SharedState) -> Message {
     match message {
@@ -44,7 +44,6 @@ pub fn handle_message(message: Message, sender: &Sender<Message>, state: &Shared
         Message::Stash(task_ids) => stash::stash(task_ids, state),
         Message::Switch(message) => switch::switch(message, state),
         Message::Status => get_status(state),
-        Message::DaemonShutdown(shutdown_type) => shutdown(sender, shutdown_type),
         _ => create_failure_message("Not yet implemented"),
     }
 }
@@ -62,21 +61,6 @@ fn reset(message: ResetMessage, sender: &Sender<Message>) -> Message {
 fn get_status(state: &SharedState) -> Message {
     let state = state.lock().unwrap().clone();
     Message::StatusResponse(Box::new(state))
-}
-
-/// Initialize the shutdown procedure.
-/// At first, the unix socket will be removed.
-///
-/// Next, the DaemonShutdown Message will be forwarded to the TaskHandler.
-/// The TaskHandler then gracefully shuts down all child processes
-/// and exits with std::proces::exit(0).
-fn shutdown(sender: &Sender<Message>, shutdown_type: Shutdown) -> Message {
-    // Notify the task handler.
-    sender
-        .send(Message::DaemonShutdown(shutdown_type))
-        .expect(SENDER_ERR);
-
-    create_success_message("Daemon is shutting down")
 }
 
 fn ok_or_failure_message<T, E: Display>(result: Result<T, E>) -> Result<T, Message> {
