@@ -4,7 +4,7 @@ use std::process::{Child, Command, Stdio};
 
 use anyhow::{bail, Context, Result};
 use assert_cmd::prelude::*;
-use tempdir::TempDir;
+use tempfile::TempDir;
 use tokio::io::{self, AsyncWriteExt};
 
 use pueue_daemon_lib::run;
@@ -92,7 +92,7 @@ async fn run_and_handle_error(pueue_dir: PathBuf, test: bool) -> Result<()> {
 
 pub fn base_setup() -> Result<(Settings, TempDir)> {
     // Create a temporary directory used for testing.
-    let tempdir = TempDir::new("pueue_lib").unwrap();
+    let tempdir = TempDir::new().unwrap();
     let tempdir_path = tempdir.path();
 
     std::fs::create_dir(tempdir_path.join("certs")).unwrap();

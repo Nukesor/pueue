@@ -88,7 +88,7 @@ mod fixtures {
     pub use crossbeam_channel::Sender;
     use std::collections::HashMap;
     use std::sync::{Arc, Mutex};
-    use tempdir::TempDir;
+    use tempfile::TempDir;
 
     pub use pueue_lib::network::message::*;
     pub use pueue_lib::network::protocol::socket_cleanup;
@@ -100,7 +100,7 @@ mod fixtures {
     pub use crate::network::response_helper::*;
 
     pub fn get_settings() -> (Settings, TempDir) {
-        let tempdir = TempDir::new("pueued_test").expect("Failed to create test pueue directory");
+        let tempdir = TempDir::new().expect("Failed to create test pueue directory");
         let mut settings: Settings = Settings::default_config()
             .expect("Failed to get default config")
             .try_into()

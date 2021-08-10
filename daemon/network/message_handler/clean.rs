@@ -47,7 +47,7 @@ mod tests {
     use super::*;
 
     use pretty_assertions::assert_eq;
-    use tempdir::TempDir;
+    use tempfile::TempDir;
 
     fn get_message(successful_only: bool) -> CleanMessage {
         CleanMessage { successful_only }

@@ -3,7 +3,7 @@ use std::io::prelude::*;
 
 use anyhow::{Context, Result};
 use pueue_daemon_lib::state_helper::restore_state;
-use tempdir::TempDir;
+use tempfile::TempDir;
 
 use pueue_lib::settings::Settings;
 
@@ -20,7 +20,7 @@ fn test_restore_from_old_state() -> Result<()> {
     better_panic::install();
     let old_state = include_str!("data/v1.0.0_state.json");
 
-    let temp_dir = TempDir::new("pueue_lib")?;
+    let temp_dir = TempDir::new()?;
     let temp_path = temp_dir.path();
 
     // Open v0.12.2 file and write old state to it.
