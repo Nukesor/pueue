@@ -426,13 +426,14 @@ dependencies = [
 
 [[package]]
 name = "comfy-table"
-version = "4.0.1"
+version = "4.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "92e0356b571da8e3d6ff2fe5de9be56e379c6bf22d91ffc86c2fcab35e54701f"
+checksum = "e1e894abc9bc1e88122c9580c84cfaedcb7f34e83682f2c65a7c003da2b20f1a"
 dependencies = [
  "crossterm",
  "strum",
  "strum_macros",
+ "unicode-width",
 ]
 
 [[package]]
@@ -868,9 +869,9 @@ dependencies = [
 
 [[package]]
 name = "libc"
-version = "0.2.98"
+version = "0.2.99"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "320cfe77175da3a483efed4bc0adc1968ca050b098ce4f2f1c13a56626128790"
+checksum = "a7f823d141fe0a24df1e23b4af4e3c7ba9e5966ec514ea068c93024aa7deb765"
 
 [[package]]
 name = "linked-hash-map"
