@@ -4,8 +4,9 @@ use anyhow::{Context, Result};
 
 use pueue_lib::settings::Settings;
 
-/// From 0.12.2 on, we aim to have full backward compatibility.
-/// For this reason, an old v0.12.2 serialized state has been checked in.
+/// From 0.15.0 on, we aim to have full backward compatibility.
+/// For this reason, an old (slightly modified) v0.15.0 serialized state
+/// has been checked in.
 ///
 /// We have to be able to restore from that state at all costs.
 /// Everything else results in a breaking change and needs a major version change.
