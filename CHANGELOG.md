@@ -11,33 +11,33 @@ Even though quite a few new features were added, the main effort went into incre
 
 The goal of this release is to push the code quality, error handling, test coverage and stability to a level that justifies a v1.0 release. \
 Since this project follows semantic versioning, this includes no breaking changes and backward compatibility on minor version upgrades. \
-This also means, that I'm quite certain that there are no critical bugs in the project and that all important and planned features have been implemented.
+This also means that I'm quite certain that there are no critical bugs in the project and that all important and planned features have been implemented.
 
 Unless some critical issues pop up, this can be seen as a finished version of the project!
 
 **Disclaimer:** This project is mainly developed for Linux.
 Windows and MacOS/Apple platforms are partially supported, but this is a community effort.
 Thereby, v1.0 might be misleading for those. \
-I hope you understand, that I cannot wait a few years for someone to implement missing features for these platforms.
+I hope you understand, that I cannot wait for someone to implement missing features for these platforms.
 I want this project to move forward.
 
 ### Added
 
-- The last lines of `stderr` and `stdout` are now available in the callback command. [#196](https://github.com/Nukesor/pueue/issues/196).
-- Add `callback_log_lines` setting for the daemon, specifying the amount of lines returned to the callback. [#196](https://github.com/Nukesor/pueue/issues/196).
 - `~` is respected in configuration paths by [dadav](https://github.com/dadav) for [#191](https://github.com/Nukesor/pueue/issues/191).
-- Support for other `apple` platforms. New build artifacts for `ios-aarch64`.
 - Use `pueue kill --signal SigTerm` to send Unix signals directly to Pueue's processes. [#202](https://github.com/Nukesor/pueue/issues/202)
-- Add a PID file to `$pueue_directory/pueue.pid`, which will be used to check whether there's an already running daemon.
+- Support for other `apple` platforms. New build artifacts for `ios-aarch64`.
+- Option in config file to use the `--in-place` flag on `restart` by default.
 - `--failed-in-group [group_name]` for `restart`. That way you can restart all failed tasks of a specific group [#211](https://github.com/Nukesor/pueue/issues/211)
 - Options in config file to configure the time and datetime format in `pueue status` for [#212](https://github.com/Nukesor/pueue/issues/212).
-- Option in config file to use the `--in-place` flag on `restart` by default.
 - Add a worker pool representation for groups to Pueue [#218](https://github.com/Nukesor/pueue/issues/218).
     The task's group name and the pool's worker id for a given task are then injected into the environment variables of the subprocess.
-    This allows users to map Pueue's internal group and pool logic to external resources:
+    This allows users to map Pueue's internal group and worker logic to external resources:
     ```
     ./run_on_gpu_pool --gpu $PUEUE_WORKER_ID --pool $PUEUE_GROUP`
     ```
+- The last lines of `stderr` and `stdout` are now available in the callback command. [#196](https://github.com/Nukesor/pueue/issues/196).
+- Add `callback_log_lines` setting for the daemon, specifying the amount of lines returned to the callback. [#196](https://github.com/Nukesor/pueue/issues/196).
+- Add a PID file to `$pueue_directory/pueue.pid`, which will be used to check whether there's an already running daemon.
 
 
 ### Changed
@@ -46,12 +46,11 @@ I want this project to move forward.
     This results in ids being reused, on `pueue clean` or `pueue remove` of the last tasks in a queue.
 - Show the date in `pueue status` for the `start` and `end` fields, if the task didn't start today.
 - Backward compatible protocol for stable version changes with `serde_cbor`.
-- Detection of old daemon versions on update.
+- Detection of old daemon versions during client-\>daemon handshake.
 - Overall better debug messages.
-- Crash hard, if we fail to write the settings file.
 - Use tokio's async runtime and set a hardcoded limit of 4 worker threads, which is already more than enough.
-- Add a debug message, when using `pueue wait` or `pueue wait -g some_group`, but there're no tasks in the group.
-- Reworked shutdown, restoration and cleanup logic.
+- Add a debug message, when using `pueue wait` or `pueue wait -g some_group` and there're no tasks in the group.
+- Stabilized internal daemon shutdown and restoration logic.
 - Rename `Index` to `Id` in `pueue status` to free up screen space.
 - Remove `Exitcode` column in `pueue status` and include exitcode into `Failed` status to free up screen space.
 - You can no longer remove groups, if there are still tasks assigned to that group.
@@ -72,12 +71,12 @@ Overall, this resulted in sleaker und much better maintainable code. However, th
 - Handle very rare race-condition, where tasks with failed dependencies start anyway.
 - `pueue log --json` now works again. [#186](https://github.com/Nukesor/pueue/issues/186)
     By default, only a few lines of output will be provided, but this can be configured via the `--full` and `--lines` option.
-- Use crossbeam mpsc channels, which results in faster response time for client connections.
+- Use crossbeam's mpsc channels, resulting in faster execution of user's instructions.
 - Fix issue where the daemon was shutting down so fast, there wasn't enough time to respond the client that it's actually shutting down.
 
 ### Removed
 
-- Removed the `enqueue` parameter from callback, as the callback is only fired on finished commands.
+- Removed the `enqueue` parameter from callback, as the callback is only run for finished tasks.
 
 ## [0.12.2] - 20-04-2021
 
