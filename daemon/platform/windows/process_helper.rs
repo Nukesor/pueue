@@ -282,6 +282,36 @@ mod test {
         !process_exists(pid)
     }
 
+    /// A test helper function, which ensures that a specific amount of subprocesses can be
+    /// observed for a given PID in a given time window.
+    /// If the correct amount can be observed, the process ids are then returned.
+    ///
+    /// The process count is checked every few milliseconds for the given duration.
+    fn assert_process_ids(pid: u32, expected_processes: usize, millis: usize) -> Result<Vec<u32>> {
+        // Check every 50 milliseconds.
+        let interval = 50;
+        let tries = millis / interval;
+        let mut current_try = 0;
+
+        while current_try <= tries {
+            // Continue waiting if the count doesn't match.
+            let process_ids = get_cur_task_processes(pid);
+            if process_ids.len() != expected_processes {
+                current_try += 1;
+                sleep(Duration::from_millis(interval as u64));
+                continue;
+            }
+
+            return Ok(process_ids);
+        }
+
+        bail!(
+            "{} processes were expected. Last process count was {}",
+            expected_processes,
+            get_cur_task_processes(pid).len()
+        )
+    }
+
     #[test]
     fn test_spawn_command() {
         let mut child = compile_shell_command("sleep 0.1")
@@ -295,17 +325,14 @@ mod test {
 
     #[test]
     /// Ensure a `powershell -c` command will be properly killed without detached processes.
-    fn test_shell_command_is_killed() {
+    fn test_shell_command_is_killed() -> Result<()> {
         let mut child = compile_shell_command("sleep 60; sleep 60; echo 'this is a test'")
             .spawn()
             .expect("Failed to spawn echo");
         let pid = child.id();
-        // Sleep a little to give everything a chance to spawn.
-        sleep(Duration::from_millis(1000));
 
         // Get all processes, so we can make sure they no longer exist afterwards.
-        let process_ids = get_cur_task_processes(pid);
-        assert_eq!(process_ids.len(), 1);
+        let process_ids = assert_process_ids(pid, 1, 5000)?;
 
         // Kill the process and make sure it'll be killed.
         assert!(kill_child(0, &mut child, false));
@@ -320,21 +347,20 @@ mod test {
         for pid in process_ids {
             assert!(process_is_gone(pid));
         }
+
+        Ok(())
     }
 
     #[test]
     /// Ensure that a `powershell -c` process with a child process that has children of it's own
     /// will properly kill all processes and their children's children without detached processes.
-    fn test_shell_command_children_are_killed() {
+    fn test_shell_command_children_are_killed() -> Result<()> {
         let mut child = compile_shell_command("powershell -c 'sleep 60; sleep 60'; sleep 60")
             .spawn()
             .expect("Failed to spawn echo");
         let pid = child.id();
-        // Sleep a little to give everything a chance to spawn.
-        sleep(Duration::from_millis(1000));
-
-        let process_ids = get_cur_task_processes(pid);
-        assert_eq!(process_ids.len(), 2);
+        // Get all processes, so we can make sure they no longer exist afterwards.
+        let process_ids = assert_process_ids(pid, 2, 5000)?;
 
         // Kill the process and make sure it'll be killed.
         assert!(kill_child(0, &mut child, false));
@@ -347,23 +373,22 @@ mod test {
         for pid in process_ids {
             assert!(process_is_gone(pid));
         }
+
+        Ok(())
     }
 
     #[test]
     /// Ensure a normal command without `powershell -c` will be killed.
-    fn test_normal_command_is_killed() {
+    fn test_normal_command_is_killed() -> Result<()> {
         let mut child = Command::new("ping")
             .arg("localhost")
             .arg("-t")
             .spawn()
             .expect("Failed to spawn ping");
         let pid = child.id();
-        // Sleep a little to give everything a chance to spawn.
-        sleep(Duration::from_millis(500));
 
-        // Get all processes
-        let process_ids = get_cur_task_processes(pid);
-        assert_eq!(process_ids.len(), 1);
+        // Get all processes, so we can make sure they no longer exist afterwards.
+        let process_ids = assert_process_ids(pid, 1, 5000)?;
 
         // Kill the process and make sure it'll be killed.
         assert!(kill_child(0, &mut child, false));
@@ -372,24 +397,23 @@ mod test {
         sleep(Duration::from_millis(500));
 
         assert!(process_is_gone(pid));
+
+        Ok(())
     }
 
     #[test]
     /// Ensure a normal command and all it's children will be
     /// properly killed without any detached processes.
-    fn test_normal_command_children_are_killed() {
+    fn test_normal_command_children_are_killed() -> Result<()> {
         let mut child = Command::new("powershell")
             .arg("-c")
             .arg("sleep 60; sleep 60; sleep 60")
             .spawn()
             .expect("Failed to spawn echo");
         let pid = child.id();
-        // Sleep a little to give everything a chance to spawn.
-        sleep(Duration::from_millis(500));
 
         // Get all processes, so we can make sure they no longer exist afterwards.
-        let process_ids = get_cur_task_processes(pid);
-        assert_eq!(process_ids.len(), 1);
+        let process_ids = assert_process_ids(pid, 1, 5000)?;
 
         // Kill the process and make sure it'll be killed.
         assert!(kill_child(0, &mut child, true));
@@ -404,5 +428,7 @@ mod test {
         for pid in process_ids {
             assert!(process_is_gone(pid));
         }
+
+        Ok(())
     }
 }
