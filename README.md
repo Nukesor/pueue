@@ -123,7 +123,7 @@ It might compile on older versions, but this isn't tested or officially supporte
 ```bash
 git clone git@github.com:Nukesor/pueue
 cd pueue
-cargo install --path .
+cargo install --locked --path .
 ```
 
 This will install Pueue to `$CARGO_HOME/bin/pueue` (default is `~/.cargo/bin/pueue`)
