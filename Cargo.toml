@@ -49,8 +49,8 @@ serde_derive = "1"
 
 log = "0.4"
 simplelog = { version = "0.10", default-features = false }
-clap = "3.0.0-beta.2"
-clap_generate = "3.0.0-beta.2"
+clap = "3.0.0-beta.4"
+clap_generate = "3.0.0-beta.4"
 crossterm = "0.20"
 comfy-table= "4"
 

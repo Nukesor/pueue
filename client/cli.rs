@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use chrono::prelude::*;
 use chrono::Duration;
 use chrono_english::*;
-use clap::Clap;
+use clap::{ArgEnum, Clap};
 
 use pueue_lib::network::message::Signal;
 
@@ -386,7 +386,7 @@ pub enum SubCommand {
     },
 }
 
-#[derive(Clap, Debug, PartialEq)]
+#[derive(Clap, Debug, PartialEq, ArgEnum)]
 pub enum Shell {
     Bash,
     Elvish,
