@@ -110,7 +110,7 @@ Pueue is built for the current `stable` Rust version.
 It might compile on older versions, but this isn't tested or officially supported.
 
 ```bash
-cargo install pueue
+cargo install --locked pueue
 ```
 
 This will install Pueue to `$CARGO_HOME/bin/pueue` (default is `~/.cargo/bin/pueue`)
