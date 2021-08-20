@@ -4,7 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0] - 
+## [1.0.1] - 20-08-2021
+
+### Fix
+
+- Update to clap `v3.0.0-beta.4`. The upgrade from beta.2 to beta.4 introduced breaking changes, which lead to compiler errors when doing a `cargo install` without a `--locked`.
+    A beta upgrade seems to be handled like a patch version in semantic versioning.
+    This isn't a bug per se, but it leads to confusion when people forget the `--locked` flag during install.
+
+## [1.0.0] - 19-08-2021
 
 A lot of things happened during this release.
 Even though quite a few new features were added, the main effort went into increasing stability and inter-version compatibility.
