@@ -322,6 +322,7 @@ impl Client {
         match &self.opt.cmd {
             SubCommand::Add {
                 command,
+                working_directory: cwd,
                 escape,
                 start_immediately,
                 stashed,
@@ -331,10 +332,16 @@ impl Client {
                 label,
                 print_task_id,
             } => {
-                let cwd_pathbuf = current_dir()?;
-                let cwd = cwd_pathbuf
+                let cwd_pathbuf = if let Some(cwd) = cwd {
+                    cwd.clone()
+                } else {
+                    current_dir()?
+                };
+
+                let path = cwd_pathbuf
                     .to_str()
-                    .context("Cannot parse current working directory (Invalid utf8?)")?;
+                    .context("Cannot parse current working directory (Invalid utf8?)")?
+                    .to_string();
 
                 let mut envs = HashMap::new();
                 // Save all environment variables for later injection into the started task
@@ -356,7 +363,7 @@ impl Client {
                 let group = group_or_default(group);
                 Ok(Message::Add(AddMessage {
                     command: command.join(" "),
-                    path: cwd.to_string(),
+                    path,
                     envs,
                     start_immediately: *start_immediately,
                     stashed: *stashed,

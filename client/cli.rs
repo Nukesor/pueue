@@ -15,6 +15,10 @@ pub enum SubCommand {
         #[clap(required = true)]
         command: Vec<String>,
 
+        /// Specify current working directory.
+        #[clap(name = "working-directory", short = 'w', long)]
+        working_directory: Option<PathBuf>,
+
         /// Escape any special shell characters (" ", "&", "!", etc.).
         /// Beware: This implicitly disables nearly all shell specific syntax ("&&", "&>").
         #[clap(short, long)]
