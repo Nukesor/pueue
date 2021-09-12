@@ -10,6 +10,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Add the `--working-directory` parameter to the `pueue add` command [#227](https://github.com/Nukesor/pueue/issues/227).
 
+## [1.0.2] - 12-09-2021
+
+### Fix
+
+- Settings weren't always read on daemon restart.
+    This bug was introduced in `1.0.0` due to large-scale refactorings and insufficient testing.
+
 ## [1.0.1] - 20-08-2021
 
 ### Fix

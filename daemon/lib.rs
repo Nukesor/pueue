@@ -62,7 +62,7 @@ pub async fn run(config_path: Option<PathBuf>, test: bool) -> Result<()> {
     // Restore the previous state and save any changes that might have happened during this
     // process. If no previous state exists, just create a new one.
     // Create a new empty state if any errors occur, but print the error message.
-    let state = match restore_state(&settings.shared.pueue_directory()) {
+    let mut state = match restore_state(&settings.shared.pueue_directory()) {
         Ok(Some(state)) => state,
         Ok(None) => State::new(&settings, config_path.clone()),
         Err(error) => {
@@ -71,6 +71,7 @@ pub async fn run(config_path: Option<PathBuf>, test: bool) -> Result<()> {
             State::new(&settings, config_path.clone())
         }
     };
+    state.settings = settings.clone();
     save_state(&state)?;
     let state = Arc::new(Mutex::new(state));
 
