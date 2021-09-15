@@ -11,7 +11,7 @@ use shellexpand::tilde;
 use crate::error::Error;
 use crate::platform::directories::*;
 
-pub const PUEUE_DEFAULT_GROUP: &'static str = "default";
+pub const PUEUE_DEFAULT_GROUP: &str = "default";
 
 /// All settings which are used by both, the client and the daemon
 #[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
