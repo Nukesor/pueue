@@ -2,7 +2,6 @@ use crossbeam_channel::Sender;
 use std::fmt::Display;
 
 use pueue_lib::network::message::*;
-use pueue_lib::settings::PUEUE_DEFAULT_GROUP;
 use pueue_lib::state::SharedState;
 
 use crate::network::response_helper::*;
@@ -93,7 +92,7 @@ mod fixtures {
 
     pub use pueue_lib::network::message::*;
     pub use pueue_lib::network::protocol::socket_cleanup;
-    pub use pueue_lib::settings::Settings;
+    pub use pueue_lib::settings::{Settings, PUEUE_DEFAULT_GROUP};
     pub use pueue_lib::state::{SharedState, State};
     pub use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
