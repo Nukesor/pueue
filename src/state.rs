@@ -5,7 +5,7 @@ use std::sync::{Arc, Mutex};
 use serde_derive::{Deserialize, Serialize};
 
 use crate::error::Error;
-use crate::settings::Settings;
+use crate::settings::{Settings, PUEUE_DEFAULT_GROUP};
 use crate::task::{Task, TaskStatus};
 
 pub type SharedState = Arc<Mutex<State>>;
@@ -69,7 +69,7 @@ impl State {
             groups,
             config_path,
         };
-        state.create_group("default");
+        state.create_group(PUEUE_DEFAULT_GROUP);
         state
     }
 
@@ -108,7 +108,7 @@ impl State {
     /// This also iterates through all tasks and sets any tasks' group
     /// to the `default` group if it matches the deleted group.
     pub fn remove_group(&mut self, group: &str) -> Result<(), Error> {
-        if group.eq("default") {
+        if group.eq(PUEUE_DEFAULT_GROUP) {
             return Err(Error::Generic(
                 "You cannot remove the default group.".into(),
             ));

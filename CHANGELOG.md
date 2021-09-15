@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [0.18.0] - 2021-07-27
 
+### Added
+
+- Add the `PUEUE_DEFAULT_GROUP` constant, which provides a consistent way of working with the `"default"` group.
+
+### Fix
+
+- Always insert the "default" group into `settings.daemon.group` on read.
+
+## [0.18.0] - 2021-07-27
+
 ### Change
 
 - Make `GroupMessage` an enum to prevent impossible states.

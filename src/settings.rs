@@ -11,6 +11,8 @@ use shellexpand::tilde;
 use crate::error::Error;
 use crate::platform::directories::*;
 
+pub const PUEUE_DEFAULT_GROUP: &'static str = "default";
+
 /// All settings which are used by both, the client and the daemon
 #[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
 pub struct Shared {
@@ -136,7 +138,11 @@ impl Settings {
     pub fn read(from_file: &Option<PathBuf>) -> Result<Settings, Error> {
         let config = Config::new();
 
-        parse_config(config, true, from_file)
+        // Insert the default group, if it doesn't exist.
+        let mut settings = parse_config(config, true, from_file)?;
+        settings.ensure_default_group();
+
+        Ok(settings)
     }
 
     /// Try to read existing config files and
@@ -156,7 +162,10 @@ impl Settings {
     ) -> Result<Settings, Error> {
         let config = Settings::default_config()?;
 
-        parse_config(config, require_config, from_file)
+        let mut settings = parse_config(config, require_config, from_file)?;
+        settings.ensure_default_group();
+
+        Ok(settings)
     }
 
     pub fn default_config() -> Result<Config, Error> {
@@ -271,6 +280,15 @@ impl Settings {
         file.write_all(content.as_bytes())?;
 
         Ok(())
+    }
+
+    pub fn ensure_default_group(&mut self) {
+        // Insert the default group, if it doesn't exist.
+        if self.daemon.groups.get(PUEUE_DEFAULT_GROUP).is_none() {
+            self.daemon
+                .groups
+                .insert(PUEUE_DEFAULT_GROUP.to_string(), 1);
+        }
     }
 }
 

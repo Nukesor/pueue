@@ -4,7 +4,7 @@ use chrono::prelude::*;
 use serde_derive::{Deserialize, Serialize};
 use strum_macros::Display;
 
-use crate::aliasing::insert_alias;
+use crate::{aliasing::insert_alias, settings::PUEUE_DEFAULT_GROUP};
 
 /// This enum represents the status of the internal task handling of Pueue.
 /// They basically represent the internal task life-cycle.
@@ -101,7 +101,7 @@ impl Task {
             command: task.command.clone(),
             path: task.path.clone(),
             envs: task.envs.clone(),
-            group: "default".to_string(),
+            group: task.group.clone(),
             dependencies: Vec::new(),
             label: task.label.clone(),
             status: TaskStatus::Queued,
@@ -138,10 +138,10 @@ impl Task {
 
     /// Small convenience function to set the task's group to the default group.
     pub fn set_default_group(&mut self) {
-        self.group = String::from("default");
+        self.group = String::from(PUEUE_DEFAULT_GROUP);
     }
 
     pub fn is_in_default_group(&self) -> bool {
-        self.group.eq("default")
+        self.group.eq(PUEUE_DEFAULT_GROUP)
     }
 }
