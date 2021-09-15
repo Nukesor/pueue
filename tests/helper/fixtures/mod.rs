@@ -14,7 +14,7 @@ pub fn add_message(shared: &Shared, command: &str) -> AddMessage {
         envs: HashMap::new(),
         start_immediately: false,
         stashed: false,
-        group: "default".into(),
+        group: PUEUE_DEFAULT_GROUP.into(),
         enqueue_at: None,
         dependencies: vec![],
         label: None,

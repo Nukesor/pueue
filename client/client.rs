@@ -10,7 +10,7 @@ use log::error;
 use pueue_lib::network::message::*;
 use pueue_lib::network::protocol::*;
 use pueue_lib::network::secret::read_shared_secret;
-use pueue_lib::settings::Settings;
+use pueue_lib::settings::{Settings, PUEUE_DEFAULT_GROUP};
 
 use crate::cli::{CliArguments, SubCommand};
 use crate::commands::edit::edit;
@@ -36,12 +36,14 @@ pub struct Client {
 
 /// This is a small helper which either returns a given group or the default group.
 pub fn group_or_default(group: &Option<String>) -> String {
-    group.clone().unwrap_or_else(|| "default".to_string())
+    group
+        .clone()
+        .unwrap_or_else(|| PUEUE_DEFAULT_GROUP.to_string())
 }
 
 /// This is a small helper which determines the selection depending on given commandline
 /// parameters.
-/// If no parameters are given, it returns to the default, which is the "default" group.
+/// If no parameters are given, it returns to the default group.
 pub fn selection_from_params(
     all: bool,
     group: &Option<String>,
@@ -54,7 +56,7 @@ pub fn selection_from_params(
     } else if !task_ids.is_empty() {
         TaskSelection::TaskIds(task_ids.to_owned())
     } else {
-        TaskSelection::Group("default".into())
+        TaskSelection::Group(PUEUE_DEFAULT_GROUP.into())
     }
 }
 

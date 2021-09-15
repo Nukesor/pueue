@@ -15,7 +15,7 @@ async fn test_pause_daemon() -> Result<()> {
     // This pauses the daemon
     pause_tasks(shared, TaskSelection::All).await?;
     // Make sure the default group get's paused
-    wait_for_group_status(shared, "default", GroupStatus::Paused).await?;
+    wait_for_group_status(shared, PUEUE_DEFAULT_GROUP, GroupStatus::Paused).await?;
 
     // Add a task and give the taskmanager time to theoretically start the process
     add_task(shared, "ls", false).await?;
@@ -43,7 +43,10 @@ async fn test_pause_running_task() -> Result<()> {
     // Make sure the task as well as the default group get paused
     wait_for_task_condition(shared, 0, |task| matches!(task.status, TaskStatus::Paused)).await?;
     let state = get_state(shared).await?;
-    assert_eq!(state.groups.get("default").unwrap(), &GroupStatus::Paused);
+    assert_eq!(
+        state.groups.get(PUEUE_DEFAULT_GROUP).unwrap(),
+        &GroupStatus::Paused
+    );
 
     Ok(())
 }
@@ -60,7 +63,7 @@ async fn test_pause_with_wait() -> Result<()> {
 
     // Pauses the default queue while waiting for tasks
     let message = Message::Pause(PauseMessage {
-        tasks: TaskSelection::Group("default".into()),
+        tasks: TaskSelection::Group(PUEUE_DEFAULT_GROUP.into()),
         wait: true,
         children: false,
     });
@@ -69,7 +72,7 @@ async fn test_pause_with_wait() -> Result<()> {
         .context("Failed to send message")?;
 
     // Make sure the default group gets paused, but the task is still running
-    wait_for_group_status(shared, "default", GroupStatus::Paused).await?;
+    wait_for_group_status(shared, PUEUE_DEFAULT_GROUP, GroupStatus::Paused).await?;
     let state = get_state(shared).await?;
     assert_eq!(state.tasks.get(&0).unwrap().status, TaskStatus::Running);
 

@@ -2,6 +2,8 @@
 use anyhow::Result;
 use tokio::io::{self, AsyncWriteExt};
 
+pub use pueue_lib::settings::PUEUE_DEFAULT_GROUP;
+
 pub mod daemon;
 pub mod envs;
 pub mod fixtures;

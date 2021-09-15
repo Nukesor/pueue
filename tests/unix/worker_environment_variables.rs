@@ -1,5 +1,7 @@
 use anyhow::Result;
 
+use pueue_lib::settings::PUEUE_DEFAULT_GROUP;
+
 use crate::helper::fixtures::*;
 use crate::helper::*;
 
@@ -23,7 +25,7 @@ async fn test_single_worker() -> Result<()> {
     // All tasks should have the worker id 0, as the tasks are processed sequentially.
     let state = get_state(shared).await?;
     for task_id in 0..3 {
-        assert_worker_envs(shared, &state, task_id, 0, "default").await?;
+        assert_worker_envs(shared, &state, task_id, 0, PUEUE_DEFAULT_GROUP).await?;
     }
 
     Ok(())

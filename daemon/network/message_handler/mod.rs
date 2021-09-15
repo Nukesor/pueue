@@ -2,6 +2,7 @@ use crossbeam_channel::Sender;
 use std::fmt::Display;
 
 use pueue_lib::network::message::*;
+use pueue_lib::settings::PUEUE_DEFAULT_GROUP;
 use pueue_lib::state::SharedState;
 
 use crate::network::response_helper::*;
@@ -133,7 +134,7 @@ mod fixtures {
             format!("{}", id),
             "/tmp".to_string(),
             HashMap::new(),
-            "default".to_string(),
+            PUEUE_DEFAULT_GROUP.to_string(),
             status,
             Vec::new(),
             None,

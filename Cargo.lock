@@ -1281,9 +1281,9 @@ dependencies = [
 
 [[package]]
 name = "pueue-lib"
-version = "0.18.0"
+version = "0.18.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "270bc7e5aac11e67289461b434e565789245494a43f2e41bc4a6393787f29783"
+checksum = "6b228feeeda26f64e36bf0ebd2dd48da8c091b3ff2314b18e0a83f0f776bc1b9"
 dependencies = [
  "async-std",
  "async-tls",

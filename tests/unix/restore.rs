@@ -26,7 +26,10 @@ async fn test_start_running() -> Result<()> {
 
     // Assert that the group is still running.
     let state = get_state(shared).await?;
-    assert_eq!(state.groups.get("default").unwrap(), &GroupStatus::Running);
+    assert_eq!(
+        state.groups.get(PUEUE_DEFAULT_GROUP).unwrap(),
+        &GroupStatus::Running
+    );
 
     child.kill()?;
     Ok(())
@@ -52,7 +55,10 @@ async fn test_start_paused() -> Result<()> {
 
     // Assert that the group is still paused.
     let state = get_state(shared).await?;
-    assert_eq!(state.groups.get("default").unwrap(), &GroupStatus::Paused);
+    assert_eq!(
+        state.groups.get(PUEUE_DEFAULT_GROUP).unwrap(),
+        &GroupStatus::Paused
+    );
 
     child.kill()?;
     Ok(())

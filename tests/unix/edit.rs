@@ -31,7 +31,7 @@ async fn test_edit_flow() -> Result<()> {
 
     // Pause the daemon. That way the command won't be started.
     pause_tasks(shared, TaskSelection::All).await?;
-    wait_for_group_status(shared, "default", GroupStatus::Paused).await?;
+    wait_for_group_status(shared, PUEUE_DEFAULT_GROUP, GroupStatus::Paused).await?;
 
     let response = create_edited_task(shared).await?;
     assert_eq!(response.task_id, 0);

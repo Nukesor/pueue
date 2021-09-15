@@ -4,20 +4,31 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.1.0] - 
-
-### Feature
-
-- Add the `--working-directory` parameter to the `pueue add` command [#227](https://github.com/Nukesor/pueue/issues/227).
-
-## [1.0.2] - 12-09-2021
+## [1.0.3] - 2021-09-15
 
 ### Fix
 
-- Settings weren't always read on daemon restart.
+- The `default` group wasn't created, if the `pueue.yml` config file didn't contain it. [#242](https://github.com/Nukesor/pueue/issues/242).
+    This lead to crashes and undefined behavior in the daemon and the client.
+    This bug was introduced in `1.0.0` due to changes to the internal datastructures and several added features.
+    It only popped up now, due to [#236](https://github.com/Nukesor/pueue/issues/236) being fixed, as the config is now being correctly used.
+    This only affects users with quite old pueue configs or custom config files.
+
+## [1.0.2] - 2021-09-12
+
+### Feature
+
+This feature wasn't supposed to be added to v1.0.2 and breaks semantic versioning.
+I'm still getting used to this, sorry for any inconveniences.
+
+- Add the `--working-directory` parameter to the `pueue add` command [#227](https://github.com/Nukesor/pueue/issues/227).
+
+### Fix
+
+- Settings weren't always read on daemon restart. [#236](https://github.com/Nukesor/pueue/issues/236).
     This bug was introduced in `1.0.0` due to large-scale refactorings and insufficient testing.
 
-## [1.0.1] - 20-08-2021
+## [1.0.1] - 2021-08-20
 
 ### Fix
 
@@ -25,7 +36,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
     A beta upgrade seems to be handled like a patch version in semantic versioning.
     This isn't a bug per se, but it leads to confusion when people forget the `--locked` flag during install.
 
-## [1.0.0] - 19-08-2021
+## [1.0.0] - 2021-08-19
 
 A lot of things happened during this release.
 Even though quite a few new features were added, the main effort went into increasing stability and inter-version compatibility.
@@ -99,7 +110,7 @@ Overall, this resulted in sleaker und much better maintainable code. However, th
 
 - Removed the `enqueue` parameter from callback, as the callback is only run for finished tasks.
 
-## [0.12.2] - 20-04-2021
+## [0.12.2] - 2021-04-20
 
 ### Fixed
 
@@ -108,7 +119,7 @@ Overall, this resulted in sleaker und much better maintainable code. However, th
 - Fix empty output for empty groups when requesting specific group with `status -g $name`. [#190](https://github.com/Nukesor/pueue/issues/190)
 - Fix missing output when explicitly requesting default group with `status -g default`. [#190](https://github.com/Nukesor/pueue/issues/190)
 
-## [0.12.1] - 12-03-2021
+## [0.12.1] - 2021-03-12
 
 ### Fixed
 
@@ -118,7 +129,7 @@ Overall, this resulted in sleaker und much better maintainable code. However, th
 
 - Show the status of the default group, if there are no tasks in the queue.
 
-## [0.12.0] - 10-02-2021
+## [0.12.0] - 2021-02-10
 
 **Info for all packagers:** \
 In case you updated your packaging rules for the new layout in v0.11, those changes need to be reverted. \
@@ -145,20 +156,20 @@ Managing two crates in a single repository in combination with `cargo release` t
     `--start-immediately` and `--stashed` collided.
 - Error on BSD due to inability to get username from system registry. [#173](https://github.com/Nukesor/pueue/issues/173)
 
-## [0.11.2] - 01-02-2021
+## [0.11.2] - 2021-02-01
 
 ### Changed
 
 - Readability of the `log` command has been further improved.
 - Dependency bump to pueue-lib `v0.11.2`
 
-## [0.11.1] - 19-01-2021
+## [0.11.1] - 2021-01-19
 
 ### Fixed
 
 - Wrong version (`pueue-v0.11.0-alpha.0`) due to an error in the build process with the new project structure. [#169](https://github.com/Nukesor/pueue/issues/169)
 
-## [0.11.0] - 18-01-2021
+## [0.11.0] - 2021-01-18
 
 ### Added
 
@@ -174,7 +185,7 @@ Managing two crates in a single repository in combination with `cargo release` t
 - If multiple tasks are selected, `log` now only shows the last few lines for each log.
     You can use the new `--full` option to get the old behavior.
 
-## [0.10.2] - 31-12-2020
+## [0.10.2] - 2020-12-31
 
 ### Fixed
 
@@ -182,13 +193,13 @@ Managing two crates in a single repository in combination with `cargo release` t
     This didn't lead to any crashes, but could lead to unwanted behavior, since the dependant tasks simply started due to the dependency no longer existing.
     It's however still possible to delete dependencies as long as their dependants are deleted as well.
 
-## [0.10.1] - 29-12-2020
+## [0.10.1] - 2020-12-29
 
 ### Fixed
 
 - panic, when using `pueue status` and only having tasks in non-default groups.
 
-## [0.10.0] - 29-12-2020
+## [0.10.0] - 2020-12-29
 
 This release adds a lot of breaking changes!
 I tried to clean up, refactor and streamline as much code as possible.

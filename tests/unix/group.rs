@@ -37,7 +37,7 @@ async fn test_cannot_delete_default() -> Result<()> {
     let shared = &settings.shared;
     let _pid = boot_daemon(tempdir.path())?;
 
-    let pause_message = Message::Group(GroupMessage::Remove("default".to_string()));
+    let pause_message = Message::Group(GroupMessage::Remove(PUEUE_DEFAULT_GROUP.to_string()));
     assert_failure(send_message(shared, pause_message).await?);
 
     Ok(())

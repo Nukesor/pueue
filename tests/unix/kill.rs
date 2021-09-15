@@ -18,7 +18,7 @@ use crate::helper::*;
 )]
 #[case(
     Message::Kill(KillMessage {
-        tasks: TaskSelection::Group("default".into()),
+        tasks: TaskSelection::Group(PUEUE_DEFAULT_GROUP.into()),
         children: false,
         signal: None,
     }), true
@@ -70,7 +70,10 @@ async fn test_kill_tasks(
     // Groups should be paused in specific modes.
     if group_should_pause {
         let state = get_state(shared).await?;
-        assert_eq!(state.groups.get("default").unwrap(), &GroupStatus::Paused);
+        assert_eq!(
+            state.groups.get(PUEUE_DEFAULT_GROUP).unwrap(),
+            &GroupStatus::Paused
+        );
     }
 
     Ok(())

@@ -1,6 +1,7 @@
 use crossbeam_channel::Sender;
 
 use pueue_lib::network::message::*;
+use pueue_lib::settings::PUEUE_DEFAULT_GROUP;
 use pueue_lib::state::SharedState;
 
 use crate::network::message_handler::ok_or_failure_message;
@@ -40,7 +41,7 @@ pub fn group(message: GroupMessage, sender: &Sender<Message>, state: &SharedStat
                 return message;
             }
 
-            if group == "default" {
+            if group == PUEUE_DEFAULT_GROUP {
                 return create_failure_message("You cannot delete the default group".to_string());
             }
 

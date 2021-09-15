@@ -14,7 +14,7 @@ use crate::helper::*;
 )]
 #[case(
     Message::Start(StartMessage {
-        tasks: TaskSelection::Group("default".into()),
+        tasks: TaskSelection::Group(PUEUE_DEFAULT_GROUP.into()),
         children: false,
     })
 )]

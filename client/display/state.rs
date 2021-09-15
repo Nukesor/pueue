@@ -5,7 +5,7 @@ use chrono::{Duration, Local};
 use comfy_table::presets::UTF8_HORIZONTAL_BORDERS_ONLY;
 use comfy_table::*;
 
-use pueue_lib::settings::Settings;
+use pueue_lib::settings::{Settings, PUEUE_DEFAULT_GROUP};
 use pueue_lib::state::State;
 use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
@@ -78,9 +78,14 @@ fn print_all_groups(
     // see most of the time anyway.
     if state.tasks.is_empty() {
         let headline = get_group_headline(
-            "default",
-            state.groups.get("default").unwrap(),
-            *state.settings.daemon.groups.get("default").unwrap(),
+            PUEUE_DEFAULT_GROUP,
+            state.groups.get(PUEUE_DEFAULT_GROUP).unwrap(),
+            *state
+                .settings
+                .daemon
+                .groups
+                .get(PUEUE_DEFAULT_GROUP)
+                .unwrap(),
             colors,
         );
         println!("{}\n", headline);
@@ -89,12 +94,17 @@ fn print_all_groups(
     }
 
     // Always print the default queue at the very top, if no specific group is requested.
-    if sorted_tasks.get("default").is_some() {
-        let tasks = sorted_tasks.get("default").unwrap();
+    if sorted_tasks.get(PUEUE_DEFAULT_GROUP).is_some() {
+        let tasks = sorted_tasks.get(PUEUE_DEFAULT_GROUP).unwrap();
         let headline = get_group_headline(
-            "default",
-            state.groups.get("default").unwrap(),
-            *state.settings.daemon.groups.get("default").unwrap(),
+            PUEUE_DEFAULT_GROUP,
+            state.groups.get(PUEUE_DEFAULT_GROUP).unwrap(),
+            *state
+                .settings
+                .daemon
+                .groups
+                .get(PUEUE_DEFAULT_GROUP)
+                .unwrap(),
             colors,
         );
         println!("{}", headline);
@@ -111,7 +121,7 @@ fn print_all_groups(
     while let Some((group, tasks)) = sorted_iter.next() {
         // We always want to print the default group at the very top.
         // That's why we print it before this loop and skip it in here.
-        if group.eq("default") {
+        if group.eq(PUEUE_DEFAULT_GROUP) {
             continue;
         }
 
