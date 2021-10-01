@@ -61,6 +61,7 @@ pub enum SubCommand {
     },
     /// Remove tasks from the list.
     /// Running or paused tasks need to be killed first.
+    #[clap(alias("rm"))]
     Remove {
         /// The task ids to be removed.
         #[clap(required = true)]
@@ -141,6 +142,7 @@ pub enum SubCommand {
     /// Restart task(s).
     /// Identical tasks will be created and by default enqueued.
     /// By default, a new task will be created.
+    #[clap(alias("re"))]
     Restart {
         /// Restart these specific tasks.
         task_ids: Vec<usize>,
@@ -313,6 +315,7 @@ pub enum SubCommand {
 
     /// Follow the output of a currently running task.
     /// This command works like tail -f.
+    #[clap(alias("fo"))]
     Follow {
         /// The id of the task you want to watch.
         /// If no or multiple tasks are running, you have to specify the id.
