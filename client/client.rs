@@ -28,7 +28,7 @@ use crate::display::*;
 /// communication pattern, such as the `follow` command, which can read local files,
 /// or the `edit` command, which needs to open an editor locally.
 pub struct Client {
-    opt: CliArguments,
+    subcommand: SubCommand,
     settings: Settings,
     colors: Colors,
     stream: GenericStream,
@@ -98,11 +98,21 @@ impl Client {
 
         let colors = Colors::new(&settings);
 
+        // If no subcommand is given, we default to the `status` subcommand without any arguments.
+        let subcommand = if let Some(subcommand) = opt.cmd {
+            subcommand
+        } else {
+            SubCommand::Status {
+                json: false,
+                group: None,
+            }
+        };
+
         Ok(Client {
-            opt,
             settings,
             colors,
             stream,
+            subcommand,
         })
     }
 
@@ -134,7 +144,7 @@ impl Client {
     /// [handle_simple_command] function.
     async fn handle_complex_command(&mut self) -> Result<bool> {
         // This match handles all "complex" commands.
-        match &self.opt.cmd {
+        match &self.subcommand {
             SubCommand::Reset { force, .. } => {
                 let state = get_state(&mut self.stream).await?;
                 let running_tasks = state
@@ -262,10 +272,10 @@ impl Client {
                 std::process::exit(1);
             }
             Message::StatusResponse(state) => {
-                print_state(*state, &self.opt.cmd, &self.colors, &self.settings)
+                print_state(*state, &self.subcommand, &self.colors, &self.settings)
             }
             Message::LogResponse(task_logs) => {
-                print_logs(task_logs, &self.opt.cmd, &self.colors, &self.settings)
+                print_logs(task_logs, &self.subcommand, &self.colors, &self.settings)
             }
             Message::GroupResponse(groups) => print_groups(groups, &self.colors),
             Message::Stream(text) => {
@@ -321,7 +331,7 @@ impl Client {
     /// Convert the cli command into the message that's being sent to the server,
     /// so it can be understood by the daemon.
     fn get_message_from_opt(&self) -> Result<Message> {
-        match &self.opt.cmd {
+        match &self.subcommand {
             SubCommand::Add {
                 command,
                 working_directory: cwd,

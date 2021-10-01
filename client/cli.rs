@@ -420,7 +420,7 @@ pub struct CliArguments {
     pub config: Option<PathBuf>,
 
     #[clap(subcommand)]
-    pub cmd: SubCommand,
+    pub cmd: Option<SubCommand>,
 }
 
 fn parse_delay_until(src: &str) -> Result<DateTime<Local>, String> {

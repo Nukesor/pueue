@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 
 - Introduce the `rm` (remove), `re` (restart) and `fo` (follow) subcommand aliases.
+- When calling `pueue` without a subcommand `status` will be called by default.
 
 ## [1.0.3] - 2021-09-15
 

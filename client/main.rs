@@ -19,10 +19,10 @@ async fn main() -> Result<()> {
     // Parse commandline options.
     let opt = CliArguments::parse();
 
-    if let SubCommand::Completions {
+    if let Some(SubCommand::Completions {
         shell,
         output_directory,
-    } = &opt.cmd
+    }) = &opt.cmd
     {
         let mut app = CliArguments::into_app();
         app.set_bin_name("pueue");
