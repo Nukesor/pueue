@@ -83,8 +83,6 @@ pub struct Client {
 /// All settings which are used by the daemon
 #[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
 pub struct Daemon {
-    /// How many parallel tasks a group should have by default
-    pub default_parallel_tasks: usize,
     /// Whether a group should be paused as soon as a single task fails
     pub pause_group_on_failure: bool,
     /// Whether the daemon (and all groups) should be paused as soon as a single task fails
