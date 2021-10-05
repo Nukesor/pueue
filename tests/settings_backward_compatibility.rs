@@ -10,8 +10,9 @@ use pueue_lib::settings::{Settings, PUEUE_DEFAULT_GROUP};
 ///
 /// We have to be able to restore from that config at all costs.
 /// Everything else results in a breaking change and needs a major version change.
+/// (For `pueue_lib` as well as `pueue`!
 ///
-/// On top of simply having an old settings, I also removed a few default fields.
+/// On top of simply having old settings, I also removed a few default fields.
 /// This should be handled as well.
 #[test]
 fn test_restore_from_old_state() -> Result<()> {
