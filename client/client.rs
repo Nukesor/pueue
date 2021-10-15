@@ -472,10 +472,10 @@ impl Client {
                 remove,
             } => {
                 if let Some(group) = add {
-                    Ok(Message::Group(GroupMessage::Add(
-                        group.to_owned(),
-                        parallel.to_owned(),
-                    )))
+                    Ok(Message::Group(GroupMessage::Add {
+                        name: group.to_owned(),
+                        parallel_tasks: parallel.to_owned(),
+                    }))
                 } else if let Some(group) = remove {
                     Ok(Message::Group(GroupMessage::Remove(group.to_owned())))
                 } else {
