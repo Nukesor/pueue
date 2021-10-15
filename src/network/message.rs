@@ -168,7 +168,7 @@ pub struct EditResponseMessage {
 
 #[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
 pub enum GroupMessage {
-    Add(String),
+    Add(String, Option<usize>),
     Remove(String),
     List,
 }
