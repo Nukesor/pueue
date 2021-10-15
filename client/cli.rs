@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use chrono::prelude::*;
 use chrono::Duration;
 use chrono_english::*;
-use clap::{ArgEnum, Clap};
+use clap::{ArgEnum, Clap, Subcommand};
 
 use pueue_lib::network::message::Signal;
 
@@ -265,14 +265,8 @@ pub enum SubCommand {
     /// Use this to add or remove groups.
     /// By default, this will simply display all known groups.
     Group {
-        /// Add a group by name.
-        #[clap(short, long, conflicts_with = "remove")]
-        add: Option<String>,
-
-        /// Remove a group by name.
-        /// This will move all tasks in this group to the default group!
-        #[clap(short, long)]
-        remove: Option<String>,
+        #[clap(subcommand)]
+        group_cmd: Option<GroupSubcommand>
     },
 
     /// Display the current status of all tasks.
@@ -391,6 +385,25 @@ pub enum SubCommand {
         /// The output directory to which the file should be written.
         output_directory: PathBuf,
     },
+}
+
+#[derive(Debug, Subcommand)]
+pub enum GroupSubcommand {
+    /// Add a group by name
+    Add {
+        name: String,
+
+        /// Set the amount of parallel tasks this group can do
+        #[clap(short, long, validator=min_one)]
+        parallel: Option<usize>
+    },
+
+    /// Remove a group by name.
+    /// This will move all tasks in this group to the default group!
+    #[clap(alias = "rm")]
+    Remove {
+        name: String
+    }
 }
 
 #[derive(Clap, Debug, PartialEq, ArgEnum)]

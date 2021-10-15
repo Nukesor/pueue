@@ -12,7 +12,7 @@ use pueue_lib::network::protocol::*;
 use pueue_lib::network::secret::read_shared_secret;
 use pueue_lib::settings::{Settings, PUEUE_DEFAULT_GROUP};
 
-use crate::cli::{CliArguments, SubCommand};
+use crate::cli::{CliArguments, GroupSubcommand, SubCommand};
 use crate::commands::edit::edit;
 use crate::commands::get_state;
 use crate::commands::local_follow::local_follow;
@@ -466,11 +466,12 @@ impl Client {
                 };
                 Ok(Message::Send(message))
             }
-            SubCommand::Group { add, remove } => {
-                if let Some(group) = add {
-                    Ok(Message::Group(GroupMessage::Add(group.clone())))
-                } else if let Some(group) = remove {
-                    Ok(Message::Group(GroupMessage::Remove(group.clone())))
+            SubCommand::Group { group_cmd } => {
+                if let Some(cmd) = group_cmd {
+                    match cmd {
+                        GroupSubcommand::Add { name, parallel } => Ok(Message::Group(GroupMessage::Add(name.to_owned(), parallel.to_owned()))),
+                        GroupSubcommand::Remove { name } => Ok(Message::Group(GroupMessage::Remove(name.to_owned())))
+                    }
                 } else {
                     Ok(Message::Group(GroupMessage::List))
                 }

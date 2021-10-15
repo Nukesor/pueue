@@ -23,7 +23,7 @@ impl TaskHandler {
 
         match message {
             GroupMessage::List => {}
-            GroupMessage::Add(group) => {
+            GroupMessage::Add(group, parallel) => {
                 if state.groups.contains_key(&group) {
                     error!("Group \"{}\" already exists", group);
                     return;
@@ -32,7 +32,10 @@ impl TaskHandler {
                 info!("New group \"{}\" has been created", &group);
 
                 // Create the worker pool.
-                self.children.0.insert(group, BTreeMap::new());
+                self.children.0.insert(group.clone(), BTreeMap::new());
+                if let Some(parallel) = parallel {
+                    state.settings.daemon.groups.insert(group, parallel);
+                }
 
                 // Save the state and the settings file.
                 ok_or_shutdown!(self, save_state(&state));

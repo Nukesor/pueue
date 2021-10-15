@@ -24,14 +24,14 @@ pub fn group(message: GroupMessage, sender: &Sender<Message>, state: &SharedStat
                 settings: state.settings.daemon.groups.clone(),
             })
         }
-        GroupMessage::Add(group) => {
+        GroupMessage::Add(group, parallel) => {
             if state.groups.contains_key(&group) {
                 return create_failure_message(format!("Group \"{}\" already exists", group));
             }
 
             // Propagate the message to the TaskHandler, which is responsible for actually
             // manipulating our internal data
-            let result = sender.send(Message::Group(GroupMessage::Add(group.clone())));
+            let result = sender.send(Message::Group(GroupMessage::Add(group.clone(), parallel)));
             ok_or_return_failure_message!(result);
 
             create_success_message(format!("Group \"{}\" is being created", group))
