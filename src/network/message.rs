@@ -170,7 +170,7 @@ pub struct EditResponseMessage {
 pub enum GroupMessage {
     Add {
         name: String,
-        parallel_tasks: Option<usize>
+        parallel_tasks: Option<usize>,
     },
     Remove(String),
     List,
