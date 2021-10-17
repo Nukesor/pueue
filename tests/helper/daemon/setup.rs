@@ -128,7 +128,6 @@ pub fn base_setup() -> Result<(Settings, TempDir)> {
     groups.insert("test_5".to_string(), 5);
 
     let daemon = Daemon {
-        default_parallel_tasks: 1,
         pause_group_on_failure: false,
         pause_all_on_failure: false,
         callback: None,

@@ -15,7 +15,10 @@ async fn test_add_and_remove() -> Result<()> {
     add_group_with_slots(shared, "testgroup", 1).await?;
 
     // Try to add the same group again. This should fail
-    let add_message = Message::Group(GroupMessage::Add("testgroup".to_string(), None));
+    let add_message = Message::Group(GroupMessage::Add {
+        name: "testgroup".to_string(),
+        parallel_tasks: None,
+    });
     assert_failure(send_message(shared, add_message).await?);
 
     // Remove the newly added group and wait for the deletion to be processed.

@@ -23,19 +23,22 @@ impl TaskHandler {
 
         match message {
             GroupMessage::List => {}
-            GroupMessage::Add { name, parallel_tasks } => {
+            GroupMessage::Add {
+                name,
+                parallel_tasks,
+            } => {
                 if state.groups.contains_key(&name) {
                     error!("Group \"{}\" already exists", name);
                     return;
                 }
                 state.create_group(&name);
+                if let Some(parallel) = parallel_tasks {
+                    state.settings.daemon.groups.insert(name.clone(), parallel);
+                }
                 info!("New group \"{}\" has been created", &name);
 
                 // Create the worker pool.
-                self.children.0.insert(name.clone(), BTreeMap::new());
-                if let Some(parallel) = parallel_tasks {
-                    state.settings.daemon.groups.insert(name, parallel);
-                }
+                self.children.0.insert(name, BTreeMap::new());
 
                 // Save the state and the settings file.
                 ok_or_shutdown!(self, save_state(&state));
