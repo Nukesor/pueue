@@ -505,9 +505,13 @@ impl Client {
                 };
                 Ok(Message::StreamRequest(message))
             }
-            SubCommand::Clean { successful_only } => {
+            SubCommand::Clean {
+                successful_only,
+                group,
+            } => {
                 let message = CleanMessage {
                     successful_only: *successful_only,
+                    group: group.clone(),
                 };
 
                 Ok(Message::Clean(message))
