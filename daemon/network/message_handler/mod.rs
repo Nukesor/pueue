@@ -127,17 +127,22 @@ mod fixtures {
         (Arc::new(Mutex::new(state)), tempdir)
     }
 
-    /// Create a new task with stub data
-    pub fn get_stub_task(id: &str, status: TaskStatus) -> Task {
+    /// Create a new task with stub data in the given group
+    pub fn get_stub_task_in_group(id: &str, group: &str, status: TaskStatus) -> Task {
         Task::new(
             format!("{}", id),
             "/tmp".to_string(),
             HashMap::new(),
-            PUEUE_DEFAULT_GROUP.to_string(),
+            group.to_string(),
             status,
             Vec::new(),
             None,
         )
+    }
+
+    /// Create a new task with stub data
+    pub fn get_stub_task(id: &str, status: TaskStatus) -> Task {
+        get_stub_task_in_group(id, PUEUE_DEFAULT_GROUP, status)
     }
 
     pub fn get_stub_state() -> (SharedState, TempDir) {
