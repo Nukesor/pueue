@@ -357,6 +357,10 @@ pub enum SubCommand {
         /// Only clean tasks that finished successfully.
         #[clap(short, long)]
         successful_only: bool,
+
+        /// Only clean tasks of a specific group
+        #[clap(short, long)]
+        group: Option<String>,
     },
 
     /// Kill all tasks, clean up afterwards and reset EVERYTHING!
