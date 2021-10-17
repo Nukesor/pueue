@@ -186,12 +186,8 @@ pub struct ResetMessage {
 
 #[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
 pub struct CleanMessage {
-    #[serde(default = "false_default")]
+    #[serde(default = "bool::default")]
     pub successful_only: bool,
-}
-fn false_default() -> bool {
-    false
-}
 
 /// Determines which type of shutdown we're dealing with.
 #[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
