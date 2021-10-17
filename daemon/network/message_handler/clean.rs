@@ -7,6 +7,19 @@ use super::*;
 use crate::ok_or_return_failure_message;
 use crate::state_helper::{is_task_removable, save_state};
 
+fn construct_success_clean_message(message: CleanMessage) -> String {
+    let successfull_only_fix = if message.successful_only {
+        " successfully"
+    } else {
+        ""
+    };
+
+    format!(
+        "All{} finished tasks have been removed",
+        successfull_only_fix
+    )
+}
+
 /// Invoked when calling `pueue clean`.
 /// Remove all failed or done tasks from the state.
 pub fn clean(message: CleanMessage, state: &SharedState) -> Message {
@@ -34,11 +47,7 @@ pub fn clean(message: CleanMessage, state: &SharedState) -> Message {
 
     ok_or_return_failure_message!(save_state(&state));
 
-    if message.successful_only {
-        create_success_message("All successfully finished tasks have been removed")
-    } else {
-        create_success_message("All finished tasks have been removed")
-    }
+    create_success_message(construct_success_clean_message(message))
 }
 
 #[cfg(test)]
