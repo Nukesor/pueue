@@ -269,6 +269,10 @@ pub enum SubCommand {
         #[clap(short, long, conflicts_with = "remove")]
         add: Option<String>,
 
+        /// Set the amount of parallel tasks this group can do
+        #[clap(short, long, validator = min_one, conflicts_with = "remove")]
+        parallel: Option<usize>,
+
         /// Remove a group by name.
         /// This will move all tasks in this group to the default group!
         #[clap(short, long)]

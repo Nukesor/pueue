@@ -466,11 +466,18 @@ impl Client {
                 };
                 Ok(Message::Send(message))
             }
-            SubCommand::Group { add, remove } => {
+            SubCommand::Group {
+                add,
+                parallel,
+                remove,
+            } => {
                 if let Some(group) = add {
-                    Ok(Message::Group(GroupMessage::Add(group.clone())))
+                    Ok(Message::Group(GroupMessage::Add {
+                        name: group.to_owned(),
+                        parallel_tasks: parallel.to_owned(),
+                    }))
                 } else if let Some(group) = remove {
-                    Ok(Message::Group(GroupMessage::Remove(group.clone())))
+                    Ok(Message::Group(GroupMessage::Remove(group.to_owned())))
                 } else {
                     Ok(Message::Group(GroupMessage::List))
                 }

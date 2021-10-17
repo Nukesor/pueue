@@ -24,17 +24,17 @@ pub fn group(message: GroupMessage, sender: &Sender<Message>, state: &SharedStat
                 settings: state.settings.daemon.groups.clone(),
             })
         }
-        GroupMessage::Add(group) => {
-            if state.groups.contains_key(&group) {
-                return create_failure_message(format!("Group \"{}\" already exists", group));
+        GroupMessage::Add { name, parallel_tasks } => {
+            if state.groups.contains_key(&name) {
+                return create_failure_message(format!("Group \"{}\" already exists", name));
             }
 
             // Propagate the message to the TaskHandler, which is responsible for actually
             // manipulating our internal data
-            let result = sender.send(Message::Group(GroupMessage::Add(group.clone())));
+            let result = sender.send(Message::Group(GroupMessage::Add{ name: name.clone(), parallel_tasks }));
             ok_or_return_failure_message!(result);
 
-            create_success_message(format!("Group \"{}\" is being created", group))
+            create_success_message(format!("Group \"{}\" is being created", name))
         }
         GroupMessage::Remove(group) => {
             if let Err(message) = ensure_group_exists(&state, &group) {
