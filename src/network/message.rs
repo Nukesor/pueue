@@ -189,6 +189,10 @@ pub struct CleanMessage {
     #[serde(default = "bool::default")]
     pub successful_only: bool,
 
+    #[serde(default = "Option::default")]
+    pub group: Option<String>,
+}
+
 /// Determines which type of shutdown we're dealing with.
 #[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
 pub enum Shutdown {
