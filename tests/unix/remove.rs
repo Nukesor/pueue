@@ -4,8 +4,8 @@ use pueue_lib::network::message::*;
 use crate::helper::*;
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-/// Ensure that clean only removes finished tasks
-async fn test_normal_clean() -> Result<()> {
+/// Ensure that only removable tasks can be removed.
+async fn test_normal_remove() -> Result<()> {
     let (settings, _tempdir, _pid) = threaded_setup()?;
     let shared = &settings.shared;
 
