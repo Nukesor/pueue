@@ -62,31 +62,29 @@ mod tests {
         CleanMessage { successful_only }
     }
 
+    trait TaskAddable {
+        fn add_stub_task(&mut self, id: &str, group: &str, task_result: TaskResult);
+    }
+
+    impl TaskAddable for State {
+        fn add_stub_task(&mut self, id: &str, group: &str, task_result: TaskResult) {
+            let task = get_stub_task_in_group(id, group, TaskStatus::Done(task_result));
+            self.add_task(task);
+        }
+    }
+
     fn get_clean_test_state() -> (SharedState, TempDir) {
         let (state, tempdir) = get_state();
 
         {
             let mut state = state.lock().unwrap();
-            let task = get_stub_task("0", TaskStatus::Done(TaskResult::Success));
-            state.add_task(task);
 
-            let task = get_stub_task("1", TaskStatus::Done(TaskResult::Failed(1)));
-            state.add_task(task);
-
-            let task = get_stub_task(
-                "2",
-                TaskStatus::Done(TaskResult::FailedToSpawn("error".to_string())),
-            );
-            state.add_task(task);
-
-            let task = get_stub_task("3", TaskStatus::Done(TaskResult::Killed));
-            state.add_task(task);
-
-            let task = get_stub_task("4", TaskStatus::Done(TaskResult::Errored));
-            state.add_task(task);
-
-            let task = get_stub_task("5", TaskStatus::Done(TaskResult::DependencyFailed));
-            state.add_task(task);
+            state.add_stub_task("0", group, TaskResult::Success);
+            state.add_stub_task("1", group, TaskResult::Failed(1));
+            state.add_stub_task("2", group, TaskResult::FailedToSpawn("error".to_string()));
+            state.add_stub_task("3", group, TaskResult::Killed);
+            state.add_stub_task("4", group, TaskResult::Errored);
+            state.add_stub_task("5", group, TaskResult::DependencyFailed);
         }
 
         (state, tempdir)
