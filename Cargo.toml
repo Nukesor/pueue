@@ -9,10 +9,10 @@ documentation = "https://docs.rs/pueue/"
 license = "MIT"
 keywords = ["shell", "command", "parallel", "task", "queue"]
 readme = "README.md"
-edition = "2018"
+edition = "2021"
 
 [badges]
-maintenance = { status = "actively-developed" }
+maintenance = { status="actively-developed" }
 
 [[bin]]
 name = "pueue"
@@ -31,35 +31,41 @@ path = "daemon/main.rs"
 
 [dependencies]
 #pueue-lib = "0.18.0"
-pueue-lib = { git = "https://github.com/Nukesor/pueue-lib", branch = "master" }
+pueue-lib = { git="https://github.com/Nukesor/pueue-lib", branch="master" }
 #pueue-lib = { path = "../../libraries/pueue-lib" }
 
 anyhow = "1"
-chrono = { version = "0.4", features = ["serde"] }
+chrono = { version="0.4", features=["serde"] }
 chrono-english = "0.1"
 shell-escape = "0.1"
 tempfile = "3"
 
 crossbeam-channel = "0.5"
-tokio = { version = "1", features = ["rt-multi-thread", "time", "macros", "io-std", "io-util"] }
+tokio = { version="1", features=["rt-multi-thread", "time", "macros", "io-std", "io-util"] }
 snap = "1"
 serde = "1"
 serde_json = "1"
 serde_derive = "1"
 
 log = "0.4"
-simplelog = { version = "0.10", default-features = false }
+simplelog = { version="0.10", default-features=false }
 clap = "=3.0.0-beta.4"
 clap_generate = "3.0.0-beta.4"
 crossterm = "0.20"
-comfy-table= "4"
+comfy-table = "4"
 
 handlebars = "4"
-ctrlc = { version = "3", features = ["termination"] }
+ctrlc = { version="3", features=["termination"] }
 
 # Windows
 [target.'cfg(windows)'.dependencies]
-winapi = { version = "0.3", features = ["tlhelp32", "handleapi", "processthreadsapi", "minwindef", "impl-default"] }
+winapi = { version="0.3", features=[
+  "tlhelp32",
+  "handleapi",
+  "processthreadsapi",
+  "minwindef",
+  "impl-default",
+] }
 
 # Unix
 [target.'cfg(not(windows))'.dependencies]
@@ -68,7 +74,7 @@ whoami = "1"
 
 # Linux / Freebsd
 [target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]
-procfs = { version = "0.9", default-features = false }
+procfs = { version="0.9", default-features=false }
 
 [build-dependencies]
 version_check = "0.9"
