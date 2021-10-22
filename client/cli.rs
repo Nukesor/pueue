@@ -3,11 +3,11 @@ use std::path::PathBuf;
 use chrono::prelude::*;
 use chrono::Duration;
 use chrono_english::*;
-use clap::{ArgEnum, Clap};
+use clap::{ArgEnum, Parser};
 
 use pueue_lib::network::message::Signal;
 
-#[derive(Clap, Debug)]
+#[derive(Parser, Debug)]
 pub enum SubCommand {
     /// Enqueue a task for execution.
     Add {
@@ -401,7 +401,7 @@ pub enum SubCommand {
     },
 }
 
-#[derive(Clap, Debug, PartialEq, ArgEnum)]
+#[derive(Parser, Debug, Clone, PartialEq, ArgEnum)]
 pub enum Shell {
     Bash,
     Elvish,
@@ -410,7 +410,7 @@ pub enum Shell {
     Zsh,
 }
 
-#[derive(Clap, Debug)]
+#[derive(Parser, Debug)]
 #[clap(
     name = "Pueue client",
     about = "Interact with the Pueue daemon",

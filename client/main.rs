@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use clap::{Clap, IntoApp};
+use clap::{IntoApp, Parser};
 use clap_generate::generate_to;
 use clap_generate::generators::*;
 use simplelog::{Config, LevelFilter, SimpleLogger};
@@ -27,13 +27,11 @@ async fn main() -> Result<()> {
         let mut app = CliArguments::into_app();
         app.set_bin_name("pueue");
         let completion_result = match shell {
-            Shell::Bash => generate_to::<Bash, _, _>(&mut app, "pueue", output_directory),
-            Shell::Elvish => generate_to::<Elvish, _, _>(&mut app, "pueue", output_directory),
-            Shell::Fish => generate_to::<Fish, _, _>(&mut app, "pueue", output_directory),
-            Shell::PowerShell => {
-                generate_to::<PowerShell, _, _>(&mut app, "pueue", output_directory)
-            }
-            Shell::Zsh => generate_to::<Zsh, _, _>(&mut app, "pueue", output_directory),
+            Shell::Bash => generate_to(Bash, &mut app, "pueue", output_directory),
+            Shell::Elvish => generate_to(Elvish, &mut app, "pueue", output_directory),
+            Shell::Fish => generate_to(Fish, &mut app, "pueue", output_directory),
+            Shell::PowerShell => generate_to(PowerShell, &mut app, "pueue", output_directory),
+            Shell::Zsh => generate_to(Zsh, &mut app, "pueue", output_directory),
         };
         completion_result.context(format!("Failed to generate completions for {:?}", shell))?;
         return Ok(());
