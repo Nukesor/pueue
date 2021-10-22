@@ -1,7 +1,7 @@
 use std::process::Command;
 
 use anyhow::Result;
-use clap::Clap;
+use clap::Parser;
 use simplelog::{Config, LevelFilter, SimpleLogger};
 
 use pueue_daemon_lib::cli::CliArguments;
