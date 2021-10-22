@@ -1,7 +1,10 @@
-use async_std::io::{Read, Write};
-use async_std::net::{TcpListener, TcpStream};
-use async_tls::TlsAcceptor;
+use std::convert::TryFrom;
+
 use async_trait::async_trait;
+use rustls::ServerName;
+use tokio::io::{AsyncRead, AsyncWrite};
+use tokio::net::{TcpListener, TcpStream};
+use tokio_rustls::TlsAcceptor;
 
 use crate::error::Error;
 use crate::network::tls::{get_tls_connector, get_tls_listener};
@@ -39,9 +42,9 @@ impl Listener for TlsTcpListener {
 
 /// A new trait, which can be used to represent Unix- and Tls encrypted TcpStreams.
 /// This is necessary to write generic functions where both types can be used.
-pub trait Stream: Read + Write + Unpin + Send {}
-impl Stream for async_tls::server::TlsStream<TcpStream> {}
-impl Stream for async_tls::client::TlsStream<TcpStream> {}
+pub trait Stream: AsyncRead + AsyncWrite + Unpin + Send {}
+impl Stream for tokio_rustls::server::TlsStream<TcpStream> {}
+impl Stream for tokio_rustls::client::TlsStream<TcpStream> {}
 
 /// Two convenient types, so we don't have type write Box<dyn ...> all the time.
 pub type GenericListener = Box<dyn Listener>;
@@ -66,7 +69,7 @@ pub async fn get_client_stream(settings: &Shared) -> Result<GenericStream, Error
 
     // Initialize the TLS layer
     let stream = tls_connector
-        .connect("pueue.local", tcp_stream)
+        .connect(ServerName::try_from("pueue.local").unwrap(), tcp_stream)
         .await
         .map_err(|err| Error::Connection(format!("Failed to initialize tls {}.", err)))?;
 

@@ -1,10 +1,11 @@
+use std::convert::TryFrom;
 use std::path::PathBuf;
 
-use async_std::io::{Read, Write};
-use async_std::net::{TcpListener, TcpStream};
-use async_std::os::unix::net::{UnixListener, UnixStream};
-use async_tls::TlsAcceptor;
 use async_trait::async_trait;
+use rustls::ServerName;
+use tokio::io::{AsyncRead, AsyncWrite};
+use tokio::net::{TcpListener, TcpStream, UnixListener, UnixStream};
+use tokio_rustls::TlsAcceptor;
 
 use crate::error::Error;
 use crate::network::tls::{get_tls_connector, get_tls_listener};
@@ -55,10 +56,10 @@ impl Listener for UnixListener {
 
 /// A new trait, which can be used to represent Unix- and Tls encrypted TcpStreams. \
 /// This is necessary to write generic functions where both types can be used.
-pub trait Stream: Read + Write + Unpin + Send {}
+pub trait Stream: AsyncRead + AsyncWrite + Unpin + Send {}
 impl Stream for UnixStream {}
-impl Stream for async_tls::server::TlsStream<TcpStream> {}
-impl Stream for async_tls::client::TlsStream<TcpStream> {}
+impl Stream for tokio_rustls::server::TlsStream<TcpStream> {}
+impl Stream for tokio_rustls::client::TlsStream<TcpStream> {}
 
 /// Convenience type, so we don't have type write `Box<dyn Listener>` all the time.
 pub type GenericListener = Box<dyn Listener>;
@@ -97,7 +98,7 @@ pub async fn get_client_stream(settings: &Shared) -> Result<GenericStream, Error
 
     // Initialize the TLS layer
     let stream = tls_connector
-        .connect("pueue.local", tcp_stream)
+        .connect(ServerName::try_from("pueue.local").unwrap(), tcp_stream)
         .await
         .map_err(|err| Error::Connection(format!("Failed to initialize tls {}.", err)))?;
 
@@ -120,9 +121,7 @@ pub async fn get_listener(settings: &Shared) -> Result<GenericListener, Error> {
             std::fs::remove_file(&settings.unix_socket_path())?;
         }
 
-        return Ok(Box::new(
-            UnixListener::bind(&settings.unix_socket_path()).await?,
-        ));
+        return Ok(Box::new(UnixListener::bind(&settings.unix_socket_path())?));
     }
 
     // This is the listener, which accepts low-level TCP connections

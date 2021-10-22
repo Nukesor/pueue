@@ -6,9 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [0.19.0] -
 
+### Added
+
+- Add optional `group` field to CleanMessage.
+- Add optional `parallel_tasks` field to Group create message.
+
 ### Removed
 
 - Remove the `settings.daemon.default_parallel_tasks` setting, as it doesn't have any effect.
+
+### Changed
+
+- Switch from `async-std` to tokio.
+- Update to rustls 0.20
 
 ## [0.18.1] - 2021-09-15
 

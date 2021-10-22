@@ -1,10 +1,10 @@
 use std::io::Cursor;
 
-use async_std::prelude::*;
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use log::debug;
 use serde_cbor::de::from_slice;
 use serde_cbor::ser::to_vec;
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
 use crate::error::Error;
 use crate::network::message::*;
@@ -29,7 +29,7 @@ pub async fn send_bytes(payload: &[u8], stream: &mut GenericStream) -> Result<()
     let message_size = payload.len() as u64;
 
     let mut header = vec![];
-    header.write_u64::<BigEndian>(message_size).unwrap();
+    WriteBytesExt::write_u64::<BigEndian>(&mut header, message_size).unwrap();
 
     // Send the request size header first.
     // Afterwards send the request.
@@ -54,7 +54,7 @@ pub async fn receive_bytes(stream: &mut GenericStream) -> Result<Vec<u8>, Error>
     let mut header = vec![0; 8];
     stream.read_exact(&mut header).await?;
     let mut header = Cursor::new(header);
-    let message_size = header.read_u64::<BigEndian>()? as usize;
+    let message_size = ReadBytesExt::read_u64::<BigEndian>(&mut header)? as usize;
 
     // Buffer for the whole payload
     let mut payload_bytes = Vec::with_capacity(message_size);
@@ -101,10 +101,10 @@ pub async fn receive_message(stream: &mut GenericStream) -> Result<Message, Erro
 mod test {
     use super::*;
 
-    use async_std::net::{TcpListener, TcpStream};
-    use async_std::task;
     use async_trait::async_trait;
     use pretty_assertions::assert_eq;
+    use tokio::net::{TcpListener, TcpStream};
+    use tokio::task;
 
     use crate::network::platform::socket::Stream as PueueStream;
 
@@ -118,7 +118,7 @@ mod test {
     }
     impl PueueStream for TcpStream {}
 
-    #[async_std::test]
+    #[tokio::test]
     async fn test_single_huge_payload() -> Result<(), Error> {
         let listener = TcpListener::bind("127.0.0.1:0").await?;
         let addr = listener.local_addr()?;
