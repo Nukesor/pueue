@@ -1,8 +1,8 @@
 use anyhow::Result;
-use async_std::task;
 use pretty_assertions::assert_eq;
 use serde_cbor::de::from_slice;
 use serde_cbor::ser::to_vec;
+use tokio::task;
 
 use pueue_lib::network::certificate::create_certificates;
 use pueue_lib::network::message::*;
@@ -10,7 +10,7 @@ use pueue_lib::network::protocol::*;
 
 mod helper;
 
-#[async_std::test]
+#[tokio::test]
 /// This tests whether we can create a listener and client, that communicate via TLS sockets.
 async fn test_tls_socket() -> Result<()> {
     better_panic::install();
