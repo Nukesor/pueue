@@ -9,7 +9,7 @@ documentation = "https://docs.rs/pueue-lib"
 license = "MIT"
 keywords = ["shell", "command", "parallel", "task", "queue"]
 readme = "README.md"
-edition = "2018"
+edition = "2021"
 
 [badges]
 maintenance = { status="actively-developed" }
