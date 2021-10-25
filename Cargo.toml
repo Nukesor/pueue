@@ -41,7 +41,7 @@ shell-escape = "0.1"
 tempfile = "3"
 
 crossbeam-channel = "0.5"
-tokio = { version="1", features=["rt-multi-thread", "time", "macros", "io-std", "io-util"] }
+tokio = { version="1", features=["rt-multi-thread", "time", "io-std"] }
 snap = "1"
 serde = "1"
 serde_json = "1"
