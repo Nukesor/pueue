@@ -3,16 +3,17 @@ use anyhow::Result;
 use pueue_lib::network::message::{Message, TaskSelection};
 use pueue_lib::task::*;
 
+use crate::fixtures::*;
 use crate::helper::*;
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Test if adding a normal task works as intended.
 async fn test_normal_add() -> Result<()> {
-    let (settings, _tempdir, _pid) = threaded_setup()?;
+    let PueueDaemon { settings, .. } = threaded_setup()?;
     let shared = &settings.shared;
 
     // Add a task that instantly finishes
-    assert_success(fixtures::add_task(shared, "sleep 0.01", false).await?);
+    assert_success(add_task(shared, "sleep 0.01", false).await?);
 
     // Wait until the task finished and get state
     wait_for_task_condition(&shared, 0, |task| task.is_done()).await?;
