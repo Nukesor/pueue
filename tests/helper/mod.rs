@@ -4,16 +4,22 @@ use tokio::io::{self, AsyncWriteExt};
 
 pub use pueue_lib::settings::PUEUE_DEFAULT_GROUP;
 
-pub mod daemon;
-pub mod envs;
-pub mod fixtures;
-pub mod network;
-pub mod wait;
+mod daemon;
+mod env;
+mod group;
+mod message;
+mod network;
+mod state;
+mod task;
+mod wait;
 
 pub use daemon::*;
-pub use envs::*;
-pub use fixtures::*;
+pub use env::*;
+pub use group::*;
+pub use message::*;
 pub use network::*;
+pub use state::*;
+pub use task::*;
 pub use wait::*;
 
 /// A helper function to sleep for ms time.

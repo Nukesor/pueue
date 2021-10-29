@@ -1,17 +1,18 @@
 use anyhow::Result;
 use pueue_lib::network::message::*;
 
+use crate::fixtures::*;
 use crate::helper::*;
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Ensure that clean only removes finished tasks
 async fn test_normal_clean() -> Result<()> {
-    let (settings, _tempdir, _pid) = threaded_setup()?;
-    let shared = &settings.shared;
+    let daemon = daemon()?;
+    let shared = &daemon.settings.shared;
 
     // This should result in one failed, one finished, one running and one queued task.
-    for command in vec!["failing", "ls", "sleep 60", "ls"] {
-        assert_success(fixtures::add_task(shared, command, false).await?);
+    for command in &["failing", "ls", "sleep 60", "ls"] {
+        assert_success(add_task(shared, command, false).await?);
     }
     // Wait for task2 to start. This implies task[0,1] being finished.
     wait_for_task_condition(shared, 2, |task| task.is_running()).await?;
@@ -34,12 +35,12 @@ async fn test_normal_clean() -> Result<()> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Ensure only successful tasks are removed, if the `-s` flag is set.
 async fn test_successful_only_clean() -> Result<()> {
-    let (settings, _tempdir, _pid) = threaded_setup()?;
-    let shared = &settings.shared;
+    let daemon = daemon()?;
+    let shared = &daemon.settings.shared;
 
     // This should result in one failed, one finished, one running and one queued task.
-    for command in vec!["failing", "ls"] {
-        assert_success(fixtures::add_task(shared, command, false).await?);
+    for command in &["failing", "ls"] {
+        assert_success(add_task(shared, command, false).await?);
     }
     // Wait for task2 to start. This implies task[0,1] being finished.
     wait_for_task_condition(shared, 1, |task| task.is_done()).await?;
@@ -63,14 +64,14 @@ async fn test_successful_only_clean() -> Result<()> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Ensure only tasks of the selected group are cleaned up
 async fn test_clean_in_selected_group() -> Result<()> {
-    let (settings, _tempdir, _pid) = threaded_setup()?;
-    let shared = &settings.shared;
+    let daemon = daemon()?;
+    let shared = &daemon.settings.shared;
 
-    fixtures::add_group_with_slots(shared, "other", 1).await?;
+    add_group_with_slots(shared, "other", 1).await?;
 
     for group in &[PUEUE_DEFAULT_GROUP, "other"] {
         for command in &["failing", "ls", "sleep 60", "ls"] {
-            assert_success(fixtures::add_task_to_group(shared, command, group).await?);
+            assert_success(add_task_to_group(shared, command, group).await?);
         }
     }
 
@@ -102,14 +103,13 @@ async fn test_clean_in_selected_group() -> Result<()> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Ensure only successful tasks are removed, if the `-s` flag is set.
 async fn test_clean_successful_only_in_selected_group() -> Result<()> {
-    let (settings, _tempdir, _pid) = threaded_setup()?;
-    let shared = &settings.shared;
+    let daemon = daemon()?;
+    let shared = &daemon.settings.shared;
 
-    fixtures::add_group_with_slots(shared, "other", 1).await?;
-
+    add_group_with_slots(shared, "other", 1).await?;
     for group in &[PUEUE_DEFAULT_GROUP, "other"] {
         for command in &["failing", "ls", "sleep 60", "ls"] {
-            assert_success(fixtures::add_task_to_group(shared, command, group).await?);
+            assert_success(add_task_to_group(shared, command, group).await?);
         }
     }
 
