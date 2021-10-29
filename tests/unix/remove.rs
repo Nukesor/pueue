@@ -19,7 +19,7 @@ async fn test_normal_remove() -> Result<()> {
     // 3 -> paused
     // 4 -> queued
     // 5 -> stashed
-    for command in vec!["failing", "ls", "sleep 60", "sleep 60", "ls", "ls"] {
+    for command in &["failing", "ls", "sleep 60", "sleep 60", "ls", "ls"] {
         assert_success(add_task(shared, command, false).await?);
     }
     // Wait for task2 to start. This implies task[0,1] being finished.
