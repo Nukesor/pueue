@@ -30,9 +30,9 @@ pub fn compile_shell_command(command_string: &str) -> Command {
 }
 
 pub fn send_internal_signal_to_child(
-    child: &Child,
-    signal: InternalSignal,
-    send_to_children: bool,
+    _child: &Child,
+    _signal: InternalSignal,
+    _send_to_children: bool,
 ) -> Result<bool> {
     bail!("Trying to send unix signal on a windows machine. This isn't supported.");
 }
@@ -273,8 +273,6 @@ mod test {
     use std::thread::sleep;
     use std::time::Duration;
 
-    use pretty_assertions::assert_eq;
-
     use super::*;
 
     /// Assert that certain process id no longer exists
@@ -388,7 +386,7 @@ mod test {
         let pid = child.id();
 
         // Get all processes, so we can make sure they no longer exist afterwards.
-        let process_ids = assert_process_ids(pid, 1, 5000)?;
+        let _ = assert_process_ids(pid, 1, 5000)?;
 
         // Kill the process and make sure it'll be killed.
         assert!(kill_child(0, &mut child, false));
