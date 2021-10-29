@@ -6,6 +6,7 @@ use pueue_lib::network::message::*;
 use pueue_lib::state::GroupStatus;
 use pueue_lib::task::*;
 
+use crate::fixtures::*;
 use crate::helper::*;
 
 #[rstest]
@@ -44,12 +45,12 @@ async fn test_kill_tasks(
     #[case] kill_message: Message,
     #[case] group_should_pause: bool,
 ) -> Result<()> {
-    let (settings, _tempdir, _pid) = threaded_setup()?;
-    let shared = &settings.shared;
+    let daemon = daemon()?;
+    let shared = &daemon.settings.shared;
 
     // Add multiple tasks and start them immediately
     for _ in 0..3 {
-        assert_success(fixtures::add_task(shared, "sleep 60", true).await?);
+        assert_success(add_task(shared, "sleep 60", true).await?);
     }
     // Wait until all tasks are running
     for id in 0..3 {

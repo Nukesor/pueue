@@ -105,7 +105,7 @@ mod fixtures {
             .expect("Failed to get default config")
             .try_into()
             .expect("Failed to get test settings");
-        settings.shared.pueue_directory = tempdir.path().clone().to_owned();
+        settings.shared.pueue_directory = tempdir.path().to_owned();
 
         (settings, tempdir)
     }
@@ -130,7 +130,7 @@ mod fixtures {
     /// Create a new task with stub data in the given group
     pub fn get_stub_task_in_group(id: &str, group: &str, status: TaskStatus) -> Task {
         Task::new(
-            format!("{}", id),
+            id.to_string(),
             "/tmp".to_string(),
             HashMap::new(),
             group.to_string(),

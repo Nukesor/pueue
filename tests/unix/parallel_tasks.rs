@@ -3,6 +3,7 @@ use pretty_assertions::assert_eq;
 
 use pueue_lib::task::*;
 
+use crate::fixtures::*;
 use crate::helper::*;
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
@@ -10,9 +11,8 @@ use crate::helper::*;
 ///
 /// For each group, Pueue should start tasks until all slots are filled.
 async fn test_parallel_tasks() -> Result<()> {
-    better_panic::debug_install();
-    let (settings, _tempdir, _pid) = threaded_setup()?;
-    let shared = &settings.shared;
+    let daemon = daemon()?;
+    let shared = &daemon.settings.shared;
 
     // ---- First group ----
     // Add a new group with 3 slots
@@ -25,7 +25,7 @@ async fn test_parallel_tasks() -> Result<()> {
 
     // Ensure those three tasks are started.
     for task_id in 0..3 {
-        wait_for_task_condition(&shared, task_id, |task| task.is_running()).await?;
+        wait_for_task_condition(shared, task_id, |task| task.is_running()).await?;
     }
 
     // Tasks 4-5 should still be queued
@@ -46,7 +46,7 @@ async fn test_parallel_tasks() -> Result<()> {
 
     // Ensure only two tasks are started.
     for task_id in 5..7 {
-        wait_for_task_condition(&shared, task_id, |task| task.is_running()).await?;
+        wait_for_task_condition(shared, task_id, |task| task.is_running()).await?;
     }
 
     // Tasks 8-10 should still be queued

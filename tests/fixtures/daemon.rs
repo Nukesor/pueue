@@ -20,24 +20,14 @@ pub struct PueueDaemon {
     pub pid: i32,
 }
 
-/// All info about a booted standalone test daemon.
-/// This daemon is a stand-alone process.
-///
-/// Contains the [Child] handle for the daemon subprocess.
-pub struct StandalonePueueDaemon {
-    pub settings: Settings,
-    pub tempdir: TempDir,
-    pub child: Child,
-}
-
 /// A helper function which, creates some test config, sets up a temporary directory and boots a
 /// daemon in a async tokio thread.
 /// This is done in 90% of our tests, thereby this convenience helper.
-pub fn threaded_setup() -> Result<PueueDaemon> {
+pub fn daemon() -> Result<PueueDaemon> {
     let (settings, tempdir) = daemon_base_setup()?;
 
     let pueue_dir = tempdir.path();
-    let path = pueue_dir.clone().to_path_buf();
+    let path = pueue_dir.to_path_buf();
     // Start/spin off the daemon and get its PID
     tokio::spawn(run_and_handle_error(path, true));
     let pid = get_pid(pueue_dir)?;
@@ -81,8 +71,7 @@ async fn run_and_handle_error(pueue_dir: PathBuf, test: bool) -> Result<()> {
 
 /// Spawn the daemon by calling the actual pueued binary.
 /// This function also checks for the pid file and the unix socket to pop-up.
-pub fn boot_standalone_daemon(pueue_dir: &Path) -> Result<StandalonePueueDaemon> {
-    let (settings, tempdir) = daemon_base_setup()?;
+pub fn standalone_daemon(pueue_dir: &Path) -> Result<Child> {
     let child = Command::cargo_bin("pueued")?
         .arg("--config")
         .arg(pueue_dir.join("pueue.yml").to_str().unwrap())
@@ -98,11 +87,7 @@ pub fn boot_standalone_daemon(pueue_dir: &Path) -> Result<StandalonePueueDaemon>
     while current_try < tries {
         sleep_ms(50);
         if socket_path.exists() {
-            return Ok(StandalonePueueDaemon {
-                settings,
-                tempdir,
-                child,
-            });
+            return Ok(child);
         }
 
         current_try += 1;
@@ -112,7 +97,7 @@ pub fn boot_standalone_daemon(pueue_dir: &Path) -> Result<StandalonePueueDaemon>
 }
 
 /// This is the base setup for all daemon test setups.
-fn daemon_base_setup() -> Result<(Settings, TempDir)> {
+pub fn daemon_base_setup() -> Result<(Settings, TempDir)> {
     // Create a temporary directory used for testing.
     let tempdir = TempDir::new().unwrap();
     let tempdir_path = tempdir.path();
@@ -120,7 +105,7 @@ fn daemon_base_setup() -> Result<(Settings, TempDir)> {
     std::fs::create_dir(tempdir_path.join("certs")).unwrap();
 
     let shared = Shared {
-        pueue_directory: tempdir_path.clone().to_path_buf(),
+        pueue_directory: tempdir_path.to_path_buf(),
         #[cfg(not(target_os = "windows"))]
         use_unix_socket: true,
         #[cfg(not(target_os = "windows"))]

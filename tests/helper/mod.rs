@@ -4,14 +4,14 @@ use tokio::io::{self, AsyncWriteExt};
 
 pub use pueue_lib::settings::PUEUE_DEFAULT_GROUP;
 
-pub mod daemon;
-pub mod env;
-pub mod group;
-pub mod message;
-pub mod network;
-pub mod state;
-pub mod task;
-pub mod wait;
+mod daemon;
+mod env;
+mod group;
+mod message;
+mod network;
+mod state;
+mod task;
+mod wait;
 
 pub use daemon::*;
 pub use env::*;
