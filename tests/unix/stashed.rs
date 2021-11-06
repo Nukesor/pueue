@@ -39,7 +39,7 @@ async fn test_enqueued_tasks(
     #[case] stashed: bool,
     #[case] enqueue_at: Option<DateTime<Local>>,
 ) -> Result<()> {
-    let daemon = daemon()?;
+    let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 
     assert_success(add_stashed_task(shared, "sleep 10", stashed, enqueue_at).await?);
@@ -78,7 +78,7 @@ async fn test_enqueued_tasks(
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Delayed stashed tasks will be enqueued.
 async fn test_delayed_tasks() -> Result<()> {
-    let daemon = daemon()?;
+    let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 
     // The task will be stashed and automatically enqueued after about 1 second.

@@ -11,7 +11,7 @@ use crate::helper::*;
 ///
 /// For each group, Pueue should start tasks until all slots are filled.
 async fn test_parallel_tasks() -> Result<()> {
-    let daemon = daemon()?;
+    let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 
     // ---- First group ----

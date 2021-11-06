@@ -8,7 +8,7 @@ use crate::helper::*;
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Add and directly remove a group.
 async fn test_add_and_remove() -> Result<()> {
-    let daemon = daemon()?;
+    let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 
     // Add a new group
@@ -36,7 +36,7 @@ async fn test_add_and_remove() -> Result<()> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Users cannot delete the default group.
 async fn test_cannot_delete_default() -> Result<()> {
-    let daemon = daemon()?;
+    let daemon = daemon().await?;
 
     let pause_message = Message::Group(GroupMessage::Remove(PUEUE_DEFAULT_GROUP.to_string()));
     assert_failure(send_message(&daemon.settings.shared, pause_message).await?);
@@ -47,7 +47,7 @@ async fn test_cannot_delete_default() -> Result<()> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Users cannot delete a non-existing group.
 async fn test_cannot_delete_non_existing() -> Result<()> {
-    let daemon = daemon()?;
+    let daemon = daemon().await?;
 
     let pause_message = Message::Group(GroupMessage::Remove("doesnt_exist".to_string()));
     assert_failure(send_message(&daemon.settings.shared, pause_message).await?);
@@ -58,7 +58,7 @@ async fn test_cannot_delete_non_existing() -> Result<()> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Groups with tasks shouldn't be able to be removed.
 async fn test_cannot_delete_group_with_tasks() -> Result<()> {
-    let daemon = daemon()?;
+    let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 
     // Add a new group

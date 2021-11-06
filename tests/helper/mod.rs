@@ -2,7 +2,7 @@
 use anyhow::Result;
 use tokio::io::{self, AsyncWriteExt};
 
-pub use pueue_lib::settings::PUEUE_DEFAULT_GROUP;
+pub use pueue_lib::state::PUEUE_DEFAULT_GROUP;
 
 mod daemon;
 mod env;

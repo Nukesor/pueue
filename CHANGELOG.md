@@ -13,6 +13,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - When calling `pueue` without a subcommand, the `status` command will be called by default [#247](https://github.com/Nukesor/pueue/issues/247).
 - Add the `--group` parameter to the `pueue clean` command [#248](https://github.com/Nukesor/pueue/issues/248)
 
+### Changed
+
+- The configuration for groups can no longer be done via configuration file.
+    This means, that groups can only be edited, created or deleted via the commandline interface.
+- **Breaking changes:** The amount of parallel tasks will be reset to `1` for all groups.
+- **Breaking changes:** The `pueue group` command won't work, unless the daemon is restarted.
+
+
 ## [1.0.3] - 2021-09-15
 
 ### Fix

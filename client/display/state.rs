@@ -5,8 +5,8 @@ use chrono::{Duration, Local};
 use comfy_table::presets::UTF8_HORIZONTAL_ONLY;
 use comfy_table::*;
 
-use pueue_lib::settings::{Settings, PUEUE_DEFAULT_GROUP};
-use pueue_lib::state::State;
+use pueue_lib::settings::Settings;
+use pueue_lib::state::{State, PUEUE_DEFAULT_GROUP};
 use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
 use super::{colors::Colors, helper::*};
@@ -48,12 +48,7 @@ fn print_single_group(
 ) {
     // Only a single group is requested. Print that group and return.
     let tasks = sorted_tasks.entry(group.clone()).or_default();
-    let headline = get_group_headline(
-        &group,
-        state.groups.get(&group).unwrap(),
-        *state.settings.daemon.groups.get(&group).unwrap(),
-        colors,
-    );
+    let headline = get_group_headline(&group, state.groups.get(&group).unwrap(), colors);
     println!("{}", headline);
 
     // Show a message if the requested group doesn't have any tasks.
@@ -80,12 +75,6 @@ fn print_all_groups(
         let headline = get_group_headline(
             PUEUE_DEFAULT_GROUP,
             state.groups.get(PUEUE_DEFAULT_GROUP).unwrap(),
-            *state
-                .settings
-                .daemon
-                .groups
-                .get(PUEUE_DEFAULT_GROUP)
-                .unwrap(),
             colors,
         );
         println!("{}\n", headline);
@@ -99,12 +88,6 @@ fn print_all_groups(
         let headline = get_group_headline(
             PUEUE_DEFAULT_GROUP,
             state.groups.get(PUEUE_DEFAULT_GROUP).unwrap(),
-            *state
-                .settings
-                .daemon
-                .groups
-                .get(PUEUE_DEFAULT_GROUP)
-                .unwrap(),
             colors,
         );
         println!("{}", headline);
@@ -125,12 +108,7 @@ fn print_all_groups(
             continue;
         }
 
-        let headline = get_group_headline(
-            group,
-            state.groups.get(group).unwrap(),
-            *state.settings.daemon.groups.get(group).unwrap(),
-            colors,
-        );
+        let headline = get_group_headline(group, state.groups.get(group).unwrap(), colors);
         println!("{}", headline);
         print_table(tasks, colors, settings);
 

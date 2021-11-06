@@ -27,9 +27,20 @@ impl TaskHandler {
             .iter()
             .filter(|(_, task)| task.status == TaskStatus::Queued)
             .filter(|(_, task)| {
-                // The task is assigned to a group.
-                // First let's check if the group is running. If it isn't, simply return false.
-                if !matches!(state.groups.get(&task.group), Some(GroupStatus::Running)) {
+                // Make sure the task is assigned to an existing group.
+                let group = match state.groups.get(&task.group) {
+                    Some(group) => group,
+                    None => {
+                        error!(
+                            "Got task with unknown group {}. Please report this!",
+                            &task.group
+                        );
+                        return false;
+                    }
+                };
+
+                // Let's check if the group is running. If it isn't, simply return false.
+                if group.status != GroupStatus::Running {
                     return false;
                 }
 
@@ -46,16 +57,8 @@ impl TaskHandler {
                     }
                 };
 
-                match state.settings.daemon.groups.get(&task.group) {
-                    Some(allowed) => running_tasks < *allowed,
-                    None => {
-                        error!(
-                            "Got task with unknown group {}. Please report this!",
-                            &task.group
-                        );
-                        false
-                    }
-                }
+                // Make sure there are free slots in the task's group
+                running_tasks < group.parallel_tasks
             })
             .find(|(_, task)| {
                 // Check whether all dependencies for this task are fulfilled.
@@ -146,7 +149,7 @@ impl TaskHandler {
                     task.group.clone()
                 };
 
-                pause_on_failure(state, group);
+                pause_on_failure(state, &group);
                 ok_or_shutdown!(self, save_state(state));
                 return;
             }

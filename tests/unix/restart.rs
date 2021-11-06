@@ -8,7 +8,7 @@ use crate::helper::*;
 /// Ensure that restarting a task in-place, resets it's state and possibly updates the command and
 /// path to the new values.
 async fn test_restart_in_place() -> Result<()> {
-    let daemon = daemon()?;
+    let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 
     // Add a single task that instantly finishes.
@@ -47,7 +47,7 @@ async fn test_restart_in_place() -> Result<()> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Ensure that running task cannot be restarted.
 async fn test_cannot_restart_running() -> Result<()> {
-    let daemon = daemon()?;
+    let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 
     // Add a single task that instantly finishes.

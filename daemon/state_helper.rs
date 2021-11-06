@@ -8,7 +8,7 @@ use anyhow::{Context, Result};
 use chrono::prelude::*;
 use log::{debug, info};
 
-use pueue_lib::state::{GroupStatus, State};
+use pueue_lib::state::{Group, GroupStatus, State, PUEUE_DEFAULT_GROUP};
 use pueue_lib::task::{TaskResult, TaskStatus};
 
 pub type LockedState<'a> = MutexGuard<'a, State>;
@@ -52,9 +52,11 @@ pub fn is_task_removable(state: &LockedState, task_id: &usize, to_delete: &[usiz
 /// paused depending on the current settings.
 ///
 /// `group` should be the name of the failed task.
-pub fn pause_on_failure(state: &mut LockedState, group: String) {
+pub fn pause_on_failure(state: &mut LockedState, group: &str) {
     if state.settings.daemon.pause_group_on_failure {
-        state.groups.insert(group, GroupStatus::Paused);
+        if let Some(group) = state.groups.get_mut(group) {
+            group.status = GroupStatus::Paused;
+        }
     } else if state.settings.daemon.pause_all_on_failure {
         state.set_status_for_all_groups(GroupStatus::Paused);
     }
@@ -154,13 +156,6 @@ pub fn restore_state(pueue_directory: &Path) -> Result<Option<State>> {
     // Try to deserialize the state file.
     let mut state: State = serde_json::from_str(&data).context("Failed to deserialize state.")?;
 
-    // Copy group statuses from the previous state.
-    for (group, _) in state.settings.daemon.groups.iter() {
-        if let Some(status) = state.groups.clone().get(group) {
-            state.groups.insert(group.clone(), status.clone());
-        }
-    }
-
     // Restore all tasks.
     // While restoring the tasks, check for any invalid/broken stati.
     for (_, task) in state.tasks.iter_mut() {
@@ -182,9 +177,19 @@ pub fn restore_state(pueue_directory: &Path) -> Result<Option<State>> {
 
         // Go trough all tasks and set all groups that are no longer
         // listed in the configuration file to the default.
-        if !state.settings.daemon.groups.contains_key(&task.group) {
-            task.set_default_group();
-        }
+        let group = match state.groups.get_mut(&task.group) {
+            Some(group) => group,
+            None => {
+                task.set_default_group();
+                state
+                    .groups
+                    .entry(PUEUE_DEFAULT_GROUP.into())
+                    .or_insert(Group {
+                        status: GroupStatus::Running,
+                        parallel_tasks: 1,
+                    })
+            }
+        };
 
         // If there are any queued tasks, pause the group.
         // This should prevent any unwanted execution of tasks due to a system crash.
@@ -193,7 +198,7 @@ pub fn restore_state(pueue_directory: &Path) -> Result<Option<State>> {
                 "Pausing group {} to prevent unwanted execution of previous tasks",
                 &task.group
             );
-            state.groups.insert(task.group.clone(), GroupStatus::Paused);
+            group.status = GroupStatus::Paused;
         }
     }
 

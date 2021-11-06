@@ -31,9 +31,9 @@ impl TaskHandler {
                     error!("Group \"{}\" already exists", name);
                     return;
                 }
-                state.create_group(&name);
-                if let Some(parallel) = parallel_tasks {
-                    state.settings.daemon.groups.insert(name.clone(), parallel);
+                let mut group = state.create_group(&name);
+                if let Some(parallel_tasks) = parallel_tasks {
+                    group.parallel_tasks = parallel_tasks;
                 }
                 info!("New group \"{}\" has been created", &name);
 

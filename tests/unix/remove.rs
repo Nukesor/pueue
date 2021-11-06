@@ -7,7 +7,7 @@ use crate::helper::*;
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Ensure that only removable tasks can be removed.
 async fn test_normal_remove() -> Result<()> {
-    let daemon = daemon()?;
+    let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 
     // We'll add some tasks.
