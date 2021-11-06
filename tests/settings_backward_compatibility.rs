@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use anyhow::{Context, Result};
 
-use pueue_lib::settings::{Settings, PUEUE_DEFAULT_GROUP};
+use pueue_lib::settings::Settings;
 
 /// From 0.15.0 on, we aim to have full backward compatibility.
 /// For this reason, an old (slightly modified) v0.15.0 serialized settings file
@@ -23,15 +23,8 @@ fn test_restore_from_old_state() -> Result<()> {
         .join("v0.15.0_settings.yml");
 
     // Open v0.15.0 file and ensure the settings file can be read.
-    let settings: Settings = Settings::read_with_defaults(true, &Some(old_settings_path))
+    Settings::read_with_defaults(true, &Some(old_settings_path))
         .context("Failed to read old config with defaults:")?;
-
-    assert!(settings.daemon.groups.get(PUEUE_DEFAULT_GROUP).is_some());
-    assert_eq!(
-        settings.daemon.groups.get(PUEUE_DEFAULT_GROUP).unwrap(),
-        &1,
-        "The default parallel setting for the 'default' group should be 1."
-    );
 
     Ok(())
 }

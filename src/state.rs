@@ -2,11 +2,15 @@ use std::collections::BTreeMap;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
+use serde::{de, Deserializer};
 use serde_derive::{Deserialize, Serialize};
+use serde_json::Value;
 
 use crate::error::Error;
-use crate::settings::{Settings, PUEUE_DEFAULT_GROUP};
+use crate::settings::Settings;
 use crate::task::{Task, TaskStatus};
+
+pub const PUEUE_DEFAULT_GROUP: &str = "default";
 
 pub type SharedState = Arc<Mutex<State>>;
 
@@ -16,6 +20,13 @@ pub type SharedState = Arc<Mutex<State>>;
 pub enum GroupStatus {
     Running,
     Paused,
+}
+
+/// The representation of a group.
+#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
+pub struct Group {
+    pub status: GroupStatus,
+    pub parallel_tasks: usize,
 }
 
 /// This is the full representation of the current state of the Pueue daemon.
@@ -47,26 +58,68 @@ pub struct State {
     pub settings: Settings,
     /// All tasks currently managed by the daemon.
     pub tasks: BTreeMap<usize, Task>,
-    /// All groups
-    pub groups: BTreeMap<String, GroupStatus>,
+    /// All groups with their current state a configuration.
+    #[serde(deserialize_with = "deserialize_groups")]
+    pub groups: BTreeMap<String, Group>,
     /// Used to store an configuration path that has been explicitely specified.
     /// Without this, the default config path will be used instead.
     pub config_path: Option<PathBuf>,
 }
 
+/// Custom group serializer, which tries to deserialize the field with the legacy representation if
+/// there are any errors. That way we can recover in a smooth way from the old format.
+/// This is necessary to ensure a semi-smooth transition from v1 to v2.
+/// TODO: Remove in 2.1.0
+fn deserialize_groups<'de, D>(deserializer: D) -> Result<BTreeMap<String, Group>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    // Do a general deserialization to Serde's `Value` type.
+    // That way we don't break the deserialization state if we're unable to deserialize it into
+    // our expected format.
+    let value: Value = serde::Deserialize::deserialize(deserializer)?;
+    let groups: Result<BTreeMap<String, Group>, serde_json::Error> =
+        serde_json::from_value(value.clone());
+
+    // If we cannot deserialize the state, this means that this is probably an old state which uses
+    // the old format. Try to deserialize the old format and convert them to the new format.
+    match groups {
+        Ok(groups) => Ok(groups),
+        Err(_) => {
+            let legacy_groups: Result<BTreeMap<String, GroupStatus>, serde_json::Error> =
+                serde_json::from_value(value);
+
+            let groups = match legacy_groups {
+                Ok(legacy_groups) => {
+                    // Iterate over all legacy groups and create a respective new group.
+                    let mut groups = BTreeMap::new();
+                    for (name, _) in legacy_groups.into_iter() {
+                        groups.insert(
+                            name,
+                            Group {
+                                status: GroupStatus::Paused,
+                                parallel_tasks: 1,
+                            },
+                        );
+                    }
+
+                    groups
+                }
+                Err(_) => return Err(de::Error::custom("Failed to deserialize `groups` field.")),
+            };
+
+            Ok(groups)
+        }
+    }
+}
+
 impl State {
     /// Create a new default state.
     pub fn new(settings: &Settings, config_path: Option<PathBuf>) -> State {
-        // Create a default group state.
-        let mut groups = BTreeMap::new();
-        for group in settings.daemon.groups.keys() {
-            groups.insert(group.into(), GroupStatus::Running);
-        }
-
         let mut state = State {
             settings: settings.clone(),
             tasks: BTreeMap::new(),
-            groups,
+            groups: BTreeMap::new(),
             config_path,
         };
         state.create_group(PUEUE_DEFAULT_GROUP);
@@ -95,13 +148,11 @@ impl State {
     /// Add a new group to the daemon. \
     /// This also check if the given group already exists.
     /// Create a state.group entry and a settings.group entry, if it doesn't.
-    pub fn create_group(&mut self, group: &str) {
-        if self.settings.daemon.groups.get(group).is_none() {
-            self.settings.daemon.groups.insert(group.into(), 1);
-        }
-        if self.groups.get(group).is_none() {
-            self.groups.insert(group.into(), GroupStatus::Running);
-        }
+    pub fn create_group(&mut self, name: &str) -> &mut Group {
+        self.groups.entry(name.into()).or_insert(Group {
+            status: GroupStatus::Running,
+            parallel_tasks: 1,
+        })
     }
 
     /// Remove a group.
@@ -114,7 +165,6 @@ impl State {
             ));
         }
 
-        self.settings.daemon.groups.remove(group);
         self.groups.remove(group);
 
         // Reset all tasks with removed group to the default.
@@ -129,9 +179,8 @@ impl State {
 
     /// Set the group status (running/paused) for all groups including the default queue.
     pub fn set_status_for_all_groups(&mut self, status: GroupStatus) {
-        let keys = self.groups.keys().cloned().collect::<Vec<String>>();
-        for key in keys {
-            self.groups.insert(key, status.clone());
+        for (_, group) in self.groups.iter_mut() {
+            group.status = status.clone();
         }
     }
 

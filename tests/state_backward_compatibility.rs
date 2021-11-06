@@ -2,10 +2,7 @@ use std::{fs, path::PathBuf};
 
 use anyhow::{Context, Result};
 
-use pueue_lib::{
-    settings::PUEUE_DEFAULT_GROUP,
-    state::{GroupStatus, State},
-};
+use pueue_lib::state::{GroupStatus, State, PUEUE_DEFAULT_GROUP};
 
 /// From 0.18.0 on, we aim to have full backward compatibility for our state deserialization.
 /// For this reason, an old (slightly modified) v0.18.0 serialized state has been checked in.
@@ -40,14 +37,17 @@ fn test_restore_from_old_state() -> Result<()> {
         "Group 'default' should exist."
     );
     assert_eq!(
-        state.groups.get(PUEUE_DEFAULT_GROUP).unwrap(),
-        &GroupStatus::Paused
+        state.groups.get(PUEUE_DEFAULT_GROUP).unwrap().status,
+        GroupStatus::Paused
     );
     assert!(
         state.groups.get("test").is_some(),
         "Group 'test' should exist"
     );
-    assert_eq!(state.groups.get("test").unwrap(), &GroupStatus::Running);
+    assert_eq!(
+        state.groups.get("test").unwrap().status,
+        GroupStatus::Paused
+    );
 
     assert!(state.tasks.get(&3).is_some(), "Task 3 should exist");
     assert_eq!(state.tasks.get(&3).unwrap().command, "ls stash_it");

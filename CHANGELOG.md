@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Add optional `group` field to CleanMessage.
 - Add optional `parallel_tasks` field to Group create message.
+- Introduced a `Group` struct, which is used to store information about groups in the `State`.
 
 ### Removed
 
@@ -19,6 +20,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Switch from `async-std` to tokio.
 - Update to rustls 0.20
+- **Breaking:** The type of `State.group` changed from `BTreeMap<String, GroupStatus>` to the new `BTreeMap<String, Group>` struct.
+- **Breaking:** The `GroupResponseMessage` now also uses the new `Group` struct.
 
 ## [0.18.1] - 2021-09-15
 
