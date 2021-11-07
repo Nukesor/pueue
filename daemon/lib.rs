@@ -4,7 +4,7 @@ use std::{fs::create_dir_all, path::PathBuf};
 
 use anyhow::{bail, Result};
 use crossbeam_channel::{unbounded, Sender};
-use log::warn;
+use log::{error, warn};
 
 use pueue_lib::network::certificate::create_certificates;
 use pueue_lib::network::message::{Message, Shutdown};
@@ -54,6 +54,15 @@ pub async fn run(config_path: Option<PathBuf>, test: bool) -> Result<()> {
             settings
         }
     };
+
+    #[allow(deprecated)]
+    if settings.daemon.groups.is_some() {
+        error!(
+            "Please delete the 'daemon.groups' section from your config file. \n\
+            It is no longer used and groups can now only be edited via the commandline interface. \n\n\
+            Attention: The first time the daemon is restarted this update, the amount of parallel tasks per group will be reset to 1!!"
+        )
+    }
 
     init_directories(&settings.shared.pueue_directory());
     if !settings.shared.daemon_key().exists() && !settings.shared.daemon_cert().exists() {

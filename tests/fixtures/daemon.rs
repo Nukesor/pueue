@@ -128,11 +128,13 @@ pub fn daemon_base_setup() -> Result<(Settings, TempDir)> {
         status_datetime_format: "%Y-%m-%d\n%H:%M:%S".into(),
     };
 
+    #[allow(deprecated)]
     let daemon = Daemon {
         pause_group_on_failure: false,
         pause_all_on_failure: false,
         callback: None,
         callback_log_lines: 15,
+        groups: None,
     };
 
     let settings = Settings {
