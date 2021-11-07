@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fs::{create_dir_all, File};
 use std::io::prelude::*;
 use std::path::{Path, PathBuf};
@@ -88,6 +89,13 @@ pub struct Daemon {
     pub callback: Option<String>,
     /// The amount of log lines from stdout/stderr that are passed to the callback command.
     pub callback_log_lines: usize,
+    /// The legacy configuration for groups
+    #[serde(skip_serializing)]
+    #[deprecated(
+        since = "1.1",
+        note = "The configuration for groups is now stored in the state."
+    )]
+    pub groups: Option<HashMap<String, i64>>,
 }
 
 /// The parent settings struct. \
@@ -218,6 +226,9 @@ impl Settings {
             .set_default("daemon.callback", None::<String>)
             .unwrap();
         config.set_default("daemon.callback_log_lines", 10).unwrap();
+        config
+            .set_default("daemon.groups", None::<HashMap<String, i64>>)
+            .unwrap();
 
         Ok(config)
     }
