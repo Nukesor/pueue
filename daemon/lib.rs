@@ -41,16 +41,19 @@ pub async fn run(config_path: Option<PathBuf>, test: bool) -> Result<()> {
             // There's something wrong with the config file or something's missing.
             // Try to read the config and fill missing values with defaults.
             // This might be possible on version upgrade or first run.
-            Settings::read_with_defaults(false, &config_path)?
+            let (settings, config_found) = Settings::read_with_defaults(&config_path)?;
+
+            // If there doesn't exist a config file yet, we save **once**.
+            // Hence, this should only happen on the very first time `pueued` is started.
+            if !config_found {
+                if let Err(error) = settings.save(&config_path) {
+                    bail!("Failed saving config file: {:?}.", error);
+                }
+            }
+
+            settings
         }
     };
-    // As we're trying to be backward compatible, we populate the config with default values to
-    // ensure everything will work when communicating with an old daemon/newer client.
-    // For this reason, config files might not update if new values are added.
-    // That's why we save the file under all circumstances.
-    if let Err(error) = settings.save(&config_path) {
-        bail!("Failed saving config file: {:?}.", error);
-    }
 
     init_directories(&settings.shared.pueue_directory());
     if !settings.shared.daemon_key().exists() && !settings.shared.daemon_cert().exists() {

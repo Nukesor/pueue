@@ -62,14 +62,6 @@ pub fn pause_on_failure(state: &mut LockedState, group: &str) {
     }
 }
 
-/// A small convenience wrapper for saving the settings to a file.
-pub fn save_settings(state: &LockedState) -> Result<()> {
-    state
-        .settings
-        .save(&state.config_path)
-        .context("Failed to save settings")
-}
-
 /// Do a full reset of the state.
 /// This doesn't reset any processes!
 pub fn reset_state(state: &mut LockedState) -> Result<()> {
@@ -99,7 +91,7 @@ pub fn backup_state(state: &LockedState) -> Result<()> {
 /// If log == true, the file will be saved with a time stamp.
 ///
 /// In comparison to the daemon -> client communication, the state is saved
-/// as JSON for better readability and debug purposes.
+/// as JSON for readability and debugging purposes.
 fn save_state_to_file(state: &State, log: bool) -> Result<()> {
     let serialized = serde_json::to_string(&state).context("Failed to serialize state:");
 

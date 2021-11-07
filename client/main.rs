@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 use clap::{IntoApp, Parser};
 use clap_generate::generate_to;
 use clap_generate::generators::*;
@@ -47,7 +47,13 @@ async fn main() -> Result<()> {
     SimpleLogger::init(level, Config::default()).unwrap();
 
     // Try to read settings from the configuration file.
-    let settings = Settings::read_with_defaults(true, &opt.config)?;
+    let (settings, config_found) = Settings::read_with_defaults(&opt.config)?;
+
+    // Error if no configuration file can be found, as this is an indicator, that the daemon hasn't
+    // been started yet.
+    if !config_found {
+        bail!("Couldn't find a configuration file. Did you start the daemon yet?");
+    }
 
     // Create client to talk with the daemon and connect.
     let mut client = Client::new(settings, opt).await?;
