@@ -6,7 +6,7 @@ use log::{error, info};
 use pueue_lib::network::message::GroupMessage;
 
 use crate::ok_or_shutdown;
-use crate::state_helper::{save_settings, save_state};
+use crate::state_helper::save_state;
 use crate::task_handler::{Shutdown, TaskHandler};
 
 impl TaskHandler {
@@ -40,9 +40,8 @@ impl TaskHandler {
                 // Create the worker pool.
                 self.children.0.insert(name, BTreeMap::new());
 
-                // Save the state and the settings file.
+                // Persist the state.
                 ok_or_shutdown!(self, save_state(&state));
-                ok_or_shutdown!(self, save_settings(&state));
             }
             GroupMessage::Remove(group) => {
                 if !state.groups.contains_key(&group) {
@@ -82,9 +81,8 @@ impl TaskHandler {
                 // Actually remove the worker pool.
                 self.children.0.remove(&group);
 
-                // Save the state and the settings file.
+                // Persist the state.
                 ok_or_shutdown!(self, save_state(&state));
-                ok_or_shutdown!(self, save_settings(&state));
 
                 info!("Group \"{}\" has been removed", &group);
             }
