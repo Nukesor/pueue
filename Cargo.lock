@@ -1008,7 +1008,6 @@ dependencies = [
  "snap",
  "tempfile",
  "tokio",
- "version_check",
  "whoami",
  "winapi",
 ]

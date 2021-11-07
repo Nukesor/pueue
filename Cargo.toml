@@ -9,6 +9,8 @@ documentation = "https://docs.rs/pueue/"
 license = "MIT"
 keywords = ["shell", "command", "parallel", "task", "queue"]
 readme = "README.md"
+rust-version = "1.56"
+edition = "2021"
 
 [badges]
 maintenance = { status="actively-developed" }
@@ -74,9 +76,6 @@ whoami = "1"
 # Linux / Freebsd
 [target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]
 procfs = { version="0.11", default-features=false }
-
-[build-dependencies]
-version_check = "0.9"
 
 [dev-dependencies]
 assert_cmd = "2"
