@@ -13,7 +13,7 @@ use crate::state_helper::save_state;
 /// If the start_immediately flag is set, send a StartMessage to the task handler.
 pub fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
     let mut state = state.lock().unwrap();
-    if let Err(message) = ensure_group_exists(&state, &message.group) {
+    if let Err(message) = ensure_group_exists(&mut state, &message.group) {
         return message;
     }
 

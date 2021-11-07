@@ -7,7 +7,7 @@ use crate::helper::*;
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Ensure that clean only removes finished tasks
 async fn test_normal_clean() -> Result<()> {
-    let daemon = daemon()?;
+    let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 
     // This should result in one failed, one finished, one running and one queued task.
@@ -35,7 +35,7 @@ async fn test_normal_clean() -> Result<()> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Ensure only successful tasks are removed, if the `-s` flag is set.
 async fn test_successful_only_clean() -> Result<()> {
-    let daemon = daemon()?;
+    let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 
     // This should result in one failed, one finished, one running and one queued task.
@@ -64,7 +64,7 @@ async fn test_successful_only_clean() -> Result<()> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Ensure only tasks of the selected group are cleaned up
 async fn test_clean_in_selected_group() -> Result<()> {
-    let daemon = daemon()?;
+    let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 
     add_group_with_slots(shared, "other", 1).await?;
@@ -103,7 +103,7 @@ async fn test_clean_in_selected_group() -> Result<()> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Ensure only successful tasks are removed, if the `-s` flag is set.
 async fn test_clean_successful_only_in_selected_group() -> Result<()> {
-    let daemon = daemon()?;
+    let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 
     add_group_with_slots(shared, "other", 1).await?;

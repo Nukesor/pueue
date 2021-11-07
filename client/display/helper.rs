@@ -4,7 +4,7 @@ use std::io::stdout;
 use crossterm::style::{style, Attribute, Color, Stylize};
 use crossterm::tty::IsTty;
 
-use pueue_lib::state::GroupStatus;
+use pueue_lib::state::{Group, GroupStatus};
 use pueue_lib::task::{Task, TaskStatus};
 
 use super::colors::Colors;
@@ -59,22 +59,17 @@ pub fn has_special_columns(tasks: &BTreeMap<usize, Task>) -> (bool, bool, bool) 
 }
 
 /// Return a nicely formatted headline that's displayed above group tables
-pub fn get_group_headline(
-    name: &str,
-    status: &GroupStatus,
-    parallel: usize,
-    colors: &Colors,
-) -> String {
+pub fn get_group_headline(name: &str, group: &Group, colors: &Colors) -> String {
     // Style group name
     let name = style(format!("Group \"{}\"", name)).attribute(Attribute::Bold);
 
     // Print the current state of the group.
-    let status = match status {
+    let status = match group.status {
         GroupStatus::Running => style_text("running", Some(colors.green()), None),
         GroupStatus::Paused => style_text("paused", Some(colors.yellow()), None),
     };
 
-    format!("{} ({} parallel): {}", name, parallel, status)
+    format!("{} ({} parallel): {}", name, group.parallel_tasks, status)
 }
 
 /// Sort given tasks by their groups

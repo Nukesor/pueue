@@ -1,4 +1,3 @@
-use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
 
@@ -23,7 +22,7 @@ pub struct PueueDaemon {
 /// A helper function which, creates some test config, sets up a temporary directory and boots a
 /// daemon in a async tokio thread.
 /// This is done in 90% of our tests, thereby this convenience helper.
-pub fn daemon() -> Result<PueueDaemon> {
+pub async fn daemon() -> Result<PueueDaemon> {
     let (settings, tempdir) = daemon_base_setup()?;
 
     let pueue_dir = tempdir.path();
@@ -40,6 +39,7 @@ pub fn daemon() -> Result<PueueDaemon> {
     while current_try < tries {
         sleep_ms(50);
         if socket_path.exists() {
+            create_test_groups(&settings.shared).await?;
             return Ok(PueueDaemon {
                 settings,
                 tempdir,
@@ -71,7 +71,7 @@ async fn run_and_handle_error(pueue_dir: PathBuf, test: bool) -> Result<()> {
 
 /// Spawn the daemon by calling the actual pueued binary.
 /// This function also checks for the pid file and the unix socket to pop-up.
-pub fn standalone_daemon(pueue_dir: &Path) -> Result<Child> {
+pub async fn standalone_daemon(pueue_dir: &Path) -> Result<Child> {
     let child = Command::cargo_bin("pueued")?
         .arg("--config")
         .arg(pueue_dir.join("pueue.yml").to_str().unwrap())
@@ -128,18 +128,11 @@ pub fn daemon_base_setup() -> Result<(Settings, TempDir)> {
         status_datetime_format: "%Y-%m-%d\n%H:%M:%S".into(),
     };
 
-    let mut groups = BTreeMap::new();
-    groups.insert(PUEUE_DEFAULT_GROUP.to_string(), 1);
-    groups.insert("test_2".to_string(), 2);
-    groups.insert("test_3".to_string(), 3);
-    groups.insert("test_5".to_string(), 5);
-
     let daemon = Daemon {
         pause_group_on_failure: false,
         pause_all_on_failure: false,
         callback: None,
         callback_log_lines: 15,
-        groups,
     };
 
     let settings = Settings {
@@ -153,4 +146,16 @@ pub fn daemon_base_setup() -> Result<(Settings, TempDir)> {
         .context("Couldn't write pueue config to temporary directory")?;
 
     Ok((settings, tempdir))
+}
+
+/// Create a few test groups that have various parallel task settings.
+pub async fn create_test_groups(shared: &Shared) -> Result<()> {
+    add_group_with_slots(shared, "test_2", 2).await?;
+    add_group_with_slots(shared, "test_3", 3).await?;
+    add_group_with_slots(shared, "test_5", 5).await?;
+
+    wait_for_group(shared, "test_3").await?;
+    wait_for_group(shared, "test_5").await?;
+
+    Ok(())
 }

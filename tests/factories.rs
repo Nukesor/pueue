@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use pueue_lib::network::message::*;
 use pueue_lib::settings::*;
+use pueue_lib::state::PUEUE_DEFAULT_GROUP;
 
 /// Create a AddMessage for a given command.
 pub fn add_message(shared: &Shared, command: &str) -> AddMessage {

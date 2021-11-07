@@ -99,7 +99,7 @@ impl TaskHandler {
 
         // Initialize the subprocess management structure.
         let mut pools = BTreeMap::new();
-        for group in state.settings.daemon.groups.keys() {
+        for group in state.groups.keys() {
             pools.insert(group.clone(), BTreeMap::new());
         }
 

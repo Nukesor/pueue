@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use pueue_lib::settings::PUEUE_DEFAULT_GROUP;
+use pueue_lib::state::PUEUE_DEFAULT_GROUP;
 
 use crate::fixtures::*;
 use crate::helper::*;
@@ -9,7 +9,7 @@ use crate::helper::*;
 /// Make sure that the expected worker variables are injected into the tasks' environment variables
 /// for a single task on the default queue.
 async fn test_single_worker() -> Result<()> {
-    let daemon = daemon()?;
+    let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 
     // Add some tasks that instantly finish.
@@ -39,7 +39,7 @@ async fn test_single_worker() -> Result<()> {
 /// Task3 should take Task0's slot once it's finished.
 /// Task4 should take Task1's slot.
 async fn test_multiple_worker() -> Result<()> {
-    let daemon = daemon()?;
+    let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 
     // Spawn three tasks and wait for them
@@ -72,7 +72,7 @@ async fn test_multiple_worker() -> Result<()> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Make sure the worker pools are properly initialized when maually adding a new group.
 async fn test_worker_for_new_pool() -> Result<()> {
-    let daemon = daemon()?;
+    let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 
     // Add a new group

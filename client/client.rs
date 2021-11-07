@@ -10,7 +10,8 @@ use log::error;
 use pueue_lib::network::message::*;
 use pueue_lib::network::protocol::*;
 use pueue_lib::network::secret::read_shared_secret;
-use pueue_lib::settings::{Settings, PUEUE_DEFAULT_GROUP};
+use pueue_lib::settings::Settings;
+use pueue_lib::state::PUEUE_DEFAULT_GROUP;
 
 use crate::cli::{CliArguments, SubCommand};
 use crate::commands::edit::edit;

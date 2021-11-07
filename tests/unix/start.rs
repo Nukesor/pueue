@@ -33,7 +33,7 @@ use crate::helper::*;
 /// - Via the --group flag, which resumes everything in a specific group (in our case 'default').
 /// - Via specific ids.
 async fn test_start_tasks(#[case] start_message: Message) -> Result<()> {
-    let daemon = daemon()?;
+    let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 
     // Add multiple tasks only a single one will be started by default

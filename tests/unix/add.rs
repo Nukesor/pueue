@@ -10,7 +10,7 @@ use crate::helper::*;
 /// Test if adding a normal task works as intended.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn test_normal_add() -> Result<()> {
-    let daemon = daemon()?;
+    let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 
     // Add a task that instantly finishes
@@ -31,7 +31,7 @@ async fn test_normal_add() -> Result<()> {
 /// Test if adding a task in stashed state work.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn test_stashed_add() -> Result<()> {
-    let daemon = daemon()?;
+    let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 
     // Tell the daemon to add a task in stashed state.
@@ -52,7 +52,7 @@ async fn test_stashed_add() -> Result<()> {
 /// Pause the default group and make sure that immediately spawning a task still works.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn test_add_with_immediate_start() -> Result<()> {
-    let daemon = daemon()?;
+    let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 
     // Pause the daemon and prevent tasks to be automatically spawned.

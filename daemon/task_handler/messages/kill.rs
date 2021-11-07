@@ -31,20 +31,22 @@ impl TaskHandler {
         // Get the keys of all tasks that should be resumed
         let task_ids = match tasks {
             TaskSelection::TaskIds(task_ids) => task_ids,
-            TaskSelection::Group(group) => {
+            TaskSelection::Group(group_name) => {
                 // Ensure that a given group exists. (Might not happen due to concurrency)
-                if !state.groups.contains_key(&group) {
-                    return;
-                }
+                let group = match state.groups.get_mut(&group_name) {
+                    Some(group) => group,
+                    None => return,
+                };
+
                 // Pause this specific group.
                 if pause_groups {
-                    state.groups.insert(group.clone(), GroupStatus::Paused);
+                    group.status = GroupStatus::Paused;
                 }
-                info!("Killing tasks of group {}", &group);
+                info!("Killing tasks of group {}", &group_name);
 
                 let (matching, _) = state.filter_tasks_of_group(
                     |task| matches!(task.status, TaskStatus::Running | TaskStatus::Paused),
-                    &group,
+                    &group_name,
                 );
                 matching
             }

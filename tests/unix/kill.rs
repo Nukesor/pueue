@@ -45,7 +45,7 @@ async fn test_kill_tasks(
     #[case] kill_message: Message,
     #[case] group_should_pause: bool,
 ) -> Result<()> {
-    let daemon = daemon()?;
+    let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 
     // Add multiple tasks and start them immediately
@@ -72,8 +72,8 @@ async fn test_kill_tasks(
     if group_should_pause {
         let state = get_state(shared).await?;
         assert_eq!(
-            state.groups.get(PUEUE_DEFAULT_GROUP).unwrap(),
-            &GroupStatus::Paused
+            state.groups.get(PUEUE_DEFAULT_GROUP).unwrap().status,
+            GroupStatus::Paused
         );
     }
 
