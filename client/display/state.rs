@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 use std::string::ToString;
 
 use chrono::{Duration, Local};
-use comfy_table::presets::UTF8_HORIZONTAL_BORDERS_ONLY;
+use comfy_table::presets::UTF8_HORIZONTAL_ONLY;
 use comfy_table::*;
 
 use pueue_lib::settings::{Settings, PUEUE_DEFAULT_GROUP};
@@ -169,7 +169,7 @@ fn print_table(tasks: &BTreeMap<usize, Task>, colors: &Colors, settings: &Settin
     let mut table = Table::new();
     table
         .set_content_arrangement(ContentArrangement::Dynamic)
-        .load_preset(UTF8_HORIZONTAL_BORDERS_ONLY)
+        .load_preset(UTF8_HORIZONTAL_ONLY)
         .set_header(headers);
 
     // Add rows one by one.

@@ -9,7 +9,6 @@ documentation = "https://docs.rs/pueue/"
 license = "MIT"
 keywords = ["shell", "command", "parallel", "task", "queue"]
 readme = "README.md"
-edition = "2021"
 
 [badges]
 maintenance = { status="actively-developed" }
@@ -51,8 +50,8 @@ log = "0.4"
 simplelog = { version="0.10", default-features=false }
 clap = "=3.0.0-beta.5"
 clap_generate = "3.0.0-beta.5"
-crossterm = "0.20"
-comfy-table = "4"
+crossterm = "0.22"
+comfy-table = "5"
 
 handlebars = "4"
 ctrlc = { version="3", features=["termination"] }
