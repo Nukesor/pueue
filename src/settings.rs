@@ -129,26 +129,19 @@ impl Settings {
     /// If no config files can be found or fields are missing, an error is returned.
     pub fn read(from_file: &Option<PathBuf>) -> Result<Settings, Error> {
         let config = Config::new();
-        parse_config(config, true, from_file)
+        let (settings, _) = parse_config(config, from_file)?;
+
+        Ok(settings)
     }
 
-    /// Try to read existing config files and
-    /// This function creates a new configuration instance and
-    /// populates it with default values for every option. \
-    /// If a local config file already exists, it is parsed and
-    /// overrules the default option values.
+    /// Try to read existing config files, while using default values for non-existing fields.
+    /// If successful, this will return a full config as well as a boolean on whether we found an
+    /// existing configuration file or not.
     ///
-    /// The default local config is located at "~/.config/pueue.yml".
-    ///
-    /// If `require_config` is `true`, an error will be thrown, if no configuration file can be found.
-    /// This is utilized by the client, since only the daemon is allowed to touch the configuration
-    /// file.
-    pub fn read_with_defaults(
-        require_config: bool,
-        from_file: &Option<PathBuf>,
-    ) -> Result<Settings, Error> {
+    /// The default local config locations depends on the current target.
+    pub fn read_with_defaults(from_file: &Option<PathBuf>) -> Result<(Settings, bool), Error> {
         let config = Settings::default_config()?;
-        parse_config(config, require_config, from_file)
+        parse_config(config, from_file)
     }
 
     pub fn default_config() -> Result<Config, Error> {
@@ -266,13 +259,10 @@ impl Settings {
 /// Get all possible configuration paths and check if there are
 /// configuration files at those locations.
 /// All configs will be merged by importance.
-///
-/// If `require_config` is `true`, an error will be thrown, if no configuration file can be found.
 fn parse_config(
     mut config: Config,
-    require_config: bool,
     from_file: &Option<PathBuf>,
-) -> Result<Settings, Error> {
+) -> Result<(Settings, bool), Error> {
     // Load the config from a very specific file path
     if let Some(path) = from_file {
         if !path.exists() || !path.is_file() {
@@ -284,7 +274,7 @@ fn parse_config(
         info!("Using config file at: {:?}", path);
         let config_file = config::File::with_name(path.to_str().unwrap());
         config.merge(config_file)?;
-        return Ok(config.try_into()?);
+        return Ok((config.try_into()?, true));
     };
 
     let mut config_found = false;
@@ -302,12 +292,6 @@ fn parse_config(
         }
     }
 
-    if require_config && !config_found {
-        return Err(Error::FileNotFound(
-            "Couldn't find a configuration file. Did you start the daemon yet?".into(),
-        ));
-    }
-
     // Try to can deserialize the entire configuration
-    Ok(config.try_into()?)
+    Ok((config.try_into()?, config_found))
 }

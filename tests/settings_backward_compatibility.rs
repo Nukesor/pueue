@@ -23,7 +23,7 @@ fn test_restore_from_old_state() -> Result<()> {
         .join("v0.15.0_settings.yml");
 
     // Open v0.15.0 file and ensure the settings file can be read.
-    Settings::read_with_defaults(true, &Some(old_settings_path))
+    Settings::read_with_defaults(&Some(old_settings_path))
         .context("Failed to read old config with defaults:")?;
 
     Ok(())

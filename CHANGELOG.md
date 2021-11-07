@@ -20,6 +20,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Switch from `async-std` to tokio.
 - Update to rustls 0.20
+- **Breaking:** `Settings::read_with_defaults` no longer a boolean as first parameter.
+    Instead, it returns a tuple of `(Settings, bool)` with the boolean indicating whether a config file has been found.
 - **Breaking:** The type of `State.group` changed from `BTreeMap<String, GroupStatus>` to the new `BTreeMap<String, Group>` struct.
 - **Breaking:** The `GroupResponseMessage` now also uses the new `Group` struct.
 
