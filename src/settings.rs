@@ -92,7 +92,7 @@ pub struct Daemon {
     /// The legacy configuration for groups
     #[serde(skip_serializing)]
     #[deprecated(
-        since = "1.1",
+        since = "1.1.0",
         note = "The configuration for groups is now stored in the state."
     )]
     pub groups: Option<HashMap<String, i64>>,
