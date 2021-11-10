@@ -2,7 +2,7 @@ name: Test build
 
 on:
   push:
-    branches: [master]
+    branches: [main]
     paths:
       - '.github/**/*'
       - '**.rs'
