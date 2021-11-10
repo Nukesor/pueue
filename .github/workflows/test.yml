@@ -2,14 +2,14 @@ name: Test build
 
 on:
   push:
-    branches: [master]
+    branches: [main]
     paths:
       - '.github/**/*'
       - '**.rs'
       - 'Cargo.toml'
       - 'Cargo.lock'
   pull_request:
-    branches: [master]
+    branches: [main]
     paths:
       - '.github/**/*'
       - '**.rs'
