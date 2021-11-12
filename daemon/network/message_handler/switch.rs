@@ -20,6 +20,9 @@ pub fn switch(message: SwitchMessage, state: &SharedState) -> Message {
     if !mismatching.is_empty() {
         return create_failure_message("Tasks have to be either queued or stashed.");
     }
+    if task_ids[0] == task_ids[1] {
+        return create_failure_message("You cannot switch a task with itself.");
+    }
 
     // Get the tasks. Expect them to be there, since we found no mismatch
     let mut first_task = state.tasks.remove(&task_ids[0]).unwrap();
@@ -119,6 +122,20 @@ mod tests {
         let state = state.lock().unwrap();
         assert_eq!(state.tasks.get(&1).unwrap().command, "2");
         assert_eq!(state.tasks.get(&2).unwrap().command, "1");
+    }
+
+    #[test]
+    /// Tasks cannot be switched with themselves.
+    fn switch_task_with_itself() {
+        let (state, _tempdir) = get_test_state();
+
+        let message = switch(get_message(1, 1), &state);
+
+        // Return message is correct
+        assert!(matches!(message, Message::Failure(_)));
+        if let Message::Failure(text) = message {
+            assert_eq!(text, "You cannot switch a task with itself.");
+        };
     }
 
     #[test]
