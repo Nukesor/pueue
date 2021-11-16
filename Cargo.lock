@@ -1015,7 +1015,7 @@ dependencies = [
 [[package]]
 name = "pueue-lib"
 version = "0.18.2-alpha.0"
-source = "git+https://github.com/Nukesor/pueue-lib?branch=master#a67e749564f225c855273454fefbf8622c253770"
+source = "git+https://github.com/Nukesor/pueue-lib?branch=main#5f22c155a25f87c021a4c67da90511a0f5050c77"
 dependencies = [
  "async-trait",
  "byteorder",

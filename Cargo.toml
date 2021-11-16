@@ -32,7 +32,7 @@ path = "daemon/main.rs"
 
 [dependencies]
 #pueue-lib = "0.18.0"
-pueue-lib = { git="https://github.com/Nukesor/pueue-lib", branch="master" }
+pueue-lib = { git="https://github.com/Nukesor/pueue-lib", branch="main" }
 #pueue-lib = { path="../../libraries/pueue-lib" }
 
 anyhow = "1"

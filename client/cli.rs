@@ -293,12 +293,12 @@ pub enum SubCommand {
     },
 
     /// Display the log output of finished tasks.
-    /// Prints either all logs or only the logs of specified tasks.
-    ///
-    /// When looking at multiple logs, only the last few lines will be shown
+    /// When looking at multiple logs, only the last few lines will be shown.
+    /// If you want to "follow" the output of a task, please use the "follow" subcommand.
     Log {
         /// View the task output of these specific tasks.
         task_ids: Vec<usize>,
+
         /// Print the resulting tasks and output as json.
         /// By default only the last stdout/-err lines will be returned unless --full is provided.
         /// Take care, as the json cannot be streamed!
