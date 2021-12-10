@@ -85,6 +85,12 @@ impl TaskHandler {
             parameters.insert("stderr", "".to_string());
         }
 
+        let (out_path, err_path) = get_log_paths(task.id, &self.pueue_directory);
+        // Using Display impl of PathBuf which isn't necessarily a perfect
+        // representation of the path but should work for most cases here
+        parameters.insert("stdout_path", out_path.display().to_string());
+        parameters.insert("stderr_path", err_path.display().to_string());
+
         // Get the exit code
         if let TaskStatus::Done(result) = &task.status {
             match result {
