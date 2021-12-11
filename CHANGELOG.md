@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.1.0] -
+## [2.0.0] - unreleased
 
 ### Added
 
@@ -20,6 +20,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **Breaking changes:** The amount of parallel tasks will be reset to `1` for all groups.
 - **Breaking changes:** The `pueue group` command won't work, unless the daemon is restarted.
 
+## [1.0.4] - 2021-11-12
+
+### Fix
+
+- Hard panic of the daemon, when one tries to switch a task with itself [#262](https://github.com/Nukesor/pueue/issues/262).
 
 ## [1.0.3] - 2021-09-15
 

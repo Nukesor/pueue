@@ -7,7 +7,7 @@
 
 <!---[![dependency status](https://deps.rs/repo/github/nukesor/pueue/status.svg)](https://deps.rs/repo/github/nukesor/pueue) --->
 
-![Pueue](https://raw.githubusercontent.com/Nukesor/images/master/pueue.gif)
+![Pueue](https://raw.githubusercontent.com/Nukesor/images/main/pueue.gif)
 
 Pueue is a command-line task management tool for sequential and parallel execution of long-running tasks.
 
@@ -252,7 +252,7 @@ Feature requests and pull requests are very much appreciated and welcome!
 Anyhow, please talk to me a bit about your ideas before you start hacking!
 It's always nice to know what you're working on and I might have a few suggestions or tips :)
 
-There's also the [Architecture Guide](https://github.com/Nukesor/pueue/blob/master/ARCHITECTURE.md), which is supposed to give you a brief overview and introduction to the project.
+There's also the [Architecture Guide](https://github.com/Nukesor/pueue/blob/main/ARCHITECTURE.md), which is supposed to give you a brief overview and introduction to the project.
 
 Copyright &copy; 2019 Arne Beer ([@Nukesor](https://github.com/Nukesor))
 

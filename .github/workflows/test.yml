@@ -3,8 +3,8 @@ name: Test build
 on:
   push:
     branches:
-      - master
-      - 'v*.*.*'
+      - main
+      - development
     paths:
       - '.github/**/*'
       - '**.rs'

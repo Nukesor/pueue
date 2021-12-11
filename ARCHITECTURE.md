@@ -5,12 +5,12 @@ It explains the project structure, so you can get a rough overview of the overal
 
 Feel free to expand this document!
 
-- [Overall Structure](https://github.com/Nukesor/pueue/blob/master/ARCHITECTURE.md#overall-structure)
-- [Daemon](https://github.com/Nukesor/pueue/blob/master/ARCHITECTURE.md#daemon)
-- [Request Handler](https://github.com/Nukesor/pueue/blob/master/ARCHITECTURE.md#request-handler)
-- [TaskHandler](https://github.com/Nukesor/pueue/blob/master/ARCHITECTURE.md#taskhandler)
-- [Shared State](https://github.com/Nukesor/pueue/blob/master/ARCHITECTURE.md#shared-state)
-- [Code Style](https://github.com/Nukesor/pueue/blob/master/ARCHITECTURE.md#code-style)
+- [Overall Structure](https://github.com/Nukesor/pueue/blob/main/ARCHITECTURE.md#overall-structure)
+- [Daemon](https://github.com/Nukesor/pueue/blob/main/ARCHITECTURE.md#daemon)
+- [Request Handler](https://github.com/Nukesor/pueue/blob/main/ARCHITECTURE.md#request-handler)
+- [TaskHandler](https://github.com/Nukesor/pueue/blob/main/ARCHITECTURE.md#taskhandler)
+- [Shared State](https://github.com/Nukesor/pueue/blob/main/ARCHITECTURE.md#shared-state)
+- [Code Style](https://github.com/Nukesor/pueue/blob/main/ARCHITECTURE.md#code-style)
 
 ## Overall Structure
 
