@@ -18,13 +18,13 @@ Since Pueue is not bound to any terminal, you can control your tasks from any te
 The queue will be continuously processed, even if you no longer have any active ssh sessions.
 
 - [Features](https://github.com/Nukesor/pueue#features)
-- [Why should I use it](https://github.com/Nukesor/pueue#why-should-i-use-it)
 - [Installation](https://github.com/Nukesor/pueue#installation)
 - [How to use it](https://github.com/Nukesor/pueue#how-to-use-it)
-- [Advantages over Using a Terminal Multiplexer](https://github.com/Nukesor/pueue#advantages-over-using-a-terminal-multiplexer)
 - [Similar Projects](https://github.com/Nukesor/pueue#similar-projects)
+- [Design Goals](https://github.com/Nukesor/pueue#design-goals)
+- [Contributing](https://github.com/Nukesor/pueue#contributing)
 
-### Features
+## Features
 
 - Scheduling
     * Add tasks as you go.
@@ -54,36 +54,9 @@ The queue will be continuously processed, even if you no longer have any active 
 - Windows has all features, but process handling is [relatively new](https://github.com/Nukesor/pueue/pull/59).
 - MacOS only has **rudimentary** process handling, but it's still usable.
     Check this [issue](https://github.com/Nukesor/pueue/issues/115) to find out what's missing.
+- [Why should I use it](https://github.com/Nukesor/pueue/wiki/FAQ#why-should-i-use-it)
+- [Advantages over Using a Terminal Multiplexer](https://github.com/Nukesor/pueue/wiki/FAQ#advantages-over-using-a-terminal-multiplexer)
 
-
-## Why should I use it
-
-Consider this scenario: You have to unpack large amounts of data into various directories.
-Usually, something like this ends with 10+ open terminals/tmux sessions and an over-challenged hard drive.
-
-Another scenario might be, that you want to re-encode 10 movies and each re-encode takes 10+ hours.
-Creating a chained command with `&&`s isn't ergonomic at all and running that many re-encodes in parallel will break your CPU.
-
-Pueue is specifically designed for these situations.\
-You can schedule your task and continue on the same shell without waiting.
-You can specify how many tasks should run in parallel and group tasks to maximize system resource utilization.\
-Since everything is run by a daemon, you can simply log off your server and check on your tasks' progress whenever you want.\
-Heck, you can even set up desktop notifications to get notified or execute parameterized commands every time a task finishes.
-
-**A few possible applications:**
-
-- Copying large amounts of data
-- Machine learning
-- Compression tasks
-- Movie encoding
-- `rsync` tasks
-- Anything that takes longer than 5 minutes
-
-Pueue made at least my life a lot easier on many occasions.
-
-If you like the project, feel free to give it at try!
-If you feel like something is missing, please create an issue :).\
-PRs are of course very welcome!
 
 ## Installation
 
@@ -115,7 +88,7 @@ cargo install --locked pueue
 
 This will install Pueue to `$CARGO_HOME/bin/pueue` (default is `~/.cargo/bin/pueue`)
 
-#### From source
+#### From Source
 
 Pueue is built for the current `stable` Rust version.
 It might compile on older versions, but this isn't tested or officially supported.
@@ -128,7 +101,7 @@ cargo install --locked --path .
 
 This will install Pueue to `$CARGO_HOME/bin/pueue` (default is `~/.cargo/bin/pueue`)
 
-## How to use it
+## How to Use it
 
 Check out the wiki to [get you started](https://github.com/Nukesor/pueue/wiki/Get-started) :).
 
@@ -142,20 +115,22 @@ There are also detailed sections for (hopefully) every important feature:
 On top of that, there is a help option (-h) for all commands.
 
 ```text
-Pueue client 0.12.2
+Pueue client 1.0.4
+
 Arne Beer <contact@arne.beer>
+
 Interact with the Pueue daemon
 
 USAGE:
     pueue [FLAGS] [OPTIONS] <SUBCOMMAND>
 
 FLAGS:
-    -h, --help       Prints help information
+    -h, --help       Print help information
     -v, --verbose    Verbose mode (-v, -vv, -vvv)
-    -V, --version    Prints version information
+    -V, --version    Print version information
 
 OPTIONS:
-    -c, --config <config>    Path to a specific pueue config file to use. This ignores all other
+    -c, --config <CONFIG>    Path to a specific pueue config file to use. This ignores all other
                              config files
 
 SUBCOMMANDS:
@@ -170,7 +145,7 @@ SUBCOMMANDS:
                    -f
     group          Use this to add or remove groups. By default, this will simply display all
                    known groups
-    help           Prints this message or the help of the given subcommand(s)
+    help           Print this message or the help of the given subcommand(s)
     kill           Kill specific running tasks or whole task groups. Kills all tasks of the
                    default group when no ids are provided
     log            Display the log output of finished tasks. Prints either all logs or only the
@@ -201,36 +176,21 @@ SUBCOMMANDS:
                    [Paused, Stashed, Locked, Queued, ...]
 ```
 
-## Advantages over Using a Terminal Multiplexer
+## Design Goals
 
-One of the most frequent questions is, why one should use Pueue, when there're terminal multiplexer such as Tmux or Screen.
+Pueue is designed to be a convenient helper tool for a single user.
 
-My response is, that there're simply a lot of missing convenience features.\
-Here are few examples of Pueue's basic functionality.
+It's supposed to be stand-alone, without any external integration.
+The idea is to keep it simple and to prevent feature creep.
 
-- The ability to queue commands and not start them all at once
-- Specifying how many tasks should run in parallel
-- Easy pausing/resuming of tasks
-- Pretty and accessible task status overviews
-- No need to attach to multiple tmux sessions
+Hence, these features won't be included as they're out of scope:
 
-There are a lot more built-in convenience features. You should read the [Wiki](https://github.com/Nukesor/pueue/wiki) for a detailed explanation.
+- Distributed task management/execution.
+- Multi-user task management.
+- Sophisticated task scheduling for optimal load balancing.
+- Tight system integration or integration with external tools.
 
-Only using your shell's features is definitely possible!
-However, in my opinion, having a tool that's specifically designed for managing tasks is just more efficient and fun.
-
-One of my regular use cases is downloading lots of stuff. In this case, I want:
-
-- At most three parallel downloads, otherwise the other services on my server get starved.
-- To see at first glance whether a download fails and easily edit and re-schedule it.
-- An easy way to look at process output.
-- Everything to be in a uniform interface.
-- It to look pretty and clear.
-- To be able to pause/resume everything in case I need to some bandwidth right now.
-
-I used tmux for this stuff all the time before writing Pueue.\
-However, after using it for a really long time, it just kept feeling annoying and inconvenient.
-Up to the point, I couldn't bear it any longer and decided to write something that's better suited for such scenarios.
+There seems to be the need for some solution that satisfies all these points mentioned above, but that isn't Pueue's job.
 
 ## Similar Projects
 
