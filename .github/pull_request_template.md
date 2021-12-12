@@ -19,4 +19,6 @@ Once the MR in the `pueue-lib` repository is merged, just change the dependency 
 
 - [ ] I picked the correct source and target branch.
 - [ ] I included a new entry to the `CHANGELOG.md`.
+- [ ] I checked `cargo clippy` and `cargo fmt`. The CI will fail otherwise anyway.
+- [ ] (If applicable) I added tests for this feature or adjusted existing tests.
 - [ ] (If applicable) I adjusted the wiki according to the new changes.
