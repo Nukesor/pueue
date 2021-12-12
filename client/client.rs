@@ -299,7 +299,7 @@ impl Client {
             action,
             task_ids
                 .iter()
-                .map(|t| format!("task{}", t.to_string()))
+                .map(|t| format!("task{}", t))
                 .collect::<Vec<String>>()
                 .join(", ")
         );
