@@ -94,7 +94,7 @@ impl TaskHandler {
     /// Triggered on `reset` and `kill`.
     pub fn kill_task(&mut self, task_id: usize, kill_children: bool) {
         if let Some(mut child) = self.children.get_child_mut(task_id) {
-            kill_child(task_id, &mut child, kill_children);
+            kill_child(task_id, child, kill_children);
         } else {
             warn!("Tried to kill non-existing child: {}", task_id);
         }
