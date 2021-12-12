@@ -92,7 +92,7 @@ pub fn print_logs(
 
     // Iterate over each task and print the respective log.
     let mut task_iter = task_logs.iter_mut().peekable();
-    while let Some((_, mut task_log)) = task_iter.next() {
+    while let Some((_, task_log)) = task_iter.next() {
         print_log(task_log, colors, settings, lines);
 
         // Add a newline if there is another task that's going to be printed.
