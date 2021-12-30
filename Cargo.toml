@@ -1,7 +1,7 @@
 [package]
 name = "pueue"
 description = "A cli tool for managing long running shell commands."
-version = "1.1.0-alpha.0"
+version = "2.0.0"
 authors = ["Arne Beer <contact@arne.beer>"]
 homepage = "https://github.com/nukesor/pueue"
 repository = "https://github.com/nukesor/pueue"
@@ -14,6 +14,9 @@ edition = "2021"
 
 [badges]
 maintenance = { status="actively-developed" }
+
+[workspace]
+members = ["lib"]
 
 [[bin]]
 name = "pueue"
@@ -31,9 +34,7 @@ name = "pueued"
 path = "daemon/main.rs"
 
 [dependencies]
-#pueue-lib = "0.18.0"
-pueue-lib = { git="https://github.com/Nukesor/pueue-lib", branch="main" }
-#pueue-lib = { path="../../libraries/pueue-lib" }
+pueue-lib = { version="0.19", path="lib" }
 
 anyhow = "1"
 chrono = { version="0.4", features=["serde"] }
