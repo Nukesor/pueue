@@ -1,0 +1,27 @@
+---
+client:
+  bogus_settings: ~
+  restart_in_place: false
+  read_local_logs: true
+  show_confirmation_questions: false
+  show_expanded_aliases: false
+  max_status_lines: ~
+  status_time_format: "%H:%M:%S"
+  status_datetime_format: "%Y-%m-%d\n%H:%M:%S"
+daemon:
+  default_parallel_tasks: 1
+  pause_group_on_failure: false
+  pause_all_on_failure: false
+  callback: "notify-send \"Task {{ id }}\nCommand: {{ command }}\nPath: {{ path }}\nFinished with status '{{ result }}'\nDuration: $(humanizer time -s $(bc <<< \"{{end}} - {{start}}\"))\""
+  groups:
+    test: 1
+    webhook: 1
+shared:
+  pueue_directory: ~/.local/share/pueue
+  use_unix_socket: true
+  unix_socket_path: ~/.local/share/pueue/pueue.socket
+  host: localhost
+  port: "6924"
+  daemon_cert: ~/.local/share/pueue/certs/daemon.cert
+  daemon_key: ~/.local/share/pueue/certs/daemon.key
+  shared_secret_path: ~/.local/share/pueue/shared_secret
