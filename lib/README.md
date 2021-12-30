@@ -1,10 +1,9 @@
 # Pueue-lib
 
-[![GitHub Actions Workflow](https://github.com/nukesor/pueue-lib/workflows/Test%20build/badge.svg)](https://github.com/Nukesor/pueue-lib/actions)
+[![GitHub Actions Workflow](https://github.com/nukesor/pueue/workflows/Test%20build/badge.svg)](https://github.com/Nukesor/pueue/actions)
 [![Crates.io](https://img.shields.io/crates/v/pueue-lib)](https://crates.io/crates/pueue-lib)
 [![docs](https://docs.rs/pueue-lib/badge.svg)](https://docs.rs/pueue-lib/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Downloads](https://img.shields.io/github/downloads/nukesor/pueue-lib/total.svg)](https://github.com/nukesor/pueue-lib/releases)
 
 
 This is the shared library used by the [Pueue](https://github.com/nukesor/pueue/) client and daemon.
@@ -20,5 +19,5 @@ It's always nice to know what you're working on and I might have a few suggestio
 
 There's also the [Architecture Guide](https://github.com/Nukesor/pueue/blob/main/ARCHITECTURE.md), which is supposed to give you a brief overview and introduction to the project.
 
-Copyright &copy; 2019-2021 Arne Beer ([@Nukesor](https://github.com/Nukesor))
+Copyright &copy; 2019-2022 Arne Beer ([@Nukesor](https://github.com/Nukesor))
 
