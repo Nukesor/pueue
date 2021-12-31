@@ -17,15 +17,15 @@ use json::*;
 use local::*;
 use remote::*;
 
-// Determine how many lines of stderr/out should be printed/returned.
-// `None` implicates that all lines are printed.
-//
-// By default, everything is returned for single tasks and only some lines for multiple.
-// `json` is an exception to this, in json mode we always only return some lines
-// (unless otherwise explicitely requested).
-//
-// `full` always forces the full log output
-// `lines` force a specific amount of lines
+/// Determine how many lines of stderr/out should be printed/returned.
+/// `None` implicates that all lines are printed.
+///
+/// By default, everything is returned for single tasks and only some lines for multiple.
+/// `json` is an exception to this, in json mode we always only return some lines
+/// (unless otherwise explicitely requested).
+///
+/// `full` always forces the full log output
+/// `lines` force a specific amount of lines
 pub fn determine_log_line_amount(
     full: bool,
     lines: &Option<usize>,
@@ -92,8 +92,8 @@ pub fn print_logs(
 
     // Iterate over each task and print the respective log.
     let mut task_iter = task_logs.iter_mut().peekable();
-    while let Some((_, mut task_log)) = task_iter.next() {
-        print_log(&mut task_log, colors, settings, lines);
+    while let Some((_, task_log)) = task_iter.next() {
+        print_log(task_log, colors, settings, lines);
 
         // Add a newline if there is another task that's going to be printed.
         if let Some((_, task_log)) = task_iter.peek() {

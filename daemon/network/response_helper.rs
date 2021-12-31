@@ -1,20 +1,25 @@
 use std::sync::MutexGuard;
 
 use pueue_lib::network::message::{create_failure_message, create_success_message, Message};
-use pueue_lib::state::State;
+use pueue_lib::state::{Group, State};
 use pueue_lib::task::Task;
 
+use crate::state_helper::LockedState;
+
 /// Check whether the given group exists. Return an failure message if it doesn't.
-pub fn ensure_group_exists(state: &MutexGuard<State>, group: &str) -> Result<(), Message> {
-    if !state.groups.contains_key(group) {
-        return Err(create_failure_message(format!(
-            "Group {} doesn't exists. Use one of these: {:?}",
-            group,
-            state.groups.keys()
-        )));
+pub fn ensure_group_exists<'state>(
+    state: &'state mut LockedState,
+    group: &str,
+) -> Result<&'state mut Group, Message> {
+    let group_keys: Vec<String> = state.groups.keys().cloned().collect();
+    if let Some(group) = state.groups.get_mut(group) {
+        return Ok(group);
     }
 
-    Ok(())
+    Err(create_failure_message(format!(
+        "Group {} doesn't exists. Use one of these: {:?}",
+        group, group_keys
+    )))
 }
 
 /// Compile a response for actions that affect several given tasks.

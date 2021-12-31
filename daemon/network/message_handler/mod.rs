@@ -92,8 +92,8 @@ mod fixtures {
 
     pub use pueue_lib::network::message::*;
     pub use pueue_lib::network::protocol::socket_cleanup;
-    pub use pueue_lib::settings::{Settings, PUEUE_DEFAULT_GROUP};
-    pub use pueue_lib::state::{SharedState, State};
+    pub use pueue_lib::settings::Settings;
+    pub use pueue_lib::state::{SharedState, State, PUEUE_DEFAULT_GROUP};
     pub use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
     pub use super::*;
@@ -105,7 +105,7 @@ mod fixtures {
             .expect("Failed to get default config")
             .try_into()
             .expect("Failed to get test settings");
-        settings.shared.pueue_directory = tempdir.path().clone().to_owned();
+        settings.shared.pueue_directory = tempdir.path().to_owned();
 
         (settings, tempdir)
     }
@@ -127,17 +127,22 @@ mod fixtures {
         (Arc::new(Mutex::new(state)), tempdir)
     }
 
-    /// Create a new task with stub data
-    pub fn get_stub_task(id: &str, status: TaskStatus) -> Task {
+    /// Create a new task with stub data in the given group
+    pub fn get_stub_task_in_group(id: &str, group: &str, status: TaskStatus) -> Task {
         Task::new(
-            format!("{}", id),
+            id.to_string(),
             "/tmp".to_string(),
             HashMap::new(),
-            PUEUE_DEFAULT_GROUP.to_string(),
+            group.to_string(),
             status,
             Vec::new(),
             None,
         )
+    }
+
+    /// Create a new task with stub data
+    pub fn get_stub_task(id: &str, status: TaskStatus) -> Task {
+        get_stub_task_in_group(id, PUEUE_DEFAULT_GROUP, status)
     }
 
     pub fn get_stub_state() -> (SharedState, TempDir) {

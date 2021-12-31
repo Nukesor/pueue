@@ -3,11 +3,11 @@ use std::path::PathBuf;
 use chrono::prelude::*;
 use chrono::Duration;
 use chrono_english::*;
-use clap::{ArgEnum, Clap};
+use clap::{ArgEnum, Parser};
 
 use pueue_lib::network::message::Signal;
 
-#[derive(Clap, Debug)]
+#[derive(Parser, Debug)]
 pub enum SubCommand {
     /// Enqueue a task for execution.
     Add {
@@ -61,6 +61,7 @@ pub enum SubCommand {
     },
     /// Remove tasks from the list.
     /// Running or paused tasks need to be killed first.
+    #[clap(alias("rm"))]
     Remove {
         /// The task ids to be removed.
         #[clap(required = true)]
@@ -141,6 +142,7 @@ pub enum SubCommand {
     /// Restart task(s).
     /// Identical tasks will be created and by default enqueued.
     /// By default, a new task will be created.
+    #[clap(alias("re"))]
     Restart {
         /// Restart these specific tasks.
         task_ids: Vec<usize>,
@@ -267,6 +269,10 @@ pub enum SubCommand {
         #[clap(short, long, conflicts_with = "remove")]
         add: Option<String>,
 
+        /// Set the amount of parallel tasks this group can do
+        #[clap(short, long, validator = min_one, conflicts_with = "remove")]
+        parallel: Option<usize>,
+
         /// Remove a group by name.
         /// This will move all tasks in this group to the default group!
         #[clap(short, long)]
@@ -287,12 +293,12 @@ pub enum SubCommand {
     },
 
     /// Display the log output of finished tasks.
-    /// Prints either all logs or only the logs of specified tasks.
-    ///
-    /// When looking at multiple logs, only the last few lines will be shown
+    /// When looking at multiple logs, only the last few lines will be shown.
+    /// If you want to "follow" the output of a task, please use the "follow" subcommand.
     Log {
         /// View the task output of these specific tasks.
         task_ids: Vec<usize>,
+
         /// Print the resulting tasks and output as json.
         /// By default only the last stdout/-err lines will be returned unless --full is provided.
         /// Take care, as the json cannot be streamed!
@@ -313,6 +319,7 @@ pub enum SubCommand {
 
     /// Follow the output of a currently running task.
     /// This command works like tail -f.
+    #[clap(alias("fo"))]
     Follow {
         /// The id of the task you want to watch.
         /// If no or multiple tasks are running, you have to specify the id.
@@ -350,6 +357,10 @@ pub enum SubCommand {
         /// Only clean tasks that finished successfully.
         #[clap(short, long)]
         successful_only: bool,
+
+        /// Only clean tasks of a specific group
+        #[clap(short, long)]
+        group: Option<String>,
     },
 
     /// Kill all tasks, clean up afterwards and reset EVERYTHING!
@@ -390,7 +401,7 @@ pub enum SubCommand {
     },
 }
 
-#[derive(Clap, Debug, PartialEq, ArgEnum)]
+#[derive(Parser, Debug, Clone, PartialEq, ArgEnum)]
 pub enum Shell {
     Bash,
     Elvish,
@@ -399,7 +410,7 @@ pub enum Shell {
     Zsh,
 }
 
-#[derive(Clap, Debug)]
+#[derive(Parser, Debug)]
 #[clap(
     name = "Pueue client",
     about = "Interact with the Pueue daemon",
@@ -417,7 +428,7 @@ pub struct CliArguments {
     pub config: Option<PathBuf>,
 
     #[clap(subcommand)]
-    pub cmd: SubCommand,
+    pub cmd: Option<SubCommand>,
 }
 
 fn parse_delay_until(src: &str) -> Result<DateTime<Local>, String> {

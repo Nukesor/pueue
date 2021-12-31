@@ -38,18 +38,20 @@ impl TaskHandler {
                 ok_or_shutdown!(self, save_state(&state));
                 return;
             }
-            TaskSelection::Group(group) => {
+            TaskSelection::Group(group_name) => {
                 // Ensure that a given group exists. (Might not happen due to concurrency)
-                if !state.groups.contains_key(&group) {
-                    return;
-                }
+                let group = match state.groups.get_mut(&group_name) {
+                    Some(group) => group,
+                    None => return,
+                };
+
                 // Set the group to running.
-                state.groups.insert(group.clone(), GroupStatus::Running);
-                info!("Resuming group {}", &group);
+                group.status = GroupStatus::Running;
+                info!("Resuming group {}", &group_name);
 
                 let (matching, _) = state.filter_tasks_of_group(
                     |task| matches!(task.status, TaskStatus::Paused),
-                    &group,
+                    &group_name,
                 );
                 matching
             }

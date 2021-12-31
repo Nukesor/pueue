@@ -9,10 +9,11 @@ use crate::network::response_helper::{ensure_group_exists, task_action_response_
 /// Invoked when calling `pueue kill`.
 /// Forward the kill message to the task handler, which then kills the process.
 pub fn kill(message: KillMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
-    let state = state.lock().unwrap();
+    let mut state = state.lock().unwrap();
+
     // If a group is selected, make sure it exists.
     if let TaskSelection::Group(group) = &message.tasks {
-        if let Err(message) = ensure_group_exists(&state, group) {
+        if let Err(message) = ensure_group_exists(&mut state, group) {
             return message;
         }
     }

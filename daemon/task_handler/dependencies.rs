@@ -1,5 +1,7 @@
 use super::*;
 
+use pueue_lib::state::Group;
+
 impl TaskHandler {
     /// Ensure that no `Queued` tasks have any failed dependencies.
     /// Otherwise set their status to `Done` and result to `DependencyFailed`.
@@ -40,7 +42,11 @@ impl TaskHandler {
             // Only update the status, if the group isn't paused.
             // This allows users to fix and restart dependencies in-place without
             // breaking the dependency chain.
-            if matches!(state.groups.get(&group).unwrap(), GroupStatus::Paused) {
+            if let Some(&Group {
+                status: GroupStatus::Paused,
+                ..
+            }) = state.groups.get(&group)
+            {
                 continue;
             }
 

@@ -2,14 +2,15 @@ use std::convert::TryInto;
 
 use anyhow::{Context, Result};
 
+use crate::fixtures::*;
 use crate::helper::*;
 
-#[test]
+#[tokio::test]
 /// Spin up the daemon and send a SIGTERM shortly afterwards.
 /// This should trigger the graceful shutdown and kill the process.
-fn test_ctrlc() -> Result<()> {
-    let (_settings, tempdir) = base_setup()?;
-    let mut child = boot_standalone_daemon(tempdir.path())?;
+async fn test_ctrlc() -> Result<()> {
+    let (_, tempdir) = daemon_base_setup()?;
+    let mut child = standalone_daemon(tempdir.path()).await?;
 
     use nix::sys::signal::{kill, Signal};
     // Send SIGTERM signal to process via nix
@@ -31,8 +32,8 @@ fn test_ctrlc() -> Result<()> {
 /// Spin up the daemon and send a graceful shutdown message afterwards.
 /// The daemon should shutdown normally and exit with a 0.
 async fn test_graceful_shutdown() -> Result<()> {
-    let (settings, tempdir) = base_setup()?;
-    let mut child = boot_standalone_daemon(tempdir.path())?;
+    let (settings, tempdir) = daemon_base_setup()?;
+    let mut child = standalone_daemon(tempdir.path()).await?;
 
     // Kill the daemon gracefully and wait for it to shut down.
     assert_success(shutdown_daemon(&settings.shared).await?);

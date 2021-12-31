@@ -4,7 +4,7 @@ use std::{fs::create_dir_all, path::PathBuf};
 
 use anyhow::{bail, Result};
 use crossbeam_channel::{unbounded, Sender};
-use log::warn;
+use log::{error, warn};
 
 use pueue_lib::network::certificate::create_certificates;
 use pueue_lib::network::message::{Message, Shutdown};
@@ -41,15 +41,27 @@ pub async fn run(config_path: Option<PathBuf>, test: bool) -> Result<()> {
             // There's something wrong with the config file or something's missing.
             // Try to read the config and fill missing values with defaults.
             // This might be possible on version upgrade or first run.
-            Settings::read_with_defaults(false, &config_path)?
+            let (settings, config_found) = Settings::read_with_defaults(&config_path)?;
+
+            // If there doesn't exist a config file yet, we save **once**.
+            // Hence, this should only happen on the very first time `pueued` is started.
+            if !config_found {
+                if let Err(error) = settings.save(&config_path) {
+                    bail!("Failed saving config file: {:?}.", error);
+                }
+            }
+
+            settings
         }
     };
-    // As we're trying to be backward compatible, we populate the config with default values to
-    // ensure everything will work when communicating with an old daemon/newer client.
-    // For this reason, config files might not update if new values are added.
-    // That's why we save the file under all circumstances.
-    if let Err(error) = settings.save(&config_path) {
-        bail!("Failed saving config file: {:?}.", error);
+
+    #[allow(deprecated)]
+    if settings.daemon.groups.is_some() {
+        error!(
+            "Please delete the 'daemon.groups' section from your config file. \n\
+            It is no longer used and groups can now only be edited via the commandline interface. \n\n\
+            Attention: The first time the daemon is restarted this update, the amount of parallel tasks per group will be reset to 1!!"
+        )
     }
 
     init_directories(&settings.shared.pueue_directory());

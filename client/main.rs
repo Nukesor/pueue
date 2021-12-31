@@ -1,5 +1,5 @@
-use anyhow::{Context, Result};
-use clap::{Clap, IntoApp};
+use anyhow::{bail, Context, Result};
+use clap::{IntoApp, Parser};
 use clap_generate::generate_to;
 use clap_generate::generators::*;
 use simplelog::{Config, LevelFilter, SimpleLogger};
@@ -19,21 +19,19 @@ async fn main() -> Result<()> {
     // Parse commandline options.
     let opt = CliArguments::parse();
 
-    if let SubCommand::Completions {
+    if let Some(SubCommand::Completions {
         shell,
         output_directory,
-    } = &opt.cmd
+    }) = &opt.cmd
     {
         let mut app = CliArguments::into_app();
         app.set_bin_name("pueue");
         let completion_result = match shell {
-            Shell::Bash => generate_to::<Bash, _, _>(&mut app, "pueue", output_directory),
-            Shell::Elvish => generate_to::<Elvish, _, _>(&mut app, "pueue", output_directory),
-            Shell::Fish => generate_to::<Fish, _, _>(&mut app, "pueue", output_directory),
-            Shell::PowerShell => {
-                generate_to::<PowerShell, _, _>(&mut app, "pueue", output_directory)
-            }
-            Shell::Zsh => generate_to::<Zsh, _, _>(&mut app, "pueue", output_directory),
+            Shell::Bash => generate_to(Bash, &mut app, "pueue", output_directory),
+            Shell::Elvish => generate_to(Elvish, &mut app, "pueue", output_directory),
+            Shell::Fish => generate_to(Fish, &mut app, "pueue", output_directory),
+            Shell::PowerShell => generate_to(PowerShell, &mut app, "pueue", output_directory),
+            Shell::Zsh => generate_to(Zsh, &mut app, "pueue", output_directory),
         };
         completion_result.context(format!("Failed to generate completions for {:?}", shell))?;
         return Ok(());
@@ -49,7 +47,22 @@ async fn main() -> Result<()> {
     SimpleLogger::init(level, Config::default()).unwrap();
 
     // Try to read settings from the configuration file.
-    let settings = Settings::read_with_defaults(true, &opt.config)?;
+    let (settings, config_found) = Settings::read_with_defaults(&opt.config)?;
+
+    #[allow(deprecated)]
+    if settings.daemon.groups.is_some() {
+        println!(
+            "Please delete the 'daemon.groups' section from your config file.\n\
+            It is no longer used and groups can now only be edited via the commandline interface.\n\n\
+            Attention: The first time the daemon is restarted this update, the amount of parallel tasks per group will be reset to 1!!"
+        )
+    }
+
+    // Error if no configuration file can be found, as this is an indicator, that the daemon hasn't
+    // been started yet.
+    if !config_found {
+        bail!("Couldn't find a configuration file. Did you start the daemon yet?");
+    }
 
     // Create client to talk with the daemon and connect.
     let mut client = Client::new(settings, opt).await?;

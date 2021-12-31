@@ -1,0 +1,52 @@
+[package]
+name = "pueue-lib"
+description = "The shared library to work with the Pueue client and daemon."
+version = "0.19.0"
+authors = ["Arne Beer <contact@arne.beer>"]
+homepage = "https://github.com/nukesor/pueue"
+repository = "https://github.com/nukesor/pueue"
+documentation = "https://docs.rs/pueue"
+license = "MIT"
+keywords = ["shell", "command", "parallel", "task", "queue"]
+readme = "README.md"
+edition = "2021"
+
+[badges]
+maintenance = { status="actively-developed" }
+
+[dependencies]
+thiserror = "1"
+dirs = "4"
+chrono = { version="0.4", features=["serde"] }
+rand = "0.8"
+shellexpand = "2.1"
+strum = "0.22"
+strum_macros = "0.22"
+
+async-trait = "0.1"
+tokio = { version="1", features=["macros", "net", "rt-multi-thread", "io-util"] }
+tokio-rustls = "0.23"
+rustls = "0.20"
+rustls-pemfile = "0.2"
+rev_lines = "0.2"
+rcgen = "0.8"
+byteorder = "1"
+snap = "1"
+serde = "1"
+serde_cbor = "0.11"
+serde_json = "1"
+serde_yaml = "0.8"
+serde_derive = "1"
+
+config = { version="0.11", default-features=false, features=["yaml"] }
+log = "0.4"
+
+[target.'cfg(not(windows))'.dependencies]
+whoami = "1"
+
+[dev-dependencies]
+anyhow = "1"
+better-panic = "0.2"
+pretty_assertions = "1"
+portpicker = "0.1"
+tempdir = "0.3"

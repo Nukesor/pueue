@@ -6,7 +6,7 @@ use log::{error, info};
 use pueue_lib::network::message::GroupMessage;
 
 use crate::ok_or_shutdown;
-use crate::state_helper::{save_settings, save_state};
+use crate::state_helper::save_state;
 use crate::task_handler::{Shutdown, TaskHandler};
 
 impl TaskHandler {
@@ -23,20 +23,25 @@ impl TaskHandler {
 
         match message {
             GroupMessage::List => {}
-            GroupMessage::Add(group) => {
-                if state.groups.contains_key(&group) {
-                    error!("Group \"{}\" already exists", group);
+            GroupMessage::Add {
+                name,
+                parallel_tasks,
+            } => {
+                if state.groups.contains_key(&name) {
+                    error!("Group \"{}\" already exists", name);
                     return;
                 }
-                state.create_group(&group);
-                info!("New group \"{}\" has been created", &group);
+                let mut group = state.create_group(&name);
+                if let Some(parallel_tasks) = parallel_tasks {
+                    group.parallel_tasks = parallel_tasks;
+                }
+                info!("New group \"{}\" has been created", &name);
 
                 // Create the worker pool.
-                self.children.0.insert(group, BTreeMap::new());
+                self.children.0.insert(name, BTreeMap::new());
 
-                // Save the state and the settings file.
+                // Persist the state.
                 ok_or_shutdown!(self, save_state(&state));
-                ok_or_shutdown!(self, save_settings(&state));
             }
             GroupMessage::Remove(group) => {
                 if !state.groups.contains_key(&group) {
@@ -76,9 +81,8 @@ impl TaskHandler {
                 // Actually remove the worker pool.
                 self.children.0.remove(&group);
 
-                // Save the state and the settings file.
+                // Persist the state.
                 ok_or_shutdown!(self, save_state(&state));
-                ok_or_shutdown!(self, save_settings(&state));
 
                 info!("Group \"{}\" has been removed", &group);
             }

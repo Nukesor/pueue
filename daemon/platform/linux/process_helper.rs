@@ -353,7 +353,7 @@ mod tests {
     /// Ensure a `sh -c` command will be properly killed without detached processes when using unix
     /// signals directly.
     fn test_shell_command_is_killed_with_signal() {
-        let mut child = compile_shell_command("sleep 60 & sleep 60 && echo 'this is a test'")
+        let child = compile_shell_command("sleep 60 & sleep 60 && echo 'this is a test'")
             .spawn()
             .expect("Failed to spawn echo");
         let pid: i32 = child.id().try_into().unwrap();
@@ -368,7 +368,7 @@ mod tests {
         assert_eq!(child_processes.len(), 2);
 
         // Kill the process and make sure it'll be killed.
-        send_signal_to_child(&mut child, Signal::SIGKILL, false).unwrap();
+        send_signal_to_child(&child, Signal::SIGKILL, false).unwrap();
 
         // Sleep a little to give all processes time to shutdown.
         sleep(Duration::from_millis(500));

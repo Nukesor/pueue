@@ -8,8 +8,9 @@ use pueue_lib::network::protocol::{
 use pueue_lib::network::secret::read_shared_secret;
 use pueue_lib::settings::Shared;
 
+/// This is a small convenience wrapper that sends a message and immediately returns the response.
 pub async fn send_message(shared: &Shared, message: Message) -> Result<Message> {
-    let mut stream = get_authenticated_client(shared).await?;
+    let mut stream = get_authenticated_stream(shared).await?;
 
     // Check if we can receive the response from the daemon
     internal_send_message(message, &mut stream)
@@ -22,7 +23,10 @@ pub async fn send_message(shared: &Shared, message: Message) -> Result<Message> 
         .map_err(|err| anyhow!("Failed to receive message: {}", err))
 }
 
-pub async fn get_authenticated_client(shared: &Shared) -> Result<GenericStream> {
+/// Create a new stream that already finished the handshake and secret exchange.
+///
+/// Pueue creates a new socket stream for each command, which is why we do it the same way.
+pub async fn get_authenticated_stream(shared: &Shared) -> Result<GenericStream> {
     // Connect to daemon and get stream used for communication.
     let mut stream = match get_client_stream(shared).await {
         Ok(stream) => stream,
