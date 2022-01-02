@@ -11,7 +11,7 @@ pub fn get_shared_settings() -> (Shared, TempDir) {
     std::fs::create_dir(tempdir_path.join("certs")).unwrap();
 
     let shared_settings = Shared {
-        pueue_directory: tempdir_path.clone().to_path_buf(),
+        pueue_directory: tempdir_path.to_path_buf(),
         #[cfg(not(target_os = "windows"))]
         use_unix_socket: true,
         #[cfg(not(target_os = "windows"))]
