@@ -21,6 +21,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **Breaking changes:** The amount of parallel tasks will be reset to `1` for all groups.
 - **Breaking changes:** The `pueue group` command won't work, unless the daemon is restarted.
 
+## [1.0.5] - 2022-01-02
+
+### Changed
+
+- Update to stable clap v3.0.
+
+### Fix
+
+- Panic instead of loop endlessly, if `task_log` directory disapears.
+
 ## [1.0.4] - 2021-11-12
 
 ### Fix

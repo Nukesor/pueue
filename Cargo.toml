@@ -51,8 +51,8 @@ serde_derive = "1"
 
 log = "0.4"
 simplelog = { version="0.10", default-features=false }
-clap = "=3.0.0-beta.5"
-clap_generate = "3.0.0-beta.5"
+clap = { version="3", features=["derive", "cargo"] }
+clap_complete = "3"
 crossterm = "0.22"
 comfy-table = "5"
 

@@ -90,14 +90,13 @@ impl TaskHandler {
             }
         };
 
-        // Try to get the log files to which the output of the process
-        // will be written to. Error if this doesn't work!
+        // Try to get the log files to which the output of the process will be written to.
+        // Panic if this doesn't work! This is unrecoverable.
         let (stdout_log, stderr_log) = match create_log_file_handles(task_id, &self.pueue_directory)
         {
             Ok((out, err)) => (out, err),
             Err(err) => {
-                error!("Failed to create child log files: {:?}", err);
-                return;
+                panic!("Failed to create child log files: {:?}", err);
             }
         };
 

@@ -5,9 +5,9 @@ use clap::Parser;
 #[derive(Parser, Debug)]
 #[clap(
     name = "Pueue daemon",
-    about = "Start the daemon for pueue",
-    author = env!("CARGO_PKG_AUTHORS"),
-    version = env!("CARGO_PKG_VERSION")
+    about = "Start the Pueue daemon",
+    author,
+    version
 )]
 pub struct CliArguments {
     /// Verbose mode (-v, -vv, -vvv)

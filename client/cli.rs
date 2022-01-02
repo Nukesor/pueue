@@ -237,7 +237,7 @@ pub enum SubCommand {
         /// Send a UNIX signal instead of simply killing the process.
         /// DISCLAIMER: This bypasses Pueue's process handling logic!
         ///     You might enter weird invalid states, use at your own descretion.
-        #[clap(short, long, case_insensitive(true))]
+        #[clap(short, long, ignore_case(true))]
         signal: Option<Signal>,
     },
 
@@ -401,7 +401,7 @@ pub enum SubCommand {
     },
 }
 
-#[derive(Parser, Debug, Clone, PartialEq, ArgEnum)]
+#[derive(Parser, ArgEnum, Debug, Clone, PartialEq)]
 pub enum Shell {
     Bash,
     Elvish,
@@ -411,12 +411,7 @@ pub enum Shell {
 }
 
 #[derive(Parser, Debug)]
-#[clap(
-    name = "Pueue client",
-    about = "Interact with the Pueue daemon",
-    author = env!("CARGO_PKG_AUTHORS"),
-    version = env!("CARGO_PKG_VERSION")
-)]
+#[clap(name = "Pueue client", about = "Interact with the Pueue daemon")]
 pub struct CliArguments {
     /// Verbose mode (-v, -vv, -vvv)
     #[clap(short, long, parse(from_occurrences))]

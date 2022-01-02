@@ -11,4 +11,6 @@ New features should branch of the `development` branch. \
 
 - [ ] I picked the correct source and target branch.
 - [ ] I included a new entry to the `CHANGELOG.md`.
-- [ ] I checked if anything in the wiki needs to change.
+- [ ] I checked `cargo clippy` and `cargo fmt`. The CI will fail otherwise anyway.
+- [ ] (If applicable) I added tests for this feature or adjusted existing tests.
+- [ ] (If applicable) I checked if anything in the wiki needs to be changed.
