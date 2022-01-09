@@ -70,7 +70,7 @@ async fn run_and_handle_error(pueue_dir: PathBuf, test: bool) -> Result<()> {
 }
 
 /// Spawn the daemon by calling the actual pueued binary.
-/// This function also checks for the pid file and the unix socket to pop-up.
+/// This function also checks for the pid file and the unix socket to appear.
 pub async fn standalone_daemon(pueue_dir: &Path) -> Result<Child> {
     let child = Command::cargo_bin("pueued")?
         .arg("--config")

@@ -3,6 +3,7 @@ mod clean;
 mod edit;
 mod group;
 mod kill;
+mod log;
 mod parallel_tasks;
 mod pause;
 mod remove;
