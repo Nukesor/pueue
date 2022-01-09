@@ -16,10 +16,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
+- Improved memory footprint for reading partial logs.
+- Always only show the last X lines of output when using `pueue log` without additional parameters.
 - The configuration for groups can no longer be done via configuration file.
     This means, that groups can only be edited, created or deleted via the commandline interface.
 - **Breaking changes:** The amount of parallel tasks will be reset to `1` for all groups.
 - **Breaking changes:** The `pueue group` command won't work, unless the daemon is restarted.
+
+### Fixed
+
+- `pueue log` now behaves the same for local and remote logs.
+     Remote logs previously showed more lines under some circumstances.
 
 ## [1.0.5] - 2022-01-02
 

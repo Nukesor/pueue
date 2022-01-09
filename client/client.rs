@@ -488,9 +488,9 @@ impl Client {
                 task_ids,
                 lines,
                 full,
-                json,
+                ..
             } => {
-                let lines = determine_log_line_amount(*full, lines, *json, task_ids.len());
+                let lines = determine_log_line_amount(*full, lines);
 
                 let message = LogRequestMessage {
                     task_ids: task_ids.clone(),

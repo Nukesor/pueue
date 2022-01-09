@@ -26,24 +26,14 @@ use remote::*;
 ///
 /// `full` always forces the full log output
 /// `lines` force a specific amount of lines
-pub fn determine_log_line_amount(
-    full: bool,
-    lines: &Option<usize>,
-    json: bool,
-    task_amount: usize,
-) -> Option<usize> {
+pub fn determine_log_line_amount(full: bool, lines: &Option<usize>) -> Option<usize> {
     if full {
         None
     } else if let Some(lines) = lines {
         Some(*lines)
     } else {
-        // By default, only some lines are shown per task, if multiple tasks exist or
-        // json ouput is requested.
-        if task_amount > 1 || json {
-            Some(15)
-        } else {
-            None
-        }
+        // By default, only some lines are shown per task
+        Some(15)
     }
 }
 
@@ -71,7 +61,7 @@ pub fn print_logs(
         ),
     };
 
-    let lines = determine_log_line_amount(full, &lines, json, task_logs.len());
+    let lines = determine_log_line_amount(full, &lines);
 
     // Return the server response in json representation.
     if json {

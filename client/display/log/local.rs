@@ -3,7 +3,7 @@ use std::io::{self, Stdout};
 
 use comfy_table::*;
 
-use pueue_lib::log::{get_log_file_handles, read_last_lines};
+use pueue_lib::log::{get_log_file_handles, seek_to_last_lines};
 use pueue_lib::settings::Settings;
 
 use crate::display::{colors::Colors, helper::*};
@@ -48,8 +48,10 @@ fn print_local_file(stdout: &mut Stdout, file: &mut File, lines: &Option<usize>,
 
             // Only print the last lines if requested
             if let Some(lines) = lines {
-                println!("{}", read_last_lines(file, *lines));
-                return;
+                if let Err(err) = seek_to_last_lines(file, *lines) {
+                    println!("Failed reading local log file: {}", err);
+                    return;
+                }
             }
 
             // Print everything

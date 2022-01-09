@@ -28,7 +28,7 @@ tokio = { version="1", features=["macros", "net", "rt-multi-thread", "io-util"] 
 tokio-rustls = "0.23"
 rustls = "0.20"
 rustls-pemfile = "0.2"
-rev_lines = "0.2"
+rev_buf_reader = "0.2"
 rcgen = "0.8"
 byteorder = "1"
 snap = "1"

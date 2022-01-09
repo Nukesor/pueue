@@ -1013,7 +1013,7 @@ dependencies = [
  "pretty_assertions",
  "rand 0.8.4",
  "rcgen",
- "rev_lines",
+ "rev_buf_reader",
  "rustls",
  "rustls-pemfile",
  "serde",
@@ -1186,10 +1186,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "rev_lines"
-version = "0.2.1"
+name = "rev_buf_reader"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "18eb52b6664d331053136fcac7e4883bdc6f5fc04a6aab3b0f75eafb80ab88b3"
+checksum = "5be7eaf8415a214da18dcf43c4db1c70394f68d77a0c6a20f33e95e7eba4f741"
+dependencies = [
+ "memchr",
+]
 
 [[package]]
 name = "ring"
