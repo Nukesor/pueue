@@ -1,93 +1,109 @@
 use std::collections::HashMap;
 use std::fs::{create_dir_all, File};
-use std::io::prelude::*;
+use std::io::{prelude::*, BufReader};
 use std::path::{Path, PathBuf};
 
-use config::Config;
 use log::info;
 use serde_derive::{Deserialize, Serialize};
 use shellexpand::tilde;
 
 use crate::error::Error;
 use crate::platform::directories::*;
+use crate::setting_defaults::*;
 
 /// All settings which are used by both, the client and the daemon
-#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Clone, Debug, Default, Deserialize, Serialize)]
 pub struct Shared {
     /// Don't access this property directly, but rather use the getter with the same name.
     /// It's only public to allow proper integration testing.
     ///
-    /// The directory that is used for all runtime information. \
-    /// I.e. task logs, sockets, state dumps, etc.
-    pub pueue_directory: PathBuf,
+    /// The directory that is used for all of pueue's state. \
+    /// I.e. task logs, state dumps, etc.
+    pub pueue_directory: Option<PathBuf>,
+    /// The location where runtime related files will be placed.
+    /// Defaults to `pueue_directory` unless `$XDG_RUNTIME_DIR` is set.
+    pub runtime_directory: Option<PathBuf>,
     /// If this is set to true, unix sockets will be used.
     /// Otherwise we default to TCP+TLS
     #[cfg(not(target_os = "windows"))]
+    #[serde(default = "default_true")]
     pub use_unix_socket: bool,
     /// Don't access this property directly, but rather use the getter with the same name.
     /// It's only public to allow proper integration testing.
     ///
     /// The path to the unix socket.
     #[cfg(not(target_os = "windows"))]
-    pub unix_socket_path: PathBuf,
+    pub unix_socket_path: Option<PathBuf>,
 
     /// The TCP hostname/ip address.
+    #[serde(default = "default_host")]
     pub host: String,
     /// The TCP port.
+    #[serde(default = "default_port")]
     pub port: String,
     /// Don't access this property directly, but rather use the getter with the same name.
     /// It's only public to allow proper integration testing.
     ///
     /// The path to the TLS certificate used by the daemon. \
     /// This is also used by the client to verify the daemon's identity.
-    pub daemon_cert: PathBuf,
+    pub daemon_cert: Option<PathBuf>,
     /// Don't access this property directly, but rather use the getter with the same name.
     /// It's only public to allow proper integration testing.
     ///
     /// The path to the TLS key used by the daemon.
-    pub daemon_key: PathBuf,
+    pub daemon_key: Option<PathBuf>,
     /// Don't access this property directly, but rather use the getter with the same name.
     /// It's only public to allow proper integration testing.
     ///
     /// The path to the file containing the shared secret used to authenticate the client.
-    pub shared_secret_path: PathBuf,
+    pub shared_secret_path: Option<PathBuf>,
 }
 
 /// All settings which are used by the client
-#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Clone, Debug, Default, Deserialize, Serialize)]
 pub struct Client {
     /// If set to true, all tasks will be restart in place, instead of creating a new task.
     /// False is the default, as you'll lose the logs of the previously failed tasks when
     /// restarting tasks in place.
+    #[serde(default = "Default::default")]
     pub restart_in_place: bool,
     /// Whether the client should read the logs directly from disk or whether it should
     /// request the data from the daemon via socket.
+    #[serde(default = "default_true")]
     pub read_local_logs: bool,
     /// Whether the client should show a confirmation question on potential dangerous actions.
+    #[serde(default = "Default::default")]
     pub show_confirmation_questions: bool,
     /// Whether aliases specified in `pueue_aliases.yml` should be expanded in the `pueue status`
     /// or shown in their short form.
+    #[serde(default = "Default::default")]
     pub show_expanded_aliases: bool,
     /// Whether the client should use dark shades instead of regular colors.
+    #[serde(default = "Default::default")]
     pub dark_mode: bool,
     /// The max amount of lines each task get's in the `pueue status` view.
     pub max_status_lines: Option<usize>,
     /// The format that will be used to display time formats in `pueue status`.
+    #[serde(default = "default_status_time_format")]
     pub status_time_format: String,
     /// The format that will be used to display datetime formats in `pueue status`.
+    #[serde(default = "default_status_datetime_format")]
     pub status_datetime_format: String,
 }
 
 /// All settings which are used by the daemon
-#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Clone, Debug, Default, Deserialize, Serialize)]
 pub struct Daemon {
     /// Whether a group should be paused as soon as a single task fails
+    #[serde(default = "Default::default")]
     pub pause_group_on_failure: bool,
     /// Whether the daemon (and all groups) should be paused as soon as a single task fails
+    #[serde(default = "Default::default")]
     pub pause_all_on_failure: bool,
     /// The callback that's called whenever a task finishes.
     pub callback: Option<String>,
     /// The amount of log lines from stdout/stderr that are passed to the callback command.
+    #[serde(default = "default_callback_log_lines")]
     pub callback_log_lines: usize,
     /// The legacy configuration for groups
     #[serde(skip_serializing)]
@@ -96,6 +112,30 @@ pub struct Daemon {
         note = "The configuration for groups is now stored in the state."
     )]
     pub groups: Option<HashMap<String, i64>>,
+}
+
+impl Default for Settings {
+    fn default() -> Self {
+        Settings {
+            client: Client {
+                read_local_logs: true,
+                status_time_format: default_status_time_format(),
+                status_datetime_format: default_status_datetime_format(),
+                ..Default::default()
+            },
+            daemon: Daemon {
+                callback_log_lines: default_callback_log_lines(),
+                ..Default::default()
+            },
+            shared: Shared {
+                #[cfg(not(target_os = "windows"))]
+                use_unix_socket: true,
+                host: default_host(),
+                port: default_port(),
+                ..Default::default()
+            },
+        }
+    }
 }
 
 /// The parent settings struct. \
@@ -107,130 +147,118 @@ pub struct Settings {
     pub shared: Shared,
 }
 
+/// Little helper which expands a given path's `~` characters to a fully qualified path.
+pub fn expand_home(old_path: &Path) -> PathBuf {
+    PathBuf::from(tilde(&old_path.to_string_lossy()).into_owned())
+}
+
 impl Shared {
-    pub fn expand(old_path: &Path) -> PathBuf {
-        PathBuf::from(tilde(&old_path.to_string_lossy()).into_owned())
-    }
-
     pub fn pueue_directory(&self) -> PathBuf {
-        Shared::expand(&self.pueue_directory)
+        if let Some(path) = &self.pueue_directory {
+            expand_home(path)
+        } else {
+            default_pueue_path()
+        }
     }
 
+    /// Get the current runtime directory in the following precedence.
+    /// 1. Config value
+    /// 2. Environment configuration
+    /// 3. Pueue directory
+    pub fn runtime_directory(&self) -> PathBuf {
+        if let Some(path) = &self.runtime_directory {
+            expand_home(path)
+        } else if let Some(path) = default_runtime_directory() {
+            path
+        } else {
+            default_pueue_path()
+        }
+    }
+
+    /// The unix socket path can either be explicitly specified or it's simply placed in the
+    /// current runtime directory.
     #[cfg(not(target_os = "windows"))]
     pub fn unix_socket_path(&self) -> PathBuf {
-        Shared::expand(&self.unix_socket_path)
+        if let Some(path) = &self.unix_socket_path {
+            expand_home(path)
+        } else {
+            self.runtime_directory()
+                .join(format!("pueue_{}.socket", whoami::username()))
+        }
     }
 
     pub fn daemon_cert(&self) -> PathBuf {
-        Shared::expand(&self.daemon_cert)
+        if let Some(path) = &self.daemon_cert {
+            expand_home(path)
+        } else {
+            self.pueue_directory().join("certs").join("daemon.cert")
+        }
     }
+
     pub fn daemon_key(&self) -> PathBuf {
-        Shared::expand(&self.daemon_key)
+        if let Some(path) = &self.daemon_key {
+            expand_home(path)
+        } else {
+            self.pueue_directory().join("certs").join("daemon.key")
+        }
     }
+
     pub fn shared_secret_path(&self) -> PathBuf {
-        Shared::expand(&self.shared_secret_path)
+        if let Some(path) = &self.shared_secret_path {
+            expand_home(path)
+        } else {
+            self.pueue_directory().join("shared_secret")
+        }
     }
 }
 
 impl Settings {
-    /// Read from existing config files.
-    /// If no config files can be found or fields are missing, an error is returned.
-    pub fn read(from_file: &Option<PathBuf>) -> Result<Settings, Error> {
-        let config = Config::new();
-        let (settings, _) = parse_config(config, from_file)?;
-
-        Ok(settings)
-    }
-
     /// Try to read existing config files, while using default values for non-existing fields.
     /// If successful, this will return a full config as well as a boolean on whether we found an
     /// existing configuration file or not.
     ///
     /// The default local config locations depends on the current target.
-    pub fn read_with_defaults(from_file: &Option<PathBuf>) -> Result<(Settings, bool), Error> {
-        let config = Settings::default_config()?;
-        parse_config(config, from_file)
-    }
+    pub fn read(from_file: &Option<PathBuf>) -> Result<(Settings, bool), Error> {
+        // Load the config from a very specific file path
+        if let Some(path) = from_file {
+            if !path.exists() || !path.is_file() {
+                return Err(Error::FileNotFound(format!(
+                    "Couldn't find config at path {:?}",
+                    path
+                )));
+            }
 
-    pub fn default_config() -> Result<Config, Error> {
-        let mut config = Config::new();
-        let pueue_path = default_pueue_path()?;
-        config
-            .set_default("shared.pueue_directory", pueue_path.clone())
-            .unwrap();
-        #[cfg(not(target_os = "windows"))]
-        config.set_default("shared.use_unix_socket", true).unwrap();
-        #[cfg(not(target_os = "windows"))]
-        config
-            .set_default("shared.unix_socket_path", get_unix_socket_path()?)
-            .unwrap();
+            // Open the file in read-only mode with buffer.
+            let file = File::open(path)?;
+            let reader = BufReader::new(file);
 
-        config.set_default("shared.host", "127.0.0.1").unwrap();
-        config.set_default("shared.port", "6924").unwrap();
-        config.set_default("shared.tls_enabled", true).unwrap();
-        config
-            .set_default(
-                "shared.daemon_key",
-                pueue_path.clone() + "/certs/daemon.key",
-            )
-            .unwrap();
-        config
-            .set_default(
-                "shared.daemon_cert",
-                pueue_path.clone() + "/certs/daemon.cert",
-            )
-            .unwrap();
-        config
-            .set_default("shared.shared_secret_path", pueue_path + "/shared_secret")
-            .unwrap();
+            let settings = serde_yaml::from_reader(reader)
+                .map_err(|err| Error::ConfigDeserialization(err.to_string()))?;
+            return Ok((settings, true));
+        };
 
-        // Client specific config
-        config
-            .set_default("client.restart_in_place", false)
-            .unwrap();
-        config.set_default("client.read_local_logs", true).unwrap();
-        config
-            .set_default("client.show_expanded_aliases", false)
-            .unwrap();
-        config
-            .set_default("client.show_confirmation_questions", false)
-            .unwrap();
-        config.set_default("client.dark_mode", false).unwrap();
-        config
-            .set_default("client.max_status_lines", None::<i64>)
-            .unwrap();
-        config
-            .set_default("client.newline_between_date_and_time", false)
-            .unwrap();
-        config
-            .set_default("client.status_time_format", "%H:%M:%S".to_string())
-            .unwrap();
-        config
-            .set_default(
-                "client.status_datetime_format",
-                "%Y-%m-%d\n%H:%M:%S".to_string(),
-            )
-            .unwrap();
+        info!("Parsing config files");
+        for directory in get_config_directories().into_iter() {
+            let path = directory.join("pueue.yml");
+            info!("Checking path: {:?}", &path);
 
-        // Daemon specific config
-        config
-            .set_default("daemon.default_parallel_tasks", 1)
-            .unwrap();
-        config
-            .set_default("daemon.pause_group_on_failure", false)
-            .unwrap();
-        config
-            .set_default("daemon.pause_all_on_failure", false)
-            .unwrap();
-        config
-            .set_default("daemon.callback", None::<String>)
-            .unwrap();
-        config.set_default("daemon.callback_log_lines", 10).unwrap();
-        config
-            .set_default("daemon.groups", None::<HashMap<String, i64>>)
-            .unwrap();
+            // Check if the file exists and parse it.
+            if path.exists() && path.is_file() {
+                info!("Found config file at: {:?}", path);
 
-        Ok(config)
+                // Open the file in read-only mode with buffer.
+                let file = File::open(path)?;
+                let reader = BufReader::new(file);
+
+                let settings = serde_yaml::from_reader(reader)
+                    .map_err(|err| Error::ConfigDeserialization(err.to_string()))?;
+                return Ok((settings, true));
+            }
+        }
+
+        info!("No config file found. Use default config.");
+        // Return a default configuration if we couldn't find a file.
+        Ok((Settings::default(), false))
     }
 
     /// Save the current configuration as a file to the given path. \
@@ -240,7 +268,7 @@ impl Settings {
         let config_path = if let Some(path) = path {
             path.clone()
         } else {
-            default_config_directory()?.join("pueue.yml")
+            default_config_directory().join("pueue.yml")
         };
         let config_dir = config_path
             .parent()
@@ -265,44 +293,4 @@ impl Settings {
 
         Ok(())
     }
-}
-
-/// Get all possible configuration paths and check if there are
-/// configuration files at those locations.
-/// All configs will be merged by importance.
-fn parse_config(
-    mut config: Config,
-    from_file: &Option<PathBuf>,
-) -> Result<(Settings, bool), Error> {
-    // Load the config from a very specific file path
-    if let Some(path) = from_file {
-        if !path.exists() || !path.is_file() {
-            return Err(Error::FileNotFound(format!(
-                "Couldn't find config at path {:?}",
-                path
-            )));
-        }
-        info!("Using config file at: {:?}", path);
-        let config_file = config::File::with_name(path.to_str().unwrap());
-        config.merge(config_file)?;
-        return Ok((config.try_into()?, true));
-    };
-
-    let mut config_found = false;
-    info!("Parsing config files");
-    for directory in get_config_directories()?.into_iter() {
-        let path = directory.join("pueue.yml");
-        info!("Checking path: {:?}", &path);
-
-        // Check if the file exists and parse it.
-        if path.exists() && path.is_file() {
-            info!("Found config file at: {:?}", path);
-            config_found = true;
-            let config_file = config::File::with_name(path.to_str().unwrap());
-            config.merge(config_file)?;
-        }
-    }
-
-    // Try to can deserialize the entire configuration
-    Ok((config.try_into()?, config_found))
 }

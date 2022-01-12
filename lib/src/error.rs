@@ -22,10 +22,7 @@ pub enum Error {
     #[error("Couldn't serialize message:\n{}", .0)]
     MessageSerialization(String),
 
-    #[error("Failed while building configuration.")]
-    ConfigError(#[from] config::ConfigError),
-
-    #[error("Failed while building configuration.")]
+    #[error("Error while reading configuration: {}", .0)]
     ConfigDeserialization(String),
 
     #[error("Couldn't write task log file. {}", .0)]

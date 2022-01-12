@@ -101,11 +101,8 @@ mod fixtures {
 
     pub fn get_settings() -> (Settings, TempDir) {
         let tempdir = TempDir::new().expect("Failed to create test pueue directory");
-        let mut settings: Settings = Settings::default_config()
-            .expect("Failed to get default config")
-            .try_into()
-            .expect("Failed to get test settings");
-        settings.shared.pueue_directory = tempdir.path().to_owned();
+        let mut settings = Settings::default();
+        settings.shared.pueue_directory = Some(tempdir.path().to_owned());
 
         (settings, tempdir)
     }

@@ -11,6 +11,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Add optional `group` field to CleanMessage.
 - Add optional `parallel_tasks` field to Group create message.
 - Introduced a `Group` struct, which is used to store information about groups in the `State`.
+- Added the `shared.runtime_directory` config variable for any runtime related files, such as sockets.
+- `XDG_CONFIG_HOME` is respected for Pueue's config directory [#243](https://github.com/Nukesor/pueue/issues/243).
+- `XDG_DATA_HOME` is used if the `pueue_directory` config isn't explicitly set [#243](https://github.com/Nukesor/pueue/issues/243).
+- `XDG_RUNTIME_DIR` is used if the new `runtime_directory` config isn't explicitly set [#243](https://github.com/Nukesor/pueue/issues/243).
+- Add `lines` to `LogRequestMessage` [#270](https://github.com/Nukesor/pueue/issues/270).
 
 ### Removed
 
@@ -20,6 +25,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Switch from `async-std` to tokio.
 - Update to rustls 0.20
+- **Breaking:** The unix socket is now located in the `runtime_directory` by default [#243](https://github.com/Nukesor/pueue/issues/243).
+- **Breaking:** `Shared::pueue_directory` changed from `PathBuf` to `Option<PathBuf>`.
 - **Breaking:** `Settings::read_with_defaults` no longer a boolean as first parameter.
     Instead, it returns a tuple of `(Settings, bool)` with the boolean indicating whether a config file has been found.
 - **Breaking:** The type of `State.group` changed from `BTreeMap<String, GroupStatus>` to the new `BTreeMap<String, Group>` struct.

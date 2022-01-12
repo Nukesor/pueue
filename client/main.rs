@@ -48,7 +48,7 @@ async fn main() -> Result<()> {
     SimpleLogger::init(level, Config::default()).unwrap();
 
     // Try to read settings from the configuration file.
-    let (settings, config_found) = Settings::read_with_defaults(&opt.config)?;
+    let (settings, config_found) = Settings::read(&opt.config)?;
 
     #[allow(deprecated)]
     if settings.daemon.groups.is_some() {

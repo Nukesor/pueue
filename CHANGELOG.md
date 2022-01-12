@@ -11,18 +11,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Introduce the `rm` (remove), `re` (restart) and `fo` (follow) subcommand aliases [#245](https://github.com/Nukesor/pueue/issues/245).
 - Allow to set the amount of parallel tasks at group creation by [Spyros Roum](https://github.com/SpyrosRoum) [#245](https://github.com/Nukesor/pueue/issues/249).
 - When calling `pueue` without a subcommand, the `status` command will be called by default [#247](https://github.com/Nukesor/pueue/issues/247).
-- Add the `--group` parameter to the `pueue clean` command [#248](https://github.com/Nukesor/pueue/issues/248)
-- Add `stdout_path` and `stderr_path` as template parameters for callbacks [#269](https://github.com/Nukesor/issues/269)
-- Add `--lines` parameter to `pueue follow` to only show specified number of lines from stdout before following [#270](https://github.com/Nukesor/pueue/issues/270)
+- Add the `--group` parameter to the `pueue clean` command [#248](https://github.com/Nukesor/pueue/issues/248).
+- Add `stdout_path` and `stderr_path` as template parameters for callbacks [#269](https://github.com/Nukesor/issues/269).
+- Add `--lines` parameter to `pueue follow` to only show specified number of lines from stdout before following [#270](https://github.com/Nukesor/pueue/issues/270).
+- Added the `shared.runtime_directory` config variable for any runtime related files, such as sockets.
+- `XDG_CONFIG_HOME` is respected for Pueue's config directory [#243](https://github.com/Nukesor/pueue/issues/243).
+- `XDG_DATA_HOME` is used if the `pueue_directory` config isn't explicitly set [#243](https://github.com/Nukesor/pueue/issues/243).
+- `XDG_RUNTIME_DIR` is used if the new `runtime_directory` config isn't explicitly set [#243](https://github.com/Nukesor/pueue/issues/243).
+- The unix socket is now located in the `runtime_directory` by default [#243](https://github.com/Nukesor/pueue/issues/243).
 
 ### Changed
 
 - Improved memory footprint for reading partial logs.
 - Always only show the last X lines of output when using `pueue log` without additional parameters.
-- The configuration for groups can no longer be done via configuration file.
+- **Breaking changes:** The configuration for groups can no longer be done via configuration file.
     This means, that groups can only be edited, created or deleted via the commandline interface.
-- **Breaking changes:** The amount of parallel tasks will be reset to `1` for all groups.
-- **Breaking changes:** The `pueue group` command won't work, unless the daemon is restarted.
+    The amount of parallel tasks will also be reset to `1` when upgrading.
+
+### Removed
+
+- No longer read `/etc/pueue/` configuration files.
+    Pueue isn't designed as a system wide service, hence this doesn't make any sense to have system wide configuration files.
+- If multiple configuration files are found, they're no longer merged together.
+    Instead, only the first file will be used.
 
 ### Fixed
 
