@@ -215,7 +215,11 @@ impl Client {
                 Ok(true)
             }
 
-            SubCommand::Follow { task_id, err } => {
+            SubCommand::Follow {
+                task_id,
+                err,
+                lines,
+            } => {
                 // Simple log output follows for local logs don't need any communication with the daemon.
                 // Thereby we handle this separately over here.
                 if self.settings.client.read_local_logs {
@@ -224,6 +228,7 @@ impl Client {
                         &self.settings.shared.pueue_directory(),
                         task_id,
                         *err,
+                        *lines,
                     )
                     .await?;
                     return Ok(true);
@@ -499,10 +504,15 @@ impl Client {
                 };
                 Ok(Message::Log(message))
             }
-            SubCommand::Follow { task_id, err } => {
+            SubCommand::Follow {
+                task_id,
+                err,
+                lines,
+            } => {
                 let message = StreamRequestMessage {
                     task_id: *task_id,
                     err: *err,
+                    lines: *lines,
                 };
                 Ok(Message::StreamRequest(message))
             }

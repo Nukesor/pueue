@@ -73,6 +73,14 @@ pub async fn handle_follow(
     let (out_path, err_path) = get_log_paths(task_id, pueue_directory);
     let handle_path = if message.err { err_path } else { out_path };
 
+    // If lines is passed as an option, seek the output file handle to the start of
+    // the line corresponding to the `lines` number of lines from the end of the file.
+    // The loop following this section will copy those lines to stdout
+    if let Some(lines) = message.lines {
+        if let Err(err) = seek_to_last_lines(&mut handle, lines) {
+            println!("Error seeking to last lines from log: {}", err);
+        }
+    }
     loop {
         // Check whether the file still exists. Exit if it doesn't.
         if !handle_path.exists() {

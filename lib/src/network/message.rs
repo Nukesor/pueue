@@ -209,6 +209,7 @@ pub enum Shutdown {
 pub struct StreamRequestMessage {
     pub task_id: Option<usize>,
     pub err: bool,
+    pub lines: Option<usize>,
 }
 
 /// Request logs for specific tasks.

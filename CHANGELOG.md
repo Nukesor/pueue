@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - When calling `pueue` without a subcommand, the `status` command will be called by default [#247](https://github.com/Nukesor/pueue/issues/247).
 - Add the `--group` parameter to the `pueue clean` command [#248](https://github.com/Nukesor/pueue/issues/248)
 - Add `stdout_path` and `stderr_path` as template parameters for callbacks [#269](https://github.com/Nukesor/issues/269)
+- Add `--lines` parameter to `pueue follow` to only show specified number of lines from stdout before following [#270](https://github.com/Nukesor/pueue/issues/270)
 
 ### Changed
 
