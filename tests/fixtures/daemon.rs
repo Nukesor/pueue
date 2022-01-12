@@ -105,16 +105,17 @@ pub fn daemon_base_setup() -> Result<(Settings, TempDir)> {
     std::fs::create_dir(tempdir_path.join("certs")).unwrap();
 
     let shared = Shared {
-        pueue_directory: tempdir_path.to_path_buf(),
+        pueue_directory: Some(tempdir_path.to_path_buf()),
+        runtime_directory: Some(tempdir_path.to_path_buf()),
         #[cfg(not(target_os = "windows"))]
         use_unix_socket: true,
         #[cfg(not(target_os = "windows"))]
-        unix_socket_path: tempdir_path.join("test.socket"),
+        unix_socket_path: Some(tempdir_path.join("test.socket")),
         host: "localhost".to_string(),
         port: "51230".to_string(),
-        daemon_cert: tempdir_path.join("certs").join("daemon.cert"),
-        daemon_key: tempdir_path.join("certs").join("daemon.key"),
-        shared_secret_path: tempdir_path.join("secret"),
+        daemon_cert: Some(tempdir_path.join("certs").join("daemon.cert")),
+        daemon_key: Some(tempdir_path.join("certs").join("daemon.key")),
+        shared_secret_path: Some(tempdir_path.join("secret")),
     };
 
     let client = Client {

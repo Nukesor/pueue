@@ -12,7 +12,7 @@ use crate::platform::directories::get_config_directories;
 pub fn get_aliases() -> Result<HashMap<String, String>, Error> {
     // Go through all config directories and check for a alias file.
     let mut alias_file_path = None;
-    for directory in get_config_directories()? {
+    for directory in get_config_directories() {
         let path = directory.join("pueue_aliases.yml");
         if path.exists() {
             alias_file_path = Some(path);

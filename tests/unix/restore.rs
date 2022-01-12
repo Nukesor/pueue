@@ -78,7 +78,7 @@ async fn test_load_config() -> Result<()> {
     // Change the settings and save it to disk
     settings.client.dark_mode = true;
     settings.daemon.callback = Some("This is a test".to_string());
-    settings.shared.daemon_key = PathBuf::from("/tmp/daemon.key");
+    settings.shared.daemon_key = Some(PathBuf::from("/tmp/daemon.key"));
     settings.save(&Some(tempdir.path().join("pueue.yml")))?;
 
     let mut child = standalone_daemon(tempdir.path()).await?;

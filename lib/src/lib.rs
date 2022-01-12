@@ -20,6 +20,9 @@ pub mod log;
 pub mod network;
 /// Platform specific code, mainly used to get platform specific working directories.
 mod platform;
+/// This module contains all platform unspecific default values and helper functions for working
+/// with our setting representation.
+mod setting_defaults;
 /// Pueue's representation of configuration and their default settings.
 pub mod settings;
 /// The main struct used to represent the daemon's current state.

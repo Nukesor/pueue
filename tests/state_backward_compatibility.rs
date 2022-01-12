@@ -28,8 +28,8 @@ fn test_restore_from_old_state() -> Result<()> {
     let mut file = File::create(&temp_state_path)?;
     file.write_all(old_state.as_bytes())?;
 
-    let mut settings: Settings = Settings::default_config()?.try_into()?;
-    settings.shared.pueue_directory = temp_path.to_path_buf();
+    let mut settings = Settings::default();
+    settings.shared.pueue_directory = Some(temp_path.to_path_buf());
 
     let state = restore_state(&settings.shared.pueue_directory())
         .context("Failed to restore state in test")?;

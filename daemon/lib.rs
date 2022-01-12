@@ -35,23 +35,14 @@ mod task_handler;
 /// Since the threads own the same global space, this would crash.
 pub async fn run(config_path: Option<PathBuf>, test: bool) -> Result<()> {
     // Try to read settings from the configuration file.
-    let settings = match Settings::read(&config_path) {
-        Ok(settings) => settings,
-        Err(_) => {
-            // There's something wrong with the config file or something's missing.
-            // Try to read the config and fill missing values with defaults.
-            // This might be possible on version upgrade or first run.
-            let (settings, config_found) = Settings::read_with_defaults(&config_path)?;
+    let (settings, config_found) = Settings::read(&config_path)?;
 
-            // If there doesn't exist a config file yet, we save **once**.
-            // Hence, this should only happen on the very first time `pueued` is started.
-            if !config_found {
-                if let Err(error) = settings.save(&config_path) {
-                    bail!("Failed saving config file: {:?}.", error);
-                }
-            }
-
-            settings
+    // We couldn't find a configuration file.
+    // This probably means that Pueue has been started for the first time and we have to create a
+    // default config file once.
+    if !config_found {
+        if let Err(error) = settings.save(&config_path) {
+            bail!("Failed saving config file: {:?}.", error);
         }
     };
 
