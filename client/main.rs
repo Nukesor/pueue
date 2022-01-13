@@ -34,7 +34,7 @@ async fn main() -> Result<()> {
             }
             Shell::Zsh => generate_to(shells::Zsh, &mut app, "pueue", output_directory),
         };
-        completion_result.context(format!("Failed to generate completions for {:?}", shell))?;
+        completion_result.context(format!("Failed to generate completions for {shell:?}"))?;
         return Ok(());
     }
 

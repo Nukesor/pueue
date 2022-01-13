@@ -15,15 +15,12 @@ fn construct_success_clean_message(message: CleanMessage) -> String {
     };
 
     let group_fix = if let Some(group) = message.group {
-        format!(" in group '{}'", group)
+        format!(" from group '{}'", group)
     } else {
         String::new()
     };
 
-    format!(
-        "All{} finished tasks have been removed{}",
-        successfull_only_fix, group_fix
-    )
+    format!("All{successfull_only_fix} finished tasks have been removed{group_fix}")
 }
 
 /// Invoked when calling `pueue clean`.
@@ -182,7 +179,7 @@ mod tests {
         if let Message::Success(text) = message {
             assert_eq!(
                 text,
-                "All finished tasks have been removed in group 'other'"
+                "All finished tasks have been removed from group 'other'"
             );
         };
 
@@ -205,7 +202,7 @@ mod tests {
         if let Message::Success(text) = message {
             assert_eq!(
                 text,
-                "All successfully finished tasks have been removed in group 'other'"
+                "All successfully finished tasks have been removed from group 'other'"
             );
         };
 

@@ -29,7 +29,7 @@ impl TaskHandler {
 
                 // Pause a specific group.
                 group.status = GroupStatus::Paused;
-                info!("Pausing group {}", &group_name);
+                info!("Pausing group {group_name}");
 
                 let (matching, _) = state.filter_tasks_of_group(
                     |task| matches!(task.status, TaskStatus::Running),
@@ -59,7 +59,7 @@ impl TaskHandler {
     /// Send a signal to the process to actually pause the OS process.
     fn pause_task(&mut self, state: &mut LockedState, id: usize, pause_children: bool) {
         match self.perform_action(id, ProcessAction::Pause, pause_children) {
-            Err(err) => error!("Failed pausing task {}: {:?}", id, err),
+            Err(err) => error!("Failed pausing task {id}: {err:?}"),
             Ok(success) => {
                 if success {
                     state.change_status(id, TaskStatus::Paused);

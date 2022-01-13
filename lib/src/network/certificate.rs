@@ -43,7 +43,7 @@ pub fn create_certificates(shared_settings: &Shared) -> Result<(), Error> {
 }
 
 fn write_file(blob: String, name: &str, path: &Path) -> Result<(), Error> {
-    info!("Generate {}.", name);
+    info!("Generate {name}.");
     let mut file = File::create(path)?;
 
     file.write_all(&blob.into_bytes())?;

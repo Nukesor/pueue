@@ -21,7 +21,7 @@ pub fn follow_local_task_logs(
     let (stdout_handle, stderr_handle) = match get_log_file_handles(task_id, pueue_directory) {
         Ok((stdout, stderr)) => (stdout, stderr),
         Err(err) => {
-            println!("Failed to get log file handles: {}", err);
+            println!("Failed to get log file handles: {err}");
             return;
         }
     };
@@ -39,7 +39,7 @@ pub fn follow_local_task_logs(
     // The loop following this section will copy those lines to stdout
     if let Some(lines) = lines {
         if let Err(err) = seek_to_last_lines(&mut handle, lines) {
-            println!("Error seeking to last lines from log: {}", err);
+            println!("Error seeking to last lines from log: {err}");
         }
     }
     loop {
@@ -50,7 +50,7 @@ pub fn follow_local_task_logs(
         }
         // Read the next chunk of text from the last position.
         if let Err(err) = io::copy(&mut handle, &mut stdout) {
-            println!("Error while reading file: {}", err);
+            println!("Error while reading file: {err}");
             return;
         };
         let timeout = Duration::from_millis(100);

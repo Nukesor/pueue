@@ -17,10 +17,7 @@ impl TaskHandler {
         let callback_command = match self.build_callback_command(task, template_string) {
             Ok(callback_command) => callback_command,
             Err(err) => {
-                error!(
-                    "Failed to create callback command from template with error: {}",
-                    err
-                );
+                error!("Failed to create callback command from template with error: {err}");
                 return;
             }
         };
@@ -31,7 +28,7 @@ impl TaskHandler {
         let spawn_result = command.spawn();
         let child = match spawn_result {
             Err(error) => {
-                error!("Failed to spawn callback with error: {}", error);
+                error!("Failed to spawn callback with error: {error}");
                 return;
             }
             Ok(child) => child,
@@ -113,13 +110,13 @@ impl TaskHandler {
             match child.try_wait() {
                 // Handle a child error.
                 Err(error) => {
-                    error!("Callback failed with error {:?}", error);
+                    error!("Callback failed with error {error:?}");
                     finished.push(id);
                 }
                 // Child process did not exit yet.
                 Ok(None) => continue,
                 Ok(exit_status) => {
-                    info!("Callback finished with exit code {:?}", exit_status);
+                    info!("Callback finished with exit code {exit_status:?}");
                     finished.push(id);
                 }
             }

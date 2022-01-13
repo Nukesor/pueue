@@ -15,7 +15,7 @@ pub fn print_local_log(task_id: usize, colors: &Colors, settings: &Settings, lin
         match get_log_file_handles(task_id, &settings.shared.pueue_directory()) {
             Ok((stdout, stderr)) => (stdout, stderr),
             Err(err) => {
-                println!("Failed to get log file handles: {}", err);
+                println!("Failed to get log file handles: {err}");
                 return;
             }
         };
@@ -49,14 +49,14 @@ fn print_local_file(stdout: &mut Stdout, file: &mut File, lines: &Option<usize>,
             // Only print the last lines if requested
             if let Some(lines) = lines {
                 if let Err(err) = seek_to_last_lines(file, *lines) {
-                    println!("Failed reading local log file: {}", err);
+                    println!("Failed reading local log file: {err}");
                     return;
                 }
             }
 
             // Print everything
             if let Err(err) = io::copy(file, stdout) {
-                println!("Failed reading local log file: {}", err);
+                println!("Failed reading local log file: {err}");
             };
         }
     }

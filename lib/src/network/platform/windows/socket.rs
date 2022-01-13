@@ -57,21 +57,20 @@ pub async fn get_client_stream(settings: &Shared) -> Result<GenericStream, Error
     let address = format!("{}:{}", settings.host, settings.port);
     let tcp_stream = TcpStream::connect(&address).await.map_err(|_| {
         Error::Connection(format!(
-            "Failed to connect to the daemon on {}. Did you start it?",
-            &address
+            "Failed to connect to the daemon on {address}. Did you start it?"
         ))
     })?;
 
     // Get the configured rustls TlsConnector
     let tls_connector = get_tls_connector(&settings)
         .await
-        .map_err(|err| Error::Connection(format!("Failed to initialize tls connector {}.", err)))?;
+        .map_err(|err| Error::Connection(format!("Failed to initialize tls connector {err}.")))?;
 
     // Initialize the TLS layer
     let stream = tls_connector
         .connect(ServerName::try_from("pueue.local").unwrap(), tcp_stream)
         .await
-        .map_err(|err| Error::Connection(format!("Failed to initialize tls {}.", err)))?;
+        .map_err(|err| Error::Connection(format!("Failed to initialize tls {err}.")))?;
 
     Ok(Box::new(stream))
 }
@@ -81,7 +80,7 @@ pub async fn get_listener(settings: &Shared) -> Result<GenericListener, Error> {
     // This is the listener, which accepts low-level TCP connections
     let address = format!("{}:{}", settings.host, settings.port);
     let tcp_listener = TcpListener::bind(&address).await.map_err(|err| {
-        Error::Connection(format!("Failed to listen on address {}. {}", address, err))
+        Error::Connection(format!("Failed to listen on address {address}. {err}"))
     })?;
 
     // This is the TLS acceptor, which initializes the TLS layer

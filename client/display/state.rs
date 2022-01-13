@@ -16,10 +16,7 @@ use crate::cli::SubCommand;
 pub fn print_state(state: State, cli_command: &SubCommand, colors: &Colors, settings: &Settings) {
     let (json, group_only) = match cli_command {
         SubCommand::Status { json, group } => (*json, group.clone()),
-        _ => panic!(
-            "Got wrong Subcommand {:?} in print_state. This shouldn't happen",
-            cli_command
-        ),
+        _ => panic!("Got wrong Subcommand {cli_command:?} in print_state. This shouldn't happen!"),
     };
 
     // If the json flag is specified, print the state as json and exit.
@@ -53,10 +50,7 @@ fn print_single_group(
 
     // Show a message if the requested group doesn't have any tasks.
     if tasks.is_empty() {
-        println!(
-            "Task list is empty. Add tasks with `pueue add -g {} -- [cmd]`",
-            group
-        );
+        println!("Task list is empty. Add tasks with `pueue add -g {group} -- [cmd]`");
         return;
     }
     print_table(tasks, colors, settings);
@@ -77,7 +71,7 @@ fn print_all_groups(
             state.groups.get(PUEUE_DEFAULT_GROUP).unwrap(),
             colors,
         );
-        println!("{}\n", headline);
+        println!("{headline}\n");
         println!("Task list is empty. Add tasks with `pueue add -- [cmd]`");
         return;
     }
@@ -90,7 +84,7 @@ fn print_all_groups(
             state.groups.get(PUEUE_DEFAULT_GROUP).unwrap(),
             colors,
         );
-        println!("{}", headline);
+        println!("{headline}");
         print_table(tasks, colors, settings);
 
         // Add a newline if there are further groups to be printed
@@ -109,7 +103,7 @@ fn print_all_groups(
         }
 
         let headline = get_group_headline(group, state.groups.get(group).unwrap(), colors);
-        println!("{}", headline);
+        println!("{headline}");
         print_table(tasks, colors, settings);
 
         // Add a newline between groups
@@ -167,7 +161,7 @@ fn print_table(tasks: &BTreeMap<usize, Task>, colors: &Colors, settings: &Settin
                 TaskResult::Success => (TaskResult::Success.to_string(), colors.green()),
                 TaskResult::DependencyFailed => ("Dependency failed".to_string(), colors.red()),
                 TaskResult::FailedToSpawn(_) => ("Failed to spawn".to_string(), colors.red()),
-                TaskResult::Failed(code) => (format!("Failed ({})", code), colors.red()),
+                TaskResult::Failed(code) => (format!("Failed ({code})"), colors.red()),
                 _ => (result.to_string(), colors.red()),
             },
             _ => (status_string, colors.yellow()),
@@ -228,7 +222,7 @@ fn print_table(tasks: &BTreeMap<usize, Task>, colors: &Colors, settings: &Settin
     }
 
     // Print the table.
-    println!("{}", table);
+    println!("{table}");
 }
 
 /// Returns the formatted `start` and `end` text for a given task.

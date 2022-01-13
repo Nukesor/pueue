@@ -50,7 +50,7 @@ pub fn get_pid(pueue_dir: &Path) -> Result<i32> {
 
         let pid = content
             .parse::<i32>()
-            .map_err(|_| anyhow!("Couldn't parse value: {}", content))?;
+            .map_err(|_| anyhow!("Couldn't parse value: {content}"))?;
         return Ok(pid);
     }
 

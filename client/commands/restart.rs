@@ -129,10 +129,10 @@ pub async fn restart(
     }
 
     if !matching.is_empty() {
-        println!("Restarted tasks: {:?}", matching);
+        println!("Restarted tasks: {matching:?}");
     }
     if !mismatching.is_empty() {
-        println!("Couldn't restart tasks: {:?}", mismatching);
+        println!("Couldn't restart tasks: {mismatching:?}");
     }
 
     Ok(())

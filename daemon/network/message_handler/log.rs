@@ -31,8 +31,7 @@ pub fn get_log(message: LogRequestMessage, state: &SharedState) -> Message {
                     Err(err) => {
                         // Fail early if there's some problem with getting the log output
                         return create_failure_message(format!(
-                            "Failed reading process output file: {:?}",
-                            err
+                            "Failed reading process output file: {err:?}"
                         ));
                     }
                 }

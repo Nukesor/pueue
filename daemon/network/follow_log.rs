@@ -43,8 +43,7 @@ pub async fn handle_follow(
                     .collect::<Vec<_>>()
                     .join(", ");
                 return Ok(create_failure_message(format!(
-                    "Multiple tasks are running, please select one of the following: {}",
-                    running_ids
+                    "Multiple tasks are running, please select one of the following: {running_ids}"
                 )));
             }
         }
@@ -78,7 +77,7 @@ pub async fn handle_follow(
     // The loop following this section will copy those lines to stdout
     if let Some(lines) = message.lines {
         if let Err(err) = seek_to_last_lines(&mut handle, lines) {
-            println!("Error seeking to last lines from log: {}", err);
+            println!("Error seeking to last lines from log: {err}");
         }
     }
     loop {
@@ -92,7 +91,7 @@ pub async fn handle_follow(
         let mut buffer = Vec::new();
 
         if let Err(err) = handle.read_to_end(&mut buffer) {
-            return Ok(create_failure_message(format!("Error: {}", err)));
+            return Ok(create_failure_message(format!("Error: {err}")));
         };
         let text = String::from_utf8_lossy(&buffer).to_string();
 

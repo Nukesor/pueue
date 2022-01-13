@@ -67,8 +67,7 @@ fn ok_or_failure_message<T, E: Display>(result: Result<T, E>) -> Result<T, Messa
     match result {
         Ok(inner) => Ok(inner),
         Err(error) => Err(create_failure_message(format!(
-            "Failed to save state. This is a bug: {}",
-            error
+            "Failed to save state. This is a bug: {error}"
         ))),
     }
 }

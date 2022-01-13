@@ -11,8 +11,8 @@ use crate::error::Error;
 /// Return the paths to the `(stdout, stderr)` log files of a task.
 pub fn get_log_paths(task_id: usize, path: &Path) -> (PathBuf, PathBuf) {
     let task_log_dir = path.join("task_logs");
-    let out_path = task_log_dir.join(format!("{}_stdout.log", task_id));
-    let err_path = task_log_dir.join(format!("{}_stderr.log", task_id));
+    let out_path = task_log_dir.join(format!("{task_id}_stdout.log"));
+    let err_path = task_log_dir.join(format!("{task_id}_stderr.log"));
     (out_path, err_path)
 }
 
@@ -39,18 +39,12 @@ pub fn clean_log_handles(task_id: usize, path: &Path) {
     let (out_path, err_path) = get_log_paths(task_id, path);
     if out_path.exists() {
         if let Err(err) = remove_file(out_path) {
-            error!(
-                "Failed to remove stdout file for task {} with error {:?}",
-                task_id, err
-            );
+            error!("Failed to remove stdout file for task {task_id} with error {err:?}");
         };
     }
     if err_path.exists() {
         if let Err(err) = remove_file(err_path) {
-            error!(
-                "Failed to remove stderr file for task {} with error {:?}",
-                task_id, err
-            );
+            error!("Failed to remove stderr file for task {task_id} with error {err:?}");
         };
     }
 }
@@ -96,8 +90,7 @@ pub fn read_last_log_file_lines(
         Ok((stdout, stderr)) => (stdout, stderr),
         Err(err) => {
             return Err(Error::LogRead(format!(
-                "Error while opening log files for task {}: {}",
-                task_id, err
+                "Error while opening log files for task {task_id}: {err}"
             )));
         }
     };
@@ -117,7 +110,7 @@ pub fn reset_task_log_directory(path: &Path) -> Result<(), Error> {
 
     for file in files.flatten() {
         if let Err(err) = remove_file(file.path()) {
-            error!("Failed to delete log file: {}", err);
+            error!("Failed to delete log file: {err}");
         }
     }
 

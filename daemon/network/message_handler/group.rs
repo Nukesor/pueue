@@ -27,7 +27,7 @@ pub fn group(message: GroupMessage, sender: &Sender<Message>, state: &SharedStat
             parallel_tasks,
         } => {
             if state.groups.contains_key(&name) {
-                return create_failure_message(format!("Group \"{}\" already exists", name));
+                return create_failure_message(format!("Group \"{name}\" already exists"));
             }
 
             // Propagate the message to the TaskHandler, which is responsible for actually
@@ -38,7 +38,7 @@ pub fn group(message: GroupMessage, sender: &Sender<Message>, state: &SharedStat
             }));
             ok_or_return_failure_message!(result);
 
-            create_success_message(format!("Group \"{}\" is being created", name))
+            create_success_message(format!("Group \"{name}\" is being created"))
         }
         GroupMessage::Remove(group) => {
             if let Err(message) = ensure_group_exists(&mut state, &group) {
@@ -61,7 +61,7 @@ pub fn group(message: GroupMessage, sender: &Sender<Message>, state: &SharedStat
             let result = sender.send(Message::Group(GroupMessage::Remove(group.clone())));
             ok_or_return_failure_message!(result);
 
-            create_success_message(format!("Group \"{}\" is being removed", group))
+            create_success_message(format!("Group \"{group}\" is being removed"))
         }
     }
 }

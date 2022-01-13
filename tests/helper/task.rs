@@ -52,10 +52,7 @@ pub async fn add_env_task(shared: &Shared, command: &str) -> Result<Message> {
 
 /// Just like [add_env_task], but the task get's added to specific group.
 pub async fn add_env_task_to_group(shared: &Shared, command: &str, group: &str) -> Result<Message> {
-    let command = format!(
-        "echo WORKER_ID: $PUEUE_WORKER_ID; echo GROUP: $PUEUE_GROUP; {}",
-        command
-    );
+    let command = format!("echo WORKER_ID: $PUEUE_WORKER_ID; echo GROUP: $PUEUE_GROUP; {command}");
     add_task_to_group(shared, &command, group).await
 }
 
@@ -90,7 +87,7 @@ pub async fn get_task(shared: &Shared, task_id: usize) -> Result<Task> {
     let task = state
         .tasks
         .get(&0)
-        .ok_or_else(|| anyhow!("Couldn't find task {}", task_id))?;
+        .ok_or_else(|| anyhow!("Couldn't find task {task_id}"))?;
 
     Ok(task.clone())
 }

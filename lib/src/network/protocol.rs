@@ -16,7 +16,7 @@ pub use super::platform::socket::*;
 /// Convenience wrapper around send_bytes.
 /// Deserialize a message and feed the bytes into send_bytes.
 pub async fn send_message(message: Message, stream: &mut GenericStream) -> Result<(), Error> {
-    debug!("Sending message: {:?}", message);
+    debug!("Sending message: {message:?}",);
     // Prepare command for transfer and determine message byte size
     let payload = to_vec(&message).map_err(|err| Error::MessageDeserialization(err.to_string()))?;
 
@@ -92,7 +92,7 @@ pub async fn receive_message(stream: &mut GenericStream) -> Result<Message, Erro
     // Deserialize the message.
     let message: Message =
         from_slice(&payload_bytes).map_err(|err| Error::MessageDeserialization(err.to_string()))?;
-    debug!("Received message: {:?}", message);
+    debug!("Received message: {message:?}");
 
     Ok(message)
 }

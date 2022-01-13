@@ -68,7 +68,7 @@ pub fn run_action_on_child(child: &Child, action: &ProcessAction, _children: boo
 pub fn kill_child(task_id: usize, child: &mut Child, _kill_children: bool) -> bool {
     match child.kill() {
         Err(_) => {
-            info!("Task {} has already finished by itself", task_id);
+            info!("Task {task_id} has already finished by itself");
             false
         }
         Ok(_) => {
@@ -106,7 +106,7 @@ fn get_child_pids(target_pid: u32, pid_list: &mut Vec<u32>) {
         // While enumerating the set of processes, new processes can be created and destroyed.
         let snapshot_handle = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, target_pid);
         if snapshot_handle == INVALID_HANDLE_VALUE {
-            error!("Failed to get process {} snapShot", target_pid);
+            error!("Failed to get process {target_pid} snapShot");
             return;
         }
 
@@ -144,7 +144,7 @@ fn get_threads(target_pid: u32) -> Vec<u32> {
         // While enumerating the set of threads, new threads can be created and destroyed.
         let snapshot_handle = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
         if snapshot_handle == INVALID_HANDLE_VALUE {
-            error!("Failed to get process {} snapShot", target_pid);
+            error!("Failed to get process {target_pid} snapShot");
             return threads;
         }
 
@@ -189,10 +189,7 @@ fn suspend_thread(tid: u32) {
             // If SuspendThread fails, the return value is (DWORD) -1
             if u32::max_value() == SuspendThread(thread_handle) {
                 let err_code = GetLastError();
-                warn!(
-                    "Failed to suspend thread {} with error code {}",
-                    tid, err_code
-                );
+                warn!("Failed to suspend thread {tid} with error code {err_code}");
             }
         }
 
@@ -213,10 +210,7 @@ fn resume_thread(tid: u32) {
             // If ResumeThread fails, the return value is (DWORD) -1
             if u32::max_value() == ResumeThread(thread_handle) {
                 let err_code = GetLastError();
-                warn!(
-                    "Failed to resume thread {} with error code {}",
-                    tid, err_code
-                );
+                warn!("Failed to resume thread {tid} with error code {err_code}");
             }
         }
 
@@ -233,10 +227,7 @@ fn terminate_process(pid: u32) {
         // If TerminateProcess fails, the return value is zero.
         if 0 == TerminateProcess(process_handle, 1) {
             let err_code = GetLastError();
-            warn!(
-                "Failed to terminate process {} with error code {}",
-                pid, err_code
-            );
+            warn!("Failed to terminate process {pid} with error code {err_code}");
         }
 
         CloseHandle(process_handle);
@@ -303,11 +294,8 @@ mod test {
             return Ok(process_ids);
         }
 
-        bail!(
-            "{} processes were expected. Last process count was {}",
-            expected_processes,
-            get_cur_task_processes(pid).len()
-        )
+        let count = get_cur_task_processes(pid).len();
+        bail!("{expected_processes} processes were expected. Last process count was {count}")
     }
 
     #[test]

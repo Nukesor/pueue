@@ -37,7 +37,7 @@ pub fn start(message: StartMessage, sender: &Sender<Message>, state: &SharedStat
             &state,
         ),
         TaskSelection::Group(group) => {
-            create_success_message(format!("Group \"{}\" is being resumed.", &group))
+            create_success_message(format!("Group \"{group}\" is being resumed."))
         }
         TaskSelection::All => create_success_message("All queues are being resumed."),
     }

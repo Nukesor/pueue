@@ -42,7 +42,7 @@ impl TaskHandler {
                 if pause_groups {
                     group.status = GroupStatus::Paused;
                 }
-                info!("Killing tasks of group {}", &group_name);
+                info!("Killing tasks of group {group_name}");
 
                 let (matching, _) = state.filter_tasks_of_group(
                     |task| matches!(task.status, TaskStatus::Running | TaskStatus::Paused),
@@ -79,16 +79,13 @@ impl TaskHandler {
         let child = match self.children.get_child_mut(task_id) {
             Some(child) => child,
             None => {
-                warn!("Tried to kill non-existing child: {}", task_id);
+                warn!("Tried to kill non-existing child: {task_id}");
                 return;
             }
         };
 
         if let Err(err) = send_internal_signal_to_child(child, signal, send_to_children) {
-            warn!(
-                "Failed to send signal to task {} with error: {}",
-                task_id, err
-            );
+            warn!("Failed to send signal to task {task_id} with error: {err}");
         };
     }
 
@@ -98,7 +95,7 @@ impl TaskHandler {
         if let Some(child) = self.children.get_child_mut(task_id) {
             kill_child(task_id, child, kill_children);
         } else {
-            warn!("Tried to kill non-existing child: {}", task_id);
+            warn!("Tried to kill non-existing child: {task_id}");
         }
     }
 }

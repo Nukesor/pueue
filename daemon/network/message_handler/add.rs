@@ -33,8 +33,7 @@ pub fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedSta
         .collect();
     if !not_found.is_empty() {
         return create_failure_message(format!(
-            "Unable to setup dependencies : task(s) {:?} not found",
-            not_found
+            "Unable to setup dependencies : task(s) {not_found:?} not found",
         ));
     }
 
@@ -69,13 +68,10 @@ pub fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedSta
     let message = if message.print_task_id {
         task_id.to_string()
     } else if let Some(enqueue_at) = message.enqueue_at {
-        format!(
-            "New task added (id {}). It will be enqueued at {}",
-            task_id,
-            enqueue_at.format("%Y-%m-%d %H:%M:%S")
-        )
+        let enqueue_at = enqueue_at.format("%Y-%m-%d %H:%M:%S");
+        format!("New task added (id {task_id}). It will be enqueued at {enqueue_at}",)
     } else {
-        format!("New task added (id {}).", task_id)
+        format!("New task added (id {task_id}).")
     };
 
     // Add a task. This also persists the state.

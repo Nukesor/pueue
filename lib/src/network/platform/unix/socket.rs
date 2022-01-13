@@ -72,13 +72,13 @@ pub type GenericStream = Box<dyn Stream>;
 pub async fn get_client_stream(settings: &Shared) -> Result<GenericStream, Error> {
     // Create a unix socket, if the config says so.
     if settings.use_unix_socket {
-        if !PathBuf::from(&settings.unix_socket_path()).exists() {
+        let unix_socket_path = settings.unix_socket_path();
+        if !PathBuf::from(&unix_socket_path).exists() {
             return Err(Error::FileNotFound(format!(
-                "Unix socket at path {:?}. Is the daemon started?",
-                &settings.unix_socket_path
+                "Unix socket at path {unix_socket_path:?}. Is the daemon started?",
             )));
         }
-        let stream = UnixStream::connect(&settings.unix_socket_path()).await?;
+        let stream = UnixStream::connect(&unix_socket_path).await?;
         return Ok(Box::new(stream));
     }
 
@@ -86,21 +86,20 @@ pub async fn get_client_stream(settings: &Shared) -> Result<GenericStream, Error
     let address = format!("{}:{}", &settings.host, &settings.port);
     let tcp_stream = TcpStream::connect(&address).await.map_err(|_| {
         Error::Connection(format!(
-            "Failed to connect to the daemon on {}. Did you start it?",
-            &address
+            "Failed to connect to the daemon on {address}. Did you start it?"
         ))
     })?;
 
     // Get the configured rustls TlsConnector
     let tls_connector = get_tls_connector(settings)
         .await
-        .map_err(|err| Error::Connection(format!("Failed to initialize tls connector {}.", err)))?;
+        .map_err(|err| Error::Connection(format!("Failed to initialize tls connector {err}.")))?;
 
     // Initialize the TLS layer
     let stream = tls_connector
         .connect(ServerName::try_from("pueue.local").unwrap(), tcp_stream)
         .await
-        .map_err(|err| Error::Connection(format!("Failed to initialize tls {}.", err)))?;
+        .map_err(|err| Error::Connection(format!("Failed to initialize tls {err}.")))?;
 
     Ok(Box::new(stream))
 }

@@ -102,8 +102,8 @@ fn save_state_to_file(state: &State, log: bool) -> Result<()> {
         let now: DateTime<Utc> = Utc::now();
         let time = now.format("%Y-%m-%d_%H-%M-%S");
         (
-            path.join(format!("{}_state.json.partial", time)),
-            path.join(format!("{}_state.json", time)),
+            path.join(format!("{time}_state.json.partial")),
+            path.join(format!("{time}_state.json")),
         )
     } else {
         (path.join("state.json.partial"), path.join("state.json"))
@@ -116,9 +116,9 @@ fn save_state_to_file(state: &State, log: bool) -> Result<()> {
     fs::rename(&temp, &real).context("Failed to overwrite old state while saving state")?;
 
     if log {
-        debug!("State backup created at: {:?}", real);
+        debug!("State backup created at: {real:?}");
     } else {
-        debug!("State saved at: {:?}", real);
+        debug!("State saved at: {real:?}");
     }
 
     Ok(())
@@ -134,10 +134,7 @@ pub fn restore_state(pueue_directory: &Path) -> Result<Option<State>> {
 
     // Ignore if the file doesn't exist. It doesn't have to.
     if !path.exists() {
-        info!(
-            "Couldn't find state from previous session at location: {:?}",
-            path
-        );
+        info!("Couldn't find state from previous session at location: {path:?}");
         return Ok(None);
     }
     info!("Start restoring state");

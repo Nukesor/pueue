@@ -92,8 +92,7 @@ impl Client {
         // Backward compatibility should work, but some features might not work as expected.
         if version != crate_version!() {
             println!(
-                "Different daemon version detected '{}'. Consider restarting the daemon.",
-                version
+                "Different daemon version detected '{version}'. Consider restarting the daemon."
             );
         }
 
@@ -299,21 +298,18 @@ impl Client {
     /// Returns `Ok(())` if the action was confirmed.
     fn handle_user_confirmation(&self, action: &str, task_ids: &[usize]) -> Result<()> {
         // printing warning and prompt
-        println!(
-            "You are trying to {}: {}",
-            action,
-            task_ids
-                .iter()
-                .map(|t| format!("task{}", t))
-                .collect::<Vec<String>>()
-                .join(", ")
-        );
+        let task_ids = task_ids
+            .iter()
+            .map(|t| format!("task{t}"))
+            .collect::<Vec<String>>()
+            .join(", ");
+        println!("You are trying to {action}: {task_ids}",);
 
         let mut input = String::new();
 
         loop {
             print!("Do you want to continue [Y/n]: ");
-            io::stdout().flush().unwrap();
+            io::stdout().flush()?;
             input.clear();
             io::stdin().read_line(&mut input)?;
 

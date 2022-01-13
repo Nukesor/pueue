@@ -9,7 +9,7 @@ documentation = "https://docs.rs/pueue/"
 license = "MIT"
 keywords = ["shell", "command", "parallel", "task", "queue"]
 readme = "README.md"
-rust-version = "1.56"
+rust-version = "1.58"
 edition = "2021"
 
 [badges]

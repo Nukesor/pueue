@@ -64,8 +64,10 @@ fn get_local_logs(settings: &Settings, id: usize, lines: Option<usize>) -> (Stri
         match get_log_file_handles(id, &settings.shared.pueue_directory()) {
             Ok((stdout, stderr)) => (stdout, stderr),
             Err(err) => {
-                let error = format!("(Pueue error) Failed to get log file handles: {}", err);
-                return (String::new(), error);
+                return (
+                    String::new(),
+                    format!("(Pueue error) Failed to get log file handles: {err}"),
+                );
             }
         };
 
@@ -75,8 +77,7 @@ fn get_local_logs(settings: &Settings, id: usize, lines: Option<usize>) -> (Stri
         let mut stdout = String::new();
         if let Err(error) = stdout_file.read_to_string(&mut stdout) {
             stdout.push_str(&format!(
-                "(Pueue error) Failed to read local log output file: {:?}",
-                error
+                "(Pueue error) Failed to read local log output file: {error:?}"
             ))
         };
 
@@ -89,8 +90,7 @@ fn get_local_logs(settings: &Settings, id: usize, lines: Option<usize>) -> (Stri
         let mut stderr = String::new();
         if let Err(error) = stderr_file.read_to_string(&mut stderr) {
             stderr.push_str(&format!(
-                "(Pueue error) Failed to read local log output file: {:?}",
-                error
+                "(Pueue error) Failed to read local log output file: {error:?}"
             ))
         };
 
@@ -111,8 +111,7 @@ fn get_remote_logs(
         let mut stdout = String::new();
         if let Err(error) = decoder.read_to_string(&mut stdout) {
             stdout.push_str(&format!(
-                "(Pueue error) Failed to decompress remote log output: {:?}",
-                error
+                "(Pueue error) Failed to decompress remote log output: {error:?}"
             ))
         }
         stdout
@@ -125,8 +124,7 @@ fn get_remote_logs(
         let mut stderr = String::new();
         if let Err(error) = decoder.read_to_string(&mut stderr) {
             stderr.push_str(&format!(
-                "(Pueue error) Failed to decompress remote log output: {:?}",
-                error
+                "(Pueue error) Failed to decompress remote log output: {error:?}"
             ))
         }
 

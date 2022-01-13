@@ -19,7 +19,7 @@ pub async fn get_tls_connector(settings: &Shared) -> Result<TlsConnector, Error>
     let ca = load_ca(&settings.daemon_cert())?;
     let mut cert_store = RootCertStore::empty();
     cert_store.add(&ca).map_err(|err| {
-        Error::CertificateFailure(format!("Failed to build RootCertStore: {}", err))
+        Error::CertificateFailure(format!("Failed to build RootCertStore: {err}"))
     })?;
 
     let config: ClientConfig = ClientConfig::builder()
@@ -47,17 +47,15 @@ pub fn get_tls_listener(settings: &Shared) -> Result<TlsAcceptor, Error> {
         .expect("Couldn't enforce TLS1.2 and TLS 1.3. This is a bug.")
         .with_no_client_auth()
         .with_single_cert(certs, key)
-        .map_err(|err| {
-            Error::CertificateFailure(format!("Failed to build TLS Acceptor: {}", err))
-        })?;
+        .map_err(|err| Error::CertificateFailure(format!("Failed to build TLS Acceptor: {err}")))?;
 
     Ok(TlsAcceptor::from(Arc::new(config)))
 }
 
 /// Load the passed certificates file
 fn load_certs(path: &Path) -> Result<Vec<Certificate>, Error> {
-    let file = File::open(path)
-        .map_err(|_| Error::FileNotFound(format!("Cannot open cert {:?}", path)))?;
+    let file =
+        File::open(path).map_err(|_| Error::FileNotFound(format!("Cannot open cert {path:?}")))?;
     let certs: Vec<Certificate> = rustls_pemfile::certs(&mut BufReader::new(file))
         .map_err(|_| Error::CertificateFailure("Failed to parse daemon certificate.".into()))?
         .into_iter()
@@ -71,7 +69,7 @@ fn load_certs(path: &Path) -> Result<Vec<Certificate>, Error> {
 /// Only the first key will be used. It should match the certificate.
 fn load_key(path: &Path) -> Result<PrivateKey, Error> {
     let file =
-        File::open(path).map_err(|_| Error::FileNotFound(format!("Cannot open key {:?}", path)))?;
+        File::open(path).map_err(|_| Error::FileNotFound(format!("Cannot open key {path:?}")))?;
 
     // Try to read pkcs8 format first
     let keys = pkcs8_private_keys(&mut BufReader::new(&file))
@@ -92,14 +90,13 @@ fn load_key(path: &Path) -> Result<PrivateKey, Error> {
     }
 
     Err(Error::CertificateFailure(format!(
-        "Couldn't extract private key from keyfile {:?}",
-        path
+        "Couldn't extract private key from keyfile {path:?}",
     )))
 }
 
 fn load_ca(path: &Path) -> Result<Certificate, Error> {
-    let file = File::open(path)
-        .map_err(|_| Error::FileNotFound(format!("Cannot open cert {:?}", path)))?;
+    let file =
+        File::open(path).map_err(|_| Error::FileNotFound(format!("Cannot open cert {path:?}")))?;
 
     let cert = rustls_pemfile::certs(&mut BufReader::new(file))
         .map_err(|_| Error::CertificateFailure("Failed to parse daemon certificate.".into()))?

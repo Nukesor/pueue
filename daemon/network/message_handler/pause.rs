@@ -32,7 +32,7 @@ pub fn pause(message: PauseMessage, sender: &Sender<Message>, state: &SharedStat
             &state,
         ),
         TaskSelection::Group(group) => {
-            create_success_message(format!("Group \"{}\" is being paused.", &group))
+            create_success_message(format!("Group \"{group}\" is being paused."))
         }
         TaskSelection::All => create_success_message("All queues are being paused."),
     }

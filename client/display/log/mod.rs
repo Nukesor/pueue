@@ -55,10 +55,7 @@ pub fn print_logs(
             lines,
             full,
         } => (*json, task_ids.clone(), *lines, *full),
-        _ => panic!(
-            "Got wrong Subcommand {:?} in print_log. This shouldn't happen",
-            cli_command
-        ),
+        _ => panic!("Got wrong Subcommand {cli_command:?} in print_log. This shouldn't happen"),
     };
 
     let lines = determine_log_line_amount(full, &lines);
@@ -193,5 +190,5 @@ fn print_task_info(task: &Task, colors: &Colors) {
     first_column.set_cell_alignment(CellAlignment::Right);
     first_column.set_padding((0, 0));
 
-    println!("{}", table);
+    println!("{table}");
 }

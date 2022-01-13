@@ -85,7 +85,7 @@ impl TaskHandler {
                 }
             }
             None => {
-                info!("Tried to start non-existing task: {}", task_id);
+                info!("Tried to start non-existing task: {task_id}");
                 return;
             }
         };
@@ -96,7 +96,7 @@ impl TaskHandler {
         {
             Ok((out, err)) => (out, err),
             Err(err) => {
-                panic!("Failed to create child log files: {:?}", err);
+                panic!("Failed to create child log files: {err:?}");
             }
         };
 
@@ -133,7 +133,7 @@ impl TaskHandler {
         let child = match spawned_command {
             Ok(child) => child,
             Err(err) => {
-                let error = format!("Failed to spawn child {} with err: {:?}", task_id, err);
+                let error = format!("Failed to spawn child {task_id} with err: {err:?}");
                 error!("{}", error);
                 clean_log_handles(task_id, &self.pueue_directory);
 

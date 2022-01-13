@@ -155,7 +155,7 @@ pub fn kill_child(task_id: usize, child: &mut Child, kill_children: bool) -> boo
     // Kill the parent first
     let kill_result = child.kill();
     if kill_result.is_err() {
-        info!("Task {} has already finished by itself", task_id);
+        info!("Task {task_id} has already finished by itself.");
         return false;
     }
 
@@ -175,10 +175,7 @@ pub fn kill_child(task_id: usize, child: &mut Child, kill_children: bool) -> boo
             let process_pid = child_process.pid();
             if let Err(error) = send_signal_to_process(process_pid, Signal::SIGKILL, kill_children)
             {
-                warn!(
-                    "Failed to send kill to pid {} with error {:?}",
-                    process_pid, error
-                );
+                warn!("Failed to send kill to pid {process_pid} with error {error:?}");
             }
         }
     } else if kill_children {
@@ -194,10 +191,7 @@ fn did_process_spawn_shell(pid: i32) -> Result<bool> {
     let process = if let Ok(process) = Process::new(pid) {
         process
     } else {
-        info!(
-            "Process to kill has probably just gone away. Process {}",
-            pid
-        );
+        info!("Process to kill has probably just gone away. Process {pid}");
         bail!("Process has just gone away");
     };
 
@@ -205,10 +199,7 @@ fn did_process_spawn_shell(pid: i32) -> Result<bool> {
     let mut cmdline = if let Ok(cmdline) = process.cmdline() {
         cmdline
     } else {
-        info!(
-            "Process to kill has probably just gone away. Process {}",
-            pid
-        );
+        info!("Process to kill has probably just gone away. Process {pid}");
         bail!("Process has just gone away");
     };
 
@@ -237,7 +228,7 @@ fn send_signal_to_process(
     signal: Signal,
     send_to_children: bool,
 ) -> Result<bool, nix::Error> {
-    debug!("Sending signal {} to {}", signal, pid);
+    debug!("Sending signal {signal} to {pid}");
 
     if send_to_children {
         let children = get_child_processes(pid);
@@ -260,10 +251,7 @@ fn send_signal_to_processes(processes: Vec<Process>, signal: Signal) {
 
         let pid = Pid::from_raw(process.pid);
         if let Err(error) = signal::kill(pid, signal) {
-            warn!(
-                "Failed to send signal {:?} to Pid {}: {:?}",
-                signal, process.pid, error
-            );
+            warn!("Failed to send signal {signal:?} to Pid {pid}: {error:?}");
         }
     }
 }
@@ -272,7 +260,7 @@ fn send_signal_to_processes(processes: Vec<Process>, signal: Signal) {
 fn get_child_processes(pid: i32) -> Vec<Process> {
     let all_processes = match all_processes() {
         Err(error) => {
-            warn!("Failed to get full process list: {}", error);
+            warn!("Failed to get full process list: {error}");
             return Vec::new();
         }
         Ok(processes) => processes,

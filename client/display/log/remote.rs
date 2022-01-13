@@ -15,26 +15,22 @@ pub fn print_remote_log(task_log: &TaskLogMessage, colors: &Colors) {
     // Save whether stdout was printed, so we can add a newline between outputs.
     if let Some(bytes) = task_log.stdout.as_ref() {
         if !bytes.is_empty() {
-            println!(
-                "\n{}",
-                style_text("stdout: ", Some(colors.green()), Some(Attribute::Bold))
-            );
+            let stdout_header = style_text("stdout: ", Some(colors.green()), Some(Attribute::Bold));
+            println!("\n{stdout_header}",);
 
             if let Err(err) = decompress_and_print_remote_log(bytes) {
-                println!("Error while parsing stdout: {}", err);
+                println!("Error while parsing stdout: {err}");
             }
         }
     }
 
     if let Some(bytes) = task_log.stderr.as_ref() {
         if !bytes.is_empty() {
-            println!(
-                "\n{}",
-                style_text("stderr: ", Some(colors.red()), Some(Attribute::Bold))
-            );
+            let stderr_header = style_text("stderr: ", Some(colors.red()), Some(Attribute::Bold));
+            println!("\n{stderr_header}");
 
             if let Err(err) = decompress_and_print_remote_log(bytes) {
-                println!("Error while parsing stderr: {}", err);
+                println!("Error while parsing stderr: {err}");
             };
         }
     }

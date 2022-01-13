@@ -223,8 +223,7 @@ impl Settings {
         if let Some(path) = from_file {
             if !path.exists() || !path.is_file() {
                 return Err(Error::FileNotFound(format!(
-                    "Couldn't find config at path {:?}",
-                    path
+                    "Couldn't find config at path {path:?}"
                 )));
             }
 
@@ -240,11 +239,11 @@ impl Settings {
         info!("Parsing config files");
         for directory in get_config_directories().into_iter() {
             let path = directory.join("pueue.yml");
-            info!("Checking path: {:?}", &path);
+            info!("Checking path: {path:?}");
 
             // Check if the file exists and parse it.
             if path.exists() && path.is_file() {
-                info!("Found config file at: {:?}", path);
+                info!("Found config file at: {path:?}");
 
                 // Open the file in read-only mode with buffer.
                 let file = File::open(path)?;
@@ -283,8 +282,7 @@ impl Settings {
             Ok(content) => content,
             Err(error) => {
                 return Err(Error::Generic(format!(
-                    "Configuration file serialization failed:\n{}",
-                    error
+                    "Configuration file serialization failed:\n{error}"
                 )))
             }
         };

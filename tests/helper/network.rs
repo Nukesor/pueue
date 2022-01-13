@@ -15,12 +15,12 @@ pub async fn send_message(shared: &Shared, message: Message) -> Result<Message> 
     // Check if we can receive the response from the daemon
     internal_send_message(message, &mut stream)
         .await
-        .map_err(|err| anyhow!("Failed to send message: {}", err))?;
+        .map_err(|err| anyhow!("Failed to send message: {err}"))?;
 
     // Check if we can receive the response from the daemon
     receive_message(&mut stream)
         .await
-        .map_err(|err| anyhow!("Failed to receive message: {}", err))
+        .map_err(|err| anyhow!("Failed to receive message: {err}"))
 }
 
 /// Create a new stream that already finished the handshake and secret exchange.
@@ -31,7 +31,7 @@ pub async fn get_authenticated_stream(shared: &Shared) -> Result<GenericStream> 
     let mut stream = match get_client_stream(shared).await {
         Ok(stream) => stream,
         Err(err) => {
-            panic!("Couldn't get client stream: {}", err);
+            panic!("Couldn't get client stream: {err}");
         }
     };
 

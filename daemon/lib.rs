@@ -42,7 +42,7 @@ pub async fn run(config_path: Option<PathBuf>, test: bool) -> Result<()> {
     // default config file once.
     if !config_found {
         if let Err(error) = settings.save(&config_path) {
-            bail!("Failed saving config file: {:?}.", error);
+            bail!("Failed saving config file: {error:?}.");
         }
     };
 
@@ -69,7 +69,7 @@ pub async fn run(config_path: Option<PathBuf>, test: bool) -> Result<()> {
         Ok(Some(state)) => state,
         Ok(None) => State::new(&settings, config_path.clone()),
         Err(error) => {
-            warn!("Failed to restore previous state:\n {:?}", error);
+            warn!("Failed to restore previous state:\n {error:?}");
             warn!("Using clean state instead.");
             State::new(&settings, config_path.clone())
         }
@@ -102,10 +102,7 @@ fn init_directories(pueue_dir: &Path) {
     // Pueue base path
     if !pueue_dir.exists() {
         if let Err(error) = create_dir_all(&pueue_dir) {
-            panic!(
-                "Failed to create main directory at {:?} error: {:?}",
-                pueue_dir, error
-            );
+            panic!("Failed to create main directory at {pueue_dir:?} error: {error:?}");
         }
     }
 
@@ -113,10 +110,7 @@ fn init_directories(pueue_dir: &Path) {
     let log_dir = pueue_dir.join("log");
     if !log_dir.exists() {
         if let Err(error) = create_dir_all(&log_dir) {
-            panic!(
-                "Failed to create log directory at {:?} error: {:?}",
-                log_dir, error
-            );
+            panic!("Failed to create log directory at {log_dir:?} error: {error:?}",);
         }
     }
 
@@ -124,10 +118,7 @@ fn init_directories(pueue_dir: &Path) {
     let certs_dir = pueue_dir.join("certs");
     if !certs_dir.exists() {
         if let Err(error) = create_dir_all(&certs_dir) {
-            panic!(
-                "Failed to create certificate directory at {:?} error: {:?}",
-                certs_dir, error
-            );
+            panic!("Failed to create certificate directory at {certs_dir:?} error: {error:?}");
         }
     }
 
@@ -135,10 +126,7 @@ fn init_directories(pueue_dir: &Path) {
     let logs_dir = pueue_dir.join("task_logs");
     if !logs_dir.exists() {
         if let Err(error) = create_dir_all(&logs_dir) {
-            panic!(
-                "Failed to create task logs directory at {:?} error: {:?}",
-                logs_dir, error
-            );
+            panic!("Failed to create task logs directory at {logs_dir:?} error: {error:?}");
         }
     }
 }
@@ -172,13 +160,13 @@ fn setup_signal_panic_handling(settings: &Settings, sender: &Sender<Message>) ->
         // Cleanup the pid file
         if let Err(error) = pid::cleanup_pid_file(&settings_clone.shared.pueue_directory()) {
             println!("Failed to cleanup pid after panic.");
-            println!("{}", error);
+            println!("{error}");
         }
 
         // Remove the unix socket.
         if let Err(error) = socket_cleanup(&settings_clone.shared) {
             println!("Failed to cleanup socket after panic.");
-            println!("{}", error);
+            println!("{error}");
         }
 
         std::process::exit(1);

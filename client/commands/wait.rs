@@ -58,7 +58,7 @@ pub async fn wait(
                 .collect::<Vec<Task>>();
 
             if tasks.is_empty() {
-                println!("No tasks found for group {}", group);
+                println!("No tasks found for group {group}");
                 return Ok(());
             }
 
@@ -77,12 +77,9 @@ pub async fn wait(
                     // Don't log anything if this is the first run
                     if !quiet && !first_run {
                         let color = get_color_for_status(&task.status, colors);
-                        println!(
-                            "{} - New task {} with status {}",
-                            current_time,
-                            style_text(task.id, None, Some(Attribute::Bold)),
-                            style_text(&task.status, Some(color), None),
-                        );
+                        let task_id = style_text(task.id, None, Some(Attribute::Bold));
+                        let status = style_text(&task.status, Some(color), None);
+                        println!("{current_time} - New task {task_id} with status {status}",);
                     }
                     watched_tasks.insert(task.id, task.status.clone());
 
@@ -132,63 +129,48 @@ fn log_status_change(
     if let TaskStatus::Done(result) = &task.status {
         let text = match result {
             TaskResult::Success => {
-                format!(
-                    "Task {} succeeded with {}",
-                    style_text(task.id, None, Some(Attribute::Bold)),
-                    style_text("0", Some(colors.green()), None)
-                )
+                let task_id = style_text(task.id, None, Some(Attribute::Bold));
+                let status = style_text("0", Some(colors.green()), None);
+                format!("Task {task_id} succeeded with {status}")
             }
             TaskResult::DependencyFailed => {
-                format!(
-                    "Task {} failed due to {}",
-                    style_text(task.id, None, Some(Attribute::Bold)),
-                    style_text("failed dependencies", Some(colors.red()), None)
-                )
+                let task_id = style_text(task.id, None, Some(Attribute::Bold));
+                let status = style_text("failed dependencies", Some(colors.red()), None);
+                format!("Task {task_id} failed due to {status}")
             }
 
             TaskResult::FailedToSpawn(_) => {
-                format!(
-                    "Task {} {}",
-                    style_text(task.id, None, Some(Attribute::Bold)),
-                    style_text("failed to spawn", Some(colors.red()), None)
-                )
+                let task_id = style_text(task.id, None, Some(Attribute::Bold));
+                let status = style_text("failed to spawn", Some(colors.red()), None);
+                format!("Task {task_id} {status}")
             }
             TaskResult::Failed(exit_code) => {
-                format!(
-                    "Task {} failed with {}",
-                    style_text(task.id, None, Some(Attribute::Bold)),
-                    style_text(exit_code, Some(colors.red()), Some(Attribute::Bold))
-                )
+                let task_id = style_text(task.id, None, Some(Attribute::Bold));
+                let status = style_text(exit_code, Some(colors.red()), Some(Attribute::Bold));
+                format!("Task {task_id} failed with {status}")
             }
             TaskResult::Errored => {
-                format!(
-                    "Task {} experienced an {}.",
-                    style_text(task.id, None, Some(Attribute::Bold)),
-                    style_text("IO error", Some(colors.red()), Some(Attribute::Bold))
-                )
+                let task_id = style_text(task.id, None, Some(Attribute::Bold));
+                let status = style_text("IO error", Some(colors.red()), Some(Attribute::Bold));
+                format!("Task {task_id} experienced an {status}.")
             }
             TaskResult::Killed => {
-                format!(
-                    "Task {} has been {}",
-                    style_text(task.id, None, Some(Attribute::Bold)),
-                    style_text("killed", Some(colors.red()), None)
-                )
+                let task_id = style_text(task.id, None, Some(Attribute::Bold));
+                let status = style_text("killed", Some(colors.red()), None);
+                format!("Task {task_id} has been {status}")
             }
         };
-        println!("{} - {}", current_time, text);
+        println!("{current_time} - {text}");
 
         return;
     }
     let new_status_color = get_color_for_status(&task.status, colors);
     let previous_status_color = get_color_for_status(&previous_status, colors);
 
-    println!(
-        "{} - Task {} changed from {} to {}",
-        current_time,
-        style_text(task.id, None, Some(Attribute::Bold)),
-        style_text(previous_status, Some(previous_status_color), None),
-        style_text(&task.status, Some(new_status_color), None),
-    );
+    let task_id = style_text(task.id, None, Some(Attribute::Bold));
+    let previous_status = style_text(previous_status, Some(previous_status_color), None);
+    let new_status = style_text(&task.status, Some(new_status_color), None);
+    println!("{current_time} - Task {task_id} changed from {previous_status} to {new_status}",);
 }
 
 fn get_color_for_status(task_status: &TaskStatus, colors: &Colors) -> Color {

@@ -46,12 +46,12 @@ pub fn init_shared_secret(path: &Path) -> Result<(), Error> {
         let mut permissions = file
             .metadata()
             .map_err(|err| {
-                Error::Generic(format!("Failed to set secret file permissions:\n{}", err))
+                Error::Generic(format!("Failed to set secret file permissions:\n{err}"))
             })?
             .permissions();
         permissions.set_mode(0o640);
         std::fs::set_permissions(path, permissions).map_err(|err| {
-            Error::Generic(format!("Failed to set secret file permissions:\n{}", err))
+            Error::Generic(format!("Failed to set secret file permissions:\n{err}"))
         })?;
     }
 

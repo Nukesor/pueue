@@ -27,7 +27,7 @@ fn test_restore_from_old_state() -> Result<()> {
         .join("v0.18.0_state.json");
 
     // Try to load the file.
-    let data = fs::read_to_string(&path).context("State restore: Failed to read file:\n\n{}")?;
+    let data = fs::read_to_string(&path).context("State restore: Failed to read file")?;
     // Try to deserialize the state file.
     let state: State = serde_json::from_str(&data).context("Failed to deserialize state.")?;
 

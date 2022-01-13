@@ -10,7 +10,7 @@ use super::*;
 pub async fn wait_for_group_status(
     shared: &Shared,
     group: &str,
-    _expected_status: GroupStatus,
+    expected_status: GroupStatus,
 ) -> Result<()> {
     let state = get_state(shared).await?;
 
@@ -30,11 +30,7 @@ pub async fn wait_for_group_status(
         current_try += 1;
     }
 
-    bail!(
-        "Group {} didn't change to state {:?} after about 1 sec.",
-        group,
-        _expected_status
-    );
+    bail!("Group {group} didn't change to state {expected_status:?} after about 1 sec.",);
 }
 
 /// Create a new group with a specific amount of slots.

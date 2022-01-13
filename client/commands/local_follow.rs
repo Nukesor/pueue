@@ -39,8 +39,7 @@ pub async fn local_follow(
                         .collect::<Vec<_>>()
                         .join(", ");
                     bail!(
-                        "Multiple tasks are running, please select one of the following: {}",
-                        running_ids
+                        "Multiple tasks are running, please select one of the following: {running_ids}",
                     );
                 }
             }
