@@ -16,7 +16,7 @@ pub type SharedState = Arc<Mutex<State>>;
 
 /// Represents the current status of a group.
 /// Each group acts as a queue and can be managed individually.
-#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Clone, Debug, Copy, Deserialize, Serialize)]
 pub enum GroupStatus {
     Running,
     Paused,
@@ -180,7 +180,7 @@ impl State {
     /// Set the group status (running/paused) for all groups including the default queue.
     pub fn set_status_for_all_groups(&mut self, status: GroupStatus) {
         for (_, group) in self.groups.iter_mut() {
-            group.status = status.clone();
+            group.status = status;
         }
     }
 
