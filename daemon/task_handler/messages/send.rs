@@ -16,7 +16,7 @@ impl TaskHandler {
         };
         {
             let child_stdin = child.stdin.as_mut().unwrap();
-            if let Err(err) = child_stdin.write_all(&input.clone().into_bytes()) {
+            if let Err(err) = child_stdin.write_all(&input.into_bytes()) {
                 error!("Failed to send input to task {task_id} with err {err:?}");
             };
         }
