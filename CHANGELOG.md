@@ -26,6 +26,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Improved memory footprint for reading partial logs.
 - Always only show the last X lines of output when using `pueue log` without additional parameters.
+- **Breaking changes:** The `group` subcommand now has `group add [-p $count] $name` and `group remove $name` subcommands.
+    The old `group [-a,-p,-r]` flags have been removed.
 - **Breaking changes:** The configuration for groups can no longer be done via configuration file.
     This means, that groups can only be edited, created or deleted via the commandline interface.
     The amount of parallel tasks will also be reset to `1` when upgrading.

@@ -265,18 +265,8 @@ pub enum SubCommand {
     /// Use this to add or remove groups.
     /// By default, this will simply display all known groups.
     Group {
-        /// Add a group by name.
-        #[clap(short, long, conflicts_with = "remove")]
-        add: Option<String>,
-
-        /// Set the amount of parallel tasks this group can do
-        #[clap(short, long, validator = min_one, conflicts_with = "remove")]
-        parallel: Option<usize>,
-
-        /// Remove a group by name.
-        /// This will move all tasks in this group to the default group!
-        #[clap(short, long)]
-        remove: Option<String>,
+        #[clap(subcommand)]
+        cmd: Option<GroupCommand>,
     },
 
     /// Display the current status of all tasks.
@@ -403,6 +393,22 @@ pub enum SubCommand {
         /// The output directory to which the file should be written.
         output_directory: PathBuf,
     },
+}
+
+#[derive(Parser, Debug)]
+pub enum GroupCommand {
+    /// Add a group by name.
+    Add {
+        name: String,
+
+        /// Set the amount of parallel tasks this group can have.
+        #[clap(short, long, validator = min_one, conflicts_with = "remove")]
+        parallel: Option<usize>,
+    },
+
+    /// Remove a group by name.
+    /// This will move all tasks in this group to the default group!
+    Remove { name: String },
 }
 
 #[derive(Parser, ArgEnum, Debug, Clone, PartialEq)]
