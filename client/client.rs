@@ -14,11 +14,7 @@ use pueue_lib::settings::Settings;
 use pueue_lib::state::PUEUE_DEFAULT_GROUP;
 
 use crate::cli::{CliArguments, GroupCommand, SubCommand};
-use crate::commands::edit::edit;
-use crate::commands::get_state;
-use crate::commands::local_follow::local_follow;
-use crate::commands::restart::restart;
-use crate::commands::wait::wait;
+use crate::commands::*;
 use crate::display::*;
 
 /// This struct contains the base logic for the client.
@@ -213,7 +209,6 @@ impl Client {
                 .await?;
                 Ok(true)
             }
-
             SubCommand::Follow {
                 task_id,
                 err,
@@ -234,7 +229,10 @@ impl Client {
                 }
                 Ok(false)
             }
-
+            SubCommand::FormatStatus { group } => {
+                format_state(group, &self.colors, &self.settings).await?;
+                Ok(true)
+            }
             _ => Ok(false),
         }
     }
@@ -544,6 +542,7 @@ impl Client {
                 }
                 None => Ok(Message::Group(GroupMessage::List)),
             },
+            SubCommand::FormatStatus { .. } => bail!("FormatStatus has to be handled earlier"),
             SubCommand::Completions { .. } => bail!("Completions have to be handled earlier"),
             SubCommand::Restart { .. } => bail!("Restarts have to be handled earlier"),
             SubCommand::Edit { .. } => bail!("Edits have to be handled earlier"),
