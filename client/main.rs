@@ -48,7 +48,12 @@ async fn main() -> Result<()> {
     SimpleLogger::init(level, Config::default()).unwrap();
 
     // Try to read settings from the configuration file.
-    let (settings, config_found) = Settings::read(&opt.config)?;
+    let (mut settings, config_found) = Settings::read(&opt.config)?;
+
+    // Load any requested profile.
+    if let Some(profile) = &opt.profile {
+        settings.load_profile(profile)?;
+    }
 
     #[allow(deprecated)]
     if settings.daemon.groups.is_some() {

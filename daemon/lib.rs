@@ -33,9 +33,9 @@ mod task_handler;
 /// There are some global operations that crash during tests, such as the ctlc handler.
 /// This is due to the fact, that tests in the same file are executed in multiple threads.
 /// Since the threads own the same global space, this would crash.
-pub async fn run(config_path: Option<PathBuf>, test: bool) -> Result<()> {
+pub async fn run(config_path: Option<PathBuf>, profile: Option<String>, test: bool) -> Result<()> {
     // Try to read settings from the configuration file.
-    let (settings, config_found) = Settings::read(&config_path)?;
+    let (mut settings, config_found) = Settings::read(&config_path)?;
 
     // We couldn't find a configuration file.
     // This probably means that Pueue has been started for the first time and we have to create a
@@ -45,6 +45,11 @@ pub async fn run(config_path: Option<PathBuf>, test: bool) -> Result<()> {
             bail!("Failed saving config file: {error:?}.");
         }
     };
+
+    // Load any requested profile.
+    if let Some(profile) = &profile {
+        settings.load_profile(profile)?;
+    }
 
     #[allow(deprecated)]
     if settings.daemon.groups.is_some() {

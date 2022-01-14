@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
 
@@ -55,7 +56,7 @@ pub async fn daemon() -> Result<PueueDaemon> {
 
 /// Internal helper function, which wraps the daemon main logic inside tokio and prints any errors.
 async fn run_and_handle_error(pueue_dir: PathBuf, test: bool) -> Result<()> {
-    if let Err(err) = run(Some(pueue_dir.join("pueue.yml")), test).await {
+    if let Err(err) = run(Some(pueue_dir.join("pueue.yml")), None, test).await {
         let mut stdout = io::stdout();
         stdout
             .write_all(format!("Entcountered error: {:?}", err).as_bytes())
@@ -142,6 +143,7 @@ pub fn daemon_base_setup() -> Result<(Settings, TempDir)> {
         client,
         daemon,
         shared,
+        profiles: HashMap::new(),
     };
 
     settings

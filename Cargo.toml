@@ -23,8 +23,7 @@ name = "pueue"
 path = "client/main.rs"
 
 # Split the daemon logic in a lib and bin crate.
-# The bin crate uses the lib to for all logic, but using a lib allows
-# us to do proper integration testing.
+# Using a lib allows us to do proper integration testing.
 [lib]
 name = "pueue_daemon_lib"
 path = "daemon/lib.rs"

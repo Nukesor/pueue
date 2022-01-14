@@ -16,6 +16,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Add `--lines` parameter to `pueue follow` to only show specified number of lines from stdout before following [#270](https://github.com/Nukesor/pueue/issues/270).
 - Notify the user if a task is added to a paused group [#265](https://github.com/Nukesor/pueue/issues/265).
 - Notify the user that when killing whole groups, those groups are also paused [#265](https://github.com/Nukesor/pueue/issues/265).
+- Implementation of configuration profiles [#244](https://github.com/Nukesor/pueue/issues/244).
+    This supports multiple profiles in a single `pueue.yml`, which can be loaded via the `--profile/-p $name` flag.
 - Added the `shared.runtime_directory` config variable for any runtime related files, such as sockets.
 - `XDG_CONFIG_HOME` is respected for Pueue's config directory [#243](https://github.com/Nukesor/pueue/issues/243).
 - `XDG_DATA_HOME` is used if the `pueue_directory` config isn't explicitly set [#243](https://github.com/Nukesor/pueue/issues/243).

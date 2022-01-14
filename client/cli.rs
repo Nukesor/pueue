@@ -432,6 +432,10 @@ pub struct CliArguments {
     #[clap(short, long)]
     pub config: Option<PathBuf>,
 
+    /// The name of the profile that should be loaded from your config file.
+    #[clap(short, long)]
+    pub profile: Option<String>,
+
     #[clap(subcommand)]
     pub cmd: Option<SubCommand>,
 }

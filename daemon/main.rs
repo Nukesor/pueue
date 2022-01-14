@@ -25,7 +25,7 @@ async fn main() -> Result<()> {
     };
     SimpleLogger::init(level, Config::default()).unwrap();
 
-    run(opt.config, false).await
+    run(opt.config, opt.profile, false).await
 }
 
 /// This is a simple and cheap custom fork method.
