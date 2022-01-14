@@ -45,10 +45,12 @@ pub fn kill(message: KillMessage, sender: &Sender<Message>, state: &SharedState)
                 |task| task.is_running(),
                 &state,
             ),
-            TaskSelection::Group(group) => {
-                create_success_message(format!("All tasks of group \"{group}\" are being killed."))
+            TaskSelection::Group(group) => create_success_message(format!(
+                "All tasks of group \"{group}\" are being killed. The group will also be paused!!!"
+            )),
+            TaskSelection::All => {
+                create_success_message("All tasks are being killed. All groups will be paused!!!")
             }
-            TaskSelection::All => create_success_message("All tasks are being killed."),
         }
     }
 }
