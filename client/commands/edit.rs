@@ -2,7 +2,7 @@ use std::env;
 use std::io::{Read, Seek, SeekFrom, Write};
 use std::process::Command;
 
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 use tempfile::NamedTempFile;
 
 use pueue_lib::network::message::*;
@@ -35,9 +35,9 @@ pub async fn edit(stream: &mut GenericStream, task_id: usize, edit_path: bool) -
     let mut command = init_response.command;
     let mut path = init_response.path;
     if edit_path {
-        path = edit_line(&path)?;
+        path = edit_line_wrapper(stream, task_id, &path).await?;
     } else {
-        command = edit_line(&command)?
+        command = edit_line_wrapper(stream, task_id, &command).await?
     };
 
     // Create a new message with the edited command.
@@ -51,20 +51,57 @@ pub async fn edit(stream: &mut GenericStream, task_id: usize, edit_path: bool) -
     Ok(receive_message(stream).await?)
 }
 
+/// This function wraps the edit_line function for error handling.
+///
+/// Any error will result in the client aborting the editing process.
+/// This includes notifying the daemon of this, so it can restore the task to its previous state.
+pub async fn edit_line_wrapper(
+    stream: &mut GenericStream,
+    task_id: usize,
+    line: &str,
+) -> Result<String> {
+    match edit_line(line) {
+        Ok(edited_line) => Ok(edited_line),
+        Err(error) => {
+            eprintln!("Encountered an error while editing. Trying to restore the task's status.");
+            // Notify the daemon that something went wrong.
+            let edit_message = Message::EditRestore(task_id);
+            send_message(edit_message, stream).await?;
+            let response = receive_message(stream).await?;
+            match response {
+                Message::Failure(message) | Message::Success(message) => {
+                    eprintln!("{message}");
+                }
+                _ => eprintln!("Received unknown resonse: {response:?}"),
+            };
+
+            Err(error)
+        }
+    }
+}
+
 /// This function allows the user to edit a task's command or path.
 /// Save the string to a temporary file, which is the edited by the user with $EDITOR.
 /// As soon as the editor is closed, read the file content and return the line
-pub fn edit_line(line: &str) -> Result<String> {
+fn edit_line(line: &str) -> Result<String> {
     // Create a temporary file with the command so we can edit it with the editor.
     let mut file = NamedTempFile::new().expect("Failed to create a temporary file");
-    writeln!(file, "{}", line).expect("Failed writing to temporary file");
+    writeln!(file, "{}", line).context("Failed to write to temporary file.")?;
 
     // Start the editor on this file.
-    let editor = &env::var("EDITOR").unwrap_or_else(|_e| "vi".to_string());
-    Command::new(editor)
+    let editor = match env::var("EDITOR") {
+        Err(_) => bail!("The '$EDITOR' environment variable couldn't be read. Aborting."),
+        Ok(editor) => editor,
+    };
+
+    let status = Command::new(editor)
         .arg(file.path())
         .status()
-        .context("Failed to start editor. Do you have the $EDITOR environment variable set?")?;
+        .context("Editor command did somehow fail. Aborting.")?;
+
+    if !status.success() {
+        bail!("The editor exited with a non-zero code. Aborting.");
+    }
 
     // Read the file.
     let mut file = file.into_file();

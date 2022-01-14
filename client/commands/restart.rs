@@ -4,7 +4,7 @@ use pueue_lib::network::message::*;
 use pueue_lib::network::protocol::*;
 use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
-use crate::commands::edit::edit_line;
+use crate::commands::edit::edit_line_wrapper;
 use crate::commands::get_state;
 
 /// When Restarting tasks, the remote state is queried and a AddMessage
@@ -81,10 +81,10 @@ pub async fn restart(
         let mut command = task.original_command.clone();
         let mut path = task.path.clone();
         if edit_command {
-            command = edit_line(&command)?
+            command = edit_line_wrapper(stream, *task_id, &command).await?
         };
         if edit_path {
-            path = edit_line(&path)?;
+            path = edit_line_wrapper(stream, *task_id, &path).await?;
         }
 
         // Add the tasks to the singular message, if we want to restart the tasks in-place.

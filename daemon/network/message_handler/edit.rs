@@ -54,3 +54,23 @@ pub fn edit(message: EditMessage, state: &SharedState) -> Message {
         None => create_failure_message(format!("Task to edit has gone away: {}", message.task_id)),
     }
 }
+
+/// Invoked if a client fails to edit a task and asks the daemon to restore the task's status.
+pub fn edit_restore(task_id: usize, state: &SharedState) -> Message {
+    // Check whether the task exists and is queued/stashed. Abort if that's not the case.
+    let mut state = state.lock().unwrap();
+    match state.tasks.get_mut(&task_id) {
+        Some(task) => {
+            if task.status != TaskStatus::Locked {
+                return create_failure_message("The requested task isn't locked");
+            }
+            task.status = task.prev_status.clone();
+
+            return create_success_message(format!(
+                "The requested task's status has been restored to '{}'",
+                task.status
+            ));
+        }
+        None => create_failure_message("No task with this id."),
+    }
+}

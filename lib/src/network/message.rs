@@ -28,6 +28,9 @@ pub enum Message {
     /// The first part of the three-step protocol to edit a task.
     /// This one requests an edit from the daemon.
     EditRequest(usize),
+    /// This is send by the client if something went wrong during the editing process.
+    /// The daemon will go ahead and restore the task's old state.
+    EditRestore(usize),
     /// The daemon locked the task and responds with the task's details.
     EditResponse(EditResponseMessage),
     /// The client sends the edited details to the daemon.
