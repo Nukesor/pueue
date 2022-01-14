@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - `XDG_DATA_HOME` is used if the `pueue_directory` config isn't explicitly set [#243](https://github.com/Nukesor/pueue/issues/243).
 - `XDG_RUNTIME_DIR` is used if the new `runtime_directory` config isn't explicitly set [#243](https://github.com/Nukesor/pueue/issues/243).
 - Add `lines` to `LogRequestMessage` [#270](https://github.com/Nukesor/pueue/issues/270).
+- Add a new message type `Message::EditRestore`, which is used to notify the daemon of a failed editing process.
 
 ### Removed
 

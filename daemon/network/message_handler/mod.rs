@@ -30,6 +30,7 @@ pub fn handle_message(message: Message, sender: &Sender<Message>, state: &Shared
         Message::Clean(message) => clean::clean(message, state),
         Message::Edit(message) => edit::edit(message, state),
         Message::EditRequest(task_id) => edit::edit_request(task_id, state),
+        Message::EditRestore(task_id) => edit::edit_restore(task_id, state),
         Message::Enqueue(message) => enqueue::enqueue(message, state),
         Message::Group(message) => group::group(message, sender, state),
         Message::Kill(message) => kill::kill(message, sender, state),
