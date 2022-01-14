@@ -16,6 +16,7 @@ use crate::cli::SubCommand;
 pub fn print_state(state: State, cli_command: &SubCommand, colors: &Colors, settings: &Settings) {
     let (json, group_only) = match cli_command {
         SubCommand::Status { json, group } => (*json, group.clone()),
+        SubCommand::FormatStatus { group } => (false, group.clone()),
         _ => panic!("Got wrong Subcommand {cli_command:?} in print_state. This shouldn't happen!"),
     };
 
@@ -41,16 +42,23 @@ fn print_single_group(
     settings: &Settings,
     colors: &Colors,
     mut sorted_tasks: BTreeMap<String, BTreeMap<usize, Task>>,
-    group: String,
+    group_name: String,
 ) {
+    let group = if let Some(group) = state.groups.get(&group_name) {
+        group
+    } else {
+        eprintln!("There exists no group \"{group_name}\"");
+        return;
+    };
+
     // Only a single group is requested. Print that group and return.
-    let tasks = sorted_tasks.entry(group.clone()).or_default();
-    let headline = get_group_headline(&group, state.groups.get(&group).unwrap(), colors);
-    println!("{}", headline);
+    let tasks = sorted_tasks.entry(group_name.clone()).or_default();
+    let headline = get_group_headline(&group_name, group, colors);
+    println!("{headline}");
 
     // Show a message if the requested group doesn't have any tasks.
     if tasks.is_empty() {
-        println!("Task list is empty. Add tasks with `pueue add -g {group} -- [cmd]`");
+        println!("Task list is empty. Add tasks with `pueue add -g {group_name} -- [cmd]`");
         return;
     }
     print_table(tasks, colors, settings);

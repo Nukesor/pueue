@@ -47,6 +47,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Recover tasks from `Locked` state if editing fails [#267](https://github.com/Nukesor/pueue/issues/267)
 - `pueue log` now behaves the same for local and remote logs.
      Remote logs previously showed more lines under some circumstances.
+- panic due to rogue `.unwrap()` when filtering for a non-existing group in `pueue status`.
 
 ## [1.0.5] - 2022-01-02
 
