@@ -26,24 +26,18 @@ pub fn print_state(state: State, cli_command: &SubCommand, colors: &Colors, sett
         return;
     }
 
-    // Sort all tasks by their respective group;
-    let sorted_tasks = sort_tasks_by_group(&state.tasks);
-
     if let Some(group) = group_only {
-        print_single_group(state, settings, colors, sorted_tasks, group);
+        print_single_group(state, settings, colors, group);
         return;
     }
 
-    print_all_groups(state, settings, colors, sorted_tasks);
+    print_all_groups(state, settings, colors);
 }
 
-fn print_single_group(
-    state: State,
-    settings: &Settings,
-    colors: &Colors,
-    mut sorted_tasks: BTreeMap<String, BTreeMap<usize, Task>>,
-    group_name: String,
-) {
+fn print_single_group(state: State, settings: &Settings, colors: &Colors, group_name: String) {
+    // Sort all tasks by their respective group;
+    let mut sorted_tasks = sort_tasks_by_group(state.tasks);
+
     let group = if let Some(group) = state.groups.get(&group_name) {
         group
     } else {
@@ -64,12 +58,7 @@ fn print_single_group(
     print_table(tasks, colors, settings);
 }
 
-fn print_all_groups(
-    state: State,
-    settings: &Settings,
-    colors: &Colors,
-    sorted_tasks: BTreeMap<String, BTreeMap<usize, Task>>,
-) {
+fn print_all_groups(state: State, settings: &Settings, colors: &Colors) {
     // Early exit and hint if there are no tasks in the queue
     // Print the state of the default group anyway, since this is information one wants to
     // see most of the time anyway.
@@ -83,6 +72,9 @@ fn print_all_groups(
         println!("Task list is empty. Add tasks with `pueue add -- [cmd]`");
         return;
     }
+
+    // Sort all tasks by their respective group;
+    let sorted_tasks = sort_tasks_by_group(state.tasks);
 
     // Always print the default queue at the very top, if no specific group is requested.
     if sorted_tasks.get(PUEUE_DEFAULT_GROUP).is_some() {
