@@ -229,8 +229,14 @@ impl Client {
                 }
                 Ok(false)
             }
-            SubCommand::FormatStatus { group } => {
-                format_state(group, &self.colors, &self.settings).await?;
+            SubCommand::FormatStatus { .. } => {
+                format_state(
+                    &mut self.stream,
+                    &self.subcommand,
+                    &self.colors,
+                    &self.settings,
+                )
+                .await?;
                 Ok(true)
             }
             _ => Ok(false),

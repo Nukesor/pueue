@@ -26,7 +26,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - The `format-status` subcommand [#213](https://github.com/Nukesor/pueue/issues/213).
     This is a preliminary feature, which allows users to use external tools, such as `jq`, to filter Pueue's `state -j` output and pipe them back into `format-status` to display it.
     This feature will probably be removed once a proper internal filter logic has been added. \
-    The simplest usage looks like this: `pueue status -j | pueue format-status
+    The simplest usage looks like this: `pueue status --json | jq -c '.tasks' | pueue format-status`
 
 ### Changed
 

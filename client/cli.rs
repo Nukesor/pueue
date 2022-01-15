@@ -282,10 +282,9 @@ pub enum SubCommand {
         group: Option<String>,
     },
 
-    /// Accept a JSON pueue state via stdin and display it.
-    /// The state will then be displayed as usual.
-    /// The most simple example would look like this:
-    /// pueue status -j | pueue format-status
+    /// Accept a map of JSON pueue tasks via stdin and display it just like "status".
+    /// A simple example might look like this:
+    /// pueue status --json | jq -c '.tasks' | pueue format-status
     #[clap(after_help = "DISCLAIMER:
     This command is a temporary workaround until a proper filtering language for \"status\" has
     been implemented. It might be removed in the future.")]
