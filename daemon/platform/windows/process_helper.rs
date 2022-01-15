@@ -239,8 +239,10 @@ pub fn process_exists(pid: u32) -> bool {
     unsafe {
         let handle = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 
-        let mut process_entry = PROCESSENTRY32::default();
-        process_entry.dwSize = std::mem::size_of::<PROCESSENTRY32>() as u32;
+        let mut process_entry = PROCESSENTRY32 {
+            dwSize: std::mem::size_of::<PROCESSENTRY32>() as u32,
+            ..Default::default()
+        };
 
         loop {
             if process_entry.th32ProcessID == pid {
