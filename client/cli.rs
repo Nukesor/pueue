@@ -282,6 +282,18 @@ pub enum SubCommand {
         group: Option<String>,
     },
 
+    /// Accept a list or map of JSON pueue tasks via stdin and display it just like "status".
+    /// A simple example might look like this:
+    /// pueue status --json | jq -c '.tasks' | pueue format-status
+    #[clap(after_help = "DISCLAIMER:
+    This command is a temporary workaround until a proper filtering language for \"status\" has
+    been implemented. It might be removed in the future.")]
+    FormatStatus {
+        #[clap(short, long)]
+        /// Only show tasks of a specific group
+        group: Option<String>,
+    },
+
     /// Display the log output of finished tasks.
     /// When looking at multiple logs, only the last few lines will be shown.
     /// If you want to "follow" the output of a task, please use the "follow" subcommand.

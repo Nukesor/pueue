@@ -23,6 +23,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - `XDG_DATA_HOME` is used if the `pueue_directory` config isn't explicitly set [#243](https://github.com/Nukesor/pueue/issues/243).
 - `XDG_RUNTIME_DIR` is used if the new `runtime_directory` config isn't explicitly set [#243](https://github.com/Nukesor/pueue/issues/243).
 - The unix socket is now located in the `runtime_directory` by default [#243](https://github.com/Nukesor/pueue/issues/243).
+- The `format-status` subcommand [#213](https://github.com/Nukesor/pueue/issues/213).
+    This is a preliminary feature, which allows users to use external tools, such as `jq`, to filter Pueue's `state -j` output and pipe them back into `format-status` to display it.
+    This feature will probably be removed once a proper internal filter logic has been added. \
+    The simplest usage looks like this: `pueue status --json | jq -c '.tasks' | pueue format-status`
 
 ### Changed
 
@@ -47,6 +51,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Recover tasks from `Locked` state if editing fails [#267](https://github.com/Nukesor/pueue/issues/267)
 - `pueue log` now behaves the same for local and remote logs.
      Remote logs previously showed more lines under some circumstances.
+- panic due to rogue `.unwrap()` when filtering for a non-existing group in `pueue status`.
 
 ## [1.0.5] - 2022-01-02
 

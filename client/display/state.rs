@@ -16,6 +16,7 @@ use crate::cli::SubCommand;
 pub fn print_state(state: State, cli_command: &SubCommand, colors: &Colors, settings: &Settings) {
     let (json, group_only) = match cli_command {
         SubCommand::Status { json, group } => (*json, group.clone()),
+        SubCommand::FormatStatus { group } => (false, group.clone()),
         _ => panic!("Got wrong Subcommand {cli_command:?} in print_state. This shouldn't happen!"),
     };
 
@@ -25,43 +26,39 @@ pub fn print_state(state: State, cli_command: &SubCommand, colors: &Colors, sett
         return;
     }
 
-    // Sort all tasks by their respective group;
-    let sorted_tasks = sort_tasks_by_group(&state.tasks);
-
     if let Some(group) = group_only {
-        print_single_group(state, settings, colors, sorted_tasks, group);
+        print_single_group(state, settings, colors, group);
         return;
     }
 
-    print_all_groups(state, settings, colors, sorted_tasks);
+    print_all_groups(state, settings, colors);
 }
 
-fn print_single_group(
-    state: State,
-    settings: &Settings,
-    colors: &Colors,
-    mut sorted_tasks: BTreeMap<String, BTreeMap<usize, Task>>,
-    group: String,
-) {
+fn print_single_group(state: State, settings: &Settings, colors: &Colors, group_name: String) {
+    // Sort all tasks by their respective group;
+    let mut sorted_tasks = sort_tasks_by_group(state.tasks);
+
+    let group = if let Some(group) = state.groups.get(&group_name) {
+        group
+    } else {
+        eprintln!("There exists no group \"{group_name}\"");
+        return;
+    };
+
     // Only a single group is requested. Print that group and return.
-    let tasks = sorted_tasks.entry(group.clone()).or_default();
-    let headline = get_group_headline(&group, state.groups.get(&group).unwrap(), colors);
-    println!("{}", headline);
+    let tasks = sorted_tasks.entry(group_name.clone()).or_default();
+    let headline = get_group_headline(&group_name, group, colors);
+    println!("{headline}");
 
     // Show a message if the requested group doesn't have any tasks.
     if tasks.is_empty() {
-        println!("Task list is empty. Add tasks with `pueue add -g {group} -- [cmd]`");
+        println!("Task list is empty. Add tasks with `pueue add -g {group_name} -- [cmd]`");
         return;
     }
     print_table(tasks, colors, settings);
 }
 
-fn print_all_groups(
-    state: State,
-    settings: &Settings,
-    colors: &Colors,
-    sorted_tasks: BTreeMap<String, BTreeMap<usize, Task>>,
-) {
+fn print_all_groups(state: State, settings: &Settings, colors: &Colors) {
     // Early exit and hint if there are no tasks in the queue
     // Print the state of the default group anyway, since this is information one wants to
     // see most of the time anyway.
@@ -75,6 +72,9 @@ fn print_all_groups(
         println!("Task list is empty. Add tasks with `pueue add -- [cmd]`");
         return;
     }
+
+    // Sort all tasks by their respective group;
+    let sorted_tasks = sort_tasks_by_group(state.tasks);
 
     // Always print the default queue at the very top, if no specific group is requested.
     if sorted_tasks.get(PUEUE_DEFAULT_GROUP).is_some() {
