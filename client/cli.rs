@@ -282,7 +282,7 @@ pub enum SubCommand {
         group: Option<String>,
     },
 
-    /// Accept a map of JSON pueue tasks via stdin and display it just like "status".
+    /// Accept a list or map of JSON pueue tasks via stdin and display it just like "status".
     /// A simple example might look like this:
     /// pueue status --json | jq -c '.tasks' | pueue format-status
     #[clap(after_help = "DISCLAIMER:
