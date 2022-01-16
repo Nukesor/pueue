@@ -134,6 +134,7 @@ impl Default for Settings {
                 port: default_port(),
                 ..Default::default()
             },
+            profiles: HashMap::new(),
         }
     }
 }
@@ -142,6 +143,18 @@ impl Default for Settings {
 /// This contains all other setting structs.
 #[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
 pub struct Settings {
+    pub client: Client,
+    pub daemon: Daemon,
+    pub shared: Shared,
+    #[serde(default = "HashMap::new")]
+    pub profiles: HashMap<String, NestedSettings>,
+}
+
+/// The nested settings struct for profiles. \
+/// In contrast to the normal `Settings` struct, this struct doesn't allow profiles.
+/// That way we prevent nested profiles and problems with self-referencing structs.
+#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
+pub struct NestedSettings {
     pub client: Client,
     pub daemon: Daemon,
     pub shared: Shared,
@@ -290,5 +303,76 @@ impl Settings {
         file.write_all(content.as_bytes())?;
 
         Ok(())
+    }
+
+    /// Try to load a profile. Error if it doesn't exist.
+    pub fn load_profile(&mut self, profile: &str) -> Result<(), Error> {
+        let profile = self.profiles.remove(profile).ok_or_else(|| {
+            Error::ConfigDeserialization(format!("Couldn't find profile with name \"{profile}\""))
+        })?;
+
+        self.client = profile.client;
+        self.daemon = profile.daemon;
+        self.shared = profile.shared;
+
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    /// Check if profiles get loaded correctly.
+    #[test]
+    fn test_load_profile() {
+        // Create some default settings and ensure that default values are loaded.
+        let mut settings = Settings::default();
+        assert_eq!(
+            settings.client.status_time_format,
+            default_status_time_format()
+        );
+        assert_eq!(
+            settings.daemon.callback_log_lines,
+            default_callback_log_lines()
+        );
+        assert_eq!(settings.shared.host, default_host());
+
+        // Crate a new profile with slightly different values.
+        let mut profile = Settings::default();
+        profile.client.status_time_format = "test".to_string();
+        profile.daemon.callback_log_lines = 100_000;
+        profile.shared.host = "quatschhost".to_string();
+        let profile = NestedSettings {
+            client: profile.client,
+            daemon: profile.daemon,
+            shared: profile.shared,
+        };
+
+        settings.profiles.insert("testprofile".to_string(), profile);
+
+        // Load the profile and ensure the new values are now loaded.
+        settings
+            .load_profile("testprofile")
+            .expect("We just added the profile");
+
+        assert_eq!(settings.client.status_time_format, "test");
+        assert_eq!(settings.daemon.callback_log_lines, 100_000);
+        assert_eq!(settings.shared.host, "quatschhost");
+    }
+
+    /// A proper pueue [Error] should be thrown if the profile cannot be found.
+    #[test]
+    fn test_error_on_missing_profile() {
+        let mut settings = Settings::default();
+
+        let result = settings.load_profile("doesn't exist");
+        let expected_error_message = "Couldn't find profile with name \"doesn't exist\"";
+        if let Err(Error::ConfigDeserialization(error_message)) = result {
+            assert_eq!(error_message, expected_error_message);
+            return;
+        }
+
+        panic!("Got unexpected result when expecting missing profile error: {result:?}");
     }
 }
