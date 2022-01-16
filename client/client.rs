@@ -533,14 +533,17 @@ impl Client {
             SubCommand::Parallel {
                 parallel_tasks,
                 group,
-            } => {
-                let group = group_or_default(group);
-                let message = ParallelMessage {
-                    parallel_tasks: *parallel_tasks,
-                    group,
-                };
-                Ok(Message::Parallel(message))
-            }
+            } => match parallel_tasks {
+                Some(parallel_tasks) => {
+                    let group = group_or_default(group);
+                    let message = ParallelMessage {
+                        parallel_tasks: *parallel_tasks,
+                        group,
+                    };
+                    Ok(Message::Parallel(message))
+                }
+                None => Ok(Message::Group(GroupMessage::List)),
+            },
             SubCommand::Completions { .. } => bail!("Completions have to be handled earlier"),
             SubCommand::Restart { .. } => bail!("Restarts have to be handled earlier"),
             SubCommand::Edit { .. } => bail!("Edits have to be handled earlier"),

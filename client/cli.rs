@@ -377,7 +377,7 @@ pub enum SubCommand {
     Parallel {
         /// The amount of allowed parallel tasks.
         #[clap(validator=min_one)]
-        parallel_tasks: usize,
+        parallel_tasks: Option<usize>,
 
         /// Set the amount for a specific group.
         #[clap(name = "group", short, long)]

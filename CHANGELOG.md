@@ -28,6 +28,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Improved memory footprint for reading partial logs.
 - Always only show the last X lines of output when using `pueue log` without additional parameters.
+- `pueue parallel` without arguments now also shows the groups with their current limit like `pueue group`. (#264)[https://github.com/Nukesor/pueue/issues/264]
 - **Breaking changes:** The `group` subcommand now has `group add [-p $count] $name` and `group remove $name` subcommands.
     The old `group [-a,-p,-r]` flags have been removed.
 - **Breaking changes:** The configuration for groups can no longer be done via configuration file.
