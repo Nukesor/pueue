@@ -62,7 +62,7 @@ pub async fn get_client_stream(settings: &Shared) -> Result<GenericStream, Error
     })?;
 
     // Get the configured rustls TlsConnector
-    let tls_connector = get_tls_connector(&settings)
+    let tls_connector = get_tls_connector(settings)
         .await
         .map_err(|err| Error::Connection(format!("Failed to initialize tls connector {err}.")))?;
 
@@ -84,7 +84,7 @@ pub async fn get_listener(settings: &Shared) -> Result<GenericListener, Error> {
     })?;
 
     // This is the TLS acceptor, which initializes the TLS layer
-    let tls_acceptor = get_tls_listener(&settings)?;
+    let tls_acceptor = get_tls_listener(settings)?;
 
     // Create a struct, which accepts connections and initializes a TLS layer in one go.
     let tls_listener = TlsTcpListener {
