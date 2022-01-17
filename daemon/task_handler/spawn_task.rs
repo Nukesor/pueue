@@ -90,7 +90,7 @@ impl TaskHandler {
             }
         };
 
-        // Try to get the log files to which the output of the process will be written to.
+        // Try to get the log file to which the output of the process will be written to.
         // Panic if this doesn't work! This is unrecoverable.
         let (stdout_log, stderr_log) = match create_log_file_handles(task_id, &self.pueue_directory)
         {

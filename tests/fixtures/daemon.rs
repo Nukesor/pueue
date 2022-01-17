@@ -78,6 +78,7 @@ pub async fn standalone_daemon(pueue_dir: &Path) -> Result<Child> {
         .arg(pueue_dir.join("pueue.yml").to_str().unwrap())
         .arg("-vvv")
         .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
         .spawn()?;
 
     let tries = 20;

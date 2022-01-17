@@ -52,12 +52,12 @@ fn create_test_files(path: &Path, partial: bool) -> Result<String> {
 // We have to unpack it first.
 fn decompress_log(bytes: Vec<u8>) -> Result<String> {
     let mut decoder = FrameDecoder::new(&bytes[..]);
-    let mut stdout = String::new();
+    let mut output = String::new();
     decoder
-        .read_to_string(&mut stdout)
+        .read_to_string(&mut output)
         .context("Failed to decompress remote log output")?;
 
-    Ok(stdout)
+    Ok(output)
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
@@ -89,16 +89,16 @@ async fn test_full_log() -> Result<()> {
         _ => bail!("Received non LogResponse: {:#?}", response),
     };
 
-    // Get the received stdout output
+    // Get the received output
     let logs = logs.get(&0).unwrap();
-    let stdout = logs
-        .stdout
+    let output = logs
+        .output
         .clone()
-        .context("Didn't find stdout on log output")?;
-    let stdout = decompress_log(stdout)?;
+        .context("Didn't find output on TaskLogMessage")?;
+    let output = decompress_log(output)?;
 
     // Make sure it's the same
-    assert_eq!(stdout, expected_output);
+    assert_eq!(output, expected_output);
 
     Ok(())
 }
@@ -121,10 +121,7 @@ async fn test_partial_log() -> Result<()> {
     wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
 
     // Debug output to see what the file actually looks like:
-    let real_log_path = shared
-        .pueue_directory()
-        .join("task_logs")
-        .join("0_stdout.log");
+    let real_log_path = shared.pueue_directory().join("task_logs").join("0.log");
     let content = read_to_string(real_log_path).context("Failed to read actual file")?;
     println!("Actual log file contents: \n{}", content);
 
@@ -140,16 +137,16 @@ async fn test_partial_log() -> Result<()> {
         _ => bail!("Received non LogResponse: {:#?}", response),
     };
 
-    // Get the received stdout output
+    // Get the received output
     let logs = logs.get(&0).unwrap();
-    let stdout = logs
-        .stdout
+    let output = logs
+        .output
         .clone()
-        .context("Didn't find stdout on log output")?;
-    let stdout = decompress_log(stdout)?;
+        .context("Didn't find output on TaskLogMessage")?;
+    let output = decompress_log(output)?;
 
     // Make sure it's the same
-    assert_eq!(stdout, expected_output);
+    assert_eq!(output, expected_output);
 
     Ok(())
 }

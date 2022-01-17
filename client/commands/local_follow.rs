@@ -11,7 +11,6 @@ pub async fn local_follow(
     stream: &mut GenericStream,
     pueue_directory: &Path,
     task_id: &Option<usize>,
-    err: bool,
     lines: Option<usize>,
 ) -> Result<()> {
     // The user can specify the id of the task they want to follow
@@ -46,7 +45,7 @@ pub async fn local_follow(
         }
     };
 
-    follow_local_task_logs(pueue_directory, task_id, err, lines);
+    follow_local_task_logs(pueue_directory, task_id, lines);
 
     Ok(())
 }

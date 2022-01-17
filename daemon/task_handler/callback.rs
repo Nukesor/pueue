@@ -72,21 +72,18 @@ impl TaskHandler {
         parameters.insert("end", print_time(task.end));
 
         // Read the last lines of the process' output and make it available.
-        if let Ok((stdout, stderr)) =
+        if let Ok(output) =
             read_last_log_file_lines(task.id, &self.pueue_directory, self.callback_log_lines)
         {
-            parameters.insert("stdout", stdout);
-            parameters.insert("stderr", stderr);
+            parameters.insert("output", output);
         } else {
-            parameters.insert("stdout", "".to_string());
-            parameters.insert("stderr", "".to_string());
+            parameters.insert("output", "".to_string());
         }
 
-        let (out_path, err_path) = get_log_paths(task.id, &self.pueue_directory);
+        let out_path = get_log_path(task.id, &self.pueue_directory);
         // Using Display impl of PathBuf which isn't necessarily a perfect
         // representation of the path but should work for most cases here
-        parameters.insert("stdout_path", out_path.display().to_string());
-        parameters.insert("stderr_path", err_path.display().to_string());
+        parameters.insert("output_path", out_path.display().to_string());
 
         // Get the exit code
         if let TaskStatus::Done(result) = &task.status {

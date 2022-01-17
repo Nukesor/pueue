@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Allow to set the amount of parallel tasks at group creation by [Spyros Roum](https://github.com/SpyrosRoum) [#245](https://github.com/Nukesor/pueue/issues/249).
 - When calling `pueue` without a subcommand, the `status` command will be called by default [#247](https://github.com/Nukesor/pueue/issues/247).
 - Add the `--group` parameter to the `pueue clean` command [#248](https://github.com/Nukesor/pueue/issues/248).
-- Add `stdout_path` and `stderr_path` as template parameters for callbacks [#269](https://github.com/Nukesor/issues/269).
+- Add `output` for a task's log output as template parameters for callbacks [#269](https://github.com/Nukesor/issues/269).
 - Add `--lines` parameter to `pueue follow` to only show specified number of lines from stdout before following [#270](https://github.com/Nukesor/pueue/issues/270).
 - Notify the user if a task is added to a paused group [#265](https://github.com/Nukesor/pueue/issues/265).
 - Notify the user that when killing whole groups, those groups are also paused [#265](https://github.com/Nukesor/pueue/issues/265).
@@ -33,6 +33,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Improved memory footprint for reading partial logs.
 - Always only show the last X lines of output when using `pueue log` without additional parameters.
 - `pueue parallel` without arguments now also shows the groups with their current limit like `pueue group`. (#264)[https://github.com/Nukesor/pueue/issues/264]
+- **Breaking changes:** `stderr` and `stdout` of Pueue's tasks are now combined into a single file.
+    This means a few things.
+    * One doesn't have to filter for stderr any longer.
+    * All logs are now combined in a single chronologically correct log file.
+    * One **can no longer** filter for stderr/stdout specific output.
 - **Breaking changes:** The `group` subcommand now has `group add [-p $count] $name` and `group remove $name` subcommands.
     The old `group [-a,-p,-r]` flags have been removed.
 - **Breaking changes:** The configuration for groups can no longer be done via configuration file.

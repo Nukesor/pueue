@@ -52,7 +52,7 @@ pub async fn assert_worker_envs(
         .get(&task_id)
         .expect("Log should contain requested task.");
 
-    let stdout = log.stdout.clone().unwrap();
+    let stdout = log.output.clone().unwrap();
     let output = String::from_utf8_lossy(&stdout);
     assert!(
         output.contains(&format!("WORKER_ID: {worker}")),

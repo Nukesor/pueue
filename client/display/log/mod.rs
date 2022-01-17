@@ -17,7 +17,7 @@ use json::*;
 use local::*;
 use remote::*;
 
-/// Determine how many lines of stderr/out should be printed/returned.
+/// Determine how many lines of output should be printed/returned.
 /// `None` implicates that all lines are printed.
 ///
 /// By default, everything is returned for single tasks and only some lines for multiple.
@@ -120,7 +120,7 @@ fn print_log(
 
     if settings.client.read_local_logs {
         print_local_log(message.task.id, colors, settings, lines);
-    } else if message.stdout.is_some() && message.stderr.is_some() {
+    } else if message.output.is_some() {
         print_remote_log(message, colors);
     } else {
         println!("Logs requested from pueue daemon, but none received. Please report this bug.");

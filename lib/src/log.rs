@@ -8,86 +8,76 @@ use snap::write::FrameEncoder;
 
 use crate::error::Error;
 
-/// Return the paths to the `(stdout, stderr)` log files of a task.
-pub fn get_log_paths(task_id: usize, path: &Path) -> (PathBuf, PathBuf) {
+/// Get the path to the log file of a task.
+pub fn get_log_path(task_id: usize, path: &Path) -> PathBuf {
     let task_log_dir = path.join("task_logs");
-    let out_path = task_log_dir.join(format!("{task_id}_stdout.log"));
-    let err_path = task_log_dir.join(format!("{task_id}_stderr.log"));
-    (out_path, err_path)
+    let path = task_log_dir.join(format!("{task_id}.log"));
+    path
 }
 
-/// Create and return the file handle for the `(stdout, stderr)` log files of a task.
+/// Create and return the two file handles for the `(stdout, stderr)` log file of a task.
+/// These are two handles to the same file.
 pub fn create_log_file_handles(task_id: usize, path: &Path) -> Result<(File, File), Error> {
-    let (out_path, err_path) = get_log_paths(task_id, path);
-    let stdout = File::create(out_path)?;
-    let stderr = File::create(err_path)?;
+    let log_path = get_log_path(task_id, path);
+    let stdout_handle = File::create(log_path)?;
+    let stderr_handle = stdout_handle.try_clone()?;
 
-    Ok((stdout, stderr))
+    Ok((stdout_handle, stderr_handle))
 }
 
-/// Return the file handle for the `(stdout, stderr)` log files of a task.
-pub fn get_log_file_handles(task_id: usize, path: &Path) -> Result<(File, File), Error> {
-    let (out_path, err_path) = get_log_paths(task_id, path);
-    let stdout = File::open(out_path)?;
-    let stderr = File::open(err_path)?;
+/// Return the file handle for the log file of a task.
+pub fn get_log_file_handle(task_id: usize, path: &Path) -> Result<File, Error> {
+    let path = get_log_path(task_id, path);
+    let handle = File::open(path)?;
 
-    Ok((stdout, stderr))
+    Ok(handle)
 }
 
 /// Remove the the log files of a task.
 pub fn clean_log_handles(task_id: usize, path: &Path) {
-    let (out_path, err_path) = get_log_paths(task_id, path);
-    if out_path.exists() {
-        if let Err(err) = remove_file(out_path) {
+    let path = get_log_path(task_id, path);
+    if path.exists() {
+        if let Err(err) = remove_file(path) {
             error!("Failed to remove stdout file for task {task_id} with error {err:?}");
-        };
-    }
-    if err_path.exists() {
-        if let Err(err) = remove_file(err_path) {
-            error!("Failed to remove stderr file for task {task_id} with error {err:?}");
         };
     }
 }
 
-/// Return the `(stdout, stderr)` output of a task. \
+/// Return the output of a task. \
 /// Task output is compressed using [snap] to save some memory and bandwidth.
-pub fn read_and_compress_log_files(
+pub fn read_and_compress_log_file(
     task_id: usize,
     path: &Path,
     lines: Option<usize>,
-) -> Result<(Vec<u8>, Vec<u8>), Error> {
-    let (mut stdout_file, mut stderr_file) = get_log_file_handles(task_id, path)?;
+) -> Result<Vec<u8>, Error> {
+    let mut file = get_log_file_handle(task_id, path)?;
 
-    let mut stdout = Vec::new();
-    let mut stderr = Vec::new();
+    let mut content = Vec::new();
 
     // Move the cursor to the last few lines of both files.
     if let Some(lines) = lines {
-        seek_to_last_lines(&mut stdout_file, lines)?;
-        seek_to_last_lines(&mut stderr_file, lines)?;
+        seek_to_last_lines(&mut file, lines)?;
     }
 
     // Compress the full log input and pipe it into the snappy compressor
     {
-        let mut stdout_compressor = FrameEncoder::new(&mut stdout);
-        io::copy(&mut stdout_file, &mut stdout_compressor)?;
-        let mut stderr_compressor = FrameEncoder::new(&mut stderr);
-        io::copy(&mut stderr_file, &mut stderr_compressor)?;
+        let mut compressor = FrameEncoder::new(&mut content);
+        io::copy(&mut file, &mut compressor)?;
     }
 
-    Ok((stdout, stderr))
+    Ok(content)
 }
 
-/// Return the last lines of `(stdout, stderr)` of a task. \
+/// Return the last lines of of a task's output. \
 /// This output is uncompressed and may take a lot of memory, which is why we only read
 /// the last few lines.
 pub fn read_last_log_file_lines(
     task_id: usize,
     path: &Path,
     lines: usize,
-) -> Result<(String, String), Error> {
-    let (mut stdout_file, mut stderr_file) = match get_log_file_handles(task_id, path) {
-        Ok((stdout, stderr)) => (stdout, stderr),
+) -> Result<String, Error> {
+    let mut file = match get_log_file_handle(task_id, path) {
+        Ok(stdout) => stdout,
         Err(err) => {
             return Err(Error::LogRead(format!(
                 "Error while opening log files for task {task_id}: {err}"
@@ -96,10 +86,7 @@ pub fn read_last_log_file_lines(
     };
 
     // Get the last few lines of both files
-    Ok((
-        read_last_lines(&mut stdout_file, lines),
-        read_last_lines(&mut stderr_file, lines),
-    ))
+    Ok(read_last_lines(&mut file, lines))
 }
 
 /// Remove all files in the log directory.
