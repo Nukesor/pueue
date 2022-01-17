@@ -80,6 +80,6 @@ procfs = { version="0.12", default-features=false }
 [dev-dependencies]
 assert_cmd = "2"
 anyhow = "1"
-better-panic = "0.2"
+better-panic = "0.3"
 pretty_assertions = "1"
 rstest = "0.12"

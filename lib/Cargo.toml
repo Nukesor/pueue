@@ -46,7 +46,7 @@ whoami = "1"
 
 [dev-dependencies]
 anyhow = "1"
-better-panic = "0.2"
+better-panic = "0.3"
 pretty_assertions = "1"
 portpicker = "0.1"
 tempdir = "0.3"
