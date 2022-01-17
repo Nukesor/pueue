@@ -45,7 +45,7 @@ pub enum SubCommand {
 
         /// Start the task once all specified tasks have successfully finished.
         /// As soon as one of the dependencies fails, this task will fail as well.
-        #[clap(name = "after", short, long)]
+        #[clap(name = "after", short, long, multiple_values(true))]
         dependencies: Vec<usize>,
 
         /// Add some information for yourself.

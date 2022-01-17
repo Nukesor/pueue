@@ -53,6 +53,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
      Remote logs previously showed more lines under some circumstances.
 - panic due to rogue `.unwrap()` when filtering for a non-existing group in `pueue status`.
 
+## [1.0.6] - 2022-01-05
+
+#### Fixed
+
+- The `--after` flag on add no longer accepted multiple parameters. This was due to a change in Clap's API in their bump from beta to full v3 release.
+
 ## [1.0.5] - 2022-01-02
 
 ### Changed
