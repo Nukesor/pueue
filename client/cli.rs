@@ -414,7 +414,7 @@ pub enum GroupCommand {
         name: String,
 
         /// Set the amount of parallel tasks this group can have.
-        #[clap(short, long, validator = min_one, conflicts_with = "remove")]
+        #[clap(short, long, validator = min_one)]
         parallel: Option<usize>,
     },
 
