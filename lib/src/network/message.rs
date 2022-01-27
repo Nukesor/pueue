@@ -207,11 +207,9 @@ pub enum Shutdown {
     Graceful,
 }
 
-/// `err` decides, whether you should stream stderr or stdout.
 #[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
 pub struct StreamRequestMessage {
     pub task_id: Option<usize>,
-    pub err: bool,
     pub lines: Option<usize>,
 }
 
@@ -231,8 +229,7 @@ pub struct LogRequestMessage {
 #[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
 pub struct TaskLogMessage {
     pub task: Task,
-    pub stdout: Option<Vec<u8>>,
-    pub stderr: Option<Vec<u8>>,
+    pub output: Option<Vec<u8>>,
 }
 
 #[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]

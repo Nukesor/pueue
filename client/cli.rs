@@ -272,7 +272,7 @@ pub enum SubCommand {
     /// Display the current status of all tasks.
     Status {
         /// Print the current state as json to stdout.
-        /// This does not include stdout/stderr of tasks.
+        /// This does not include the output of tasks.
         /// Use `log -j` if you want everything.
         #[clap(short, long)]
         json: bool,
@@ -302,7 +302,7 @@ pub enum SubCommand {
         task_ids: Vec<usize>,
 
         /// Print the resulting tasks and output as json.
-        /// By default only the last stdout/-err lines will be returned unless --full is provided.
+        /// By default only the last lines will be returned unless --full is provided.
         /// Take care, as the json cannot be streamed!
         /// If your logs are really huge, using --full can use all of your machine's RAM.
         #[clap(short, long)]
@@ -313,7 +313,7 @@ pub enum SubCommand {
         #[clap(short, long, conflicts_with = "full")]
         lines: Option<usize>,
 
-        /// Show the whole stdout and stderr output.
+        /// Show the whole output.
         /// This is the default if only a single task is being looked at.
         #[clap(short, long)]
         full: bool,
@@ -327,10 +327,6 @@ pub enum SubCommand {
         /// If no or multiple tasks are running, you have to specify the id.
         /// If only a single task is running, you can omit the id.
         task_id: Option<usize>,
-
-        /// Show stderr instead of stdout.
-        #[clap(short, long)]
-        err: bool,
 
         /// Only print the last X lines of the output before following
         #[clap(short, long)]

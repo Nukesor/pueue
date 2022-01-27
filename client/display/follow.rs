@@ -3,7 +3,7 @@ use std::path::Path;
 use std::thread::sleep;
 use std::time::Duration;
 
-use pueue_lib::log::{get_log_file_handles, get_log_paths, seek_to_last_lines};
+use pueue_lib::log::{get_log_file_handle, get_log_path, seek_to_last_lines};
 
 /// Follow the log ouput of running task.
 ///
@@ -12,23 +12,15 @@ use pueue_lib::log::{get_log_file_handles, get_log_paths, seek_to_last_lines};
 /// - No running task: Print an error that there are no running tasks
 /// - Single running task: Follow the output of that task
 /// - Multiple running tasks: Print out the list of possible tasks to follow.
-pub fn follow_local_task_logs(
-    pueue_directory: &Path,
-    task_id: usize,
-    stderr: bool,
-    lines: Option<usize>,
-) {
-    let (stdout_handle, stderr_handle) = match get_log_file_handles(task_id, pueue_directory) {
-        Ok((stdout, stderr)) => (stdout, stderr),
+pub fn follow_local_task_logs(pueue_directory: &Path, task_id: usize, lines: Option<usize>) {
+    let mut handle = match get_log_file_handle(task_id, pueue_directory) {
+        Ok(stdout) => stdout,
         Err(err) => {
             println!("Failed to get log file handles: {err}");
             return;
         }
     };
-    let mut handle = if stderr { stderr_handle } else { stdout_handle };
-
-    let (out_path, err_path) = get_log_paths(task_id, pueue_directory);
-    let handle_path = if stderr { err_path } else { out_path };
+    let path = get_log_path(task_id, pueue_directory);
 
     // Stdout handler to directly write log file output to io::stdout
     // without having to load anything into memory.
@@ -44,7 +36,7 @@ pub fn follow_local_task_logs(
     }
     loop {
         // Check whether the file still exists. Exit if it doesn't.
-        if !handle_path.exists() {
+        if !path.exists() {
             println!("File has gone away. Did somebody remove the task?");
             return;
         }
