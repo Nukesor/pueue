@@ -150,3 +150,40 @@ async fn test_partial_log() -> Result<()> {
 
     Ok(())
 }
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+/// Ensure that stdout and stderr are properly ordered in log output.
+async fn test_correct_log_order() -> Result<()> {
+    let daemon = daemon().await?;
+    let shared = &daemon.settings.shared;
+
+    // Add a task that lists those files and wait for it to finish.
+    let command = "echo 'test' && echo 'error' && echo 'test'";
+    assert_success(add_task(shared, &command, false).await?);
+    wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
+
+    // Request all log lines
+    let log_message = LogRequestMessage {
+        task_ids: vec![0],
+        send_logs: true,
+        lines: None,
+    };
+    let response = send_message(shared, Message::Log(log_message)).await?;
+    let logs = match response {
+        Message::LogResponse(logs) => logs,
+        _ => bail!("Received non LogResponse: {:#?}", response),
+    };
+
+    // Get the received output
+    let logs = logs.get(&0).unwrap();
+    let output = logs
+        .output
+        .clone()
+        .context("Didn't find output on TaskLogMessage")?;
+    let output = decompress_log(output)?;
+
+    // Make sure it's the same
+    assert_eq!(output, "test\nerror\ntest\n");
+
+    Ok(())
+}
