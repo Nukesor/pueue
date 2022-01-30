@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [2.0.0] - unreleased
 
+This release marks the second stable release of Pueue.
+
+Shortly after releasing `v1.0.0` a few short-comings of some design decisions became apparent.
+This release aims to remove all those short-comings or important missing features.
+Some of those changes required breaking changes of both internal APIs and datastructures, as well as the CLI interfaces and the configuration file.
+Since this project sticks to SemVer, this meant that a new major release was necessary.
+
+Hopefully, this will be the last stable release for quite a while.
+There are a few features planned that might introduce further breaking changes, but those will most likely need quite some time to implement (if we manage to implement them at all).
+
+Anyhow, I'm quite pleased with the overall state of this release!
+A lot of cool and convenient stuff has been added and quite a bit of internal logic has been streamlined and cleaned up.
+
+Also a huge thanks to all contributers that helped working on this version!
+
 ### Added
 
 - Introduce the `rm` (remove), `re` (restart) and `fo` (follow) subcommand aliases [#245](https://github.com/Nukesor/pueue/issues/245).
