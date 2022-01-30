@@ -116,7 +116,7 @@ async fn test_partial_log() -> Result<()> {
         create_test_files(tempdir_path, true).context("Failed to create test files.")?;
 
     // Add a task that lists those files and wait for it to finish.
-    let command = format!("ls {:?}", tempdir_path);
+    let command = format!("ls {tempdir_path:?}");
     assert_success(add_task(shared, &command, false).await?);
     wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
 
@@ -159,7 +159,7 @@ async fn test_correct_log_order() -> Result<()> {
 
     // Add a task that lists those files and wait for it to finish.
     let command = "echo 'test' && echo 'error' && echo 'test'";
-    assert_success(add_task(shared, &command, false).await?);
+    assert_success(add_task(shared, command, false).await?);
     wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
 
     // Request all log lines
