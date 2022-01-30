@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.19.0] -
+## [0.19.0] - 30-01-2022
 
 ### Added
 
@@ -26,6 +26,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Switch from `async-std` to tokio.
 - Update to rustls 0.20
+- **Breaking:** Logs are now no longer split into two files, for stderr and stdout respectively, but rather a single file for both.
 - **Breaking:** The unix socket is now located in the `runtime_directory` by default [#243](https://github.com/Nukesor/pueue/issues/243).
 - **Breaking:** `Shared::pueue_directory` changed from `PathBuf` to `Option<PathBuf>`.
 - **Breaking:** `Settings::read_with_defaults` no longer a boolean as first parameter.
