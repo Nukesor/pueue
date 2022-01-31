@@ -19,7 +19,7 @@ There are a few features planned that might introduce further breaking changes, 
 Anyhow, I'm quite pleased with the overall state of this release!
 A lot of cool and convenient stuff has been added and quite a bit of internal logic has been streamlined and cleaned up.
 
-Also a huge thanks to all contributers that helped working on this version!
+Also a huge thanks to all contributors that helped working on this version!
 
 ### Added
 
@@ -47,7 +47,9 @@ Also a huge thanks to all contributers that helped working on this version!
 
 - Improved memory footprint for reading partial logs.
 - Always only show the last X lines of output when using `pueue log` without additional parameters.
-- `pueue parallel` without arguments now also shows the groups with their current limit like `pueue group`. (#264)[https://github.com/Nukesor/pueue/issues/264]
+- `pueue parallel` without arguments now also shows the groups with their current limit like `pueue group`. [#264](https://github.com/Nukesor/pueue/issues/264)
+- Configuration files will no longer be changed programatically [#241](https://github.com/Nukesor/pueue/issues/241).
+- Default values for all most configuration variables have been added [#241](https://github.com/Nukesor/pueue/issues/241).
 - **Breaking changes:** `stderr` and `stdout` of Pueue's tasks are now combined into a single file.
     This means a few things.
     * One doesn't have to filter for stderr any longer.
