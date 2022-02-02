@@ -143,7 +143,9 @@ impl Default for Settings {
 /// This contains all other setting structs.
 #[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
 pub struct Settings {
+    #[serde(default = "Default::default")]
     pub client: Client,
+    #[serde(default = "Default::default")]
     pub daemon: Daemon,
     pub shared: Shared,
     #[serde(default = "HashMap::new")]
@@ -155,8 +157,11 @@ pub struct Settings {
 /// That way we prevent nested profiles and problems with self-referencing structs.
 #[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
 pub struct NestedSettings {
+    #[serde(default = "Default::default")]
     pub client: Client,
+    #[serde(default = "Default::default")]
     pub daemon: Daemon,
+    #[serde(default = "Default::default")]
     pub shared: Shared,
 }
 
