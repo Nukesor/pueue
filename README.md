@@ -7,7 +7,7 @@
 
 <!---[![dependency status](https://deps.rs/repo/github/nukesor/pueue/status.svg)](https://deps.rs/repo/github/nukesor/pueue) --->
 
-![Pueue](https://raw.githubusercontent.com/Nukesor/images/main/pueue.gif)
+![Pueue](https://raw.githubusercontent.com/Nukesor/images/main/pueue-v2.0.0.gif)
 
 Pueue is a command-line task management tool for sequential and parallel execution of long-running tasks.
 
@@ -115,65 +115,66 @@ There are also detailed sections for (hopefully) every important feature:
 On top of that, there is a help option (-h) for all commands.
 
 ```text
-Pueue client 1.0.4
-
+Pueue client 2.0.0
 Arne Beer <contact@arne.beer>
-
 Interact with the Pueue daemon
 
 USAGE:
-    pueue [FLAGS] [OPTIONS] <SUBCOMMAND>
-
-FLAGS:
-    -h, --help       Print help information
-    -v, --verbose    Verbose mode (-v, -vv, -vvv)
-    -V, --version    Print version information
+    pueue [OPTIONS] [SUBCOMMAND]
 
 OPTIONS:
-    -c, --config <CONFIG>    Path to a specific pueue config file to use. This ignores all other
-                             config files
+    -c, --config <CONFIG>      Path to a specific pueue config file to use. This ignores all other
+                               config files
+    -h, --help                 Print help information
+    -p, --profile <PROFILE>    The name of the profile that should be loaded from your config file
+    -v, --verbose              Verbose mode (-v, -vv, -vvv)
+    -V, --version              Print version information
 
 SUBCOMMANDS:
-    add            Enqueue a task for execution
-    clean          Remove all finished tasks from the list
-    completions    Generates shell completion files. This can be ignored during normal
-                   operations
-    edit           Edit the command or path of a stashed or queued task.
-                   The command is edited by default.
-    enqueue        Enqueue stashed tasks. They'll be handled normally afterwards
-    follow         Follow the output of a currently running task. This command works like tail
-                   -f
-    group          Use this to add or remove groups. By default, this will simply display all
-                   known groups
-    help           Print this message or the help of the given subcommand(s)
-    kill           Kill specific running tasks or whole task groups. Kills all tasks of the
-                   default group when no ids are provided
-    log            Display the log output of finished tasks. Prints either all logs or only the
-                   logs of specified tasks
-    parallel       Set the amount of allowed parallel tasks. By default, adjusts the amount of
-                   the default group
-    pause          Either pause running tasks or specific groups of tasks.
-                   By default, pauses the default group and all its tasks.
-                   A paused queue (group) won't start any new tasks.
-    remove         Remove tasks from the list. Running or paused tasks need to be killed first
-    reset          Kill all tasks, clean up afterwards and reset EVERYTHING!
-    restart        Restart task(s). Identical tasks will be created and by default enqueued. By
-                   default, a new task will be created
-    send           Send something to a task. Useful for sending confirmations such as 'y\n'
-    shutdown       Remotely shut down the daemon. Should only be used if the daemon isn't
-                   started by a service manager
-    start          Resume operation of specific tasks or groups of tasks.
-                   By default, this resumes the default group and all its tasks.
-                   Can also be used force-start specific tasks.
-    stash          Stashed tasks won't be automatically started. You have to enqueue them or
-                   start them by hand
-    status         Display the current status of all tasks
-    switch         Switches the queue position of two commands. Only works on queued and stashed
-                   commands
-    wait           Wait until tasks are finished. This can be quite useful for scripting. By
-                   default, this will wait for all tasks in the default group to finish. Note:
-                   This will also wait for all tasks that aren't somehow 'Done'. Includes:
-                   [Paused, Stashed, Locked, Queued, ...]
+    add              Enqueue a task for execution
+    clean            Remove all finished tasks from the list
+    completions      Generates shell completion files. This can be ignored during normal
+                     operations
+    edit             Edit the command or path of a stashed or queued task.
+                     The command is edited by default.
+    enqueue          Enqueue stashed tasks. They'll be handled normally afterwards
+    follow           Follow the output of a currently running task. This command works like tail
+                     -f
+    format-status    Accept a list or map of JSON pueue tasks via stdin and display it just like
+                     "status". A simple example might look like this: pueue status --json | jq
+                     -c '.tasks' | pueue format-status
+    group            Use this to add or remove groups. By default, this will simply display all
+                     known groups
+    help             Print this message or the help of the given subcommand(s)
+    kill             Kill specific running tasks or whole task groups. Kills all tasks of the
+                     default group when no ids are provided
+    log              Display the log output of finished tasks. When looking at multiple logs,
+                     only the last few lines will be shown. If you want to "follow" the output
+                     of a task, please use the "follow" subcommand
+    parallel         Set the amount of allowed parallel tasks. By default, adjusts the amount of
+                     the default group
+    pause            Either pause running tasks or specific groups of tasks.
+                     By default, pauses the default group and all its tasks.
+                     A paused queue (group) won't start any new tasks.
+    remove           Remove tasks from the list. Running or paused tasks need to be killed first
+    reset            Kill all tasks, clean up afterwards and reset EVERYTHING!
+    restart          Restart task(s). Identical tasks will be created and by default enqueued.
+                     By default, a new task will be created
+    send             Send something to a task. Useful for sending confirmations such as 'y\n'
+    shutdown         Remotely shut down the daemon. Should only be used if the daemon isn't
+                     started by a service manager
+    start            Resume operation of specific tasks or groups of tasks.
+                     By default, this resumes the default group and all its tasks.
+                     Can also be used force-start specific tasks.
+    stash            Stashed tasks won't be automatically started. You have to enqueue them or
+                     start them by hand
+    status           Display the current status of all tasks
+    switch           Switches the queue position of two commands. Only works on queued and
+                     stashed commands
+    wait             Wait until tasks are finished. This can be quite useful for scripting. By
+                     default, this will wait for all tasks in the default group to finish. Note:
+                     This will also wait for all tasks that aren't somehow 'Done'. Includes:
+                     [Paused, Stashed, Locked, Queued, ...]
 ```
 
 ## Design Goals
