@@ -42,7 +42,8 @@ The queue will be continuously processed, even if you no longer have any active 
 - Background process execution
     * The `pueued` daemon runs in the background. No need to be logged in.
     * Commands are executed in their respective working directories.
-    * Environment variables are on `pueue add`.
+    * The current environment variables are copied when adding a task.
+    * Commands are run in a shell which allows the full feature set of shell coding.
 - Consistency
     * The queue is always saved to disk and restored on kill/system crash.
     * Logs are persisted onto the disk and survive a crash.
@@ -50,17 +51,18 @@ The queue will be continuously processed, even if you no longer have any active 
     * A callback hook to, for instance, set up desktop notifications.
     * Convenient methods for scripting
 - A lot more. Check the -h options for each subcommand for detailed options.
-- Linux is fully supported and battle-tested.
-- Windows has all features, but process handling is [relatively new](https://github.com/Nukesor/pueue/pull/59).
-- MacOS only has **rudimentary** process handling, but it's still usable.
-    Check this [issue](https://github.com/Nukesor/pueue/issues/115) to find out what's missing.
+- Cross Platform
+    * Linux is fully supported and battle-tested.
+    * Windows is fully supported and working fine for quite a while.
+    * MacOS only has **rudimentary** process handling, but it's still usable.
+        Check this [issue](https://github.com/Nukesor/pueue/issues/115) to find out what's missing.
 - [Why should I use it](https://github.com/Nukesor/pueue/wiki/FAQ#why-should-i-use-it)
 - [Advantages over Using a Terminal Multiplexer](https://github.com/Nukesor/pueue/wiki/FAQ#advantages-over-using-a-terminal-multiplexer)
 
 
 ## Installation
 
-There are four different ways to install Pueue.
+There are a few different ways to install Pueue.
 
 #### Package Manager
 
@@ -96,14 +98,14 @@ It might compile on older versions, but this isn't tested or officially supporte
 ```bash
 git clone git@github.com:Nukesor/pueue
 cd pueue
-cargo install --locked --path .
+cargo build --release --locked --path .
 ```
 
-This will install Pueue to `$CARGO_HOME/bin/pueue` (default is `~/.cargo/bin/pueue`)
+The final binaries will be located in `target/release/{pueue,pueued}`.
 
 ## How to Use it
 
-Check out the wiki to [get you started](https://github.com/Nukesor/pueue/wiki/Get-started) :).
+Check the wiki to [get started](https://github.com/Nukesor/pueue/wiki/Get-started) :).
 
 There are also detailed sections for (hopefully) every important feature:
 
@@ -181,7 +183,7 @@ SUBCOMMANDS:
 
 Pueue is designed to be a convenient helper tool for a single user.
 
-It's supposed to be stand-alone, without any external integration.
+It's supposed to work stand-alone and without any external integration.
 The idea is to keep it simple and to prevent feature creep.
 
 Hence, these features won't be included as they're out of scope:
