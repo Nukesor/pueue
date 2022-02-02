@@ -429,7 +429,12 @@ pub enum Shell {
 }
 
 #[derive(Parser, Debug)]
-#[clap(name = "Pueue client", about = "Interact with the Pueue daemon")]
+#[clap(
+    name = "Pueue client",
+    about = "Interact with the Pueue daemon",
+    author,
+    version
+)]
 pub struct CliArguments {
     /// Verbose mode (-v, -vv, -vvv)
     #[clap(short, long, parse(from_occurrences))]
