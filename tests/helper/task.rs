@@ -24,7 +24,7 @@ pub async fn add_task(shared: &Shared, command: &str, start_immediately: bool) -
 pub async fn add_task_to_group(shared: &Shared, command: &str, group: &str) -> Result<Message> {
     let message = Message::Add(AddMessage {
         command: command.into(),
-        path: shared.pueue_directory().to_str().unwrap().to_string(),
+        path: shared.pueue_directory(),
         envs: HashMap::new(),
         start_immediately: false,
         stashed: false,

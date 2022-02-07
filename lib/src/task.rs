@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, path::PathBuf};
 
 use chrono::prelude::*;
 use serde_derive::{Deserialize, Serialize};
@@ -50,7 +50,7 @@ pub struct Task {
     pub id: usize,
     pub original_command: String,
     pub command: String,
-    pub path: String,
+    pub path: PathBuf,
     pub envs: HashMap<String, String>,
     pub group: String,
     pub dependencies: Vec<usize>,
@@ -68,7 +68,7 @@ impl Task {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         original_command: String,
-        path: String,
+        path: PathBuf,
         envs: HashMap<String, String>,
         group: String,
         starting_status: TaskStatus,

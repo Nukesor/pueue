@@ -211,7 +211,7 @@ fn print_table(tasks: &BTreeMap<usize, Task>, colors: &Colors, settings: &Settin
         } else {
             row.add_cell(Cell::new(&task.original_command));
         }
-        row.add_cell(Cell::new(&task.path));
+        row.add_cell(Cell::new(&task.path.to_string_lossy()));
 
         // Add start and end info
         let (start, end) = formatted_start_end(task, settings);

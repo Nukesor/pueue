@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use anyhow::Result;
 use pueue_lib::network::message::*;
 
@@ -22,7 +24,7 @@ async fn test_restart_in_place() -> Result<()> {
         tasks: vec![TasksToRestart {
             task_id: 0,
             command: "sleep 60".to_string(),
-            path: "/tmp".to_string(),
+            path: PathBuf::from("/tmp"),
         }],
         start_immediately: false,
         stashed: false,
@@ -39,7 +41,7 @@ async fn test_restart_in_place() -> Result<()> {
     let state = get_state(shared).await?;
     let task = state.tasks.get(&0).unwrap();
     assert_eq!(task.command, "sleep 60");
-    assert_eq!(task.path, "/tmp");
+    assert_eq!(task.path, PathBuf::from("/tmp"));
 
     Ok(())
 }
@@ -61,7 +63,7 @@ async fn test_cannot_restart_running() -> Result<()> {
         tasks: vec![TasksToRestart {
             task_id: 0,
             command: "sleep 60".to_string(),
-            path: "/tmp/".to_string(),
+            path: PathBuf::from("/tmp"),
         }],
         start_immediately: false,
         stashed: false,

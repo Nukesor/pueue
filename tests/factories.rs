@@ -8,7 +8,7 @@ use pueue_lib::state::PUEUE_DEFAULT_GROUP;
 pub fn add_message(shared: &Shared, command: &str) -> AddMessage {
     AddMessage {
         command: command.into(),
-        path: shared.pueue_directory().to_str().unwrap().to_string(),
+        path: shared.pueue_directory(),
         envs: HashMap::new(),
         start_immediately: false,
         stashed: false,

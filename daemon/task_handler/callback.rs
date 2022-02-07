@@ -53,7 +53,7 @@ impl TaskHandler {
         let mut parameters = HashMap::new();
         parameters.insert("id", task.id.to_string());
         parameters.insert("command", task.command.clone());
-        parameters.insert("path", task.path.clone());
+        parameters.insert("path", (*task.path.to_string_lossy()).to_owned());
         parameters.insert("group", task.group.clone());
 
         // Result takes the TaskResult Enum strings, unless it didn't finish yet.
