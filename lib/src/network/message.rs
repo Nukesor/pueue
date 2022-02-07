@@ -1,4 +1,5 @@
 use std::collections::{BTreeMap, HashMap};
+use std::path::PathBuf;
 
 use chrono::prelude::*;
 use serde_derive::{Deserialize, Serialize};
@@ -73,7 +74,7 @@ pub enum TaskSelection {
 #[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
 pub struct AddMessage {
     pub command: String,
-    pub path: String,
+    pub path: PathBuf,
     pub envs: HashMap<String, String>,
     pub start_immediately: bool,
     pub stashed: bool,
@@ -113,7 +114,7 @@ pub struct RestartMessage {
 pub struct TasksToRestart {
     pub task_id: usize,
     pub command: String,
-    pub path: String,
+    pub path: PathBuf,
 }
 
 #[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
@@ -159,14 +160,14 @@ pub struct SendMessage {
 pub struct EditMessage {
     pub task_id: usize,
     pub command: String,
-    pub path: String,
+    pub path: PathBuf,
 }
 
 #[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
 pub struct EditResponseMessage {
     pub task_id: usize,
     pub command: String,
-    pub path: String,
+    pub path: PathBuf,
 }
 
 #[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
