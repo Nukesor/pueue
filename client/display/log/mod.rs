@@ -168,7 +168,7 @@ fn print_task_info(task: &Task, colors: &Colors) {
     ]);
     table.add_row(vec![
         Cell::new("Path:").add_attribute(Attribute::Bold),
-        Cell::new(&task.path),
+        Cell::new(&task.path.to_string_lossy()),
     ]);
 
     // Start and end time

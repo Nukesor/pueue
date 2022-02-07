@@ -1,3 +1,6 @@
+use std::path::PathBuf;
+
+use anyhow::Context;
 use anyhow::{bail, Result};
 
 use pueue_lib::network::message::*;
@@ -84,7 +87,11 @@ pub async fn restart(
             command = edit_line_wrapper(stream, *task_id, &command).await?
         };
         if edit_path {
-            path = edit_line_wrapper(stream, *task_id, &path).await?;
+            let str_path = path
+                .to_str()
+                .context("Failed to convert task path to string")?;
+            let changed_path = edit_line_wrapper(stream, *task_id, str_path).await?;
+            path = PathBuf::from(changed_path);
         }
 
         // Add the tasks to the singular message, if we want to restart the tasks in-place.

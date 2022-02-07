@@ -1,5 +1,6 @@
 use std::env;
 use std::io::{Read, Seek, SeekFrom, Write};
+use std::path::PathBuf;
 use std::process::Command;
 
 use anyhow::{bail, Context, Result};
@@ -35,7 +36,11 @@ pub async fn edit(stream: &mut GenericStream, task_id: usize, edit_path: bool) -
     let mut command = init_response.command;
     let mut path = init_response.path;
     if edit_path {
-        path = edit_line_wrapper(stream, task_id, &path).await?;
+        let str_path = path
+            .to_str()
+            .context("Failed to convert task path to string")?;
+        let changed_path = edit_line_wrapper(stream, task_id, str_path).await?;
+        path = PathBuf::from(changed_path);
     } else {
         command = edit_line_wrapper(stream, task_id, &command).await?
     };

@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use anyhow::{bail, Result};
 
 use pueue_lib::network::message::*;
@@ -37,7 +39,7 @@ async fn test_edit_flow() -> Result<()> {
     let response = create_edited_task(shared).await?;
     assert_eq!(response.task_id, 0);
     assert_eq!(response.command, "ls");
-    assert_eq!(response.path, daemon.tempdir.path().to_string_lossy());
+    assert_eq!(response.path, daemon.tempdir.path());
 
     // Task should be locked, after the request for editing succeeded.
     assert_eq!(get_task_status(shared, 0).await?, TaskStatus::Locked);
@@ -61,7 +63,7 @@ async fn test_edit_flow() -> Result<()> {
     // Make sure the task has been changed and enqueued.
     let task = get_task(shared, 0).await?;
     assert_eq!(task.command, "ls -ahl");
-    assert_eq!(task.path, "/tmp");
+    assert_eq!(task.path, PathBuf::from("/tmp"));
     assert_eq!(task.status, TaskStatus::Queued);
 
     Ok(())
