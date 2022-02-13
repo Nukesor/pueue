@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use clap::Parser;
+use clap::{Parser, ValueHint};
 
 #[derive(Parser, Debug)]
 #[clap(
@@ -22,7 +22,7 @@ pub struct CliArguments {
 
     /// Path to a specific pueue config file to use.
     /// This ignores all other config files.
-    #[clap(short, long)]
+    #[clap(short, long, value_hint = ValueHint::FilePath)]
     pub config: Option<PathBuf>,
 
     /// The name of the profile that should be loaded from your config file.

@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use chrono::prelude::*;
 use chrono::Duration;
 use chrono_english::*;
-use clap::{ArgEnum, Parser};
+use clap::{ArgEnum, Parser, ValueHint};
 
 use pueue_lib::network::message::Signal;
 
@@ -12,11 +12,11 @@ pub enum SubCommand {
     /// Enqueue a task for execution.
     Add {
         /// The command to be added.
-        #[clap(required = true)]
+        #[clap(required = true, value_hint = ValueHint::CommandWithArguments)]
         command: Vec<String>,
 
         /// Specify current working directory.
-        #[clap(name = "working-directory", short = 'w', long)]
+        #[clap(name = "working-directory", short = 'w', long, value_hint = ValueHint::DirPath)]
         working_directory: Option<PathBuf>,
 
         /// Escape any special shell characters (" ", "&", "!", etc.).
@@ -399,6 +399,7 @@ pub enum SubCommand {
         #[clap(arg_enum)]
         shell: Shell,
         /// The output directory to which the file should be written.
+        #[clap(value_hint = ValueHint::DirPath)]
         output_directory: PathBuf,
     },
 }
@@ -442,7 +443,7 @@ pub struct CliArguments {
 
     /// Path to a specific pueue config file to use.
     /// This ignores all other config files.
-    #[clap(short, long)]
+    #[clap(short, long, value_hint = ValueHint::FilePath)]
     pub config: Option<PathBuf>,
 
     /// The name of the profile that should be loaded from your config file.

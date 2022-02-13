@@ -23,6 +23,7 @@ Also a huge thanks to all contributors that helped working on this version!
 
 ### Added
 
+- Shell auto-completion value hints for some arguments (zsh and fish only).
 - Introduce the `rm` (remove), `re` (restart) and `fo` (follow) subcommand aliases [#245](https://github.com/Nukesor/pueue/issues/245).
 - Allow to set the amount of parallel tasks at group creation by [Spyros Roum](https://github.com/SpyrosRoum) [#245](https://github.com/Nukesor/pueue/issues/249).
 - When calling `pueue` without a subcommand, the `status` command will be called by default [#247](https://github.com/Nukesor/pueue/issues/247).
