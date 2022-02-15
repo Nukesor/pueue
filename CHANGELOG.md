@@ -43,6 +43,7 @@ Also a huge thanks to all contributors that helped working on this version!
     This is a preliminary feature, which allows users to use external tools, such as `jq`, to filter Pueue's `state -j` output and pipe them back into `format-status` to display it.
     This feature will probably be removed once a proper internal filter logic has been added. \
     The simplest usage looks like this: `pueue status --json | jq -c '.tasks' | pueue format-status`
+- Show currently active commands when calling `pueue wait`.
 
 ### Changed
 

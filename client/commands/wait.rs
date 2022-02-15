@@ -74,13 +74,22 @@ pub async fn wait(
             let previous_status = match watched_tasks.get(&task.id) {
                 None => {
                     // Add any unknown tasks to our watchlist
-                    // Don't log anything if this is the first run
-                    if !quiet && !first_run {
+                    if !quiet {
                         let color = get_color_for_status(&task.status, colors);
                         let task_id = style_text(task.id, None, Some(Attribute::Bold));
                         let status = style_text(&task.status, Some(color), None);
-                        println!("{current_time} - New task {task_id} with status {status}",);
+
+                        if !first_run {
+                            // Don't log non-active tasks in the initial loop.
+                            println!("{current_time} - New task {task_id} with status {status}",);
+                        } else if task.is_running() {
+                            // Show currently running tasks for better user feedback.
+                            println!(
+                                "{current_time} - Found active Task {task_id} with status {status}",
+                            );
+                        }
                     }
+
                     watched_tasks.insert(task.id, task.status.clone());
 
                     continue;
