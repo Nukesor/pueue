@@ -216,7 +216,7 @@ impl State {
         self.filter_task_ids(task_ids, filter)
     }
 
-    /// Same as [tasks_in_statuses], but only checks for tasks of a specific group.
+    /// Same as [State::filter_tasks], but only checks for tasks of a specific group.
     pub fn filter_tasks_of_group<F>(&self, filter: F, group: &str) -> (Vec<usize>, Vec<usize>)
     where
         F: Fn(&Task) -> bool,

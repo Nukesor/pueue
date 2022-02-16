@@ -137,7 +137,7 @@ impl Client {
     /// Returns `Ok(true)`, if the current command has been handled by this function.
     /// This indicates that the client can now shut down.
     /// If `Ok(false)` is returned, the client will continue and handle the Subcommand in the
-    /// [handle_simple_command] function.
+    /// [Client::handle_simple_command] function.
     async fn handle_complex_command(&mut self) -> Result<bool> {
         // This match handles all "complex" commands.
         match &self.subcommand {
