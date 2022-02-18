@@ -976,7 +976,7 @@ dependencies = [
 
 [[package]]
 name = "pueue-lib"
-version = "0.19.2"
+version = "0.19.3"
 dependencies = [
  "anyhow",
  "async-trait",
