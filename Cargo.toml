@@ -52,7 +52,7 @@ log = "0.4"
 simplelog = { version="0.11", default-features=false }
 clap = { version="3", features=["derive", "cargo"] }
 clap_complete = "3"
-crossterm = "0.22"
+crossterm = "0.23"
 comfy-table = "5"
 
 handlebars = "4"

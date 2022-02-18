@@ -23,7 +23,7 @@ async fn main() -> Result<()> {
         output_directory,
     }) = &opt.cmd
     {
-        let mut app = CliArguments::into_app();
+        let mut app = CliArguments::command();
         app.set_bin_name("pueue");
         let completion_result = match shell {
             Shell::Bash => generate_to(shells::Bash, &mut app, "pueue", output_directory),
