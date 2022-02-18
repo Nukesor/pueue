@@ -110,12 +110,6 @@ jobs:
         args: --lzma
         strip: ${{ matrix.strip }}
 
-    - name: Get CHANGELOG.md entry
-      id: changelog_reader
-      uses: mindsers/changelog-reader-action@v1.2.0
-      with:
-        path: ./CHANGELOG.md
-
     - name: Upload client binaries to release
       uses: svenstaro/upload-release-action@v2
       with:
