@@ -11,7 +11,7 @@
 
 Pueue is a command-line task management tool for sequential and parallel execution of long-running tasks.
 
-Simply put, it's a tool that processes a queue of shell commands.
+Simply put, it's a tool that **p**rocesses a q**ueue** of shell commands.
 On top of that, there are a lot of convenient features and abstractions.
 
 Since Pueue is not bound to any terminal, you can control your tasks from any terminal on the same machine.
