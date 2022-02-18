@@ -112,7 +112,7 @@ jobs:
 
     - name: Get CHANGELOG.md entry
       id: changelog_reader
-      uses: mindsers/changelog-reader-action@v1.2.0
+      uses: mindsers/changelog-reader-action@v2
       with:
         path: ./CHANGELOG.md
 
