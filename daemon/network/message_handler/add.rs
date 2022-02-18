@@ -1,7 +1,7 @@
 use crossbeam_channel::Sender;
 
 use pueue_lib::network::message::*;
-use pueue_lib::state::SharedState;
+use pueue_lib::state::{GroupStatus, SharedState};
 use pueue_lib::task::{Task, TaskStatus};
 
 use super::*;
@@ -13,7 +13,7 @@ use crate::state_helper::save_state;
 /// If the start_immediately flag is set, send a StartMessage to the task handler.
 pub fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
     let mut state = state.lock().unwrap();
-    if let Err(message) = ensure_group_exists(&state, &message.group) {
+    if let Err(message) = ensure_group_exists(&mut state, &message.group) {
         return message;
     }
 
@@ -33,8 +33,7 @@ pub fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedSta
         .collect();
     if !not_found.is_empty() {
         return create_failure_message(format!(
-            "Unable to setup dependencies : task(s) {:?} not found",
-            not_found
+            "Unable to setup dependencies : task(s) {not_found:?} not found",
         ));
     }
 
@@ -52,8 +51,17 @@ pub fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedSta
     task.dependencies.sort_unstable();
     task.dependencies.dedup();
 
-    // Add a task. This also persists the state.
+    // Check if the task's group is paused before we pass it to the state
+    let group_status = state
+        .groups
+        .get(&task.group)
+        .expect("We ensured that the group exists.")
+        .status;
+    let group_is_paused = matches!(group_status, GroupStatus::Paused);
+
+    // Add the task and persist the state.
     let task_id = state.add_task(task);
+    ok_or_return_failure_message!(save_state(&state));
 
     // Notify the task handler, in case the client wants to start the task immediately.
     if message.start_immediately {
@@ -66,21 +74,19 @@ pub fn add_task(message: AddMessage, sender: &Sender<Message>, state: &SharedSta
     }
 
     // Create the customized response for the client.
-    let message = if message.print_task_id {
+    let mut response = if message.print_task_id {
         task_id.to_string()
     } else if let Some(enqueue_at) = message.enqueue_at {
-        format!(
-            "New task added (id {}). It will be enqueued at {}",
-            task_id,
-            enqueue_at.format("%Y-%m-%d %H:%M:%S")
-        )
+        let enqueue_at = enqueue_at.format("%Y-%m-%d %H:%M:%S");
+        format!("New task added (id {task_id}). It will be enqueued at {enqueue_at}")
     } else {
-        format!("New task added (id {}).", task_id)
+        format!("New task added (id {task_id}).")
     };
 
-    // Add a task. This also persists the state.
-    // Return an error, if this fails.
-    ok_or_return_failure_message!(save_state(&state));
+    // Notify the user if the task's group is paused
+    if !message.print_task_id && group_is_paused {
+        response.push_str("\nThe group of this task is currently paused!")
+    }
 
-    create_success_message(message)
+    create_success_message(response)
 }

@@ -30,6 +30,7 @@ pub fn handle_message(message: Message, sender: &Sender<Message>, state: &Shared
         Message::Clean(message) => clean::clean(message, state),
         Message::Edit(message) => edit::edit(message, state),
         Message::EditRequest(task_id) => edit::edit_request(task_id, state),
+        Message::EditRestore(task_id) => edit::edit_restore(task_id, state),
         Message::Enqueue(message) => enqueue::enqueue(message, state),
         Message::Group(message) => group::group(message, sender, state),
         Message::Kill(message) => kill::kill(message, sender, state),
@@ -67,8 +68,7 @@ fn ok_or_failure_message<T, E: Display>(result: Result<T, E>) -> Result<T, Messa
     match result {
         Ok(inner) => Ok(inner),
         Err(error) => Err(create_failure_message(format!(
-            "Failed to save state. This is a bug: {}",
-            error
+            "Failed to save state. This is a bug: {error}"
         ))),
     }
 }
@@ -87,13 +87,14 @@ macro_rules! ok_or_return_failure_message {
 mod fixtures {
     pub use crossbeam_channel::Sender;
     use std::collections::HashMap;
+    use std::path::PathBuf;
     use std::sync::{Arc, Mutex};
     use tempfile::TempDir;
 
     pub use pueue_lib::network::message::*;
     pub use pueue_lib::network::protocol::socket_cleanup;
-    pub use pueue_lib::settings::{Settings, PUEUE_DEFAULT_GROUP};
-    pub use pueue_lib::state::{SharedState, State};
+    pub use pueue_lib::settings::Settings;
+    pub use pueue_lib::state::{SharedState, State, PUEUE_DEFAULT_GROUP};
     pub use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
     pub use super::*;
@@ -101,11 +102,8 @@ mod fixtures {
 
     pub fn get_settings() -> (Settings, TempDir) {
         let tempdir = TempDir::new().expect("Failed to create test pueue directory");
-        let mut settings: Settings = Settings::default_config()
-            .expect("Failed to get default config")
-            .try_into()
-            .expect("Failed to get test settings");
-        settings.shared.pueue_directory = tempdir.path().clone().to_owned();
+        let mut settings = Settings::default();
+        settings.shared.pueue_directory = Some(tempdir.path().to_owned());
 
         (settings, tempdir)
     }
@@ -127,17 +125,22 @@ mod fixtures {
         (Arc::new(Mutex::new(state)), tempdir)
     }
 
-    /// Create a new task with stub data
-    pub fn get_stub_task(id: &str, status: TaskStatus) -> Task {
+    /// Create a new task with stub data in the given group
+    pub fn get_stub_task_in_group(id: &str, group: &str, status: TaskStatus) -> Task {
         Task::new(
-            format!("{}", id),
-            "/tmp".to_string(),
+            id.to_string(),
+            PathBuf::from("/tmp"),
             HashMap::new(),
-            PUEUE_DEFAULT_GROUP.to_string(),
+            group.to_string(),
             status,
             Vec::new(),
             None,
         )
+    }
+
+    /// Create a new task with stub data
+    pub fn get_stub_task(id: &str, status: TaskStatus) -> Task {
+        get_stub_task_in_group(id, PUEUE_DEFAULT_GROUP, status)
     }
 
     pub fn get_stub_state() -> (SharedState, TempDir) {

@@ -10,14 +10,11 @@ use log::error;
 use pueue_lib::network::message::*;
 use pueue_lib::network::protocol::*;
 use pueue_lib::network::secret::read_shared_secret;
-use pueue_lib::settings::{Settings, PUEUE_DEFAULT_GROUP};
+use pueue_lib::settings::Settings;
+use pueue_lib::state::PUEUE_DEFAULT_GROUP;
 
-use crate::cli::{CliArguments, SubCommand};
-use crate::commands::edit::edit;
-use crate::commands::get_state;
-use crate::commands::local_follow::local_follow;
-use crate::commands::restart::restart;
-use crate::commands::wait::wait;
+use crate::cli::{CliArguments, GroupCommand, SubCommand};
+use crate::commands::*;
 use crate::display::*;
 
 /// This struct contains the base logic for the client.
@@ -28,7 +25,7 @@ use crate::display::*;
 /// communication pattern, such as the `follow` command, which can read local files,
 /// or the `edit` command, which needs to open an editor locally.
 pub struct Client {
-    opt: CliArguments,
+    subcommand: SubCommand,
     settings: Settings,
     colors: Colors,
     stream: GenericStream,
@@ -91,18 +88,27 @@ impl Client {
         // Backward compatibility should work, but some features might not work as expected.
         if version != crate_version!() {
             println!(
-                "Different daemon version detected '{}'. Consider restarting the daemon.",
-                version
+                "Different daemon version detected '{version}'. Consider restarting the daemon."
             );
         }
 
         let colors = Colors::new(&settings);
 
+        // If no subcommand is given, we default to the `status` subcommand without any arguments.
+        let subcommand = if let Some(subcommand) = opt.cmd {
+            subcommand
+        } else {
+            SubCommand::Status {
+                json: false,
+                group: None,
+            }
+        };
+
         Ok(Client {
-            opt,
             settings,
             colors,
             stream,
+            subcommand,
         })
     }
 
@@ -131,10 +137,10 @@ impl Client {
     /// Returns `Ok(true)`, if the current command has been handled by this function.
     /// This indicates that the client can now shut down.
     /// If `Ok(false)` is returned, the client will continue and handle the Subcommand in the
-    /// [handle_simple_command] function.
+    /// [Client::handle_simple_command] function.
     async fn handle_complex_command(&mut self) -> Result<bool> {
         // This match handles all "complex" commands.
-        match &self.opt.cmd {
+        match &self.subcommand {
             SubCommand::Reset { force, .. } => {
                 let state = get_state(&mut self.stream).await?;
                 let running_tasks = state
@@ -203,8 +209,7 @@ impl Client {
                 .await?;
                 Ok(true)
             }
-
-            SubCommand::Follow { task_id, err } => {
+            SubCommand::Follow { task_id, lines } => {
                 // Simple log output follows for local logs don't need any communication with the daemon.
                 // Thereby we handle this separately over here.
                 if self.settings.client.read_local_logs {
@@ -212,14 +217,23 @@ impl Client {
                         &mut self.stream,
                         &self.settings.shared.pueue_directory(),
                         task_id,
-                        *err,
+                        *lines,
                     )
                     .await?;
                     return Ok(true);
                 }
                 Ok(false)
             }
-
+            SubCommand::FormatStatus { .. } => {
+                format_state(
+                    &mut self.stream,
+                    &self.subcommand,
+                    &self.colors,
+                    &self.settings,
+                )
+                .await?;
+                Ok(true)
+            }
             _ => Ok(false),
         }
     }
@@ -262,10 +276,10 @@ impl Client {
                 std::process::exit(1);
             }
             Message::StatusResponse(state) => {
-                print_state(*state, &self.opt.cmd, &self.colors, &self.settings)
+                print_state(*state, &self.subcommand, &self.colors, &self.settings)
             }
             Message::LogResponse(task_logs) => {
-                print_logs(task_logs, &self.opt.cmd, &self.colors, &self.settings)
+                print_logs(task_logs, &self.subcommand, &self.colors, &self.settings)
             }
             Message::GroupResponse(groups) => print_groups(groups, &self.colors),
             Message::Stream(text) => {
@@ -283,21 +297,18 @@ impl Client {
     /// Returns `Ok(())` if the action was confirmed.
     fn handle_user_confirmation(&self, action: &str, task_ids: &[usize]) -> Result<()> {
         // printing warning and prompt
-        println!(
-            "You are trying to {}: {}",
-            action,
-            task_ids
-                .iter()
-                .map(|t| format!("task{}", t))
-                .collect::<Vec<String>>()
-                .join(", ")
-        );
+        let task_ids = task_ids
+            .iter()
+            .map(|t| format!("task{t}"))
+            .collect::<Vec<String>>()
+            .join(", ");
+        println!("You are trying to {action}: {task_ids}",);
 
         let mut input = String::new();
 
         loop {
             print!("Do you want to continue [Y/n]: ");
-            io::stdout().flush().unwrap();
+            io::stdout().flush()?;
             input.clear();
             io::stdin().read_line(&mut input)?;
 
@@ -321,10 +332,10 @@ impl Client {
     /// Convert the cli command into the message that's being sent to the server,
     /// so it can be understood by the daemon.
     fn get_message_from_opt(&self) -> Result<Message> {
-        match &self.opt.cmd {
+        match &self.subcommand {
             SubCommand::Add {
                 command,
-                working_directory: cwd,
+                working_directory,
                 escape,
                 start_immediately,
                 stashed,
@@ -334,16 +345,11 @@ impl Client {
                 label,
                 print_task_id,
             } => {
-                let cwd_pathbuf = if let Some(cwd) = cwd {
-                    cwd.clone()
+                let path = if let Some(path) = working_directory {
+                    path.clone()
                 } else {
                     current_dir()?
                 };
-
-                let path = cwd_pathbuf
-                    .to_str()
-                    .context("Cannot parse current working directory (Invalid utf8?)")?
-                    .to_string();
 
                 let mut envs = HashMap::new();
                 // Save all environment variables for later injection into the started task
@@ -456,23 +462,26 @@ impl Client {
                 };
                 Ok(Message::Send(message))
             }
-            SubCommand::Group { add, remove } => {
-                if let Some(group) = add {
-                    Ok(Message::Group(GroupMessage::Add(group.clone())))
-                } else if let Some(group) = remove {
-                    Ok(Message::Group(GroupMessage::Remove(group.clone())))
-                } else {
-                    Ok(Message::Group(GroupMessage::List))
+            SubCommand::Group { cmd } => match cmd {
+                Some(GroupCommand::Add { name, parallel }) => {
+                    Ok(Message::Group(GroupMessage::Add {
+                        name: name.to_owned(),
+                        parallel_tasks: parallel.to_owned(),
+                    }))
                 }
-            }
+                Some(GroupCommand::Remove { name }) => {
+                    Ok(Message::Group(GroupMessage::Remove(name.to_owned())))
+                }
+                None => Ok(Message::Group(GroupMessage::List)),
+            },
             SubCommand::Status { .. } => Ok(Message::Status),
             SubCommand::Log {
                 task_ids,
                 lines,
                 full,
-                json,
+                ..
             } => {
-                let lines = determine_log_line_amount(*full, lines, *json, task_ids.len());
+                let lines = determine_log_line_amount(*full, lines);
 
                 let message = LogRequestMessage {
                     task_ids: task_ids.clone(),
@@ -481,16 +490,20 @@ impl Client {
                 };
                 Ok(Message::Log(message))
             }
-            SubCommand::Follow { task_id, err } => {
+            SubCommand::Follow { task_id, lines } => {
                 let message = StreamRequestMessage {
                     task_id: *task_id,
-                    err: *err,
+                    lines: *lines,
                 };
                 Ok(Message::StreamRequest(message))
             }
-            SubCommand::Clean { successful_only } => {
+            SubCommand::Clean {
+                successful_only,
+                group,
+            } => {
                 let message = CleanMessage {
                     successful_only: *successful_only,
+                    group: group.clone(),
                 };
 
                 Ok(Message::Clean(message))
@@ -509,14 +522,18 @@ impl Client {
             SubCommand::Parallel {
                 parallel_tasks,
                 group,
-            } => {
-                let group = group_or_default(group);
-                let message = ParallelMessage {
-                    parallel_tasks: *parallel_tasks,
-                    group,
-                };
-                Ok(Message::Parallel(message))
-            }
+            } => match parallel_tasks {
+                Some(parallel_tasks) => {
+                    let group = group_or_default(group);
+                    let message = ParallelMessage {
+                        parallel_tasks: *parallel_tasks,
+                        group,
+                    };
+                    Ok(Message::Parallel(message))
+                }
+                None => Ok(Message::Group(GroupMessage::List)),
+            },
+            SubCommand::FormatStatus { .. } => bail!("FormatStatus has to be handled earlier"),
             SubCommand::Completions { .. } => bail!("Completions have to be handled earlier"),
             SubCommand::Restart { .. } => bail!("Restarts have to be handled earlier"),
             SubCommand::Edit { .. } => bail!("Edits have to be handled earlier"),

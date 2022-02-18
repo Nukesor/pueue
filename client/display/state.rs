@@ -2,11 +2,11 @@ use std::collections::BTreeMap;
 use std::string::ToString;
 
 use chrono::{Duration, Local};
-use comfy_table::presets::UTF8_HORIZONTAL_BORDERS_ONLY;
+use comfy_table::presets::UTF8_HORIZONTAL_ONLY;
 use comfy_table::*;
 
-use pueue_lib::settings::{Settings, PUEUE_DEFAULT_GROUP};
-use pueue_lib::state::State;
+use pueue_lib::settings::Settings;
+use pueue_lib::state::{State, PUEUE_DEFAULT_GROUP};
 use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
 use super::{colors::Colors, helper::*};
@@ -16,10 +16,8 @@ use crate::cli::SubCommand;
 pub fn print_state(state: State, cli_command: &SubCommand, colors: &Colors, settings: &Settings) {
     let (json, group_only) = match cli_command {
         SubCommand::Status { json, group } => (*json, group.clone()),
-        _ => panic!(
-            "Got wrong Subcommand {:?} in print_state. This shouldn't happen",
-            cli_command
-        ),
+        SubCommand::FormatStatus { group } => (false, group.clone()),
+        _ => panic!("Got wrong Subcommand {cli_command:?} in print_state. This shouldn't happen!"),
     };
 
     // If the json flag is specified, print the state as json and exit.
@@ -28,51 +26,39 @@ pub fn print_state(state: State, cli_command: &SubCommand, colors: &Colors, sett
         return;
     }
 
-    // Sort all tasks by their respective group;
-    let sorted_tasks = sort_tasks_by_group(&state.tasks);
-
     if let Some(group) = group_only {
-        print_single_group(state, settings, colors, sorted_tasks, group);
+        print_single_group(state, settings, colors, group);
         return;
     }
 
-    print_all_groups(state, settings, colors, sorted_tasks);
+    print_all_groups(state, settings, colors);
 }
 
-fn print_single_group(
-    state: State,
-    settings: &Settings,
-    colors: &Colors,
-    mut sorted_tasks: BTreeMap<String, BTreeMap<usize, Task>>,
-    group: String,
-) {
+fn print_single_group(state: State, settings: &Settings, colors: &Colors, group_name: String) {
+    // Sort all tasks by their respective group;
+    let mut sorted_tasks = sort_tasks_by_group(state.tasks);
+
+    let group = if let Some(group) = state.groups.get(&group_name) {
+        group
+    } else {
+        eprintln!("There exists no group \"{group_name}\"");
+        return;
+    };
+
     // Only a single group is requested. Print that group and return.
-    let tasks = sorted_tasks.entry(group.clone()).or_default();
-    let headline = get_group_headline(
-        &group,
-        state.groups.get(&group).unwrap(),
-        *state.settings.daemon.groups.get(&group).unwrap(),
-        colors,
-    );
-    println!("{}", headline);
+    let tasks = sorted_tasks.entry(group_name.clone()).or_default();
+    let headline = get_group_headline(&group_name, group, colors);
+    println!("{headline}");
 
     // Show a message if the requested group doesn't have any tasks.
     if tasks.is_empty() {
-        println!(
-            "Task list is empty. Add tasks with `pueue add -g {} -- [cmd]`",
-            group
-        );
+        println!("Task list is empty. Add tasks with `pueue add -g {group_name} -- [cmd]`");
         return;
     }
     print_table(tasks, colors, settings);
 }
 
-fn print_all_groups(
-    state: State,
-    settings: &Settings,
-    colors: &Colors,
-    sorted_tasks: BTreeMap<String, BTreeMap<usize, Task>>,
-) {
+fn print_all_groups(state: State, settings: &Settings, colors: &Colors) {
     // Early exit and hint if there are no tasks in the queue
     // Print the state of the default group anyway, since this is information one wants to
     // see most of the time anyway.
@@ -80,18 +66,15 @@ fn print_all_groups(
         let headline = get_group_headline(
             PUEUE_DEFAULT_GROUP,
             state.groups.get(PUEUE_DEFAULT_GROUP).unwrap(),
-            *state
-                .settings
-                .daemon
-                .groups
-                .get(PUEUE_DEFAULT_GROUP)
-                .unwrap(),
             colors,
         );
-        println!("{}\n", headline);
+        println!("{headline}\n");
         println!("Task list is empty. Add tasks with `pueue add -- [cmd]`");
         return;
     }
+
+    // Sort all tasks by their respective group;
+    let sorted_tasks = sort_tasks_by_group(state.tasks);
 
     // Always print the default queue at the very top, if no specific group is requested.
     if sorted_tasks.get(PUEUE_DEFAULT_GROUP).is_some() {
@@ -99,15 +82,9 @@ fn print_all_groups(
         let headline = get_group_headline(
             PUEUE_DEFAULT_GROUP,
             state.groups.get(PUEUE_DEFAULT_GROUP).unwrap(),
-            *state
-                .settings
-                .daemon
-                .groups
-                .get(PUEUE_DEFAULT_GROUP)
-                .unwrap(),
             colors,
         );
-        println!("{}", headline);
+        println!("{headline}");
         print_table(tasks, colors, settings);
 
         // Add a newline if there are further groups to be printed
@@ -125,13 +102,8 @@ fn print_all_groups(
             continue;
         }
 
-        let headline = get_group_headline(
-            group,
-            state.groups.get(group).unwrap(),
-            *state.settings.daemon.groups.get(group).unwrap(),
-            colors,
-        );
-        println!("{}", headline);
+        let headline = get_group_headline(group, state.groups.get(group).unwrap(), colors);
+        println!("{headline}");
         print_table(tasks, colors, settings);
 
         // Add a newline between groups
@@ -169,7 +141,7 @@ fn print_table(tasks: &BTreeMap<usize, Task>, colors: &Colors, settings: &Settin
     let mut table = Table::new();
     table
         .set_content_arrangement(ContentArrangement::Dynamic)
-        .load_preset(UTF8_HORIZONTAL_BORDERS_ONLY)
+        .load_preset(UTF8_HORIZONTAL_ONLY)
         .set_header(headers);
 
     // Add rows one by one.
@@ -189,7 +161,7 @@ fn print_table(tasks: &BTreeMap<usize, Task>, colors: &Colors, settings: &Settin
                 TaskResult::Success => (TaskResult::Success.to_string(), colors.green()),
                 TaskResult::DependencyFailed => ("Dependency failed".to_string(), colors.red()),
                 TaskResult::FailedToSpawn(_) => ("Failed to spawn".to_string(), colors.red()),
-                TaskResult::Failed(code) => (format!("Failed ({})", code), colors.red()),
+                TaskResult::Failed(code) => (format!("Failed ({code})"), colors.red()),
                 _ => (result.to_string(), colors.red()),
             },
             _ => (status_string, colors.yellow()),
@@ -239,7 +211,7 @@ fn print_table(tasks: &BTreeMap<usize, Task>, colors: &Colors, settings: &Settin
         } else {
             row.add_cell(Cell::new(&task.original_command));
         }
-        row.add_cell(Cell::new(&task.path));
+        row.add_cell(Cell::new(&task.path.to_string_lossy()));
 
         // Add start and end info
         let (start, end) = formatted_start_end(task, settings);
@@ -250,7 +222,7 @@ fn print_table(tasks: &BTreeMap<usize, Task>, colors: &Colors, settings: &Settin
     }
 
     // Print the table.
-    println!("{}", table);
+    println!("{table}");
 }
 
 /// Returns the formatted `start` and `end` text for a given task.

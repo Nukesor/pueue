@@ -11,7 +11,7 @@ pub async fn local_follow(
     stream: &mut GenericStream,
     pueue_directory: &Path,
     task_id: &Option<usize>,
-    err: bool,
+    lines: Option<usize>,
 ) -> Result<()> {
     // The user can specify the id of the task they want to follow
     // If the id isn't specified and there's only a single running task, this task will be used.
@@ -38,15 +38,14 @@ pub async fn local_follow(
                         .collect::<Vec<_>>()
                         .join(", ");
                     bail!(
-                        "Multiple tasks are running, please select one of the following: {}",
-                        running_ids
+                        "Multiple tasks are running, please select one of the following: {running_ids}",
                     );
                 }
             }
         }
     };
 
-    follow_local_task_logs(pueue_directory, task_id, err);
+    follow_local_task_logs(pueue_directory, task_id, lines);
 
     Ok(())
 }

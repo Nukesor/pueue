@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use log::info;
+use log::warn;
 
 use pueue_lib::network::message::*;
 
@@ -36,7 +36,7 @@ impl TaskHandler {
             Message::DaemonShutdown(shutdown) => {
                 self.initiate_shutdown(shutdown);
             }
-            _ => info!("Received unhandled message {:?}", message),
+            _ => warn!("Received unhandled message {message:?}"),
         }
     }
 }

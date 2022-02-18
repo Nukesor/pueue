@@ -4,6 +4,79 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2022-02-18
+
+This release marks the second stable release of Pueue.
+
+Shortly after releasing `v1.0.0` a few short-comings of some design decisions became apparent.
+This release aims to remove all those short-comings or important missing features.
+Some of those changes required breaking changes of both internal APIs and datastructures, as well as the CLI interfaces and the configuration file.
+Since this project sticks to SemVer, this meant that a new major release was necessary.
+
+Hopefully, this will be the last stable release for quite a while.
+There are a few features planned that might introduce further breaking changes, but those will most likely need quite some time to implement (if we manage to implement them at all).
+
+Anyhow, I'm quite pleased with the overall state of this release!
+A lot of cool and convenient stuff has been added and quite a bit of internal logic has been streamlined and cleaned up.
+
+Also a huge thanks to all contributors that helped working on this version!
+
+### Added
+
+- Shell auto-completion value hints for some arguments (zsh and fish only).
+- Introduce the `rm` (remove), `re` (restart) and `fo` (follow) subcommand aliases [#245](https://github.com/Nukesor/pueue/issues/245).
+- Allow to set the amount of parallel tasks at group creation by [Spyros Roum](https://github.com/SpyrosRoum) [#245](https://github.com/Nukesor/pueue/issues/249).
+- When calling `pueue` without a subcommand, the `status` command will be called by default [#247](https://github.com/Nukesor/pueue/issues/247).
+- Add the `--group` parameter to the `pueue clean` command [#248](https://github.com/Nukesor/pueue/issues/248).
+- Add `output` for a task's log output as template parameters for callbacks [#269](https://github.com/Nukesor/issues/269).
+- Add `--lines` parameter to `pueue follow` to only show specified number of lines from stdout before following [#270](https://github.com/Nukesor/pueue/issues/270).
+- Notify the user if a task is added to a paused group [#265](https://github.com/Nukesor/pueue/issues/265).
+- Notify the user that when killing whole groups, those groups are also paused [#265](https://github.com/Nukesor/pueue/issues/265).
+- Implementation of configuration profiles [#244](https://github.com/Nukesor/pueue/issues/244).
+    This supports multiple profiles in a single `pueue.yml`, which can be loaded via the `--profile/-p $name` flag.
+- Added the `shared.runtime_directory` config variable for any runtime related files, such as sockets.
+- `XDG_CONFIG_HOME` is respected for Pueue's config directory [#243](https://github.com/Nukesor/pueue/issues/243).
+- `XDG_DATA_HOME` is used if the `pueue_directory` config isn't explicitly set [#243](https://github.com/Nukesor/pueue/issues/243).
+- `XDG_RUNTIME_DIR` is used if the new `runtime_directory` config isn't explicitly set [#243](https://github.com/Nukesor/pueue/issues/243).
+- The unix socket is now located in the `runtime_directory` by default [#243](https://github.com/Nukesor/pueue/issues/243).
+- The `format-status` subcommand [#213](https://github.com/Nukesor/pueue/issues/213).
+    This is a preliminary feature, which allows users to use external tools, such as `jq`, to filter Pueue's `state -j` output and pipe them back into `format-status` to display it.
+    This feature will probably be removed once a proper internal filter logic has been added. \
+    The simplest usage looks like this: `pueue status --json | jq -c '.tasks' | pueue format-status`
+- Show currently active commands when calling `pueue wait`.
+
+### Changed
+
+- Improved memory footprint for reading partial logs.
+- Always only show the last X lines of output when using `pueue log` without additional parameters.
+- `pueue parallel` without arguments now also shows the groups with their current limit like `pueue group`. [#264](https://github.com/Nukesor/pueue/issues/264)
+- Configuration files will no longer be changed programatically [#241](https://github.com/Nukesor/pueue/issues/241).
+- Default values for all most configuration variables have been added [#241](https://github.com/Nukesor/pueue/issues/241).
+- **Breaking changes:** `stderr` and `stdout` of Pueue's tasks are now combined into a single file.
+    This means a few things.
+    * One doesn't have to filter for stderr any longer.
+    * All logs are now combined in a single chronologically correct log file.
+    * One **can no longer** filter for stderr/stdout specific output.
+- **Breaking changes:** The `group` subcommand now has `group add [-p $count] $name` and `group remove $name` subcommands.
+    The old `group [-a,-p,-r]` flags have been removed.
+- **Breaking changes:** The configuration for groups can no longer be done via configuration file.
+    This means, that groups can only be edited, created or deleted via the commandline interface.
+    The amount of parallel tasks will also be reset to `1` when upgrading.
+
+### Removed
+
+- No longer read `/etc/pueue/` configuration files.
+    Pueue isn't designed as a system wide service, hence this doesn't make any sense to have system wide configuration files.
+- If multiple configuration files are found, they're no longer merged together.
+    Instead, only the first file will be used.
+
+### Fixed
+
+- Recover tasks from `Locked` state if editing fails [#267](https://github.com/Nukesor/pueue/issues/267)
+- `pueue log` now behaves the same for local and remote logs.
+     Remote logs previously showed more lines under some circumstances.
+- panic due to rogue `.unwrap()` when filtering for a non-existing group in `pueue status`.
+
 ## [1.0.6] - 2022-01-05
 
 #### Fixed

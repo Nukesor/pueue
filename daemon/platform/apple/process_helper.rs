@@ -78,7 +78,7 @@ pub fn send_signal_to_child(
 pub fn kill_child(task_id: usize, child: &mut Child, _kill_children: bool) -> bool {
     match child.kill() {
         Err(_) => {
-            debug!("Task {} has already finished by itself", task_id);
+            debug!("Task {task_id} has already finished by itself");
             false
         }
         _ => true,
@@ -87,7 +87,7 @@ pub fn kill_child(task_id: usize, child: &mut Child, _kill_children: bool) -> bo
 
 /// Send a signal to a unix process.
 fn send_signal_to_process(pid: u32, signal: Signal, _children: bool) -> Result<bool, nix::Error> {
-    debug!("Sending signal {} to {}", signal, pid);
+    debug!("Sending signal {signal} to {pid}");
 
     signal::kill(Pid::from_raw(pid.try_into().unwrap()), signal)?;
     Ok(true)
@@ -95,7 +95,7 @@ fn send_signal_to_process(pid: u32, signal: Signal, _children: bool) -> Result<b
 
 /// Check, whether a specific process is exists or not
 pub fn process_exists(pid: u32) -> bool {
-    Path::new(&format!("/proc/{}", pid)).exists()
+    Path::new(&format!("/proc/{pid}")).exists()
 }
 
 #[cfg(test)]

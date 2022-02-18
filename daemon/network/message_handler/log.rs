@@ -1,11 +1,11 @@
 use std::collections::BTreeMap;
 
-use pueue_lib::log::read_and_compress_log_files;
+use pueue_lib::log::read_and_compress_log_file;
 use pueue_lib::network::message::*;
 use pueue_lib::state::SharedState;
 
 /// Invoked when calling `pueue log`.
-/// Return the current state and the stdou/stderr of all tasks to the client.
+/// Return tasks and their output to the client.
 pub fn get_log(message: LogRequestMessage, state: &SharedState) -> Message {
     let state = { state.lock().unwrap().clone() };
     // Return all logs, if no specific task id is specified.
@@ -21,29 +21,27 @@ pub fn get_log(message: LogRequestMessage, state: &SharedState) -> Message {
             // We send log output and the task at the same time.
             // This isn't as efficient as sending the raw compressed data directly,
             // but it's a lot more convenient for now.
-            let (stdout, stderr) = if message.send_logs {
-                match read_and_compress_log_files(
+            let output = if message.send_logs {
+                match read_and_compress_log_file(
                     *task_id,
                     &state.settings.shared.pueue_directory(),
                     message.lines,
                 ) {
-                    Ok((stdout, stderr)) => (Some(stdout), Some(stderr)),
+                    Ok(output) => (Some(output)),
                     Err(err) => {
                         // Fail early if there's some problem with getting the log output
                         return create_failure_message(format!(
-                            "Failed reading process output file: {:?}",
-                            err
+                            "Failed reading process output file: {err:?}"
                         ));
                     }
                 }
             } else {
-                (None, None)
+                None
             };
 
             let task_log = TaskLogMessage {
                 task: task.clone(),
-                stdout,
-                stderr,
+                output,
             };
             tasks.insert(*task_id, task_log);
         }

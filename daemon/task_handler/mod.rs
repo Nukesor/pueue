@@ -45,10 +45,7 @@ macro_rules! ok_or_shutdown {
     ($task_manager:ident, $result:expr) => {
         match $result {
             Err(err) => {
-                error!(
-                    "Initializing graceful shutdown. Encountered error in TaskHandler: {}",
-                    err
-                );
+                error!("Initializing graceful shutdown. Encountered error in TaskHandler: {err}");
                 $task_manager.initiate_shutdown(Shutdown::Emergency);
                 return;
             }
@@ -99,7 +96,7 @@ impl TaskHandler {
 
         // Initialize the subprocess management structure.
         let mut pools = BTreeMap::new();
-        for group in state.settings.daemon.groups.keys() {
+        for group in state.groups.keys() {
             pools.insert(group.clone(), BTreeMap::new());
         }
 
@@ -174,13 +171,13 @@ impl TaskHandler {
         // Remove the unix socket.
         if let Err(error) = socket_cleanup(&state.settings.shared) {
             println!("Failed to cleanup socket during shutdown.");
-            println!("{}", error);
+            println!("{error}");
         }
 
         // Cleanup the pid file
         if let Err(error) = cleanup_pid_file(&self.pueue_directory) {
             println!("Failed to cleanup pid during shutdown.");
-            println!("{}", error);
+            println!("{error}");
         }
 
         // Actually exit the program the way we're supposed to.
@@ -204,11 +201,11 @@ impl TaskHandler {
 
         let mut state = self.state.lock().unwrap();
         if let Err(error) = reset_state(&mut state) {
-            error!("Failed to reset state with error: {:?}", error);
+            error!("Failed to reset state with error: {error:?}");
         };
 
         if let Err(error) = reset_task_log_directory(&self.pueue_directory) {
-            panic!("Error while resetting task log directory: {}", error);
+            panic!("Error while resetting task log directory: {error}");
         };
         self.full_reset = false;
     }
@@ -251,16 +248,13 @@ impl TaskHandler {
     fn perform_action(&mut self, id: usize, action: ProcessAction, children: bool) -> Result<bool> {
         match self.children.get_child(id) {
             Some(child) => {
-                debug!("Executing action {:?} to {}", action, id);
+                debug!("Executing action {action:?} to {id}");
                 run_action_on_child(child, &action, children)?;
 
                 Ok(true)
             }
             None => {
-                error!(
-                    "Tried to execute action {:?} to non existing task {}",
-                    action, id
-                );
+                error!("Tried to execute action {action:?} to non existing task {id}");
                 Ok(false)
             }
         }

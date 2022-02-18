@@ -3,6 +3,7 @@ use pueue_lib::network::message::*;
 use pueue_lib::task::*;
 use rstest::rstest;
 
+use crate::fixtures::*;
 use crate::helper::*;
 
 #[rstest]
@@ -32,12 +33,12 @@ use crate::helper::*;
 /// - Via the --group flag, which resumes everything in a specific group (in our case 'default').
 /// - Via specific ids.
 async fn test_start_tasks(#[case] start_message: Message) -> Result<()> {
-    let (settings, _tempdir, _pid) = threaded_setup()?;
-    let shared = &settings.shared;
+    let daemon = daemon().await?;
+    let shared = &daemon.settings.shared;
 
     // Add multiple tasks only a single one will be started by default
     for _ in 0..3 {
-        assert_success(fixtures::add_task(shared, "sleep 60", false).await?);
+        assert_success(add_task(shared, "sleep 60", false).await?);
     }
     // Wait for task 0 to start on its own.
     // We have to do this, otherwise we'll start task 1/2 beforehand, which prevents task 0 to be

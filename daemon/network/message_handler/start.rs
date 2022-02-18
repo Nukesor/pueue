@@ -10,10 +10,10 @@ use crate::network::response_helper::*;
 /// Invoked when calling `pueue start`.
 /// Forward the start message to the task handler, which then starts the process(es).
 pub fn start(message: StartMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
-    let state = state.lock().unwrap();
+    let mut state = state.lock().unwrap();
     // If a group is selected, make sure it exists.
     if let TaskSelection::Group(group) = &message.tasks {
-        if let Err(message) = ensure_group_exists(&state, group) {
+        if let Err(message) = ensure_group_exists(&mut state, group) {
             return message;
         }
     }
@@ -37,7 +37,7 @@ pub fn start(message: StartMessage, sender: &Sender<Message>, state: &SharedStat
             &state,
         ),
         TaskSelection::Group(group) => {
-            create_success_message(format!("Group \"{}\" is being resumed.", &group))
+            create_success_message(format!("Group \"{group}\" is being resumed."))
         }
         TaskSelection::All => create_success_message("All queues are being resumed."),
     }

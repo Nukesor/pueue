@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use chrono::prelude::*;
 use chrono::Duration;
 use chrono_english::*;
-use clap::{ArgEnum, Parser};
+use clap::{ArgEnum, Parser, ValueHint};
 
 use pueue_lib::network::message::Signal;
 
@@ -12,11 +12,11 @@ pub enum SubCommand {
     /// Enqueue a task for execution.
     Add {
         /// The command to be added.
-        #[clap(required = true)]
+        #[clap(required = true, value_hint = ValueHint::CommandWithArguments)]
         command: Vec<String>,
 
         /// Specify current working directory.
-        #[clap(name = "working-directory", short = 'w', long)]
+        #[clap(name = "working-directory", short = 'w', long, value_hint = ValueHint::DirPath)]
         working_directory: Option<PathBuf>,
 
         /// Escape any special shell characters (" ", "&", "!", etc.).
@@ -61,6 +61,7 @@ pub enum SubCommand {
     },
     /// Remove tasks from the list.
     /// Running or paused tasks need to be killed first.
+    #[clap(alias("rm"))]
     Remove {
         /// The task ids to be removed.
         #[clap(required = true)]
@@ -141,6 +142,7 @@ pub enum SubCommand {
     /// Restart task(s).
     /// Identical tasks will be created and by default enqueued.
     /// By default, a new task will be created.
+    #[clap(alias("re"))]
     Restart {
         /// Restart these specific tasks.
         task_ids: Vec<usize>,
@@ -263,20 +265,14 @@ pub enum SubCommand {
     /// Use this to add or remove groups.
     /// By default, this will simply display all known groups.
     Group {
-        /// Add a group by name.
-        #[clap(short, long, conflicts_with = "remove")]
-        add: Option<String>,
-
-        /// Remove a group by name.
-        /// This will move all tasks in this group to the default group!
-        #[clap(short, long)]
-        remove: Option<String>,
+        #[clap(subcommand)]
+        cmd: Option<GroupCommand>,
     },
 
     /// Display the current status of all tasks.
     Status {
         /// Print the current state as json to stdout.
-        /// This does not include stdout/stderr of tasks.
+        /// This does not include the output of tasks.
         /// Use `log -j` if you want everything.
         #[clap(short, long)]
         json: bool,
@@ -286,15 +282,27 @@ pub enum SubCommand {
         group: Option<String>,
     },
 
+    /// Accept a list or map of JSON pueue tasks via stdin and display it just like "status".
+    /// A simple example might look like this:
+    /// pueue status --json | jq -c '.tasks' | pueue format-status
+    #[clap(after_help = "DISCLAIMER:
+    This command is a temporary workaround until a proper filtering language for \"status\" has
+    been implemented. It might be removed in the future.")]
+    FormatStatus {
+        #[clap(short, long)]
+        /// Only show tasks of a specific group
+        group: Option<String>,
+    },
+
     /// Display the log output of finished tasks.
-    /// Prints either all logs or only the logs of specified tasks.
-    ///
-    /// When looking at multiple logs, only the last few lines will be shown
+    /// When looking at multiple logs, only the last few lines will be shown.
+    /// If you want to "follow" the output of a task, please use the "follow" subcommand.
     Log {
         /// View the task output of these specific tasks.
         task_ids: Vec<usize>,
+
         /// Print the resulting tasks and output as json.
-        /// By default only the last stdout/-err lines will be returned unless --full is provided.
+        /// By default only the last lines will be returned unless --full is provided.
         /// Take care, as the json cannot be streamed!
         /// If your logs are really huge, using --full can use all of your machine's RAM.
         #[clap(short, long)]
@@ -305,7 +313,7 @@ pub enum SubCommand {
         #[clap(short, long, conflicts_with = "full")]
         lines: Option<usize>,
 
-        /// Show the whole stdout and stderr output.
+        /// Show the whole output.
         /// This is the default if only a single task is being looked at.
         #[clap(short, long)]
         full: bool,
@@ -313,15 +321,16 @@ pub enum SubCommand {
 
     /// Follow the output of a currently running task.
     /// This command works like tail -f.
+    #[clap(alias("fo"))]
     Follow {
         /// The id of the task you want to watch.
         /// If no or multiple tasks are running, you have to specify the id.
         /// If only a single task is running, you can omit the id.
         task_id: Option<usize>,
 
-        /// Show stderr instead of stdout.
+        /// Only print the last X lines of the output before following
         #[clap(short, long)]
-        err: bool,
+        lines: Option<usize>,
     },
 
     /// Wait until tasks are finished. This can be quite useful for scripting.
@@ -350,6 +359,10 @@ pub enum SubCommand {
         /// Only clean tasks that finished successfully.
         #[clap(short, long)]
         successful_only: bool,
+
+        /// Only clean tasks of a specific group
+        #[clap(short, long)]
+        group: Option<String>,
     },
 
     /// Kill all tasks, clean up afterwards and reset EVERYTHING!
@@ -372,7 +385,7 @@ pub enum SubCommand {
     Parallel {
         /// The amount of allowed parallel tasks.
         #[clap(validator=min_one)]
-        parallel_tasks: usize,
+        parallel_tasks: Option<usize>,
 
         /// Set the amount for a specific group.
         #[clap(name = "group", short, long)]
@@ -386,8 +399,25 @@ pub enum SubCommand {
         #[clap(arg_enum)]
         shell: Shell,
         /// The output directory to which the file should be written.
+        #[clap(value_hint = ValueHint::DirPath)]
         output_directory: PathBuf,
     },
+}
+
+#[derive(Parser, Debug)]
+pub enum GroupCommand {
+    /// Add a group by name.
+    Add {
+        name: String,
+
+        /// Set the amount of parallel tasks this group can have.
+        #[clap(short, long, validator = min_one)]
+        parallel: Option<usize>,
+    },
+
+    /// Remove a group by name.
+    /// This will move all tasks in this group to the default group!
+    Remove { name: String },
 }
 
 #[derive(Parser, ArgEnum, Debug, Clone, PartialEq)]
@@ -403,8 +433,8 @@ pub enum Shell {
 #[clap(
     name = "Pueue client",
     about = "Interact with the Pueue daemon",
-    author = env!("CARGO_PKG_AUTHORS"),
-    version = env!("CARGO_PKG_VERSION")
+    author,
+    version
 )]
 pub struct CliArguments {
     /// Verbose mode (-v, -vv, -vvv)
@@ -413,11 +443,15 @@ pub struct CliArguments {
 
     /// Path to a specific pueue config file to use.
     /// This ignores all other config files.
-    #[clap(short, long)]
+    #[clap(short, long, value_hint = ValueHint::FilePath)]
     pub config: Option<PathBuf>,
 
+    /// The name of the profile that should be loaded from your config file.
+    #[clap(short, long)]
+    pub profile: Option<String>,
+
     #[clap(subcommand)]
-    pub cmd: SubCommand,
+    pub cmd: Option<SubCommand>,
 }
 
 fn parse_delay_until(src: &str) -> Result<DateTime<Local>, String> {

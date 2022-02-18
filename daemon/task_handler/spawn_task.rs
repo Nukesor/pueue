@@ -27,9 +27,20 @@ impl TaskHandler {
             .iter()
             .filter(|(_, task)| task.status == TaskStatus::Queued)
             .filter(|(_, task)| {
-                // The task is assigned to a group.
-                // First let's check if the group is running. If it isn't, simply return false.
-                if !matches!(state.groups.get(&task.group), Some(GroupStatus::Running)) {
+                // Make sure the task is assigned to an existing group.
+                let group = match state.groups.get(&task.group) {
+                    Some(group) => group,
+                    None => {
+                        error!(
+                            "Got task with unknown group {}. Please report this!",
+                            &task.group
+                        );
+                        return false;
+                    }
+                };
+
+                // Let's check if the group is running. If it isn't, simply return false.
+                if group.status != GroupStatus::Running {
                     return false;
                 }
 
@@ -46,16 +57,8 @@ impl TaskHandler {
                     }
                 };
 
-                match state.settings.daemon.groups.get(&task.group) {
-                    Some(allowed) => running_tasks < *allowed,
-                    None => {
-                        error!(
-                            "Got task with unknown group {}. Please report this!",
-                            &task.group
-                        );
-                        false
-                    }
-                }
+                // Make sure there are free slots in the task's group
+                running_tasks < group.parallel_tasks
             })
             .find(|(_, task)| {
                 // Check whether all dependencies for this task are fulfilled.
@@ -82,18 +85,18 @@ impl TaskHandler {
                 }
             }
             None => {
-                info!("Tried to start non-existing task: {}", task_id);
+                info!("Tried to start non-existing task: {task_id}");
                 return;
             }
         };
 
-        // Try to get the log files to which the output of the process will be written to.
+        // Try to get the log file to which the output of the process will be written to.
         // Panic if this doesn't work! This is unrecoverable.
         let (stdout_log, stderr_log) = match create_log_file_handles(task_id, &self.pueue_directory)
         {
             Ok((out, err)) => (out, err),
             Err(err) => {
-                panic!("Failed to create child log files: {:?}", err);
+                panic!("Failed to create child log files: {err:?}");
             }
         };
 
@@ -130,7 +133,7 @@ impl TaskHandler {
         let child = match spawned_command {
             Ok(child) => child,
             Err(err) => {
-                let error = format!("Failed to spawn child {} with err: {:?}", task_id, err);
+                let error = format!("Failed to spawn child {task_id} with err: {err:?}");
                 error!("{}", error);
                 clean_log_handles(task_id, &self.pueue_directory);
 
@@ -145,7 +148,7 @@ impl TaskHandler {
                     task.group.clone()
                 };
 
-                pause_on_failure(state, group);
+                pause_on_failure(state, &group);
                 ok_or_shutdown!(self, save_state(state));
                 return;
             }

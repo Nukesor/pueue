@@ -4,26 +4,18 @@ use std::path::Path;
 
 use anyhow::{anyhow, bail, Context, Result};
 use procfs::process::Process;
-use pueue_lib::network::message::Message;
-use pueue_lib::settings::Shared;
-use pueue_lib::state::GroupStatus;
+use pueue_lib::network::message::*;
+use pueue_lib::settings::*;
 
-use super::{get_state, sleep_ms};
+use super::*;
 
-pub fn assert_success(message: Message) {
-    assert!(
-        matches!(message, Message::Success(_)),
-        "Expected to get SuccessMessage, got {:?}",
-        message
-    );
-}
+/// Send the Shutdown message to the test daemon.
+pub async fn shutdown_daemon(shared: &Shared) -> Result<Message> {
+    let message = Message::DaemonShutdown(Shutdown::Graceful);
 
-pub fn assert_failure(message: Message) {
-    assert!(
-        matches!(message, Message::Failure(_)),
-        "Expected to get FailureMessage, got {:?}",
-        message
-    );
+    send_message(shared, message)
+        .await
+        .context("Failed to send Shutdown message")
 }
 
 /// Get a daemon pid from a specific pueue directory.
@@ -58,7 +50,7 @@ pub fn get_pid(pueue_dir: &Path) -> Result<i32> {
 
         let pid = content
             .parse::<i32>()
-            .map_err(|_| anyhow!("Couldn't parse value: {}", content))?;
+            .map_err(|_| anyhow!("Couldn't parse value: {content}"))?;
         return Ok(pid);
     }
 
@@ -90,35 +82,4 @@ pub fn wait_for_shutdown(pid: i32) -> Result<()> {
     }
 
     bail!("Couldn't find pid file after about 2 sec.");
-}
-
-/// Waits for a status on a specific group.
-pub async fn wait_for_group_status(
-    shared: &Shared,
-    group: &str,
-    _expected_status: GroupStatus,
-) -> Result<()> {
-    let state = get_state(shared).await?;
-
-    // Give the daemon about 1 sec to shutdown.
-    let tries = 20;
-    let mut current_try = 0;
-
-    while current_try < tries {
-        // Process is still alive, wait a little longer
-        if let Some(status) = state.groups.get(group) {
-            if matches!(status, _expected_status) {
-                return Ok(());
-            }
-        }
-
-        sleep_ms(50);
-        current_try += 1;
-    }
-
-    bail!(
-        "Group {} didn't change to state {:?} after about 1 sec.",
-        group,
-        _expected_status
-    );
 }

@@ -30,7 +30,7 @@ pub async fn accept_incoming(sender: Sender<Message>, state: SharedState) -> Res
         let stream = match listener.accept().await {
             Ok(stream) => stream,
             Err(err) => {
-                warn!("Failed connecting to client: {:?}", err);
+                warn!("Failed connecting to client: {err:?}");
                 continue;
             }
         };
@@ -67,10 +67,8 @@ async fn handle_incoming(
 
     // Return immediately, if we got a wrong secret from the client.
     if payload_bytes != secret {
-        warn!(
-            "Received invalid secret: {}",
-            String::from_utf8(payload_bytes)?
-        );
+        let received_secret = String::from_utf8(payload_bytes)?;
+        warn!("Received invalid secret: {received_secret}");
 
         // Wait for 1 second before closing the socket, when getting a invalid secret.
         // This invalidates any timing attacks.
@@ -106,7 +104,7 @@ async fn handle_incoming(
         // In case of a deserialization error, respond the error to the client and return early.
         if let Err(Error::MessageDeserialization(err)) = message_result {
             send_message(
-                create_failure_message(format!("Failed to deserialize message: {}", err)),
+                create_failure_message(format!("Failed to deserialize message: {err}")),
                 &mut stream,
             )
             .await?;
@@ -114,7 +112,7 @@ async fn handle_incoming(
         }
 
         let message = message_result?;
-        debug!("Received instruction: {:?}", message);
+        debug!("Received instruction: {message:?}");
 
         let response = match message {
             // The client requested the output of a task.

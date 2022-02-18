@@ -20,18 +20,20 @@ impl TaskHandler {
         // Get the keys of all tasks that should be paused
         let keys: Vec<usize> = match tasks {
             TaskSelection::TaskIds(task_ids) => task_ids,
-            TaskSelection::Group(group) => {
+            TaskSelection::Group(group_name) => {
                 // Ensure that a given group exists. (Might not happen due to concurrency)
-                if !state.groups.contains_key(&group) {
-                    return;
-                }
+                let group = match state.groups.get_mut(&group_name) {
+                    Some(group) => group,
+                    None => return,
+                };
+
                 // Pause a specific group.
-                state.groups.insert(group.clone(), GroupStatus::Paused);
-                info!("Pausing group {}", &group);
+                group.status = GroupStatus::Paused;
+                info!("Pausing group {group_name}");
 
                 let (matching, _) = state.filter_tasks_of_group(
                     |task| matches!(task.status, TaskStatus::Running),
-                    &group,
+                    &group_name,
                 );
                 matching
             }
@@ -57,7 +59,7 @@ impl TaskHandler {
     /// Send a signal to the process to actually pause the OS process.
     fn pause_task(&mut self, state: &mut LockedState, id: usize, pause_children: bool) {
         match self.perform_action(id, ProcessAction::Pause, pause_children) {
-            Err(err) => error!("Failed pausing task {}: {:?}", id, err),
+            Err(err) => error!("Failed pausing task {id}: {err:?}"),
             Ok(success) => {
                 if success {
                     state.change_status(id, TaskStatus::Paused);

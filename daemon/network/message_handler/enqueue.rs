@@ -33,10 +33,8 @@ pub fn enqueue(message: EnqueueMessage, state: &SharedState) -> Message {
     }
 
     let text = if let Some(enqueue_at) = message.enqueue_at {
-        format!(
-            "Tasks will be enqueued at {}",
-            enqueue_at.format("%Y-%m-%d %H:%M:%S")
-        )
+        let enqueue_at = enqueue_at.format("%Y-%m-%d %H:%M:%S");
+        format!("Tasks will be enqueued at {enqueue_at}")
     } else {
         String::from("Tasks are enqueued")
     };

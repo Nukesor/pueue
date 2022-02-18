@@ -8,7 +8,7 @@ use anyhow::{Context, Result};
 use chrono::prelude::*;
 use log::{debug, info};
 
-use pueue_lib::state::{GroupStatus, State};
+use pueue_lib::state::{Group, GroupStatus, State, PUEUE_DEFAULT_GROUP};
 use pueue_lib::task::{TaskResult, TaskStatus};
 
 pub type LockedState<'a> = MutexGuard<'a, State>;
@@ -52,20 +52,14 @@ pub fn is_task_removable(state: &LockedState, task_id: &usize, to_delete: &[usiz
 /// paused depending on the current settings.
 ///
 /// `group` should be the name of the failed task.
-pub fn pause_on_failure(state: &mut LockedState, group: String) {
+pub fn pause_on_failure(state: &mut LockedState, group: &str) {
     if state.settings.daemon.pause_group_on_failure {
-        state.groups.insert(group, GroupStatus::Paused);
+        if let Some(group) = state.groups.get_mut(group) {
+            group.status = GroupStatus::Paused;
+        }
     } else if state.settings.daemon.pause_all_on_failure {
         state.set_status_for_all_groups(GroupStatus::Paused);
     }
-}
-
-/// A small convenience wrapper for saving the settings to a file.
-pub fn save_settings(state: &LockedState) -> Result<()> {
-    state
-        .settings
-        .save(&state.config_path)
-        .context("Failed to save settings")
 }
 
 /// Do a full reset of the state.
@@ -97,7 +91,7 @@ pub fn backup_state(state: &LockedState) -> Result<()> {
 /// If log == true, the file will be saved with a time stamp.
 ///
 /// In comparison to the daemon -> client communication, the state is saved
-/// as JSON for better readability and debug purposes.
+/// as JSON for readability and debugging purposes.
 fn save_state_to_file(state: &State, log: bool) -> Result<()> {
     let serialized = serde_json::to_string(&state).context("Failed to serialize state:");
 
@@ -108,8 +102,8 @@ fn save_state_to_file(state: &State, log: bool) -> Result<()> {
         let now: DateTime<Utc> = Utc::now();
         let time = now.format("%Y-%m-%d_%H-%M-%S");
         (
-            path.join(format!("{}_state.json.partial", time)),
-            path.join(format!("{}_state.json", time)),
+            path.join(format!("{time}_state.json.partial")),
+            path.join(format!("{time}_state.json")),
         )
     } else {
         (path.join("state.json.partial"), path.join("state.json"))
@@ -122,9 +116,9 @@ fn save_state_to_file(state: &State, log: bool) -> Result<()> {
     fs::rename(&temp, &real).context("Failed to overwrite old state while saving state")?;
 
     if log {
-        debug!("State backup created at: {:?}", real);
+        debug!("State backup created at: {real:?}");
     } else {
-        debug!("State saved at: {:?}", real);
+        debug!("State saved at: {real:?}");
     }
 
     Ok(())
@@ -140,10 +134,7 @@ pub fn restore_state(pueue_directory: &Path) -> Result<Option<State>> {
 
     // Ignore if the file doesn't exist. It doesn't have to.
     if !path.exists() {
-        info!(
-            "Couldn't find state from previous session at location: {:?}",
-            path
-        );
+        info!("Couldn't find state from previous session at location: {path:?}");
         return Ok(None);
     }
     info!("Start restoring state");
@@ -153,13 +144,6 @@ pub fn restore_state(pueue_directory: &Path) -> Result<Option<State>> {
 
     // Try to deserialize the state file.
     let mut state: State = serde_json::from_str(&data).context("Failed to deserialize state.")?;
-
-    // Copy group statuses from the previous state.
-    for (group, _) in state.settings.daemon.groups.iter() {
-        if let Some(status) = state.groups.clone().get(group) {
-            state.groups.insert(group.clone(), status.clone());
-        }
-    }
 
     // Restore all tasks.
     // While restoring the tasks, check for any invalid/broken stati.
@@ -182,9 +166,19 @@ pub fn restore_state(pueue_directory: &Path) -> Result<Option<State>> {
 
         // Go trough all tasks and set all groups that are no longer
         // listed in the configuration file to the default.
-        if !state.settings.daemon.groups.contains_key(&task.group) {
-            task.set_default_group();
-        }
+        let group = match state.groups.get_mut(&task.group) {
+            Some(group) => group,
+            None => {
+                task.set_default_group();
+                state
+                    .groups
+                    .entry(PUEUE_DEFAULT_GROUP.into())
+                    .or_insert(Group {
+                        status: GroupStatus::Running,
+                        parallel_tasks: 1,
+                    })
+            }
+        };
 
         // If there are any queued tasks, pause the group.
         // This should prevent any unwanted execution of tasks due to a system crash.
@@ -193,7 +187,7 @@ pub fn restore_state(pueue_directory: &Path) -> Result<Option<State>> {
                 "Pausing group {} to prevent unwanted execution of previous tasks",
                 &task.group
             );
-            state.groups.insert(task.group.clone(), GroupStatus::Paused);
+            group.status = GroupStatus::Paused;
         }
     }
 

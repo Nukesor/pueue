@@ -15,13 +15,12 @@ fn check_for_running_daemon(pid_path: &Path) -> Result<()> {
 
     let pid: u32 = pid
         .parse()
-        .context(format!("Failed to parse PID from file: {:?}", pid_path))?;
+        .context(format!("Failed to parse PID from file: {pid_path:?}"))?;
 
     if process_exists(pid) {
         bail!(
             "Pid file already exists and another daemon seems to be running.\n\
-              Please stop the daemon beforehand or delete the file manually: {:?}",
-            &pid_path
+              Please stop the daemon beforehand or delete the file manually: {pid_path:?}",
         );
     }
 
@@ -50,8 +49,7 @@ pub fn cleanup_pid_file(pueue_dir: &Path) -> Result<()> {
     let pid_file = pueue_dir.join("pueue.pid");
     if !pid_file.exists() {
         bail!(
-            "Couldn't remove pid file, since it doesn't exists. This shouldn't happen: {:?}",
-            pid_file
+            "Couldn't remove pid file, since it doesn't exists. This shouldn't happen: {pid_file:?}"
         );
     }
 

@@ -4,7 +4,7 @@ use std::io::stdout;
 use crossterm::style::{style, Attribute, Color, Stylize};
 use crossterm::tty::IsTty;
 
-use pueue_lib::state::GroupStatus;
+use pueue_lib::state::{Group, GroupStatus};
 use pueue_lib::task::{Task, TaskStatus};
 
 use super::colors::Colors;
@@ -59,39 +59,34 @@ pub fn has_special_columns(tasks: &BTreeMap<usize, Task>) -> (bool, bool, bool) 
 }
 
 /// Return a nicely formatted headline that's displayed above group tables
-pub fn get_group_headline(
-    name: &str,
-    status: &GroupStatus,
-    parallel: usize,
-    colors: &Colors,
-) -> String {
+pub fn get_group_headline(name: &str, group: &Group, colors: &Colors) -> String {
     // Style group name
     let name = style(format!("Group \"{}\"", name)).attribute(Attribute::Bold);
 
     // Print the current state of the group.
-    let status = match status {
+    let status = match group.status {
         GroupStatus::Running => style_text("running", Some(colors.green()), None),
         GroupStatus::Paused => style_text("paused", Some(colors.yellow()), None),
     };
 
-    format!("{} ({} parallel): {}", name, parallel, status)
+    format!("{} ({} parallel): {}", name, group.parallel_tasks, status)
 }
 
 /// Sort given tasks by their groups
 /// This is needed to print a table for each group
 pub fn sort_tasks_by_group(
-    tasks: &BTreeMap<usize, Task>,
+    tasks: BTreeMap<usize, Task>,
 ) -> BTreeMap<String, BTreeMap<usize, Task>> {
     // We use a BTreeMap, since groups should be ordered alphabetically by their name
     let mut sorted_task_groups = BTreeMap::new();
-    for (id, task) in tasks.iter() {
+    for (id, task) in tasks.into_iter() {
         if !sorted_task_groups.contains_key(&task.group) {
             sorted_task_groups.insert(task.group.clone(), BTreeMap::new());
         }
         sorted_task_groups
             .get_mut(&task.group)
             .unwrap()
-            .insert(*id, task.clone());
+            .insert(id, task);
     }
 
     sorted_task_groups

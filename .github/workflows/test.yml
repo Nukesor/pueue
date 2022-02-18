@@ -2,7 +2,9 @@ name: Test build
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - development
     paths:
       - '.github/**/*'
       - '**.rs'
@@ -83,7 +85,7 @@ jobs:
         if: ${{ !matrix.cross }}
         with:
           command: test
-          args: --target=${{ matrix.target }}
+          args:  --workspace --target=${{ matrix.target }}
           use-cross: ${{ matrix.cross }}
 
       - name: cargo fmt
@@ -98,4 +100,4 @@ jobs:
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.target == 'x86_64-unknown-linux-gnu' }}
         with:
           command: clippy
-          args: -- -D warnings
+          args: --tests --workspace -- -D warnings

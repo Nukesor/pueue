@@ -42,7 +42,7 @@ impl TaskHandler {
                 };
                 error!("Child {} failed with io::Error: {:?}", task_id, error);
 
-                pause_on_failure(&mut state, group);
+                pause_on_failure(&mut state, &group);
                 continue;
             }
 
@@ -61,8 +61,7 @@ impl TaskHandler {
             let exit_code_result = child.wait();
             let exit_code = exit_code_result
                 .context(format!(
-                    "Failed on wait() for finished task {} with error: {:?}",
-                    task_id, error
+                    "Failed on wait() for finished task {task_id} with error: {error:?}"
                 ))
                 .unwrap()
                 .code();
@@ -90,7 +89,7 @@ impl TaskHandler {
             };
 
             if let TaskResult::Failed(_) = result {
-                pause_on_failure(&mut state, group);
+                pause_on_failure(&mut state, &group);
             }
 
             // Already remove the output files, if the daemon is being reset anyway
@@ -116,7 +115,7 @@ impl TaskHandler {
                     // Child process did not exit yet
                     Ok(None) => continue,
                     Ok(_exit_status) => {
-                        info!("Task {} just finished", task_id);
+                        info!("Task {task_id} just finished");
                         finished.push(((*task_id, group.clone(), *worker_id), None));
                     }
                 }

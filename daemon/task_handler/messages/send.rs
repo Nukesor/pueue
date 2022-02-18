@@ -1,6 +1,6 @@
 use std::io::Write;
 
-use log::warn;
+use log::{error, warn};
 
 use crate::task_handler::TaskHandler;
 
@@ -10,20 +10,14 @@ impl TaskHandler {
         let child = match self.children.get_child_mut(task_id) {
             Some(child) => child,
             None => {
-                warn!(
-                    "Task {} finished before input could be sent: {}",
-                    task_id, input
-                );
+                warn!("Task {task_id} finished before input could be sent");
                 return;
             }
         };
         {
             let child_stdin = child.stdin.as_mut().unwrap();
-            if let Err(err) = child_stdin.write_all(&input.clone().into_bytes()) {
-                warn!(
-                    "Failed to send input to task {} with err {:?}: {}",
-                    task_id, err, input
-                );
+            if let Err(err) = child_stdin.write_all(&input.into_bytes()) {
+                error!("Failed to send input to task {task_id} with err {err:?}");
             };
         }
     }

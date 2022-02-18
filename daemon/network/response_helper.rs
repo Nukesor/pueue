@@ -1,20 +1,24 @@
 use std::sync::MutexGuard;
 
 use pueue_lib::network::message::{create_failure_message, create_success_message, Message};
-use pueue_lib::state::State;
+use pueue_lib::state::{Group, State};
 use pueue_lib::task::Task;
 
+use crate::state_helper::LockedState;
+
 /// Check whether the given group exists. Return an failure message if it doesn't.
-pub fn ensure_group_exists(state: &MutexGuard<State>, group: &str) -> Result<(), Message> {
-    if !state.groups.contains_key(group) {
-        return Err(create_failure_message(format!(
-            "Group {} doesn't exists. Use one of these: {:?}",
-            group,
-            state.groups.keys()
-        )));
+pub fn ensure_group_exists<'state>(
+    state: &'state mut LockedState,
+    group: &str,
+) -> Result<&'state mut Group, Message> {
+    let group_keys: Vec<String> = state.groups.keys().cloned().collect();
+    if let Some(group) = state.groups.get_mut(group) {
+        return Ok(group);
     }
 
-    Ok(())
+    Err(create_failure_message(format!(
+        "Group {group} doesn't exists. Use one of these: {group_keys:?}",
+    )))
 }
 
 /// Compile a response for actions that affect several given tasks.
@@ -46,25 +50,24 @@ pub fn compile_task_response(
     mismatching: Vec<usize>,
 ) -> Message {
     let matching: Vec<String> = matching.iter().map(|id| id.to_string()).collect();
-    let mismatching: Vec<String> = mismatching.iter().map(|id| id.to_string()).collect();
-    let matching_string = matching.join(", ");
+    let mismatching_ids: Vec<String> = mismatching.iter().map(|id| id.to_string()).collect();
+    let matching_ids = matching.join(", ");
 
     // We don't have any mismatching ids, return the simple message.
     if mismatching.is_empty() {
-        return create_success_message(format!("{}: {}", message, matching_string));
+        return create_success_message(format!("{message}: {matching_ids}"));
     }
 
     let mismatched_message = "The command failed for tasks";
-    let mismatching_string = mismatching.join(", ");
+    let mismatching_ids = mismatching_ids.join(", ");
 
     // All given ids are invalid.
     if matching.is_empty() {
-        return create_failure_message(format!("{}: {}", mismatched_message, mismatching_string));
+        return create_failure_message(format!("{mismatched_message}: {mismatching_ids}"));
     }
 
     // Some ids were valid, some were invalid.
     create_success_message(format!(
-        "{}: {}\n{}: {}",
-        message, matching_string, mismatched_message, mismatching_string
+        "{message}: {matching_ids}\n{mismatched_message}: {mismatching_ids}",
     ))
 }

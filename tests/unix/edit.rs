@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use anyhow::{bail, Result};
 
 use pueue_lib::network::message::*;
@@ -5,11 +7,12 @@ use pueue_lib::settings::Shared;
 use pueue_lib::state::GroupStatus;
 use pueue_lib::task::*;
 
+use crate::fixtures::*;
 use crate::helper::*;
 
 async fn create_edited_task(shared: &Shared) -> Result<EditResponseMessage> {
     // Add a task
-    assert_success(fixtures::add_task(shared, "ls", false).await?);
+    assert_success(add_task(shared, "ls", false).await?);
 
     // The task should now be queued
     assert_eq!(get_task_status(shared, 0).await?, TaskStatus::Queued);
@@ -26,8 +29,8 @@ async fn create_edited_task(shared: &Shared) -> Result<EditResponseMessage> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Test if adding a normal task works as intended.
 async fn test_edit_flow() -> Result<()> {
-    let (settings, tempdir, _pid) = threaded_setup()?;
-    let shared = &settings.shared;
+    let daemon = daemon().await?;
+    let shared = &daemon.settings.shared;
 
     // Pause the daemon. That way the command won't be started.
     pause_tasks(shared, TaskSelection::All).await?;
@@ -36,7 +39,7 @@ async fn test_edit_flow() -> Result<()> {
     let response = create_edited_task(shared).await?;
     assert_eq!(response.task_id, 0);
     assert_eq!(response.command, "ls");
-    assert_eq!(response.path, tempdir.path().to_string_lossy());
+    assert_eq!(response.path, daemon.tempdir.path());
 
     // Task should be locked, after the request for editing succeeded.
     assert_eq!(get_task_status(shared, 0).await?, TaskStatus::Locked);
@@ -60,7 +63,7 @@ async fn test_edit_flow() -> Result<()> {
     // Make sure the task has been changed and enqueued.
     let task = get_task(shared, 0).await?;
     assert_eq!(task.command, "ls -ahl");
-    assert_eq!(task.path, "/tmp");
+    assert_eq!(task.path, PathBuf::from("/tmp"));
     assert_eq!(task.status, TaskStatus::Queued);
 
     Ok(())

@@ -54,15 +54,12 @@ pub async fn wait_for_status_change(
                 continue;
             }
             None => {
-                bail!(
-                    "Couldn't find task {} while waiting for status change",
-                    task_id
-                )
+                bail!("Couldn't find task {task_id} while waiting for status change")
             }
         }
     }
 
-    bail!("Task {} didn't change state in about 1 second.", task_id)
+    bail!("Task {task_id} didn't change state in about 1 second.")
 }
 
 /// This is a small helper function, which checks in very short intervals, whether a task fulfills
@@ -89,14 +86,11 @@ where
                 continue;
             }
             None => {
-                bail!("Couldn't find task {} while waiting for condition", task_id)
+                bail!("Couldn't find task {task_id} while waiting for condition")
             }
         }
     }
-    bail!(
-        "Task {} didn't fulfill condition after about 1 second.",
-        task_id,
-    )
+    bail!("Task {task_id} didn't fulfill condition after about 1 second.")
 }
 
 /// This is a small helper function, which checks in very short intervals, whether a group has been
@@ -115,7 +109,7 @@ pub async fn wait_for_group(shared: &Shared, group: &str) -> Result<()> {
         return Ok(());
     }
 
-    bail!("Group {} didn't show up in about 1 second.", group)
+    bail!("Group {group} didn't show up in about 1 second.")
 }
 
 /// This is a small helper function, which checks in very short intervals, whether a group has been
@@ -134,5 +128,5 @@ pub async fn wait_for_group_absence(shared: &Shared, group: &str) -> Result<()> 
         return Ok(());
     }
 
-    bail!("Group {} hasn't been removed after about 1 second.", group)
+    bail!("Group {group} hasn't been removed after about 1 second.")
 }

@@ -4,7 +4,7 @@ use std::{fs::create_dir_all, path::PathBuf};
 
 use anyhow::{bail, Result};
 use crossbeam_channel::{unbounded, Sender};
-use log::warn;
+use log::{error, warn};
 
 use pueue_lib::network::certificate::create_certificates;
 use pueue_lib::network::message::{Message, Shutdown};
@@ -33,23 +33,31 @@ mod task_handler;
 /// There are some global operations that crash during tests, such as the ctlc handler.
 /// This is due to the fact, that tests in the same file are executed in multiple threads.
 /// Since the threads own the same global space, this would crash.
-pub async fn run(config_path: Option<PathBuf>, test: bool) -> Result<()> {
+pub async fn run(config_path: Option<PathBuf>, profile: Option<String>, test: bool) -> Result<()> {
     // Try to read settings from the configuration file.
-    let settings = match Settings::read(&config_path) {
-        Ok(settings) => settings,
-        Err(_) => {
-            // There's something wrong with the config file or something's missing.
-            // Try to read the config and fill missing values with defaults.
-            // This might be possible on version upgrade or first run.
-            Settings::read_with_defaults(false, &config_path)?
+    let (mut settings, config_found) = Settings::read(&config_path)?;
+
+    // We couldn't find a configuration file.
+    // This probably means that Pueue has been started for the first time and we have to create a
+    // default config file once.
+    if !config_found {
+        if let Err(error) = settings.save(&config_path) {
+            bail!("Failed saving config file: {error:?}.");
         }
     };
-    // As we're trying to be backward compatible, we populate the config with default values to
-    // ensure everything will work when communicating with an old daemon/newer client.
-    // For this reason, config files might not update if new values are added.
-    // That's why we save the file under all circumstances.
-    if let Err(error) = settings.save(&config_path) {
-        bail!("Failed saving config file: {:?}.", error);
+
+    // Load any requested profile.
+    if let Some(profile) = &profile {
+        settings.load_profile(profile)?;
+    }
+
+    #[allow(deprecated)]
+    if settings.daemon.groups.is_some() {
+        error!(
+            "Please delete the 'daemon.groups' section from your config file. \n\
+            It is no longer used and groups can now only be edited via the commandline interface. \n\n\
+            Attention: The first time the daemon is restarted this update, the amount of parallel tasks per group will be reset to 1!!"
+        )
     }
 
     init_directories(&settings.shared.pueue_directory());
@@ -66,7 +74,7 @@ pub async fn run(config_path: Option<PathBuf>, test: bool) -> Result<()> {
         Ok(Some(state)) => state,
         Ok(None) => State::new(&settings, config_path.clone()),
         Err(error) => {
-            warn!("Failed to restore previous state:\n {:?}", error);
+            warn!("Failed to restore previous state:\n {error:?}");
             warn!("Using clean state instead.");
             State::new(&settings, config_path.clone())
         }
@@ -99,10 +107,7 @@ fn init_directories(pueue_dir: &Path) {
     // Pueue base path
     if !pueue_dir.exists() {
         if let Err(error) = create_dir_all(&pueue_dir) {
-            panic!(
-                "Failed to create main directory at {:?} error: {:?}",
-                pueue_dir, error
-            );
+            panic!("Failed to create main directory at {pueue_dir:?} error: {error:?}");
         }
     }
 
@@ -110,10 +115,7 @@ fn init_directories(pueue_dir: &Path) {
     let log_dir = pueue_dir.join("log");
     if !log_dir.exists() {
         if let Err(error) = create_dir_all(&log_dir) {
-            panic!(
-                "Failed to create log directory at {:?} error: {:?}",
-                log_dir, error
-            );
+            panic!("Failed to create log directory at {log_dir:?} error: {error:?}",);
         }
     }
 
@@ -121,10 +123,7 @@ fn init_directories(pueue_dir: &Path) {
     let certs_dir = pueue_dir.join("certs");
     if !certs_dir.exists() {
         if let Err(error) = create_dir_all(&certs_dir) {
-            panic!(
-                "Failed to create certificate directory at {:?} error: {:?}",
-                certs_dir, error
-            );
+            panic!("Failed to create certificate directory at {certs_dir:?} error: {error:?}");
         }
     }
 
@@ -132,10 +131,7 @@ fn init_directories(pueue_dir: &Path) {
     let logs_dir = pueue_dir.join("task_logs");
     if !logs_dir.exists() {
         if let Err(error) = create_dir_all(&logs_dir) {
-            panic!(
-                "Failed to create task logs directory at {:?} error: {:?}",
-                logs_dir, error
-            );
+            panic!("Failed to create task logs directory at {logs_dir:?} error: {error:?}");
         }
     }
 }
@@ -169,13 +165,13 @@ fn setup_signal_panic_handling(settings: &Settings, sender: &Sender<Message>) ->
         // Cleanup the pid file
         if let Err(error) = pid::cleanup_pid_file(&settings_clone.shared.pueue_directory()) {
             println!("Failed to cleanup pid after panic.");
-            println!("{}", error);
+            println!("{error}");
         }
 
         // Remove the unix socket.
         if let Err(error) = socket_cleanup(&settings_clone.shared) {
             println!("Failed to cleanup socket after panic.");
-            println!("{}", error);
+            println!("{error}");
         }
 
         std::process::exit(1);

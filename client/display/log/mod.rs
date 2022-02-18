@@ -17,33 +17,23 @@ use json::*;
 use local::*;
 use remote::*;
 
-// Determine how many lines of stderr/out should be printed/returned.
-// `None` implicates that all lines are printed.
-//
-// By default, everything is returned for single tasks and only some lines for multiple.
-// `json` is an exception to this, in json mode we always only return some lines
-// (unless otherwise explicitely requested).
-//
-// `full` always forces the full log output
-// `lines` force a specific amount of lines
-pub fn determine_log_line_amount(
-    full: bool,
-    lines: &Option<usize>,
-    json: bool,
-    task_amount: usize,
-) -> Option<usize> {
+/// Determine how many lines of output should be printed/returned.
+/// `None` implicates that all lines are printed.
+///
+/// By default, everything is returned for single tasks and only some lines for multiple.
+/// `json` is an exception to this, in json mode we always only return some lines
+/// (unless otherwise explicitely requested).
+///
+/// `full` always forces the full log output
+/// `lines` force a specific amount of lines
+pub fn determine_log_line_amount(full: bool, lines: &Option<usize>) -> Option<usize> {
     if full {
         None
     } else if let Some(lines) = lines {
         Some(*lines)
     } else {
-        // By default, only some lines are shown per task, if multiple tasks exist or
-        // json ouput is requested.
-        if task_amount > 1 || json {
-            Some(15)
-        } else {
-            None
-        }
+        // By default, only some lines are shown per task
+        Some(15)
     }
 }
 
@@ -65,13 +55,10 @@ pub fn print_logs(
             lines,
             full,
         } => (*json, task_ids.clone(), *lines, *full),
-        _ => panic!(
-            "Got wrong Subcommand {:?} in print_log. This shouldn't happen",
-            cli_command
-        ),
+        _ => panic!("Got wrong Subcommand {cli_command:?} in print_log. This shouldn't happen"),
     };
 
-    let lines = determine_log_line_amount(full, &lines, json, task_logs.len());
+    let lines = determine_log_line_amount(full, &lines);
 
     // Return the server response in json representation.
     if json {
@@ -133,7 +120,7 @@ fn print_log(
 
     if settings.client.read_local_logs {
         print_local_log(message.task.id, colors, settings, lines);
-    } else if message.stdout.is_some() && message.stderr.is_some() {
+    } else if message.output.is_some() {
         print_remote_log(message, colors);
     } else {
         println!("Logs requested from pueue daemon, but none received. Please report this bug.");
@@ -181,7 +168,7 @@ fn print_task_info(task: &Task, colors: &Colors) {
     ]);
     table.add_row(vec![
         Cell::new("Path:").add_attribute(Attribute::Bold),
-        Cell::new(&task.path),
+        Cell::new(&task.path.to_string_lossy()),
     ]);
 
     // Start and end time
@@ -203,5 +190,5 @@ fn print_task_info(task: &Task, colors: &Colors) {
     first_column.set_cell_alignment(CellAlignment::Right);
     first_column.set_padding((0, 0));
 
-    println!("{}", table);
+    println!("{table}");
 }

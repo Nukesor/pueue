@@ -1,10 +1,13 @@
+use std::path::PathBuf;
+
+use anyhow::Context;
 use anyhow::{bail, Result};
 
 use pueue_lib::network::message::*;
 use pueue_lib::network::protocol::*;
 use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
-use crate::commands::edit::edit_line;
+use crate::commands::edit::edit_line_wrapper;
 use crate::commands::get_state;
 
 /// When Restarting tasks, the remote state is queried and a AddMessage
@@ -81,10 +84,14 @@ pub async fn restart(
         let mut command = task.original_command.clone();
         let mut path = task.path.clone();
         if edit_command {
-            command = edit_line(&command)?
+            command = edit_line_wrapper(stream, *task_id, &command).await?
         };
         if edit_path {
-            path = edit_line(&path)?;
+            let str_path = path
+                .to_str()
+                .context("Failed to convert task path to string")?;
+            let changed_path = edit_line_wrapper(stream, *task_id, str_path).await?;
+            path = PathBuf::from(changed_path);
         }
 
         // Add the tasks to the singular message, if we want to restart the tasks in-place.
@@ -129,10 +136,10 @@ pub async fn restart(
     }
 
     if !matching.is_empty() {
-        println!("Restarted tasks: {:?}", matching);
+        println!("Restarted tasks: {matching:?}");
     }
     if !mismatching.is_empty() {
-        println!("Couldn't restart tasks: {:?}", mismatching);
+        println!("Couldn't restart tasks: {mismatching:?}");
     }
 
     Ok(())

@@ -1,6 +1,6 @@
 use std::io::Read;
+use std::path::Path;
 use std::time::Duration;
-use std::{fs::File, path::Path};
 
 use anyhow::Result;
 
@@ -43,39 +43,37 @@ pub async fn handle_follow(
                     .collect::<Vec<_>>()
                     .join(", ");
                 return Ok(create_failure_message(format!(
-                    "Multiple tasks are running, please select one of the following: {}",
-                    running_ids
+                    "Multiple tasks are running, please select one of the following: {running_ids}"
                 )));
             }
         }
     };
 
-    // The client requested streaming of stdout.
-    let mut handle: File;
-    match get_log_file_handles(task_id, pueue_directory) {
+    let mut handle = match get_log_file_handle(task_id, pueue_directory) {
         Err(_) => {
             return Ok(create_failure_message(
                 "Couldn't find output files for task. Maybe it finished? Try `log`",
             ))
         }
-        Ok((stdout_handle, stderr_handle)) => {
-            handle = if message.err {
-                stderr_handle
-            } else {
-                stdout_handle
-            };
-        }
-    }
+        Ok(handle) => handle,
+    };
 
-    // Get the stdout/stderr path.
+    // Get the output path.
     // We need to check continuously, whether the file still exists,
     // since the file can go away (e.g. due to finishing a task).
-    let (out_path, err_path) = get_log_paths(task_id, pueue_directory);
-    let handle_path = if message.err { err_path } else { out_path };
+    let path = get_log_path(task_id, pueue_directory);
 
+    // If lines is passed as an option, seek the output file handle to the start of
+    // the line corresponding to the `lines` number of lines from the end of the file.
+    // The loop following this section will copy those lines to stdout.
+    if let Some(lines) = message.lines {
+        if let Err(err) = seek_to_last_lines(&mut handle, lines) {
+            println!("Error seeking to last lines from log: {err}");
+        }
+    }
     loop {
         // Check whether the file still exists. Exit if it doesn't.
-        if !handle_path.exists() {
+        if !path.exists() {
             return Ok(create_success_message(
                 "File has gone away. Did somebody remove the task?",
             ));
@@ -84,7 +82,7 @@ pub async fn handle_follow(
         let mut buffer = Vec::new();
 
         if let Err(err) = handle.read_to_end(&mut buffer) {
-            return Ok(create_failure_message(format!("Error: {}", err)));
+            return Ok(create_failure_message(format!("Error: {err}")));
         };
         let text = String::from_utf8_lossy(&buffer).to_string();
 

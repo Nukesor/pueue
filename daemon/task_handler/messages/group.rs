@@ -6,7 +6,7 @@ use log::{error, info};
 use pueue_lib::network::message::GroupMessage;
 
 use crate::ok_or_shutdown;
-use crate::state_helper::{save_settings, save_state};
+use crate::state_helper::save_state;
 use crate::task_handler::{Shutdown, TaskHandler};
 
 impl TaskHandler {
@@ -23,38 +23,40 @@ impl TaskHandler {
 
         match message {
             GroupMessage::List => {}
-            GroupMessage::Add(group) => {
-                if state.groups.contains_key(&group) {
-                    error!("Group \"{}\" already exists", group);
+            GroupMessage::Add {
+                name,
+                parallel_tasks,
+            } => {
+                if state.groups.contains_key(&name) {
+                    error!("Group \"{name}\" already exists");
                     return;
                 }
-                state.create_group(&group);
-                info!("New group \"{}\" has been created", &group);
+                let mut group = state.create_group(&name);
+                if let Some(parallel_tasks) = parallel_tasks {
+                    group.parallel_tasks = parallel_tasks;
+                }
+                info!("New group \"{name}\" has been created");
 
                 // Create the worker pool.
-                self.children.0.insert(group, BTreeMap::new());
+                self.children.0.insert(name, BTreeMap::new());
 
-                // Save the state and the settings file.
+                // Persist the state.
                 ok_or_shutdown!(self, save_state(&state));
-                ok_or_shutdown!(self, save_settings(&state));
             }
             GroupMessage::Remove(group) => {
                 if !state.groups.contains_key(&group) {
-                    error!("Group \"{}\" to be remove doesn't exists", group);
+                    error!("Group \"{group}\" to be remove doesn't exists");
                     return;
                 }
 
                 // Make sure there are no tasks in that group.
                 if state.tasks.iter().any(|(_, task)| task.group == group) {
-                    error!(
-                        "Tried to remove group \"{}\", while it still contained tasks.",
-                        group
-                    );
+                    error!("Tried to remove group \"{group}\", while it still contained tasks.");
                     return;
                 }
 
                 if let Err(error) = state.remove_group(&group) {
-                    error!("Error while removing group: \"{}\"", error);
+                    error!("Error while removing group: \"{error}\"");
                     return;
                 }
 
@@ -76,11 +78,10 @@ impl TaskHandler {
                 // Actually remove the worker pool.
                 self.children.0.remove(&group);
 
-                // Save the state and the settings file.
+                // Persist the state.
                 ok_or_shutdown!(self, save_state(&state));
-                ok_or_shutdown!(self, save_settings(&state));
 
-                info!("Group \"{}\" has been removed", &group);
+                info!("Group \"{group}\" has been removed");
             }
         }
     }

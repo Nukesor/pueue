@@ -10,10 +10,10 @@ use crate::network::response_helper::*;
 /// Invoked when calling `pueue pause`.
 /// Forward the pause message to the task handler, which then pauses groups/tasks/everything.
 pub fn pause(message: PauseMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
-    let state = state.lock().unwrap();
+    let mut state = state.lock().unwrap();
     // If a group is selected, make sure it exists.
     if let TaskSelection::Group(group) = &message.tasks {
-        if let Err(message) = ensure_group_exists(&state, group) {
+        if let Err(message) = ensure_group_exists(&mut state, group) {
             return message;
         }
     }
@@ -32,7 +32,7 @@ pub fn pause(message: PauseMessage, sender: &Sender<Message>, state: &SharedStat
             &state,
         ),
         TaskSelection::Group(group) => {
-            create_success_message(format!("Group \"{}\" is being paused.", &group))
+            create_success_message(format!("Group \"{group}\" is being paused."))
         }
         TaskSelection::All => create_success_message("All queues are being paused."),
     }

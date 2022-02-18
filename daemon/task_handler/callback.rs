@@ -17,10 +17,7 @@ impl TaskHandler {
         let callback_command = match self.build_callback_command(task, template_string) {
             Ok(callback_command) => callback_command,
             Err(err) => {
-                error!(
-                    "Failed to create callback command from template with error: {}",
-                    err
-                );
+                error!("Failed to create callback command from template with error: {err}");
                 return;
             }
         };
@@ -31,7 +28,7 @@ impl TaskHandler {
         let spawn_result = command.spawn();
         let child = match spawn_result {
             Err(error) => {
-                error!("Failed to spawn callback with error: {}", error);
+                error!("Failed to spawn callback with error: {error}");
                 return;
             }
             Ok(child) => child,
@@ -56,7 +53,7 @@ impl TaskHandler {
         let mut parameters = HashMap::new();
         parameters.insert("id", task.id.to_string());
         parameters.insert("command", task.command.clone());
-        parameters.insert("path", task.path.clone());
+        parameters.insert("path", (*task.path.to_string_lossy()).to_owned());
         parameters.insert("group", task.group.clone());
 
         // Result takes the TaskResult Enum strings, unless it didn't finish yet.
@@ -75,15 +72,18 @@ impl TaskHandler {
         parameters.insert("end", print_time(task.end));
 
         // Read the last lines of the process' output and make it available.
-        if let Ok((stdout, stderr)) =
+        if let Ok(output) =
             read_last_log_file_lines(task.id, &self.pueue_directory, self.callback_log_lines)
         {
-            parameters.insert("stdout", stdout);
-            parameters.insert("stderr", stderr);
+            parameters.insert("output", output);
         } else {
-            parameters.insert("stdout", "".to_string());
-            parameters.insert("stderr", "".to_string());
+            parameters.insert("output", "".to_string());
         }
+
+        let out_path = get_log_path(task.id, &self.pueue_directory);
+        // Using Display impl of PathBuf which isn't necessarily a perfect
+        // representation of the path but should work for most cases here
+        parameters.insert("output_path", out_path.display().to_string());
 
         // Get the exit code
         if let TaskStatus::Done(result) = &task.status {
@@ -107,13 +107,13 @@ impl TaskHandler {
             match child.try_wait() {
                 // Handle a child error.
                 Err(error) => {
-                    error!("Callback failed with error {:?}", error);
+                    error!("Callback failed with error {error:?}");
                     finished.push(id);
                 }
                 // Child process did not exit yet.
                 Ok(None) => continue,
                 Ok(exit_status) => {
-                    info!("Callback finished with exit code {:?}", exit_status);
+                    info!("Callback finished with exit code {exit_status:?}");
                     finished.push(id);
                 }
             }

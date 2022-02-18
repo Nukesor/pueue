@@ -1,8 +1,7 @@
 use crossbeam_channel::Sender;
 
 use pueue_lib::network::message::*;
-use pueue_lib::settings::PUEUE_DEFAULT_GROUP;
-use pueue_lib::state::SharedState;
+use pueue_lib::state::{SharedState, PUEUE_DEFAULT_GROUP};
 
 use crate::network::message_handler::ok_or_failure_message;
 use crate::network::response_helper::ensure_group_exists;
@@ -14,30 +13,35 @@ use crate::ok_or_return_failure_message;
 /// - Add group
 /// - Remove group
 pub fn group(message: GroupMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
-    let state = state.lock().unwrap();
+    let mut state = state.lock().unwrap();
 
     match message {
         GroupMessage::List => {
             // Return information about all groups to the client.
             Message::GroupResponse(GroupResponseMessage {
                 groups: state.groups.clone(),
-                settings: state.settings.daemon.groups.clone(),
             })
         }
-        GroupMessage::Add(group) => {
-            if state.groups.contains_key(&group) {
-                return create_failure_message(format!("Group \"{}\" already exists", group));
+        GroupMessage::Add {
+            name,
+            parallel_tasks,
+        } => {
+            if state.groups.contains_key(&name) {
+                return create_failure_message(format!("Group \"{name}\" already exists"));
             }
 
             // Propagate the message to the TaskHandler, which is responsible for actually
             // manipulating our internal data
-            let result = sender.send(Message::Group(GroupMessage::Add(group.clone())));
+            let result = sender.send(Message::Group(GroupMessage::Add {
+                name: name.clone(),
+                parallel_tasks,
+            }));
             ok_or_return_failure_message!(result);
 
-            create_success_message(format!("Group \"{}\" is being created", group))
+            create_success_message(format!("Group \"{name}\" is being created"))
         }
         GroupMessage::Remove(group) => {
-            if let Err(message) = ensure_group_exists(&state, &group) {
+            if let Err(message) = ensure_group_exists(&mut state, &group) {
                 return message;
             }
 
@@ -57,7 +61,7 @@ pub fn group(message: GroupMessage, sender: &Sender<Message>, state: &SharedStat
             let result = sender.send(Message::Group(GroupMessage::Remove(group.clone())));
             ok_or_return_failure_message!(result);
 
-            create_success_message(format!("Group \"{}\" removed", group))
+            create_success_message(format!("Group \"{group}\" is being removed"))
         }
     }
 }

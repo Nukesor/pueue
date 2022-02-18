@@ -1,17 +1,20 @@
+use std::path::PathBuf;
+
 use anyhow::Result;
 use pueue_lib::network::message::*;
 
+use crate::fixtures::*;
 use crate::helper::*;
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Ensure that restarting a task in-place, resets it's state and possibly updates the command and
 /// path to the new values.
 async fn test_restart_in_place() -> Result<()> {
-    let (settings, _tempdir, _pid) = threaded_setup()?;
-    let shared = &settings.shared;
+    let daemon = daemon().await?;
+    let shared = &daemon.settings.shared;
 
     // Add a single task that instantly finishes.
-    assert_success(fixtures::add_task(shared, "sleep 0.1", false).await?);
+    assert_success(add_task(shared, "sleep 0.1", false).await?);
 
     // Wait for task 0 to finish.
     wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
@@ -21,7 +24,7 @@ async fn test_restart_in_place() -> Result<()> {
         tasks: vec![TasksToRestart {
             task_id: 0,
             command: "sleep 60".to_string(),
-            path: "/tmp".to_string(),
+            path: PathBuf::from("/tmp"),
         }],
         start_immediately: false,
         stashed: false,
@@ -38,7 +41,7 @@ async fn test_restart_in_place() -> Result<()> {
     let state = get_state(shared).await?;
     let task = state.tasks.get(&0).unwrap();
     assert_eq!(task.command, "sleep 60");
-    assert_eq!(task.path, "/tmp");
+    assert_eq!(task.path, PathBuf::from("/tmp"));
 
     Ok(())
 }
@@ -46,11 +49,11 @@ async fn test_restart_in_place() -> Result<()> {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Ensure that running task cannot be restarted.
 async fn test_cannot_restart_running() -> Result<()> {
-    let (settings, _tempdir, _pid) = threaded_setup()?;
-    let shared = &settings.shared;
+    let daemon = daemon().await?;
+    let shared = &daemon.settings.shared;
 
     // Add a single task that instantly finishes.
-    assert_success(fixtures::add_task(shared, "sleep 60", false).await?);
+    assert_success(add_task(shared, "sleep 60", false).await?);
 
     // Wait for task 0 to finish.
     wait_for_task_condition(shared, 0, |task| task.is_running()).await?;
@@ -60,7 +63,7 @@ async fn test_cannot_restart_running() -> Result<()> {
         tasks: vec![TasksToRestart {
             task_id: 0,
             command: "sleep 60".to_string(),
-            path: "/tmp/".to_string(),
+            path: PathBuf::from("/tmp"),
         }],
         start_immediately: false,
         stashed: false,

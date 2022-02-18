@@ -6,6 +6,8 @@ use pueue_lib::network::message::*;
 use pueue_lib::settings::Shared;
 use pueue_lib::task::*;
 
+use crate::factories::*;
+use crate::fixtures::*;
 use crate::helper::*;
 
 /// Helper to pause the whole daemon
@@ -15,7 +17,7 @@ pub async fn add_stashed_task(
     stashed: bool,
     enqueue_at: Option<DateTime<Local>>,
 ) -> Result<Message> {
-    let mut inner_message = fixtures::add_message(shared, command);
+    let mut inner_message = add_message(shared, command);
     inner_message.stashed = stashed;
     inner_message.enqueue_at = enqueue_at;
     let message = Message::Add(inner_message);
@@ -37,8 +39,8 @@ async fn test_enqueued_tasks(
     #[case] stashed: bool,
     #[case] enqueue_at: Option<DateTime<Local>>,
 ) -> Result<()> {
-    let (settings, _tempdir, _pid) = threaded_setup()?;
-    let shared = &settings.shared;
+    let daemon = daemon().await?;
+    let shared = &daemon.settings.shared;
 
     assert_success(add_stashed_task(shared, "sleep 10", stashed, enqueue_at).await?);
 
@@ -76,8 +78,8 @@ async fn test_enqueued_tasks(
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Delayed stashed tasks will be enqueued.
 async fn test_delayed_tasks() -> Result<()> {
-    let (settings, _tempdir, _pid) = threaded_setup()?;
-    let shared = &settings.shared;
+    let daemon = daemon().await?;
+    let shared = &daemon.settings.shared;
 
     // The task will be stashed and automatically enqueued after about 1 second.
     let response = add_stashed_task(

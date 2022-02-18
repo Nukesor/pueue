@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 use clap::{IntoApp, Parser};
 use clap_complete::{generate_to, shells};
 use simplelog::{Config, LevelFilter, SimpleLogger};
@@ -18,12 +18,12 @@ async fn main() -> Result<()> {
     // Parse commandline options.
     let opt = CliArguments::parse();
 
-    if let SubCommand::Completions {
+    if let Some(SubCommand::Completions {
         shell,
         output_directory,
-    } = &opt.cmd
+    }) = &opt.cmd
     {
-        let mut app = CliArguments::into_app();
+        let mut app = CliArguments::command();
         app.set_bin_name("pueue");
         let completion_result = match shell {
             Shell::Bash => generate_to(shells::Bash, &mut app, "pueue", output_directory),
@@ -34,7 +34,7 @@ async fn main() -> Result<()> {
             }
             Shell::Zsh => generate_to(shells::Zsh, &mut app, "pueue", output_directory),
         };
-        completion_result.context(format!("Failed to generate completions for {:?}", shell))?;
+        completion_result.context(format!("Failed to generate completions for {shell:?}"))?;
         return Ok(());
     }
 
@@ -48,7 +48,27 @@ async fn main() -> Result<()> {
     SimpleLogger::init(level, Config::default()).unwrap();
 
     // Try to read settings from the configuration file.
-    let settings = Settings::read_with_defaults(true, &opt.config)?;
+    let (mut settings, config_found) = Settings::read(&opt.config)?;
+
+    // Load any requested profile.
+    if let Some(profile) = &opt.profile {
+        settings.load_profile(profile)?;
+    }
+
+    #[allow(deprecated)]
+    if settings.daemon.groups.is_some() {
+        println!(
+            "Please delete the 'daemon.groups' section from your config file.\n\
+            It is no longer used and groups can now only be edited via the commandline interface.\n\n\
+            Attention: The first time the daemon is restarted this update, the amount of parallel tasks per group will be reset to 1!!"
+        )
+    }
+
+    // Error if no configuration file can be found, as this is an indicator, that the daemon hasn't
+    // been started yet.
+    if !config_found {
+        bail!("Couldn't find a configuration file. Did you start the daemon yet?");
+    }
 
     // Create client to talk with the daemon and connect.
     let mut client = Client::new(settings, opt).await?;

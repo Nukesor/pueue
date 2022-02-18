@@ -21,14 +21,12 @@ pub async fn assert_worker_envs(
     assert_eq!(
         task.envs.get("PUEUE_GROUP"),
         Some(&group.to_string()),
-        "Worker group didn't match for task {}",
-        task_id
+        "Worker group didn't match for task {task_id}",
     );
     assert_eq!(
         task.envs.get("PUEUE_WORKER_ID"),
         Some(&worker.to_string()),
-        "Worker id didn't for task {}",
-        task_id
+        "Worker id didn't for task {task_id}",
     );
 
     // Get the log output for the task.
@@ -45,7 +43,7 @@ pub async fn assert_worker_envs(
     let message = if let Message::LogResponse(message) = response {
         message
     } else {
-        bail!("Expected LogResponse got {:?}", response)
+        bail!("Expected LogResponse got {response:?}")
     };
 
     // Make sure the PUEUE_WORKER_ID and PUEUE_GROUP variables are present in the output.
@@ -54,21 +52,15 @@ pub async fn assert_worker_envs(
         .get(&task_id)
         .expect("Log should contain requested task.");
 
-    let stdout = log.stdout.clone().unwrap();
+    let stdout = log.output.clone().unwrap();
     let output = String::from_utf8_lossy(&stdout);
     assert!(
-        output.contains(&format!("WORKER_ID: {}", worker.to_string())),
-        "Output should contain worker id {} for task {}. Got: {}",
-        task_id,
-        worker,
-        &output
+        output.contains(&format!("WORKER_ID: {worker}")),
+        "Output should contain worker id {worker} for task {task_id}. Got: {output}",
     );
     assert!(
-        output.contains(&format!("GROUP: {}", group)),
-        "Output should contain worker group {} for task {}. Got: {}",
-        task_id,
-        group,
-        &output
+        output.contains(&format!("GROUP: {group}")),
+        "Output should contain worker group {group} for task {task_id}. Got: {output}",
     );
 
     Ok(())
