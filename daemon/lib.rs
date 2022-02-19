@@ -2,7 +2,7 @@ use std::path::Path;
 use std::sync::{Arc, Mutex};
 use std::{fs::create_dir_all, path::PathBuf};
 
-use anyhow::{bail, Result};
+use anyhow::{bail, Context, Result};
 use crossbeam_channel::{unbounded, Sender};
 use log::{error, warn};
 
@@ -35,7 +35,8 @@ mod task_handler;
 /// Since the threads own the same global space, this would crash.
 pub async fn run(config_path: Option<PathBuf>, profile: Option<String>, test: bool) -> Result<()> {
     // Try to read settings from the configuration file.
-    let (mut settings, config_found) = Settings::read(&config_path)?;
+    let (mut settings, config_found) =
+        Settings::read(&config_path).context("Error while reading configuration.")?;
 
     // We couldn't find a configuration file.
     // This probably means that Pueue has been started for the first time and we have to create a
@@ -62,10 +63,12 @@ pub async fn run(config_path: Option<PathBuf>, profile: Option<String>, test: bo
 
     init_directories(&settings.shared.pueue_directory());
     if !settings.shared.daemon_key().exists() && !settings.shared.daemon_cert().exists() {
-        create_certificates(&settings.shared)?;
+        create_certificates(&settings.shared).context("Failed to create certificates.")?;
     }
-    init_shared_secret(&settings.shared.shared_secret_path())?;
-    pid::create_pid_file(&settings.shared.pueue_directory())?;
+    init_shared_secret(&settings.shared.shared_secret_path())
+        .context("Failed to initialize shared secret.")?;
+    pid::create_pid_file(&settings.shared.pueue_directory())
+        .context("Failed to create pid file.")?;
 
     // Restore the previous state and save any changes that might have happened during this
     // process. If no previous state exists, just create a new one.
@@ -80,7 +83,7 @@ pub async fn run(config_path: Option<PathBuf>, profile: Option<String>, test: bo
         }
     };
     state.settings = settings.clone();
-    save_state(&state)?;
+    save_state(&state).context("Failed to save state on startup.")?;
     let state = Arc::new(Mutex::new(state));
 
     let (sender, receiver) = unbounded();

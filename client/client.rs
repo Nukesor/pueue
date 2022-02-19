@@ -61,22 +61,26 @@ impl Client {
     /// Connect to the daemon, authorize via secret and return a new initialized Client.
     pub async fn new(settings: Settings, opt: CliArguments) -> Result<Self> {
         // Connect to daemon and get stream used for communication.
-        let mut stream = get_client_stream(&settings.shared).await?;
+        let mut stream = get_client_stream(&settings.shared)
+            .await
+            .context("Failed to initialize stream.")?;
 
         // Next we do a handshake with the daemon
         // 1. Client sends the secret to the daemon.
         // 2. If successful, the daemon responds with their version.
         let secret = read_shared_secret(&settings.shared.shared_secret_path())?;
-        send_bytes(&secret, &mut stream).await?;
+        send_bytes(&secret, &mut stream)
+            .await
+            .context("Failed to send secret.")?;
         let version_bytes = receive_bytes(&mut stream)
             .await
-            .context("Failed sending secret during handshake with daemon.")?;
+            .context("Failed to receive version during handshake with daemon.")?;
 
         if version_bytes.is_empty() {
             bail!("Daemon went away after sending secret. Did you use the correct secret?")
         }
 
-        // Check if we got valid utf8. Invalid utf8 should never happen and probably
+        // Check if we got valid utf8. Invalid utf8 should never occur and is most likely a bug.
         let version = match String::from_utf8(version_bytes) {
             Ok(version) => version,
             Err(_) => {

@@ -48,7 +48,8 @@ async fn main() -> Result<()> {
     SimpleLogger::init(level, Config::default()).unwrap();
 
     // Try to read settings from the configuration file.
-    let (mut settings, config_found) = Settings::read(&opt.config)?;
+    let (mut settings, config_found) =
+        Settings::read(&opt.config).context("Failed to read configuration.")?;
 
     // Load any requested profile.
     if let Some(profile) = &opt.profile {
@@ -71,7 +72,9 @@ async fn main() -> Result<()> {
     }
 
     // Create client to talk with the daemon and connect.
-    let mut client = Client::new(settings, opt).await?;
+    let mut client = Client::new(settings, opt)
+        .await
+        .context("Failed to initialize client.")?;
     client.start().await?;
 
     Ok(())
