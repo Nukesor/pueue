@@ -284,7 +284,7 @@ pub enum SubCommand {
 
     /// Accept a list or map of JSON pueue tasks via stdin and display it just like "status".
     /// A simple example might look like this:
-    /// pueue status --json | jq -c '.tasks' | pueue format-status
+    /// "pueue status --json | jq -c '.tasks' | pueue format-status"
     #[clap(after_help = "DISCLAIMER:
     This command is a temporary workaround until a proper filtering language for \"status\" has
     been implemented. It might be removed in the future.")]
@@ -295,7 +295,7 @@ pub enum SubCommand {
     },
 
     /// Display the log output of finished tasks.
-    /// When looking at multiple logs, only the last few lines will be shown.
+    /// Only the last few lines will be shown by default.
     /// If you want to "follow" the output of a task, please use the "follow" subcommand.
     Log {
         /// View the task output of these specific tasks.
@@ -320,7 +320,7 @@ pub enum SubCommand {
     },
 
     /// Follow the output of a currently running task.
-    /// This command works like tail -f.
+    /// This command works like "tail -f".
     #[clap(alias("fo"))]
     Follow {
         /// The id of the task you want to watch.
