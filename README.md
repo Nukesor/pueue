@@ -49,7 +49,8 @@ The queue will be continuously processed, even if you no longer have any active 
     * Logs are persisted onto the disk and survive a crash.
 - Miscellaneous
     * A callback hook to, for instance, set up desktop notifications.
-    * Convenient methods for scripting
+    * JSON output for `log` and `status` for external scripting.
+    * A `wait` subcommand to allow external scripts to wait for a group (or everything) to finish.
 - A lot more. Check the -h options for each subcommand for detailed options.
 - Cross Platform
     * Linux is fully supported and battle-tested.
