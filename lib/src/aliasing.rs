@@ -20,7 +20,7 @@ pub fn get_aliases() -> Result<HashMap<String, String>, Error> {
     }
 
     // Return early if we cannot find the file
-    let alias_file_path = match alias_file_path {
+    let path = match alias_file_path {
         None => {
             info!("Didn't find pueue alias file.");
             return Ok(HashMap::new());
@@ -29,9 +29,12 @@ pub fn get_aliases() -> Result<HashMap<String, String>, Error> {
     };
 
     // Read the file content
-    let mut alias_file = File::open(alias_file_path)?;
+    let mut alias_file = File::open(&path)
+        .map_err(|err| Error::IoPathError(path.clone(), "opening alias file", err))?;
     let mut content = String::new();
-    alias_file.read_to_string(&mut content)?;
+    alias_file
+        .read_to_string(&mut content)
+        .map_err(|err| Error::IoPathError(path.clone(), "reading alias file", err))?;
 
     serde_yaml::from_str(&content).map_err(|err| {
         Error::ConfigDeserialization(format!("Failed to read alias configuration file:\n{err}"))

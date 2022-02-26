@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("Couldn't find or open file: {}", .0)]
@@ -22,7 +24,7 @@ pub enum Error {
     #[error("Couldn't serialize message:\n{}", .0)]
     MessageSerialization(String),
 
-    #[error("Error while reading configuration: {}", .0)]
+    #[error("Error while reading configuration:\n{}", .0)]
     ConfigDeserialization(String),
 
     #[error("Couldn't write task log file. {}", .0)]
@@ -34,8 +36,14 @@ pub enum Error {
     #[error("Some error occurred. {}", .0)]
     Generic(String),
 
-    #[error("Io Error: {}", .0)]
-    IoError(#[from] std::io::Error),
+    #[error("I/O error while {}:\n{}", .0, .1)]
+    IoError(String, std::io::Error),
+
+    #[error("Unexpected I/O error:\n{}", .0)]
+    RawIoError(#[from] std::io::Error),
+
+    #[error("I/O error at path {:?} while {}:\n{}", .0, .1, .2)]
+    IoPathError(PathBuf, &'static str, std::io::Error),
 
     /// Thrown if one tries to create the unix socket, but it already exists.
     /// Another daemon instance might be already running.

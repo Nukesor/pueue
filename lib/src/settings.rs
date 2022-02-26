@@ -246,7 +246,8 @@ impl Settings {
             }
 
             // Open the file in read-only mode with buffer.
-            let file = File::open(path)?;
+            let file = File::open(path)
+                .map_err(|err| Error::IoPathError(path.clone(), "opening config file", err))?;
             let reader = BufReader::new(file);
 
             let settings = serde_yaml::from_reader(reader)
@@ -264,7 +265,8 @@ impl Settings {
                 info!("Found config file at: {path:?}");
 
                 // Open the file in read-only mode with buffer.
-                let file = File::open(path)?;
+                let file = File::open(&path)
+                    .map_err(|err| Error::IoPathError(path, "opening config file.", err))?;
                 let reader = BufReader::new(file);
 
                 let settings = serde_yaml::from_reader(reader)
@@ -293,7 +295,9 @@ impl Settings {
 
         // Create the config dir, if it doesn't exist yet
         if !config_dir.exists() {
-            create_dir_all(config_dir)?;
+            create_dir_all(&config_dir).map_err(|err| {
+                Error::IoPathError(config_dir.to_path_buf(), "creating config dir", err)
+            })?;
         }
 
         let content = match serde_yaml::to_string(self) {
@@ -304,8 +308,12 @@ impl Settings {
                 )))
             }
         };
-        let mut file = File::create(config_path)?;
-        file.write_all(content.as_bytes())?;
+        let mut file = File::create(&config_path).map_err(|err| {
+            Error::IoPathError(config_dir.to_path_buf(), "creating settings file", err)
+        })?;
+        file.write_all(content.as_bytes()).map_err(|err| {
+            Error::IoPathError(config_dir.to_path_buf(), "writing settings file", err)
+        })?;
 
         Ok(())
     }

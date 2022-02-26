@@ -14,9 +14,11 @@ pub fn read_shared_secret(path: &Path) -> Result<Vec<u8>, Error> {
         ));
     }
 
-    let mut file = File::open(path)?;
+    let mut file = File::open(path)
+        .map_err(|err| Error::IoPathError(path.to_path_buf(), "opening secret file", err))?;
     let mut buffer = Vec::new();
-    file.read_to_end(&mut buffer)?;
+    file.read_to_end(&mut buffer)
+        .map_err(|err| Error::IoPathError(path.to_path_buf(), "reading secret file", err))?;
 
     Ok(buffer)
 }
@@ -36,8 +38,10 @@ pub fn init_shared_secret(path: &Path) -> Result<(), Error> {
         .take(PASSWORD_LEN)
         .collect();
 
-    let mut file = File::create(path)?;
-    file.write_all(&secret.into_bytes())?;
+    let mut file = File::create(&path)
+        .map_err(|err| Error::IoPathError(path.to_path_buf(), "creating shared secret", err))?;
+    file.write_all(&secret.into_bytes())
+        .map_err(|err| Error::IoPathError(path.to_path_buf(), "writing shared secret", err))?;
 
     // Set proper file permissions for unix filesystems
     #[cfg(not(target_os = "windows"))]
@@ -46,12 +50,12 @@ pub fn init_shared_secret(path: &Path) -> Result<(), Error> {
         let mut permissions = file
             .metadata()
             .map_err(|err| {
-                Error::Generic(format!("Failed to set secret file permissions:\n{err}"))
+                Error::IoPathError(path.to_path_buf(), "reading secret file metadata", err)
             })?
             .permissions();
         permissions.set_mode(0o640);
         std::fs::set_permissions(path, permissions).map_err(|err| {
-            Error::Generic(format!("Failed to set secret file permissions:\n{err}"))
+            Error::IoPathError(path.to_path_buf(), "setting secret file permissions", err)
         })?;
     }
 

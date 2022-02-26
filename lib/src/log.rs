@@ -19,8 +19,11 @@ pub fn get_log_path(task_id: usize, path: &Path) -> PathBuf {
 /// These are two handles to the same file.
 pub fn create_log_file_handles(task_id: usize, path: &Path) -> Result<(File, File), Error> {
     let log_path = get_log_path(task_id, path);
-    let stdout_handle = File::create(log_path)?;
-    let stderr_handle = stdout_handle.try_clone()?;
+    let stdout_handle = File::create(&log_path)
+        .map_err(|err| Error::IoPathError(log_path, "getting stdout handle", err))?;
+    let stderr_handle = stdout_handle
+        .try_clone()
+        .map_err(|err| Error::IoError("cloning stderr handle".to_string(), err))?;
 
     Ok((stdout_handle, stderr_handle))
 }
@@ -28,7 +31,8 @@ pub fn create_log_file_handles(task_id: usize, path: &Path) -> Result<(File, Fil
 /// Return the file handle for the log file of a task.
 pub fn get_log_file_handle(task_id: usize, path: &Path) -> Result<File, Error> {
     let path = get_log_path(task_id, path);
-    let handle = File::open(path)?;
+    let handle = File::open(&path)
+        .map_err(|err| Error::IoPathError(path, "getting log file handle", err))?;
 
     Ok(handle)
 }
@@ -62,7 +66,8 @@ pub fn read_and_compress_log_file(
     // Compress the full log input and pipe it into the snappy compressor
     {
         let mut compressor = FrameEncoder::new(&mut content);
-        io::copy(&mut file, &mut compressor)?;
+        io::copy(&mut file, &mut compressor)
+            .map_err(|err| Error::IoError("compressing log output".to_string(), err))?;
     }
 
     Ok(content)
@@ -93,7 +98,8 @@ pub fn read_last_log_file_lines(
 pub fn reset_task_log_directory(path: &Path) -> Result<(), Error> {
     let task_log_dir = path.join("task_logs");
 
-    let files = read_dir(task_log_dir)?;
+    let files = read_dir(&task_log_dir)
+        .map_err(|err| Error::IoPathError(task_log_dir, "reading task log files", err))?;
 
     for file in files.flatten() {
         if let Err(err) = remove_file(file.path()) {
@@ -117,7 +123,7 @@ pub fn read_last_lines(file: &mut File, amount: usize) -> String {
     let lines: Vec<String> = reader
         .lines()
         .take(amount)
-        .map(|line| line.unwrap_or_else(|_| "Failed to read line.".to_string()))
+        .map(|line| line.unwrap_or_else(|_| "Pueue: Failed to read line.".to_string()))
         .collect();
 
     lines.into_iter().rev().collect::<Vec<String>>().join("\n")
@@ -129,7 +135,10 @@ pub fn seek_to_last_lines(file: &mut File, amount: usize) -> Result<(), Error> {
     let mut reader = RevBufReader::new(file);
     // The position from which the RevBufReader starts reading.
     // The file size might change while we're reading the file. Hence we have to save it now.
-    let start_position = reader.get_mut().seek(SeekFrom::Current(0))?;
+    let start_position = reader
+        .get_mut()
+        .seek(SeekFrom::Current(0))
+        .map_err(|err| Error::IoError("seeking to start of file".to_string(), err))?;
     let start_position: i64 = start_position.try_into().map_err(|_| {
         Error::Generic("Failed to convert start cursor position to i64".to_string())
     })?;
@@ -140,7 +149,9 @@ pub fn seek_to_last_lines(file: &mut File, amount: usize) -> Result<(), Error> {
     // Read in 4KB chunks until there's either nothing left or we found `amount` newline characters.
     'outer: loop {
         let mut buffer = vec![0; 4096];
-        let read_bytes = reader.read(&mut buffer)?;
+        let read_bytes = reader
+            .read(&mut buffer)
+            .map_err(|err| Error::IoError("reading next log chunk".to_string(), err))?;
 
         // Return if there's nothing left to read.
         // We hit the start of the file and read fewer lines then specified.
@@ -177,7 +188,10 @@ pub fn seek_to_last_lines(file: &mut File, amount: usize) -> Result<(), Error> {
             if distance_to_file_start < start_position.try_into().unwrap() {
                 // Seek to the position.
                 let file = reader.get_mut();
-                file.seek(SeekFrom::Start(distance_to_file_start))?;
+                file.seek(SeekFrom::Start(distance_to_file_start))
+                    .map_err(|err| {
+                        Error::IoError("seeking to correct position".to_string(), err)
+                    })?;
             }
 
             break 'outer;
