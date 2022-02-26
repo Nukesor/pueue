@@ -30,7 +30,7 @@ fn create_test_files(path: &Path, partial: bool) -> Result<String> {
         .collect();
 
     for name in &names {
-        File::create(path.join(name.to_string()))?;
+        File::create(path.join(name))?;
     }
 
     // Only return the last 5 lines if partial output is requested.
