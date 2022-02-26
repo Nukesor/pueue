@@ -81,14 +81,7 @@ pub fn read_last_log_file_lines(
     path: &Path,
     lines: usize,
 ) -> Result<String, Error> {
-    let mut file = match get_log_file_handle(task_id, path) {
-        Ok(stdout) => stdout,
-        Err(err) => {
-            return Err(Error::LogRead(format!(
-                "Error while opening log files for task {task_id}: {err}"
-            )));
-        }
-    };
+    let mut file = get_log_file_handle(task_id, path)?;
 
     // Get the last few lines of both files
     Ok(read_last_lines(&mut file, lines))

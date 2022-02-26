@@ -27,12 +27,6 @@ pub enum Error {
     #[error("Error while reading configuration:\n{}", .0)]
     ConfigDeserialization(String),
 
-    #[error("Couldn't write task log file. {}", .0)]
-    LogWrite(String),
-
-    #[error("Couldn't read task log file. {}", .0)]
-    LogRead(String),
-
     #[error("Some error occurred. {}", .0)]
     Generic(String),
 
