@@ -1,11 +1,9 @@
 use std::fs::read_to_string;
 use std::fs::File;
-use std::io::Read;
 use std::path::Path;
 
 use anyhow::{bail, Context, Result};
 use pueue_lib::network::message::*;
-use snap::read::FrameDecoder;
 use tempfile::TempDir;
 
 use crate::fixtures::*;
@@ -48,18 +46,6 @@ fn create_test_files(path: &Path, partial: bool) -> Result<String> {
     Ok(expected_output)
 }
 
-// Log output is send in a compressed form from the daemon.
-// We have to unpack it first.
-fn decompress_log(bytes: Vec<u8>) -> Result<String> {
-    let mut decoder = FrameDecoder::new(&bytes[..]);
-    let mut output = String::new();
-    decoder
-        .read_to_string(&mut output)
-        .context("Failed to decompress remote log output")?;
-
-    Ok(output)
-}
-
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Make sure that receiving partial output from the daemon works.
 async fn test_full_log() -> Result<()> {
@@ -78,24 +64,7 @@ async fn test_full_log() -> Result<()> {
     wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
 
     // Request all log lines
-    let log_message = LogRequestMessage {
-        task_ids: vec![0],
-        send_logs: true,
-        lines: None,
-    };
-    let response = send_message(shared, Message::Log(log_message)).await?;
-    let logs = match response {
-        Message::LogResponse(logs) => logs,
-        _ => bail!("Received non LogResponse: {:#?}", response),
-    };
-
-    // Get the received output
-    let logs = logs.get(&0).unwrap();
-    let output = logs
-        .output
-        .clone()
-        .context("Didn't find output on TaskLogMessage")?;
-    let output = decompress_log(output)?;
+    let output = get_task_log(shared, 0, None).await?;
 
     // Make sure it's the same
     assert_eq!(output, expected_output);

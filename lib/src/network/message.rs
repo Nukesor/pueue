@@ -217,7 +217,7 @@ pub struct StreamRequestMessage {
 /// Request logs for specific tasks.
 ///
 /// `task_ids` specifies the requested tasks. If none are given, all tasks are selected.
-/// `send_logs` Determines whether tasks should be sent at all.
+/// `send_logs` Determines whether logs should be sent at all.
 /// `lines` Determines whether only a few lines of log should be returned.
 #[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
 pub struct LogRequestMessage {

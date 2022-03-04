@@ -73,10 +73,16 @@ async fn run_and_handle_error(pueue_dir: PathBuf, test: bool) -> Result<()> {
 /// Spawn the daemon by calling the actual pueued binary.
 /// This function also checks for the pid file and the unix socket to appear.
 pub async fn standalone_daemon(pueue_dir: &Path) -> Result<Child> {
+    // Inject an environment variable into the daemon.
+    // This is used to ensure that the spawned subprocesses won't inherit the daemon's environment.
+    let mut envs = HashMap::new();
+    envs.insert("PUEUED_TEST_ENV_VARIABLE", "Test");
+
     let child = Command::cargo_bin("pueued")?
         .arg("--config")
         .arg(pueue_dir.join("pueue.yml").to_str().unwrap())
         .arg("-vvv")
+        .envs(envs)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()?;

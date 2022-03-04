@@ -7,12 +7,14 @@ pub use pueue_lib::state::PUEUE_DEFAULT_GROUP;
 mod daemon;
 mod env;
 mod group;
+mod log;
 mod message;
 mod network;
 mod state;
 mod task;
 mod wait;
 
+pub use self::log::*;
 pub use daemon::*;
 pub use env::*;
 pub use group::*;

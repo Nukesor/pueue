@@ -1,6 +1,7 @@
 mod add;
 mod clean;
 mod edit;
+mod environment_variables;
 mod group;
 mod kill;
 mod log;
