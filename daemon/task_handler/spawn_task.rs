@@ -124,6 +124,7 @@ impl TaskHandler {
         let spawned_command = command
             .current_dir(path)
             .stdin(Stdio::piped())
+            .env_clear()
             .envs(envs.clone())
             .stdout(Stdio::from(stdout_log))
             .stderr(Stdio::from(stderr_log))
