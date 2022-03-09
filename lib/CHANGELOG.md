@@ -2,7 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+This project adheres **somewhat** to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The concept of SemVer is applied to the daemon/client API, but not the library API itself.
+
+## [0.19.4] - unreleased
+
+### Added
+
+- New `Error::IoPathError`, which provides better error messages for path related IoErrors.
+- `Error::RawIoError`, for all generic IoErrors that already have some context.
+
+### Changed
+
+- More info in `Error::IoError`, for better context on some IoErrors.
+
+### Removed
+
+- `Error::LogWrite` in favor of the new `IoPathError`.
+- `Error::LogRead` in favor of the new `IoPathError`.
 
 ## [0.19.3] - 2022-02-18
 
