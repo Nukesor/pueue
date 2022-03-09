@@ -8,14 +8,13 @@ use crate::error::Error;
 
 /// Read the shared secret from a file.
 pub fn read_shared_secret(path: &Path) -> Result<Vec<u8>, Error> {
-    if !path.exists() {
-        return Err(Error::FileNotFound(
-            "Secret. Did you start the daemon at least once?".into(),
-        ));
-    }
-
-    let mut file = File::open(path)
-        .map_err(|err| Error::IoPathError(path.to_path_buf(), "opening secret file", err))?;
+    let mut file = File::open(path).map_err(|err| {
+        Error::IoPathError(
+            path.to_path_buf(),
+            "opening secret file. Did you start the daemon at least once?",
+            err,
+        )
+    })?;
     let mut buffer = Vec::new();
     file.read_to_end(&mut buffer)
         .map_err(|err| Error::IoPathError(path.to_path_buf(), "reading secret file", err))?;

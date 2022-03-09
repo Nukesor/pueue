@@ -21,6 +21,7 @@ The concept of SemVer is applied to the daemon/client API, but not the library A
 
 - `Error::LogWrite` in favor of the new `IoPathError`.
 - `Error::LogRead` in favor of the new `IoPathError`.
+- `Error::FileNotFound` in favor of the new `IoPathError`.
 
 ## [0.19.3] - 2022-02-18
 

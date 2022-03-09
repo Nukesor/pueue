@@ -86,11 +86,6 @@ pub async fn get_client_stream(settings: &Shared) -> Result<GenericStream, Error
     // Create a unix socket, if the config says so.
     if settings.use_unix_socket {
         let unix_socket_path = settings.unix_socket_path();
-        if !PathBuf::from(&unix_socket_path).exists() {
-            return Err(Error::FileNotFound(format!(
-                "Unix socket at path {unix_socket_path:?}. Is the daemon started?",
-            )));
-        }
         let stream = UnixStream::connect(&unix_socket_path)
             .await
             .map_err(|err| {

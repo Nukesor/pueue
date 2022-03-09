@@ -2,9 +2,6 @@ use std::path::PathBuf;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
-    #[error("Couldn't find or open file: {}", .0)]
-    FileNotFound(String),
-
     #[error("Error while building path: {}", .0)]
     InvalidPath(String),
 

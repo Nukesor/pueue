@@ -239,12 +239,6 @@ impl Settings {
     pub fn read(from_file: &Option<PathBuf>) -> Result<(Settings, bool), Error> {
         // Load the config from a very specific file path
         if let Some(path) = from_file {
-            if !path.exists() || !path.is_file() {
-                return Err(Error::FileNotFound(format!(
-                    "Couldn't find config at path {path:?}"
-                )));
-            }
-
             // Open the file in read-only mode with buffer.
             let file = File::open(path)
                 .map_err(|err| Error::IoPathError(path.clone(), "opening config file", err))?;
