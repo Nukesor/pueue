@@ -44,9 +44,11 @@ pub fn create_certificates(shared_settings: &Shared) -> Result<(), Error> {
 
 fn write_file(blob: String, name: &str, path: &Path) -> Result<(), Error> {
     info!("Generate {name}.");
-    let mut file = File::create(path)?;
+    let mut file = File::create(path)
+        .map_err(|err| Error::IoPathError(path.to_path_buf(), "creating certificate", err))?;
 
-    file.write_all(&blob.into_bytes())?;
+    file.write_all(&blob.into_bytes())
+        .map_err(|err| Error::IoPathError(path.to_path_buf(), "writing certificate", err))?;
 
     #[cfg(not(target_os = "windows"))]
     {

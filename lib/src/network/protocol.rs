@@ -33,12 +33,18 @@ pub async fn send_bytes(payload: &[u8], stream: &mut GenericStream) -> Result<()
 
     // Send the request size header first.
     // Afterwards send the request.
-    stream.write_all(&header).await?;
+    stream
+        .write_all(&header)
+        .await
+        .map_err(|err| Error::IoError("sending request size header".to_string(), err))?;
 
     // Split the payload into 1.4Kbyte chunks
     // 1.5Kbyte is the MUT for TCP, but some carrier have a little less, such as Wireguard.
     for chunk in payload.chunks(1400) {
-        stream.write_all(chunk).await?;
+        stream
+            .write_all(chunk)
+            .await
+            .map_err(|err| Error::IoError("sending payload chunk".to_string(), err))?;
     }
 
     Ok(())
@@ -52,7 +58,10 @@ pub async fn send_bytes(payload: &[u8], stream: &mut GenericStream) -> Result<()
 pub async fn receive_bytes(stream: &mut GenericStream) -> Result<Vec<u8>, Error> {
     // Receive the header with the overall message size
     let mut header = vec![0; 8];
-    stream.read_exact(&mut header).await?;
+    stream
+        .read_exact(&mut header)
+        .await
+        .map_err(|err| Error::IoError("reading request size header".to_string(), err))?;
     let mut header = Cursor::new(header);
     let message_size = ReadBytesExt::read_u64::<BigEndian>(&mut header)? as usize;
 
@@ -65,7 +74,10 @@ pub async fn receive_bytes(stream: &mut GenericStream) -> Result<Vec<u8>, Error>
     // Receive chunks until we reached the expected message size
     while payload_bytes.len() < message_size {
         // Read data and get the amount of received bytes
-        let received_bytes = stream.read(&mut chunk_buffer).await?;
+        let received_bytes = stream
+            .read(&mut chunk_buffer)
+            .await
+            .map_err(|err| Error::IoError("reading next chunk".to_string(), err))?;
 
         if received_bytes == 0 {
             return Err(Error::Connection(

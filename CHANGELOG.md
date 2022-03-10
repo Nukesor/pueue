@@ -4,11 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.0.1] - unreleased
 
-### Changed
+### Added
 
-- Commands no longer inherit environment variables from the daemon process
+- Better error output and error context for filesystem related errors [#239](https://github.com/Nukesor/pueue/issues/293).
+
+### Fixed
+
+- Commands no longer inherit environment variables from the daemon process by [drewkett](https://github.com/drewkett) [#297](https://github.com/Nukesor/pueue/pull/297).
+    Previously, the daemon environment variables bled into the subprocesses.
 
 ## [2.0.0] - 2022-02-18
 

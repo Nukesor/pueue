@@ -54,8 +54,8 @@ pub fn get_tls_listener(settings: &Shared) -> Result<TlsAcceptor, Error> {
 
 /// Load the passed certificates file
 fn load_certs(path: &Path) -> Result<Vec<Certificate>, Error> {
-    let file =
-        File::open(path).map_err(|_| Error::FileNotFound(format!("Cannot open cert {path:?}")))?;
+    let file = File::open(path)
+        .map_err(|err| Error::IoPathError(path.to_path_buf(), "opening cert", err))?;
     let certs: Vec<Certificate> = rustls_pemfile::certs(&mut BufReader::new(file))
         .map_err(|_| Error::CertificateFailure("Failed to parse daemon certificate.".into()))?
         .into_iter()
@@ -68,8 +68,8 @@ fn load_certs(path: &Path) -> Result<Vec<Certificate>, Error> {
 /// Load the passed keys file.
 /// Only the first key will be used. It should match the certificate.
 fn load_key(path: &Path) -> Result<PrivateKey, Error> {
-    let file =
-        File::open(path).map_err(|_| Error::FileNotFound(format!("Cannot open key {path:?}")))?;
+    let file = File::open(path)
+        .map_err(|err| Error::IoPathError(path.to_path_buf(), "opening key", err))?;
 
     // Try to read pkcs8 format first
     let keys = pkcs8_private_keys(&mut BufReader::new(&file))
@@ -95,8 +95,8 @@ fn load_key(path: &Path) -> Result<PrivateKey, Error> {
 }
 
 fn load_ca(path: &Path) -> Result<Certificate, Error> {
-    let file =
-        File::open(path).map_err(|_| Error::FileNotFound(format!("Cannot open cert {path:?}")))?;
+    let file = File::open(path)
+        .map_err(|err| Error::IoPathError(path.to_path_buf(), "opening cert", err))?;
 
     let cert = rustls_pemfile::certs(&mut BufReader::new(file))
         .map_err(|_| Error::CertificateFailure("Failed to parse daemon certificate.".into()))?
