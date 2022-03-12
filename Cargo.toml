@@ -1,7 +1,7 @@
 [package]
 name = "pueue"
 description = "A cli tool for managing long running shell commands."
-version = "2.0.0"
+version = "2.0.1"
 authors = ["Arne Beer <contact@arne.beer>"]
 homepage = "https://github.com/nukesor/pueue"
 repository = "https://github.com/nukesor/pueue"
