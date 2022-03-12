@@ -1,6 +1,5 @@
 use std::collections::BTreeMap;
 
-use anyhow::anyhow;
 use log::{error, info};
 
 use pueue_lib::network::message::GroupMessage;
@@ -66,12 +65,12 @@ impl TaskHandler {
                 // internal datastructures, which is really bad.
                 if let Some(pool) = self.children.0.get(&group) {
                     if !pool.is_empty() {
-                        anyhow!("Encountered a non-empty worker pool, while removing a group. This is a critical error. Please report this bug.");
+                        error!("Encountered a non-empty worker pool, while removing a group. This is a critical error. Please report this bug.");
                         self.initiate_shutdown(Shutdown::Emergency);
                         return;
                     }
                 } else {
-                    anyhow!("Encountered an group without an worker pool, while removing a group. This is a critical error. Please report this bug.");
+                    error!("Encountered an group without an worker pool, while removing a group. This is a critical error. Please report this bug.");
                     self.initiate_shutdown(Shutdown::Emergency);
                     return;
                 }
