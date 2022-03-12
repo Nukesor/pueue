@@ -105,9 +105,9 @@ PR's are automatically checked for these two and won't be accepted unless everyt
 
 ### Comments
 
-1. All functions have to have a doc block.
-2. All non-trivial structs have to have doc block.
+1. All functions must have a doc block.
+2. All non-trivial structs must have a doc block.
 3. Rather too many inline comments than too few.
-4. Non-trivial complexity should be well documented!
+4. Non-trivial code should be well documented!
 
 In general, please add a lot of comments. It makes maintenance, collaboration and reviews MUCH easier.
