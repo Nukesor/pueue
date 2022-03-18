@@ -55,7 +55,8 @@ pub async fn run(config_path: Option<PathBuf>, profile: Option<String>, test: bo
     #[allow(deprecated)]
     if settings.daemon.groups.is_some() {
         error!(
-            "Please delete the 'daemon.groups' section from your config file. \n\
+            "Please delete the 'daemon.groups' section from your config file.
+            Run `pueue -vv` to see where your config is located.\n\
             It is no longer used and groups can now only be edited via the commandline interface. \n\n\
             Attention: The first time the daemon is restarted this update, the amount of parallel tasks per group will be reset to 1!!"
         )
