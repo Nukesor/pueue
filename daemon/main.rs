@@ -38,8 +38,13 @@ fn fork_daemon(opt: &CliArguments) -> Result<()> {
         arguments.push(config.to_string_lossy().into_owned());
     }
 
+    if let Some(profile) = &opt.profile {
+        arguments.push("--profile".to_string());
+        arguments.push(profile.clone());
+    }
+
     if opt.verbose > 0 {
-        arguments.push("-".to_string() + &" ".repeat(opt.verbose as usize));
+        arguments.push("-".to_string() + &"v".repeat(opt.verbose as usize));
     }
 
     Command::new("pueued").args(&arguments).spawn()?;

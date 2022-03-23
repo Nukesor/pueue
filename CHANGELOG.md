@@ -10,6 +10,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Better debug output for migration instructions from v1 to v2 [#298](https://github.com/Nukesor/pueue/issues/298).
 
+### Fixed
+
+- Some options weren't properly passed onto the forked daemon instance, when starting `pueued` with the `-d` flag.
+    * the `-vvv` flags 
+    * the `--profile` option.
+
 ## [2.0.1] - 2022-03-12
 
 ### Added
