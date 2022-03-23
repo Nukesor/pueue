@@ -6,6 +6,7 @@ use anyhow::{bail, Context, Result};
 use crossbeam_channel::{unbounded, Sender};
 use log::{error, warn};
 
+use pueue_lib::error::Error;
 use pueue_lib::network::certificate::create_certificates;
 use pueue_lib::network::message::{Message, Shutdown};
 use pueue_lib::network::protocol::socket_cleanup;
@@ -62,7 +63,7 @@ pub async fn run(config_path: Option<PathBuf>, profile: Option<String>, test: bo
         )
     }
 
-    init_directories(&settings.shared.pueue_directory());
+    init_directories(&settings.shared.pueue_directory())?;
     if !settings.shared.daemon_key().exists() && !settings.shared.daemon_cert().exists() {
         create_certificates(&settings.shared).context("Failed to create certificates.")?;
     }
@@ -92,7 +93,7 @@ pub async fn run(config_path: Option<PathBuf>, profile: Option<String>, test: bo
 
     // Don't set ctrlc and panic handlers during testing.
     // This is necessary for multithreaded integration testing, since multiple listener per process
-    // aren't prophibited. On top of this, ctrlc also somehow breaks test error output.
+    // aren't allowed. On top of this, ctrlc also somehow breaks test error output.
     if !test {
         setup_signal_panic_handling(&settings, &sender)?;
     }
@@ -107,37 +108,36 @@ pub async fn run(config_path: Option<PathBuf>, profile: Option<String>, test: bo
 }
 
 /// Initialize all directories needed for normal operation.
-fn init_directories(pueue_dir: &Path) {
+fn init_directories(pueue_dir: &Path) -> Result<()> {
     // Pueue base path
     if !pueue_dir.exists() {
-        if let Err(error) = create_dir_all(&pueue_dir) {
-            panic!("Failed to create main directory at {pueue_dir:?} error: {error:?}");
-        }
+        create_dir_all(&pueue_dir).map_err(|err| {
+            Error::IoPathError(pueue_dir.to_path_buf(), "creating main directory", err)
+        })?;
     }
 
     // Task log dir
     let log_dir = pueue_dir.join("log");
     if !log_dir.exists() {
-        if let Err(error) = create_dir_all(&log_dir) {
-            panic!("Failed to create log directory at {log_dir:?} error: {error:?}",);
-        }
+        create_dir_all(&log_dir)
+            .map_err(|err| Error::IoPathError(log_dir, "creating log directory", err))?;
     }
 
     // Task certs dir
     let certs_dir = pueue_dir.join("certs");
     if !certs_dir.exists() {
-        if let Err(error) = create_dir_all(&certs_dir) {
-            panic!("Failed to create certificate directory at {certs_dir:?} error: {error:?}");
-        }
+        create_dir_all(&certs_dir)
+            .map_err(|err| Error::IoPathError(certs_dir, "creating certificate directory", err))?;
     }
 
     // Task log dir
     let logs_dir = pueue_dir.join("task_logs");
     if !logs_dir.exists() {
-        if let Err(error) = create_dir_all(&logs_dir) {
-            panic!("Failed to create task logs directory at {logs_dir:?} error: {error:?}");
-        }
+        create_dir_all(&logs_dir)
+            .map_err(|err| Error::IoPathError(logs_dir, "creating task log directory", err))?;
     }
+
+    Ok(())
 }
 
 /// Setup signal handling and panic handling.
