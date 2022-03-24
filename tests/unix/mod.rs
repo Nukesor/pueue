@@ -1,5 +1,6 @@
 mod add;
 mod clean;
+mod completions;
 mod edit;
 mod environment_variables;
 mod group;
