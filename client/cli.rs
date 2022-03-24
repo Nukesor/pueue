@@ -10,9 +10,10 @@ use pueue_lib::network::message::Signal;
 #[derive(Parser, Debug)]
 pub enum SubCommand {
     /// Enqueue a task for execution.
+    #[clap(trailing_var_arg = true)]
     Add {
         /// The command to be added.
-        #[clap(required = true, value_hint = ValueHint::CommandWithArguments)]
+        #[clap(required = true, multiple_values = true, value_hint = ValueHint::CommandWithArguments)]
         command: Vec<String>,
 
         /// Specify current working directory.

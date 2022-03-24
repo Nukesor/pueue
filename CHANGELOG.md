@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Some options weren't properly passed onto the forked daemon instance, when starting `pueued` with the `-d` flag.
     * the `-vvv` flags
     * the `--profile` option.
+- Autocompletion shell scripts. They generation is now also tested to prevent regressions.
 
 ## [2.0.1] - 2022-03-12
 
