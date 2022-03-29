@@ -34,22 +34,18 @@ pub async fn format_state(
     // Try to deserialize the input as a map of tasks first.
     // If this doesn't work, try a list of tasks.
     let map_deserialize = serde_json::from_str::<BTreeMap<usize, Task>>(&json);
-    let tasks: BTreeMap<usize, Task> = match map_deserialize {
-        Ok(tasks) => tasks,
-        Err(_) => {
-            let task_list: Vec<Task> =
-                serde_json::from_str(&json).context("Failed to deserialize from JSON input.")?;
-            task_list.into_iter().map(|task| (task.id, task)).collect()
-        }
+
+    let tasks: Vec<Task> = if let Ok(map) = map_deserialize {
+        map.into_iter().map(|(_, task)| task).collect()
+    } else {
+        serde_json::from_str(&json).context("Failed to deserialize from JSON input.")?
     };
 
-    let mut state = super::get_state(stream)
+    let state = super::get_state(stream)
         .await
         .context("Failed to get the current state from daemon")?;
 
-    state.tasks = tasks;
-
-    print_state(state, command, colors, settings);
+    print_state(state, tasks, command, colors, settings);
 
     Ok(())
 }

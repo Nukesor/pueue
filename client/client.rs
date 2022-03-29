@@ -280,7 +280,14 @@ impl Client {
                 std::process::exit(1);
             }
             Message::StatusResponse(state) => {
-                print_state(*state, &self.subcommand, &self.colors, &self.settings)
+                let tasks = state.tasks.iter().map(|(_, task)| task.clone()).collect();
+                print_state(
+                    *state,
+                    tasks,
+                    &self.subcommand,
+                    &self.colors,
+                    &self.settings,
+                )
             }
             Message::LogResponse(task_logs) => {
                 print_logs(task_logs, &self.subcommand, &self.colors, &self.settings)

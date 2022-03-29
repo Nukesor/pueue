@@ -20,6 +20,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Autocompletion shell scripts. They generation is now also tested to prevent regressions.
 - Move the `PID` file into the runtime directory to prevent rare startup issues after crashes + reboot. [#302](https://github.com/Nukesor/pueue/issues/298).
     This won't cause any problems for running clients/daemons, making this a backward compatible change.
+- The `format-status` option now respects the order in which tasks are provided, if they're passed in list form [#301](https://github.com/Nukesor/pueue/issues/301).
+    Tasks passed in a map will still be displayed in increasing order.
 
 ## [2.0.1] - 2022-03-12
 
