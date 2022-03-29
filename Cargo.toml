@@ -13,7 +13,7 @@ rust-version = "1.58"
 edition = "2021"
 
 [badges]
-maintenance = { status="actively-developed" }
+maintenance = { status = "actively-developed" }
 
 [workspace]
 members = ["lib"]
@@ -33,34 +33,34 @@ name = "pueued"
 path = "daemon/main.rs"
 
 [dependencies]
-pueue-lib = { version="0.19.4", path="lib" }
+pueue-lib = { version = "0.19.5", path = "lib" }
 
 anyhow = "1"
-chrono = { version="0.4", features=["serde"] }
+chrono = { version = "0.4", features = ["serde"] }
 chrono-english = "0.1"
 shell-escape = "0.1"
 tempfile = "3"
 
 crossbeam-channel = "0.5"
-tokio = { version="1", features=["rt-multi-thread", "time", "io-std"] }
+tokio = { version = "1", features = ["rt-multi-thread", "time", "io-std"] }
 snap = "1"
 serde = "1"
 serde_json = "1"
 serde_derive = "1"
 
 log = "0.4"
-simplelog = { version="0.11", default-features=false }
-clap = { version="3", features=["derive", "cargo"] }
+simplelog = { version = "0.11", default-features = false }
+clap = { version = "3", features = ["derive", "cargo"] }
 clap_complete = "3"
 crossterm = "0.23"
 comfy-table = "5"
 
 handlebars = "4"
-ctrlc = { version="3", features=["termination"] }
+ctrlc = { version = "3", features = ["termination"] }
 
 # Windows
 [target.'cfg(windows)'.dependencies]
-winapi = { version="0.3", features=[
+winapi = { version = "0.3", features = [
   "tlhelp32",
   "handleapi",
   "processthreadsapi",
@@ -75,7 +75,7 @@ whoami = "1"
 
 # Linux / Freebsd
 [target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]
-procfs = { version="0.12", default-features=false }
+procfs = { version = "0.12", default-features = false }
 
 [dev-dependencies]
 assert_cmd = "2"
