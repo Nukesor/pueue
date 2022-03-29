@@ -69,8 +69,7 @@ pub async fn run(config_path: Option<PathBuf>, profile: Option<String>, test: bo
     }
     init_shared_secret(&settings.shared.shared_secret_path())
         .context("Failed to initialize shared secret.")?;
-    pid::create_pid_file(&settings.shared.pueue_directory())
-        .context("Failed to create pid file.")?;
+    pid::create_pid_file(&settings.shared.pid_path()).context("Failed to create pid file.")?;
 
     // Restore the previous state and save any changes that might have happened during this
     // process. If no previous state exists, just create a new one.
@@ -167,7 +166,7 @@ fn setup_signal_panic_handling(settings: &Settings, sender: &Sender<Message>) ->
         orig_hook(panic_info);
 
         // Cleanup the pid file
-        if let Err(error) = pid::cleanup_pid_file(&settings_clone.shared.pueue_directory()) {
+        if let Err(error) = pid::cleanup_pid_file(&settings_clone.shared.pid_path()) {
             println!("Failed to cleanup pid after panic.");
             println!("{error}");
         }
