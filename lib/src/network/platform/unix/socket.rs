@@ -2,6 +2,7 @@ use std::convert::TryFrom;
 use std::path::PathBuf;
 
 use async_trait::async_trait;
+use log::info;
 use rustls::ServerName;
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio::net::{TcpListener, TcpStream, UnixListener, UnixStream};
@@ -126,6 +127,7 @@ pub async fn get_client_stream(settings: &Shared) -> Result<GenericStream, Error
 pub async fn get_listener(settings: &Shared) -> Result<GenericListener, Error> {
     if settings.use_unix_socket {
         let socket_path = settings.unix_socket_path();
+        info!("Using unix socket at: {socket_path:?}");
 
         // Check, if the socket already exists
         // In case it does, we have to check, if it's an active socket.
@@ -148,6 +150,7 @@ pub async fn get_listener(settings: &Shared) -> Result<GenericListener, Error> {
 
     // This is the listener, which accepts low-level TCP connections
     let address = format!("{}:{}", &settings.host, &settings.port);
+    info!("Binding to address: {address}");
     let tcp_listener = TcpListener::bind(&address)
         .await
         .map_err(|err| Error::IoError("binding tcp listener to address".to_string(), err))?;

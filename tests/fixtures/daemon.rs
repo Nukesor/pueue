@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
 
 use anyhow::{bail, Context, Result};
@@ -30,13 +30,13 @@ pub async fn daemon() -> Result<PueueDaemon> {
     let path = pueue_dir.to_path_buf();
     // Start/spin off the daemon and get its PID
     tokio::spawn(run_and_handle_error(path, true));
-    let pid = get_pid(pueue_dir)?;
+    let pid = get_pid(&settings.shared.pid_path())?;
 
     let tries = 20;
     let mut current_try = 0;
 
     // Wait up to 1s for the unix socket to pop up.
-    let socket_path = pueue_dir.join("test.socket");
+    let socket_path = settings.shared.unix_socket_path();
     while current_try < tries {
         sleep_ms(50);
         if socket_path.exists() {
@@ -72,7 +72,7 @@ async fn run_and_handle_error(pueue_dir: PathBuf, test: bool) -> Result<()> {
 
 /// Spawn the daemon by calling the actual pueued binary.
 /// This function also checks for the pid file and the unix socket to appear.
-pub async fn standalone_daemon(pueue_dir: &Path) -> Result<Child> {
+pub async fn standalone_daemon(shared: &Shared) -> Result<Child> {
     // Inject an environment variable into the daemon.
     // This is used to ensure that the spawned subprocesses won't inherit the daemon's environment.
     let mut envs = HashMap::new();
@@ -80,7 +80,7 @@ pub async fn standalone_daemon(pueue_dir: &Path) -> Result<Child> {
 
     let child = Command::cargo_bin("pueued")?
         .arg("--config")
-        .arg(pueue_dir.join("pueue.yml").to_str().unwrap())
+        .arg(shared.pueue_directory().join("pueue.yml").to_str().unwrap())
         .arg("-vvv")
         .envs(envs)
         .stdout(Stdio::piped())
@@ -91,7 +91,7 @@ pub async fn standalone_daemon(pueue_dir: &Path) -> Result<Child> {
     let mut current_try = 0;
 
     // Wait up to 1s for the unix socket to pop up.
-    let socket_path = pueue_dir.join("test.socket");
+    let socket_path = shared.unix_socket_path();
     while current_try < tries {
         sleep_ms(50);
         if socket_path.exists() {
@@ -118,7 +118,8 @@ pub fn daemon_base_setup() -> Result<(Settings, TempDir)> {
         #[cfg(not(target_os = "windows"))]
         use_unix_socket: true,
         #[cfg(not(target_os = "windows"))]
-        unix_socket_path: Some(tempdir_path.join("test.socket")),
+        unix_socket_path: None,
+        pid_path: None,
         host: "localhost".to_string(),
         port: "51230".to_string(),
         daemon_cert: Some(tempdir_path.join("certs").join("daemon.cert")),

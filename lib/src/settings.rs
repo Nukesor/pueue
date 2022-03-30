@@ -28,6 +28,9 @@ pub struct Shared {
     #[cfg(not(target_os = "windows"))]
     #[serde(default = "default_true")]
     pub use_unix_socket: bool,
+    /// The path where the daemon's PID is located.
+    /// This is by default in `runtime_directory/pueue.pid`.
+    pub pid_path: Option<PathBuf>,
     /// Don't access this property directly, but rather use the getter with the same name.
     /// It's only public to allow proper integration testing.
     ///
@@ -202,6 +205,16 @@ impl Shared {
         } else {
             self.runtime_directory()
                 .join(format!("pueue_{}.socket", whoami::username()))
+        }
+    }
+
+    /// The daemon's pid path can either be explicitly specified or it's simply placed in the
+    /// current runtime directory.
+    pub fn pid_path(&self) -> PathBuf {
+        if let Some(path) = &self.pid_path {
+            expand_home(path)
+        } else {
+            self.runtime_directory().join("pueue.pid")
         }
     }
 

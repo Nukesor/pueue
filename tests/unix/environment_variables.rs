@@ -5,8 +5,8 @@ use crate::helper::*;
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Make sure that the daemon's environment variables don't bleed into the spawned subprocesses.
 async fn test_isolated_task_environment() -> Result<()> {
-    let (settings, tempdir) = daemon_base_setup()?;
-    let mut child = standalone_daemon(tempdir.path()).await?;
+    let (settings, _tempdir) = daemon_base_setup()?;
+    let mut child = standalone_daemon(&settings.shared).await?;
 
     let shared = &settings.shared;
 

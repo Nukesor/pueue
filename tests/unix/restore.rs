@@ -14,8 +14,8 @@ use crate::helper::*;
 /// The daemon should start in the same state as before shutdown, if no tasks are queued.
 /// This function tests for the running state.
 async fn test_start_running() -> Result<()> {
-    let (settings, tempdir) = daemon_base_setup()?;
-    let child = standalone_daemon(tempdir.path()).await?;
+    let (settings, _tempdir) = daemon_base_setup()?;
+    let child = standalone_daemon(&settings.shared).await?;
     let shared = &settings.shared;
 
     // Kill the daemon and wait for it to shut down.
@@ -23,7 +23,7 @@ async fn test_start_running() -> Result<()> {
     wait_for_shutdown(child.id().try_into()?)?;
 
     // Boot it up again
-    let mut child = standalone_daemon(tempdir.path()).await?;
+    let mut child = standalone_daemon(&settings.shared).await?;
 
     // Assert that the group is still running.
     let state = get_state(shared).await?;
@@ -40,8 +40,8 @@ async fn test_start_running() -> Result<()> {
 /// The daemon should start in the same state as before shutdown, if no tasks are queued.
 /// This function tests for the paused state.
 async fn test_start_paused() -> Result<()> {
-    let (settings, tempdir) = daemon_base_setup()?;
-    let child = standalone_daemon(tempdir.path()).await?;
+    let (settings, _tempdir) = daemon_base_setup()?;
+    let child = standalone_daemon(&settings.shared).await?;
     let shared = &settings.shared;
 
     // This pauses the daemon
@@ -52,7 +52,7 @@ async fn test_start_paused() -> Result<()> {
     wait_for_shutdown(child.id().try_into()?)?;
 
     // Boot it up again
-    let mut child = standalone_daemon(tempdir.path()).await?;
+    let mut child = standalone_daemon(&settings.shared).await?;
 
     // Assert that the group is still paused.
     let state = get_state(shared).await?;
@@ -69,7 +69,7 @@ async fn test_start_paused() -> Result<()> {
 /// The daemon will load new settings, when restoring a previous state.
 async fn test_load_config() -> Result<()> {
     let (mut settings, tempdir) = daemon_base_setup()?;
-    let child = standalone_daemon(tempdir.path()).await?;
+    let child = standalone_daemon(&settings.shared).await?;
 
     // Kill the daemon and wait for it to shut down.
     assert_success(shutdown_daemon(&settings.shared).await?);
@@ -81,7 +81,7 @@ async fn test_load_config() -> Result<()> {
     settings.shared.daemon_key = Some(PathBuf::from("/tmp/daemon.key"));
     settings.save(&Some(tempdir.path().join("pueue.yml")))?;
 
-    let mut child = standalone_daemon(tempdir.path()).await?;
+    let mut child = standalone_daemon(&settings.shared).await?;
 
     // Get the new state and make sure the settings actually changed.
     let state = get_state(&settings.shared).await?;

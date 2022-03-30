@@ -16,7 +16,8 @@ pub fn get_shared_settings() -> (Shared, TempDir) {
         #[cfg(not(target_os = "windows"))]
         use_unix_socket: true,
         #[cfg(not(target_os = "windows"))]
-        unix_socket_path: Some(tempdir_path.join("test.socket")),
+        unix_socket_path: None,
+        pid_path: None,
         host: "localhost".to_string(),
         port: pick_unused_port()
             .expect("There should be a free port")

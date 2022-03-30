@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Better debug output for migration instructions from v1 to v2 [#298](https://github.com/Nukesor/pueue/issues/298).
 - Better error output and error context for filesystem related errors (Continuation).
+- Add a new option to specify the location of the `PID` file: `shared.pid_path` [#302](https://github.com/Nukesor/pueue/issues/298).
 
 ### Fixed
 
@@ -17,6 +18,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
     * the `-vvv` flags
     * the `--profile` option.
 - Autocompletion shell scripts. They generation is now also tested to prevent regressions.
+- Move the `PID` file into the runtime directory to prevent rare startup issues after crashes + reboot. [#302](https://github.com/Nukesor/pueue/issues/298).
+    This won't cause any problems for running clients/daemons, making this a backward compatible change.
 
 ## [2.0.1] - 2022-03-12
 

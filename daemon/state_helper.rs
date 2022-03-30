@@ -137,7 +137,7 @@ pub fn restore_state(pueue_directory: &Path) -> Result<Option<State>> {
         info!("Couldn't find state from previous session at location: {path:?}");
         return Ok(None);
     }
-    info!("Start restoring state");
+    info!("Restoring state");
 
     // Try to load the file.
     let data = fs::read_to_string(&path).context("State restore: Failed to read file:\n\n{}")?;
