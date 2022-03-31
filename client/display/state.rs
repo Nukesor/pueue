@@ -1,4 +1,3 @@
-use std::collections::BTreeMap;
 use std::string::ToString;
 
 use chrono::{Duration, Local};
@@ -13,7 +12,15 @@ use super::{colors::Colors, helper::*};
 use crate::cli::SubCommand;
 
 /// Print the current state of the daemon in a nicely formatted table.
-pub fn print_state(state: State, cli_command: &SubCommand, colors: &Colors, settings: &Settings) {
+/// We pass the tasks as a separate parameter and as a list.
+/// This allows us to print the tasks in any user-defined order.
+pub fn print_state(
+    state: State,
+    tasks: Vec<Task>,
+    cli_command: &SubCommand,
+    colors: &Colors,
+    settings: &Settings,
+) {
     let (json, group_only) = match cli_command {
         SubCommand::Status { json, group } => (*json, group.clone()),
         SubCommand::FormatStatus { group } => (false, group.clone()),
@@ -27,16 +34,22 @@ pub fn print_state(state: State, cli_command: &SubCommand, colors: &Colors, sett
     }
 
     if let Some(group) = group_only {
-        print_single_group(state, settings, colors, group);
+        print_single_group(state, tasks, settings, colors, group);
         return;
     }
 
-    print_all_groups(state, settings, colors);
+    print_all_groups(state, tasks, settings, colors);
 }
 
-fn print_single_group(state: State, settings: &Settings, colors: &Colors, group_name: String) {
+fn print_single_group(
+    state: State,
+    tasks: Vec<Task>,
+    settings: &Settings,
+    colors: &Colors,
+    group_name: String,
+) {
     // Sort all tasks by their respective group;
-    let mut sorted_tasks = sort_tasks_by_group(state.tasks);
+    let mut sorted_tasks = sort_tasks_by_group(tasks);
 
     let group = if let Some(group) = state.groups.get(&group_name) {
         group
@@ -58,7 +71,7 @@ fn print_single_group(state: State, settings: &Settings, colors: &Colors, group_
     print_table(tasks, colors, settings);
 }
 
-fn print_all_groups(state: State, settings: &Settings, colors: &Colors) {
+fn print_all_groups(state: State, tasks: Vec<Task>, settings: &Settings, colors: &Colors) {
     // Early exit and hint if there are no tasks in the queue
     // Print the state of the default group anyway, since this is information one wants to
     // see most of the time anyway.
@@ -74,7 +87,7 @@ fn print_all_groups(state: State, settings: &Settings, colors: &Colors) {
     }
 
     // Sort all tasks by their respective group;
-    let sorted_tasks = sort_tasks_by_group(state.tasks);
+    let sorted_tasks = sort_tasks_by_group(tasks);
 
     // Always print the default queue at the very top, if no specific group is requested.
     if sorted_tasks.get(PUEUE_DEFAULT_GROUP).is_some() {
@@ -114,7 +127,7 @@ fn print_all_groups(state: State, settings: &Settings, colors: &Colors) {
 }
 
 /// Print some tasks into a nicely formatted table
-fn print_table(tasks: &BTreeMap<usize, Task>, colors: &Colors, settings: &Settings) {
+fn print_table(tasks: &[Task], colors: &Colors, settings: &Settings) {
     let (has_delayed_tasks, has_dependencies, has_labels) = has_special_columns(tasks);
 
     // Create table header row
@@ -145,12 +158,12 @@ fn print_table(tasks: &BTreeMap<usize, Task>, colors: &Colors, settings: &Settin
         .set_header(headers);
 
     // Add rows one by one.
-    for (id, task) in tasks {
+    for task in tasks.iter() {
         let mut row = Row::new();
         if let Some(height) = settings.client.max_status_lines {
             row.max_height(height);
         }
-        row.add_cell(Cell::new(&id.to_string()));
+        row.add_cell(Cell::new(&task.id.to_string()));
 
         // Determine the human readable task status representation and the respective color.
         let status_string = task.status.to_string();

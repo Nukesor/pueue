@@ -36,9 +36,9 @@ pub fn style_text<T: ToString>(
 
 /// By default, several columns aren't shown until there's actually some data to display.
 /// This function determines, which of those columns actually need to be shown.
-pub fn has_special_columns(tasks: &BTreeMap<usize, Task>) -> (bool, bool, bool) {
+pub fn has_special_columns(tasks: &[Task]) -> (bool, bool, bool) {
     // Check whether there are any delayed tasks.
-    let has_delayed_tasks = tasks.iter().any(|(_, task)| {
+    let has_delayed_tasks = tasks.iter().any(|task| {
         matches!(
             task.status,
             TaskStatus::Stashed {
@@ -48,12 +48,10 @@ pub fn has_special_columns(tasks: &BTreeMap<usize, Task>) -> (bool, bool, bool) 
     });
 
     // Check whether there are any tasks with dependencies.
-    let has_dependencies = tasks
-        .iter()
-        .any(|(_id, task)| !task.dependencies.is_empty());
+    let has_dependencies = tasks.iter().any(|task| !task.dependencies.is_empty());
 
     // Check whether there are any tasks a label.
-    let has_labels = tasks.iter().any(|(_id, task)| task.label.is_some());
+    let has_labels = tasks.iter().any(|task| task.label.is_some());
 
     (has_delayed_tasks, has_dependencies, has_labels)
 }
@@ -74,19 +72,14 @@ pub fn get_group_headline(name: &str, group: &Group, colors: &Colors) -> String 
 
 /// Sort given tasks by their groups
 /// This is needed to print a table for each group
-pub fn sort_tasks_by_group(
-    tasks: BTreeMap<usize, Task>,
-) -> BTreeMap<String, BTreeMap<usize, Task>> {
+pub fn sort_tasks_by_group(tasks: Vec<Task>) -> BTreeMap<String, Vec<Task>> {
     // We use a BTreeMap, since groups should be ordered alphabetically by their name
     let mut sorted_task_groups = BTreeMap::new();
-    for (id, task) in tasks.into_iter() {
+    for task in tasks.into_iter() {
         if !sorted_task_groups.contains_key(&task.group) {
-            sorted_task_groups.insert(task.group.clone(), BTreeMap::new());
+            sorted_task_groups.insert(task.group.clone(), Vec::new());
         }
-        sorted_task_groups
-            .get_mut(&task.group)
-            .unwrap()
-            .insert(id, task);
+        sorted_task_groups.get_mut(&task.group).unwrap().push(task);
     }
 
     sorted_task_groups

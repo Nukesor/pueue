@@ -1,7 +1,7 @@
 [package]
 name = "pueue-lib"
 description = "The shared library to work with the Pueue client and daemon."
-version = "0.19.4"
+version = "0.19.5"
 authors = ["Arne Beer <contact@arne.beer>"]
 homepage = "https://github.com/nukesor/pueue"
 repository = "https://github.com/nukesor/pueue"
@@ -13,19 +13,24 @@ rust-version = "1.58"
 edition = "2021"
 
 [badges]
-maintenance = { status="actively-developed" }
+maintenance = { status = "actively-developed" }
 
 [dependencies]
 thiserror = "1"
 dirs = "4"
-chrono = { version="0.4", features=["serde"] }
+chrono = { version = "0.4", features = ["serde"] }
 rand = "0.8"
 shellexpand = "2.1"
 strum = "0.23"
 strum_macros = "0.23"
 
 async-trait = "0.1"
-tokio = { version="1", features=["macros", "net", "rt-multi-thread", "io-util"] }
+tokio = { version = "1", features = [
+  "macros",
+  "net",
+  "rt-multi-thread",
+  "io-util",
+] }
 tokio-rustls = "0.23"
 rustls = "0.20"
 rustls-pemfile = "0.2"
