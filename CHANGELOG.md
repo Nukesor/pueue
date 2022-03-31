@@ -10,7 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Better debug output for migration instructions from v1 to v2 [#298](https://github.com/Nukesor/pueue/issues/298).
 - Better error output and error context for some filesystem related errors (continuation).
-- Add a new option to specify the location of the `PID` file: `shared.pid_path` [#302](https://github.com/Nukesor/pueue/issues/298).
+- Add a new option to specify the location of the `PID` file: `shared.pid_path` [#302](https://github.com/Nukesor/pueue/issues/302).
 
 ### Fixed
 
