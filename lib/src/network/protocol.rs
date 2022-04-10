@@ -23,8 +23,11 @@ pub async fn send_message(message: Message, stream: &mut GenericStream) -> Resul
     send_bytes(&payload, stream).await
 }
 
-/// Send a Vec of bytes. Before the actual bytes are send, the size of the message
-/// is transmitted in an header of fixed size (u64).
+/// Send a Vec of bytes.
+/// This is part of the basic protocol beneath all communication. \
+///
+/// 1. Sends a u64 as 4bytes in BigEndian mode, which tells the receiver the length of the payload.
+/// 2. Send the payload in chunks of 1400 bytes.
 pub async fn send_bytes(payload: &[u8], stream: &mut GenericStream) -> Result<(), Error> {
     let message_size = payload.len() as u64;
 
@@ -51,10 +54,11 @@ pub async fn send_bytes(payload: &[u8], stream: &mut GenericStream) -> Result<()
 }
 
 /// Receive a byte stream. \
-/// This is the basic protocol beneath all pueue communication. \
+/// This is part of the basic protocol beneath all communication. \
 ///
-/// 1. The client sends a u64, which specifies the length of the payload.
-/// 2. Receive chunks of 1400 bytes until we finished all expected bytes
+/// 1. First of, the client sends a u64 as a 4byte vector in BigEndian mode, which specifies
+///    the length of the payload we're going to receive.
+/// 2. Receive chunks of 1400 bytes until we finished all expected bytes.
 pub async fn receive_bytes(stream: &mut GenericStream) -> Result<Vec<u8>, Error> {
     // Receive the header with the overall message size
     let mut header = vec![0; 8];

@@ -16,7 +16,6 @@ pub mod aliasing;
 pub mod error;
 /// Helper classes to read and write log files of Pueue's tasks.
 pub mod log;
-/// Everything you need to communicate with either the daemon or the client.
 pub mod network;
 /// Platform specific code, mainly used to get platform specific working directories.
 mod platform;

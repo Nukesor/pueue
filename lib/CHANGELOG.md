@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project adheres **somewhat** to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 The concept of SemVer is applied to the daemon/client API, but not the library API itself.
 
+## [0.19.6] - unreleased
+
+### Added
+
+- Docs on how pueue's communication protocol looks like [#308](https://github.com/Nukesor/pueue/issues/308).
+
 ## [0.19.5] - 2022-03-22
 
 ### Added
