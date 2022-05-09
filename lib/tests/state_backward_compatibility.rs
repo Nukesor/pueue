@@ -24,7 +24,7 @@ fn test_restore_from_old_state() -> Result<()> {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("tests")
         .join("data")
-        .join("v0.18.0_state.json");
+        .join("v0.19.0_state.json");
 
     // Try to load the file.
     let data = fs::read_to_string(&path).context("State restore: Failed to read file")?;
@@ -38,7 +38,7 @@ fn test_restore_from_old_state() -> Result<()> {
     );
     assert_eq!(
         state.groups.get(PUEUE_DEFAULT_GROUP).unwrap().status,
-        GroupStatus::Paused
+        GroupStatus::Running
     );
     assert!(
         state.groups.get("test").is_some(),
