@@ -1,11 +1,9 @@
 use std::collections::BTreeMap;
-use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
 use serde_derive::{Deserialize, Serialize};
 
 use crate::error::Error;
-use crate::settings::Settings;
 use crate::task::{Task, TaskStatus};
 
 pub const PUEUE_DEFAULT_GROUP: &str = "default";
@@ -52,25 +50,18 @@ pub struct Group {
 /// information, such as status changes and incoming commands by the client.
 #[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
 pub struct State {
-    /// The current settings used by the daemon.
-    pub settings: Settings,
     /// All tasks currently managed by the daemon.
     pub tasks: BTreeMap<usize, Task>,
     /// All groups with their current state a configuration.
     pub groups: BTreeMap<String, Group>,
-    /// Used to store an configuration path that has been explicitely specified.
-    /// Without this, the default config path will be used instead.
-    pub config_path: Option<PathBuf>,
 }
 
 impl State {
     /// Create a new default state.
-    pub fn new(settings: &Settings, config_path: Option<PathBuf>) -> State {
+    pub fn new() -> State {
         let mut state = State {
-            settings: settings.clone(),
             tasks: BTreeMap::new(),
             groups: BTreeMap::new(),
-            config_path,
         };
         state.create_group(PUEUE_DEFAULT_GROUP);
         state

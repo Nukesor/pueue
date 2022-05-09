@@ -10,7 +10,10 @@ The concept of SemVer is applied to the daemon/client API, but not the library A
 
 ### Removed
 
-- Backward compatibility logic for the old group structure in the main state.
+- Breaking change: Backward compatibility logic for the old group structure in the main state.
+- Breaking change:
+    The `State` no longer owns a copy of the current settings.
+    This became possible due to the group configuration no longer being part of the configuration file.
 
 ## [0.19.6] - unreleased
 

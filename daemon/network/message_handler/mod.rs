@@ -1,4 +1,5 @@
 use crossbeam_channel::Sender;
+use pueue_lib::settings::Settings;
 use std::fmt::Display;
 
 use pueue_lib::network::message::*;
@@ -24,26 +25,31 @@ mod switch;
 
 pub static SENDER_ERR: &str = "Failed to send message to task handler thread";
 
-pub fn handle_message(message: Message, sender: &Sender<Message>, state: &SharedState) -> Message {
+pub fn handle_message(
+    message: Message,
+    sender: &Sender<Message>,
+    state: &SharedState,
+    settings: &Settings,
+) -> Message {
     match message {
-        Message::Add(message) => add::add_task(message, sender, state),
-        Message::Clean(message) => clean::clean(message, state),
-        Message::Edit(message) => edit::edit(message, state),
+        Message::Add(message) => add::add_task(message, sender, state, settings),
+        Message::Clean(message) => clean::clean(message, state, settings),
+        Message::Edit(message) => edit::edit(message, state, settings),
         Message::EditRequest(task_id) => edit::edit_request(task_id, state),
         Message::EditRestore(task_id) => edit::edit_restore(task_id, state),
         Message::Enqueue(message) => enqueue::enqueue(message, state),
         Message::Group(message) => group::group(message, sender, state),
         Message::Kill(message) => kill::kill(message, sender, state),
-        Message::Log(message) => log::get_log(message, state),
+        Message::Log(message) => log::get_log(message, state, settings),
         Message::Parallel(message) => parallel::set_parallel_tasks(message, state),
         Message::Pause(message) => pause::pause(message, sender, state),
-        Message::Remove(task_ids) => remove::remove(task_ids, state),
+        Message::Remove(task_ids) => remove::remove(task_ids, state, settings),
         Message::Reset(message) => reset(message, sender),
         Message::Restart(message) => restart::restart_multiple(message, sender, state),
         Message::Send(message) => send::send(message, sender, state),
         Message::Start(message) => start::start(message, sender, state),
         Message::Stash(task_ids) => stash::stash(task_ids, state),
-        Message::Switch(message) => switch::switch(message, state),
+        Message::Switch(message) => switch::switch(message, state, settings),
         Message::Status => get_status(state),
         _ => create_failure_message("Not yet implemented"),
     }
@@ -108,7 +114,7 @@ mod fixtures {
         (settings, tempdir)
     }
 
-    pub fn get_state() -> (SharedState, TempDir) {
+    pub fn get_state() -> (SharedState, Settings, TempDir) {
         let (settings, tempdir) = get_settings();
 
         // Create the normal pueue directories.
@@ -121,8 +127,8 @@ mod fixtures {
             std::fs::create_dir(task_log_dir).expect("Failed to create test task log dir");
         }
 
-        let state = State::new(&settings, None);
-        (Arc::new(Mutex::new(state)), tempdir)
+        let state = State::new();
+        (Arc::new(Mutex::new(state)), settings, tempdir)
     }
 
     /// Create a new task with stub data in the given group
@@ -143,8 +149,8 @@ mod fixtures {
         get_stub_task_in_group(id, PUEUE_DEFAULT_GROUP, status)
     }
 
-    pub fn get_stub_state() -> (SharedState, TempDir) {
-        let (state, tempdir) = get_state();
+    pub fn get_stub_state() -> (SharedState, Settings, TempDir) {
+        let (state, settings, tempdir) = get_state();
         {
             // Queued task
             let mut state = state.lock().unwrap();
@@ -168,6 +174,6 @@ mod fixtures {
             state.add_task(task);
         }
 
-        (state, tempdir)
+        (state, settings, tempdir)
     }
 }

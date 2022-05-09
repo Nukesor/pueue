@@ -25,9 +25,8 @@ fn construct_success_clean_message(message: CleanMessage) -> String {
 
 /// Invoked when calling `pueue clean`.
 /// Remove all failed or done tasks from the state.
-pub fn clean(message: CleanMessage, state: &SharedState) -> Message {
+pub fn clean(message: CleanMessage, state: &SharedState, settings: &Settings) -> Message {
     let mut state = state.lock().unwrap();
-    ok_or_return_failure_message!(save_state(&state));
 
     let (matching, _) = state.filter_tasks(|task| matches!(task.status, TaskStatus::Done(_)), None);
 
@@ -54,10 +53,10 @@ pub fn clean(message: CleanMessage, state: &SharedState) -> Message {
             }
         }
         let _ = state.tasks.remove(task_id).unwrap();
-        clean_log_handles(*task_id, &state.settings.shared.pueue_directory());
+        clean_log_handles(*task_id, &settings.shared.pueue_directory());
     }
 
-    ok_or_return_failure_message!(save_state(&state));
+    ok_or_return_failure_message!(save_state(&state, settings));
 
     create_success_message(construct_success_clean_message(message))
 }
@@ -89,8 +88,8 @@ mod tests {
     }
 
     /// gets the clean test state with the required groups
-    fn get_clean_test_state(groups: &[&str]) -> (SharedState, TempDir) {
-        let (state, tempdir) = get_state();
+    fn get_clean_test_state(groups: &[&str]) -> (SharedState, Settings, TempDir) {
+        let (state, settings, tempdir) = get_state();
 
         {
             let mut state = state.lock().unwrap();
@@ -109,15 +108,15 @@ mod tests {
             }
         }
 
-        (state, tempdir)
+        (state, settings, tempdir)
     }
 
     #[test]
     fn clean_normal() {
-        let (state, _tempdir) = get_stub_state();
+        let (state, settings, _tempdir) = get_stub_state();
 
         // Only task 1 will be removed, since it's the only TaskStatus with `Done`.
-        let message = clean(get_message(false, None), &state);
+        let message = clean(get_message(false, None), &state, &settings);
 
         // Return message is correct
         assert!(matches!(message, Message::Success(_)));
@@ -131,10 +130,10 @@ mod tests {
 
     #[test]
     fn clean_normal_for_all_results() {
-        let (state, _tempdir) = get_clean_test_state(&[PUEUE_DEFAULT_GROUP]);
+        let (state, settings, _tempdir) = get_clean_test_state(&[PUEUE_DEFAULT_GROUP]);
 
         // All finished tasks should removed when calling default `clean`.
-        let message = clean(get_message(false, None), &state);
+        let message = clean(get_message(false, None), &state, &settings);
 
         // Return message is correct
         assert!(matches!(message, Message::Success(_)));
@@ -148,11 +147,11 @@ mod tests {
 
     #[test]
     fn clean_successful_only() {
-        let (state, _tempdir) = get_clean_test_state(&[PUEUE_DEFAULT_GROUP]);
+        let (state, settings, _tempdir) = get_clean_test_state(&[PUEUE_DEFAULT_GROUP]);
 
         // Only successfully finished tasks should get removed when
         // calling `clean` with the `successful_only` flag.
-        let message = clean(get_message(true, None), &state);
+        let message = clean(get_message(true, None), &state, &settings);
 
         // Return message is correct
         assert!(matches!(message, Message::Success(_)));
@@ -168,10 +167,10 @@ mod tests {
 
     #[test]
     fn clean_only_in_selected_group() {
-        let (state, _tempdir) = get_clean_test_state(&[PUEUE_DEFAULT_GROUP, "other"]);
+        let (state, settings, _tempdir) = get_clean_test_state(&[PUEUE_DEFAULT_GROUP, "other"]);
 
         // All finished tasks should removed in selected group (other)
-        let message = clean(get_message(false, Some("other".into())), &state);
+        let message = clean(get_message(false, Some("other".into())), &state, &settings);
 
         // Return message is correct
         assert!(matches!(message, Message::Success(_)));
@@ -191,10 +190,10 @@ mod tests {
 
     #[test]
     fn clean_only_successful_only_in_selected_group() {
-        let (state, _tempdir) = get_clean_test_state(&[PUEUE_DEFAULT_GROUP, "other"]);
+        let (state, settings, _tempdir) = get_clean_test_state(&[PUEUE_DEFAULT_GROUP, "other"]);
 
         // Only successfully finished tasks should removed in the 'other' group
-        let message = clean(get_message(true, Some("other".into())), &state);
+        let message = clean(get_message(true, Some("other".into())), &state, &settings);
 
         // Return message is correct
         assert!(matches!(message, Message::Success(_)));

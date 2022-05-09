@@ -9,6 +9,7 @@ use pueue_lib::error::Error;
 use pueue_lib::network::message::*;
 use pueue_lib::network::protocol::*;
 use pueue_lib::network::secret::read_shared_secret;
+use pueue_lib::settings::Settings;
 use pueue_lib::state::SharedState;
 
 use crate::network::follow_log::handle_follow;
@@ -16,14 +17,14 @@ use crate::network::message_handler::{handle_message, SENDER_ERR};
 
 /// Poll the listener and accept new incoming connections.
 /// Create a new future to handle the message and spawn it.
-pub async fn accept_incoming(sender: Sender<Message>, state: SharedState) -> Result<()> {
-    // Get cloned shared settings to avoid holding a mutex over an await point.
-    let shared_settings = {
-        let state = state.lock().unwrap();
-        state.settings.shared.clone()
-    };
-    let listener = get_listener(&shared_settings).await?;
-    let secret = read_shared_secret(&shared_settings.shared_secret_path())?;
+pub async fn accept_incoming(
+    sender: Sender<Message>,
+    state: SharedState,
+    settings: Settings,
+) -> Result<()> {
+    let listener = get_listener(&settings.shared).await?;
+    // Read secret once to prevent multiple disk reads.
+    let secret = read_shared_secret(&settings.shared.shared_secret_path())?;
 
     loop {
         // Poll incoming connections.
@@ -39,8 +40,16 @@ pub async fn accept_incoming(sender: Sender<Message>, state: SharedState) -> Res
         let sender_clone = sender.clone();
         let state_clone = state.clone();
         let secret_clone = secret.clone();
+        let settings_clone = settings.clone();
         tokio::spawn(async move {
-            let _result = handle_incoming(stream, sender_clone, state_clone, secret_clone).await;
+            let _result = handle_incoming(
+                stream,
+                sender_clone,
+                state_clone,
+                settings_clone,
+                secret_clone,
+            )
+            .await;
         });
     }
 }
@@ -52,6 +61,7 @@ async fn handle_incoming(
     mut stream: GenericStream,
     sender: Sender<Message>,
     state: SharedState,
+    settings: Settings,
     secret: Vec<u8>,
 ) -> Result<()> {
     // Receive the secret once and check, whether the client is allowed to connect
@@ -85,12 +95,8 @@ async fn handle_incoming(
     // daemon needs a restart in case a version difference exists.
     send_bytes(crate_version!().as_bytes(), &mut stream).await?;
 
-    // Save the directory for convenience purposes and to prevent continuously
-    // locking the state in the streaming loop.
-    let pueue_directory = {
-        let state = state.lock().unwrap();
-        state.settings.shared.pueue_directory().clone()
-    };
+    // Get the directory for convenience purposes.
+    let pueue_directory = settings.shared.pueue_directory();
 
     loop {
         // Receive the actual instruction from the client
@@ -140,7 +146,7 @@ async fn handle_incoming(
             }
             _ => {
                 // Process a normal message.
-                handle_message(message, &sender, &state)
+                handle_message(message, &sender, &state, &settings)
             }
         };
 

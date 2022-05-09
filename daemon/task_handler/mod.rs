@@ -12,6 +12,7 @@ use log::{debug, error, info};
 use pueue_lib::log::*;
 use pueue_lib::network::message::*;
 use pueue_lib::network::protocol::socket_cleanup;
+use pueue_lib::settings::Settings;
 use pueue_lib::state::{GroupStatus, SharedState};
 use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
@@ -71,11 +72,11 @@ pub struct TaskHandler {
     /// Whether we're currently in the process of a graceful shutdown.
     /// Depending on the shutdown type, we're exiting with different exitcodes.
     shutdown: Option<Shutdown>,
+    /// The settings that are passed at program start.
+    settings: Settings,
 
-    // Some static settings that are extracted from `state.settings` for convenience purposes.
+    // Some static settings that are extracted from `settings` for convenience purposes.
     pueue_directory: PathBuf,
-    callback: Option<String>,
-    callback_log_lines: usize,
 }
 
 /// Pueue directly interacts with processes.
@@ -89,8 +90,8 @@ pub enum ProcessAction {
 }
 
 impl TaskHandler {
-    pub fn new(shared_state: SharedState, receiver: Receiver<Message>) -> Self {
-        // Clone the pointer, as we need to access it, but also put it into the TaskHandler.
+    pub fn new(shared_state: SharedState, settings: Settings, receiver: Receiver<Message>) -> Self {
+        // Clone the pointer, as we need to regularly access it inside the TaskHandler.
         let state_clone = shared_state.clone();
         let state = state_clone.lock().unwrap();
 
@@ -107,9 +108,8 @@ impl TaskHandler {
             callbacks: Vec::new(),
             full_reset: false,
             shutdown: None,
-            pueue_directory: state.settings.shared.pueue_directory(),
-            callback: state.settings.daemon.callback.clone(),
-            callback_log_lines: state.settings.daemon.callback_log_lines,
+            pueue_directory: settings.shared.pueue_directory(),
+            settings,
         }
     }
 
@@ -166,10 +166,10 @@ impl TaskHandler {
         }
 
         // Lock the state. This prevents any further connections/alterations from this point on.
-        let state = self.state.lock().unwrap();
+        let _state = self.state.lock().unwrap();
 
         // Remove the unix socket.
-        if let Err(error) = socket_cleanup(&state.settings.shared) {
+        if let Err(error) = socket_cleanup(&self.settings.shared) {
             println!("Failed to cleanup socket during shutdown.");
             println!("{error}");
         }
@@ -200,7 +200,7 @@ impl TaskHandler {
         }
 
         let mut state = self.state.lock().unwrap();
-        if let Err(error) = reset_state(&mut state) {
+        if let Err(error) = reset_state(&mut state, &self.settings) {
             error!("Failed to reset state with error: {error:?}");
         };
 
@@ -239,7 +239,7 @@ impl TaskHandler {
         }
         // Save the state if a task has been enqueued
         if changed {
-            ok_or_shutdown!(self, save_state(&state));
+            ok_or_shutdown!(self, save_state(&state, &self.settings));
         }
     }
 

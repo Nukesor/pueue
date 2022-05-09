@@ -1,5 +1,6 @@
 use pueue_lib::log::clean_log_handles;
 use pueue_lib::network::message::*;
+use pueue_lib::settings::Settings;
 use pueue_lib::state::SharedState;
 use pueue_lib::task::{Task, TaskStatus};
 
@@ -11,7 +12,7 @@ use crate::state_helper::{is_task_removable, save_state};
 /// Invoked when calling `pueue remove`.
 /// Remove tasks from the queue.
 /// We have to ensure that those tasks aren't running!
-pub fn remove(task_ids: Vec<usize>, state: &SharedState) -> Message {
+pub fn remove(task_ids: Vec<usize>, state: &SharedState, settings: &Settings) -> Message {
     let mut state = state.lock().unwrap();
     let filter = |task: &Task| {
         matches!(
@@ -36,10 +37,10 @@ pub fn remove(task_ids: Vec<usize>, state: &SharedState) -> Message {
     for task_id in &not_running {
         state.tasks.remove(task_id);
 
-        clean_log_handles(*task_id, &state.settings.shared.pueue_directory());
+        clean_log_handles(*task_id, &settings.shared.pueue_directory());
     }
 
-    ok_or_return_failure_message!(save_state(&state));
+    ok_or_return_failure_message!(save_state(&state, settings));
 
     compile_task_response("Tasks removed from list", not_running, running)
 }
@@ -53,11 +54,11 @@ mod tests {
 
     #[test]
     fn normal_remove() {
-        let (state, _tempdir) = get_stub_state();
+        let (state, settings, _tempdir) = get_stub_state();
 
         // 3 and 4 aren't allowed to be removed, since they're running.
         // The rest will succeed.
-        let message = remove(vec![0, 1, 2, 3, 4], &state);
+        let message = remove(vec![0, 1, 2, 3, 4], &state, &settings);
 
         // Return message is correct
         assert!(matches!(message, Message::Success(_)));
@@ -74,7 +75,7 @@ mod tests {
 
     #[test]
     fn removal_of_dependencies() {
-        let (state, _tempdir) = get_stub_state();
+        let (state, settings, _tempdir) = get_stub_state();
 
         {
             let mut state = state.lock().unwrap();
@@ -90,7 +91,7 @@ mod tests {
         }
 
         // Make sure we cannot remove a task with dependencies.
-        let message = remove(vec![1], &state);
+        let message = remove(vec![1], &state, &settings);
 
         // Return message is correct
         assert!(matches!(message, Message::Failure(_)));
@@ -104,7 +105,7 @@ mod tests {
         }
 
         // Make sure we cannot remove a task with recursive dependencies.
-        let message = remove(vec![1, 5], &state);
+        let message = remove(vec![1, 5], &state, &settings);
 
         // Return message is correct
         assert!(matches!(message, Message::Failure(_)));
@@ -118,7 +119,7 @@ mod tests {
         }
 
         // Make sure we can remove tasks with dependencies if all dependencies are specified.
-        let message = remove(vec![1, 5, 6], &state);
+        let message = remove(vec![1, 5, 6], &state, &settings);
 
         // Return message is correct
         assert!(matches!(message, Message::Success(_)));

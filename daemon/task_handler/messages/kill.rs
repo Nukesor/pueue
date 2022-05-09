@@ -69,7 +69,7 @@ impl TaskHandler {
             }
         }
 
-        ok_or_shutdown!(self, save_state(&state));
+        ok_or_shutdown!(self, save_state(&state, &self.settings));
     }
 
     /// Send a signal to a specific child process.
