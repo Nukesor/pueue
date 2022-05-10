@@ -56,6 +56,12 @@ pub struct State {
     pub groups: BTreeMap<String, Group>,
 }
 
+impl Default for State {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl State {
     /// Create a new default state.
     pub fn new() -> State {
