@@ -198,6 +198,29 @@ There seems to be the need for some solution that satisfies all these points men
 
 ## Similar Projects
 
+**GNU Parallel**
+
+A robust and featureful parrallel processor with text-based joblog and n-retries (but it also integrates with SSH and databases if you have the need to farm out jobs to multiple machines). [Link to project](https://www.gnu.org/software/parallel/parallel_tutorial.html)
+
+Sequential jobs example:
+
+```sh
+tee example1.sh 
+#!/bin/bash
+printf 'cmd-to-run "%s"\n' "$@" | parallel -j1 --joblog p.log --resume --retries 3
+```
+
+Running this `example1.sh taipeifilmcommission vihartvihart socallinuxexpo` would start the following jobs and re-run them up to 3 times if they failed:
+
+```
+cmd-to-run taipeifilmcommission
+cmd-to-run vihartvihart
+cmd-to-run socallinuxexpo
+```
+
+- If you want parallel change j1 to j3 or remove it altogether and GNU Parallel will chose for you using the number of CPU cores you have
+- You can also add the -u flag (`parallel -u`) if you prefer to see all the output as the commands run (instead of printed when each command finishes)
+
 **nq**
 
 A very lightweight job queue systems which require no setup, maintenance, supervision, or any long-running processes. \
