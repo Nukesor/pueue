@@ -21,8 +21,8 @@ dirs = "4"
 chrono = { version = "0.4", features = ["serde"] }
 rand = "0.8"
 shellexpand = "2.1"
-strum = "0.23"
-strum_macros = "0.23"
+strum = "0.24"
+strum_macros = "0.24"
 
 async-trait = "0.1"
 tokio = { version = "1", features = [
