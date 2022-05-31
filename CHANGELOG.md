@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.3] - 2022-06-04
+
+### Fixed
+
+- Use the `dirs` crate for platform specific directory discovery. [#311](https://github.com/Nukesor/pueue/issues/311)
+    The previous trivial implementation was error prone in some edge-cases.
+    For instance, Pueue fell back to the shared directory, if the `$XDG_RUNTIME_DIR` couldn't be found.
+    This resulted in a reocurrence of [#302](https://github.com/Nukesor/pueue/issues/302) in non-XDG environments.
+
+    Furthermore, Pueue used the wrong directories for its configuration and cache on Apple and Windows platforms.
+    This is now fixed.
+
+    This change is a bit tricky:
+    * It's a fix on one hand (correct directories for Apple & Windows + fix for [#311](https://github.com/Nukesor/pueue/issues/311)).
+    * It's somewhat of a **breaking change** for Apple & Windows on the other hand?
+
+    I still decided to make this a patch release, as the next major release is still in the pipeline and needs a lot of work.
+    [#302](https://github.com/Nukesor/pueue/issues/302) will still show up in Apple/Windows environments, as there doesn't seem to be runtime directory equivalent for those platforms.
+
+
 ## [2.0.2] - 2022-03-22
 
 ### Added

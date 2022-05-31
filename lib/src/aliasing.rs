@@ -4,15 +4,14 @@ use std::io::prelude::*;
 
 use log::{info, warn};
 
-use crate::error::Error;
-use crate::platform::directories::get_config_directories;
+use crate::{error::Error, settings::configuration_directories};
 
 /// Return the contents of the alias file, if it exists and can be parsed. \
 /// The file has to be located in `pueue_directory` and named `pueue_aliases.yml`.
 pub fn get_aliases() -> Result<HashMap<String, String>, Error> {
     // Go through all config directories and check for a alias file.
     let mut alias_file_path = None;
-    for directory in get_config_directories() {
+    for directory in configuration_directories() {
         let path = directory.join("pueue_aliases.yml");
         if path.exists() {
             alias_file_path = Some(path);

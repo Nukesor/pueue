@@ -8,7 +8,6 @@ use serde_derive::{Deserialize, Serialize};
 use shellexpand::tilde;
 
 use crate::error::Error;
-use crate::platform::directories::*;
 use crate::setting_defaults::*;
 
 /// All settings which are used by both, the client and the daemon
@@ -168,6 +167,16 @@ pub struct NestedSettings {
     pub shared: Shared,
 }
 
+/// Get the default config directory.
+/// If no config can be found, fallback to the current directory.
+pub fn configuration_directories() -> Vec<PathBuf> {
+    if let Some(config_dir) = dirs::config_dir() {
+        vec![config_dir.join("pueue.yml"), PathBuf::from(".")]
+    } else {
+        vec![PathBuf::from(".")]
+    }
+}
+
 /// Little helper which expands a given path's `~` characters to a fully qualified path.
 pub fn expand_home(old_path: &Path) -> PathBuf {
     PathBuf::from(tilde(&old_path.to_string_lossy()).into_owned())
@@ -177,8 +186,10 @@ impl Shared {
     pub fn pueue_directory(&self) -> PathBuf {
         if let Some(path) = &self.pueue_directory {
             expand_home(path)
+        } else if let Some(path) = dirs::data_local_dir() {
+            path.join("pueue")
         } else {
-            default_pueue_path()
+            PathBuf::from("./pueue")
         }
     }
 
@@ -189,10 +200,10 @@ impl Shared {
     pub fn runtime_directory(&self) -> PathBuf {
         if let Some(path) = &self.runtime_directory {
             expand_home(path)
-        } else if let Some(path) = default_runtime_directory() {
+        } else if let Some(path) = dirs::runtime_dir() {
             path
         } else {
-            default_pueue_path()
+            self.pueue_directory()
         }
     }
 
@@ -263,7 +274,9 @@ impl Settings {
         };
 
         info!("Parsing config files");
-        for directory in get_config_directories().into_iter() {
+
+        let config_dirs = configuration_directories();
+        for directory in config_dirs.into_iter() {
             let path = directory.join("pueue.yml");
             info!("Checking path: {path:?}");
 
@@ -293,8 +306,14 @@ impl Settings {
     pub fn save(&self, path: &Option<PathBuf>) -> Result<(), Error> {
         let config_path = if let Some(path) = path {
             path.clone()
+        } else if let Some(path) = dirs::config_dir() {
+            let path = path.join("pueue");
+            path.join("pueue.yml")
         } else {
-            default_config_directory().join("pueue.yml")
+            return Err(Error::Generic(
+                "Failed to resolve default config directory. User home cannot be determined."
+                    .into(),
+            ));
         };
         let config_dir = config_path
             .parent()
