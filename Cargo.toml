@@ -33,7 +33,7 @@ name = "pueued"
 path = "daemon/main.rs"
 
 [dependencies]
-pueue-lib = { version = "0.19.5", path = "lib" }
+pueue-lib = { version = "0.19.6", path = "lib" }
 
 anyhow = "1"
 chrono = { version = "0.4", features = ["serde"] }
