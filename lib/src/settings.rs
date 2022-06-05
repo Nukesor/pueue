@@ -171,7 +171,7 @@ pub struct NestedSettings {
 /// If no config can be found, fallback to the current directory.
 pub fn configuration_directories() -> Vec<PathBuf> {
     if let Some(config_dir) = dirs::config_dir() {
-        vec![config_dir.join("pueue.yml"), PathBuf::from(".")]
+        vec![config_dir.join("pueue"), PathBuf::from(".")]
     } else {
         vec![PathBuf::from(".")]
     }

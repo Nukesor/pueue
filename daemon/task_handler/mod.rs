@@ -175,7 +175,7 @@ impl TaskHandler {
         }
 
         // Cleanup the pid file
-        if let Err(error) = cleanup_pid_file(&self.pueue_directory) {
+        if let Err(error) = cleanup_pid_file(&state.settings.shared.pid_path()) {
             println!("Failed to cleanup pid during shutdown.");
             println!("{error}");
         }
