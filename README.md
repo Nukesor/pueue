@@ -198,6 +198,10 @@ There seems to be the need for some solution that satisfies all these points men
 
 ## Similar Projects
 
+**GNU Parallel**
+
+A robust and featureful parrallel processor with text-based joblog and n-retries. [GNU Parallel](https://www.gnu.org/software/parallel/parallel_tutorial.html) is able to scale to multi-host parallelization and has complex code to have deep integration across different tools and shells, as well as other advanced features. `Pueue` differentiates itself from GNU Parallel by focusing more on visibility across many different long running commands, and creating a central location for commands to be stored, rather than GNU Parallel's focus on chunking a specific task.
+
 **nq**
 
 A very lightweight job queue systems which require no setup, maintenance, supervision, or any long-running processes. \

@@ -17,8 +17,6 @@ pub mod error;
 /// Helper classes to read and write log files of Pueue's tasks.
 pub mod log;
 pub mod network;
-/// Platform specific code, mainly used to get platform specific working directories.
-mod platform;
 /// This module contains all platform unspecific default values and helper functions for working
 /// with our setting representation.
 mod setting_defaults;
