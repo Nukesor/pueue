@@ -1,0 +1,88 @@
+name: Lint the code
+
+on:
+  push:
+    branches:
+      - main
+      - development
+    paths:
+      - '.github/**/*'
+      - '**.rs'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+  pull_request:
+    paths:
+      - '.github/**/*'
+      - '**.rs'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+
+
+jobs:
+  publish:
+    name: Test on ${{ matrix.os }} for ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        target:
+            - x86_64-unknown-linux-gnu
+            - aarch64-unknown-linux-musl
+            - armv7-unknown-linux-musleabihf
+            - arm-unknown-linux-musleabihf
+            - x86_64-pc-windows-msvc
+            - x86_64-apple-darwin
+            - aarch64-apple-ios
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            cross: false
+            strip: true
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-musl
+            cross: true
+            strip: false
+          - os: ubuntu-latest
+            target: armv7-unknown-linux-musleabihf
+            cross: true
+            strip: false
+          - os: ubuntu-latest
+            target: arm-unknown-linux-musleabihf
+            cross: true
+            strip: false
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            cross: false
+            strip: true
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            cross: false
+            strip: true
+          - os: macos-latest
+            target: aarch64-apple-ios
+            cross: true
+            strip: true
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          components: rustfmt, clippy
+
+      - name: cargo fmt
+        uses: actions-rs/cargo@v1
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.target == 'x86_64-unknown-linux-gnu' }}
+        with:
+          command: fmt
+          args: --all -- --check
+
+      - name: cargo clippy
+        uses: actions-rs/cargo@v1
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.target == 'x86_64-unknown-linux-gnu' }}
+        with:
+          command: clippy
+          args: --tests --workspace -- -D warnings
