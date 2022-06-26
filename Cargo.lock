@@ -1057,6 +1057,8 @@ dependencies = [
  "handlebars",
  "log",
  "nix 0.24.2",
+ "pest",
+ "pest_derive",
  "pretty_assertions",
  "procfs",
  "pueue-lib",
