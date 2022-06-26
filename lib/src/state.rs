@@ -170,7 +170,7 @@ impl State {
     {
         // Return empty vectors, if there's no such group.
         if !self.groups.contains_key(group) {
-            return (vec![], vec![]);
+            return (Vec::new(), Vec::new());
         }
 
         // Filter all task ids of tasks that match the given group.

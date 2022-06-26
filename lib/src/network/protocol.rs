@@ -34,7 +34,7 @@ pub async fn send_message(message: Message, stream: &mut GenericStream) -> Resul
 pub async fn send_bytes(payload: &[u8], stream: &mut GenericStream) -> Result<(), Error> {
     let message_size = payload.len() as u64;
 
-    let mut header = vec![];
+    let mut header = Vec::new();
     WriteBytesExt::write_u64::<BigEndian>(&mut header, message_size).unwrap();
 
     // Send the request size header first.
