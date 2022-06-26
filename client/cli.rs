@@ -285,6 +285,10 @@ pub enum SubCommand {
 
     /// Display the current status of all tasks.
     Status {
+        /// Users can specify a custom query to filter for specific values, order by a column
+        /// or limit the amount of tasks listed.
+        query: Vec<String>,
+
         /// Print the current state as json to stdout.
         /// This does not include the output of tasks.
         /// Use `log -j` if you want everything.
