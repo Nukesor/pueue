@@ -74,7 +74,7 @@ pub async fn wait(
                 None => {
                     // Add any unknown tasks to our watchlist
                     if !quiet {
-                        let color = get_color_for_status(&task.status, style);
+                        let color = get_color_for_status(&task.status);
                         let task_id = style.style_text(task.id, None, Some(Attribute::Bold));
                         let status = style.style_text(&task.status, Some(color), None);
 
@@ -138,33 +138,33 @@ fn log_status_change(
         let text = match result {
             TaskResult::Success => {
                 let task_id = style.style_text(task.id, None, Some(Attribute::Bold));
-                let status = style.style_text("0", Some(style.green()), None);
+                let status = style.style_text("0", Some(Color::Green), None);
                 format!("Task {task_id} succeeded with {status}")
             }
             TaskResult::DependencyFailed => {
                 let task_id = style.style_text(task.id, None, Some(Attribute::Bold));
-                let status = style.style_text("failed dependencies", Some(style.red()), None);
+                let status = style.style_text("failed dependencies", Some(Color::Red), None);
                 format!("Task {task_id} failed due to {status}")
             }
 
             TaskResult::FailedToSpawn(_) => {
                 let task_id = style.style_text(task.id, None, Some(Attribute::Bold));
-                let status = style.style_text("failed to spawn", Some(style.red()), None);
+                let status = style.style_text("failed to spawn", Some(Color::Red), None);
                 format!("Task {task_id} {status}")
             }
             TaskResult::Failed(exit_code) => {
                 let task_id = style.style_text(task.id, None, Some(Attribute::Bold));
-                let status = style.style_text(exit_code, Some(style.red()), Some(Attribute::Bold));
+                let status = style.style_text(exit_code, Some(Color::Red), Some(Attribute::Bold));
                 format!("Task {task_id} failed with {status}")
             }
             TaskResult::Errored => {
                 let task_id = style.style_text(task.id, None, Some(Attribute::Bold));
-                let status = style.style_text("IO error", Some(style.red()), Some(Attribute::Bold));
+                let status = style.style_text("IO error", Some(Color::Red), Some(Attribute::Bold));
                 format!("Task {task_id} experienced an {status}.")
             }
             TaskResult::Killed => {
                 let task_id = style.style_text(task.id, None, Some(Attribute::Bold));
-                let status = style.style_text("killed", Some(style.red()), None);
+                let status = style.style_text("killed", Some(Color::Red), None);
                 format!("Task {task_id} has been {status}")
             }
         };
@@ -172,8 +172,8 @@ fn log_status_change(
 
         return;
     }
-    let new_status_color = get_color_for_status(&task.status, style);
-    let previous_status_color = get_color_for_status(&previous_status, style);
+    let new_status_color = get_color_for_status(&task.status);
+    let previous_status_color = get_color_for_status(&previous_status);
 
     let task_id = style.style_text(task.id, None, Some(Attribute::Bold));
     let previous_status = style.style_text(previous_status, Some(previous_status_color), None);
@@ -181,10 +181,10 @@ fn log_status_change(
     println!("{current_time} - Task {task_id} changed from {previous_status} to {new_status}",);
 }
 
-fn get_color_for_status(task_status: &TaskStatus, style: &OutputStyle) -> Color {
+fn get_color_for_status(task_status: &TaskStatus) -> Color {
     match task_status {
-        TaskStatus::Running | TaskStatus::Done(_) => style.green(),
-        TaskStatus::Paused | TaskStatus::Locked => style.white(),
-        _ => style.white(),
+        TaskStatus::Running | TaskStatus::Done(_) => Color::Green,
+        TaskStatus::Paused | TaskStatus::Locked => Color::White,
+        _ => Color::White,
     }
 }

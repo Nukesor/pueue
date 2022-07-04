@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use crossterm::style::Attribute;
+use crossterm::style::{Attribute, Color};
 
 use pueue_lib::state::{Group, GroupStatus};
 use pueue_lib::task::{Task, TaskStatus};
@@ -36,8 +36,8 @@ pub fn get_group_headline(name: &str, group: &Group, style: &OutputStyle) -> Str
 
     // Print the current state of the group.
     let status = match group.status {
-        GroupStatus::Running => style.style_text("running", Some(style.green()), None),
-        GroupStatus::Paused => style.style_text("paused", Some(style.yellow()), None),
+        GroupStatus::Running => style.style_text("running", Some(Color::Green), None),
+        GroupStatus::Paused => style.style_text("paused", Some(Color::Yellow), None),
     };
 
     format!("{} ({} parallel): {}", name, group.parallel_tasks, status)

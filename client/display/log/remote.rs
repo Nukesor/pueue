@@ -14,7 +14,7 @@ use super::OutputStyle;
 pub fn print_remote_log(task_log: &TaskLogMessage, style: &OutputStyle) {
     if let Some(bytes) = task_log.output.as_ref() {
         if !bytes.is_empty() {
-            let header = style.style_text("output: ", Some(style.green()), Some(Attribute::Bold));
+            let header = style.style_text("output: ", Some(Color::Green), Some(Attribute::Bold));
             println!("\n{header}",);
 
             if let Err(err) = decompress_and_print_remote_log(bytes) {

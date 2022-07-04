@@ -163,23 +163,23 @@ fn print_table(tasks: &[Task], style: &OutputStyle, settings: &Settings) {
         if let Some(height) = settings.client.max_status_lines {
             row.max_height(height);
         }
-        row.add_cell(Cell::new(&task.id.to_string()));
+        row.add_cell(Cell::new(&task.id));
 
         // Determine the human readable task status representation and the respective color.
         let status_string = task.status.to_string();
         let (status_text, color) = match &task.status {
-            TaskStatus::Running => (status_string, style.green()),
-            TaskStatus::Paused | TaskStatus::Locked => (status_string, style.white()),
+            TaskStatus::Running => (status_string, Color::Green),
+            TaskStatus::Paused | TaskStatus::Locked => (status_string, Color::White),
             TaskStatus::Done(result) => match result {
-                TaskResult::Success => (TaskResult::Success.to_string(), style.green()),
-                TaskResult::DependencyFailed => ("Dependency failed".to_string(), style.red()),
-                TaskResult::FailedToSpawn(_) => ("Failed to spawn".to_string(), style.red()),
-                TaskResult::Failed(code) => (format!("Failed ({code})"), style.red()),
-                _ => (result.to_string(), style.red()),
+                TaskResult::Success => (TaskResult::Success.to_string(), Color::Green),
+                TaskResult::DependencyFailed => ("Dependency failed".to_string(), Color::Red),
+                TaskResult::FailedToSpawn(_) => ("Failed to spawn".to_string(), Color::Red),
+                TaskResult::Failed(code) => (format!("Failed ({code})"), Color::Red),
+                _ => (result.to_string(), Color::Red),
             },
-            _ => (status_string, style.yellow()),
+            _ => (status_string, Color::Yellow),
         };
-        row.add_cell(Cell::new(status_text).fg(color));
+        row.add_cell(style.styled_cell(status_text, Some(color), None));
 
         if has_delayed_tasks {
             if let TaskStatus::Stashed {
@@ -211,11 +211,7 @@ fn print_table(tasks: &[Task], style: &OutputStyle, settings: &Settings) {
         }
 
         if has_labels {
-            if let Some(label) = &task.label {
-                row.add_cell(label.into());
-            } else {
-                row.add_cell(Cell::new(""));
-            }
+            row.add_cell(Cell::new(&task.label.as_deref().unwrap_or_default()));
         }
 
         // Add command and path.

@@ -5,6 +5,8 @@ mod log;
 mod state;
 pub mod style;
 
+use crossterm::style::Color;
+
 // Re-exports
 pub use self::follow::follow_local_task_logs;
 pub use self::group::print_groups;
@@ -19,6 +21,6 @@ pub fn print_success(_style: &OutputStyle, message: &str) {
 
 /// Used to style any generic failure message from the daemon.
 pub fn print_error(style: &OutputStyle, message: &str) {
-    let styled = style.style_text(message, Some(style.red()), None);
+    let styled = style.style_text(message, Some(Color::Red), None);
     println!("{}", styled);
 }

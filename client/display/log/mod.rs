@@ -130,24 +130,24 @@ fn print_log(
 /// Print some information about a task, which is displayed on top of the task's log output.
 fn print_task_info(task: &Task, style: &OutputStyle) {
     // Print task id and exit code.
-    let task_cell = Cell::new(format!("Task {}: ", task.id)).add_attribute(Attribute::Bold);
+    let task_cell = style.styled_cell(format!("Task {}: ", task.id), None, Some(Attribute::Bold));
 
     let (exit_status, color) = match &task.status {
-        TaskStatus::Paused => ("paused".into(), style.white()),
-        TaskStatus::Running => ("running".into(), style.yellow()),
+        TaskStatus::Paused => ("paused".into(), Color::White),
+        TaskStatus::Running => ("running".into(), Color::Yellow),
         TaskStatus::Done(result) => match result {
-            TaskResult::Success => ("completed successfully".into(), style.green()),
+            TaskResult::Success => ("completed successfully".into(), Color::Green),
             TaskResult::Failed(exit_code) => {
-                (format!("failed with exit code {}", exit_code), style.red())
+                (format!("failed with exit code {}", exit_code), Color::Red)
             }
-            TaskResult::FailedToSpawn(err) => (format!("failed to spawn: {}", err), style.red()),
-            TaskResult::Killed => ("killed by system or user".into(), style.red()),
-            TaskResult::Errored => ("some IO error.\n Check daemon log.".into(), style.red()),
-            TaskResult::DependencyFailed => ("dependency failed".into(), style.red()),
+            TaskResult::FailedToSpawn(err) => (format!("failed to spawn: {}", err), Color::Red),
+            TaskResult::Killed => ("killed by system or user".into(), Color::Red),
+            TaskResult::Errored => ("some IO error.\n Check daemon log.".into(), Color::Red),
+            TaskResult::DependencyFailed => ("dependency failed".into(), Color::Red),
         },
-        _ => (task.status.to_string(), style.white()),
+        _ => (task.status.to_string(), Color::White),
     };
-    let status_cell = Cell::new(exit_status).fg(color);
+    let status_cell = style.styled_cell(exit_status, Some(color), None);
 
     // The styling of the task number and status is done by a single-row table.
     let mut table = Table::new();
@@ -163,24 +163,24 @@ fn print_task_info(task: &Task, style: &OutputStyle) {
 
     // Command and path
     table.add_row(vec![
-        Cell::new("Command:").add_attribute(Attribute::Bold),
+        style.styled_cell("Command:", None, Some(Attribute::Bold)),
         Cell::new(&task.command),
     ]);
     table.add_row(vec![
-        Cell::new("Path:").add_attribute(Attribute::Bold),
+        style.styled_cell("Path:", None, Some(Attribute::Bold)),
         Cell::new(&task.path.to_string_lossy()),
     ]);
 
     // Start and end time
     if let Some(start) = task.start {
         table.add_row(vec![
-            Cell::new("Start:").add_attribute(Attribute::Bold),
+            style.styled_cell("Start:", None, Some(Attribute::Bold)),
             Cell::new(start.to_rfc2822()),
         ]);
     }
     if let Some(end) = task.end {
         table.add_row(vec![
-            Cell::new("End:").add_attribute(Attribute::Bold),
+            style.styled_cell("End:", None, Some(Attribute::Bold)),
             Cell::new(end.to_rfc2822()),
         ]);
     }

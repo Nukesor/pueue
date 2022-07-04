@@ -31,7 +31,7 @@ pub fn print_local_log(
         &mut stdout,
         &mut file,
         &lines,
-        style.style_text("output:", Some(style.green()), Some(Attribute::Bold)),
+        style.style_text("output:", Some(Color::Green), Some(Attribute::Bold)),
     );
 }
 
