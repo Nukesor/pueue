@@ -59,7 +59,7 @@ pub fn has_special_columns(tasks: &[Task]) -> (bool, bool, bool) {
 /// Return a nicely formatted headline that's displayed above group tables
 pub fn get_group_headline(name: &str, group: &Group, colors: &Colors) -> String {
     // Style group name
-    let name = style(format!("Group \"{}\"", name)).attribute(Attribute::Bold);
+    let name = style_text(format!("Group \"{}\"", name), None, Some(Attribute::Bold));
 
     // Print the current state of the group.
     let status = match group.status {
