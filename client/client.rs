@@ -1,9 +1,10 @@
 use std::env::{current_dir, vars};
-use std::io::{self, Write};
+use std::io::{self, stdout, Write};
 use std::{borrow::Cow, collections::HashMap};
 
 use anyhow::{bail, Context, Result};
 use clap::crate_version;
+use crossterm::tty::IsTty;
 use log::error;
 
 use pueue_lib::network::message::*;
@@ -12,7 +13,7 @@ use pueue_lib::network::secret::read_shared_secret;
 use pueue_lib::settings::Settings;
 use pueue_lib::state::PUEUE_DEFAULT_GROUP;
 
-use crate::cli::{CliArguments, GroupCommand, SubCommand};
+use crate::cli::{CliArguments, ColorChoice, GroupCommand, SubCommand};
 use crate::commands::*;
 use crate::display::*;
 
@@ -95,7 +96,12 @@ impl Client {
             );
         }
 
-        let style = OutputStyle::new(&settings);
+        let style_enabled = match opt.color {
+            ColorChoice::Auto => stdout().is_tty(),
+            ColorChoice::Always => true,
+            ColorChoice::Never => false,
+        };
+        let style = OutputStyle::new(&settings, style_enabled);
 
         // If no subcommand is given, we default to the `status` subcommand without any arguments.
         let subcommand = if let Some(subcommand) = opt.cmd {

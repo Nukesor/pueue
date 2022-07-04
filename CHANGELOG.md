@@ -9,6 +9,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
  - Only style the 'group' header in status output when on a TTY.
 
+## Unreleased
+
+### Added
+
+- Use the new `--color` command-line switch to control when pueue will use colors in its output. The default is `auto`, which means it'll enable colors when connected to a TTY. The other options are `never` and `always`. 
+
 ## [2.0.4] - 2022-06-05
 
 ### Fixed

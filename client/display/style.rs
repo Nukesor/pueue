@@ -1,14 +1,14 @@
-use std::io::stdout;
-
 use pueue_lib::settings::Settings;
 
 use comfy_table::Cell;
 use crossterm::style::{style, Attribute, Color, Stylize};
-use crossterm::tty::IsTty;
+
 /// OutputStyle wrapper for actual colors depending on settings
 /// - Enables styles if color mode is 'always', or if color mode is 'auto' and output is a tty.
 /// - Using dark colors if dark_mode is enabled
 pub struct OutputStyle {
+    /// whether or not ANSI styling is enabled
+    enabled: bool,
     /// red color
     red: Color,
     /// green color
@@ -19,15 +19,17 @@ pub struct OutputStyle {
 
 impl OutputStyle {
     /// init color-scheme depending on settings
-    pub const fn new(settings: &Settings) -> Self {
+    pub const fn new(settings: &Settings, enabled: bool) -> Self {
         if settings.client.dark_mode {
             Self {
+                enabled,
                 green: Color::DarkGreen,
                 red: Color::DarkRed,
                 yellow: Color::DarkYellow,
             }
         } else {
             Self {
+                enabled,
                 green: Color::Green,
                 red: Color::Red,
                 yellow: Color::Yellow,
@@ -54,8 +56,8 @@ impl OutputStyle {
         attribute: Option<Attribute>,
     ) -> String {
         let text = text.to_string();
-        // No tty, we aren't allowed to do any styling
-        if !stdout().is_tty() {
+        // Styling disabled
+        if !self.enabled {
             return text;
         }
 
