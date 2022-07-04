@@ -6,7 +6,7 @@ use pueue_lib::network::message::TaskLogMessage;
 use pueue_lib::settings::Settings;
 use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
-use super::colors::Colors;
+use super::OutputStyle;
 use crate::cli::SubCommand;
 
 mod json;
@@ -43,7 +43,7 @@ pub fn determine_log_line_amount(full: bool, lines: &Option<usize>) -> Option<us
 pub fn print_logs(
     mut task_logs: BTreeMap<usize, TaskLogMessage>,
     cli_command: &SubCommand,
-    colors: &Colors,
+    style: &OutputStyle,
     settings: &Settings,
 ) {
     // Get actual commandline options.
@@ -80,7 +80,7 @@ pub fn print_logs(
     // Iterate over each task and print the respective log.
     let mut task_iter = task_logs.iter_mut().peekable();
     while let Some((_, task_log)) = task_iter.next() {
-        print_log(task_log, colors, settings, lines);
+        print_log(task_log, style, settings, lines);
 
         // Add a newline if there is another task that's going to be printed.
         if let Some((_, task_log)) = task_iter.peek() {
@@ -103,7 +103,7 @@ pub fn print_logs(
 ///         This is only important, if we read local lines.
 fn print_log(
     message: &mut TaskLogMessage,
-    colors: &Colors,
+    style: &OutputStyle,
     settings: &Settings,
     lines: Option<usize>,
 ) {
@@ -116,36 +116,36 @@ fn print_log(
         return;
     }
 
-    print_task_info(task, colors);
+    print_task_info(task, style);
 
     if settings.client.read_local_logs {
-        print_local_log(message.task.id, colors, settings, lines);
+        print_local_log(message.task.id, style, settings, lines);
     } else if message.output.is_some() {
-        print_remote_log(message, colors);
+        print_remote_log(message, style);
     } else {
         println!("Logs requested from pueue daemon, but none received. Please report this bug.");
     }
 }
 
 /// Print some information about a task, which is displayed on top of the task's log output.
-fn print_task_info(task: &Task, colors: &Colors) {
+fn print_task_info(task: &Task, style: &OutputStyle) {
     // Print task id and exit code.
     let task_cell = Cell::new(format!("Task {}: ", task.id)).add_attribute(Attribute::Bold);
 
     let (exit_status, color) = match &task.status {
-        TaskStatus::Paused => ("paused".into(), colors.white()),
-        TaskStatus::Running => ("running".into(), colors.yellow()),
+        TaskStatus::Paused => ("paused".into(), style.white()),
+        TaskStatus::Running => ("running".into(), style.yellow()),
         TaskStatus::Done(result) => match result {
-            TaskResult::Success => ("completed successfully".into(), colors.green()),
+            TaskResult::Success => ("completed successfully".into(), style.green()),
             TaskResult::Failed(exit_code) => {
-                (format!("failed with exit code {}", exit_code), colors.red())
+                (format!("failed with exit code {}", exit_code), style.red())
             }
-            TaskResult::FailedToSpawn(err) => (format!("failed to spawn: {}", err), colors.red()),
-            TaskResult::Killed => ("killed by system or user".into(), colors.red()),
-            TaskResult::Errored => ("some IO error.\n Check daemon log.".into(), colors.red()),
-            TaskResult::DependencyFailed => ("dependency failed".into(), colors.red()),
+            TaskResult::FailedToSpawn(err) => (format!("failed to spawn: {}", err), style.red()),
+            TaskResult::Killed => ("killed by system or user".into(), style.red()),
+            TaskResult::Errored => ("some IO error.\n Check daemon log.".into(), style.red()),
+            TaskResult::DependencyFailed => ("dependency failed".into(), style.red()),
         },
-        _ => (task.status.to_string(), colors.white()),
+        _ => (task.status.to_string(), style.white()),
     };
     let status_cell = Cell::new(exit_status).fg(color);
 

@@ -8,7 +8,7 @@ use pueue_lib::settings::Settings;
 use pueue_lib::state::{State, PUEUE_DEFAULT_GROUP};
 use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
-use super::{colors::Colors, helper::*};
+use super::{helper::*, OutputStyle};
 use crate::cli::SubCommand;
 
 /// Print the current state of the daemon in a nicely formatted table.
@@ -18,7 +18,7 @@ pub fn print_state(
     state: State,
     tasks: Vec<Task>,
     cli_command: &SubCommand,
-    colors: &Colors,
+    style: &OutputStyle,
     settings: &Settings,
 ) {
     let (json, group_only) = match cli_command {
@@ -34,18 +34,18 @@ pub fn print_state(
     }
 
     if let Some(group) = group_only {
-        print_single_group(state, tasks, settings, colors, group);
+        print_single_group(state, tasks, settings, style, group);
         return;
     }
 
-    print_all_groups(state, tasks, settings, colors);
+    print_all_groups(state, tasks, settings, style);
 }
 
 fn print_single_group(
     state: State,
     tasks: Vec<Task>,
     settings: &Settings,
-    colors: &Colors,
+    style: &OutputStyle,
     group_name: String,
 ) {
     // Sort all tasks by their respective group;
@@ -60,7 +60,7 @@ fn print_single_group(
 
     // Only a single group is requested. Print that group and return.
     let tasks = sorted_tasks.entry(group_name.clone()).or_default();
-    let headline = get_group_headline(&group_name, group, colors);
+    let headline = get_group_headline(&group_name, group, style);
     println!("{headline}");
 
     // Show a message if the requested group doesn't have any tasks.
@@ -68,10 +68,10 @@ fn print_single_group(
         println!("Task list is empty. Add tasks with `pueue add -g {group_name} -- [cmd]`");
         return;
     }
-    print_table(tasks, colors, settings);
+    print_table(tasks, style, settings);
 }
 
-fn print_all_groups(state: State, tasks: Vec<Task>, settings: &Settings, colors: &Colors) {
+fn print_all_groups(state: State, tasks: Vec<Task>, settings: &Settings, style: &OutputStyle) {
     // Early exit and hint if there are no tasks in the queue
     // Print the state of the default group anyway, since this is information one wants to
     // see most of the time anyway.
@@ -79,7 +79,7 @@ fn print_all_groups(state: State, tasks: Vec<Task>, settings: &Settings, colors:
         let headline = get_group_headline(
             PUEUE_DEFAULT_GROUP,
             state.groups.get(PUEUE_DEFAULT_GROUP).unwrap(),
-            colors,
+            style,
         );
         println!("{headline}\n");
         println!("Task list is empty. Add tasks with `pueue add -- [cmd]`");
@@ -95,10 +95,10 @@ fn print_all_groups(state: State, tasks: Vec<Task>, settings: &Settings, colors:
         let headline = get_group_headline(
             PUEUE_DEFAULT_GROUP,
             state.groups.get(PUEUE_DEFAULT_GROUP).unwrap(),
-            colors,
+            style,
         );
         println!("{headline}");
-        print_table(tasks, colors, settings);
+        print_table(tasks, style, settings);
 
         // Add a newline if there are further groups to be printed
         if sorted_tasks.len() > 1 {
@@ -115,9 +115,9 @@ fn print_all_groups(state: State, tasks: Vec<Task>, settings: &Settings, colors:
             continue;
         }
 
-        let headline = get_group_headline(group, state.groups.get(group).unwrap(), colors);
+        let headline = get_group_headline(group, state.groups.get(group).unwrap(), style);
         println!("{headline}");
-        print_table(tasks, colors, settings);
+        print_table(tasks, style, settings);
 
         // Add a newline between groups
         if sorted_iter.peek().is_some() {
@@ -127,7 +127,7 @@ fn print_all_groups(state: State, tasks: Vec<Task>, settings: &Settings, colors:
 }
 
 /// Print some tasks into a nicely formatted table
-fn print_table(tasks: &[Task], colors: &Colors, settings: &Settings) {
+fn print_table(tasks: &[Task], style: &OutputStyle, settings: &Settings) {
     let (has_delayed_tasks, has_dependencies, has_labels) = has_special_columns(tasks);
 
     // Create table header row
@@ -168,16 +168,16 @@ fn print_table(tasks: &[Task], colors: &Colors, settings: &Settings) {
         // Determine the human readable task status representation and the respective color.
         let status_string = task.status.to_string();
         let (status_text, color) = match &task.status {
-            TaskStatus::Running => (status_string, colors.green()),
-            TaskStatus::Paused | TaskStatus::Locked => (status_string, colors.white()),
+            TaskStatus::Running => (status_string, style.green()),
+            TaskStatus::Paused | TaskStatus::Locked => (status_string, style.white()),
             TaskStatus::Done(result) => match result {
-                TaskResult::Success => (TaskResult::Success.to_string(), colors.green()),
-                TaskResult::DependencyFailed => ("Dependency failed".to_string(), colors.red()),
-                TaskResult::FailedToSpawn(_) => ("Failed to spawn".to_string(), colors.red()),
-                TaskResult::Failed(code) => (format!("Failed ({code})"), colors.red()),
-                _ => (result.to_string(), colors.red()),
+                TaskResult::Success => (TaskResult::Success.to_string(), style.green()),
+                TaskResult::DependencyFailed => ("Dependency failed".to_string(), style.red()),
+                TaskResult::FailedToSpawn(_) => ("Failed to spawn".to_string(), style.red()),
+                TaskResult::Failed(code) => (format!("Failed ({code})"), style.red()),
+                _ => (result.to_string(), style.red()),
             },
-            _ => (status_string, colors.yellow()),
+            _ => (status_string, style.yellow()),
         };
         row.add_cell(Cell::new(status_text).fg(color));
 

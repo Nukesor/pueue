@@ -4,7 +4,6 @@ use std::{borrow::Cow, collections::HashMap};
 
 use anyhow::{bail, Context, Result};
 use clap::crate_version;
-use colors::Colors;
 use log::error;
 
 use pueue_lib::network::message::*;
@@ -27,7 +26,7 @@ use crate::display::*;
 pub struct Client {
     subcommand: SubCommand,
     settings: Settings,
-    colors: Colors,
+    style: OutputStyle,
     stream: GenericStream,
 }
 
@@ -96,7 +95,7 @@ impl Client {
             );
         }
 
-        let colors = Colors::new(&settings);
+        let style = OutputStyle::new(&settings);
 
         // If no subcommand is given, we default to the `status` subcommand without any arguments.
         let subcommand = if let Some(subcommand) = opt.cmd {
@@ -110,7 +109,7 @@ impl Client {
 
         Ok(Client {
             settings,
-            colors,
+            style,
             stream,
             subcommand,
         })
@@ -180,7 +179,7 @@ impl Client {
                     &group,
                     *all,
                     *quiet,
-                    &self.colors,
+                    &self.style,
                 )
                 .await?;
                 Ok(true)
@@ -232,7 +231,7 @@ impl Client {
                 format_state(
                     &mut self.stream,
                     &self.subcommand,
-                    &self.colors,
+                    &self.style,
                     &self.settings,
                 )
                 .await?;
@@ -274,25 +273,19 @@ impl Client {
     /// and handle messages from the daemon. Otherwise the client will simply exit.
     fn handle_response(&self, message: Message) -> bool {
         match message {
-            Message::Success(text) => print_success(&self.colors, &text),
+            Message::Success(text) => print_success(&self.style, &text),
             Message::Failure(text) => {
-                print_error(&self.colors, &text);
+                print_error(&self.style, &text);
                 std::process::exit(1);
             }
             Message::StatusResponse(state) => {
                 let tasks = state.tasks.iter().map(|(_, task)| task.clone()).collect();
-                print_state(
-                    *state,
-                    tasks,
-                    &self.subcommand,
-                    &self.colors,
-                    &self.settings,
-                )
+                print_state(*state, tasks, &self.subcommand, &self.style, &self.settings)
             }
             Message::LogResponse(task_logs) => {
-                print_logs(task_logs, &self.subcommand, &self.colors, &self.settings)
+                print_logs(task_logs, &self.subcommand, &self.style, &self.settings)
             }
-            Message::GroupResponse(groups) => print_groups(groups, &self.colors),
+            Message::GroupResponse(groups) => print_groups(groups, &self.style),
             Message::Stream(text) => {
                 print!("{}", text);
                 io::stdout().flush().unwrap();

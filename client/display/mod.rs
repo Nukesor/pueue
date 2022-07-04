@@ -1,25 +1,24 @@
-pub mod colors;
 mod follow;
 mod group;
 pub mod helper;
 mod log;
 mod state;
-
-use self::{colors::Colors, helper::style_text};
+pub mod style;
 
 // Re-exports
 pub use self::follow::follow_local_task_logs;
 pub use self::group::print_groups;
 pub use self::log::{determine_log_line_amount, print_logs};
 pub use self::state::print_state;
+pub use self::style::OutputStyle;
 
 /// Used to style any generic success message from the daemon.
-pub fn print_success(_colors: &Colors, message: &str) {
+pub fn print_success(_style: &OutputStyle, message: &str) {
     println!("{}", message);
 }
 
 /// Used to style any generic failure message from the daemon.
-pub fn print_error(colors: &Colors, message: &str) {
-    let styled = style_text(message, Some(colors.red()), None);
+pub fn print_error(style: &OutputStyle, message: &str) {
+    let styled = style.style_text(message, Some(style.red()), None);
     println!("{}", styled);
 }

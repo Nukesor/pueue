@@ -1,38 +1,11 @@
 use std::collections::BTreeMap;
-use std::io::stdout;
 
-use crossterm::style::{style, Attribute, Color, Stylize};
-use crossterm::tty::IsTty;
+use crossterm::style::Attribute;
 
 use pueue_lib::state::{Group, GroupStatus};
 use pueue_lib::task::{Task, TaskStatus};
 
-use super::colors::Colors;
-
-/// This is a simple small helper function with the purpose of easily styling text,
-/// while also prevent styling if we're printing to a non-tty output.
-/// If there's any kind of styling in the code, it should be done with the help of this function.
-pub fn style_text<T: ToString>(
-    text: T,
-    color: Option<Color>,
-    attribute: Option<Attribute>,
-) -> String {
-    let text = text.to_string();
-    // No tty, we aren't allowed to do any styling
-    if !stdout().is_tty() {
-        return text;
-    }
-
-    let mut styled = style(text);
-    if let Some(color) = color {
-        styled = styled.with(color);
-    }
-    if let Some(attribute) = attribute {
-        styled = styled.attribute(attribute);
-    }
-
-    styled.to_string()
-}
+use super::OutputStyle;
 
 /// By default, several columns aren't shown until there's actually some data to display.
 /// This function determines, which of those columns actually need to be shown.
@@ -57,14 +30,14 @@ pub fn has_special_columns(tasks: &[Task]) -> (bool, bool, bool) {
 }
 
 /// Return a nicely formatted headline that's displayed above group tables
-pub fn get_group_headline(name: &str, group: &Group, colors: &Colors) -> String {
+pub fn get_group_headline(name: &str, group: &Group, style: &OutputStyle) -> String {
     // Style group name
-    let name = style_text(format!("Group \"{}\"", name), None, Some(Attribute::Bold));
+    let name = style.style_text(format!("Group \"{}\"", name), None, Some(Attribute::Bold));
 
     // Print the current state of the group.
     let status = match group.status {
-        GroupStatus::Running => style_text("running", Some(colors.green()), None),
-        GroupStatus::Paused => style_text("paused", Some(colors.yellow()), None),
+        GroupStatus::Running => style.style_text("running", Some(style.green()), None),
+        GroupStatus::Paused => style.style_text("paused", Some(style.yellow()), None),
     };
 
     format!("{} ({} parallel): {}", name, group.parallel_tasks, status)

@@ -9,8 +9,7 @@ use crossterm::style::{Attribute, Color};
 use pueue_lib::network::protocol::GenericStream;
 use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
-use crate::display::helper::style_text;
-use crate::{commands::get_state, display::colors::Colors};
+use crate::{commands::get_state, display::OutputStyle};
 
 /// Wait until tasks are done.
 /// Tasks can be specified by:
@@ -27,7 +26,7 @@ pub async fn wait(
     group: &str,
     all: bool,
     quiet: bool,
-    colors: &Colors,
+    style: &OutputStyle,
 ) -> Result<()> {
     let mut first_run = true;
     // Create a list of tracked tasks.
@@ -75,9 +74,9 @@ pub async fn wait(
                 None => {
                     // Add any unknown tasks to our watchlist
                     if !quiet {
-                        let color = get_color_for_status(&task.status, colors);
-                        let task_id = style_text(task.id, None, Some(Attribute::Bold));
-                        let status = style_text(&task.status, Some(color), None);
+                        let color = get_color_for_status(&task.status, style);
+                        let task_id = style.style_text(task.id, None, Some(Attribute::Bold));
+                        let status = style.style_text(&task.status, Some(color), None);
 
                         if !first_run {
                             // Don't log non-active tasks in the initial loop.
@@ -105,7 +104,7 @@ pub async fn wait(
             // Update the (previous) task status and log any changes
             watched_tasks.insert(task.id, task.status.clone());
             if !quiet {
-                log_status_change(&current_time, previous_status, task, colors);
+                log_status_change(&current_time, previous_status, task, style);
             }
         }
 
@@ -132,40 +131,40 @@ fn log_status_change(
     current_time: &str,
     previous_status: TaskStatus,
     task: &Task,
-    colors: &Colors,
+    style: &OutputStyle,
 ) {
     // Finishing tasks get some special handling
     if let TaskStatus::Done(result) = &task.status {
         let text = match result {
             TaskResult::Success => {
-                let task_id = style_text(task.id, None, Some(Attribute::Bold));
-                let status = style_text("0", Some(colors.green()), None);
+                let task_id = style.style_text(task.id, None, Some(Attribute::Bold));
+                let status = style.style_text("0", Some(style.green()), None);
                 format!("Task {task_id} succeeded with {status}")
             }
             TaskResult::DependencyFailed => {
-                let task_id = style_text(task.id, None, Some(Attribute::Bold));
-                let status = style_text("failed dependencies", Some(colors.red()), None);
+                let task_id = style.style_text(task.id, None, Some(Attribute::Bold));
+                let status = style.style_text("failed dependencies", Some(style.red()), None);
                 format!("Task {task_id} failed due to {status}")
             }
 
             TaskResult::FailedToSpawn(_) => {
-                let task_id = style_text(task.id, None, Some(Attribute::Bold));
-                let status = style_text("failed to spawn", Some(colors.red()), None);
+                let task_id = style.style_text(task.id, None, Some(Attribute::Bold));
+                let status = style.style_text("failed to spawn", Some(style.red()), None);
                 format!("Task {task_id} {status}")
             }
             TaskResult::Failed(exit_code) => {
-                let task_id = style_text(task.id, None, Some(Attribute::Bold));
-                let status = style_text(exit_code, Some(colors.red()), Some(Attribute::Bold));
+                let task_id = style.style_text(task.id, None, Some(Attribute::Bold));
+                let status = style.style_text(exit_code, Some(style.red()), Some(Attribute::Bold));
                 format!("Task {task_id} failed with {status}")
             }
             TaskResult::Errored => {
-                let task_id = style_text(task.id, None, Some(Attribute::Bold));
-                let status = style_text("IO error", Some(colors.red()), Some(Attribute::Bold));
+                let task_id = style.style_text(task.id, None, Some(Attribute::Bold));
+                let status = style.style_text("IO error", Some(style.red()), Some(Attribute::Bold));
                 format!("Task {task_id} experienced an {status}.")
             }
             TaskResult::Killed => {
-                let task_id = style_text(task.id, None, Some(Attribute::Bold));
-                let status = style_text("killed", Some(colors.red()), None);
+                let task_id = style.style_text(task.id, None, Some(Attribute::Bold));
+                let status = style.style_text("killed", Some(style.red()), None);
                 format!("Task {task_id} has been {status}")
             }
         };
@@ -173,19 +172,19 @@ fn log_status_change(
 
         return;
     }
-    let new_status_color = get_color_for_status(&task.status, colors);
-    let previous_status_color = get_color_for_status(&previous_status, colors);
+    let new_status_color = get_color_for_status(&task.status, style);
+    let previous_status_color = get_color_for_status(&previous_status, style);
 
-    let task_id = style_text(task.id, None, Some(Attribute::Bold));
-    let previous_status = style_text(previous_status, Some(previous_status_color), None);
-    let new_status = style_text(&task.status, Some(new_status_color), None);
+    let task_id = style.style_text(task.id, None, Some(Attribute::Bold));
+    let previous_status = style.style_text(previous_status, Some(previous_status_color), None);
+    let new_status = style.style_text(&task.status, Some(new_status_color), None);
     println!("{current_time} - Task {task_id} changed from {previous_status} to {new_status}",);
 }
 
-fn get_color_for_status(task_status: &TaskStatus, colors: &Colors) -> Color {
+fn get_color_for_status(task_status: &TaskStatus, style: &OutputStyle) -> Color {
     match task_status {
-        TaskStatus::Running | TaskStatus::Done(_) => colors.green(),
-        TaskStatus::Paused | TaskStatus::Locked => colors.white(),
-        _ => colors.white(),
+        TaskStatus::Running | TaskStatus::Done(_) => style.green(),
+        TaskStatus::Paused | TaskStatus::Locked => style.white(),
+        _ => style.white(),
     }
 }
