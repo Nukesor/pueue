@@ -1,0 +1,18 @@
+ignore:
+  - "utils"
+  - "tests"
+  - "ARCHITECTURE.md"
+  - "Cargo.lock"
+  - "Cargo.toml"
+  - "CHANGELOG.md"
+  - "LICENSE"
+  - "README.md"
+  - ".github"
+  - ".gitignore"
+
+codecov:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 2%

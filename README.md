@@ -4,8 +4,7 @@
 [![Crates.io](https://img.shields.io/crates/v/pueue)](https://crates.io/crates/pueue)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Downloads](https://img.shields.io/github/downloads/nukesor/pueue/total.svg)](https://github.com/nukesor/pueue/releases)
-
-<!---[![dependency status](https://deps.rs/repo/github/nukesor/pueue/status.svg)](https://deps.rs/repo/github/nukesor/pueue) --->
+[![codecov](https://codecov.io/gh/nukesor/pueue/branch/main/graph/badge.svg)](https://codecov.io/gh/nukesor/pueue)
 
 ![Pueue](https://raw.githubusercontent.com/Nukesor/images/main/pueue-v2.0.0.gif)
 

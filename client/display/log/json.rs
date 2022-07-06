@@ -1,4 +1,5 @@
 use std::collections::{BTreeMap, HashMap};
+use std::fmt::Write;
 use std::io::Read;
 
 use serde_derive::{Deserialize, Serialize};
@@ -64,9 +65,10 @@ fn get_local_log(settings: &Settings, id: usize, lines: Option<usize>) -> String
     } else {
         let mut output = String::new();
         if let Err(error) = file.read_to_string(&mut output) {
-            output.push_str(&format!(
+            let _ = write!(
+                output,
                 "(Pueue error) Failed to read local log output file: {error:?}"
-            ))
+            );
         };
 
         output
@@ -82,9 +84,10 @@ fn get_remote_log(output_bytes: Option<Vec<u8>>) -> String {
         let mut decoder = FrameDecoder::new(&bytes[..]);
         let mut output = String::new();
         if let Err(error) = decoder.read_to_string(&mut output) {
-            output.push_str(&format!(
+            let _ = write!(
+                output,
                 "(Pueue error) Failed to decompress remote log output: {error:?}"
-            ))
+            );
         }
         output
     } else {
