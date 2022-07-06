@@ -17,7 +17,7 @@ mod tests {
     /// This tests whether we can create a listener and client, that communicate via unix sockets.
     async fn test_unix_socket() -> Result<()> {
         better_panic::install();
-        let (shared_settings, _tempdir) = helper::get_shared_settings();
+        let (shared_settings, _tempdir) = helper::get_shared_settings(true);
 
         let listener = get_listener(&shared_settings).await?;
         let message = create_success_message("This is a test");
