@@ -7,6 +7,8 @@ ignore:
   - "CHANGELOG.md"
   - "LICENSE"
   - "README.md"
+  - ".github"
+  - ".gitignore"
 
 codecov:
   status:
