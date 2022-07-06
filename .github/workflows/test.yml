@@ -74,6 +74,18 @@ jobs:
           components: llvm-tools-preview
           target: ${{ matrix.target }}
 
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-${{ matrix.target }}-
+
       - name: cargo build
         uses: actions-rs/cargo@v1
         with:
