@@ -72,6 +72,7 @@ jobs:
           toolchain: stable
           override: true
           components: rustfmt, clippy
+          target: ${{ matrix.target }}
 
       - name: cargo fmt
         uses: actions-rs/cargo@v1

@@ -72,6 +72,7 @@ jobs:
           toolchain: stable
           override: true
           components: llvm-tools-preview
+          target: ${{ matrix.target }}
 
       - name: cargo build
         uses: actions-rs/cargo@v1
