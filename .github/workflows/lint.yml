@@ -20,7 +20,7 @@ on:
 
 jobs:
   publish:
-    name: Test on ${{ matrix.os }} for ${{ matrix.target }}
+    name: Lint on ${{ matrix.os }} for ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
