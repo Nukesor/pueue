@@ -22,7 +22,6 @@ jobs:
   linting:
     name: Lint on ${{ matrix.os }} for ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
-    continue-on-error: ${{ matrix.experimental }}
     strategy:
       fail-fast: false
       matrix:
@@ -37,25 +36,18 @@ jobs:
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            experimental: false
           - os: ubuntu-latest
             target: aarch64-unknown-linux-musl
-            experimental: false
           - os: ubuntu-latest
             target: armv7-unknown-linux-musleabihf
-            experimental: false
           - os: ubuntu-latest
             target: arm-unknown-linux-musleabihf
-            experimental: false
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            experimental: true
           - os: macos-latest
             target: x86_64-apple-darwin
-            experimental: false
           - os: macos-latest
             target: aarch64-apple-ios
-            experimental: false
 
     steps:
       - name: Checkout code
@@ -93,4 +85,3 @@ jobs:
         with:
           command: clippy
           args: --tests --workspace -- -D warnings
-        continue-on-error: ${{ matrix.experimental }}
