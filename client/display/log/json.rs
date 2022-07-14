@@ -60,7 +60,7 @@ fn get_local_log(settings: &Settings, id: usize, lines: Option<usize>) -> String
         }
     };
 
-    let output = if let Some(lines) = lines {
+    if let Some(lines) = lines {
         read_last_lines(&mut file, lines)
     } else {
         let mut output = String::new();
@@ -72,15 +72,13 @@ fn get_local_log(settings: &Settings, id: usize, lines: Option<usize>) -> String
         };
 
         output
-    };
-
-    output
+    }
 }
 
 /// Read logs from from compressed remote logs.
 /// If logs don't exist, an empty string will be returned.
 fn get_remote_log(output_bytes: Option<Vec<u8>>) -> String {
-    let output = if let Some(bytes) = output_bytes {
+    if let Some(bytes) = output_bytes {
         let mut decoder = FrameDecoder::new(&bytes[..]);
         let mut output = String::new();
         if let Err(error) = decoder.read_to_string(&mut output) {
@@ -92,7 +90,5 @@ fn get_remote_log(output_bytes: Option<Vec<u8>>) -> String {
         output
     } else {
         String::new()
-    };
-
-    output
+    }
 }

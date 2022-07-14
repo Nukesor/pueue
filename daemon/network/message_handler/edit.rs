@@ -66,10 +66,10 @@ pub fn edit_restore(task_id: usize, state: &SharedState) -> Message {
             }
             task.status = task.prev_status.clone();
 
-            return create_success_message(format!(
+            create_success_message(format!(
                 "The requested task's status has been restored to '{}'",
                 task.status
-            ));
+            ))
         }
         None => create_failure_message("No task with this id."),
     }

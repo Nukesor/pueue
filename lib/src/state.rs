@@ -16,14 +16,14 @@ pub type SharedState = Arc<Mutex<State>>;
 
 /// Represents the current status of a group.
 /// Each group acts as a queue and can be managed individually.
-#[derive(PartialEq, Clone, Debug, Copy, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Debug, Copy, Deserialize, Serialize)]
 pub enum GroupStatus {
     Running,
     Paused,
 }
 
 /// The representation of a group.
-#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct Group {
     pub status: GroupStatus,
     pub parallel_tasks: usize,
@@ -52,7 +52,7 @@ pub struct Group {
 /// The daemon uses the state as a piece of shared memory between it's threads.
 /// It's wrapped in a MutexGuard, which allows us to guarantee sequential access to any crucial
 /// information, such as status changes and incoming commands by the client.
-#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct State {
     /// The current settings used by the daemon.
     pub settings: Settings,

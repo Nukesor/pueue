@@ -11,7 +11,7 @@ use crate::error::Error;
 use crate::setting_defaults::*;
 
 /// All settings which are used by both, the client and the daemon
-#[derive(PartialEq, Clone, Debug, Default, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Debug, Default, Deserialize, Serialize)]
 pub struct Shared {
     /// Don't access this property directly, but rather use the getter with the same name.
     /// It's only public to allow proper integration testing.
@@ -62,7 +62,7 @@ pub struct Shared {
 }
 
 /// All settings which are used by the client
-#[derive(PartialEq, Clone, Debug, Default, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Debug, Default, Deserialize, Serialize)]
 pub struct Client {
     /// If set to true, all tasks will be restart in place, instead of creating a new task.
     /// False is the default, as you'll lose the logs of the previously failed tasks when
@@ -94,7 +94,7 @@ pub struct Client {
 }
 
 /// All settings which are used by the daemon
-#[derive(PartialEq, Clone, Debug, Default, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Debug, Default, Deserialize, Serialize)]
 pub struct Daemon {
     /// Whether a group should be paused as soon as a single task fails
     #[serde(default = "Default::default")]
@@ -143,7 +143,7 @@ impl Default for Settings {
 
 /// The parent settings struct. \
 /// This contains all other setting structs.
-#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct Settings {
     #[serde(default = "Default::default")]
     pub client: Client,
@@ -157,7 +157,7 @@ pub struct Settings {
 /// The nested settings struct for profiles. \
 /// In contrast to the normal `Settings` struct, this struct doesn't allow profiles.
 /// That way we prevent nested profiles and problems with self-referencing structs.
-#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct NestedSettings {
     #[serde(default = "Default::default")]
     pub client: Client,
