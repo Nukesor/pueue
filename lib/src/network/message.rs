@@ -10,7 +10,7 @@ use crate::task::Task;
 
 /// This is the main message enum. \
 /// Everything that's communicated in Pueue can be serialized as this enum.
-#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub enum Message {
     Add(AddMessage),
     Remove(Vec<usize>),
@@ -64,14 +64,14 @@ pub enum Message {
 /// This enum is used to express a selection of tasks.
 /// As commands can be executed on various sets of tasks, we need some kind of datastructure to
 /// explicitly and unambiguously specify the selection.
-#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub enum TaskSelection {
     TaskIds(Vec<usize>),
     Group(String),
     All,
 }
 
-#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct AddMessage {
     pub command: String,
     pub path: PathBuf,
@@ -85,39 +85,39 @@ pub struct AddMessage {
     pub print_task_id: bool,
 }
 
-#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct SwitchMessage {
     pub task_id_1: usize,
     pub task_id_2: usize,
 }
 
-#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct EnqueueMessage {
     pub task_ids: Vec<usize>,
     pub enqueue_at: Option<DateTime<Local>>,
 }
 
-#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct StartMessage {
     pub tasks: TaskSelection,
     pub children: bool,
 }
 
-#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct RestartMessage {
     pub tasks: Vec<TasksToRestart>,
     pub start_immediately: bool,
     pub stashed: bool,
 }
 
-#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct TasksToRestart {
     pub task_id: usize,
     pub command: String,
     pub path: PathBuf,
 }
 
-#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct PauseMessage {
     pub tasks: TaskSelection,
     pub wait: bool,
@@ -129,7 +129,7 @@ pub struct PauseMessage {
 ///
 /// This is also needed for usage in clap, since nix's Signal doesn't implement [Display] and
 /// [std::str::FromStr].
-#[derive(PartialEq, Clone, Debug, Deserialize, Serialize, Display, EnumString)]
+#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize, Display, EnumString)]
 pub enum Signal {
     #[strum(serialize = "SigInt", serialize = "sigint", serialize = "2")]
     SigInt,
@@ -143,34 +143,34 @@ pub enum Signal {
     SigStop,
 }
 
-#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct KillMessage {
     pub tasks: TaskSelection,
     pub children: bool,
     pub signal: Option<Signal>,
 }
 
-#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct SendMessage {
     pub task_id: usize,
     pub input: String,
 }
 
-#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct EditMessage {
     pub task_id: usize,
     pub command: String,
     pub path: PathBuf,
 }
 
-#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct EditResponseMessage {
     pub task_id: usize,
     pub command: String,
     pub path: PathBuf,
 }
 
-#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub enum GroupMessage {
     Add {
         name: String,
@@ -180,17 +180,17 @@ pub enum GroupMessage {
     List,
 }
 
-#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct GroupResponseMessage {
     pub groups: BTreeMap<String, Group>,
 }
 
-#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct ResetMessage {
     pub children: bool,
 }
 
-#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct CleanMessage {
     #[serde(default = "bool::default")]
     pub successful_only: bool,
@@ -200,7 +200,7 @@ pub struct CleanMessage {
 }
 
 /// Determines which type of shutdown we're dealing with.
-#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub enum Shutdown {
     /// Emergency is most likely a system unix signal or a CTRL+C in a terminal.
     Emergency,
@@ -208,7 +208,7 @@ pub enum Shutdown {
     Graceful,
 }
 
-#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct StreamRequestMessage {
     pub task_id: Option<usize>,
     pub lines: Option<usize>,
@@ -219,7 +219,7 @@ pub struct StreamRequestMessage {
 /// `task_ids` specifies the requested tasks. If none are given, all tasks are selected.
 /// `send_logs` Determines whether logs should be sent at all.
 /// `lines` Determines whether only a few lines of log should be returned.
-#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct LogRequestMessage {
     pub task_ids: Vec<usize>,
     pub send_logs: bool,
@@ -227,13 +227,13 @@ pub struct LogRequestMessage {
 }
 
 /// Helper struct for sending tasks and their log output to the client.
-#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct TaskLogMessage {
     pub task: Task,
     pub output: Option<Vec<u8>>,
 }
 
-#[derive(PartialEq, Clone, Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct ParallelMessage {
     pub parallel_tasks: usize,
     pub group: String,

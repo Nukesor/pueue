@@ -11,8 +11,7 @@ use crate::error::Error;
 /// Get the path to the log file of a task.
 pub fn get_log_path(task_id: usize, path: &Path) -> PathBuf {
     let task_log_dir = path.join("task_logs");
-    let path = task_log_dir.join(format!("{task_id}.log"));
-    path
+    task_log_dir.join(format!("{task_id}.log"))
 }
 
 /// Create and return the two file handles for the `(stdout, stderr)` log file of a task.
