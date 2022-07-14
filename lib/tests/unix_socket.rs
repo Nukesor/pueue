@@ -1,3 +1,4 @@
+#[cfg(not(target_os = "windows"))]
 mod helper;
 
 #[cfg(not(target_os = "windows"))]
