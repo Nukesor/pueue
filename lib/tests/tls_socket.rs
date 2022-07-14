@@ -14,11 +14,7 @@ mod helper;
 /// This tests whether we can create a listener and client, that communicate via TLS sockets.
 async fn test_tls_socket() -> Result<()> {
     better_panic::install();
-    let (mut shared_settings, _tempdir) = helper::get_shared_settings();
-    #[cfg(not(target_os = "windows"))]
-    {
-        shared_settings.use_unix_socket = false;
-    }
+    let (shared_settings, _tempdir) = helper::get_shared_settings(false);
 
     // Create new stub tls certificates/keys in our temp directory
     create_certificates(&shared_settings).unwrap();
