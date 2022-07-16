@@ -311,8 +311,12 @@ mod test {
         assert!(ecode.success());
     }
 
+    #[ignore]
     #[test]
     /// Ensure a `powershell -c` command will be properly killed without detached processes.
+    ///
+    /// This test is ignored for now, as it is flaky from time to time.
+    /// See https://github.com/Nukesor/pueue/issues/315
     fn test_shell_command_is_killed() -> Result<()> {
         let mut child = compile_shell_command("sleep 60; sleep 60; echo 'this is a test'")
             .spawn()
