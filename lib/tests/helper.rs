@@ -3,7 +3,9 @@ use tempdir::TempDir;
 use portpicker::pick_unused_port;
 use pueue_lib::settings::*;
 
-pub fn get_shared_settings() -> (Shared, TempDir) {
+pub fn get_shared_settings(
+    #[cfg_attr(target_os = "windows", allow(unused_variables))] use_unix_socket: bool,
+) -> (Shared, TempDir) {
     // Create a temporary directory used for testing.
     let tempdir = TempDir::new("pueue_lib").unwrap();
     let tempdir_path = tempdir.path();
@@ -14,7 +16,7 @@ pub fn get_shared_settings() -> (Shared, TempDir) {
         pueue_directory: Some(tempdir_path.to_path_buf()),
         runtime_directory: Some(tempdir_path.to_path_buf()),
         #[cfg(not(target_os = "windows"))]
-        use_unix_socket: true,
+        use_unix_socket,
         #[cfg(not(target_os = "windows"))]
         unix_socket_path: None,
         pid_path: None,

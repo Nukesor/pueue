@@ -370,9 +370,13 @@ mod tests {
         }
     }
 
+    #[ignore]
     #[test]
     /// Ensure that a `sh -c` process with a child process that has children of its own
     /// will properly kill all processes and their children's children without detached processes.
+    ///
+    /// This test is ignored for now, as it is flaky from time to time.
+    /// See https://github.com/Nukesor/pueue/issues/315
     fn test_shell_command_children_are_killed() {
         let mut child = compile_shell_command("bash -c 'sleep 60 && sleep 60' && sleep 60")
             .spawn()
