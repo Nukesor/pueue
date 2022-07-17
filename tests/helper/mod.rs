@@ -4,6 +4,7 @@ use tokio::io::{self, AsyncWriteExt};
 
 pub use pueue_lib::state::PUEUE_DEFAULT_GROUP;
 
+mod client;
 mod daemon;
 mod env;
 mod group;
@@ -15,6 +16,7 @@ mod task;
 mod wait;
 
 pub use self::log::*;
+pub use client::*;
 pub use daemon::*;
 pub use env::*;
 pub use group::*;
