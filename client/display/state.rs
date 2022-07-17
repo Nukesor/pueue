@@ -191,7 +191,7 @@ fn print_table(tasks: &[Task], style: &OutputStyle, settings: &Settings) {
                 enqueue_at: Some(enqueue_at),
             } = task.status
             {
-                // Only show the date if the task is supposed to be enqueued today.
+                // Only show the date if the task is not supposed to be enqueued today.
                 let enqueue_today =
                     enqueue_at <= Local::today().and_hms(0, 0, 0) + Duration::days(1);
                 let formatted_enqueue_at = if enqueue_today {
