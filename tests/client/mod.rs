@@ -1,1 +1,2 @@
 mod completions;
+mod status;
