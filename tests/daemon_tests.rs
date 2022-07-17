@@ -2,7 +2,7 @@
 mod helper;
 
 #[cfg(target_os = "linux")]
-mod unix;
+mod daemon;
 
 #[cfg(target_os = "linux")]
 mod fixtures;

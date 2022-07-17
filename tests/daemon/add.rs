@@ -19,7 +19,7 @@ async fn test_normal_add() -> Result<()> {
     // Wait until the task finished and get state
     wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
 
-    // The task finished succesfully
+    // The task finished successfully
     assert_eq!(
         get_task_status(shared, 0).await?,
         TaskStatus::Done(TaskResult::Success)
