@@ -32,6 +32,30 @@ async fn default_status(#[case] use_subcommand: bool) -> Result<()> {
     Ok(())
 }
 
+/// Test the status output with all columns enabled.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn full_status() -> Result<()> {
+    let daemon = daemon().await?;
+    let shared = &daemon.settings.shared;
+
+    // Add a paused task so we can use it as a dependency.
+    run_client_command(
+        shared,
+        &["add", "--label", "test", "--delay", "2 hours", "ls"],
+    )
+    .await?;
+
+    // Add a second command that depends on the first one.
+    run_client_command(shared, &["add", "--after=0", "ls"]).await?;
+
+    let output = run_client_command(shared, &["status"]).await?;
+
+    let context = get_task_context(&daemon.settings).await?;
+    assert_stdout_matches("status__full_status", output.stdout, context)?;
+
+    Ok(())
+}
+
 /// Calling `status` with the `--color=always` flag, colors the output as expected.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn colored_status() -> Result<()> {
