@@ -157,6 +157,11 @@ fn print_table(tasks: &[Task], style: &OutputStyle, settings: &Settings) {
         .load_preset(UTF8_HORIZONTAL_ONLY)
         .set_header(headers);
 
+    // Explicitly force styling, in case we aren't on a tty, but `--color=always` is set.
+    if style.enabled {
+        table.enforce_styling();
+    }
+
     // Add rows one by one.
     for task in tasks.iter() {
         let mut row = Row::new();
