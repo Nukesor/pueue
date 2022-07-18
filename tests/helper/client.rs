@@ -66,10 +66,12 @@ pub async fn get_task_context(settings: &Settings) -> Result<HashMap<String, Str
                 .format(&settings.client.status_time_format)
                 .to_string();
             context.insert(format!("{task_name}_start"), formatted);
+            context.insert(format!("{task_name}_start_long"), start.to_rfc2822());
         }
         if let Some(end) = task.end {
             let formatted = end.format(&settings.client.status_time_format).to_string();
             context.insert(format!("{task_name}_end"), formatted);
+            context.insert(format!("{task_name}_end_long"), end.to_rfc2822());
         }
 
         if let TaskStatus::Stashed {
@@ -119,8 +121,8 @@ pub fn assert_stdout_matches(
         ))?;
 
     if expected != stdout {
-        println!("Expected output:\n{expected}");
-        println!("\nGot output:\n{stdout}");
+        println!("Expected output:\n-----\n{expected}\n-----");
+        println!("\nGot output:\n-----\n{stdout}\n-----");
         bail!("The stdout of the command doesn't match the expected string");
     }
 
