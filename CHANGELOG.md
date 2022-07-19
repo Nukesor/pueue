@@ -18,7 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
-- Exit `pueue follow` when reading remote logs, as soon as the daemon detects that the followed task is no longer active.
+- Exit `pueue follow` when reading logs, as soon as the followed task is no longer active.
 
 ### Misc
 
