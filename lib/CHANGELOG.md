@@ -15,6 +15,13 @@ The concept of SemVer is applied to the daemon/client API, but not the library A
     The `State` no longer owns a copy of the current settings.
     This became possible due to the group configuration no longer being part of the configuration file.
 
+### Fixed
+
+- The networking logic wasn't able to handle rapid successiv messages until now.
+    If two messages were sent in quick succession, the client would receive both messages in one go.
+    The reason for this was simply, that the receiving buffer was always of a size of 1400 Bytes, even if the actual payload was much smaller.
+    This wasn't a problem until now, as this simply never happened before.
+
 ## [0.19.6] - unreleased
 
 ### Added
