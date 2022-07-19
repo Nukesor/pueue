@@ -8,6 +8,10 @@ The concept of SemVer is applied to the daemon/client API, but not the library A
 
 ## [0.20.0] - unreleased
 
+### Added
+
+- `Message::Close` which indicates the client that everything is done and the connection is being closed.
+
 ### Removed
 
 - Breaking change: Backward compatibility logic for the old group structure in the main state.

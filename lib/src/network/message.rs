@@ -57,6 +57,9 @@ pub enum Message {
 
     Success(String),
     Failure(String),
+    /// Simply notify the client that the connection is now closed.
+    /// This is used to, for instance, close a `follow` stream if the task finished.
+    Close,
 
     Parallel(ParallelMessage),
 }

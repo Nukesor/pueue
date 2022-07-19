@@ -297,6 +297,7 @@ impl Client {
                 io::stdout().flush().unwrap();
                 return true;
             }
+            Message::Close => return false,
             _ => error!("Received unhandled response message"),
         };
 
