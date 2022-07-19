@@ -16,6 +16,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Only style the `group` header in status output when on a TTY ([#319](https://github.com/Nukesor/pueue/pull/319)) by [mjpieters](https://github.com/mjpieters).
 
+### Changed
+
+- Exit `pueue follow` when reading remote logs, as soon as the daemon detects that the followed task is no longer active.
+
 ### Misc
 
 - Enable CI linting on all platforms ([#323](https://github.com/Nukesor/pueue/pull/323)) by [mjpieters](https://github.com/mjpieters).

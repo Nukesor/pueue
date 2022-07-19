@@ -77,7 +77,7 @@ pub async fn handle_follow(
         // Check whether the file still exists. Exit if it doesn't.
         if !path.exists() {
             return Ok(create_success_message(
-                "File has gone away. Did somebody remove the task?",
+                "Log file has gone away. Has the task been removed?",
             ));
         }
         // Read the next chunk of text from the last position.
@@ -88,9 +88,35 @@ pub async fn handle_follow(
         };
         let text = String::from_utf8_lossy(&buffer).to_string();
 
-        // Send the new chunk and wait for 1 second.
-        let response = Message::Stream(text);
-        send_message(response, stream).await?;
+        // Only send a message, if there's actual new content.
+        if !text.is_empty() {
+            // Send the next chunk.
+            let response = Message::Stream(text);
+            send_message(response, stream).await?;
+        }
+
+        // Check if the task in question does:
+        // 1. Still exist
+        // 2. Is still running
+        //
+        // In case it's not, close the stream.
+        {
+            let state = state.lock().unwrap();
+            let task = if let Some(task) = state.tasks.get(&task_id) {
+                task
+            } else {
+                return Ok(create_success_message(
+                    "Pueue: The followed task has been removed.",
+                ));
+            };
+
+            // The task is done, just close the stream.
+            if !task.is_running() {
+                return Ok(Message::Close);
+            }
+        }
+
+        // Wait for 1 second before sending the next chunk.
         tokio::time::sleep(Duration::from_millis(1000)).await;
     }
 }
