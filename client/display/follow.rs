@@ -22,18 +22,20 @@ pub fn follow_local_task_logs(pueue_directory: &Path, task_id: usize, lines: Opt
     };
     let path = get_log_path(task_id, pueue_directory);
 
-    // Stdout handler to directly write log file output to io::stdout
-    // without having to load anything into memory.
+    // Stdout handle to directly stream log file output to `io::stdout`.
+    // This prevents us from allocating any large amounts of memory.
     let mut stdout = io::stdout();
 
-    // If lines is passed as an option, seek the output file handle to the start of
-    // the line corresponding to the `lines` number of lines from the end of the file.
-    // The loop following this section will copy those lines to stdout
+    // If `lines` is passed as an option, we only want to show the last `X` lines.
+    // To achieve this, we seek the file handle to the start of the `Xth` line
+    // from the end of the file.
+    // The loop following this section will then only copy those last lines to stdout.
     if let Some(lines) = lines {
         if let Err(err) = seek_to_last_lines(&mut handle, lines) {
             println!("Error seeking to last lines from log: {err}");
         }
     }
+
     loop {
         // Check whether the file still exists. Exit if it doesn't.
         if !path.exists() {
