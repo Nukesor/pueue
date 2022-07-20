@@ -7,13 +7,14 @@
 use anyhow::{bail, Result};
 
 use pueue_lib::settings::Shared;
+use pueue_lib::state::GroupStatus;
 use pueue_lib::task::{Task, TaskStatus};
 
 use super::{get_state, sleep_ms};
 
 /// This is a small helper function, which checks in very short intervals, whether a task showed up
 /// in the daemon or not.
-pub async fn wait_for_task(shared: &Shared, task_id: usize) -> Result<()> {
+pub async fn wait_for_task(shared: &Shared, task_id: usize) -> Result<Task> {
     let tries = 20;
     let mut current_try = 0;
     while current_try <= tries {
@@ -24,7 +25,7 @@ pub async fn wait_for_task(shared: &Shared, task_id: usize) -> Result<()> {
             continue;
         }
 
-        return Ok(());
+        return Ok(state.tasks.get(&task_id).unwrap().clone());
     }
 
     bail!("Task {} didn't show up in about 1 second.", task_id)
@@ -36,7 +37,7 @@ pub async fn wait_for_status_change(
     shared: &Shared,
     task_id: usize,
     original_status: TaskStatus,
-) -> Result<()> {
+) -> Result<Task> {
     let tries = 20;
     let mut current_try = 0;
     while current_try <= tries {
@@ -45,7 +46,7 @@ pub async fn wait_for_status_change(
             Some(task) => {
                 // The status changed. We can give our ok!
                 if task.status != original_status {
-                    return Ok(());
+                    return Ok(task.clone());
                 }
 
                 // The status didn't change. Try again.
@@ -64,7 +65,11 @@ pub async fn wait_for_status_change(
 
 /// This is a small helper function, which checks in very short intervals, whether a task fulfills
 /// a certain criteria. This is necessary to prevent long or potentially flaky timeouts in our tests.
-pub async fn wait_for_task_condition<F>(shared: &Shared, task_id: usize, condition: F) -> Result<()>
+pub async fn wait_for_task_condition<F>(
+    shared: &Shared,
+    task_id: usize,
+    condition: F,
+) -> Result<Task>
 where
     F: Fn(&Task) -> bool,
 {
@@ -77,7 +82,7 @@ where
                 // Check if the condition is met.
                 // If it isn't, continue
                 if condition(task) {
-                    return Ok(());
+                    return Ok(task.clone());
                 }
 
                 // The status didn't change to target. Try again.
@@ -91,6 +96,25 @@ where
         }
     }
     bail!("Task {task_id} didn't fulfill condition after about 1 second.")
+}
+
+/// This is a small helper function, which checks in very short intervals, whether a task has been
+/// deleted. This is necessary, as task deletion is asynchronous task.
+pub async fn wait_for_task_absence(shared: &Shared, task_id: usize) -> Result<()> {
+    let tries = 20;
+    let mut current_try = 0;
+    while current_try <= tries {
+        let state = get_state(shared).await?;
+        if state.tasks.contains_key(&task_id) {
+            current_try += 1;
+            sleep_ms(50);
+            continue;
+        }
+
+        return Ok(());
+    }
+
+    bail!("Task {task_id} hasn't been removed after about 1 second.")
 }
 
 /// This is a small helper function, which checks in very short intervals, whether a group has been
@@ -129,4 +153,31 @@ pub async fn wait_for_group_absence(shared: &Shared, group: &str) -> Result<()> 
     }
 
     bail!("Group {group} hasn't been removed after about 1 second.")
+}
+
+/// Waits for a status on a specific group.
+pub async fn wait_for_group_status(
+    shared: &Shared,
+    group: &str,
+    expected_status: GroupStatus,
+) -> Result<()> {
+    let state = get_state(shared).await?;
+
+    // Give the daemon about 1 sec to shutdown.
+    let tries = 20;
+    let mut current_try = 0;
+
+    while current_try < tries {
+        // Process is still alive, wait a little longer
+        if let Some(status) = state.groups.get(group) {
+            if matches!(status, _expected_status) {
+                return Ok(());
+            }
+        }
+
+        sleep_ms(50);
+        current_try += 1;
+    }
+
+    bail!("Group {group} didn't change to state {expected_status:?} after about 1 sec.",);
 }

@@ -154,6 +154,11 @@ fn print_task_info(task: &Task, style: &OutputStyle) {
     table.load_preset("││─ └──┘     ─ ┌┐  ");
     table.set_content_arrangement(comfy_table::ContentArrangement::Dynamic);
     table.set_header(vec![task_cell, status_cell]);
+
+    // Explicitly force styling, in case we aren't on a tty, but `--color=always` is set.
+    if style.enabled {
+        table.enforce_styling();
+    }
     println!("{}", table);
 
     // All other information is alligned and styled by using a separat table.

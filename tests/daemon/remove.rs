@@ -32,8 +32,7 @@ async fn test_normal_remove() -> Result<()> {
     pause_tasks(shared, TaskSelection::TaskIds(vec![3])).await?;
 
     // Stash task 5
-    let pause_message = Message::Stash(vec![5]);
-    send_message(shared, pause_message).await?;
+    send_message(shared, Message::Stash(vec![5])).await?;
 
     let remove_message = Message::Remove(vec![0, 1, 2, 3, 4, 5]);
     send_message(shared, remove_message).await?;

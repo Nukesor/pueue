@@ -8,7 +8,7 @@ use crossterm::style::{style, Attribute, Color, Stylize};
 /// - Using dark colors if dark_mode is enabled
 pub struct OutputStyle {
     /// whether or not ANSI styling is enabled
-    enabled: bool,
+    pub enabled: bool,
     /// red color
     red: Color,
     /// green color

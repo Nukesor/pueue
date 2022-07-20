@@ -20,12 +20,18 @@ pub struct PueueDaemon {
     pub pid: i32,
 }
 
-/// A helper function which, creates some test config, sets up a temporary directory and boots a
-/// daemon in a async tokio thread.
+/// A helper function which creates some test config, sets up a temporary directory and spawns
+/// a daemon into the async tokio runtime.
 /// This is done in 90% of our tests, thereby this convenience helper.
 pub async fn daemon() -> Result<PueueDaemon> {
     let (settings, tempdir) = daemon_base_setup()?;
 
+    daemon_with_settings(settings, tempdir).await
+}
+
+/// A helper function which takes a Pueue config, a temporary directory and spawns
+/// a daemon into the async tokio runtime.
+pub async fn daemon_with_settings(settings: Settings, tempdir: TempDir) -> Result<PueueDaemon> {
     let pueue_dir = tempdir.path();
     let path = pueue_dir.to_path_buf();
     // Start/spin off the daemon and get its PID

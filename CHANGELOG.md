@@ -16,12 +16,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Only style the `group` header in status output when on a TTY ([#319](https://github.com/Nukesor/pueue/pull/319)) by [mjpieters](https://github.com/mjpieters).
 
+### Changed
+
+- Exit `pueue follow` when reading logs, as soon as the followed task is no longer active.
+
 ### Misc
 
 - Enable CI linting on all platforms ([#323](https://github.com/Nukesor/pueue/pull/323)) by [mjpieters](https://github.com/mjpieters).
 - Add CI caching ([#322](https://github.com/Nukesor/pueue/pull/322)) by [mjpieters](https://github.com/mjpieters).
 - Fix missing toolchain bug in CI ([#321](https://github.com/Nukesor/pueue/pull/321)) by [mjpieters](https://github.com/mjpieters).
 - Set up code-coverage in CI.
+- Tests suite for `pueue`.
 
 ## [2.0.4] - 2022-06-05
 

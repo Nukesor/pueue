@@ -1,6 +1,5 @@
 mod add;
 mod clean;
-mod completions;
 mod edit;
 mod environment_variables;
 mod group;
@@ -9,6 +8,7 @@ mod log;
 mod parallel_tasks;
 mod pause;
 mod remove;
+mod reset;
 mod restart;
 /// Tests regarding state restoration from a previous run.
 mod restore;

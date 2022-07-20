@@ -1,0 +1,5 @@
+[1mGroup "default"[0m (1 parallel): [38;5;11mpaused[39m
+[1mGroup "test_2"[0m (2 parallel): [38;5;10mrunning[39m
+[1mGroup "test_3"[0m (3 parallel): [38;5;10mrunning[39m
+[1mGroup "test_5"[0m (5 parallel): [38;5;10mrunning[39m
+[1mGroup "testgroup"[0m (2 parallel): [38;5;10mrunning[39m

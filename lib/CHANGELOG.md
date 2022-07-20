@@ -8,12 +8,23 @@ The concept of SemVer is applied to the daemon/client API, but not the library A
 
 ## [0.20.0] - unreleased
 
+### Added
+
+- `Message::Close` which indicates the client that everything is done and the connection is being closed.
+
 ### Removed
 
 - Breaking change: Backward compatibility logic for the old group structure in the main state.
 - Breaking change:
     The `State` no longer owns a copy of the current settings.
     This became possible due to the group configuration no longer being part of the configuration file.
+
+### Fixed
+
+- The networking logic wasn't able to handle rapid successiv messages until now.
+    If two messages were sent in quick succession, the client would receive both messages in one go.
+    The reason for this was simply, that the receiving buffer was always of a size of 1400 Bytes, even if the actual payload was much smaller.
+    This wasn't a problem until now, as this simply never happened before.
 
 ## [0.19.6] - unreleased
 
