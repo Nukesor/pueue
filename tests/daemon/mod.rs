@@ -8,6 +8,7 @@ mod log;
 mod parallel_tasks;
 mod pause;
 mod remove;
+mod reset;
 mod restart;
 /// Tests regarding state restoration from a previous run.
 mod restore;

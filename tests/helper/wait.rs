@@ -98,6 +98,25 @@ where
     bail!("Task {task_id} didn't fulfill condition after about 1 second.")
 }
 
+/// This is a small helper function, which checks in very short intervals, whether a task has been
+/// deleted. This is necessary, as task deletion is asynchronous task.
+pub async fn wait_for_task_absence(shared: &Shared, task_id: usize) -> Result<()> {
+    let tries = 20;
+    let mut current_try = 0;
+    while current_try <= tries {
+        let state = get_state(shared).await?;
+        if state.tasks.contains_key(&task_id) {
+            current_try += 1;
+            sleep_ms(50);
+            continue;
+        }
+
+        return Ok(());
+    }
+
+    bail!("Task {task_id} hasn't been removed after about 1 second.")
+}
+
 /// This is a small helper function, which checks in very short intervals, whether a group has been
 /// initialized. This is necessary, as group creation became an asynchronous task.
 pub async fn wait_for_group(shared: &Shared, group: &str) -> Result<()> {
