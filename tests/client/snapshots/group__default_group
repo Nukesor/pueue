@@ -1,0 +1,5 @@
+Group "default" (1 parallel): running
+Group "test_2" (2 parallel): running
+Group "test_3" (3 parallel): running
+Group "test_5" (5 parallel): running
+Group "testgroup" (2 parallel): running
