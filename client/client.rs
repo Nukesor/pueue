@@ -151,6 +151,8 @@ impl Client {
         // This match handles all "complex" commands.
         match &self.subcommand {
             SubCommand::Reset { force, .. } => {
+                // Get the current state and check if there're any running tasks.
+                // If there are, ask the user if they really want to reset the state.
                 let state = get_state(&mut self.stream).await?;
                 let running_tasks = state
                     .tasks

@@ -19,6 +19,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Changed
 
 - Exit `pueue follow` when reading logs, as soon as the followed task is no longer active.
+- Properly formatted debug output.
+- Hide `Task.envs` and `AddMessage.envs` in debug output, as they were too verbose and contained possibly sensible information.
 
 ### Misc
 

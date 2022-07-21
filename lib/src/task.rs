@@ -45,7 +45,7 @@ pub enum TaskResult {
 /// Representation of a task.
 /// start will be set the second the task starts processing.
 /// `result`, `output` and `end` won't be initialized, until the task has finished.
-#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Deserialize, Serialize)]
 pub struct Task {
     pub id: usize,
     pub original_command: String,
@@ -59,6 +59,8 @@ pub struct Task {
     /// This field is only used when editing the path/command of a task.
     /// It's necessary, since we enter the `Locked` state during editing.
     /// However, we have to go back to the previous state after we finished editing.
+    ///
+    /// TODO: Refactor this into a `TaskStatus::Locked{previous_status: TaskStatus}`.
     pub prev_status: TaskStatus,
     pub start: Option<DateTime<Local>>,
     pub end: Option<DateTime<Local>>,
@@ -143,5 +145,29 @@ impl Task {
 
     pub fn is_in_default_group(&self) -> bool {
         self.group.eq(PUEUE_DEFAULT_GROUP)
+    }
+}
+
+/// We use a custom `Debug` implementation for [Task], as the `envs` field just has too much
+/// info in it and makes the log output much too verbose.
+///
+/// Furthermore, there might be secrets in the environment, resulting in a possible leak if
+/// users copy-paste their log output for debugging.
+impl std::fmt::Debug for Task {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Task")
+            .field("id", &self.id)
+            .field("original_command", &self.original_command)
+            .field("command", &self.command)
+            .field("path", &self.path)
+            .field("envs", &"hidden")
+            .field("group", &self.group)
+            .field("dependencies", &self.dependencies)
+            .field("label", &self.label)
+            .field("status", &self.status)
+            .field("prev_status", &self.prev_status)
+            .field("start", &self.start)
+            .field("end", &self.end)
+            .finish()
     }
 }

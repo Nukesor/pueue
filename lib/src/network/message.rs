@@ -74,7 +74,7 @@ pub enum TaskSelection {
     All,
 }
 
-#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Deserialize, Serialize)]
 pub struct AddMessage {
     pub command: String,
     pub path: PathBuf,
@@ -86,6 +86,28 @@ pub struct AddMessage {
     pub dependencies: Vec<usize>,
     pub label: Option<String>,
     pub print_task_id: bool,
+}
+
+/// We use a custom `Debug` implementation for [AddMessage], as the `envs` field just has
+/// too much info in it and makes the log output much too verbose.
+///
+/// Furthermore, there might be secrets in the environment, resulting in a possible leak
+/// if users copy-paste their log output for debugging.
+impl std::fmt::Debug for AddMessage {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Task")
+            .field("command", &self.command)
+            .field("path", &self.path)
+            .field("envs", &"hidden")
+            .field("start_immediately", &self.start_immediately)
+            .field("stashed", &self.stashed)
+            .field("group", &self.group)
+            .field("enqueue_at", &self.enqueue_at)
+            .field("dependencies", &self.dependencies)
+            .field("label", &self.label)
+            .field("print_task_id", &self.print_task_id)
+            .finish()
+    }
 }
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
