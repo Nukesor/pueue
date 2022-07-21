@@ -149,8 +149,8 @@ impl TaskHandler {
                     task.group.clone()
                 };
 
-                pause_on_failure(state, &group);
-                ok_or_shutdown!(self, save_state(state));
+                pause_on_failure(state, &self.settings, &group);
+                ok_or_shutdown!(self, save_state(state, &self.settings));
                 return;
             }
         };
@@ -166,6 +166,6 @@ impl TaskHandler {
         task.envs = envs;
 
         info!("Started task: {}", task.command);
-        ok_or_shutdown!(self, save_state(state));
+        ok_or_shutdown!(self, save_state(state, &self.settings));
     }
 }

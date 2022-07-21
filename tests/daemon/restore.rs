@@ -1,5 +1,4 @@
 use std::convert::TryInto;
-use std::path::PathBuf;
 
 use anyhow::Result;
 use pretty_assertions::assert_eq;
@@ -60,34 +59,6 @@ async fn test_start_paused() -> Result<()> {
         state.groups.get(PUEUE_DEFAULT_GROUP).unwrap().status,
         GroupStatus::Paused
     );
-
-    child.kill()?;
-    Ok(())
-}
-
-#[tokio::test]
-/// The daemon will load new settings, when restoring a previous state.
-async fn test_load_config() -> Result<()> {
-    let (mut settings, tempdir) = daemon_base_setup()?;
-    let child = standalone_daemon(&settings.shared).await?;
-
-    // Kill the daemon and wait for it to shut down.
-    assert_success(shutdown_daemon(&settings.shared).await?);
-    wait_for_shutdown(child.id().try_into()?)?;
-
-    // Change the settings and save it to disk
-    settings.client.dark_mode = true;
-    settings.daemon.callback = Some("This is a test".to_string());
-    settings.shared.daemon_key = Some(PathBuf::from("/tmp/daemon.key"));
-    settings.save(&Some(tempdir.path().join("pueue.yml")))?;
-
-    let mut child = standalone_daemon(&settings.shared).await?;
-
-    // Get the new state and make sure the settings actually changed.
-    let state = get_state(&settings.shared).await?;
-    assert_eq!(state.settings.daemon.callback, settings.daemon.callback);
-    assert_eq!(state.settings.shared.daemon_key, settings.shared.daemon_key);
-    assert_eq!(state.settings.client.dark_mode, settings.client.dark_mode);
 
     child.kill()?;
     Ok(())

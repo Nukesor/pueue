@@ -18,7 +18,7 @@ use pueue_lib::settings::Settings;
 #[test]
 fn test_restore_from_old_state() -> Result<()> {
     better_panic::install();
-    let old_state = include_str!("data/v1.0.0_state.json");
+    let old_state = include_str!("data/v2.0.0_state.json");
 
     let temp_dir = TempDir::new()?;
     let temp_path = temp_dir.path();

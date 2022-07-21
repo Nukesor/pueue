@@ -13,10 +13,13 @@ use crate::network::message::*;
 pub use super::platform::socket::Stream;
 pub use super::platform::socket::*;
 
+// We choose a packet size of 1280 to be on the safe site regarding IPv6 MTU.
+const PACKET_SIZE: usize = 1280;
+
 /// Convenience wrapper around send_bytes.
 /// Deserialize a message and feed the bytes into send_bytes.
 pub async fn send_message(message: Message, stream: &mut GenericStream) -> Result<(), Error> {
-    debug!("Sending message: {message:?}",);
+    debug!("Sending message: {message:#?}",);
     // Prepare command for transfer and determine message byte size
     let payload = to_vec(&message).map_err(|err| Error::MessageDeserialization(err.to_string()))?;
 
@@ -27,11 +30,11 @@ pub async fn send_message(message: Message, stream: &mut GenericStream) -> Resul
 /// This is part of the basic protocol beneath all communication. \
 ///
 /// 1. Sends a u64 as 4bytes in BigEndian mode, which tells the receiver the length of the payload.
-/// 2. Send the payload in chunks of 1400 bytes.
+/// 2. Send the payload in chunks of [PACKET_SIZE] bytes.
 pub async fn send_bytes(payload: &[u8], stream: &mut GenericStream) -> Result<(), Error> {
     let message_size = payload.len() as u64;
 
-    let mut header = vec![];
+    let mut header = Vec::new();
     WriteBytesExt::write_u64::<BigEndian>(&mut header, message_size).unwrap();
 
     // Send the request size header first.
@@ -43,7 +46,7 @@ pub async fn send_bytes(payload: &[u8], stream: &mut GenericStream) -> Result<()
 
     // Split the payload into 1.4Kbyte chunks
     // 1.5Kbyte is the MUT for TCP, but some carrier have a little less, such as Wireguard.
-    for chunk in payload.chunks(1400) {
+    for chunk in payload.chunks(PACKET_SIZE) {
         stream
             .write_all(chunk)
             .await
@@ -58,7 +61,7 @@ pub async fn send_bytes(payload: &[u8], stream: &mut GenericStream) -> Result<()
 ///
 /// 1. First of, the client sends a u64 as a 4byte vector in BigEndian mode, which specifies
 ///    the length of the payload we're going to receive.
-/// 2. Receive chunks of 1400 bytes until we finished all expected bytes.
+/// 2. Receive chunks of [PACKET_SIZE] bytes until we finished all expected bytes.
 pub async fn receive_bytes(stream: &mut GenericStream) -> Result<Vec<u8>, Error> {
     // Receive the header with the overall message size
     let mut header = vec![0; 8];
@@ -72,11 +75,19 @@ pub async fn receive_bytes(stream: &mut GenericStream) -> Result<Vec<u8>, Error>
     // Buffer for the whole payload
     let mut payload_bytes = Vec::with_capacity(message_size);
 
-    // Create a static buffer with our packet size.
-    let mut chunk_buffer: [u8; 1400] = [0; 1400];
-
     // Receive chunks until we reached the expected message size
     while payload_bytes.len() < message_size {
+        let remaining_bytes = message_size - payload_bytes.len();
+        let mut chunk_buffer: Vec<u8> = if remaining_bytes < PACKET_SIZE {
+            // The remaining bytes fit into less then our PACKET_SIZE.
+            // In this case, we have to be exact to prevent us from accidentally reading bytes
+            // of the next message that might already be in the queue.
+            vec![0; remaining_bytes]
+        } else {
+            // Create a static buffer with our max packet size.
+            vec![0; PACKET_SIZE]
+        };
+
         // Read data and get the amount of received bytes
         let received_bytes = stream
             .read(&mut chunk_buffer)
@@ -100,7 +111,6 @@ pub async fn receive_bytes(stream: &mut GenericStream) -> Result<Vec<u8>, Error>
 /// Convenience wrapper that receives a message and converts it into a Message.
 pub async fn receive_message(stream: &mut GenericStream) -> Result<Message, Error> {
     let payload_bytes = receive_bytes(stream).await?;
-    debug!("Received {} bytes", payload_bytes.len());
     if payload_bytes.is_empty() {
         return Err(Error::EmptyPayload);
     }
@@ -108,20 +118,21 @@ pub async fn receive_message(stream: &mut GenericStream) -> Result<Message, Erro
     // Deserialize the message.
     let message: Message =
         from_slice(&payload_bytes).map_err(|err| Error::MessageDeserialization(err.to_string()))?;
-    debug!("Received message: {message:?}");
+    debug!("Received message: {message:#?}");
 
     Ok(message)
 }
 
 #[cfg(test)]
 mod test {
-    use super::*;
+    use std::time::Duration;
 
     use async_trait::async_trait;
     use pretty_assertions::assert_eq;
     use tokio::net::{TcpListener, TcpStream};
     use tokio::task;
 
+    use super::*;
     use crate::network::platform::socket::Stream as PueueStream;
 
     // Implement generic Listener/Stream traits, so we can test stuff on normal TCP
@@ -168,6 +179,45 @@ mod test {
             .map_err(|err| Error::MessageDeserialization(err.to_string()))?;
 
         assert_eq!(response_bytes, original_bytes);
+
+        Ok(())
+    }
+
+    /// Test that multiple messages can be sent by a sender.
+    /// The receiver must be able to handle those massages, even if multiple are in the buffer
+    /// at once.
+    #[tokio::test]
+    async fn test_successive_messages() -> Result<(), Error> {
+        let listener = TcpListener::bind("127.0.0.1:0").await?;
+        let addr = listener.local_addr()?;
+
+        let listener: GenericListener = Box::new(listener);
+
+        // Spawn a sub thread that:
+        // 1. Accepts a new connection.
+        // 2. Immediately sends two messages in quick succession.
+        task::spawn(async move {
+            let mut stream = listener.accept().await.unwrap();
+
+            send_message(create_success_message("message_a"), &mut stream)
+                .await
+                .unwrap();
+            send_message(create_success_message("message_b"), &mut stream)
+                .await
+                .unwrap();
+        });
+
+        // Create a receiver stream
+        let mut client: GenericStream = Box::new(TcpStream::connect(&addr).await?);
+        // Wait for a short time to allow the sender to send all messages
+        tokio::time::sleep(Duration::from_millis(500)).await;
+
+        // Get both individual messages that have been sent.
+        let message_a = receive_message(&mut client).await.expect("First message");
+        let message_b = receive_message(&mut client).await.expect("Second message");
+
+        assert_eq!(Message::Success("message_a".to_string()), message_a);
+        assert_eq!(Message::Success("message_b".to_string()), message_b);
 
         Ok(())
     }

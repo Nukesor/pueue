@@ -14,7 +14,7 @@ pub fn add_message(shared: &Shared, command: &str) -> AddMessage {
         stashed: false,
         group: PUEUE_DEFAULT_GROUP.into(),
         enqueue_at: None,
-        dependencies: vec![],
+        dependencies: Vec::new(),
         label: None,
         print_task_id: false,
     }

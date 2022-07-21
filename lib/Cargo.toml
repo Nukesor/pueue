@@ -1,7 +1,7 @@
 [package]
 name = "pueue-lib"
 description = "The shared library to work with the Pueue client and daemon."
-version = "0.19.7"
+version = "0.20.0"
 authors = ["Arne Beer <contact@arne.beer>"]
 homepage = "https://github.com/nukesor/pueue"
 repository = "https://github.com/nukesor/pueue"
@@ -16,15 +16,27 @@ edition = "2021"
 maintenance = { status = "actively-developed" }
 
 [dependencies]
-thiserror = "1"
-dirs = "4"
-chrono = { version = "0.4", features = ["serde"] }
-rand = "0.8"
-shellexpand = "2.1"
-strum = "0.24"
-strum_macros = "0.24"
 
 async-trait = "0.1"
+byteorder = "1"
+chrono = { version = "0.4", features = ["serde"] }
+dirs = "4"
+log = "0.4"
+rand = "0.8"
+rcgen = "0.9"
+rev_buf_reader = "0.3"
+rustls = "0.20"
+rustls-pemfile = "1"
+serde = "1"
+serde_cbor = "0.11"
+serde_json = "1"
+serde_yaml = "0.8"
+serde_derive = "1"
+shellexpand = "2.1"
+snap = "1"
+strum = "0.24"
+strum_macros = "0.24"
+thiserror = "1"
 tokio = { version = "1", features = [
   "macros",
   "net",
@@ -32,19 +44,6 @@ tokio = { version = "1", features = [
   "io-util",
 ] }
 tokio-rustls = "0.23"
-rustls = "0.20"
-rustls-pemfile = "0.2"
-rev_buf_reader = "0.3"
-rcgen = "0.9"
-byteorder = "1"
-snap = "1"
-serde = "1"
-serde_cbor = "0.11"
-serde_json = "1"
-serde_yaml = "0.8"
-serde_derive = "1"
-
-log = "0.4"
 
 [target.'cfg(not(windows))'.dependencies]
 whoami = "1"
@@ -55,3 +54,4 @@ better-panic = "0.3"
 pretty_assertions = "1"
 portpicker = "0.1"
 tempdir = "0.3"
+tokio = { version = "1", features = [ "time" ] }

@@ -6,11 +6,16 @@ use comfy_table::*;
 use pueue_lib::log::{get_log_file_handle, seek_to_last_lines};
 use pueue_lib::settings::Settings;
 
-use crate::display::{colors::Colors, helper::*};
+use crate::display::OutputStyle;
 
 /// The daemon didn't send any log output, thereby we didn't request any.
 /// If that's the case, read the log file from the local pueue directory.
-pub fn print_local_log(task_id: usize, colors: &Colors, settings: &Settings, lines: Option<usize>) {
+pub fn print_local_log(
+    task_id: usize,
+    style: &OutputStyle,
+    settings: &Settings,
+    lines: Option<usize>,
+) {
     let mut file = match get_log_file_handle(task_id, &settings.shared.pueue_directory()) {
         Ok(file) => file,
         Err(err) => {
@@ -26,7 +31,7 @@ pub fn print_local_log(task_id: usize, colors: &Colors, settings: &Settings, lin
         &mut stdout,
         &mut file,
         &lines,
-        style_text("output:", Some(colors.green()), Some(Attribute::Bold)),
+        style.style_text("output:", Some(Color::Green), Some(Attribute::Bold)),
     );
 }
 

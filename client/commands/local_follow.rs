@@ -45,7 +45,7 @@ pub async fn local_follow(
         }
     };
 
-    follow_local_task_logs(pueue_directory, task_id, lines);
+    follow_local_task_logs(stream, pueue_directory, task_id, lines).await?;
 
     Ok(())
 }

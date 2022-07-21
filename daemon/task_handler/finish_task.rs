@@ -42,7 +42,7 @@ impl TaskHandler {
                 };
                 error!("Child {} failed with io::Error: {:?}", task_id, error);
 
-                pause_on_failure(&mut state, &group);
+                pause_on_failure(&mut state, &self.settings, &group);
                 continue;
             }
 
@@ -89,7 +89,7 @@ impl TaskHandler {
             };
 
             if let TaskResult::Failed(_) = result {
-                pause_on_failure(&mut state, &group);
+                pause_on_failure(&mut state, &self.settings, &group);
             }
 
             // Already remove the output files, if the daemon is being reset anyway
@@ -98,7 +98,7 @@ impl TaskHandler {
             }
         }
 
-        ok_or_shutdown!(self, save_state(&state));
+        ok_or_shutdown!(self, save_state(&state, &self.settings));
     }
 
     /// Gather all finished tasks and sort them by finished and errored.

@@ -63,19 +63,21 @@ pub async fn handle_follow(
     // since the file can go away (e.g. due to finishing a task).
     let path = get_log_path(task_id, pueue_directory);
 
-    // If lines is passed as an option, seek the output file handle to the start of
-    // the line corresponding to the `lines` number of lines from the end of the file.
-    // The loop following this section will copy those lines to stdout.
+    // If `lines` is passed as an option, we only want to show the last `X` lines.
+    // To achieve this, we seek the file handle to the start of the `Xth` line
+    // from the end of the file.
+    // The loop following this section will then only copy those last lines to stdout.
     if let Some(lines) = message.lines {
         if let Err(err) = seek_to_last_lines(&mut handle, lines) {
             println!("Error seeking to last lines from log: {err}");
         }
     }
+
     loop {
         // Check whether the file still exists. Exit if it doesn't.
         if !path.exists() {
             return Ok(create_success_message(
-                "File has gone away. Did somebody remove the task?",
+                "Log file has gone away. Has the task been removed?",
             ));
         }
         // Read the next chunk of text from the last position.
@@ -86,9 +88,35 @@ pub async fn handle_follow(
         };
         let text = String::from_utf8_lossy(&buffer).to_string();
 
-        // Send the new chunk and wait for 1 second.
-        let response = Message::Stream(text);
-        send_message(response, stream).await?;
+        // Only send a message, if there's actual new content.
+        if !text.is_empty() {
+            // Send the next chunk.
+            let response = Message::Stream(text);
+            send_message(response, stream).await?;
+        }
+
+        // Check if the task in question does:
+        // 1. Still exist
+        // 2. Is still running
+        //
+        // In case it's not, close the stream.
+        {
+            let state = state.lock().unwrap();
+            let task = if let Some(task) = state.tasks.get(&task_id) {
+                task
+            } else {
+                return Ok(create_success_message(
+                    "Pueue: The followed task has been removed.",
+                ));
+            };
+
+            // The task is done, just close the stream.
+            if !task.is_running() {
+                return Ok(Message::Close);
+            }
+        }
+
+        // Wait for 1 second before sending the next chunk.
         tokio::time::sleep(Duration::from_millis(1000)).await;
     }
 }

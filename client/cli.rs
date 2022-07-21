@@ -421,6 +421,13 @@ pub enum GroupCommand {
     Remove { name: String },
 }
 
+#[derive(Parser, ArgEnum, Debug, Clone, PartialEq)]
+pub enum ColorChoice {
+    Auto,
+    Never,
+    Always,
+}
+
 #[derive(Parser, ArgEnum, Debug, Clone, PartialEq, Eq)]
 pub enum Shell {
     Bash,
@@ -441,6 +448,10 @@ pub struct CliArguments {
     /// Verbose mode (-v, -vv, -vvv)
     #[clap(short, long, parse(from_occurrences))]
     pub verbose: u8,
+
+    /// Colorize the output; auto enables color output when connected to a tty.
+    #[clap(long, arg_enum, default_value = "auto")]
+    pub color: ColorChoice,
 
     /// Path to a specific pueue config file to use.
     /// This ignores all other config files.

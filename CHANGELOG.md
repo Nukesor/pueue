@@ -3,11 +3,32 @@
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
- ## Unreleased
 
- ### Fixed
+## [2.1.0] - 2022-07-21
 
- - Only style the 'group' header in status output when on a TTY.
+### Added
+
+- Use the new `--color` command-line switch to control when pueue will use colors in its output. Fixes [#311](https://github.com/Nukesor/pueue/issues/311) by [mjpieters](https://github.com/mjpieters).
+    The default is `auto`, which means it'll enable colors when connected to a TTY.
+    The other options are `never` and `always`.
+
+### Fixed
+
+- Only style the `group` header in status output when on a TTY ([#319](https://github.com/Nukesor/pueue/pull/319)) by [mjpieters](https://github.com/mjpieters).
+
+### Changed
+
+- Exit `pueue follow` when reading logs, as soon as the followed task is no longer active.
+- Properly formatted debug output.
+- Hide `Task.envs` and `AddMessage.envs` in debug output, as they were too verbose and contained possibly sensible information.
+
+### Misc
+
+- Enable CI linting on all platforms ([#323](https://github.com/Nukesor/pueue/pull/323)) by [mjpieters](https://github.com/mjpieters).
+- Add CI caching ([#322](https://github.com/Nukesor/pueue/pull/322)) by [mjpieters](https://github.com/mjpieters).
+- Fix missing toolchain bug in CI ([#321](https://github.com/Nukesor/pueue/pull/321)) by [mjpieters](https://github.com/mjpieters).
+- Set up code-coverage in CI.
+- Tests suite for `pueue` client, pushing the test coverage from ~53% to ~70%.
 
 ## [2.0.4] - 2022-06-05
 

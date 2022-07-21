@@ -74,21 +74,22 @@ pub async fn run(config_path: Option<PathBuf>, profile: Option<String>, test: bo
     // Restore the previous state and save any changes that might have happened during this
     // process. If no previous state exists, just create a new one.
     // Create a new empty state if any errors occur, but print the error message.
-    let mut state = match restore_state(&settings.shared.pueue_directory()) {
+    let state = match restore_state(&settings.shared.pueue_directory()) {
         Ok(Some(state)) => state,
-        Ok(None) => State::new(&settings, config_path.clone()),
+        Ok(None) => State::new(),
         Err(error) => {
             warn!("Failed to restore previous state:\n {error:?}");
             warn!("Using clean state instead.");
-            State::new(&settings, config_path.clone())
+            State::new()
         }
     };
-    state.settings = settings.clone();
-    save_state(&state).context("Failed to save state on startup.")?;
+
+    // Save the state once at the very beginning.
+    save_state(&state, &settings).context("Failed to save state on startup.")?;
     let state = Arc::new(Mutex::new(state));
 
     let (sender, receiver) = unbounded();
-    let mut task_handler = TaskHandler::new(state.clone(), receiver);
+    let mut task_handler = TaskHandler::new(state.clone(), settings.clone(), receiver);
 
     // Don't set ctrlc and panic handlers during testing.
     // This is necessary for multithreaded integration testing, since multiple listener per process
@@ -101,7 +102,7 @@ pub async fn run(config_path: Option<PathBuf>, profile: Option<String>, test: bo
         task_handler.run();
     });
 
-    accept_incoming(sender, state.clone()).await?;
+    accept_incoming(sender, state.clone(), settings.clone()).await?;
 
     Ok(())
 }

@@ -14,7 +14,7 @@ async fn test_normal_clean() -> Result<()> {
     for command in &["failing", "ls", "sleep 60", "ls"] {
         assert_success(add_task(shared, command, false).await?);
     }
-    // Wait for task2 to start. This implies task[0,1] being finished.
+    // Wait for task2 to start. This implies that task[0,1] are done.
     wait_for_task_condition(shared, 2, |task| task.is_running()).await?;
 
     // Send the clean message

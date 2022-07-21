@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project adheres **somewhat** to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 The concept of SemVer is applied to the daemon/client API, but not the library API itself.
 
+## [0.20.0] - 2022-07-21
+
+### Added
+
+- `Message::Close` which indicates the client that everything is done and the connection is being closed.
+
+### Removed
+
+- Breaking change: Backward compatibility logic for the old group structure in the main state.
+- Breaking change:
+    The `State` no longer owns a copy of the current settings.
+    This became possible due to the group configuration no longer being part of the configuration file.
+
+### Fixed
+
+- The networking logic wasn't able to handle rapid successiv messages until now.
+    If two messages were sent in quick succession, the client would receive both messages in one go.
+    The reason for this was simply that the receiving buffer was always of a size of 1400 Bytes, even if the actual payload was much smaller.
+    This wasn't a problem until now as there was no scenario where two messages were send immediately one after another.
+
 ## [0.19.6] - unreleased
 
 ### Added
@@ -22,12 +42,12 @@ The concept of SemVer is applied to the daemon/client API, but not the library A
 
 ### Added
 
-- New `Error::IoPathError`, which provides better error messages for path related IoErrors.
-- `Error::RawIoError`, for all generic IoErrors that already have some context.
+- New `Error::IoPathError` which provides better error messages for path related IoErrors.
+- `Error::RawIoError` for all generic IoErrors that already have some context.
 
 ### Changed
 
-- More info in `Error::IoError`, for better context on some IoErrors.
+- More info in `Error::IoError` for better context on some IoErrors.
 
 ### Removed
 
@@ -57,13 +77,13 @@ The concept of SemVer is applied to the daemon/client API, but not the library A
 
 - Add optional `group` field to CleanMessage.
 - Add optional `parallel_tasks` field to Group create message.
-- Introduced a `Group` struct, which is used to store information about groups in the `State`.
+- Introduced a `Group` struct which is used to store information about groups in the `State`.
 - Added the `shared.runtime_directory` config variable for any runtime related files, such as sockets.
 - `XDG_CONFIG_HOME` is respected for Pueue's config directory [#243](https://github.com/Nukesor/pueue/issues/243).
 - `XDG_DATA_HOME` is used if the `pueue_directory` config isn't explicitly set [#243](https://github.com/Nukesor/pueue/issues/243).
 - `XDG_RUNTIME_DIR` is used if the new `runtime_directory` config isn't explicitly set [#243](https://github.com/Nukesor/pueue/issues/243).
 - Add `lines` to `LogRequestMessage` [#270](https://github.com/Nukesor/pueue/issues/270).
-- Add a new message type `Message::EditRestore`, which is used to notify the daemon of a failed editing process.
+- Add a new message type `Message::EditRestore` which is used to notify the daemon of a failed editing process.
 
 ### Removed
 

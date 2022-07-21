@@ -8,6 +8,7 @@ use anyhow::{Context, Result};
 use chrono::prelude::*;
 use log::{debug, info};
 
+use pueue_lib::settings::Settings;
 use pueue_lib::state::{Group, GroupStatus, State, PUEUE_DEFAULT_GROUP};
 use pueue_lib::task::{TaskResult, TaskStatus};
 
@@ -52,37 +53,37 @@ pub fn is_task_removable(state: &LockedState, task_id: &usize, to_delete: &[usiz
 /// paused depending on the current settings.
 ///
 /// `group` should be the name of the failed task.
-pub fn pause_on_failure(state: &mut LockedState, group: &str) {
-    if state.settings.daemon.pause_group_on_failure {
+pub fn pause_on_failure(state: &mut LockedState, settings: &Settings, group: &str) {
+    if settings.daemon.pause_group_on_failure {
         if let Some(group) = state.groups.get_mut(group) {
             group.status = GroupStatus::Paused;
         }
-    } else if state.settings.daemon.pause_all_on_failure {
+    } else if settings.daemon.pause_all_on_failure {
         state.set_status_for_all_groups(GroupStatus::Paused);
     }
 }
 
 /// Do a full reset of the state.
 /// This doesn't reset any processes!
-pub fn reset_state(state: &mut LockedState) -> Result<()> {
-    backup_state(state)?;
+pub fn reset_state(state: &mut LockedState, settings: &Settings) -> Result<()> {
+    backup_state(state, settings)?;
     state.tasks = BTreeMap::new();
     state.set_status_for_all_groups(GroupStatus::Running);
 
-    save_state(state)
+    save_state(state, settings)
 }
 
 /// Convenience wrapper around save_to_file.
-pub fn save_state(state: &State) -> Result<()> {
-    save_state_to_file(state, false)
+pub fn save_state(state: &State, settings: &Settings) -> Result<()> {
+    save_state_to_file(state, settings, false)
 }
 
 /// Save the current current state in a file with a timestamp.
 /// At the same time remove old state logs from the log directory.
 /// This function is called, when large changes to the state are applied, e.g. clean/reset.
-pub fn backup_state(state: &LockedState) -> Result<()> {
-    save_state_to_file(state, true)?;
-    rotate_state(state).context("Failed to rotate old log files")?;
+pub fn backup_state(state: &LockedState, settings: &Settings) -> Result<()> {
+    save_state_to_file(state, settings, true)?;
+    rotate_state(settings).context("Failed to rotate old log files")?;
     Ok(())
 }
 
@@ -92,11 +93,11 @@ pub fn backup_state(state: &LockedState) -> Result<()> {
 ///
 /// In comparison to the daemon -> client communication, the state is saved
 /// as JSON for readability and debugging purposes.
-fn save_state_to_file(state: &State, log: bool) -> Result<()> {
+fn save_state_to_file(state: &State, settings: &Settings, log: bool) -> Result<()> {
     let serialized = serde_json::to_string(&state).context("Failed to serialize state:");
 
     let serialized = serialized.unwrap();
-    let path = state.settings.shared.pueue_directory();
+    let path = settings.shared.pueue_directory();
     let (temp, real) = if log {
         let path = path.join("log");
         let now: DateTime<Utc> = Utc::now();
@@ -195,8 +196,8 @@ pub fn restore_state(pueue_directory: &Path) -> Result<Option<State>> {
 }
 
 /// Remove old logs that aren't needed any longer.
-fn rotate_state(state: &LockedState) -> Result<()> {
-    let path = state.settings.shared.pueue_directory().join("log");
+fn rotate_state(settings: &Settings) -> Result<()> {
+    let path = settings.shared.pueue_directory().join("log");
 
     // Get all log files in the directory with their respective system time.
     let mut entries: BTreeMap<SystemTime, PathBuf> = BTreeMap::new();

@@ -38,8 +38,8 @@ async fn test_add_and_remove() -> Result<()> {
 async fn test_cannot_delete_default() -> Result<()> {
     let daemon = daemon().await?;
 
-    let pause_message = Message::Group(GroupMessage::Remove(PUEUE_DEFAULT_GROUP.to_string()));
-    assert_failure(send_message(&daemon.settings.shared, pause_message).await?);
+    let message = Message::Group(GroupMessage::Remove(PUEUE_DEFAULT_GROUP.to_string()));
+    assert_failure(send_message(&daemon.settings.shared, message).await?);
 
     Ok(())
 }
@@ -49,8 +49,8 @@ async fn test_cannot_delete_default() -> Result<()> {
 async fn test_cannot_delete_non_existing() -> Result<()> {
     let daemon = daemon().await?;
 
-    let pause_message = Message::Group(GroupMessage::Remove("doesnt_exist".to_string()));
-    assert_failure(send_message(&daemon.settings.shared, pause_message).await?);
+    let message = Message::Group(GroupMessage::Remove("doesnt_exist".to_string()));
+    assert_failure(send_message(&daemon.settings.shared, message).await?);
 
     Ok(())
 }
@@ -69,16 +69,16 @@ async fn test_cannot_delete_group_with_tasks() -> Result<()> {
     wait_for_task_condition(&daemon.settings.shared, 0, |task| task.is_done()).await?;
 
     // We shouldn't be capable of removing that group
-    let pause_message = Message::Group(GroupMessage::Remove("testgroup".to_string()));
-    assert_failure(send_message(shared, pause_message).await?);
+    let message = Message::Group(GroupMessage::Remove("testgroup".to_string()));
+    assert_failure(send_message(shared, message).await?);
 
     // Remove the task from the group
     let remove_message = Message::Remove(vec![0]);
     send_message(shared, remove_message).await?;
 
     // Removal should now work.
-    let pause_message = Message::Group(GroupMessage::Remove("testgroup".to_string()));
-    assert_success(send_message(shared, pause_message).await?);
+    let message = Message::Group(GroupMessage::Remove("testgroup".to_string()));
+    assert_success(send_message(shared, message).await?);
 
     Ok(())
 }

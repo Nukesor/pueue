@@ -30,7 +30,7 @@ pub async fn add_task_to_group(shared: &Shared, command: &str, group: &str) -> R
         stashed: false,
         group: group.to_owned(),
         enqueue_at: None,
-        dependencies: vec![],
+        dependencies: Vec::new(),
         label: None,
         print_task_id: false,
     });

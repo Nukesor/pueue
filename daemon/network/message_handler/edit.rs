@@ -34,7 +34,7 @@ pub fn edit_request(task_id: usize, state: &SharedState) -> Message {
 
 /// Invoked after closing the editor on `pueue edit`.
 /// Now we actually update the message with the updated command from the client.
-pub fn edit(message: EditMessage, state: &SharedState) -> Message {
+pub fn edit(message: EditMessage, state: &SharedState, settings: &Settings) -> Message {
     // Check whether the task exists and is locked. Abort if that's not the case.
     let mut state = state.lock().unwrap();
     match state.tasks.get_mut(&message.task_id) {
@@ -47,7 +47,7 @@ pub fn edit(message: EditMessage, state: &SharedState) -> Message {
             task.original_command = message.command.clone();
             task.command = insert_alias(message.command.clone());
             task.path = message.path.clone();
-            ok_or_return_failure_message!(save_state(&state));
+            ok_or_return_failure_message!(save_state(&state, settings));
 
             create_success_message("Command has been updated")
         }

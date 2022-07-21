@@ -35,7 +35,7 @@ impl TaskHandler {
                         self.start_process(task_id, &mut state);
                     }
                 }
-                ok_or_shutdown!(self, save_state(&state));
+                ok_or_shutdown!(self, save_state(&state, &self.settings));
                 return;
             }
             TaskSelection::Group(group_name) => {
@@ -69,7 +69,7 @@ impl TaskHandler {
             self.continue_task(&mut state, task_id, start_children);
         }
 
-        ok_or_shutdown!(self, save_state(&state));
+        ok_or_shutdown!(self, save_state(&state, &self.settings));
     }
 
     /// Send a start signal to a paused task to continue execution.

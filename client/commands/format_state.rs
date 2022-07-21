@@ -9,7 +9,7 @@ use pueue_lib::{network::protocol::GenericStream, settings::Settings, task::Task
 
 use crate::{
     cli::SubCommand,
-    display::{colors::Colors, print_state},
+    display::{print_state, OutputStyle},
 };
 
 /// This function tries to read a map or list of JSON serialized [Task]s from `stdin`.
@@ -18,7 +18,7 @@ use crate::{
 pub async fn format_state(
     stream: &mut GenericStream,
     command: &SubCommand,
-    colors: &Colors,
+    style: &OutputStyle,
     settings: &Settings,
 ) -> Result<()> {
     // Read the raw input to a buffer
@@ -45,7 +45,7 @@ pub async fn format_state(
         .await
         .context("Failed to get the current state from daemon")?;
 
-    print_state(state, tasks, command, colors, settings);
+    print_state(state, tasks, command, style, settings);
 
     Ok(())
 }

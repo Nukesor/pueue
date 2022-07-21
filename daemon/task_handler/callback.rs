@@ -7,7 +7,7 @@ impl TaskHandler {
     /// Execute the callback by spawning a new subprocess.
     pub fn spawn_callback(&mut self, task: &Task) {
         // Return early, if there's no callback specified
-        let template_string = if let Some(callback) = &self.callback {
+        let template_string = if let Some(callback) = &self.settings.daemon.callback {
             callback
         } else {
             return;
@@ -72,9 +72,11 @@ impl TaskHandler {
         parameters.insert("end", print_time(task.end));
 
         // Read the last lines of the process' output and make it available.
-        if let Ok(output) =
-            read_last_log_file_lines(task.id, &self.pueue_directory, self.callback_log_lines)
-        {
+        if let Ok(output) = read_last_log_file_lines(
+            task.id,
+            &self.pueue_directory,
+            self.settings.daemon.callback_log_lines,
+        ) {
             parameters.insert("output", output);
         } else {
             parameters.insert("output", "".to_string());

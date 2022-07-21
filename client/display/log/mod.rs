@@ -6,7 +6,7 @@ use pueue_lib::network::message::TaskLogMessage;
 use pueue_lib::settings::Settings;
 use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
-use super::colors::Colors;
+use super::OutputStyle;
 use crate::cli::SubCommand;
 
 mod json;
@@ -43,7 +43,7 @@ pub fn determine_log_line_amount(full: bool, lines: &Option<usize>) -> Option<us
 pub fn print_logs(
     mut task_logs: BTreeMap<usize, TaskLogMessage>,
     cli_command: &SubCommand,
-    colors: &Colors,
+    style: &OutputStyle,
     settings: &Settings,
 ) {
     // Get actual commandline options.
@@ -80,7 +80,7 @@ pub fn print_logs(
     // Iterate over each task and print the respective log.
     let mut task_iter = task_logs.iter_mut().peekable();
     while let Some((_, task_log)) = task_iter.next() {
-        print_log(task_log, colors, settings, lines);
+        print_log(task_log, style, settings, lines);
 
         // Add a newline if there is another task that's going to be printed.
         if let Some((_, task_log)) = task_iter.peek() {
@@ -103,7 +103,7 @@ pub fn print_logs(
 ///         This is only important, if we read local lines.
 fn print_log(
     message: &mut TaskLogMessage,
-    colors: &Colors,
+    style: &OutputStyle,
     settings: &Settings,
     lines: Option<usize>,
 ) {
@@ -116,44 +116,49 @@ fn print_log(
         return;
     }
 
-    print_task_info(task, colors);
+    print_task_info(task, style);
 
     if settings.client.read_local_logs {
-        print_local_log(message.task.id, colors, settings, lines);
+        print_local_log(message.task.id, style, settings, lines);
     } else if message.output.is_some() {
-        print_remote_log(message, colors);
+        print_remote_log(message, style);
     } else {
         println!("Logs requested from pueue daemon, but none received. Please report this bug.");
     }
 }
 
 /// Print some information about a task, which is displayed on top of the task's log output.
-fn print_task_info(task: &Task, colors: &Colors) {
+fn print_task_info(task: &Task, style: &OutputStyle) {
     // Print task id and exit code.
-    let task_cell = Cell::new(format!("Task {}: ", task.id)).add_attribute(Attribute::Bold);
+    let task_cell = style.styled_cell(format!("Task {}: ", task.id), None, Some(Attribute::Bold));
 
     let (exit_status, color) = match &task.status {
-        TaskStatus::Paused => ("paused".into(), colors.white()),
-        TaskStatus::Running => ("running".into(), colors.yellow()),
+        TaskStatus::Paused => ("paused".into(), Color::White),
+        TaskStatus::Running => ("running".into(), Color::Yellow),
         TaskStatus::Done(result) => match result {
-            TaskResult::Success => ("completed successfully".into(), colors.green()),
+            TaskResult::Success => ("completed successfully".into(), Color::Green),
             TaskResult::Failed(exit_code) => {
-                (format!("failed with exit code {}", exit_code), colors.red())
+                (format!("failed with exit code {}", exit_code), Color::Red)
             }
-            TaskResult::FailedToSpawn(err) => (format!("failed to spawn: {}", err), colors.red()),
-            TaskResult::Killed => ("killed by system or user".into(), colors.red()),
-            TaskResult::Errored => ("some IO error.\n Check daemon log.".into(), colors.red()),
-            TaskResult::DependencyFailed => ("dependency failed".into(), colors.red()),
+            TaskResult::FailedToSpawn(err) => (format!("failed to spawn: {}", err), Color::Red),
+            TaskResult::Killed => ("killed by system or user".into(), Color::Red),
+            TaskResult::Errored => ("some IO error.\n Check daemon log.".into(), Color::Red),
+            TaskResult::DependencyFailed => ("dependency failed".into(), Color::Red),
         },
-        _ => (task.status.to_string(), colors.white()),
+        _ => (task.status.to_string(), Color::White),
     };
-    let status_cell = Cell::new(exit_status).fg(color);
+    let status_cell = style.styled_cell(exit_status, Some(color), None);
 
     // The styling of the task number and status is done by a single-row table.
     let mut table = Table::new();
     table.load_preset("││─ └──┘     ─ ┌┐  ");
     table.set_content_arrangement(comfy_table::ContentArrangement::Dynamic);
     table.set_header(vec![task_cell, status_cell]);
+
+    // Explicitly force styling, in case we aren't on a tty, but `--color=always` is set.
+    if style.enabled {
+        table.enforce_styling();
+    }
     println!("{}", table);
 
     // All other information is alligned and styled by using a separat table.
@@ -163,24 +168,24 @@ fn print_task_info(task: &Task, colors: &Colors) {
 
     // Command and path
     table.add_row(vec![
-        Cell::new("Command:").add_attribute(Attribute::Bold),
+        style.styled_cell("Command:", None, Some(Attribute::Bold)),
         Cell::new(&task.command),
     ]);
     table.add_row(vec![
-        Cell::new("Path:").add_attribute(Attribute::Bold),
+        style.styled_cell("Path:", None, Some(Attribute::Bold)),
         Cell::new(&task.path.to_string_lossy()),
     ]);
 
     // Start and end time
     if let Some(start) = task.start {
         table.add_row(vec![
-            Cell::new("Start:").add_attribute(Attribute::Bold),
+            style.styled_cell("Start:", None, Some(Attribute::Bold)),
             Cell::new(start.to_rfc2822()),
         ]);
     }
     if let Some(end) = task.end {
         table.add_row(vec![
-            Cell::new("End:").add_attribute(Attribute::Bold),
+            style.styled_cell("End:", None, Some(Attribute::Bold)),
             Cell::new(end.to_rfc2822()),
         ]);
     }

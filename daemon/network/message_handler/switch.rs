@@ -1,4 +1,5 @@
 use pueue_lib::network::message::*;
+use pueue_lib::settings::Settings;
 use pueue_lib::state::SharedState;
 use pueue_lib::task::TaskStatus;
 
@@ -9,7 +10,7 @@ use crate::state_helper::save_state;
 /// Invoked when calling `pueue switch`.
 /// Switch the position of two tasks in the upcoming queue.
 /// We have to ensure that those tasks are either `Queued` or `Stashed`
-pub fn switch(message: SwitchMessage, state: &SharedState) -> Message {
+pub fn switch(message: SwitchMessage, state: &SharedState, settings: &Settings) -> Message {
     let mut state = state.lock().unwrap();
 
     let task_ids = vec![message.task_id_1, message.task_id_2];
@@ -54,7 +55,7 @@ pub fn switch(message: SwitchMessage, state: &SharedState) -> Message {
         }
     }
 
-    ok_or_return_failure_message!(save_state(&state));
+    ok_or_return_failure_message!(save_state(&state, settings));
     create_success_message("Tasks have been switched")
 }
 
@@ -73,8 +74,8 @@ mod tests {
         }
     }
 
-    fn get_test_state() -> (SharedState, TempDir) {
-        let (state, tempdir) = get_state();
+    fn get_test_state() -> (SharedState, Settings, TempDir) {
+        let (state, settings, tempdir) = get_state();
 
         {
             let mut state = state.lock().unwrap();
@@ -103,15 +104,15 @@ mod tests {
             state.add_task(task);
         }
 
-        (state, tempdir)
+        (state, settings, tempdir)
     }
 
     #[test]
     /// A normal switch between two id's works perfectly fine.
     fn switch_normal() {
-        let (state, _tempdir) = get_test_state();
+        let (state, settings, _tempdir) = get_test_state();
 
-        let message = switch(get_message(1, 2), &state);
+        let message = switch(get_message(1, 2), &state, &settings);
 
         // Return message is correct
         assert!(matches!(message, Message::Success(_)));
@@ -127,9 +128,9 @@ mod tests {
     #[test]
     /// Tasks cannot be switched with themselves.
     fn switch_task_with_itself() {
-        let (state, _tempdir) = get_test_state();
+        let (state, settings, _tempdir) = get_test_state();
 
-        let message = switch(get_message(1, 1), &state);
+        let message = switch(get_message(1, 1), &state, &settings);
 
         // Return message is correct
         assert!(matches!(message, Message::Failure(_)));
@@ -142,9 +143,9 @@ mod tests {
     /// If any task that is specified as dependency get's switched,
     /// all dependants need to be updated.
     fn switch_task_with_dependant() {
-        let (state, _tempdir) = get_test_state();
+        let (state, settings, _tempdir) = get_test_state();
 
-        switch(get_message(0, 3), &state);
+        switch(get_message(0, 3), &state, &settings);
 
         let state = state.lock().unwrap();
         assert_eq!(state.tasks.get(&4).unwrap().dependencies, vec![0, 3]);
@@ -154,9 +155,9 @@ mod tests {
     /// A task with two dependencies shouldn't experience any change, if those two dependencies
     /// switched places.
     fn switch_double_dependency() {
-        let (state, _tempdir) = get_test_state();
+        let (state, settings, _tempdir) = get_test_state();
 
-        switch(get_message(1, 2), &state);
+        switch(get_message(1, 2), &state, &settings);
 
         let state = state.lock().unwrap();
         assert_eq!(state.tasks.get(&5).unwrap().dependencies, vec![2]);
@@ -167,7 +168,7 @@ mod tests {
     /// You can only switch tasks that are either stashed or queued.
     /// Everything else should result in an error message.
     fn switch_invalid() {
-        let (state, _tempdir) = get_state();
+        let (state, settings, _tempdir) = get_state();
 
         let combinations: Vec<(usize, usize)> = vec![
             (0, 1), // Queued + Done
@@ -181,7 +182,7 @@ mod tests {
         ];
 
         for ids in combinations {
-            let message = switch(get_message(ids.0, ids.1), &state);
+            let message = switch(get_message(ids.0, ids.1), &state, &settings);
 
             // Assert, that we get a Failure message with the correct text.
             assert!(matches!(message, Message::Failure(_)));

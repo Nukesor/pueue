@@ -40,7 +40,7 @@ impl TaskHandler {
                 self.children.0.insert(name, BTreeMap::new());
 
                 // Persist the state.
-                ok_or_shutdown!(self, save_state(&state));
+                ok_or_shutdown!(self, save_state(&state, &self.settings));
             }
             GroupMessage::Remove(group) => {
                 if !state.groups.contains_key(&group) {
@@ -78,7 +78,7 @@ impl TaskHandler {
                 self.children.0.remove(&group);
 
                 // Persist the state.
-                ok_or_shutdown!(self, save_state(&state));
+                ok_or_shutdown!(self, save_state(&state, &self.settings));
 
                 info!("Group \"{group}\" has been removed");
             }

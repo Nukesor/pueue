@@ -53,7 +53,7 @@ impl TaskHandler {
             }
         }
 
-        ok_or_shutdown!(self, save_state(&state));
+        ok_or_shutdown!(self, save_state(&state, &self.settings));
     }
     /// Pause a specific task.
     /// Send a signal to the process to actually pause the OS process.
