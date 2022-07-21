@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.1.0] - unreleased
+## [2.1.0] - 2022-07-21
 
 ### Added
 
@@ -28,7 +28,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Add CI caching ([#322](https://github.com/Nukesor/pueue/pull/322)) by [mjpieters](https://github.com/mjpieters).
 - Fix missing toolchain bug in CI ([#321](https://github.com/Nukesor/pueue/pull/321)) by [mjpieters](https://github.com/mjpieters).
 - Set up code-coverage in CI.
-- Tests suite for `pueue`.
+- Tests suite for `pueue` client, pushing the test coverage from ~53% to ~70%.
 
 ## [2.0.4] - 2022-06-05
 
