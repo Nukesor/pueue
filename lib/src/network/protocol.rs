@@ -19,7 +19,7 @@ const PACKET_SIZE: usize = 1280;
 /// Convenience wrapper around send_bytes.
 /// Deserialize a message and feed the bytes into send_bytes.
 pub async fn send_message(message: Message, stream: &mut GenericStream) -> Result<(), Error> {
-    debug!("Sending message: {message:?}",);
+    debug!("Sending message: {message:#?}",);
     // Prepare command for transfer and determine message byte size
     let payload = to_vec(&message).map_err(|err| Error::MessageDeserialization(err.to_string()))?;
 
@@ -111,7 +111,6 @@ pub async fn receive_bytes(stream: &mut GenericStream) -> Result<Vec<u8>, Error>
 /// Convenience wrapper that receives a message and converts it into a Message.
 pub async fn receive_message(stream: &mut GenericStream) -> Result<Message, Error> {
     let payload_bytes = receive_bytes(stream).await?;
-    debug!("Received {} bytes", payload_bytes.len());
     if payload_bytes.is_empty() {
         return Err(Error::EmptyPayload);
     }
@@ -119,7 +118,7 @@ pub async fn receive_message(stream: &mut GenericStream) -> Result<Message, Erro
     // Deserialize the message.
     let message: Message =
         from_slice(&payload_bytes).map_err(|err| Error::MessageDeserialization(err.to_string()))?;
-    debug!("Received message: {message:?}");
+    debug!("Received message: {message:#?}");
 
     Ok(message)
 }

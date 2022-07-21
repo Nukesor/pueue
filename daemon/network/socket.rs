@@ -118,7 +118,6 @@ async fn handle_incoming(
         }
 
         let message = message_result?;
-        debug!("Received instruction: {message:?}");
 
         let response = match message {
             // The client requested the output of a task.
