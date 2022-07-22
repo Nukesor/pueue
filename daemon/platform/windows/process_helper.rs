@@ -343,6 +343,7 @@ mod test {
         Ok(())
     }
 
+    #[ignore]
     #[test]
     /// Ensure that a `powershell -c` process with a child process that has children of it's own
     /// will properly kill all processes and their children's children without detached processes.
@@ -369,6 +370,7 @@ mod test {
         Ok(())
     }
 
+    #[ignore]
     #[test]
     /// Ensure a normal command without `powershell -c` will be killed.
     fn test_normal_command_is_killed() -> Result<()> {
@@ -393,6 +395,7 @@ mod test {
         Ok(())
     }
 
+    #[ignore]
     #[test]
     /// Ensure a normal command and all it's children will be
     /// properly killed without any detached processes.
