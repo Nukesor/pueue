@@ -10,6 +10,7 @@ jobs:
     name: Publish on ${{ matrix.os }} for ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         target:
             - x86_64-unknown-linux-musl
