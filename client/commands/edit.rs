@@ -1,13 +1,13 @@
 use std::env;
 use std::io::{Read, Seek, SeekFrom, Write};
 use std::path::PathBuf;
-use std::process::Command;
 
 use anyhow::{bail, Context, Result};
 use tempfile::NamedTempFile;
 
 use pueue_lib::network::message::*;
 use pueue_lib::network::protocol::*;
+use pueue_lib::process_helper::compile_shell_command;
 
 /// This function handles the logic for editing tasks.
 /// At first, we request the daemon to send us the task to edit.
@@ -93,14 +93,17 @@ fn edit_line(line: &str) -> Result<String> {
     let mut file = NamedTempFile::new().expect("Failed to create a temporary file");
     writeln!(file, "{}", line).context("Failed to write to temporary file.")?;
 
-    // Start the editor on this file.
+    // Get the editor that should be used from the environment.
     let editor = match env::var("EDITOR") {
         Err(_) => bail!("The '$EDITOR' environment variable couldn't be read. Aborting."),
         Ok(editor) => editor,
     };
 
-    let status = Command::new(editor)
-        .arg(file.path())
+    // Compile the command to start the editor on the temporary file.
+    // We escape the file path for good measure, but it shouldn't be necessary.
+    let path = shell_escape::escape(file.path().to_string_lossy());
+    let editor_command = format!("{editor} {path}");
+    let status = compile_shell_command(&editor_command)
         .status()
         .context("Editor command did somehow fail. Aborting.")?;
 
