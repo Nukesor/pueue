@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project adheres **somewhat** to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 The concept of SemVer is applied to the daemon/client API, but not the library API itself.
 
+## [0.21.0] - unreleased
+
+### Changed
+
+- The process handling code has been moved from the daemon to `pueue_lib`. See [#336](https://github.com/Nukesor/pueue/issues/336).
+    The reason for this is, that the client will need some of these process handling capabilitites to spawn shell commands when editing tasks.
+- The module structure of the platform specific networking code has been streamlined.
+
 ## [0.20.0] - 2022-07-21
 
 ### Added

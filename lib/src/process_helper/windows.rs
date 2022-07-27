@@ -1,5 +1,8 @@
 use std::process::{Child, Command};
 
+// We allow anyhow in here, as this is a module that'll be strictly used internally.
+// As soon as it's obvious that this is code is intended to be exposed to library users, we have to
+// go ahead and replace any `anyhow` usage by proper error handling via our own Error type.
 use anyhow::{bail, Result};
 use log::{error, info, warn};
 use winapi::shared::minwindef::FALSE;
@@ -15,8 +18,8 @@ use winapi::um::tlhelp32::{
 };
 use winapi::um::winnt::{PROCESS_TERMINATE, THREAD_SUSPEND_RESUME};
 
-use crate::task_handler::ProcessAction;
-use pueue_lib::network::message::Signal as InternalSignal;
+use super::ProcessAction;
+use crate::network::message::Signal as InternalSignal;
 
 pub fn compile_shell_command(command_string: &str) -> Command {
     // Chain two `powershell` commands, one that sets the output encoding to utf8 and then the user provided one.

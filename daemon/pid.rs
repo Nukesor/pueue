@@ -4,9 +4,9 @@ use std::path::Path;
 
 use anyhow::{bail, Context, Result};
 use log::info;
-use pueue_lib::error::Error;
 
-use crate::platform::process_helper::process_exists;
+use pueue_lib::error::Error;
+use pueue_lib::process_helper::process_exists;
 
 /// Read a PID file and throw an error, if another daemon instance is still running.
 fn check_for_running_daemon(pid_path: &Path) -> Result<()> {
