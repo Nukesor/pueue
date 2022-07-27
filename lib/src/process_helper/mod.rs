@@ -1,3 +1,9 @@
+//! Subprocess handling is platform specific code.
+//!
+//! The submodules of this module represent the different implementations for
+//! each supported platform.
+//! Depending on the target, the respective platform is read and loaded into this scope.
+
 // Unix specific process handling
 #[cfg(any(target_os = "linux", target_os = "freebsd"))]
 mod linux;
