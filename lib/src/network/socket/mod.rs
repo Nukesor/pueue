@@ -1,14 +1,13 @@
 /// Shared unix stuff
 #[cfg(not(target_os = "windows"))]
-pub mod unix;
-/// Windows specific stuff
-#[cfg(target_os = "windows")]
-pub mod windows;
-
+mod unix;
 /// Shared unix stuff for sockets
 #[cfg(not(target_os = "windows"))]
-pub use self::unix::socket;
+pub use self::unix::*;
 
+/// Windows specific stuff
+#[cfg(target_os = "windows")]
+mod windows;
 /// Windows specific socket stuff
 #[cfg(target_os = "windows")]
-pub use self::windows::socket;
+pub use self::windows::*;

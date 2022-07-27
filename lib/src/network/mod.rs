@@ -52,12 +52,11 @@ pub mod certificate;
 /// This contains the main [Message](message::Message) enum and all its structs used to
 /// communicate with the daemon or client.
 pub mod message;
-/// Platform specific code regarding sockets
-mod platform;
-/// This is the abstraction layer of the protocol for communication.
 /// This is probably the most interesting part for you.
 pub mod protocol;
 /// Functions to write and read the secret to/from a file.
 pub mod secret;
+/// Low-level socket handling code.
+pub mod socket;
 /// Helper functions for reading and handling TLS files.
 mod tls;
