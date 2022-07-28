@@ -315,7 +315,6 @@ pub enum SubCommand {
         lines: Option<usize>,
 
         /// Show the whole output.
-        /// This is the default if only a single task is being looked at.
         #[clap(short, long)]
         full: bool,
     },
