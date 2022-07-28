@@ -1036,12 +1036,11 @@ dependencies = [
  "tempfile",
  "tokio",
  "whoami",
- "winapi",
 ]
 
 [[package]]
 name = "pueue-lib"
-version = "0.20.0"
+version = "0.21.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1050,8 +1049,10 @@ dependencies = [
  "chrono",
  "dirs",
  "log",
+ "nix",
  "portpicker",
  "pretty_assertions",
+ "procfs",
  "rand 0.8.5",
  "rcgen",
  "rev_buf_reader",
@@ -1071,6 +1072,7 @@ dependencies = [
  "tokio",
  "tokio-rustls",
  "whoami",
+ "winapi",
 ]
 
 [[package]]

@@ -21,7 +21,6 @@ use crate::task_handler::TaskHandler;
 pub mod cli;
 mod network;
 mod pid;
-mod platform;
 /// Contains re-usable helper functions, that operate on the pueue-lib state.
 pub mod state_helper;
 mod task_handler;

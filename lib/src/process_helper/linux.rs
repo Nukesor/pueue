@@ -1,6 +1,9 @@
 use std::convert::TryInto;
 use std::process::{Child, Command};
 
+// We allow anyhow in here, as this is a module that'll be strictly used internally.
+// As soon as it's obvious that this is code is intended to be exposed to library users, we have to
+// go ahead and replace any `anyhow` usage by proper error handling via our own Error type.
 use anyhow::{bail, Result};
 use log::{debug, info, warn};
 use nix::{
@@ -9,8 +12,8 @@ use nix::{
 };
 use procfs::process::{all_processes, Process};
 
-use crate::task_handler::ProcessAction;
-use pueue_lib::network::message::Signal as InternalSignal;
+use super::ProcessAction;
+use crate::network::message::Signal as InternalSignal;
 
 pub fn compile_shell_command(command_string: &str) -> Command {
     let mut command = Command::new("sh");

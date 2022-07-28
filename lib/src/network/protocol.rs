@@ -10,8 +10,7 @@ use crate::error::Error;
 use crate::network::message::*;
 
 // Reexport all stream/socket related stuff for convenience purposes
-pub use super::platform::socket::Stream;
-pub use super::platform::socket::*;
+pub use super::socket::*;
 
 // We choose a packet size of 1280 to be on the safe site regarding IPv6 MTU.
 const PACKET_SIZE: usize = 1280;
@@ -133,7 +132,7 @@ mod test {
     use tokio::task;
 
     use super::*;
-    use crate::network::platform::socket::Stream as PueueStream;
+    use crate::network::socket::Stream as PueueStream;
 
     // Implement generic Listener/Stream traits, so we can test stuff on normal TCP
     #[async_trait]

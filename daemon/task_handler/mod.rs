@@ -12,12 +12,12 @@ use log::{debug, error, info};
 use pueue_lib::log::*;
 use pueue_lib::network::message::*;
 use pueue_lib::network::protocol::socket_cleanup;
+use pueue_lib::process_helper::*;
 use pueue_lib::settings::Settings;
 use pueue_lib::state::{GroupStatus, SharedState};
 use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
 use crate::pid::cleanup_pid_file;
-use crate::platform::process_helper::*;
 use crate::state_helper::{reset_state, save_state};
 
 mod callback;
@@ -77,16 +77,6 @@ pub struct TaskHandler {
 
     // Some static settings that are extracted from `settings` for convenience purposes.
     pueue_directory: PathBuf,
-}
-
-/// Pueue directly interacts with processes.
-/// Since these interactions can vary depending on the current platform, this enum is introduced.
-/// The intend is to keep any platform specific code out of the top level code.
-/// Even if that implicates adding some layers of abstraction.
-#[derive(Debug)]
-pub enum ProcessAction {
-    Pause,
-    Resume,
 }
 
 impl TaskHandler {

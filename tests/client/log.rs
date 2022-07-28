@@ -1,8 +1,7 @@
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 
-use anyhow::Context;
-use anyhow::Result;
+use anyhow::{Context, Result};
 use pueue_lib::task::Task;
 use serde_derive::Deserialize;
 
