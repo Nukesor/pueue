@@ -71,4 +71,4 @@ whoami = "1"
 
 # Linux / Freebsd
 [target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]
-procfs = { version = "0.12", default-features = false }
+procfs = { version = "0.14", default-features = false }

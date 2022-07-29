@@ -67,4 +67,4 @@ serde_yaml = "0.9"
 [target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]
 nix = "0.24"
 whoami = "1"
-procfs = { version = "0.12", default-features = false }
+procfs = { version = "0.14", default-features = false }

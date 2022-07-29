@@ -260,7 +260,7 @@ fn send_signal_to_processes(processes: Vec<Process>, signal: Signal) {
 }
 
 /// Get all children of a specific process
-fn get_child_processes(pid: i32) -> Vec<Process> {
+fn get_child_processes(ppid: i32) -> Vec<Process> {
     let all_processes = match all_processes() {
         Err(error) => {
             warn!("Failed to get full process list: {error}");
@@ -269,9 +269,18 @@ fn get_child_processes(pid: i32) -> Vec<Process> {
         Ok(processes) => processes,
     };
 
+    // Get all processes whose `stat` can be access without any errors.
+    // We then search for processes with the correct parent process id.
     all_processes
         .into_iter()
-        .filter(|process| process.stat.ppid == pid)
+        .filter_map(|process| process.ok())
+        .filter(|process| {
+            if let Ok(stat) = process.stat() {
+                stat.ppid == ppid
+            } else {
+                false
+            }
+        })
         .collect()
 }
 
@@ -288,6 +297,7 @@ mod tests {
     use std::thread::sleep;
     use std::time::Duration;
 
+    use anyhow::Result;
     use pretty_assertions::assert_eq;
 
     use super::*;
@@ -310,7 +320,7 @@ mod tests {
 
     #[test]
     /// Ensure a `sh -c` command will be properly killed without detached processes.
-    fn test_shell_command_is_killed() {
+    fn test_shell_command_is_killed() -> Result<()> {
         let mut child = compile_shell_command("sleep 60 & sleep 60 && echo 'this is a test'")
             .spawn()
             .expect("Failed to spawn echo");
@@ -336,14 +346,16 @@ mod tests {
 
         // Assert that all child processes have been killed.
         for child_process in child_processes {
-            assert!(process_is_gone(child_process.stat.pid));
+            assert!(!child_process.is_alive());
         }
+
+        Ok(())
     }
 
     #[test]
     /// Ensure a `sh -c` command will be properly killed without detached processes when using unix
     /// signals directly.
-    fn test_shell_command_is_killed_with_signal() {
+    fn test_shell_command_is_killed_with_signal() -> Result<()> {
         let child = compile_shell_command("sleep 60 & sleep 60 && echo 'this is a test'")
             .spawn()
             .expect("Failed to spawn echo");
@@ -369,14 +381,16 @@ mod tests {
 
         // Assert that all child processes have been killed.
         for child_process in child_processes {
-            assert!(process_is_gone(child_process.stat.pid));
+            assert!(!child_process.is_alive());
         }
+
+        Ok(())
     }
 
     #[test]
     /// Ensure that a `sh -c` process with a child process that has children of its own
     /// will properly kill all processes and their children's children without detached processes.
-    fn test_shell_command_children_are_killed() {
+    fn test_shell_command_children_are_killed() -> Result<()> {
         let mut child = compile_shell_command("bash -c 'sleep 60 && sleep 60' && sleep 60")
             .spawn()
             .expect("Failed to spawn echo");
@@ -393,7 +407,7 @@ mod tests {
         assert_eq!(child_processes.len(), 1);
         let mut childrens_children = Vec::new();
         for child_process in &child_processes {
-            childrens_children.extend(get_child_processes(child_process.stat.pid));
+            childrens_children.extend(get_child_processes(child_process.stat()?.pid));
         }
         assert_eq!(childrens_children.len(), 1);
 
@@ -408,18 +422,20 @@ mod tests {
 
         // Assert that all child processes have been killed.
         for child_process in child_processes {
-            assert!(process_is_gone(child_process.stat.pid));
+            assert!(!child_process.is_alive());
         }
 
         // Assert that all children's child processes have been killed.
         for child_process in childrens_children {
-            assert!(process_is_gone(child_process.stat.pid));
+            assert!(!child_process.is_alive());
         }
+
+        Ok(())
     }
 
     #[test]
     /// Ensure a normal command without `sh -c` will be killed.
-    fn test_normal_command_is_killed() {
+    fn test_normal_command_is_killed() -> Result<()> {
         let mut child = Command::new("sleep")
             .arg("60")
             .spawn()
@@ -442,12 +458,14 @@ mod tests {
         sleep(Duration::from_millis(500));
 
         assert!(process_is_gone(pid));
+
+        Ok(())
     }
 
     #[test]
     /// Ensure a normal command and all its children will be
     /// properly killed without any detached processes.
-    fn test_normal_command_children_are_killed() {
+    fn test_normal_command_children_are_killed() -> Result<()> {
         let mut child = Command::new("bash")
             .arg("-c")
             .arg("sleep 60 & sleep 60 && sleep 60")
@@ -475,7 +493,9 @@ mod tests {
 
         // Assert that all child processes have been killed.
         for child_process in child_processes {
-            assert!(process_is_gone(child_process.stat.pid));
+            assert!(!child_process.is_alive());
         }
+
+        Ok(())
     }
 }
