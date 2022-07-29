@@ -43,7 +43,7 @@ async fn full_status() -> Result<()> {
     // Add a paused task so we can use it as a dependency.
     run_client_command(
         shared,
-        &["add", "--label", "test", "--delay", "2 hours", "ls"],
+        &["add", "--label", "test", "--delay", "1 minute", "ls"],
     )
     .await?;
 
