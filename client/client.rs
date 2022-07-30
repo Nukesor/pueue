@@ -91,9 +91,22 @@ impl Client {
         // Info if the daemon runs a different version.
         // Backward compatibility should work, but some features might not work as expected.
         if version != crate_version!() {
-            println!(
-                "Different daemon version detected '{version}'. Consider restarting the daemon."
-            );
+            // Only show warnings if we aren't supposed to output json.
+            let show_warning = if let Some(subcommand) = &opt.cmd {
+                match subcommand {
+                    SubCommand::Status { json, .. } => !json,
+                    SubCommand::Log { json, .. } => !json,
+                    _ => true,
+                }
+            } else {
+                true
+            };
+
+            if show_warning {
+                println!(
+                    "Different daemon version detected '{version}'. Consider restarting the daemon."
+                );
+            }
         }
 
         let style_enabled = match opt.color {
