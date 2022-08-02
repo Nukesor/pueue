@@ -22,13 +22,13 @@ pub fn get_log(message: LogRequestMessage, state: &SharedState, settings: &Setti
             // We send log output and the task at the same time.
             // This isn't as efficient as sending the raw compressed data directly,
             // but it's a lot more convenient for now.
-            let output = if message.send_logs {
+            let (output, output_complete) = if message.send_logs {
                 match read_and_compress_log_file(
                     *task_id,
                     &settings.shared.pueue_directory(),
                     message.lines,
                 ) {
-                    Ok(output) => (Some(output)),
+                    Ok((output, output_complete)) => (Some(output), output_complete),
                     Err(err) => {
                         // Fail early if there's some problem with getting the log output
                         return create_failure_message(format!(
@@ -37,12 +37,13 @@ pub fn get_log(message: LogRequestMessage, state: &SharedState, settings: &Setti
                     }
                 }
             } else {
-                None
+                (None, true)
             };
 
             let task_log = TaskLogMessage {
                 task: task.clone(),
                 output,
+                output_complete,
             };
             tasks.insert(*task_id, task_log);
         }

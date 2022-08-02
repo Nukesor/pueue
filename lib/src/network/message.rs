@@ -255,6 +255,9 @@ pub struct LogRequestMessage {
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct TaskLogMessage {
     pub task: Task,
+    #[serde(default = "bool::default")]
+    /// Indicates whether the log output has been truncated or not.
+    pub output_complete: bool,
     pub output: Option<Vec<u8>>,
 }
 

@@ -48,18 +48,25 @@ pub fn clean_log_handles(task_id: usize, path: &Path) {
 
 /// Return the output of a task. \
 /// Task output is compressed using [snap] to save some memory and bandwidth.
+/// Return type is `(Vec<u8>, bool)`
+/// - `Vec<u8>` the compressed task output.
+/// - `bool` Whether the full task's output has been read.
+///     `false` indicate that the log output has been truncated
 pub fn read_and_compress_log_file(
     task_id: usize,
     path: &Path,
     lines: Option<usize>,
-) -> Result<Vec<u8>, Error> {
+) -> Result<(Vec<u8>, bool), Error> {
     let mut file = get_log_file_handle(task_id, path)?;
 
     let mut content = Vec::new();
 
+    // Indicates whether the full log output is shown or just the last part of it.
+    let mut output_complete = true;
+
     // Move the cursor to the last few lines of both files.
     if let Some(lines) = lines {
-        seek_to_last_lines(&mut file, lines)?;
+        output_complete = seek_to_last_lines(&mut file, lines)?;
     }
 
     // Compress the full log input and pipe it into the snappy compressor
@@ -69,7 +76,7 @@ pub fn read_and_compress_log_file(
             .map_err(|err| Error::IoError("compressing log output".to_string(), err))?;
     }
 
-    Ok(content)
+    Ok((content, output_complete))
 }
 
 /// Return the last lines of of a task's output. \
@@ -123,7 +130,10 @@ pub fn read_last_lines(file: &mut File, amount: usize) -> String {
 
 /// Seek the cursor of the current file to the beginning of the line that's located `amount` newlines
 /// from the back of the file.
-pub fn seek_to_last_lines(file: &mut File, amount: usize) -> Result<(), Error> {
+///
+/// The `bool` return value indicates whether we seeked to the start of the file (there were less
+/// lines than the limit). `true` means that the handle is now at the very start of the file.
+pub fn seek_to_last_lines(file: &mut File, amount: usize) -> Result<bool, Error> {
     let mut reader = RevBufReader::new(file);
     // The position from which the RevBufReader starts reading.
     // The file size might change while we're reading the file. Hence we have to save it now.
@@ -148,7 +158,7 @@ pub fn seek_to_last_lines(file: &mut File, amount: usize) -> Result<(), Error> {
         // Return if there's nothing left to read.
         // We hit the start of the file and read fewer lines then specified.
         if read_bytes == 0 {
-            break;
+            return Ok(true);
         }
 
         // Check each byte for a newline.
@@ -190,5 +200,5 @@ pub fn seek_to_last_lines(file: &mut File, amount: usize) -> Result<(), Error> {
         }
     }
 
-    Ok(())
+    Ok(false)
 }
