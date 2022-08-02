@@ -36,19 +36,32 @@ pub fn print_local_log(
 }
 
 /// Print a local log file of a task.
-fn print_local_file(stdout: &mut Stdout, file: &mut File, lines: &Option<usize>, text: String) {
+fn print_local_file(stdout: &mut Stdout, file: &mut File, lines: &Option<usize>, header: String) {
     if let Ok(metadata) = file.metadata() {
         if metadata.len() != 0 {
-            // Don't print a newline between the task information and the first output
-            println!("\n{}", text);
+            // Indicates whether the full log output is shown or just the last part of it.
+            let mut output_complete = true;
 
             // Only print the last lines if requested
             if let Some(lines) = lines {
-                if let Err(err) = seek_to_last_lines(file, *lines) {
-                    println!("Failed reading local log file: {err}");
-                    return;
+                match seek_to_last_lines(file, *lines) {
+                    Ok(complete) => output_complete = complete,
+                    Err(err) => {
+                        println!("Failed reading local log file: {err}");
+                        return;
+                    }
                 }
             }
+
+            // Add a hint if we should limit the output to X lines **and** there are actually more
+            // lines than that given limit.
+            let mut line_info = String::new();
+            if !output_complete {
+                line_info = lines.map_or(String::new(), |lines| format!(" (last {lines} lines)"));
+            }
+
+            // Print a newline between the task information and the first output.
+            println!("\n{header}{line_info}");
 
             // Print everything
             if let Err(err) = io::copy(file, stdout) {

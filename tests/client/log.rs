@@ -1,39 +1,26 @@
-use std::collections::BTreeMap;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 use anyhow::{Context, Result};
 use pueue_lib::task::Task;
+use rstest::rstest;
 use serde_derive::Deserialize;
 
 use crate::fixtures::*;
 use crate::helper::*;
 
-/// Test that the normal `log` command works as expected.
+/// Test that the `log` command works for both:
+/// - The log being streamed by the daemon.
+/// - The log being read from the local files.
+#[rstest]
+#[case(true)]
+#[case(false)]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn default_log() -> Result<()> {
-    let daemon = daemon().await?;
-    let shared = &daemon.settings.shared;
-
-    // Add a task and wait until it finishes.
-    assert_success(add_task(shared, "echo test", false).await?);
-    wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
-
-    let output = run_client_command(shared, &["log"]).await?;
-
-    let context = get_task_context(&daemon.settings).await?;
-    assert_stdout_matches("log__default_log", output.stdout, context)?;
-
-    Ok(())
-}
-
-/// Test that the `log` command works with the log being streamed by the daemon works as expected.
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn remote_log() -> Result<()> {
+async fn read_log(#[case] read_local_logs: bool) -> Result<()> {
     let mut daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 
     // Force the client to read remote logs via config file.
-    daemon.settings.client.read_local_logs = false;
+    daemon.settings.client.read_local_logs = read_local_logs;
     // Persist the change, so it can be seen by the client.
     daemon
         .settings
@@ -48,6 +35,37 @@ async fn remote_log() -> Result<()> {
 
     let context = get_task_context(&daemon.settings).await?;
     assert_stdout_matches("log__default_log", output.stdout, context)?;
+
+    Ok(())
+}
+
+/// Test that the `log` command properly truncates content and hints this to the user for:
+/// - The log being streamed by the daemon.
+/// - The log being read from the local files.
+#[rstest]
+#[case(true)]
+#[case(false)]
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn read_truncated_log(#[case] read_local_logs: bool) -> Result<()> {
+    let mut daemon = daemon().await?;
+    let shared = &daemon.settings.shared;
+
+    // Force the client to read remote logs via config file.
+    daemon.settings.client.read_local_logs = read_local_logs;
+    // Persist the change, so it can be seen by the client.
+    daemon
+        .settings
+        .save(&Some(daemon.tempdir.path().join("pueue.yml")))
+        .context("Couldn't write pueue config to temporary directory")?;
+
+    // Add a task and wait until it finishes.
+    assert_success(add_task(shared, "echo '1\n2\n3\n4\n5\n6\n7\n8\n9\n10'", false).await?);
+    wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
+
+    let output = run_client_command(shared, &["log", "--lines=5"]).await?;
+
+    let context = get_task_context(&daemon.settings).await?;
+    assert_stdout_matches("log__last_lines_log", output.stdout, context)?;
 
     Ok(())
 }

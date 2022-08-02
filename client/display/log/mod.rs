@@ -121,7 +121,7 @@ fn print_log(
     if settings.client.read_local_logs {
         print_local_log(message.task.id, style, settings, lines);
     } else if message.output.is_some() {
-        print_remote_log(message, style);
+        print_remote_log(message, style, lines);
     } else {
         println!("Logs requested from pueue daemon, but none received. Please report this bug.");
     }

@@ -1,0 +1,23 @@
+┌───────────────────────────────────┐
+│ Task 0:    completed successfully │
+└───────────────────────────────────┘
+Command: echo '1                         
+         2                               
+         3                               
+         4                               
+         5                               
+         6                               
+         7                               
+         8                               
+         9                               
+         10'                             
+   Path: {{ cwd }}                 
+  Start: {{ task_0_start_long }} 
+    End: {{ task_0_end_long }} 
+
+output: (last 5 lines)
+6
+7
+8
+9
+10
