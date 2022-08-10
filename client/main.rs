@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use anyhow::{bail, Context, Result};
 use clap::{IntoApp, Parser};
 use clap_complete::{generate_to, shells};
@@ -13,32 +15,29 @@ pub mod display;
 use crate::cli::{CliArguments, Shell, SubCommand};
 use crate::client::Client;
 
+/// This is the main entry point of the client.
+///
+/// At first we do some basic setup:
+/// - Parse the cli
+/// - Initialize logging
+/// - Read the config
+///
+/// Once all this is done, we init the [Client] struct and start the main loop via [Client::start].
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
     // Parse commandline options.
     let opt = CliArguments::parse();
 
+    // In case the user requested the generation of shell completion file, create it and exit.
     if let Some(SubCommand::Completions {
         shell,
         output_directory,
     }) = &opt.cmd
     {
-        let mut app = CliArguments::command();
-        app.set_bin_name("pueue");
-        let completion_result = match shell {
-            Shell::Bash => generate_to(shells::Bash, &mut app, "pueue", output_directory),
-            Shell::Elvish => generate_to(shells::Elvish, &mut app, "pueue", output_directory),
-            Shell::Fish => generate_to(shells::Fish, &mut app, "pueue", output_directory),
-            Shell::PowerShell => {
-                generate_to(shells::PowerShell, &mut app, "pueue", output_directory)
-            }
-            Shell::Zsh => generate_to(shells::Zsh, &mut app, "pueue", output_directory),
-        };
-        completion_result.context(format!("Failed to generate completions for {shell:?}"))?;
-        return Ok(());
+        return create_shell_completion_file(shell, output_directory);
     }
 
-    // Set the verbosity level of the logger.
+    // Init the logger and set the verbosity level depending on the `-v` flags.
     let level = match opt.verbose {
         0 => LevelFilter::Error,
         1 => LevelFilter::Warn,
@@ -77,6 +76,24 @@ async fn main() -> Result<()> {
         .await
         .context("Failed to initialize client.")?;
     client.start().await?;
+
+    Ok(())
+}
+
+/// [clap] is capable of creating auto-generated shell completion files.
+/// This function creates such a file for one of the supported shells and puts it into the
+/// specified output directory.
+fn create_shell_completion_file(shell: &Shell, output_directory: &PathBuf) -> Result<()> {
+    let mut app = CliArguments::command();
+    app.set_bin_name("pueue");
+    let completion_result = match shell {
+        Shell::Bash => generate_to(shells::Bash, &mut app, "pueue", output_directory),
+        Shell::Elvish => generate_to(shells::Elvish, &mut app, "pueue", output_directory),
+        Shell::Fish => generate_to(shells::Fish, &mut app, "pueue", output_directory),
+        Shell::PowerShell => generate_to(shells::PowerShell, &mut app, "pueue", output_directory),
+        Shell::Zsh => generate_to(shells::Zsh, &mut app, "pueue", output_directory),
+    };
+    completion_result.context(format!("Failed to generate completions for {shell:?}"))?;
 
     Ok(())
 }

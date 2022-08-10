@@ -16,8 +16,8 @@ use crate::commands::get_state;
 ///
 /// If no task is specified, this will check for the following cases:
 ///
-/// - No running task: Print an error that there are no running tasks
-/// - Single running task: Follow the output of that task
+/// - No running task: Print an error that there are no running tasks.
+/// - Single running task: Follow the output of that task.
 /// - Multiple running tasks: Print out the list of possible tasks to follow.
 pub async fn follow_local_task_logs(
     stream: &mut GenericStream,

@@ -1,3 +1,9 @@
+//! This module contains the logic for all non-trivial commands, such as `follow`, `restart`,
+//! `wait`, etc.
+//!
+//! "non-trivial" vaguely means that we, for instance, have to do additional requests to the
+//! daemon, open some files on the filesystem, edit files and so on.
+//! All commands that cannot be simply handled by handling requests or using `pueue_lib`.
 use anyhow::Result;
 
 use pueue_lib::network::message::Message;
