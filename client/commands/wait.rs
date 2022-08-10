@@ -18,7 +18,7 @@ use crate::{commands::get_state, display::OutputStyle};
 /// - A list of task ids
 /// - All tasks (`all == true`)
 ///
-/// By default, this will log status changes on tasks.
+/// By default, this will output status changes of tasks to `stdout`.
 /// Pass `quiet == true` to supress any logging.
 pub async fn wait(
     stream: &mut GenericStream,
@@ -133,37 +133,35 @@ fn log_status_change(
     task: &Task,
     style: &OutputStyle,
 ) {
-    // Finishing tasks get some special handling
+    let task_id = style.style_text(task.id, None, Some(Attribute::Bold));
+
+    // Check if the task has finished.
+    // In case it has, show the task's result in human-readable form.
+    // Color some parts of the output depending on the task's outcome.
     if let TaskStatus::Done(result) = &task.status {
         let text = match result {
             TaskResult::Success => {
-                let task_id = style.style_text(task.id, None, Some(Attribute::Bold));
                 let status = style.style_text("0", Some(Color::Green), None);
                 format!("Task {task_id} succeeded with {status}")
             }
             TaskResult::DependencyFailed => {
-                let task_id = style.style_text(task.id, None, Some(Attribute::Bold));
                 let status = style.style_text("failed dependencies", Some(Color::Red), None);
                 format!("Task {task_id} failed due to {status}")
             }
 
             TaskResult::FailedToSpawn(_) => {
-                let task_id = style.style_text(task.id, None, Some(Attribute::Bold));
                 let status = style.style_text("failed to spawn", Some(Color::Red), None);
                 format!("Task {task_id} {status}")
             }
             TaskResult::Failed(exit_code) => {
-                let task_id = style.style_text(task.id, None, Some(Attribute::Bold));
                 let status = style.style_text(exit_code, Some(Color::Red), Some(Attribute::Bold));
                 format!("Task {task_id} failed with {status}")
             }
             TaskResult::Errored => {
-                let task_id = style.style_text(task.id, None, Some(Attribute::Bold));
                 let status = style.style_text("IO error", Some(Color::Red), Some(Attribute::Bold));
                 format!("Task {task_id} experienced an {status}.")
             }
             TaskResult::Killed => {
-                let task_id = style.style_text(task.id, None, Some(Attribute::Bold));
                 let status = style.style_text("killed", Some(Color::Red), None);
                 format!("Task {task_id} has been {status}")
             }
@@ -172,10 +170,12 @@ fn log_status_change(
 
         return;
     }
+
+    // The task didn't finish yet, but changed it's state (e.g. from `Queued` to `Running`).
+    // Inform the user about this change.
     let new_status_color = get_color_for_status(&task.status);
     let previous_status_color = get_color_for_status(&previous_status);
 
-    let task_id = style.style_text(task.id, None, Some(Attribute::Bold));
     let previous_status = style.style_text(previous_status, Some(previous_status_color), None);
     let new_status = style.style_text(&task.status, Some(new_status_color), None);
     println!("{current_time} - Task {task_id} changed from {previous_status} to {new_status}",);

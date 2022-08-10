@@ -10,8 +10,11 @@ use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
 use super::{helper::*, OutputStyle};
 use crate::cli::SubCommand;
+use crate::display::group::get_group_headline;
 
 /// Print the current state of the daemon in a nicely formatted table.
+/// If there are multiple groups, each group with a task will have its own table.
+///
 /// We pass the tasks as a separate parameter and as a list.
 /// This allows us to print the tasks in any user-defined order.
 pub fn print_state(
@@ -41,6 +44,9 @@ pub fn print_state(
     print_all_groups(state, tasks, settings, style);
 }
 
+/// The user requested only a single group to be displayed.
+///
+/// Print this group or show an error if this group doesn't exist.
 fn print_single_group(
     state: State,
     tasks: Vec<Task>,
@@ -71,6 +77,9 @@ fn print_single_group(
     print_table(tasks, style, settings);
 }
 
+/// Print all groups. All tasks will be shown in the table of their assigned group.
+///
+/// This will create multiple tables, one table for each group.
 fn print_all_groups(state: State, tasks: Vec<Task>, settings: &Settings, style: &OutputStyle) {
     // Early exit and hint if there are no tasks in the queue
     // Print the state of the default group anyway, since this is information one wants to
@@ -126,7 +135,9 @@ fn print_all_groups(state: State, tasks: Vec<Task>, settings: &Settings, style: 
     }
 }
 
-/// Print some tasks into a nicely formatted table
+/// Display tasks in a nicely formatted table.
+///
+/// For info on how this works, take a look at [comfy_table].
 fn print_table(tasks: &[Task], style: &OutputStyle, settings: &Settings) {
     let (has_delayed_tasks, has_dependencies, has_labels) = has_special_columns(tasks);
 

@@ -10,11 +10,11 @@ use pueue_lib::task::{Task, TaskResult, TaskStatus};
 use crate::commands::edit::edit_line_wrapper;
 use crate::commands::get_state;
 
-/// When Restarting tasks, the remote state is queried and a AddMessage
+/// When restarting tasks, the remote state is queried and a [message::AddMessage]
 /// is create from the existing task in the state.
 ///
 /// This is done on the client-side, so we can easily edit the task before restarting it.
-/// It's also necessary to get all failed tasks, in case the user specified the --all_failed flag.
+/// It's also necessary to get all failed tasks, in case the user specified the `--all-failed` flag.
 #[allow(clippy::too_many_arguments)]
 pub async fn restart(
     stream: &mut GenericStream,

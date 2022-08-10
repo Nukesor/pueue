@@ -1,3 +1,7 @@
+//! This module contains all logic for printing or displaying structured information about the
+//! daemon.
+//!
+//! This includes formatting of task tables, group info, log inspection and log following.
 mod follow;
 mod group;
 pub mod helper;

@@ -23,7 +23,7 @@ use crate::display::*;
 ///
 /// Most commands are a simple ping-pong. However, some commands require a more complex
 /// communication pattern, such as the `follow` command, which can read local files,
-/// or the `edit` command, which needs to open an editor locally.
+/// or the `edit` command, which needs to open an editor.
 pub struct Client {
     subcommand: SubCommand,
     settings: Settings,
@@ -38,8 +38,11 @@ pub fn group_or_default(group: &Option<String>) -> String {
         .unwrap_or_else(|| PUEUE_DEFAULT_GROUP.to_string())
 }
 
-/// This is a small helper which determines the selection depending on given commandline
-/// parameters.
+/// This is a small helper which determines a task selection depending on
+/// given commandline parameters.
+/// I.e. whether the default group, a set of tasks or a specific group should be selected.
+/// `start`, `pause` and `kill` can target either of these three selections.
+///
 /// If no parameters are given, it returns to the default group.
 pub fn selection_from_params(
     all: bool,
@@ -58,7 +61,11 @@ pub fn selection_from_params(
 }
 
 impl Client {
-    /// Connect to the daemon, authorize via secret and return a new initialized Client.
+    /// Initialize a new client.
+    /// This includes establishing a connection to the daemon:
+    ///     - Connect to the daemon.
+    ///     - Authorize via secret.
+    ///     - Check versions incompatibilities.
     pub async fn new(settings: Settings, opt: CliArguments) -> Result<Self> {
         // Connect to daemon and get stream used for communication.
         let mut stream = get_client_stream(&settings.shared)
@@ -72,19 +79,18 @@ impl Client {
         send_bytes(&secret, &mut stream)
             .await
             .context("Failed to send secret.")?;
+
+        // Receive and parse the response. We expect the daemon's version as UTF-8.
         let version_bytes = receive_bytes(&mut stream)
             .await
             .context("Failed to receive version during handshake with daemon.")?;
-
         if version_bytes.is_empty() {
             bail!("Daemon went away after sending secret. Did you use the correct secret?")
         }
-
-        // Check if we got valid utf8. Invalid utf8 should never occur and is most likely a bug.
         let version = match String::from_utf8(version_bytes) {
             Ok(version) => version,
             Err(_) => {
-                bail!("Daemon went away after sending secret. Did you use the correct secret?")
+                bail!("Daemon sent invalid UTF-8. Did you use the correct secret?")
             }
         };
 
@@ -109,6 +115,8 @@ impl Client {
             }
         }
 
+        // Determine whether we should color/style our output or not.
+        // The user can explicitly disable/enable this, otherwise we check whether we are on a TTY.
         let style_enabled = match opt.color {
             ColorChoice::Auto => stdout().is_tty(),
             ColorChoice::Always => true,
@@ -116,15 +124,12 @@ impl Client {
         };
         let style = OutputStyle::new(&settings, style_enabled);
 
+        // Determine the subcommand that has been called by the user.
         // If no subcommand is given, we default to the `status` subcommand without any arguments.
-        let subcommand = if let Some(subcommand) = opt.cmd {
-            subcommand
-        } else {
-            SubCommand::Status {
-                json: false,
-                group: None,
-            }
-        };
+        let subcommand = opt.cmd.unwrap_or(SubCommand::Status {
+            json: false,
+            group: None,
+        });
 
         Ok(Client {
             settings,
@@ -264,7 +269,7 @@ impl Client {
 
     /// Handle logic that's super generic on the client-side.
     /// This (almost) always follows a singular ping-pong pattern.
-    /// One message to the daemon, one response, Done.
+    /// One message to the daemon, one response, done.
     ///
     /// The only exception is streaming of log output.
     /// In that case, we send one request and contine receiving until the stream shuts down.
@@ -288,7 +293,7 @@ impl Client {
     }
 
     /// Most returned messages can be handled in a generic fashion.
-    /// However, some commands require continuous receiving of messages (streaming).
+    /// However, some commands require to continuously receive messages (streaming).
     ///
     /// If this function returns `Ok(true)`, the parent function will continue to receive
     /// and handle messages from the daemon. Otherwise the client will simply exit.
@@ -357,6 +362,9 @@ impl Client {
 
     /// Convert the cli command into the message that's being sent to the server,
     /// so it can be understood by the daemon.
+    ///
+    /// This function is pretty large, but it consists mostly of simple conversions
+    /// of [SubCommand] variant to a [Message] variant.
     fn get_message_from_opt(&self) -> Result<Message> {
         match &self.subcommand {
             SubCommand::Add {

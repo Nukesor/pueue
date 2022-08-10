@@ -13,6 +13,14 @@ pub mod display;
 use crate::cli::{CliArguments, Shell, SubCommand};
 use crate::client::Client;
 
+/// This is the main entry point of the client.
+///
+/// At first we do some basic setup:
+/// - Parse the cli
+/// - Initialize logging
+/// - Read the config
+///
+/// Once all this is done, we init the [Client] struct and start the main loop via [Client::start].
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
     // Parse commandline options.
@@ -38,7 +46,7 @@ async fn main() -> Result<()> {
         return Ok(());
     }
 
-    // Set the verbosity level of the logger.
+    // Init the logger and set the verbosity level depending on the `-v` flags.
     let level = match opt.verbose {
         0 => LevelFilter::Error,
         1 => LevelFilter::Warn,

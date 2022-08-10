@@ -7,18 +7,24 @@ use pueue_lib::network::protocol::GenericStream;
 use crate::commands::get_state;
 use crate::display::follow_local_task_logs;
 
+/// This function reads a log file from the filesystem and streams it to `stdout`.
+/// This is the default behavior of `pueue`'s log reading logic, which is only possible
+/// if `pueued` runs on the same environment.
+///
+/// `pueue follow` can be called without a `task_id`, in which case we check whether there's a
+/// single running task. If that's the case, we default to it.
+/// If there are multiple tasks, the user has to specify which task they want to follow.
 pub async fn local_follow(
     stream: &mut GenericStream,
     pueue_directory: &Path,
     task_id: &Option<usize>,
     lines: Option<usize>,
 ) -> Result<()> {
-    // The user can specify the id of the task they want to follow
-    // If the id isn't specified and there's only a single running task, this task will be used.
-    // However, if there are multiple running tasks, the user will have to specify an id.
     let task_id = match task_id {
         Some(task_id) => *task_id,
         None => {
+            // The user didn't provide a task id.
+            // Check whether we can find a single running task to follow.
             let state = get_state(stream).await?;
             let running_ids: Vec<_> = state
                 .tasks
