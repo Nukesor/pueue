@@ -3,7 +3,6 @@ use anyhow::Result;
 use pueue_lib::network::message::{Message, TaskSelection};
 use pueue_lib::task::*;
 
-use crate::factories::*;
 use crate::fixtures::*;
 use crate::helper::*;
 
@@ -35,7 +34,7 @@ async fn test_stashed_add() -> Result<()> {
     let shared = &daemon.settings.shared;
 
     // Tell the daemon to add a task in stashed state.
-    let mut inner_message = add_message(shared, "sleep 60");
+    let mut inner_message = create_add_message(shared, "sleep 60");
     inner_message.stashed = true;
     let message = Message::Add(inner_message);
     assert_success(send_message(shared, message).await?);

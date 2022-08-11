@@ -6,12 +6,11 @@ use pueue_lib::network::message::*;
 use pueue_lib::settings::*;
 use pueue_lib::task::{Task, TaskStatus};
 
-use crate::factories::*;
 use crate::helper::*;
 
 /// Adds a task to the test daemon.
 pub async fn add_task(shared: &Shared, command: &str, start_immediately: bool) -> Result<Message> {
-    let mut inner_message = add_message(shared, command);
+    let mut inner_message = create_add_message(shared, command);
     inner_message.start_immediately = start_immediately;
     let message = Message::Add(inner_message);
 

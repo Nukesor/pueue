@@ -8,6 +8,3 @@ mod client;
 #[cfg(target_os = "linux")]
 #[allow(dead_code)]
 mod fixtures;
-
-#[cfg(target_os = "linux")]
-mod factories;

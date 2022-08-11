@@ -6,6 +6,3 @@ mod daemon;
 
 #[cfg(target_os = "linux")]
 mod fixtures;
-
-#[cfg(target_os = "linux")]
-mod factories;
