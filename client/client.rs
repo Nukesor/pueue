@@ -371,37 +371,30 @@ impl Client {
                 label,
                 print_task_id,
             } => {
-                let path = if let Some(path) = working_directory {
-                    path.clone()
-                } else {
-                    current_dir()?
-                };
+                // Either take the user-specified path or default to the current working directory.
+                let path = working_directory
+                    .as_ref()
+                    .map(|path| Ok(path.clone()))
+                    .unwrap_or_else(current_dir)?;
 
-                let mut envs = HashMap::new();
-                // Save all environment variables for later injection into the started task
-                for (key, value) in vars() {
-                    envs.insert(key, value);
-                }
-
-                // Escape any special shell characters in all strings before we concatenated them
-                // to a single string.
-                let command: Vec<String> = if *escape {
-                    command
+                let mut command = command.clone();
+                // The user can request to escape any special shell characters in all parameter strings before
+                // we concatenated them to a single string.
+                if *escape {
+                    command = command
                         .iter()
                         .map(|parameter| shell_escape::escape(Cow::from(parameter)).into_owned())
-                        .collect()
-                } else {
-                    command.clone()
-                };
+                        .collect();
+                }
 
-                let group = group_or_default(group);
                 Ok(Message::Add(AddMessage {
                     command: command.join(" "),
                     path,
-                    envs,
+                    // Catch the current environment for later injection into the task's process.
+                    envs: HashMap::from_iter(vars()),
                     start_immediately: *start_immediately,
                     stashed: *stashed,
-                    group,
+                    group: group_or_default(group),
                     enqueue_at: *delay_until,
                     dependencies: dependencies.to_vec(),
                     label: label.clone(),
