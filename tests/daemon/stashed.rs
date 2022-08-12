@@ -6,7 +6,6 @@ use pueue_lib::network::message::*;
 use pueue_lib::settings::Shared;
 use pueue_lib::task::*;
 
-use crate::factories::*;
 use crate::fixtures::*;
 use crate::helper::*;
 
@@ -17,7 +16,7 @@ pub async fn add_stashed_task(
     stashed: bool,
     enqueue_at: Option<DateTime<Local>>,
 ) -> Result<Message> {
-    let mut inner_message = add_message(shared, command);
+    let mut inner_message = create_add_message(shared, command);
     inner_message.stashed = stashed;
     inner_message.enqueue_at = enqueue_at;
     let message = Message::Add(inner_message);
