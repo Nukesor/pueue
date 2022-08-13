@@ -420,7 +420,7 @@ pub enum GroupCommand {
     Remove { name: String },
 }
 
-#[derive(Parser, ArgEnum, Debug, Clone, PartialEq)]
+#[derive(Parser, ArgEnum, Debug, Clone, PartialEq, Eq)]
 pub enum ColorChoice {
     Auto,
     Never,
