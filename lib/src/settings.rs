@@ -19,17 +19,24 @@ pub struct Shared {
     /// The directory that is used for all of pueue's state. \
     /// I.e. task logs, state dumps, etc.
     pub pueue_directory: Option<PathBuf>,
+    /// Don't access this property directly, but rather use the getter with the same name.
+    /// It's only public to allow proper integration testing.
+    ///
     /// The location where runtime related files will be placed.
     /// Defaults to `pueue_directory` unless `$XDG_RUNTIME_DIR` is set.
     pub runtime_directory: Option<PathBuf>,
+    /// Don't access this property directly, but rather use the getter with the same name.
+    /// It's only public to allow proper integration testing.
+    ///
+    /// The location of the alias file used by the daemon/client when working with
+    /// aliases.
+    pub alias_file: Option<PathBuf>,
+
     /// If this is set to true, unix sockets will be used.
     /// Otherwise we default to TCP+TLS
     #[cfg(not(target_os = "windows"))]
     #[serde(default = "default_true")]
     pub use_unix_socket: bool,
-    /// The path where the daemon's PID is located.
-    /// This is by default in `runtime_directory/pueue.pid`.
-    pub pid_path: Option<PathBuf>,
     /// Don't access this property directly, but rather use the getter with the same name.
     /// It's only public to allow proper integration testing.
     ///
@@ -43,6 +50,11 @@ pub struct Shared {
     /// The TCP port.
     #[serde(default = "default_port")]
     pub port: String,
+
+    /// The path where the daemon's PID is located.
+    /// This is by default in `runtime_directory/pueue.pid`.
+    pub pid_path: Option<PathBuf>,
+
     /// Don't access this property directly, but rather use the getter with the same name.
     /// It's only public to allow proper integration testing.
     ///
@@ -216,6 +228,18 @@ impl Shared {
         } else {
             self.runtime_directory()
                 .join(format!("pueue_{}.socket", whoami::username()))
+        }
+    }
+
+    /// The location of the alias file used by the daemon/client when working with
+    /// task aliases.
+    pub fn alias_file(&self) -> PathBuf {
+        if let Some(path) = &self.alias_file {
+            expand_home(path)
+        } else if let Some(config_dir) = dirs::config_dir() {
+            config_dir.join("pueue_aliases.yml")
+        } else {
+            PathBuf::from("pueue_aliases.yml")
         }
     }
 

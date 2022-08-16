@@ -8,6 +8,11 @@ The concept of SemVer is applied to the daemon/client API, but not the library A
 
 ## [0.21.0] - unreleased
 
+
+### Added
+
+- Added `Settings.shared.alias_file`, which can be used to specify the location of the `pueue_aliases.yml`.
+
 ### Changed
 
 - The process handling code has been moved from the daemon to `pueue_lib`. See [#336](https://github.com/Nukesor/pueue/issues/336).

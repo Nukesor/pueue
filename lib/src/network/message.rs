@@ -128,6 +128,8 @@ pub struct StartMessage {
     pub children: bool,
 }
 
+/// The messages used to restart tasks.
+/// It's possible to update the command and paths when restarting tasks.
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct RestartMessage {
     pub tasks: Vec<TasksToRestart>,
@@ -138,7 +140,9 @@ pub struct RestartMessage {
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct TasksToRestart {
     pub task_id: usize,
+    /// The command that should be used when restarting the task.
     pub command: String,
+    /// The path that should be used when restarting the task.
     pub path: PathBuf,
 }
 
