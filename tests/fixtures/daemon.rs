@@ -1,5 +1,7 @@
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::fs::File;
+use std::io::Write;
+use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
 
 use anyhow::{bail, Context, Result};
@@ -112,6 +114,13 @@ pub async fn standalone_daemon(shared: &Shared) -> Result<Child> {
 
 /// This is the base setup for all daemon test setups.
 pub fn daemon_base_setup() -> Result<(Settings, TempDir)> {
+    // Init the logger for debug output during tests.
+    // We ignore the result, as the logger can be initialized multiple times due to the
+    // way tests are run in Rust.
+    //use log::LevelFilter;
+    //use simplelog::{Config, SimpleLogger};
+    //let _ = SimpleLogger::init(LevelFilter::Info, Config::default());
+
     // Create a temporary directory used for testing.
     let tempdir = TempDir::new().unwrap();
     let tempdir_path = tempdir.path();
@@ -121,6 +130,7 @@ pub fn daemon_base_setup() -> Result<(Settings, TempDir)> {
     let shared = Shared {
         pueue_directory: Some(tempdir_path.to_path_buf()),
         runtime_directory: Some(tempdir_path.to_path_buf()),
+        alias_file: Some(tempdir_path.join("pueue_aliases.yml")),
         #[cfg(not(target_os = "windows"))]
         use_unix_socket: true,
         #[cfg(not(target_os = "windows"))]
@@ -175,6 +185,23 @@ pub async fn create_test_groups(shared: &Shared) -> Result<()> {
 
     wait_for_group(shared, "test_3").await?;
     wait_for_group(shared, "test_5").await?;
+
+    Ok(())
+}
+
+/// Create an alias file that'll be used by the daemon to do task aliasing.
+/// This fill should be created in the daemon's temporary runtime directory.
+pub fn create_test_alias_file(config_dir: &Path, aliases: HashMap<String, String>) -> Result<()> {
+    let content = serde_yaml::to_string(&aliases)
+        .context("Failed to serialize aliase configuration file.")?;
+
+    // Write the deserialized content to our alias file.
+    let path = config_dir.join("pueue_aliases.yml");
+    let mut alias_file = File::create(&path).context("Failed to open alias file")?;
+
+    alias_file
+        .write_all(content.as_bytes())
+        .context("Failed writing to alias file")?;
 
     Ok(())
 }

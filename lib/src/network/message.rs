@@ -128,18 +128,22 @@ pub struct StartMessage {
     pub children: bool,
 }
 
+/// The messages used to restart tasks.
+/// It's possible to update the command and paths when restarting tasks.
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct RestartMessage {
-    pub tasks: Vec<TasksToRestart>,
+    pub tasks: Vec<TaskToRestart>,
     pub start_immediately: bool,
     pub stashed: bool,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
-pub struct TasksToRestart {
+pub struct TaskToRestart {
     pub task_id: usize,
-    pub command: String,
-    pub path: PathBuf,
+    /// Allow to restart the task with an updated command.
+    pub command: Option<String>,
+    /// Allow to restart the task with an updated path.
+    pub path: Option<PathBuf>,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
@@ -252,13 +256,25 @@ pub struct LogRequestMessage {
 }
 
 /// Helper struct for sending tasks and their log output to the client.
-#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Deserialize, Serialize)]
 pub struct TaskLogMessage {
     pub task: Task,
     #[serde(default = "bool::default")]
     /// Indicates whether the log output has been truncated or not.
     pub output_complete: bool,
     pub output: Option<Vec<u8>>,
+}
+
+/// We use a custom `Debug` implementation for [TaskLogMessage], as the `output` field
+/// has too much info in it and renders log output unreadable.
+impl std::fmt::Debug for TaskLogMessage {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("TaskLogMessage")
+            .field("task", &self.task)
+            .field("output_complete", &self.output_complete)
+            .field("output", &"hidden")
+            .finish()
+    }
 }
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]

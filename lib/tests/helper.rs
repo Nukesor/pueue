@@ -15,6 +15,7 @@ pub fn get_shared_settings(
     let shared_settings = Shared {
         pueue_directory: Some(tempdir_path.to_path_buf()),
         runtime_directory: Some(tempdir_path.to_path_buf()),
+        alias_file: None,
         #[cfg(not(target_os = "windows"))]
         use_unix_socket,
         #[cfg(not(target_os = "windows"))]

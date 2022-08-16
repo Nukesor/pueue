@@ -1,8 +1,9 @@
-use crossbeam_channel::Sender;
-use pueue_lib::settings::Settings;
 use std::fmt::Display;
 
+use crossbeam_channel::Sender;
+
 use pueue_lib::network::message::*;
+use pueue_lib::settings::Settings;
 use pueue_lib::state::SharedState;
 
 use crate::network::response_helper::*;
@@ -45,7 +46,7 @@ pub fn handle_message(
         Message::Pause(message) => pause::pause(message, sender, state),
         Message::Remove(task_ids) => remove::remove(task_ids, state, settings),
         Message::Reset(message) => reset(message, sender),
-        Message::Restart(message) => restart::restart_multiple(message, sender, state),
+        Message::Restart(message) => restart::restart_multiple(message, sender, state, settings),
         Message::Send(message) => send::send(message, sender, state),
         Message::Start(message) => start::start(message, sender, state),
         Message::Stash(task_ids) => stash::stash(task_ids, state),

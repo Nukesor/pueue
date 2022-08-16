@@ -1,5 +1,6 @@
 use crossbeam_channel::Sender;
 
+use pueue_lib::aliasing::insert_alias;
 use pueue_lib::network::message::*;
 use pueue_lib::state::{GroupStatus, SharedState};
 use pueue_lib::task::{Task, TaskStatus};
@@ -52,6 +53,9 @@ pub fn add_task(
         message.dependencies,
         message.label,
     );
+    // Insert the client alias if we applicable.
+    task.command = insert_alias(settings, task.original_command.clone());
+
     // Sort and deduplicate dependency id.
     task.dependencies.sort_unstable();
     task.dependencies.dedup();

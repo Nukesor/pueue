@@ -17,8 +17,8 @@ impl Children {
     /// A convenience function to check whether there's child with a given task_id.
     /// We have to do a nested linear search, as these datastructure aren't indexed via task_ids.
     pub fn has_child(&self, task_id: usize) -> bool {
-        for (_, pool) in self.0.iter() {
-            for (_, (child_task_id, _)) in pool.iter() {
+        for pool in self.0.values() {
+            for (child_task_id, _) in pool.values() {
                 if child_task_id == &task_id {
                     return true;
                 }
@@ -29,10 +29,11 @@ impl Children {
     }
 
     /// A convenience function to get a child by its respective task_id.
-    /// We have to do a nested linear search, as these datastructure aren't indexed via task_ids.
+    /// We have to do a nested linear search over all children of all pools,
+    /// beceause these datastructure aren't indexed via task_ids.
     pub fn get_child(&self, task_id: usize) -> Option<&Child> {
-        for (_, pool) in self.0.iter() {
-            for (_, (child_task_id, child)) in pool.iter() {
+        for pool in self.0.values() {
+            for (child_task_id, child) in pool.values() {
                 if child_task_id == &task_id {
                     return Some(child);
                 }
@@ -42,11 +43,12 @@ impl Children {
         None
     }
 
-    /// A convenience function to get a child by its respective task_id.
-    /// We have to do a nested linear search, as these datastructure aren't indexed via task_ids.
+    /// A convenience function to get a mutable child by its respective task_id.
+    /// We have to do a nested linear search over all children of all pools,
+    /// beceause these datastructure aren't indexed via task_ids.
     pub fn get_child_mut(&mut self, task_id: usize) -> Option<&mut Child> {
-        for (_, pool) in self.0.iter_mut() {
-            for (_, (child_task_id, child)) in pool.iter_mut() {
+        for pool in self.0.values_mut() {
+            for (child_task_id, child) in pool.values_mut() {
                 if child_task_id == &task_id {
                     return Some(child);
                 }
@@ -59,8 +61,8 @@ impl Children {
     /// A convenience function to get a list with all task_ids of all children.
     pub fn all_task_ids(&self) -> Vec<usize> {
         let mut task_ids = Vec::new();
-        for (_, pool) in self.0.iter() {
-            for (_, (task_id, _)) in pool.iter() {
+        for pool in self.0.values() {
+            for (task_id, _) in pool.values() {
                 task_ids.push(*task_id)
             }
         }

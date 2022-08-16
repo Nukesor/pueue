@@ -1,4 +1,5 @@
 mod add;
+mod aliases;
 mod clean;
 mod edit;
 mod environment_variables;
