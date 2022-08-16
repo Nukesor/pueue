@@ -114,6 +114,13 @@ pub async fn standalone_daemon(shared: &Shared) -> Result<Child> {
 
 /// This is the base setup for all daemon test setups.
 pub fn daemon_base_setup() -> Result<(Settings, TempDir)> {
+    // Init the logger for debug output during tests.
+    // We ignore the result, as the logger can be initialized multiple times due to the
+    // way tests are run in Rust.
+    //use log::LevelFilter;
+    //use simplelog::{Config, SimpleLogger};
+    //let _ = SimpleLogger::init(LevelFilter::Info, Config::default());
+
     // Create a temporary directory used for testing.
     let tempdir = TempDir::new().unwrap();
     let tempdir_path = tempdir.path();
