@@ -2,7 +2,7 @@
 │ Task 0:    completed successfully │
 └───────────────────────────────────┘
 Command: echo test                       
-   Path: {{ cwd }}                 
+   Path: {{ task_0_cwd}}                            
   Start: {{ task_0_start_long }} 
     End: {{ task_0_end_long }} 
 

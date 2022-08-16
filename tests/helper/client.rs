@@ -58,18 +58,13 @@ pub async fn get_task_context(settings: &Settings) -> Result<HashMap<String, Str
 
     let mut context = HashMap::new();
 
-    // Get the current daemon cwd.
-    context.insert(
-        "cwd".to_string(),
-        settings
-            .shared
-            .pueue_directory()
-            .to_string_lossy()
-            .to_string(),
-    );
-
     for (id, task) in state.tasks {
         let task_name = format!("task_{}", id);
+        // Get the current daemon cwd.
+        context.insert(
+            format!("{task_name}_cwd"),
+            task.path.to_string_lossy().to_string(),
+        );
 
         if let Some(start) = task.start {
             let formatted = start

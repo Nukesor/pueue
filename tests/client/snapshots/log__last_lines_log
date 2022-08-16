@@ -11,7 +11,7 @@ Command: echo '1
          8                               
          9                               
          10'                             
-   Path: {{ cwd }}                 
+   Path: {{ task_0_cwd}}                            
   Start: {{ task_0_start_long }} 
     End: {{ task_0_end_long }} 
 

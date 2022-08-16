@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::env::vars;
+use std::path::PathBuf;
 
 use anyhow::{anyhow, Context, Result};
 
@@ -11,7 +12,17 @@ use crate::helper::*;
 
 /// Adds a task to the test daemon.
 pub async fn add_task(shared: &Shared, command: &str, start_immediately: bool) -> Result<Message> {
-    let mut inner_message = create_add_message(shared, command);
+    add_task_with_path(shared, command, start_immediately, shared.pueue_directory()).await
+}
+
+/// Adds a task with a specific working directory to the test daemon.
+pub async fn add_task_with_path<P: Into<PathBuf>>(
+    shared: &Shared,
+    command: &str,
+    start_immediately: bool,
+    path: P,
+) -> Result<Message> {
+    let mut inner_message = create_add_message_with_path(command, path);
     inner_message.start_immediately = start_immediately;
     let message = Message::Add(inner_message);
 
@@ -23,9 +34,17 @@ pub async fn add_task(shared: &Shared, command: &str, start_immediately: bool) -
 /// Create a bare AddMessage for testing.
 /// This is just here to minimize boilerplate code.
 pub fn create_add_message(shared: &Shared, command: &str) -> AddMessage {
+    create_add_message_with_path(command, shared.pueue_directory())
+}
+
+/// Create a bare AddMessage for testing.
+/// This is just here to minimize boilerplate code.
+///
+/// Allows to set the task's cwd.
+pub fn create_add_message_with_path<P: Into<PathBuf>>(command: &str, path: P) -> AddMessage {
     AddMessage {
         command: command.into(),
-        path: shared.pueue_directory(),
+        path: path.into(),
         envs: HashMap::from_iter(vars()),
         start_immediately: false,
         stashed: false,

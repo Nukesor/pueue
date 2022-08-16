@@ -17,7 +17,7 @@ async fn default_status(#[case] use_subcommand: bool) -> Result<()> {
     let shared = &daemon.settings.shared;
 
     // Add a task and wait until it finishes.
-    assert_success(add_task(shared, "ls", false).await?);
+    assert_success(add_task_with_path(shared, "ls", false, "/tmp").await?);
     wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
 
     let subcommand = if use_subcommand {
@@ -43,12 +43,12 @@ async fn full_status() -> Result<()> {
     // Add a paused task so we can use it as a dependency.
     run_client_command(
         shared,
-        &["add", "--label", "test", "--delay", "1 minute", "ls"],
+        &["add", "--label=test", "-w=/tmp", "--delay=1 minute", "ls"],
     )
     .await?;
 
     // Add a second command that depends on the first one.
-    run_client_command(shared, &["add", "--after=0", "ls"]).await?;
+    run_client_command(shared, &["add", "-w=/tmp", "--after=0", "ls"]).await?;
 
     let output = run_client_command(shared, &["status"]).await?;
 
@@ -65,10 +65,10 @@ async fn colored_status() -> Result<()> {
     let shared = &daemon.settings.shared;
 
     // Add a task and wait until it finishes.
-    assert_success(add_task(shared, "ls", false).await?);
+    assert_success(add_task_with_path(shared, "ls", false, "/tmp").await?);
     wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
 
-    let output = run_client_command(shared, &["--color", "always", "status"]).await?;
+    let output = run_client_command(shared, &["--color=always", "status"]).await?;
 
     let context = get_task_context(&daemon.settings).await?;
     assert_stdout_matches("status__status_with_color", output.stdout, context)?;
@@ -83,7 +83,7 @@ async fn status_json() -> Result<()> {
     let shared = &daemon.settings.shared;
 
     // Add a task and wait until it finishes.
-    assert_success(add_task(shared, "ls", false).await?);
+    assert_success(add_task_with_path(shared, "ls", false, "/tmp").await?);
     wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
 
     let output = run_client_command(shared, &["status", "--json"]).await?;
