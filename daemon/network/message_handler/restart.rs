@@ -1,4 +1,5 @@
 use crossbeam_channel::Sender;
+use pueue_lib::settings::Settings;
 use std::sync::MutexGuard;
 
 use pueue_lib::aliasing::insert_alias;
@@ -16,6 +17,7 @@ pub fn restart_multiple(
     message: RestartMessage,
     sender: &Sender<Message>,
     state: &SharedState,
+    settings: &Settings,
 ) -> Message {
     let task_ids: Vec<usize> = message.tasks.iter().map(|task| task.task_id).collect();
     let mut state = state.lock().unwrap();
@@ -31,7 +33,7 @@ pub fn restart_multiple(
 
     // Actually restart all tasks
     for task in message.tasks.iter() {
-        restart(&mut state, task, message.stashed);
+        restart(&mut state, task, message.stashed, settings);
     }
 
     // Tell the task manager to start the task immediately if requested.
@@ -52,7 +54,12 @@ pub fn restart_multiple(
 ///
 /// The "not in-place" restart functionality is actually just a copy the finished task + create a
 /// new task, which is completely handled on the client-side.
-fn restart(state: &mut MutexGuard<State>, to_restart: &TasksToRestart, stashed: bool) {
+fn restart(
+    state: &mut MutexGuard<State>,
+    to_restart: &TasksToRestart,
+    stashed: bool,
+    settings: &Settings,
+) {
     // Check if we actually know this task.
     let task = if let Some(task) = state.tasks.get_mut(&to_restart.task_id) {
         task
@@ -74,7 +81,7 @@ fn restart(state: &mut MutexGuard<State>, to_restart: &TasksToRestart, stashed: 
 
     // Update command and path.
     task.original_command = to_restart.command.clone();
-    task.command = insert_alias(to_restart.command.clone());
+    task.command = insert_alias(settings, to_restart.command.clone());
     task.path = to_restart.path.clone();
 
     // Reset all variables of any previous run.

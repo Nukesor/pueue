@@ -45,7 +45,7 @@ pub fn edit(message: EditMessage, state: &SharedState, settings: &Settings) -> M
 
             task.status = task.prev_status.clone();
             task.original_command = message.command.clone();
-            task.command = insert_alias(message.command.clone());
+            task.command = insert_alias(settings, message.command.clone());
             task.path = message.path.clone();
             ok_or_return_failure_message!(save_state(&state, settings));
 

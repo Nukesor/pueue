@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 
 - Show a hint when calling `pueue log` if the task output has been truncated. [#318](https://github.com/Nukesor/pueue/issues/318)
+- Add `Settings.shared.alias_file`, which allows to set the location of the `pueue_aliases.yml` file.
 
 ### Fixed
 

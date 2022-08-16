@@ -4,7 +4,7 @@ use chrono::prelude::*;
 use serde_derive::{Deserialize, Serialize};
 use strum_macros::Display;
 
-use crate::{aliasing::insert_alias, state::PUEUE_DEFAULT_GROUP};
+use crate::state::PUEUE_DEFAULT_GROUP;
 
 /// This enum represents the status of the internal task handling of Pueue.
 /// They basically represent the internal task life-cycle.
@@ -77,12 +77,10 @@ impl Task {
         dependencies: Vec<usize>,
         label: Option<String>,
     ) -> Task {
-        let command = insert_alias(original_command.clone());
-
         Task {
             id: 0,
-            original_command,
-            command,
+            original_command: original_command.clone(),
+            command: original_command,
             path,
             envs,
             group,
