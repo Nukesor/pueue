@@ -132,18 +132,18 @@ pub struct StartMessage {
 /// It's possible to update the command and paths when restarting tasks.
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct RestartMessage {
-    pub tasks: Vec<TasksToRestart>,
+    pub tasks: Vec<TaskToRestart>,
     pub start_immediately: bool,
     pub stashed: bool,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
-pub struct TasksToRestart {
+pub struct TaskToRestart {
     pub task_id: usize,
-    /// The command that should be used when restarting the task.
-    pub command: String,
-    /// The path that should be used when restarting the task.
-    pub path: PathBuf,
+    /// Allow to restart the task with an updated command.
+    pub command: Option<String>,
+    /// Allow to restart the task with an updated path.
+    pub path: Option<PathBuf>,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]

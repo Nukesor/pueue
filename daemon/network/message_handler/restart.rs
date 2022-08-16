@@ -56,7 +56,7 @@ pub fn restart_multiple(
 /// new task, which is completely handled on the client-side.
 fn restart(
     state: &mut MutexGuard<State>,
-    to_restart: &TasksToRestart,
+    to_restart: &TaskToRestart,
     stashed: bool,
     settings: &Settings,
 ) {
@@ -79,10 +79,16 @@ fn restart(
         TaskStatus::Queued
     };
 
-    // Update command and path.
-    task.original_command = to_restart.command.clone();
-    task.command = insert_alias(settings, to_restart.command.clone());
-    task.path = to_restart.path.clone();
+    // Update command if applicable.
+    if let Some(new_command) = &to_restart.command {
+        task.original_command = new_command.clone();
+        task.command = insert_alias(settings, new_command.clone());
+    }
+
+    // Update path if applicable.
+    if let Some(path) = &to_restart.path {
+        task.path = path.clone();
+    }
 
     // Reset all variables of any previous run.
     task.start = None;

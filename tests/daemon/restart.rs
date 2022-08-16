@@ -21,10 +21,10 @@ async fn test_restart_in_place() -> Result<()> {
 
     // Restart task 0 with an extended sleep command with a different path.
     let restart_message = Message::Restart(RestartMessage {
-        tasks: vec![TasksToRestart {
+        tasks: vec![TaskToRestart {
             task_id: 0,
-            command: "sleep 60".to_string(),
-            path: PathBuf::from("/tmp"),
+            command: Some("sleep 60".to_string()),
+            path: Some(PathBuf::from("/tmp")),
         }],
         start_immediately: false,
         stashed: false,
@@ -60,10 +60,10 @@ async fn test_cannot_restart_running() -> Result<()> {
 
     // Restart task 0 with an extended sleep command.
     let restart_message = Message::Restart(RestartMessage {
-        tasks: vec![TasksToRestart {
+        tasks: vec![TaskToRestart {
             task_id: 0,
-            command: "sleep 60".to_string(),
-            path: PathBuf::from("/tmp"),
+            command: None,
+            path: None,
         }],
         start_immediately: false,
         stashed: false,

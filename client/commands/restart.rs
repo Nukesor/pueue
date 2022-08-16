@@ -81,23 +81,28 @@ pub async fn restart(
         new_task.status = new_status.clone();
 
         // Path and command can be edited, if the use specified the -e or -p flag.
-        let mut command = task.original_command.clone();
-        let mut path = task.path.clone();
+        let mut command = None;
+        let mut path = None;
+
+        // Update the command if requested.
         if edit_command {
-            command = edit_line_wrapper(stream, *task_id, &command).await?
+            command = Some(edit_line_wrapper(stream, *task_id, &task.command).await?);
         };
+
+        // Update the path if requested.
         if edit_path {
-            let str_path = path
+            let str_path = task
+                .path
                 .to_str()
                 .context("Failed to convert task path to string")?;
             let changed_path = edit_line_wrapper(stream, *task_id, str_path).await?;
-            path = PathBuf::from(changed_path);
+            path = Some(PathBuf::from(changed_path));
         }
 
         // Add the tasks to the singular message, if we want to restart the tasks in-place.
         // And continue with the next task. The message will then be sent after the for loop.
         if in_place {
-            restart_message.tasks.push(TasksToRestart {
+            restart_message.tasks.push(TaskToRestart {
                 task_id: *task_id,
                 command,
                 path,
@@ -106,10 +111,11 @@ pub async fn restart(
             continue;
         }
 
+        // In case we don't do in-place restarts, we have to add a new task.
         // Create a AddMessage to send the task to the daemon from the updated info and the old task.
         let add_task_message = Message::Add(AddMessage {
-            command,
-            path,
+            command: command.unwrap_or_else(|| task.command.clone()),
+            path: path.unwrap_or_else(|| task.path.clone()),
             envs: task.envs.clone(),
             start_immediately,
             stashed,

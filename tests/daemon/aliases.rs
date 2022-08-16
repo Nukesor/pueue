@@ -60,10 +60,10 @@ async fn test_restart_with_alias() -> Result<()> {
 
     // Restart the task while editing its command.
     let message = Message::Restart(RestartMessage {
-        tasks: vec![TasksToRestart {
+        tasks: vec![TaskToRestart {
             task_id: 0,
-            command: "replaced_cmd test".to_string(),
-            path: daemon.tempdir.path().to_owned(),
+            command: Some("replaced_cmd test".to_string()),
+            path: None,
         }],
         start_immediately: true,
         stashed: false,

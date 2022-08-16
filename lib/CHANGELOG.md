@@ -8,7 +8,6 @@ The concept of SemVer is applied to the daemon/client API, but not the library A
 
 ## [0.21.0] - unreleased
 
-
 ### Added
 
 - Added `Settings.shared.alias_file`, which can be used to specify the location of the `pueue_aliases.yml`.
@@ -18,6 +17,8 @@ The concept of SemVer is applied to the daemon/client API, but not the library A
 - The process handling code has been moved from the daemon to `pueue_lib`. See [#336](https://github.com/Nukesor/pueue/issues/336).
     The reason for this is, that the client will need some of these process handling capabilitites to spawn shell commands when editing tasks.
 - The module structure of the platform specific networking code has been streamlined.
+- Renamed `TasksToRestart` to `TaskToRestart`.
+- Make `TaskToRestart::path` and `TaskToRestart::command` optional.
 
 ## [0.20.0] - 2022-07-21
 
