@@ -61,10 +61,10 @@ assert_cmd = "2"
 better-panic = "0.3"
 pretty_assertions = "1"
 rstest = "0.15"
-serde_yaml = "0.8"
+serde_yaml = "0.9"
 
 # Test specific dev-dependencies
 [target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]
 nix = "0.24"
 whoami = "1"
-procfs = { version = "0.12", default-features = false }
+procfs = { version = "0.14", default-features = false }

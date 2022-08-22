@@ -79,5 +79,5 @@ pub fn wait_for_shutdown(pid: i32) -> Result<()> {
         return Ok(());
     }
 
-    bail!("Couldn't find pid file after about 2 sec.");
+    bail!("Pueued daemon didn't shut down after about 2 sec.");
 }
