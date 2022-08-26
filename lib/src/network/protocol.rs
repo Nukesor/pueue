@@ -13,7 +13,7 @@ use crate::network::message::*;
 pub use super::socket::*;
 
 // We choose a packet size of 1280 to be on the safe site regarding IPv6 MTU.
-const PACKET_SIZE: usize = 1280;
+pub const PACKET_SIZE: usize = 1280;
 
 /// Convenience wrapper around send_bytes.
 /// Deserialize a message and feed the bytes into send_bytes.

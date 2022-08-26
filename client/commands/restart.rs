@@ -10,7 +10,7 @@ use pueue_lib::task::{Task, TaskResult, TaskStatus};
 use crate::commands::edit::edit_line_wrapper;
 use crate::commands::get_state;
 
-/// When restarting tasks, the remote state is queried and a [message::AddMessage]
+/// When restarting tasks, the remote state is queried and a [AddMessage]
 /// is create from the existing task in the state.
 ///
 /// This is done on the client-side, so we can easily edit the task before restarting it.
