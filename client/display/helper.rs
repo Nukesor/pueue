@@ -1,30 +1,8 @@
 use std::collections::BTreeMap;
 
-use pueue_lib::task::{Task, TaskStatus};
+use chrono::Local;
 
-/// This is a helper function for working with tables when calling `pueue status`.
-///
-/// By default, several columns aren't shown until there's at least one task with relevant data.
-/// This function determines whether any of those columns should be shown.
-pub fn has_special_columns(tasks: &[Task]) -> (bool, bool, bool) {
-    // Check whether there are any delayed tasks.
-    let has_delayed_tasks = tasks.iter().any(|task| {
-        matches!(
-            task.status,
-            TaskStatus::Stashed {
-                enqueue_at: Some(_)
-            }
-        )
-    });
-
-    // Check whether there are any tasks with dependencies.
-    let has_dependencies = tasks.iter().any(|task| !task.dependencies.is_empty());
-
-    // Check whether there are any tasks a label.
-    let has_labels = tasks.iter().any(|task| task.label.is_some());
-
-    (has_delayed_tasks, has_dependencies, has_labels)
-}
+use pueue_lib::{settings::Settings, task::Task};
 
 /// Sort given tasks by their groups.
 /// This is needed to print a table for each group.
@@ -39,4 +17,51 @@ pub fn sort_tasks_by_group(tasks: Vec<Task>) -> BTreeMap<String, Vec<Task>> {
     }
 
     sorted_task_groups
+}
+
+/// Returns the formatted `start` and `end` text for a given task.
+///
+/// 1. If the start || end is today, skip the date.
+/// 2. Otherwise show the date in both.
+///
+/// If the task doesn't have a start and/or end yet, an empty string will be returned
+/// for the respective field.
+pub fn formatted_start_end(task: &Task, settings: &Settings) -> (String, String) {
+    // Get the start time.
+    // If the task didn't start yet, just return two empty strings.
+    let start = match task.start {
+        Some(start) => start,
+        None => return ("".into(), "".into()),
+    };
+
+    // If the task started today, just show the time.
+    // Otherwise show the full date and time.
+    let started_today = start >= Local::today().and_hms(0, 0, 0);
+    let formatted_start = if started_today {
+        start
+            .format(&settings.client.status_time_format)
+            .to_string()
+    } else {
+        start
+            .format(&settings.client.status_datetime_format)
+            .to_string()
+    };
+
+    // Get finish time, if already set. Otherwise only return the formatted start.
+    let end = match task.end {
+        Some(end) => end,
+        None => return (formatted_start, "".into()),
+    };
+
+    // If the task ended today we only show the time.
+    // In all other circumstances, we show the full date.
+    let finished_today = end >= Local::today().and_hms(0, 0, 0);
+    let formatted_end = if finished_today {
+        end.format(&settings.client.status_time_format).to_string()
+    } else {
+        end.format(&settings.client.status_datetime_format)
+            .to_string()
+    };
+
+    (formatted_start, formatted_end)
 }
