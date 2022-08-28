@@ -16,7 +16,7 @@ struct QueryParser;
 ///         A `select [columns]` statement will define the set of visible columns.
 pub fn apply_query(query: String, table_builder: &mut TableBuilder) -> Result<()> {
     let mut parsed = QueryParser::parse(Rule::query, &query).context("Failed to parse query")?;
-    //dbg!(&parsed);
+    dbg!(&parsed);
 
     // Expect there to be exactly one pair for the full query.
     // Return early if we got an empty query.

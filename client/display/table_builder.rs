@@ -122,15 +122,15 @@ impl<'a> TableBuilder<'a> {
 
         for rule in rules {
             match rule {
-                Rule::id => self.id = true,
-                Rule::status => self.status = true,
-                Rule::enqueue_at => self.enqueue_at = true,
-                Rule::dependencies => self.dependencies = true,
-                Rule::label => self.label = true,
-                Rule::command => self.command = true,
-                Rule::path => self.path = true,
-                Rule::start => self.start = true,
-                Rule::end => self.end = true,
+                Rule::column_id => self.id = true,
+                Rule::column_status => self.status = true,
+                Rule::column_enqueue_at => self.enqueue_at = true,
+                Rule::column_dependencies => self.dependencies = true,
+                Rule::column_label => self.label = true,
+                Rule::column_command => self.command = true,
+                Rule::column_path => self.path = true,
+                Rule::column_start => self.start = true,
+                Rule::column_end => self.end = true,
                 _ => (),
             }
         }
