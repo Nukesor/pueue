@@ -6,6 +6,7 @@ use crossterm::style::{style, Attribute, Color, Stylize};
 /// OutputStyle wrapper for actual colors depending on settings
 /// - Enables styles if color mode is 'always', or if color mode is 'auto' and output is a tty.
 /// - Using dark colors if dark_mode is enabled
+#[derive(Debug, Clone)]
 pub struct OutputStyle {
     /// whether or not ANSI styling is enabled
     pub enabled: bool,
