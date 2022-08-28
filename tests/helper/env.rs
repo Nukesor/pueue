@@ -26,7 +26,7 @@ pub async fn assert_worker_envs(
     assert_eq!(
         task.envs.get("PUEUE_WORKER_ID"),
         Some(&worker.to_string()),
-        "Worker id didn't for task {task_id}",
+        "Worker id hasn't been correctly for task {task_id}",
     );
 
     // Get the log output for the task.

@@ -54,9 +54,9 @@ async fn test_multiple_worker() -> Result<()> {
         assert_worker_envs(shared, &state, task_id, task_id, "test_3").await?;
     }
 
-    // Spawn to more tasks and wait for them
+    // Spawn two more tasks and wait for them
     for _ in 0..2 {
-        assert_success(add_env_task_to_group(shared, "sleep 0.1", "test_3").await?);
+        assert_success(add_env_task_to_group(shared, "sleep 0.5", "test_3").await?);
     }
     wait_for_task_condition(shared, 4, |task| task.is_done()).await?;
 
