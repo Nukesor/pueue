@@ -1,20 +1,58 @@
 WHITESPACE = _{ " " }
 COMMA = _{ "," }
 
-id = { ^"id" }
-status = { ^"status" }
-command = { ^"command" }
-label = { ^"label" }
-path = { ^"path" }
-enqueue_at = { ^"enqueue_at" }
-dependencies = { ^"dependencies" }
-start = { ^"start" }
-end = { ^"end" }
+// Definition of all columns
+column_id = { ^"id" }
+column_status = { ^"status" }
+column_command = { ^"command" }
+column_label = { ^"label" }
+column_path = { ^"path" }
+column_enqueue_at = { ^"enqueue_at" }
+column_dependencies = { ^"dependencies" }
+column_start = { ^"start" }
+column_end = { ^"end" }
 
-column = { id | status | command | label | path | enqueue_at | dependencies | start | end }
+// Either one of all column and a comma-separated list of columns.
+column = { column_id | column_status | column_command | column_label | column_path | column_enqueue_at | column_dependencies | column_start | column_end }
 multiple_columns = { column ~ (COMMA ~ column )* }
 
+// ----- Column visibility -----
+
+// The select clause used to specify the columns that should be shown.
 select = { ^"select" }
 select_query = { select ~ multiple_columns }
 
-query = { SOI ~ select_query? ~ EOI }
+// ----- Filtering -----
+// Definition of possible comparison operators for task filtering.
+eq = { ^"=" }
+neq = { ^"!=" }
+lt = { ^"<" }
+gt = { ^">" }
+operator = { eq | neq | lt | gt }
+
+// Status filter
+status_queued = { ^"queued" }
+status_stashed = { ^"stashed" }
+status_running = { ^"running" }
+status_paused = { ^"paused" }
+status_done = { ^"done" }
+
+status = { status_queued | status_stashed | status_running | status_paused | status_done }
+status_filter = { column_status ~ (eq | neq) ~ status }
+
+// Label filter
+label = { ANY* }
+label_filter = { column_label ~ ( eq | neq ) ~ label }
+
+// Time related filters
+datetime = { ASCII_DIGIT{4} ~ "-" ~ ASCII_DIGIT{2} ~ "-" ~ ASCII_DIGIT{2}  ~ ASCII_DIGIT{2} ~ ":" ~ ASCII_DIGIT{2} ~ (":" ~ ASCII_DIGIT{2})? }
+date = { ASCII_DIGIT{4} ~ "-" ~ ASCII_DIGIT{2} ~ "-" ~ ASCII_DIGIT{2} }
+time = { ASCII_DIGIT{2} ~ ":" ~ ASCII_DIGIT{2} ~ (":" ~ ASCII_DIGIT{2})? }
+
+datetime_filter = { (column_start | column_end | column_enqueue_at) ~ operator ~ (datetime | date | time) }
+
+// The final filter clause to filter tasks by user-given constraints
+filter = { ^"filter" }
+filter_query = { filter ~ ( datetime_filter | status_filter | label_filter )*? }
+
+query = { SOI ~ select_query? ~ filter_query? ~ EOI }
