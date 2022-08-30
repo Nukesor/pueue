@@ -10,7 +10,7 @@ use pueue_lib::settings::Settings;
 mod cli;
 mod client;
 mod commands;
-mod display;
+pub(crate) mod display;
 mod query;
 
 use crate::cli::{CliArguments, Shell, SubCommand};
