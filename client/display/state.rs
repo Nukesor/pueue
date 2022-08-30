@@ -1,5 +1,4 @@
-use anyhow::{Context, Result};
-use pest::Parser;
+use anyhow::Result;
 
 use pueue_lib::settings::Settings;
 use pueue_lib::state::{State, PUEUE_DEFAULT_GROUP};
@@ -8,13 +7,13 @@ use pueue_lib::task::Task;
 use super::{helper::*, table_builder::TableBuilder, OutputStyle};
 use crate::cli::SubCommand;
 use crate::display::group::get_group_headline;
-use crate::query::*;
+use crate::query::apply_query;
 
 /// Print the current state of the daemon in a nicely formatted table.
 /// If there are multiple groups, each group with a task will have its own table.
 ///
 /// We pass the tasks as a separate parameter and as a list.
-/// This allows us to print the tasks in any user-defined order.
+/// This allows us to print the tasks in the order passed to the `format-status` subcommand.
 pub fn print_state<'a>(
     state: State,
     tasks: Vec<Task>,
@@ -28,11 +27,10 @@ pub fn print_state<'a>(
         _ => panic!("Got wrong Subcommand {cli_command:?} in print_state. This shouldn't happen!"),
     };
 
+    let mut table_builder = TableBuilder::new(settings, style);
+
     if let Some(query) = query {
-        let full_query = query.join(" ");
-        let parsed =
-            QueryParser::parse(Rule::query, &full_query).context("Failed to parse query")?;
-        dbg!(parsed);
+        apply_query(query.join(" "), &mut table_builder)?;
     }
 
     // If the json flag is specified, print the state as json and exit.
@@ -40,8 +38,6 @@ pub fn print_state<'a>(
         println!("{}", serde_json::to_string(&state).unwrap());
         return Ok(());
     }
-
-    let table_builder = TableBuilder::new(settings, style);
 
     if let Some(group) = group_only {
         print_single_group(state, tasks, style, group, table_builder);

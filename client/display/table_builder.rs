@@ -7,6 +7,7 @@ use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
 use super::helper::formatted_start_end;
 use super::OutputStyle;
+use crate::query::Rule;
 
 /// This builder is responsible for determining which table columns should be displayed and
 /// building a full [comfy_table] from a list of given [Task]s.
@@ -14,6 +15,11 @@ use super::OutputStyle;
 pub struct TableBuilder<'a> {
     settings: &'a Settings,
     style: &'a OutputStyle,
+
+    /// Whether the columns to be displayed are explicitly selected by the user.
+    /// If that's the case, we won't do any automated checks whether columns should be displayed or
+    /// not.
+    selected_columns: bool,
 
     /// This following fields represent which columns should be displayed when executing
     /// `pueue status`. `true` for any column means that it'll be shown in the table.
@@ -33,6 +39,8 @@ impl<'a> TableBuilder<'a> {
         Self {
             settings,
             style,
+
+            selected_columns: false,
 
             id: true,
             status: true,
@@ -67,6 +75,10 @@ impl<'a> TableBuilder<'a> {
     /// By default, several columns aren't shown until there's at least one task with relevant data.
     /// This function determines whether any of those columns should be shown.
     fn determine_special_columns(&mut self, tasks: &[Task]) {
+        if self.selected_columns {
+            return;
+        }
+
         // Check whether there are any delayed tasks.
         let has_delayed_tasks = tasks.iter().any(|task| {
             matches!(
@@ -88,6 +100,39 @@ impl<'a> TableBuilder<'a> {
         // Check whether there are any tasks a label.
         if tasks.iter().any(|task| task.label.is_some()) {
             self.label = true;
+        }
+    }
+
+    /// Take a list of given [pest] rules from our [crate::apply_select] logic.
+    /// set the column visibility based on these rules.
+    pub fn set_visibility_by_rules(&mut self, rules: Vec<Rule>) {
+        // First of all, make all columns invisible.
+        self.id = false;
+        self.status = false;
+        self.enqueue_at = false;
+        self.dependencies = false;
+        self.label = false;
+        self.command = false;
+        self.path = false;
+        self.start = false;
+        self.end = false;
+
+        // Make sure we don't do any default column visibility checks of our own.
+        self.selected_columns = true;
+
+        for rule in rules {
+            match rule {
+                Rule::id => self.id = true,
+                Rule::status => self.status = true,
+                Rule::enqueue_at => self.enqueue_at = true,
+                Rule::dependencies => self.dependencies = true,
+                Rule::label => self.label = true,
+                Rule::command => self.command = true,
+                Rule::path => self.path = true,
+                Rule::start => self.start = true,
+                Rule::end => self.end = true,
+                _ => (),
+            }
         }
     }
 
