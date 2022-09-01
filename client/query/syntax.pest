@@ -6,7 +6,6 @@ eq = { ^"=" }
 neq = { ^"!=" }
 lt = { ^"<" }
 gt = { ^">" }
-operator = { eq | neq | lt | gt }
 
 // Definition of all columns
 column_id = { ^"id" }
@@ -50,7 +49,7 @@ datetime = { ASCII_DIGIT{4} ~ "-" ~ ASCII_DIGIT{2} ~ "-" ~ ASCII_DIGIT{2}  ~ ASC
 date = { ASCII_DIGIT{4} ~ "-" ~ ASCII_DIGIT{2} ~ "-" ~ ASCII_DIGIT{2} }
 time = { ASCII_DIGIT{2} ~ ":" ~ ASCII_DIGIT{2} ~ (":" ~ ASCII_DIGIT{2})? }
 
-datetime_filter = { (column_start | column_end | column_enqueue_at) ~ operator ~ (datetime | date | time) }
+datetime_filter = { (column_start | column_end | column_enqueue_at) ~ (eq | neq | lt | gt) ~ (datetime | date | time) }
 
 // The final filter clause to filter tasks by user-given constraints
 
