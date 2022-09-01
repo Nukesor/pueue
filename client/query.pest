@@ -1,6 +1,13 @@
 WHITESPACE = _{ " " }
 COMMA = _{ "," }
 
+// Definition of possible comparison operators for task filtering.
+eq = { ^"=" }
+neq = { ^"!=" }
+lt = { ^"<" }
+gt = { ^">" }
+operator = { eq | neq | lt | gt }
+
 // Definition of all columns
 column_id = { ^"id" }
 column_status = { ^"status" }
@@ -18,17 +25,11 @@ multiple_columns = { column ~ (COMMA ~ column )* }
 
 // ----- Column visibility -----
 
-// The select clause used to specify the columns that should be shown.
-select = { ^"select" }
-select_query = { select ~ multiple_columns }
+// The columns clause used to specify the columns that should be shown.
+columns_word = { ^"columns" }
+column_selection = { columns_word ~ eq ~ multiple_columns }
 
 // ----- Filtering -----
-// Definition of possible comparison operators for task filtering.
-eq = { ^"=" }
-neq = { ^"!=" }
-lt = { ^"<" }
-gt = { ^">" }
-operator = { eq | neq | lt | gt }
 
 // Status filter
 status_queued = { ^"queued" }
@@ -55,4 +56,4 @@ datetime_filter = { (column_start | column_end | column_enqueue_at) ~ operator ~
 filter = { ^"filter" }
 filter_query = { filter ~ ( datetime_filter | status_filter | label_filter )*? }
 
-query = { SOI ~ select_query? ~ filter_query? ~ EOI }
+query = { SOI ~ column_selection? ~ filter_query? ~ EOI }

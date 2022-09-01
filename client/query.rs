@@ -13,7 +13,7 @@ struct QueryParser;
 ///
 /// - TableBuilder: The component responsible for building the table and determining which
 ///         columns should or need to be displayed.
-///         A `select [columns]` statement will define the set of visible columns.
+///         A `columns [columns]` statement will define the set of visible columns.
 pub fn apply_query(query: String, table_builder: &mut TableBuilder) -> Result<()> {
     let mut parsed = QueryParser::parse(Rule::query, &query).context("Failed to parse query")?;
     dbg!(&parsed);
@@ -36,33 +36,45 @@ pub fn apply_query(query: String, table_builder: &mut TableBuilder) -> Result<()
 
     // Go through each section and handle it accordingly
     for section in sections {
-        // The `select [columns]` section
-        if section.as_rule() == Rule::select_query {
-            // This query is expected to be the "select" keyword + columns
-            let mut select_pairs = section.into_inner();
-            let select = select_pairs
+        // The `columns=[columns]` section
+        // E.g. `columns=id,status,start,end`
+        if section.as_rule() == Rule::column_selection {
+            // This query is expected to be the "columns" keyword + columns
+            let mut columns_pairs = section.into_inner();
+            let columns_word = columns_pairs
                 .next()
-                .context("Expected 'select' keyword in select query")?;
+                .context("Expected 'columns' keyword in column selection")?;
             ensure!(
-                select.as_rule() == Rule::select,
-                "Expected leading 'select' keyword in select query"
+                columns_word.as_rule() == Rule::columns_word,
+                "Expected leading 'columns' keyword in columns query"
             );
 
-            let columns = select_pairs
+            let equals = columns_pairs
                 .next()
-                .context("Expected columns after 'select' in select query")?;
+                .context("Expected columns after 'columns' in column selection")?;
+            ensure!(
+                equals.as_rule() == Rule::eq,
+                "Expected multiple columns after 'columns' keyword in column selection"
+            );
+
+            let columns = columns_pairs
+                .next()
+                .context("Expected columns after 'columns' in column selection")?;
             ensure!(
                 columns.as_rule() == Rule::multiple_columns,
-                "Expected multiple columns after 'select' keyword in select query"
+                "Expected multiple columns after 'columns' keyword in column selection"
             );
-            apply_select(columns.into_inner(), table_builder)?;
+            apply_column_selection(columns.into_inner(), table_builder)?;
         }
     }
 
     Ok(())
 }
 
-fn apply_select<'i>(columns: Pairs<'i, Rule>, table_builder: &mut TableBuilder) -> Result<()> {
+fn apply_column_selection<'i>(
+    columns: Pairs<'i, Rule>,
+    table_builder: &mut TableBuilder,
+) -> Result<()> {
     // Extract all columns from the multiple_columns.inner iterator
     // The structure is like this
     // ```
@@ -101,7 +113,7 @@ fn apply_select<'i>(columns: Pairs<'i, Rule>, table_builder: &mut TableBuilder) 
         .map(|pair| {
             pair.into_inner()
                 .next()
-                .context("Expected a column in the select query.")
+                .context("Expected a column in the column selection.")
                 .map(|inner_pair| inner_pair.as_rule())
         })
         .collect::<Result<Vec<Rule>>>()?;
