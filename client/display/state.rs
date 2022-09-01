@@ -16,7 +16,7 @@ use crate::query::apply_query;
 /// This allows us to print the tasks in the order passed to the `format-status` subcommand.
 pub fn print_state<'a>(
     state: State,
-    tasks: Vec<Task>,
+    mut tasks: Vec<Task>,
     cli_command: &SubCommand,
     style: &'a OutputStyle,
     settings: &'a Settings,
@@ -32,6 +32,7 @@ pub fn print_state<'a>(
     if let Some(query) = query {
         let query_result = apply_query(query.join(" "))?;
         table_builder.set_visibility_by_rules(&query_result.selected_columns);
+        tasks = query_result.apply_filters(tasks);
     }
 
     // If the json flag is specified, print the state as json and exit.

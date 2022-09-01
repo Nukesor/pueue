@@ -18,7 +18,18 @@ pub struct QueryResult {
     pub selected_columns: Vec<Rule>,
 
     /// A list of filter functions that should be applied to the list of tasks.
-    filters: Vec<Box<dyn Fn(Task) -> bool>>,
+    filters: Vec<Box<dyn Fn(&Task) -> bool>>,
+}
+
+impl QueryResult {
+    /// Take a list of tasks and apply all filters to it.
+    pub fn apply_filters(&self, tasks: Vec<Task>) -> Vec<Task> {
+        let mut iter = tasks.into_iter();
+        for filter in self.filters.iter() {
+            iter = iter.filter(filter).collect::<Vec<Task>>().into_iter();
+        }
+        iter.collect()
+    }
 }
 
 /// Take a given `pueue status QUERY` and apply it to all components that're involved in the
@@ -29,7 +40,6 @@ pub struct QueryResult {
 ///         A `columns [columns]` statement will define the set of visible columns.
 pub fn apply_query(query: String) -> Result<QueryResult> {
     let mut parsed = QueryParser::parse(Rule::query, &query).context("Failed to parse query")?;
-    dbg!(&parsed);
 
     let mut query_result = QueryResult::default();
 
@@ -54,7 +64,7 @@ pub fn apply_query(query: String) -> Result<QueryResult> {
         // E.g. `columns=id,status,start,end`
         match section.as_rule() {
             Rule::column_selection => column_selection::apply(section, &mut query_result)?,
-            Rule::datetime_filter => column_selection::apply(section, &mut query_result)?,
+            Rule::datetime_filter => filters::datetime(section, &mut query_result)?,
             _ => (),
         }
     }
