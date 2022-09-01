@@ -178,3 +178,85 @@ pub fn datetime<'i>(section: Pair<'i, Rule>, query_result: &mut QueryResult) -> 
 
     Ok(())
 }
+
+/// Parse a filter for the label fiel.
+///
+/// This filter syntax looks like this:
+/// `label [=|!=] string`
+///
+/// The datastructer looks something like this:
+///  Pair {
+///     rule: label_filter,
+///     span: Span {
+///         str: "label=test",
+///         start: 0,
+///         end: 10,
+///     },
+///     inner: [
+///         Pair {
+///             rule: column_label,
+///             span: Span {
+///                 str: "label",
+///                 start: 0,
+///                 end: 5,
+///             },
+///             inner: [],
+///         },
+///         Pair {
+///             rule: eq,
+///             span: Span {
+///                 str: "=",
+///                 start: 5,
+///                 end: 6,
+///             },
+///             inner: [],
+///         },
+///         Pair {
+///             rule: label,
+///             span: Span {
+///                 str: "test",
+///                 start: 6,
+///                 end: 10,
+///             },
+///             inner: [],
+///         },
+///     ],
+/// }
+pub fn label<'i>(section: Pair<'i, Rule>, query_result: &mut QueryResult) -> Result<()> {
+    dbg!(&section);
+    let mut filter = section.into_inner();
+    // The first word should be the `label` keyword.
+    let column = filter.next().unwrap();
+    match column.as_rule() {
+        Rule::column_label => (),
+        _ => bail!("Expected label keyword"),
+    }
+
+    // Get the operator that should be applied in this filter.
+    let operator = filter.next().unwrap().as_rule();
+    match operator {
+        Rule::eq | Rule::neq => (),
+        _ => bail!("Expected a [=|!=] comparison operator label filter"),
+    }
+
+    // Get the name of the label we should filter for.
+    let operand = filter.next().unwrap().as_str().to_string();
+
+    // Filter for the label
+    let filter_function = Box::new(move |task: &Task| -> bool {
+        let label = if let Some(label) = &task.label {
+            label
+        } else {
+            return operator == Rule::neq;
+        };
+
+        match operator {
+            Rule::eq => label == &operand,
+            Rule::neq => label != &operand,
+            _ => false,
+        }
+    });
+    query_result.filters.push(filter_function);
+
+    Ok(())
+}

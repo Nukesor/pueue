@@ -65,6 +65,7 @@ pub fn apply_query(query: String) -> Result<QueryResult> {
         match section.as_rule() {
             Rule::column_selection => column_selection::apply(section, &mut query_result)?,
             Rule::datetime_filter => filters::datetime(section, &mut query_result)?,
+            Rule::label_filter => filters::label(section, &mut query_result)?,
             _ => (),
         }
     }
