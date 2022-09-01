@@ -65,12 +65,9 @@ enum DateOrDateTime {
 ///     ],
 /// }
 pub fn datetime<'i>(section: Pair<'i, Rule>, query_result: &mut QueryResult) -> Result<()> {
-    //dbg!(&section);
     let mut filter = section.into_inner();
     // Get the column this filter should be applied to.
-    let column = filter
-        .next()
-        .context("Expected 'columns' keyword in column selection")?;
+    let column = filter.next().unwrap();
     let column = column.as_rule();
     match column {
         Rule::column_enqueue_at | Rule::column_start | Rule::column_end => (),
@@ -78,19 +75,14 @@ pub fn datetime<'i>(section: Pair<'i, Rule>, query_result: &mut QueryResult) -> 
     }
 
     // Get the operator that should be applied in this filter.
-    let operator = filter
-        .next()
-        .context("Expected columns after 'columns' in column selection")?
-        .as_rule();
+    let operator = filter.next().unwrap().as_rule();
     match operator {
         Rule::eq | Rule::neq | Rule::lt | Rule::gt => (),
         _ => bail!("Expected a comparison operator for date/time filters"),
     }
 
     // Get the
-    let operand = filter
-        .next()
-        .context("Expected date, datetime or time after operator in filter")?;
+    let operand = filter.next().unwrap();
     let operand_rule = operand.as_rule();
     let operand = match operand_rule {
         Rule::time => {
