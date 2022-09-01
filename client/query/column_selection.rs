@@ -1,10 +1,9 @@
 use anyhow::{ensure, Context, Result};
 use pest::iterators::Pair;
 
-use super::Rule;
-use crate::display::table_builder::TableBuilder;
+use super::{QueryResult, Rule};
 
-pub fn apply<'i>(section: Pair<'i, Rule>, table_builder: &mut TableBuilder) -> Result<()> {
+pub fn apply(section: Pair<'_, Rule>, query_result: &mut QueryResult) -> Result<()> {
     // This query is expected to be the "columns" keyword + columns
     let mut columns_pairs = section.into_inner();
     let columns_word = columns_pairs
@@ -66,7 +65,7 @@ pub fn apply<'i>(section: Pair<'i, Rule>, table_builder: &mut TableBuilder) -> R
     //      ]
     // }
     // ```
-    let columns = columns
+    let mut columns = columns
         .map(|pair| {
             pair.into_inner()
                 .next()
@@ -75,7 +74,7 @@ pub fn apply<'i>(section: Pair<'i, Rule>, table_builder: &mut TableBuilder) -> R
         })
         .collect::<Result<Vec<Rule>>>()?;
 
-    table_builder.set_visibility_by_rules(columns);
+    query_result.selected_columns.append(&mut columns);
 
     Ok(())
 }

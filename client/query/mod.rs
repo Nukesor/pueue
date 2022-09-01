@@ -2,13 +2,24 @@ use anyhow::{bail, Context, Result};
 use pest::Parser;
 use pest_derive::Parser;
 
-use crate::display::table_builder::TableBuilder;
+use pueue_lib::task::Task;
 
 mod column_selection;
+mod filters;
 
 #[derive(Parser)]
 #[grammar = "./client/query/syntax.pest"]
 struct QueryParser;
+
+/// All appliable information that has been extracted from the query.
+#[derive(Default)]
+pub struct QueryResult {
+    /// The list of selected columns based.
+    pub selected_columns: Vec<Rule>,
+
+    /// A list of filter functions that should be applied to the list of tasks.
+    filters: Vec<Box<dyn Fn(Task) -> bool>>,
+}
 
 /// Take a given `pueue status QUERY` and apply it to all components that're involved in the
 /// `pueue status` process:
@@ -16,16 +27,18 @@ struct QueryParser;
 /// - TableBuilder: The component responsible for building the table and determining which
 ///         columns should or need to be displayed.
 ///         A `columns [columns]` statement will define the set of visible columns.
-pub fn apply_query(query: String, table_builder: &mut TableBuilder) -> Result<()> {
+pub fn apply_query(query: String) -> Result<QueryResult> {
     let mut parsed = QueryParser::parse(Rule::query, &query).context("Failed to parse query")?;
     dbg!(&parsed);
+
+    let mut query_result = QueryResult::default();
 
     // Expect there to be exactly one pair for the full query.
     // Return early if we got an empty query.
     let parsed = if let Some(pair) = parsed.next() {
         pair
     } else {
-        return Ok(());
+        return Ok(query_result);
     };
 
     // Make sure we really got a query.
@@ -35,15 +48,16 @@ pub fn apply_query(query: String, table_builder: &mut TableBuilder) -> Result<()
 
     // Get the sections of the query
     let sections = parsed.into_inner();
-
     // Go through each section and handle it accordingly
     for section in sections {
         // The `columns=[columns]` section
         // E.g. `columns=id,status,start,end`
-        if section.as_rule() == Rule::column_selection {
-            column_selection::apply(section, table_builder)?;
+        match section.as_rule() {
+            Rule::column_selection => column_selection::apply(section, &mut query_result)?,
+            Rule::datetime_filter => column_selection::apply(section, &mut query_result)?,
+            _ => (),
         }
     }
 
-    Ok(())
+    Ok(query_result)
 }

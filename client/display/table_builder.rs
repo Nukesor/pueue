@@ -105,7 +105,7 @@ impl<'a> TableBuilder<'a> {
 
     /// Take a list of given [pest] rules from our [crate::apply_select] logic.
     /// set the column visibility based on these rules.
-    pub fn set_visibility_by_rules(&mut self, rules: Vec<Rule>) {
+    pub fn set_visibility_by_rules(&mut self, rules: &[Rule]) {
         // First of all, make all columns invisible.
         self.id = false;
         self.status = false;

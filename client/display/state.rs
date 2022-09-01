@@ -30,7 +30,8 @@ pub fn print_state<'a>(
     let mut table_builder = TableBuilder::new(settings, style);
 
     if let Some(query) = query {
-        apply_query(query.join(" "), &mut table_builder)?;
+        let query_result = apply_query(query.join(" "))?;
+        table_builder.set_visibility_by_rules(&query_result.selected_columns);
     }
 
     // If the json flag is specified, print the state as json and exit.
