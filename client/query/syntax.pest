@@ -35,10 +35,10 @@ status_queued = { ^"queued" }
 status_stashed = { ^"stashed" }
 status_running = { ^"running" }
 status_paused = { ^"paused" }
-status_done = { ^"done" }
+status_success = { ^"success" }
+status_failed = { ^"failed" }
 
-status = { status_queued | status_stashed | status_running | status_paused | status_done }
-status_filter = { column_status ~ (eq | neq) ~ status }
+status_filter = { column_status ~ (eq | neq) ~ (status_queued | status_stashed | status_running | status_paused | status_success | status_failed) }
 
 // Label filter
 label = { ANY* }

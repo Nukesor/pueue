@@ -1,7 +1,7 @@
 use anyhow::{bail, Context, Result};
 use chrono::{DateTime, Duration, Local, NaiveDate, NaiveDateTime, NaiveTime};
 use pest::iterators::Pair;
-use pueue_lib::task::{Task, TaskStatus};
+use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
 use super::{QueryResult, Rule};
 
@@ -16,7 +16,7 @@ enum DateOrDateTime {
 /// This filter syntax looks like this is expected to be:
 /// `[enqueue_at|start|end] [>|<|=|!=] [YYYY-MM-DD HH:mm:SS|HH:mm:SS|YYYY-MM-DD]`
 ///
-/// The datastructer looks something like this:
+/// The data structure looks something like this:
 /// Pair {
 ///     rule: datetime_filter,
 ///     span: Span {
@@ -179,12 +179,12 @@ pub fn datetime<'i>(section: Pair<'i, Rule>, query_result: &mut QueryResult) -> 
     Ok(())
 }
 
-/// Parse a filter for the label fiel.
+/// Parse a filter for the label field.
 ///
 /// This filter syntax looks like this:
 /// `label [=|!=] string`
 ///
-/// The datastructer looks something like this:
+/// The data structure looks something like this:
 ///  Pair {
 ///     rule: label_filter,
 ///     span: Span {
@@ -223,7 +223,6 @@ pub fn datetime<'i>(section: Pair<'i, Rule>, query_result: &mut QueryResult) -> 
 ///     ],
 /// }
 pub fn label<'i>(section: Pair<'i, Rule>, query_result: &mut QueryResult) -> Result<()> {
-    dbg!(&section);
     let mut filter = section.into_inner();
     // The first word should be the `label` keyword.
     let column = filter.next().unwrap();
@@ -253,6 +252,101 @@ pub fn label<'i>(section: Pair<'i, Rule>, query_result: &mut QueryResult) -> Res
         match operator {
             Rule::eq => label == &operand,
             Rule::neq => label != &operand,
+            _ => false,
+        }
+    });
+    query_result.filters.push(filter_function);
+
+    Ok(())
+}
+
+/// Parse a filter for the status field.
+///
+/// This filter syntax looks like this:
+/// `status [=|!=] [status]`
+///
+/// The data structure looks something like this:
+/// Pair {
+///     rule: status_filter,
+///     span: Span {
+///         str: "status=success",
+///         start: 0,
+///         end: 14,
+///     },
+///     inner: [
+///         Pair {
+///             rule: column_status,
+///             span: Span {
+///                 str: "status",
+///                 start: 0,
+///                 end: 6,
+///             },
+///             inner: [],
+///         },
+///         Pair {
+///             rule: eq,
+///             span: Span {
+///                 str: "=",
+///                 start: 6,
+///                 end: 7,
+///             },
+///             inner: [],
+///         },
+///         Pair {
+///             rule: status_success,
+///             span: Span {
+///                 str: "success",
+///                 start: 7,
+///                 end: 14,
+///             },
+///             inner: [],
+///         },
+///     ],
+/// }
+pub fn status<'i>(section: Pair<'i, Rule>, query_result: &mut QueryResult) -> Result<()> {
+    let mut filter = section.into_inner();
+    // The first word should be the `status` keyword.
+    let column = filter.next().unwrap();
+    match column.as_rule() {
+        Rule::column_status => (),
+        _ => bail!("Expected status keyword"),
+    }
+
+    // Get the operator that should be applied in this filter.
+    let operator = filter.next().unwrap().as_rule();
+    match operator {
+        Rule::eq | Rule::neq => (),
+        _ => bail!("Expected a [=|!=] comparison operator label filter"),
+    }
+
+    // Get the status we should filter for.
+    let operand = filter.next().unwrap().as_rule();
+
+    // Filter for the label
+    let filter_function = Box::new(move |task: &Task| -> bool {
+        let matches = match operand {
+            Rule::status_queued => matches!(task.status, TaskStatus::Queued),
+            Rule::status_stashed => matches!(task.status, TaskStatus::Stashed { .. }),
+            Rule::status_running => matches!(task.status, TaskStatus::Running),
+            Rule::status_paused => matches!(task.status, TaskStatus::Paused),
+            Rule::status_success => {
+                matches!(&task.status, TaskStatus::Done(TaskResult::Success))
+            }
+            Rule::status_failed => {
+                let mut matches = false;
+                if let TaskStatus::Done(result) = &task.status {
+                    if !matches!(result, TaskResult::Success) {
+                        matches = true;
+                    }
+                }
+                matches
+            }
+            _ => return false,
+        };
+
+        match operator {
+            Rule::eq => matches,
+            Rule::neq => !matches,
             _ => false,
         }
     });
