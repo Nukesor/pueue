@@ -6,25 +6,19 @@ use super::{QueryResult, Rule};
 pub fn apply(section: Pair<'_, Rule>, query_result: &mut QueryResult) -> Result<()> {
     // This query is expected to be the "columns" keyword + columns
     let mut columns_pairs = section.into_inner();
-    let columns_word = columns_pairs
-        .next()
-        .context("Expected 'columns' keyword in column selection")?;
+    let columns_word = columns_pairs.next().unwrap();
     ensure!(
         columns_word.as_rule() == Rule::columns_word,
         "Expected leading 'columns' keyword in columns query"
     );
 
-    let equals = columns_pairs
-        .next()
-        .context("Expected columns after 'columns' in column selection")?;
+    let equals = columns_pairs.next().unwrap();
     ensure!(
         equals.as_rule() == Rule::eq,
         "Expected multiple columns after 'columns' keyword in column selection"
     );
 
-    let multiple_columns = columns_pairs
-        .next()
-        .context("Expected columns after 'columns' in column selection")?;
+    let multiple_columns = columns_pairs.next().unwrap();
     ensure!(
         multiple_columns.as_rule() == Rule::multiple_columns,
         "Expected multiple columns after 'columns' keyword in column selection"
