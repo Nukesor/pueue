@@ -53,7 +53,5 @@ time = { ASCII_DIGIT{2} ~ ":" ~ ASCII_DIGIT{2} ~ (":" ~ ASCII_DIGIT{2})? }
 datetime_filter = { (column_start | column_end | column_enqueue_at) ~ operator ~ (datetime | date | time) }
 
 // The final filter clause to filter tasks by user-given constraints
-filter = { ^"filter" }
-filter_query = { filter ~ ( datetime_filter | status_filter | label_filter )*? }
 
-query = { SOI ~ column_selection? ~ filter_query? ~ EOI }
+query = { SOI ~ column_selection? ~ ( datetime_filter | status_filter | label_filter )*?  ~ EOI }
