@@ -33,6 +33,7 @@ pub fn print_state<'a>(
         let query_result = apply_query(query.join(" "))?;
         table_builder.set_visibility_by_rules(&query_result.selected_columns);
         tasks = query_result.apply_filters(tasks);
+        tasks = query_result.order_tasks(tasks);
     }
 
     // If the json flag is specified, print the state as json and exit.

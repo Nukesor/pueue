@@ -2,14 +2,22 @@ use anyhow::{bail, Context, Result};
 use pest::Parser;
 use pest_derive::Parser;
 
-use pueue_lib::task::Task;
+use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
 mod column_selection;
 mod filters;
+mod order_by;
 
 #[derive(Parser)]
 #[grammar = "./client/query/syntax.pest"]
 struct QueryParser;
+
+pub enum Direction {
+    Ascending,
+    Descending,
+}
+
+type FilterFunction = dyn Fn(&Task) -> bool;
 
 /// All appliable information that has been extracted from the query.
 #[derive(Default)]
@@ -18,7 +26,10 @@ pub struct QueryResult {
     pub selected_columns: Vec<Rule>,
 
     /// A list of filter functions that should be applied to the list of tasks.
-    filters: Vec<Box<dyn Fn(&Task) -> bool>>,
+    filters: Vec<Box<FilterFunction>>,
+
+    /// A list of filter functions that should be applied to the list of tasks.
+    order_by: Option<(Rule, Direction)>,
 }
 
 impl QueryResult {
@@ -29,6 +40,46 @@ impl QueryResult {
             iter = iter.filter(filter).collect::<Vec<Task>>().into_iter();
         }
         iter.collect()
+    }
+
+    /// Take a list of tasks and apply all filters to it.
+    pub fn order_tasks(&self, mut tasks: Vec<Task>) -> Vec<Task> {
+        if let Some((column, direction)) = &self.order_by {
+            tasks.sort_by(|task1, task2| match column {
+                Rule::column_id => task1.id.cmp(&task2.id),
+                Rule::column_status => {
+                    /// Rank a task status to allow ordering by status.
+                    /// Returns a u8 based on the expected
+                    fn rank_status(task: &Task) -> u8 {
+                        match &task.status {
+                            TaskStatus::Stashed { .. } => 0,
+                            TaskStatus::Locked => 1,
+                            TaskStatus::Queued => 2,
+                            TaskStatus::Paused => 3,
+                            TaskStatus::Running => 4,
+                            TaskStatus::Done(result) => match result {
+                                TaskResult::Success => 6,
+                                _ => 5,
+                            },
+                        }
+                    }
+
+                    rank_status(task1).cmp(&rank_status(task2))
+                }
+                Rule::column_label => task1.label.cmp(&task2.label),
+                Rule::column_command => task1.command.cmp(&task2.command),
+                Rule::column_path => task1.path.cmp(&task2.path),
+                Rule::column_start => task1.start.cmp(&task2.start),
+                Rule::column_end => task1.end.cmp(&task2.end),
+                _ => std::cmp::Ordering::Less,
+            });
+
+            if let Direction::Descending = direction {
+                tasks.reverse();
+            }
+        }
+
+        tasks
     }
 }
 
@@ -67,6 +118,7 @@ pub fn apply_query(query: String) -> Result<QueryResult> {
             Rule::datetime_filter => filters::datetime(section, &mut query_result)?,
             Rule::label_filter => filters::label(section, &mut query_result)?,
             Rule::status_filter => filters::status(section, &mut query_result)?,
+            Rule::order_by_condition => order_by::order_by(section, &mut query_result)?,
             _ => (),
         }
     }
