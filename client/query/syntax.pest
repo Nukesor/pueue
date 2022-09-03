@@ -51,6 +51,12 @@ time = { ASCII_DIGIT{2} ~ ":" ~ ASCII_DIGIT{2} ~ (":" ~ ASCII_DIGIT{2})? }
 
 datetime_filter = { (column_start | column_end | column_enqueue_at) ~ (eq | neq | lt | gt) ~ (datetime | date | time) }
 
-// The final filter clause to filter tasks by user-given constraints
+// ----- Ordering -----
+order_by = { ^"order_by" }
+ascending = { ^"asc" }
+descending = { ^"desc" }
+order_columns = { column_id | column_status | column_command | column_label | column_path | column_start | column_end }
+order_by_condition = { order_by ~ column ~ (ascending | descending) }
 
-query = { SOI ~ column_selection? ~ ( datetime_filter | status_filter | label_filter )*?  ~ EOI }
+// ----- The final query syntax -----
+query = { SOI ~ column_selection? ~ ( datetime_filter | status_filter | label_filter )*?  ~ order_by_condition? ~ EOI }
