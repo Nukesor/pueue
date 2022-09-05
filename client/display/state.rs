@@ -34,6 +34,7 @@ pub fn print_state<'a>(
         table_builder.set_visibility_by_rules(&query_result.selected_columns);
         tasks = query_result.apply_filters(tasks);
         tasks = query_result.order_tasks(tasks);
+        tasks = query_result.limit_tasks(tasks);
     }
 
     // If the json flag is specified, print the state as json and exit.

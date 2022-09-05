@@ -58,5 +58,11 @@ descending = { ^"desc" }
 order_columns = { column_id | column_status | column_command | column_label | column_path | column_start | column_end }
 order_by_condition = { order_by ~ column ~ (ascending | descending) }
 
+// ----- Limit -----
+first = { ^"first" }
+last = { ^"last" }
+limit_count = { ASCII_DIGIT* }
+limit_condition = { (first | last) ~ limit_count }
+
 // ----- The final query syntax -----
-query = { SOI ~ column_selection? ~ ( datetime_filter | status_filter | label_filter )*?  ~ order_by_condition? ~ EOI }
+query = { SOI ~ column_selection? ~ ( datetime_filter | status_filter | label_filter )*?  ~ order_by_condition? ~ limit_condition? ~ EOI }
