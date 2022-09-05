@@ -6,16 +6,15 @@ use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
 mod column_selection;
 mod filters;
+mod limit;
 mod order_by;
+
+use limit::Limit;
+use order_by::Direction;
 
 #[derive(Parser)]
 #[grammar = "./client/query/syntax.pest"]
 struct QueryParser;
-
-pub enum Direction {
-    Ascending,
-    Descending,
-}
 
 type FilterFunction = dyn Fn(&Task) -> bool;
 
@@ -30,6 +29,9 @@ pub struct QueryResult {
 
     /// A list of filter functions that should be applied to the list of tasks.
     order_by: Option<(Rule, Direction)>,
+
+    /// limit
+    limit: Option<(Limit, usize)>,
 }
 
 impl QueryResult {
@@ -44,42 +46,71 @@ impl QueryResult {
 
     /// Take a list of tasks and apply all filters to it.
     pub fn order_tasks(&self, mut tasks: Vec<Task>) -> Vec<Task> {
-        if let Some((column, direction)) = &self.order_by {
-            tasks.sort_by(|task1, task2| match column {
-                Rule::column_id => task1.id.cmp(&task2.id),
-                Rule::column_status => {
-                    /// Rank a task status to allow ordering by status.
-                    /// Returns a u8 based on the expected
-                    fn rank_status(task: &Task) -> u8 {
-                        match &task.status {
-                            TaskStatus::Stashed { .. } => 0,
-                            TaskStatus::Locked => 1,
-                            TaskStatus::Queued => 2,
-                            TaskStatus::Paused => 3,
-                            TaskStatus::Running => 4,
-                            TaskStatus::Done(result) => match result {
-                                TaskResult::Success => 6,
-                                _ => 5,
-                            },
-                        }
+        // Only apply ordering if it was requested.
+        let (column, direction) = if let Some(inner) = &self.order_by {
+            inner
+        } else {
+            return tasks;
+        };
+
+        // Sort the tasks by the specified column.
+        tasks.sort_by(|task1, task2| match column {
+            Rule::column_id => task1.id.cmp(&task2.id),
+            Rule::column_status => {
+                /// Rank a task status to allow ordering by status.
+                /// Returns a u8 based on the expected
+                fn rank_status(task: &Task) -> u8 {
+                    match &task.status {
+                        TaskStatus::Stashed { .. } => 0,
+                        TaskStatus::Locked => 1,
+                        TaskStatus::Queued => 2,
+                        TaskStatus::Paused => 3,
+                        TaskStatus::Running => 4,
+                        TaskStatus::Done(result) => match result {
+                            TaskResult::Success => 6,
+                            _ => 5,
+                        },
                     }
-
-                    rank_status(task1).cmp(&rank_status(task2))
                 }
-                Rule::column_label => task1.label.cmp(&task2.label),
-                Rule::column_command => task1.command.cmp(&task2.command),
-                Rule::column_path => task1.path.cmp(&task2.path),
-                Rule::column_start => task1.start.cmp(&task2.start),
-                Rule::column_end => task1.end.cmp(&task2.end),
-                _ => std::cmp::Ordering::Less,
-            });
 
-            if let Direction::Descending = direction {
-                tasks.reverse();
+                rank_status(task1).cmp(&rank_status(task2))
             }
+            Rule::column_label => task1.label.cmp(&task2.label),
+            Rule::column_command => task1.command.cmp(&task2.command),
+            Rule::column_path => task1.path.cmp(&task2.path),
+            Rule::column_start => task1.start.cmp(&task2.start),
+            Rule::column_end => task1.end.cmp(&task2.end),
+            _ => std::cmp::Ordering::Less,
+        });
+
+        // Reverse the order, if we're in ordering by descending order.
+        if let Direction::Descending = direction {
+            tasks.reverse();
         }
 
         tasks
+    }
+
+    /// Take a list of tasks and apply all filters to it.
+    pub fn limit_tasks(&self, tasks: Vec<Task>) -> Vec<Task> {
+        // Only apply limits if it was requested.
+        let (direction, count) = if let Some(inner) = &self.limit {
+            inner
+        } else {
+            return tasks;
+        };
+
+        // Don't do anything if:
+        // - we don't have to limit
+        // - the limit is invalid
+        if tasks.len() <= *count || *count == 0 {
+            return tasks;
+        }
+
+        match direction {
+            Limit::First => tasks[0..*count].to_vec(),
+            Limit::Last => tasks[(tasks.len() - count)..].to_vec(),
+        }
     }
 }
 
@@ -119,6 +150,7 @@ pub fn apply_query(query: String) -> Result<QueryResult> {
             Rule::label_filter => filters::label(section, &mut query_result)?,
             Rule::status_filter => filters::status(section, &mut query_result)?,
             Rule::order_by_condition => order_by::order_by(section, &mut query_result)?,
+            Rule::limit_condition => limit::limit(section, &mut query_result)?,
             _ => (),
         }
     }

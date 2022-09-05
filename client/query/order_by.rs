@@ -1,7 +1,12 @@
 use anyhow::{bail, ensure, Result};
 use pest::iterators::Pair;
 
-use super::{Direction, QueryResult, Rule};
+use super::{QueryResult, Rule};
+
+pub enum Direction {
+    Ascending,
+    Descending,
+}
 
 /// Parse an order_by condition.
 ///
