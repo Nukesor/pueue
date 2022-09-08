@@ -16,7 +16,12 @@ use pueue_lib::process_helper::compile_shell_command;
 ///
 /// After receiving the task information, the user can then edit it in their editor.
 /// Upon exiting the text editor, the line will then be read and sent to the server
-pub async fn edit(stream: &mut GenericStream, task_id: usize, edit_path: bool) -> Result<Message> {
+pub async fn edit(
+    stream: &mut GenericStream,
+    task_id: usize,
+    edit_path: bool,
+    edit_label: bool,
+) -> Result<Message> {
     // Request the data to edit from the server and issue a task-lock while doing so.
     let init_message = Message::EditRequest(task_id);
     send_message(init_message, stream).await?;
@@ -35,6 +40,7 @@ pub async fn edit(stream: &mut GenericStream, task_id: usize, edit_path: bool) -
     // Edit either the path, command or label of a task, depending on the given CLI flags.
     let mut command = None;
     let mut path = None;
+    let mut label = None;
 
     if edit_path {
         let str_path = init_response
@@ -43,6 +49,19 @@ pub async fn edit(stream: &mut GenericStream, task_id: usize, edit_path: bool) -
             .context("Failed to convert task path to string")?;
         let changed_path = edit_line_wrapper(stream, task_id, str_path).await?;
         path = Some(PathBuf::from(changed_path));
+    } else if edit_label {
+        // Edit the label of a task.
+        let edited_label =
+            edit_line_wrapper(stream, task_id, &init_response.label.unwrap_or_default()).await?;
+
+        // If the user deletes the label in their editor, an empty string will be returned.
+        // This is an indicator that the task should no longer have a label, in which case we
+        // return a `Some(None)`.
+        label = if edited_label == "" {
+            Some(None)
+        } else {
+            Some(Some(edited_label))
+        };
     } else {
         let edited_command = edit_line_wrapper(stream, task_id, &init_response.command).await?;
         command = Some(edited_command);
@@ -53,6 +72,7 @@ pub async fn edit(stream: &mut GenericStream, task_id: usize, edit_path: bool) -
         task_id,
         command,
         path,
+        label,
     });
     send_message(edit_message, stream).await?;
 

@@ -261,6 +261,10 @@ pub enum SubCommand {
         /// Edit the task's path.
         #[clap(short, long)]
         path: bool,
+
+        /// Edit the task's label.
+        #[clap(short, long)]
+        label: bool,
     },
 
     /// Use this to add or remove groups.

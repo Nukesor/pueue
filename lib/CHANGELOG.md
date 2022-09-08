@@ -11,6 +11,7 @@ The concept of SemVer is applied to the daemon/client API, but not the library A
 ### Added
 
 - Added `Settings.shared.alias_file`, which can be used to specify the location of the `pueue_aliases.yml`.
+- Added functionality to edit a task's label [#354](https://github.com/Nukesor/pueue/issues/354).
 
 ### Changed
 

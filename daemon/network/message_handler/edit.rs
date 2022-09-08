@@ -25,6 +25,7 @@ pub fn edit_request(task_id: usize, state: &SharedState) -> Message {
                 task_id: task.id,
                 command: task.original_command.clone(),
                 path: task.path.clone(),
+                label: task.label.clone(),
             };
             Message::EditResponse(message)
         }
@@ -53,6 +54,9 @@ pub fn edit(message: EditMessage, state: &SharedState, settings: &Settings) -> M
             }
             if let Some(path) = message.path {
                 task.path = path;
+            }
+            if let Some(label) = message.label {
+                task.label = label;
             }
 
             ok_or_return_failure_message!(save_state(&state, settings));

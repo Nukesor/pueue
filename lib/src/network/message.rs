@@ -190,6 +190,7 @@ pub struct EditResponseMessage {
     pub task_id: usize,
     pub command: String,
     pub path: PathBuf,
+    pub label: Option<String>,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
@@ -197,6 +198,7 @@ pub struct EditMessage {
     pub task_id: usize,
     pub command: Option<String>,
     pub path: Option<PathBuf>,
+    pub label: Option<Option<String>>,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]

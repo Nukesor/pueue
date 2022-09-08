@@ -55,6 +55,7 @@ async fn test_edit_flow() -> Result<()> {
             task_id: 0,
             command: Some("ls -ahl".into()),
             path: Some("/tmp".into()),
+            label: Some(Some("test".to_string())),
         }),
     )
     .await?;
@@ -64,6 +65,7 @@ async fn test_edit_flow() -> Result<()> {
     let task = get_task(shared, 0).await?;
     assert_eq!(task.command, "ls -ahl");
     assert_eq!(task.path, PathBuf::from("/tmp"));
+    assert_eq!(task.label, Some("test".to_string()));
     assert_eq!(task.status, TaskStatus::Queued);
 
     Ok(())
