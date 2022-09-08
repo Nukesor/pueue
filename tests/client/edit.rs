@@ -18,7 +18,7 @@ async fn edit_task() -> Result<()> {
     message.stashed = true;
     send_message(shared, Message::Add(message))
         .await
-        .context("Failed to to add task to group.")?;
+        .context("Failed to to add stashed task.")?;
 
     // Update the task's command by piping a string to the temporary file.
     let mut envs = HashMap::new();
@@ -30,11 +30,17 @@ async fn edit_task() -> Result<()> {
     envs.insert("EDITOR", "echo 'expected path string' > ");
     run_client_command_with_env(shared, &["edit", "--path", "0"], envs).await?;
 
+    // Update the task's path by piping a string to the temporary file.
+    let mut envs = HashMap::new();
+    envs.insert("EDITOR", "echo 'expected label' > ");
+    run_client_command_with_env(shared, &["edit", "--label", "0"], envs).await?;
+
     // Make sure that both the command and the path have been updated.
     let state = get_state(shared).await?;
     let task = state.tasks.get(&0).unwrap();
     assert_eq!(task.command, "expected command string");
     assert_eq!(task.path.to_string_lossy(), "expected path string");
+    assert_eq!(task.label, Some("expected label".to_string()));
 
     Ok(())
 }
@@ -51,7 +57,7 @@ async fn fail_to_edit_task() -> Result<()> {
     message.stashed = true;
     send_message(shared, Message::Add(message))
         .await
-        .context("Failed to to add task to group.")?;
+        .context("Failed to to add stashed task.")?;
 
     // Run a editor command that crashes.
     let mut envs = HashMap::new();

@@ -53,8 +53,8 @@ async fn test_edit_flow() -> Result<()> {
         shared,
         Message::Edit(EditMessage {
             task_id: 0,
-            command: "ls -ahl".into(),
-            path: "/tmp".into(),
+            command: Some("ls -ahl".into()),
+            path: Some("/tmp".into()),
         }),
     )
     .await?;

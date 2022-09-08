@@ -19,6 +19,7 @@ The concept of SemVer is applied to the daemon/client API, but not the library A
 - The module structure of the platform specific networking code has been streamlined.
 - Renamed `TasksToRestart` to `TaskToRestart`.
 - Make `TaskToRestart::path` and `TaskToRestart::command` optional.
+- Make `EditMessage::path` and `EditMessage::command` optional.
 
 ## [0.20.0] - 2022-07-21
 

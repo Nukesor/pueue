@@ -32,17 +32,20 @@ pub async fn edit(stream: &mut GenericStream, task_id: usize, edit_path: bool) -
         return Ok(init_response);
     };
 
-    // Edit either the path or the command, depending on the `path` flag.
-    let mut command = init_response.command;
-    let mut path = init_response.path;
+    // Edit either the path, command or label of a task, depending on the given CLI flags.
+    let mut command = None;
+    let mut path = None;
+
     if edit_path {
-        let str_path = path
+        let str_path = init_response
+            .path
             .to_str()
             .context("Failed to convert task path to string")?;
         let changed_path = edit_line_wrapper(stream, task_id, str_path).await?;
-        path = PathBuf::from(changed_path);
+        path = Some(PathBuf::from(changed_path));
     } else {
-        command = edit_line_wrapper(stream, task_id, &command).await?
+        let edited_command = edit_line_wrapper(stream, task_id, &init_response.command).await?;
+        command = Some(edited_command);
     };
 
     // Create a new message with the edited command.
@@ -60,7 +63,7 @@ pub async fn edit(stream: &mut GenericStream, task_id: usize, edit_path: bool) -
 ///
 /// Any error will result in the client aborting the editing process.
 /// This includes notifying the daemon of this, so it can restore the task to its previous state.
-pub async fn edit_line_wrapper(
+async fn edit_line_wrapper(
     stream: &mut GenericStream,
     task_id: usize,
     line: &str,
@@ -85,10 +88,10 @@ pub async fn edit_line_wrapper(
     }
 }
 
-/// This function allows the user to edit a task's command or path.
-/// Save the string to a temporary file, which is the edited by the user with $EDITOR.
-/// As soon as the editor is closed, read the file content and return the line
-fn edit_line(line: &str) -> Result<String> {
+/// This function allows the user to edit a task's details.
+/// Save any string to a temporary file, which is the edited by the user via their specified
+/// $EDITOR. As soon as the editor is closed, read the file content and return the line.
+pub fn edit_line(line: &str) -> Result<String> {
     // Create a temporary file with the command so we can edit it with the editor.
     let mut file = NamedTempFile::new().expect("Failed to create a temporary file");
     writeln!(file, "{}", line).context("Failed to write to temporary file.")?;
@@ -125,5 +128,5 @@ fn edit_line(line: &str) -> Result<String> {
         line.pop();
     }
 
-    Ok(line)
+    Ok(line.trim().to_string())
 }

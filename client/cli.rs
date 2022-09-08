@@ -178,11 +178,11 @@ pub enum SubCommand {
         #[clap(long)]
         not_in_place: bool,
 
-        /// Edit the tasks' command before restarting.
+        /// Edit the tasks' commands before restarting.
         #[clap(short, long)]
         edit: bool,
 
-        /// Edit the tasks' path before restarting.
+        /// Edit the tasks' paths before restarting.
         #[clap(short = 'p', long)]
         edit_path: bool,
     },
@@ -255,10 +255,10 @@ pub enum SubCommand {
     /// The command is edited by default.
     #[clap(verbatim_doc_comment)]
     Edit {
-        /// The id of the task.
+        /// The task's id.
         task_id: usize,
 
-        /// Edit the path of the task.
+        /// Edit the task's path.
         #[clap(short, long)]
         path: bool,
     },

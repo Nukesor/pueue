@@ -43,10 +43,18 @@ pub fn edit(message: EditMessage, state: &SharedState, settings: &Settings) -> M
                 return create_failure_message("Task is no longer locked.");
             }
 
+            // Restore the task to its previous state.
             task.status = task.prev_status.clone();
-            task.original_command = message.command.clone();
-            task.command = insert_alias(settings, message.command.clone());
-            task.path = message.path.clone();
+
+            // Set the command/path if they've been edited.
+            if let Some(command) = message.command {
+                task.original_command = command.clone();
+                task.command = insert_alias(settings, command);
+            }
+            if let Some(path) = message.path {
+                task.path = path;
+            }
+
             ok_or_return_failure_message!(save_state(&state, settings));
 
             create_success_message("Command has been updated")

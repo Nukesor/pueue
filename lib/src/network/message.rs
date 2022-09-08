@@ -186,17 +186,17 @@ pub struct SendMessage {
 }
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
-pub struct EditMessage {
+pub struct EditResponseMessage {
     pub task_id: usize,
     pub command: String,
     pub path: PathBuf,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
-pub struct EditResponseMessage {
+pub struct EditMessage {
     pub task_id: usize,
-    pub command: String,
-    pub path: PathBuf,
+    pub command: Option<String>,
+    pub path: Option<PathBuf>,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
