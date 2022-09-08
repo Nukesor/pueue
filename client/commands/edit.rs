@@ -38,64 +38,25 @@ pub async fn edit(
         return Ok(init_response);
     };
 
-    let mut command = None;
-    let mut path = None;
-    let mut label = None;
-
     // Edit the command if explicitly specified or if no flags are provided (the default)
-    if edit_command || (!edit_command && !edit_path && !edit_label) {
-        let edited_command = edit_line_wrapper(stream, task_id, &init_response.command).await?;
-        command = Some(edited_command);
-    };
+    let edit_command = edit_command || (!edit_command && !edit_path && !edit_label);
 
-    // Edit the task's path.
-    if edit_path {
-        let str_path = init_response
-            .path
-            .to_str()
-            .context("Failed to convert task path to string")?;
-        let changed_path = edit_line_wrapper(stream, task_id, str_path).await?;
-        path = Some(PathBuf::from(changed_path));
-    }
+    // Edit all requested properties.
+    let edit_result = edit_task_properties(
+        &init_response.command,
+        &init_response.path,
+        &init_response.label,
+        edit_command,
+        edit_path,
+        edit_label,
+    );
 
-    // Edit the label of a task.
-    if edit_label {
-        let edited_label =
-            edit_line_wrapper(stream, task_id, &init_response.label.unwrap_or_default()).await?;
-
-        // If the user deletes the label in their editor, an empty string will be returned.
-        // This is an indicator that the task should no longer have a label, in which case we
-        // return a `Some(None)`.
-        label = if edited_label == "" {
-            Some(None)
-        } else {
-            Some(Some(edited_label))
-        };
-    }
-
-    // Create a new message with the edited command.
-    let edit_message = Message::Edit(EditMessage {
-        task_id,
-        command,
-        path,
-        label,
-    });
-    send_message(edit_message, stream).await?;
-
-    Ok(receive_message(stream).await?)
-}
-
-/// This function wraps the edit_line function for error handling.
-///
-/// Any error will result in the client aborting the editing process.
-/// This includes notifying the daemon of this, so it can restore the task to its previous state.
-async fn edit_line_wrapper(
-    stream: &mut GenericStream,
-    task_id: usize,
-    line: &str,
-) -> Result<String> {
-    match edit_line(line) {
-        Ok(edited_line) => Ok(edited_line),
+    // Any error while editing will result in the client aborting the editing process.
+    // However, as the daemon moves any tasks that're edited into `Locked` state, we cannot simply
+    // exit the client, we have to notify the daemon that the editing process was interrupted.
+    // In the following, we notify the daemon of any errors, so it can restore the task to its previous state.
+    let (command, path, label) = match edit_result {
+        Ok(inner) => inner,
         Err(error) => {
             eprintln!("Encountered an error while editing. Trying to restore the task's status.");
             // Notify the daemon that something went wrong.
@@ -109,15 +70,76 @@ async fn edit_line_wrapper(
                 _ => eprintln!("Received unknown resonse: {response:?}"),
             };
 
-            Err(error)
+            return Err(error);
         }
+    };
+
+    // Create a new message with the edited command.
+    let edit_message = Message::Edit(EditMessage {
+        task_id,
+        command,
+        path,
+        label,
+    });
+    send_message(edit_message, stream).await?;
+
+    Ok(receive_message(stream).await?)
+}
+
+/// Takes several task properties and edit them if requested.
+/// The `edit_*` booleans are used to determine which fields should be edited.
+///
+/// Fields that have been edited will be returned as their `Some(T)` equivalent.
+///
+/// The returned values are: `(command, path, label)`
+pub fn edit_task_properties(
+    original_command: &str,
+    original_path: &PathBuf,
+    original_label: &Option<String>,
+    edit_command: bool,
+    edit_path: bool,
+    edit_label: bool,
+) -> Result<(Option<String>, Option<PathBuf>, Option<Option<String>>)> {
+    // Path and command can be edited, if the use specified the -e or -p flag.
+    let mut command = None;
+    let mut path = None;
+    let mut label = None;
+
+    // Update the command if requested.
+    if edit_command {
+        command = Some(edit_line(original_command)?);
+    };
+
+    // Update the path if requested.
+    if edit_path {
+        let str_path = original_path
+            .to_str()
+            .context("Failed to convert task path to string")?;
+        let changed_path = edit_line(str_path)?;
+        path = Some(PathBuf::from(changed_path));
     }
+
+    // Update the label if requested.
+    if edit_label {
+        let edited_label = edit_line(&original_label.clone().unwrap_or_default())?;
+
+        // If the user deletes the label in their editor, an empty string will be returned.
+        // This is an indicator that the task should no longer have a label, in which case we
+        // return a `Some(None)`.
+        label = if edited_label == "" {
+            Some(None)
+        } else {
+            Some(Some(edited_label))
+        };
+    }
+
+    Ok((command, path, label))
 }
 
 /// This function allows the user to edit a task's details.
 /// Save any string to a temporary file, which is the edited by the user via their specified
 /// $EDITOR. As soon as the editor is closed, read the file content and return the line.
-pub fn edit_line(line: &str) -> Result<String> {
+fn edit_line(line: &str) -> Result<String> {
     // Create a temporary file with the command so we can edit it with the editor.
     let mut file = NamedTempFile::new().expect("Failed to create a temporary file");
     writeln!(file, "{}", line).context("Failed to write to temporary file.")?;

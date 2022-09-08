@@ -1,13 +1,10 @@
-use std::path::PathBuf;
-
-use anyhow::Context;
 use anyhow::{bail, Result};
 
 use pueue_lib::network::message::*;
 use pueue_lib::network::protocol::*;
 use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
-use crate::commands::edit::edit_line;
+use crate::commands::edit::edit_task_properties;
 use crate::commands::get_state;
 
 /// When restarting tasks, the remote state is queried and a [AddMessage]
@@ -81,40 +78,15 @@ pub async fn restart(
         let mut new_task = Task::from_task(task);
         new_task.status = new_status.clone();
 
-        // Path and command can be edited, if the use specified the -e or -p flag.
-        let mut command = None;
-        let mut path = None;
-        let mut label = None;
-
-        // Update the command if requested.
-        if edit_command {
-            command = Some(edit_line(&task.command)?);
-        };
-
-        // Update the path if requested.
-        if edit_path {
-            let str_path = task
-                .path
-                .to_str()
-                .context("Failed to convert task path to string")?;
-            let changed_path = edit_line(str_path)?;
-            path = Some(PathBuf::from(changed_path));
-        }
-
-        // Update the label if requested.
-        if edit_label {
-            let edited_label = edit_line(&task.label.clone().unwrap_or_default())?;
-
-            // If the user deletes the label in their editor, an empty string will be returned.
-            // This is an indicator that the task should no longer have a label, in which case we
-            // return a `Some(None)`.
-            label = if edited_label == "" {
-                Some(None)
-            } else {
-                Some(Some(edited_label))
-            };
-            dbg!(&label);
-        }
+        // Edit any properties, if requested.
+        let (command, path, label) = edit_task_properties(
+            &task.command,
+            &task.path,
+            &task.label,
+            edit_command,
+            edit_path,
+            edit_label,
+        )?;
 
         // Add the tasks to the singular message, if we want to restart the tasks in-place.
         // And continue with the next task. The message will then be sent after the for loop.
