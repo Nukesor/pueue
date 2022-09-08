@@ -37,7 +37,7 @@ async fn edit_task_default() -> Result<()> {
     Ok(())
 }
 
-/// Test that editing a task's path and command work as expected.
+/// Test that editing a multiple task properties works as expected.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn edit_all_task_properties() -> Result<()> {
     let daemon = daemon().await?;

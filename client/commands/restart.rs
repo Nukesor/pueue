@@ -79,7 +79,7 @@ pub async fn restart(
         new_task.status = new_status.clone();
 
         // Edit any properties, if requested.
-        let (command, path, label) = edit_task_properties(
+        let edited_props = edit_task_properties(
             &task.command,
             &task.path,
             &task.label,
@@ -93,9 +93,9 @@ pub async fn restart(
         if in_place {
             restart_message.tasks.push(TaskToRestart {
                 task_id: *task_id,
-                command,
-                path,
-                label,
+                command: edited_props.command,
+                path: edited_props.path,
+                label: edited_props.label,
             });
 
             continue;
@@ -104,15 +104,15 @@ pub async fn restart(
         // In case we don't do in-place restarts, we have to add a new task.
         // Create a AddMessage to send the task to the daemon from the updated info and the old task.
         let add_task_message = Message::Add(AddMessage {
-            command: command.unwrap_or_else(|| task.command.clone()),
-            path: path.unwrap_or_else(|| task.path.clone()),
+            command: edited_props.command.unwrap_or_else(|| task.command.clone()),
+            path: edited_props.path.unwrap_or_else(|| task.path.clone()),
             envs: task.envs.clone(),
             start_immediately,
             stashed,
             group: task.group.clone(),
             enqueue_at: None,
             dependencies: Vec::new(),
-            label: label.unwrap_or_else(|| task.label.clone()),
+            label: edited_props.label.unwrap_or_else(|| task.label.clone()),
             print_task_id: false,
         });
 

@@ -47,14 +47,16 @@ pub fn edit(message: EditMessage, state: &SharedState, settings: &Settings) -> M
             // Restore the task to its previous state.
             task.status = task.prev_status.clone();
 
-            // Set the command/path if they've been edited.
+            // Update command if applicable.
             if let Some(command) = message.command {
                 task.original_command = command.clone();
                 task.command = insert_alias(settings, command);
             }
+            // Update path if applicable.
             if let Some(path) = message.path {
                 task.path = path;
             }
+            // Update label if applicable.
             if let Some(label) = message.label {
                 task.label = label;
             }
