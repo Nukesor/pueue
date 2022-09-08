@@ -133,6 +133,10 @@ pub fn assert_stdout_matches(
     if expected != stdout {
         println!("Expected output:\n-----\n{expected}\n-----");
         println!("\nGot output:\n-----\n{stdout}\n-----");
+        println!(
+            "\n{}",
+            similar_asserts::SimpleDiff::from_str(&expected, &stdout, "expected", "actual")
+        );
         bail!("The stdout of the command doesn't match the expected string");
     }
 
