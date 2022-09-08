@@ -70,6 +70,24 @@ async fn read_truncated_log(#[case] read_local_logs: bool) -> Result<()> {
     Ok(())
 }
 
+/// If a task has a label, it is included in the log output
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn task_with_label() -> Result<()> {
+    let daemon = daemon().await?;
+    let shared = &daemon.settings.shared;
+
+    // Add a task and wait until it finishes.
+    run_client_command(shared, &["add", "--label", "test_label", "echo test"]).await?;
+    wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
+
+    let output = run_client_command(shared, &["log"]).await?;
+
+    let context = get_task_context(&daemon.settings).await?;
+    assert_stdout_matches("log__log_with_label", output.stdout, context)?;
+
+    Ok(())
+}
+
 /// Calling `log` with the `--color=always` flag, colors the output as expected.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn colored_log() -> Result<()> {
