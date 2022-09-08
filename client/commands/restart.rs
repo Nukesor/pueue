@@ -7,7 +7,7 @@ use pueue_lib::network::message::*;
 use pueue_lib::network::protocol::*;
 use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
-use crate::commands::edit::edit_line_wrapper;
+use crate::commands::edit::edit_line;
 use crate::commands::get_state;
 
 /// When restarting tasks, the remote state is queried and a [AddMessage]
@@ -86,7 +86,7 @@ pub async fn restart(
 
         // Update the command if requested.
         if edit_command {
-            command = Some(edit_line_wrapper(stream, *task_id, &task.command).await?);
+            command = Some(edit_line(&task.command)?);
         };
 
         // Update the path if requested.
@@ -95,7 +95,7 @@ pub async fn restart(
                 .path
                 .to_str()
                 .context("Failed to convert task path to string")?;
-            let changed_path = edit_line_wrapper(stream, *task_id, str_path).await?;
+            let changed_path = edit_line(str_path)?;
             path = Some(PathBuf::from(changed_path));
         }
 
