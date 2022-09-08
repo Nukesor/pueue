@@ -189,10 +189,11 @@ impl Client {
 
             SubCommand::Edit {
                 task_id,
+                command,
                 path,
                 label,
             } => {
-                let message = edit(&mut self.stream, *task_id, *path, *label).await?;
+                let message = edit(&mut self.stream, *task_id, *command, *path, *label).await?;
                 self.handle_response(message);
                 Ok(true)
             }

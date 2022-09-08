@@ -255,12 +255,17 @@ pub enum SubCommand {
         input: String,
     },
 
-    /// Edit the command or path of a stashed or queued task.
-    /// The command is edited by default.
+    /// Edit the command, path or label of a stashed or queued task.
+    /// By default only the command is edited.
+    /// Multiple properties can be added in one go.
     #[clap(verbatim_doc_comment)]
     Edit {
         /// The task's id.
         task_id: usize,
+
+        /// Edit the task's command.
+        #[clap(short, long)]
+        command: bool,
 
         /// Edit the task's path.
         #[clap(short, long)]

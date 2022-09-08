@@ -19,6 +19,7 @@ use pueue_lib::process_helper::compile_shell_command;
 pub async fn edit(
     stream: &mut GenericStream,
     task_id: usize,
+    edit_command: bool,
     edit_path: bool,
     edit_label: bool,
 ) -> Result<Message> {
@@ -37,11 +38,17 @@ pub async fn edit(
         return Ok(init_response);
     };
 
-    // Edit either the path, command or label of a task, depending on the given CLI flags.
     let mut command = None;
     let mut path = None;
     let mut label = None;
 
+    // Edit the command if explicitly specified or if no flags are provided (the default)
+    if edit_command || (!edit_command && !edit_path && !edit_label) {
+        let edited_command = edit_line_wrapper(stream, task_id, &init_response.command).await?;
+        command = Some(edited_command);
+    };
+
+    // Edit the task's path.
     if edit_path {
         let str_path = init_response
             .path
@@ -49,8 +56,10 @@ pub async fn edit(
             .context("Failed to convert task path to string")?;
         let changed_path = edit_line_wrapper(stream, task_id, str_path).await?;
         path = Some(PathBuf::from(changed_path));
-    } else if edit_label {
-        // Edit the label of a task.
+    }
+
+    // Edit the label of a task.
+    if edit_label {
         let edited_label =
             edit_line_wrapper(stream, task_id, &init_response.label.unwrap_or_default()).await?;
 
@@ -62,10 +71,7 @@ pub async fn edit(
         } else {
             Some(Some(edited_label))
         };
-    } else {
-        let edited_command = edit_line_wrapper(stream, task_id, &init_response.command).await?;
-        command = Some(edited_command);
-    };
+    }
 
     // Create a new message with the edited command.
     let edit_message = Message::Edit(EditMessage {
