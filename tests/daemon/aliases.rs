@@ -64,6 +64,7 @@ async fn test_restart_with_alias() -> Result<()> {
             task_id: 0,
             command: Some("replaced_cmd test".to_string()),
             path: None,
+            label: None,
         }],
         start_immediately: true,
         stashed: false,

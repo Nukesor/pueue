@@ -25,6 +25,7 @@ async fn test_restart_in_place() -> Result<()> {
             task_id: 0,
             command: Some("sleep 60".to_string()),
             path: Some(PathBuf::from("/tmp")),
+            label: Some(Some("test".to_owned())),
         }],
         start_immediately: false,
         stashed: false,
@@ -42,6 +43,7 @@ async fn test_restart_in_place() -> Result<()> {
     let task = state.tasks.get(&0).unwrap();
     assert_eq!(task.command, "sleep 60");
     assert_eq!(task.path, PathBuf::from("/tmp"));
+    assert_eq!(task.label, Some("test".to_owned()));
 
     Ok(())
 }
@@ -64,6 +66,7 @@ async fn test_cannot_restart_running() -> Result<()> {
             task_id: 0,
             command: None,
             path: None,
+            label: None,
         }],
         start_immediately: false,
         stashed: false,

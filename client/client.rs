@@ -224,6 +224,7 @@ impl Client {
                 not_in_place,
                 edit,
                 edit_path,
+                edit_label,
             } => {
                 // `not_in_place` superseeds both other configs
                 let in_place =
@@ -238,6 +239,7 @@ impl Client {
                     in_place,
                     *edit,
                     *edit_path,
+                    *edit_label,
                 )
                 .await?;
                 Ok(true)

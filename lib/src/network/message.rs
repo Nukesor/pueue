@@ -140,10 +140,12 @@ pub struct RestartMessage {
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct TaskToRestart {
     pub task_id: usize,
-    /// Allow to restart the task with an updated command.
+    /// Restart the task with an updated command.
     pub command: Option<String>,
-    /// Allow to restart the task with an updated path.
+    /// Restart the task with an updated path.
     pub path: Option<PathBuf>,
+    /// Restart the task with an updated label.
+    pub label: Option<Option<String>>,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]

@@ -185,6 +185,10 @@ pub enum SubCommand {
         /// Edit the tasks' paths before restarting.
         #[clap(short = 'p', long)]
         edit_path: bool,
+
+        /// Edit the tasks' labels before restarting.
+        #[clap(short = 'l', long)]
+        edit_label: bool,
     },
 
     /// Either pause running tasks or specific groups of tasks.

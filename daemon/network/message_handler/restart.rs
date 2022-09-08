@@ -32,7 +32,7 @@ pub fn restart_multiple(
     );
 
     // Actually restart all tasks
-    for task in message.tasks.iter() {
+    for task in message.tasks.into_iter() {
         restart(&mut state, task, message.stashed, settings);
     }
 
@@ -50,13 +50,13 @@ pub fn restart_multiple(
 }
 
 /// This is invoked, whenever a task is actually restarted (in-place) without creating a new task.
-/// Update a possibly changed path/command and reset all infos from the previous run.
+/// Update a possibly changed path/command/label and reset all infos from the previous run.
 ///
 /// The "not in-place" restart functionality is actually just a copy the finished task + create a
 /// new task, which is completely handled on the client-side.
 fn restart(
     state: &mut MutexGuard<State>,
-    to_restart: &TaskToRestart,
+    to_restart: TaskToRestart,
     stashed: bool,
     settings: &Settings,
 ) {
@@ -80,14 +80,19 @@ fn restart(
     };
 
     // Update command if applicable.
-    if let Some(new_command) = &to_restart.command {
+    if let Some(new_command) = to_restart.command {
         task.original_command = new_command.clone();
-        task.command = insert_alias(settings, new_command.clone());
+        task.command = insert_alias(settings, new_command);
     }
 
     // Update path if applicable.
-    if let Some(path) = &to_restart.path {
-        task.path = path.clone();
+    if let Some(path) = to_restart.path {
+        task.path = path;
+    }
+
+    // Update path if applicable.
+    if let Some(label) = to_restart.label {
+        task.label = label;
     }
 
     // Reset all variables of any previous run.

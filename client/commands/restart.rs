@@ -26,6 +26,7 @@ pub async fn restart(
     in_place: bool,
     edit_command: bool,
     edit_path: bool,
+    edit_label: bool,
 ) -> Result<()> {
     let new_status = if stashed {
         TaskStatus::Stashed { enqueue_at: None }
@@ -83,6 +84,7 @@ pub async fn restart(
         // Path and command can be edited, if the use specified the -e or -p flag.
         let mut command = None;
         let mut path = None;
+        let mut label = None;
 
         // Update the command if requested.
         if edit_command {
@@ -99,6 +101,21 @@ pub async fn restart(
             path = Some(PathBuf::from(changed_path));
         }
 
+        // Update the label if requested.
+        if edit_label {
+            let edited_label = edit_line(&task.label.clone().unwrap_or_default())?;
+
+            // If the user deletes the label in their editor, an empty string will be returned.
+            // This is an indicator that the task should no longer have a label, in which case we
+            // return a `Some(None)`.
+            label = if edited_label == "" {
+                Some(None)
+            } else {
+                Some(Some(edited_label))
+            };
+            dbg!(&label);
+        }
+
         // Add the tasks to the singular message, if we want to restart the tasks in-place.
         // And continue with the next task. The message will then be sent after the for loop.
         if in_place {
@@ -106,6 +123,7 @@ pub async fn restart(
                 task_id: *task_id,
                 command,
                 path,
+                label,
             });
 
             continue;
@@ -122,7 +140,7 @@ pub async fn restart(
             group: task.group.clone(),
             enqueue_at: None,
             dependencies: Vec::new(),
-            label: task.label.clone(),
+            label: label.unwrap_or_else(|| task.label.clone()),
             print_task_id: false,
         });
 
