@@ -96,6 +96,7 @@ pub async fn restart(
                 command: edited_props.command,
                 path: edited_props.path,
                 label: edited_props.label,
+                delete_label: edited_props.delete_label,
             });
 
             continue;
@@ -112,7 +113,7 @@ pub async fn restart(
             group: task.group.clone(),
             enqueue_at: None,
             dependencies: Vec::new(),
-            label: edited_props.label.unwrap_or_else(|| task.label.clone()),
+            label: edited_props.label.or_else(|| task.label.clone()),
             print_task_id: false,
         });
 

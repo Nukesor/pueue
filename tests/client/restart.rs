@@ -76,7 +76,7 @@ async fn restart_and_edit_task_path_and_command() -> Result<()> {
 
     // Restart the command, edit its command and path and wait for it to start.
     // The task will fail afterwards, but it should still be edited.
-    let output = run_client_command_with_env(
+    run_client_command_with_env(
         shared,
         &[
             "restart",
@@ -89,7 +89,6 @@ async fn restart_and_edit_task_path_and_command() -> Result<()> {
         envs,
     )
     .await?;
-    dbg!(output);
     wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
 
     // Make sure that both the path has been updated.

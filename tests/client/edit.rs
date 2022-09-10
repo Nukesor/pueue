@@ -70,6 +70,33 @@ async fn edit_all_task_properties() -> Result<()> {
     Ok(())
 }
 
+/// Ensure that deleting the label in the editor result in the deletion of the task's label.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn edit_delete_label() -> Result<()> {
+    let daemon = daemon().await?;
+    let shared = &daemon.settings.shared;
+
+    // Create a stashed message which we'll edit later on.
+    let mut message = create_add_message(shared, "this is a test");
+    message.stashed = true;
+    message.label = Some("Testlabel".to_owned());
+    send_message(shared, Message::Add(message))
+        .await
+        .context("Failed to to add stashed task.")?;
+
+    // Echo an empty string into the file.
+    let mut envs = HashMap::new();
+    envs.insert("EDITOR", "echo '' > ");
+    run_client_command_with_env(shared, &["edit", "--label", "0"], envs).await?;
+
+    // Make sure that the label has indeed be deleted
+    let state = get_state(shared).await?;
+    let task = state.tasks.get(&0).unwrap();
+    assert_eq!(task.label, None);
+
+    Ok(())
+}
+
 /// Test that automatic restoration of a task's state works, if the edit command fails for some
 /// reason.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]

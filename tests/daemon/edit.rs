@@ -55,7 +55,8 @@ async fn test_edit_flow() -> Result<()> {
             task_id: 0,
             command: Some("ls -ahl".into()),
             path: Some("/tmp".into()),
-            label: Some(Some("test".to_string())),
+            label: Some("test".to_string()),
+            delete_label: false,
         }),
     )
     .await?;

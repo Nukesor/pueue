@@ -80,6 +80,7 @@ pub async fn edit(
         command: edited_props.command,
         path: edited_props.path,
         label: edited_props.label,
+        delete_label: edited_props.delete_label,
     });
     send_message(edit_message, stream).await?;
 
@@ -90,7 +91,8 @@ pub async fn edit(
 pub struct EditedProperties {
     pub command: Option<String>,
     pub path: Option<PathBuf>,
-    pub label: Option<Option<String>>,
+    pub label: Option<String>,
+    pub delete_label: bool,
 }
 
 /// Takes several task properties and edit them if requested.
@@ -129,11 +131,11 @@ pub fn edit_task_properties(
 
         // If the user deletes the label in their editor, an empty string will be returned.
         // This is an indicator that the task should no longer have a label, in which case we
-        // return a `Some(None)`.
-        props.label = if edited_label.is_empty() {
-            Some(None)
+        // set the `delete_label` flag.
+        if edited_label.is_empty() {
+            props.delete_label = true;
         } else {
-            Some(Some(edited_label))
+            props.label = Some(edited_label);
         };
     }
 

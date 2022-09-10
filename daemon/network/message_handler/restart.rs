@@ -91,8 +91,10 @@ fn restart(
     }
 
     // Update path if applicable.
-    if let Some(label) = to_restart.label {
-        task.label = label;
+    if to_restart.label.is_some() {
+        task.label = to_restart.label;
+    } else if to_restart.delete_label {
+        task.label = None
     }
 
     // Reset all variables of any previous run.

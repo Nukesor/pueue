@@ -57,8 +57,10 @@ pub fn edit(message: EditMessage, state: &SharedState, settings: &Settings) -> M
                 task.path = path;
             }
             // Update label if applicable.
-            if let Some(label) = message.label {
-                task.label = label;
+            if message.label.is_some() {
+                task.label = message.label;
+            } else if message.delete_label {
+                task.label = None;
             }
 
             ok_or_return_failure_message!(save_state(&state, settings));

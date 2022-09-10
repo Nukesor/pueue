@@ -145,7 +145,10 @@ pub struct TaskToRestart {
     /// Restart the task with an updated path.
     pub path: Option<PathBuf>,
     /// Restart the task with an updated label.
-    pub label: Option<Option<String>>,
+    pub label: Option<String>,
+    /// Cbor cannot represent Option<Option<T>> yet, which is why we have to utilize a
+    /// boolean to indicate that the label should be released, rather than an `Some(None)`.
+    pub delete_label: bool,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
@@ -200,7 +203,10 @@ pub struct EditMessage {
     pub task_id: usize,
     pub command: Option<String>,
     pub path: Option<PathBuf>,
-    pub label: Option<Option<String>>,
+    pub label: Option<String>,
+    /// Cbor cannot represent Option<Option<T>> yet, which is why we have to utilize a
+    /// boolean to indicate that the label should be released, rather than an `Some(None)`.
+    pub delete_label: bool,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
