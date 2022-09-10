@@ -178,13 +178,17 @@ pub enum SubCommand {
         #[clap(long)]
         not_in_place: bool,
 
-        /// Edit the tasks' command before restarting.
+        /// Edit the tasks' commands before restarting.
         #[clap(short, long)]
         edit: bool,
 
-        /// Edit the tasks' path before restarting.
+        /// Edit the tasks' paths before restarting.
         #[clap(short = 'p', long)]
         edit_path: bool,
+
+        /// Edit the tasks' labels before restarting.
+        #[clap(short = 'l', long)]
+        edit_label: bool,
     },
 
     /// Either pause running tasks or specific groups of tasks.
@@ -251,16 +255,25 @@ pub enum SubCommand {
         input: String,
     },
 
-    /// Edit the command or path of a stashed or queued task.
-    /// The command is edited by default.
+    /// Edit the command, path or label of a stashed or queued task.
+    /// By default only the command is edited.
+    /// Multiple properties can be added in one go.
     #[clap(verbatim_doc_comment)]
     Edit {
-        /// The id of the task.
+        /// The task's id.
         task_id: usize,
 
-        /// Edit the path of the task.
+        /// Edit the task's command.
+        #[clap(short, long)]
+        command: bool,
+
+        /// Edit the task's path.
         #[clap(short, long)]
         path: bool,
+
+        /// Edit the task's label.
+        #[clap(short, long)]
+        label: bool,
     },
 
     /// Use this to add or remove groups.

@@ -62,6 +62,7 @@ better-panic = "0.3"
 pretty_assertions = "1"
 rstest = "0.15"
 serde_yaml = "0.9"
+similar-asserts = "1"
 
 # Test specific dev-dependencies
 [target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]

@@ -25,6 +25,7 @@ pub fn edit_request(task_id: usize, state: &SharedState) -> Message {
                 task_id: task.id,
                 command: task.original_command.clone(),
                 path: task.path.clone(),
+                label: task.label.clone(),
             };
             Message::EditResponse(message)
         }
@@ -43,10 +44,25 @@ pub fn edit(message: EditMessage, state: &SharedState, settings: &Settings) -> M
                 return create_failure_message("Task is no longer locked.");
             }
 
+            // Restore the task to its previous state.
             task.status = task.prev_status.clone();
-            task.original_command = message.command.clone();
-            task.command = insert_alias(settings, message.command.clone());
-            task.path = message.path.clone();
+
+            // Update command if applicable.
+            if let Some(command) = message.command {
+                task.original_command = command.clone();
+                task.command = insert_alias(settings, command);
+            }
+            // Update path if applicable.
+            if let Some(path) = message.path {
+                task.path = path;
+            }
+            // Update label if applicable.
+            if message.label.is_some() {
+                task.label = message.label;
+            } else if message.delete_label {
+                task.label = None;
+            }
+
             ok_or_return_failure_message!(save_state(&state, settings));
 
             create_success_message("Command has been updated")

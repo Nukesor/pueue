@@ -83,6 +83,9 @@ pub async fn get_task_context(settings: &Settings) -> Result<HashMap<String, Str
             context.insert(format!("{task_name}_end"), formatted);
             context.insert(format!("{task_name}_end_long"), end.to_rfc2822());
         }
+        if let Some(label) = &task.label {
+            context.insert(format!("{task_name}_label"), label.to_string());
+        }
 
         if let TaskStatus::Stashed {
             enqueue_at: Some(enqueue_at),
@@ -133,6 +136,10 @@ pub fn assert_stdout_matches(
     if expected != stdout {
         println!("Expected output:\n-----\n{expected}\n-----");
         println!("\nGot output:\n-----\n{stdout}\n-----");
+        println!(
+            "\n{}",
+            similar_asserts::SimpleDiff::from_str(&expected, &stdout, "expected", "actual")
+        );
         bail!("The stdout of the command doesn't match the expected string");
     }
 

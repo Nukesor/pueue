@@ -4,12 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.1.1] - unreleased
+## [2.2.0] - unreleased
+
+### Changed
+
+- pueue log output now includes the task label, if any. [#355](https://github.com/Nukesor/pueue/issues/355)
 
 ### Added
 
 - Show a hint when calling `pueue log` if the task output has been truncated. [#318](https://github.com/Nukesor/pueue/issues/318)
 - Add `Settings.shared.alias_file`, which allows to set the location of the `pueue_aliases.yml` file.
+- Added functionality to edit a task's label [#354](https://github.com/Nukesor/pueue/issues/354).
+
+### Changed
+
+- Enable `pueue edit` to edit multiple properties in one go.
 
 ### Fixed
 

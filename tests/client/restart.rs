@@ -72,13 +72,20 @@ async fn restart_and_edit_task_path_and_command() -> Result<()> {
 
     // Set the editor to a command which replaces the temporary file's content.
     let mut envs = HashMap::new();
-    envs.insert("EDITOR", "echo 'non_existing_test_binary' > ");
+    envs.insert("EDITOR", "echo 'replaced string' > ");
 
     // Restart the command, edit its command and path and wait for it to start.
     // The task will fail afterwards, but it should still be edited.
     run_client_command_with_env(
         shared,
-        &["restart", "--in-place", "--edit", "--edit-path", "0"],
+        &[
+            "restart",
+            "--in-place",
+            "--edit",
+            "--edit-path",
+            "--edit-label",
+            "0",
+        ],
         envs,
     )
     .await?;
@@ -87,8 +94,9 @@ async fn restart_and_edit_task_path_and_command() -> Result<()> {
     // Make sure that both the path has been updated.
     let state = get_state(shared).await?;
     let task = state.tasks.get(&0).unwrap();
-    assert_eq!(task.command, "non_existing_test_binary");
-    assert_eq!(task.path.to_string_lossy(), "non_existing_test_binary");
+    assert_eq!(task.command, "replaced string");
+    assert_eq!(task.path.to_string_lossy(), "replaced string");
+    assert_eq!(task.label, Some("replaced string".to_owned()));
 
     // Also the task should have been restarted and failed.
     if let TaskStatus::Done(TaskResult::FailedToSpawn(_)) = task.status {

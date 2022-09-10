@@ -34,6 +34,10 @@ pub async fn daemon() -> Result<PueueDaemon> {
 /// A helper function which takes a Pueue config, a temporary directory and spawns
 /// a daemon into the async tokio runtime.
 pub async fn daemon_with_settings(settings: Settings, tempdir: TempDir) -> Result<PueueDaemon> {
+    // Uncoment the next line to get some daemon logging.
+    // Ignore any logger initialization errors, as multiple loggers will be initialized.
+    //let _ = simplelog::SimpleLogger::init(log::LevelFilter::Debug, simplelog::Config::default());
+
     let pueue_dir = tempdir.path();
     let path = pueue_dir.to_path_buf();
     // Start/spin off the daemon and get its PID

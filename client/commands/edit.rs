@@ -1,6 +1,6 @@
 use std::env;
 use std::io::{Read, Seek, SeekFrom, Write};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Context, Result};
 use tempfile::NamedTempFile;
@@ -16,7 +16,13 @@ use pueue_lib::process_helper::compile_shell_command;
 ///
 /// After receiving the task information, the user can then edit it in their editor.
 /// Upon exiting the text editor, the line will then be read and sent to the server
-pub async fn edit(stream: &mut GenericStream, task_id: usize, edit_path: bool) -> Result<Message> {
+pub async fn edit(
+    stream: &mut GenericStream,
+    task_id: usize,
+    edit_command: bool,
+    edit_path: bool,
+    edit_label: bool,
+) -> Result<Message> {
     // Request the data to edit from the server and issue a task-lock while doing so.
     let init_message = Message::EditRequest(task_id);
     send_message(init_message, stream).await?;
@@ -32,41 +38,25 @@ pub async fn edit(stream: &mut GenericStream, task_id: usize, edit_path: bool) -
         return Ok(init_response);
     };
 
-    // Edit either the path or the command, depending on the `path` flag.
-    let mut command = init_response.command;
-    let mut path = init_response.path;
-    if edit_path {
-        let str_path = path
-            .to_str()
-            .context("Failed to convert task path to string")?;
-        let changed_path = edit_line_wrapper(stream, task_id, str_path).await?;
-        path = PathBuf::from(changed_path);
-    } else {
-        command = edit_line_wrapper(stream, task_id, &command).await?
-    };
+    // Edit the command if explicitly specified or if no flags are provided (the default)
+    let edit_command = edit_command || !edit_path && !edit_label;
 
-    // Create a new message with the edited command.
-    let edit_message = Message::Edit(EditMessage {
-        task_id,
-        command,
-        path,
-    });
-    send_message(edit_message, stream).await?;
+    // Edit all requested properties.
+    let edit_result = edit_task_properties(
+        &init_response.command,
+        &init_response.path,
+        &init_response.label,
+        edit_command,
+        edit_path,
+        edit_label,
+    );
 
-    Ok(receive_message(stream).await?)
-}
-
-/// This function wraps the edit_line function for error handling.
-///
-/// Any error will result in the client aborting the editing process.
-/// This includes notifying the daemon of this, so it can restore the task to its previous state.
-pub async fn edit_line_wrapper(
-    stream: &mut GenericStream,
-    task_id: usize,
-    line: &str,
-) -> Result<String> {
-    match edit_line(line) {
-        Ok(edited_line) => Ok(edited_line),
+    // Any error while editing will result in the client aborting the editing process.
+    // However, as the daemon moves tasks that're edited into the `Locked` state, we cannot simply
+    // exit the client. We rather have to notify the daemon that the editing process was interrupted.
+    // In the following, we notify the daemon of any errors, so it can restore the task to its previous state.
+    let edited_props = match edit_result {
+        Ok(inner) => inner,
         Err(error) => {
             eprintln!("Encountered an error while editing. Trying to restore the task's status.");
             // Notify the daemon that something went wrong.
@@ -80,14 +70,81 @@ pub async fn edit_line_wrapper(
                 _ => eprintln!("Received unknown resonse: {response:?}"),
             };
 
-            Err(error)
+            return Err(error);
         }
-    }
+    };
+
+    // Create a new message with the edited properties.
+    let edit_message = Message::Edit(EditMessage {
+        task_id,
+        command: edited_props.command,
+        path: edited_props.path,
+        label: edited_props.label,
+        delete_label: edited_props.delete_label,
+    });
+    send_message(edit_message, stream).await?;
+
+    Ok(receive_message(stream).await?)
 }
 
-/// This function allows the user to edit a task's command or path.
-/// Save the string to a temporary file, which is the edited by the user with $EDITOR.
-/// As soon as the editor is closed, read the file content and return the line
+#[derive(Default)]
+pub struct EditedProperties {
+    pub command: Option<String>,
+    pub path: Option<PathBuf>,
+    pub label: Option<String>,
+    pub delete_label: bool,
+}
+
+/// Takes several task properties and edit them if requested.
+/// The `edit_*` booleans are used to determine which fields should be edited.
+///
+/// Fields that have been edited will be returned as their `Some(T)` equivalent.
+///
+/// The returned values are: `(command, path, label)`
+pub fn edit_task_properties(
+    original_command: &str,
+    original_path: &Path,
+    original_label: &Option<String>,
+    edit_command: bool,
+    edit_path: bool,
+    edit_label: bool,
+) -> Result<EditedProperties> {
+    let mut props = EditedProperties::default();
+
+    // Update the command if requested.
+    if edit_command {
+        props.command = Some(edit_line(original_command)?);
+    };
+
+    // Update the path if requested.
+    if edit_path {
+        let str_path = original_path
+            .to_str()
+            .context("Failed to convert task path to string")?;
+        let changed_path = edit_line(str_path)?;
+        props.path = Some(PathBuf::from(changed_path));
+    }
+
+    // Update the label if requested.
+    if edit_label {
+        let edited_label = edit_line(&original_label.clone().unwrap_or_default())?;
+
+        // If the user deletes the label in their editor, an empty string will be returned.
+        // This is an indicator that the task should no longer have a label, in which case we
+        // set the `delete_label` flag.
+        if edited_label.is_empty() {
+            props.delete_label = true;
+        } else {
+            props.label = Some(edited_label);
+        };
+    }
+
+    Ok(props)
+}
+
+/// This function enables the user to edit a task's details.
+/// Save any string to a temporary file, which is opened in the specified `$EDITOR`.
+/// As soon as the editor is closed, read the file content and return the line.
 fn edit_line(line: &str) -> Result<String> {
     // Create a temporary file with the command so we can edit it with the editor.
     let mut file = NamedTempFile::new().expect("Failed to create a temporary file");
@@ -125,5 +182,5 @@ fn edit_line(line: &str) -> Result<String> {
         line.pop();
     }
 
-    Ok(line)
+    Ok(line.trim().to_string())
 }

@@ -140,10 +140,15 @@ pub struct RestartMessage {
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct TaskToRestart {
     pub task_id: usize,
-    /// Allow to restart the task with an updated command.
+    /// Restart the task with an updated command.
     pub command: Option<String>,
-    /// Allow to restart the task with an updated path.
+    /// Restart the task with an updated path.
     pub path: Option<PathBuf>,
+    /// Restart the task with an updated label.
+    pub label: Option<String>,
+    /// Cbor cannot represent Option<Option<T>> yet, which is why we have to utilize a
+    /// boolean to indicate that the label should be released, rather than an `Some(None)`.
+    pub delete_label: bool,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
@@ -186,17 +191,22 @@ pub struct SendMessage {
 }
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
-pub struct EditMessage {
-    pub task_id: usize,
-    pub command: String,
-    pub path: PathBuf,
-}
-
-#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct EditResponseMessage {
     pub task_id: usize,
     pub command: String,
     pub path: PathBuf,
+    pub label: Option<String>,
+}
+
+#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
+pub struct EditMessage {
+    pub task_id: usize,
+    pub command: Option<String>,
+    pub path: Option<PathBuf>,
+    pub label: Option<String>,
+    /// Cbor cannot represent Option<Option<T>> yet, which is why we have to utilize a
+    /// boolean to indicate that the label should be released, rather than an `Some(None)`.
+    pub delete_label: bool,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]

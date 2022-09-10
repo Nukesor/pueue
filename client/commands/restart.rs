@@ -1,13 +1,10 @@
-use std::path::PathBuf;
-
-use anyhow::Context;
 use anyhow::{bail, Result};
 
 use pueue_lib::network::message::*;
 use pueue_lib::network::protocol::*;
 use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
-use crate::commands::edit::edit_line_wrapper;
+use crate::commands::edit::edit_task_properties;
 use crate::commands::get_state;
 
 /// When restarting tasks, the remote state is queried and a [AddMessage]
@@ -26,6 +23,7 @@ pub async fn restart(
     in_place: bool,
     edit_command: bool,
     edit_path: bool,
+    edit_label: bool,
 ) -> Result<()> {
     let new_status = if stashed {
         TaskStatus::Stashed { enqueue_at: None }
@@ -80,32 +78,25 @@ pub async fn restart(
         let mut new_task = Task::from_task(task);
         new_task.status = new_status.clone();
 
-        // Path and command can be edited, if the use specified the -e or -p flag.
-        let mut command = None;
-        let mut path = None;
-
-        // Update the command if requested.
-        if edit_command {
-            command = Some(edit_line_wrapper(stream, *task_id, &task.command).await?);
-        };
-
-        // Update the path if requested.
-        if edit_path {
-            let str_path = task
-                .path
-                .to_str()
-                .context("Failed to convert task path to string")?;
-            let changed_path = edit_line_wrapper(stream, *task_id, str_path).await?;
-            path = Some(PathBuf::from(changed_path));
-        }
+        // Edit any properties, if requested.
+        let edited_props = edit_task_properties(
+            &task.command,
+            &task.path,
+            &task.label,
+            edit_command,
+            edit_path,
+            edit_label,
+        )?;
 
         // Add the tasks to the singular message, if we want to restart the tasks in-place.
         // And continue with the next task. The message will then be sent after the for loop.
         if in_place {
             restart_message.tasks.push(TaskToRestart {
                 task_id: *task_id,
-                command,
-                path,
+                command: edited_props.command,
+                path: edited_props.path,
+                label: edited_props.label,
+                delete_label: edited_props.delete_label,
             });
 
             continue;
@@ -114,15 +105,15 @@ pub async fn restart(
         // In case we don't do in-place restarts, we have to add a new task.
         // Create a AddMessage to send the task to the daemon from the updated info and the old task.
         let add_task_message = Message::Add(AddMessage {
-            command: command.unwrap_or_else(|| task.command.clone()),
-            path: path.unwrap_or_else(|| task.path.clone()),
+            command: edited_props.command.unwrap_or_else(|| task.command.clone()),
+            path: edited_props.path.unwrap_or_else(|| task.path.clone()),
             envs: task.envs.clone(),
             start_immediately,
             stashed,
             group: task.group.clone(),
             enqueue_at: None,
             dependencies: Vec::new(),
-            label: task.label.clone(),
+            label: edited_props.label.or_else(|| task.label.clone()),
             print_task_id: false,
         });
 

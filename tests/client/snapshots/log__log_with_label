@@ -1,0 +1,11 @@
+┌───────────────────────────────────┐
+│ Task 0:    completed successfully │
+└───────────────────────────────────┘
+Command: echo test                       
+   Path: {{ cwd }}                 
+  Label: {{ task_0_label }}                      
+  Start: {{ task_0_start_long }} 
+    End: {{ task_0_end_long }} 
+
+output:
+test

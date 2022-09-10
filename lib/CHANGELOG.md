@@ -11,6 +11,11 @@ The concept of SemVer is applied to the daemon/client API, but not the library A
 ### Added
 
 - Added `Settings.shared.alias_file`, which can be used to specify the location of the `pueue_aliases.yml`.
+- Added functionality to edit a task's label [#354](https://github.com/Nukesor/pueue/issues/354).
+  - `TaskToRestart.label`
+  - `TaskToRestart.delete_label`
+  - `EditMessage.label`
+  - `EditMessage.delete_label`
 
 ### Changed
 
@@ -19,6 +24,7 @@ The concept of SemVer is applied to the daemon/client API, but not the library A
 - The module structure of the platform specific networking code has been streamlined.
 - Renamed `TasksToRestart` to `TaskToRestart`.
 - Make `TaskToRestart::path` and `TaskToRestart::command` optional.
+- Make `EditMessage::path` and `EditMessage::command` optional.
 
 ## [0.20.0] - 2022-07-21
 
@@ -188,6 +194,7 @@ Several non-backward compatible breaking API changes to prevent impossible state
 ## [0.14.1] - 2021-06-21
 
 ### Added
+
 - Messages now have PartialEq for better testability
 
 ## [0.14.0] - 2021-06-15
