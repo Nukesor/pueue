@@ -1,5 +1,5 @@
-use serde_cbor::de::from_slice;
-use serde_cbor::ser::to_vec;
+use ciborium::de::from_reader;
+use ciborium::ser::into_writer;
 use serde_derive::{Deserialize, Serialize};
 
 use pueue_lib::network::message::Message as OriginalMessage;
@@ -26,9 +26,10 @@ pub struct CleanMessage {}
 /// Make sure we can deserialize old messages as long as we have default values set.
 fn test_deserialize_old_message() {
     let message = Message::Clean(CleanMessage {});
-    let payload_bytes = to_vec(&message).unwrap();
+    let mut payload_bytes = Vec::new();
+    into_writer(&message, &mut payload_bytes).unwrap();
 
-    let message: OriginalMessage = from_slice(&payload_bytes).unwrap();
+    let message: OriginalMessage = from_reader(payload_bytes.as_slice()).unwrap();
     if let OriginalMessage::Clean(message) = message {
         // The serialized message didn't have the `successful_only` property yet.
         // Instead the default `false` should be used.
@@ -46,9 +47,10 @@ fn test_deserialize_new_message() {
         task_id_2: 1,
         some_new_field: 2,
     });
-    let payload_bytes = to_vec(&message).unwrap();
+    let mut payload_bytes = Vec::new();
+    into_writer(&message, &mut payload_bytes).unwrap();
 
-    let message: OriginalMessage = from_slice(&payload_bytes).unwrap();
+    let message: OriginalMessage = from_reader(payload_bytes.as_slice()).unwrap();
     // The serialized message did have an additional field. The deserialization works anyway.
     assert!(matches!(message, OriginalMessage::Switch(_)));
 }

@@ -1,9 +1,9 @@
 use std::io::Cursor;
 
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
+use ciborium::de::from_reader;
+use ciborium::ser::into_writer;
 use log::debug;
-use serde_cbor::de::from_slice;
-use serde_cbor::ser::to_vec;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
 use crate::error::Error;
@@ -20,7 +20,9 @@ pub const PACKET_SIZE: usize = 1280;
 pub async fn send_message(message: Message, stream: &mut GenericStream) -> Result<(), Error> {
     debug!("Sending message: {message:#?}",);
     // Prepare command for transfer and determine message byte size
-    let payload = to_vec(&message).map_err(|err| Error::MessageDeserialization(err.to_string()))?;
+    let mut payload = Vec::new();
+    into_writer(&message, &mut payload)
+        .map_err(|err| Error::MessageDeserialization(err.to_string()))?;
 
     send_bytes(&payload, stream).await
 }
@@ -115,8 +117,8 @@ pub async fn receive_message(stream: &mut GenericStream) -> Result<Message, Erro
     }
 
     // Deserialize the message.
-    let message: Message =
-        from_slice(&payload_bytes).map_err(|err| Error::MessageDeserialization(err.to_string()))?;
+    let message: Message = from_reader(payload_bytes.as_slice())
+        .map_err(|err| Error::MessageDeserialization(err.to_string()))?;
     debug!("Received message: {message:#?}");
 
     Ok(message)
@@ -152,7 +154,8 @@ mod test {
         // The message that should be sent
         let payload = "a".repeat(100_000);
         let message = create_success_message(payload);
-        let original_bytes = to_vec(&message).expect("Failed to serialize message.");
+        let mut original_bytes = Vec::new();
+        into_writer(&message, &mut original_bytes).expect("Failed to serialize message.");
 
         let listener: GenericListener = Box::new(listener);
 
@@ -164,7 +167,7 @@ mod test {
             let mut stream = listener.accept().await.unwrap();
             let message_bytes = receive_bytes(&mut stream).await.unwrap();
 
-            let message: Message = from_slice(&message_bytes).unwrap();
+            let message: Message = from_reader(message_bytes.as_slice()).unwrap();
 
             send_message(message, &mut stream).await.unwrap();
         });
@@ -174,7 +177,7 @@ mod test {
         // Create a client that sends a message and instantly receives it
         send_message(message, &mut client).await?;
         let response_bytes = receive_bytes(&mut client).await?;
-        let _message: Message = from_slice(&response_bytes)
+        let _message: Message = from_reader(response_bytes.as_slice())
             .map_err(|err| Error::MessageDeserialization(err.to_string()))?;
 
         assert_eq!(response_bytes, original_bytes);
