@@ -67,21 +67,16 @@ enum DateOrDateTime {
 pub fn datetime<'i>(section: Pair<'i, Rule>, query_result: &mut QueryResult) -> Result<()> {
     let mut filter = section.into_inner();
     // Get the column this filter should be applied to.
+    // Either of [Rule::column_enqueue_at | Rule::column_start | Rule::column_end]
     let column = filter.next().unwrap();
     let column = column.as_rule();
-    match column {
-        Rule::column_enqueue_at | Rule::column_start | Rule::column_end => (),
-        _ => bail!("Expected either of [enqueue_at,start,stop]"),
-    }
 
     // Get the operator that should be applied in this filter.
+    // Either of [Rule::eq | Rule::neq | Rule::lt | Rule::gt]
     let operator = filter.next().unwrap().as_rule();
-    match operator {
-        Rule::eq | Rule::neq | Rule::lt | Rule::gt => (),
-        _ => bail!("Expected a comparison operator for date/time filters"),
-    }
 
-    // Get the
+    // Get the point in time which we should filter for.
+    // This can be either a Date or a DateTime.
     let operand = filter.next().unwrap();
     let operand_rule = operand.as_rule();
     let operand = match operand_rule {
@@ -105,6 +100,7 @@ pub fn datetime<'i>(section: Pair<'i, Rule>, query_result: &mut QueryResult) -> 
     };
 
     let filter_function = Box::new(move |task: &Task| -> bool {
+        // Get the field we should apply the filter to.
         let field = match column {
             Rule::column_enqueue_at => {
                 if let TaskStatus::Stashed {
@@ -132,6 +128,7 @@ pub fn datetime<'i>(section: Pair<'i, Rule>, query_result: &mut QueryResult) -> 
             }
             _ => return true,
         };
+
         // Apply the operator to the operands.
         // The operator might have a different meaning depending on the type of datetime/date
         // we're dealing with.
@@ -225,23 +222,16 @@ pub fn datetime<'i>(section: Pair<'i, Rule>, query_result: &mut QueryResult) -> 
 pub fn label<'i>(section: Pair<'i, Rule>, query_result: &mut QueryResult) -> Result<()> {
     let mut filter = section.into_inner();
     // The first word should be the `label` keyword.
-    let column = filter.next().unwrap();
-    match column.as_rule() {
-        Rule::column_label => (),
-        _ => bail!("Expected label keyword"),
-    }
+    let _label = filter.next().unwrap();
 
     // Get the operator that should be applied in this filter.
+    // Can be either of [Rule::eq | Rule::neq].
     let operator = filter.next().unwrap().as_rule();
-    match operator {
-        Rule::eq | Rule::neq => (),
-        _ => bail!("Expected a [=|!=] comparison operator label filter"),
-    }
 
     // Get the name of the label we should filter for.
     let operand = filter.next().unwrap().as_str().to_string();
 
-    // Filter for the label
+    // Build the label filter function.
     let filter_function = Box::new(move |task: &Task| -> bool {
         let label = if let Some(label) = &task.label {
             label
@@ -306,23 +296,16 @@ pub fn label<'i>(section: Pair<'i, Rule>, query_result: &mut QueryResult) -> Res
 pub fn status<'i>(section: Pair<'i, Rule>, query_result: &mut QueryResult) -> Result<()> {
     let mut filter = section.into_inner();
     // The first word should be the `status` keyword.
-    let column = filter.next().unwrap();
-    match column.as_rule() {
-        Rule::column_status => (),
-        _ => bail!("Expected status keyword"),
-    }
+    let _status = filter.next().unwrap();
 
     // Get the operator that should be applied in this filter.
+    // Can be either of [Rule::eq | Rule::neq]
     let operator = filter.next().unwrap().as_rule();
-    match operator {
-        Rule::eq | Rule::neq => (),
-        _ => bail!("Expected a [=|!=] comparison operator label filter"),
-    }
 
     // Get the status we should filter for.
     let operand = filter.next().unwrap().as_rule();
 
-    // Filter for the label
+    // Build the filter function for the task's status.
     let filter_function = Box::new(move |task: &Task| -> bool {
         let matches = match operand {
             Rule::status_queued => matches!(task.status, TaskStatus::Queued),

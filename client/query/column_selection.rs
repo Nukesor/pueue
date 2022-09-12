@@ -1,30 +1,18 @@
-use anyhow::{ensure, Context, Result};
+use anyhow::Result;
 use pest::iterators::Pair;
 
 use super::{QueryResult, Rule};
 
 pub fn apply(section: Pair<'_, Rule>, query_result: &mut QueryResult) -> Result<()> {
-    // This query is expected to be the "columns" keyword + columns
+    // This query is expected to be structured like this:
+    // `columns = [(column (, column)*]`
     let mut columns_pairs = section.into_inner();
-    let columns_word = columns_pairs.next().unwrap();
-    ensure!(
-        columns_word.as_rule() == Rule::columns_word,
-        "Expected leading 'columns' keyword in columns query"
-    );
+    // Pop the `column` and `=`
+    let _columns_word = columns_pairs.next().unwrap();
+    let _equals = columns_pairs.next().unwrap();
 
-    let equals = columns_pairs.next().unwrap();
-    ensure!(
-        equals.as_rule() == Rule::eq,
-        "Expected multiple columns after 'columns' keyword in column selection"
-    );
-
+    // Get the list of columns.
     let multiple_columns = columns_pairs.next().unwrap();
-    ensure!(
-        multiple_columns.as_rule() == Rule::multiple_columns,
-        "Expected multiple columns after 'columns' keyword in column selection"
-    );
-
-    let columns = multiple_columns.into_inner();
     // Extract all columns from the multiple_columns.inner iterator
     // The structure is like this
     // ```
@@ -59,14 +47,10 @@ pub fn apply(section: Pair<'_, Rule>, query_result: &mut QueryResult) -> Result<
     //      ]
     // }
     // ```
-    let mut columns = columns
-        .map(|pair| {
-            pair.into_inner()
-                .next()
-                .context("Expected a column in the column selection.")
-                .map(|inner_pair| inner_pair.as_rule())
-        })
-        .collect::<Result<Vec<Rule>>>()?;
+    let mut columns = multiple_columns
+        .into_inner()
+        .map(|pair| pair.into_inner().next().unwrap().as_rule())
+        .collect::<Vec<Rule>>();
 
     query_result.selected_columns.append(&mut columns);
 
