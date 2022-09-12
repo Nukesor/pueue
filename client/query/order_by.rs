@@ -1,4 +1,4 @@
-use anyhow::{bail, ensure, Result};
+use anyhow::Result;
 use pest::iterators::Pair;
 
 use super::{QueryResult, Rule};
@@ -63,26 +63,20 @@ pub enum Direction {
 /// }
 pub fn order_by(section: Pair<'_, Rule>, query_result: &mut QueryResult) -> Result<()> {
     let mut order_by_condition = section.into_inner();
-    // The first word should be the `label` keyword.
-    let order_by = order_by_condition.next().unwrap();
-    match order_by.as_rule() {
-        Rule::order_by => (),
-        _ => bail!("Expected order_by keyword"),
-    }
+    // The first word should be the `order_by` keyword.
+    let _order_by = order_by_condition.next().unwrap();
 
-    // Get the label we should order by.
+    // Get the column we should order by.
+    // The column is wrapped by a `Rule::column` keyword.
     let column_keyword = order_by_condition.next().unwrap();
-    ensure!(
-        column_keyword.as_rule() == Rule::column,
-        "Expected multiple columns after 'columns' keyword in column selection"
-    );
     let column = column_keyword.into_inner().next().unwrap().as_rule();
 
-    // Get the name of the label we should filter for.
-    let direction = match order_by_condition.next().unwrap().as_rule() {
-        Rule::ascending => Direction::Ascending,
-        Rule::descending => Direction::Descending,
-        _ => return Ok(()),
+    // Get the direction we should order by.
+    // If no direction is provided, default to `Ascending`.
+    let direction = match order_by_condition.next().map(|pair| pair.as_rule()) {
+        Some(Rule::ascending) => Direction::Ascending,
+        Some(Rule::descending) => Direction::Descending,
+        _ => Direction::Ascending,
     };
 
     query_result.order_by = Some((column, direction));

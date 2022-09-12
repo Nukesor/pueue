@@ -56,7 +56,7 @@ order_by = { ^"order_by" }
 ascending = { ^"asc" }
 descending = { ^"desc" }
 order_columns = { column_id | column_status | column_command | column_label | column_path | column_start | column_end }
-order_by_condition = { order_by ~ column ~ (ascending | descending) }
+order_by_condition = { order_by ~ column ~ (ascending | descending)? }
 
 // ----- Limit -----
 first = { ^"first" }
