@@ -5,4 +5,5 @@ mod group;
 mod log;
 mod restart;
 mod status;
+mod status_filter;
 mod wait;
