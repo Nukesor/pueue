@@ -75,6 +75,32 @@ async fn colored() -> Result<()> {
     Ok(())
 }
 
+/// Test status for single group
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn single_group() -> Result<()> {
+    let daemon = daemon().await?;
+    let shared = &daemon.settings.shared;
+
+    // Add a new group
+    add_group_with_slots(shared, "testgroup", 1).await?;
+
+    // Add a task to the new testgroup.
+    run_client_command(shared, &["add", "--group", "testgroup", "ls"])?;
+    // Add another task to the default group.
+    run_client_command(shared, &["add", "--stashed", "ls"])?;
+
+    // Make sure the first task finished.
+    wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
+
+    let output = run_client_command(shared, &["status", "--group", "testgroup"])?;
+
+    // The output should only show the first task
+    let context = get_task_context(&daemon.settings).await?;
+    assert_stdout_matches("status__single_group", output.stdout, context)?;
+
+    Ok(())
+}
+
 /// Calling `pueue status --json` will result in the current state being printed to the cli.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn json() -> Result<()> {
