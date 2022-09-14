@@ -40,8 +40,8 @@ async fn daemon_with_test_state() -> Result<PueueDaemon> {
     let mut failed = build_task();
     failed.id = 0;
     failed.status = TaskStatus::Done(TaskResult::Failed(255));
-    failed.start = Some(Local::now() - Duration::days(1));
-    failed.end = Some(Local::now() - Duration::days(1) + Duration::minutes(1));
+    failed.start = Some(Local::now() - Duration::days(1) + Duration::minutes(1));
+    failed.end = Some(Local::now() - Duration::days(1) + Duration::minutes(5));
     state.tasks.insert(failed.id, failed);
 
     // Successful task
