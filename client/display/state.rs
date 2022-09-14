@@ -41,10 +41,8 @@ pub fn print_state<'a>(
     if json {
         if query.is_some() {
             state.tasks = tasks.into_iter().map(|task| (task.id, task)).collect();
-            println!("{}", serde_json::to_string(&state).unwrap());
-        } else {
-            println!("{}", serde_json::to_string(&state).unwrap());
         }
+        println!("{}", serde_json::to_string(&state).unwrap());
         return Ok(());
     }
 
