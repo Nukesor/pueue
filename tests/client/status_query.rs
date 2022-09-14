@@ -31,7 +31,7 @@ async fn daemon_with_test_state() -> Result<PueueDaemon> {
     let (settings, tempdir) = daemon_base_setup()?;
 
     // ------ Inert tasks -------
-    // Build and save a state with some pre-build tasks we can use to test our filters.
+    // Build and save a state with some pre-build tasks we can use to test our querys.
     // The state is saved and created before the daemon is started.
 
     let mut state = State::new();
@@ -90,14 +90,14 @@ async fn daemon_with_test_state() -> Result<PueueDaemon> {
 /// This is a default `status` call without any paramaters.
 /// This only exists to ensure the baseline behavior of our test state.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn filter_default() -> Result<()> {
+async fn default() -> Result<()> {
     let daemon = daemon_with_test_state().await?;
     let shared = &daemon.settings.shared;
 
-    let output = run_client_command(shared, &["status"]).await?;
+    let output = run_client_command(shared, &["status"])?;
 
     let context = get_task_context(&daemon.settings).await?;
-    assert_stdout_matches("filter__default_status", output.stdout, context)?;
+    assert_stdout_matches("query__default_status", output.stdout, context)?;
 
     Ok(())
 }
@@ -108,10 +108,10 @@ async fn order_by_status() -> Result<()> {
     let daemon = daemon_with_test_state().await?;
     let shared = &daemon.settings.shared;
 
-    let output = run_client_command(shared, &["status", "order_by status"]).await?;
+    let output = run_client_command(shared, &["status", "order_by status"])?;
 
     let context = get_task_context(&daemon.settings).await?;
-    assert_stdout_matches("filter__order_by_status", output.stdout, context)?;
+    assert_stdout_matches("query__order_by_status", output.stdout, context)?;
 
     Ok(())
 }
@@ -124,10 +124,10 @@ async fn filter_start() -> Result<()> {
 
     // Filter tasks by their start time. This includes only task 0, which was started 1 day ago.
     let time = (Local::now() - Duration::days(1)).format("%F %T");
-    let output = run_client_command(shared, &["status", &format!("start>{time}")]).await?;
+    let output = run_client_command(shared, &["status", &format!("start>{time}")])?;
 
     let context = get_task_context(&daemon.settings).await?;
-    assert_stdout_matches("filter__filter_start", output.stdout, context)?;
+    assert_stdout_matches("query__filter_start", output.stdout, context)?;
 
     Ok(())
 }
@@ -144,10 +144,10 @@ async fn filter_end_with_time(#[case] format: &'static str) -> Result<()> {
     // Filter tasks by their end time, once by day (today) and time (now).
     // This includes tasks 1 and 2, which were started 1 and 2 days ago.
     let time = Local::now().format(format);
-    let output = run_client_command(shared, &["status", &format!("end<{time}")]).await?;
+    let output = run_client_command(shared, &["status", &format!("end<{time}")])?;
 
     let context = get_task_context(&daemon.settings).await?;
-    assert_stdout_matches("filter__filter_end", output.stdout, context)?;
+    assert_stdout_matches("query__filter_end", output.stdout, context)?;
 
     Ok(())
 }
