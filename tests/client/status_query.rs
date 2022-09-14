@@ -102,6 +102,20 @@ async fn default() -> Result<()> {
     Ok(())
 }
 
+/// Select only specific columns for printing
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn column_selection() -> Result<()> {
+    let daemon = daemon_with_test_state().await?;
+    let shared = &daemon.settings.shared;
+
+    let output = run_client_command(shared, &["status", "columns=id,status,command"])?;
+
+    let context = get_task_context(&daemon.settings).await?;
+    assert_stdout_matches("query__columns", output.stdout, context)?;
+
+    Ok(())
+}
+
 /// Order the test state by task status.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn order_by_status() -> Result<()> {
