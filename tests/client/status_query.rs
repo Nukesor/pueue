@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 
-use anyhow::{ensure, Result};
+use anyhow::Result;
 use chrono::{Duration, Local};
 use pueue_daemon_lib::state_helper::save_state;
 
@@ -191,6 +191,53 @@ async fn filter_end_with_time(#[case] format: &'static str) -> Result<()> {
 
     let context = get_task_context(&daemon.settings).await?;
     assert_stdout_matches("query__filter_end", output.stdout, context)?;
+
+    Ok(())
+}
+
+/// Filter for tasks
+#[rstest]
+#[case(TaskStatus::Queued, 2)]
+#[case(TaskStatus::Running, 1)]
+#[case(TaskStatus::Paused, 0)]
+#[case(TaskStatus::Done(TaskResult::Success), 1)]
+#[case(TaskStatus::Done(TaskResult::Failed(255)), 1)]
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn filter_status(#[case] status: TaskStatus, #[case] expected: usize) -> Result<()> {
+    let daemon = daemon_with_test_state().await?;
+    let shared = &daemon.settings.shared;
+
+    // Get the correct query keyword for the given status.
+    let status_filter = match status {
+        TaskStatus::Queued => "queued",
+        TaskStatus::Stashed { .. } => "stashed",
+        TaskStatus::Running => "running",
+        TaskStatus::Paused => "paused",
+        TaskStatus::Done(TaskResult::Success) => "success",
+        TaskStatus::Done(TaskResult::Failed(_)) => "failed",
+        _ => anyhow::bail!("Got unexpected TaskStatus in filter_status"),
+    };
+
+    let query = format!("status={status_filter}");
+    let tasks = get_json_tasks_from_command(shared, &[query.as_str()])
+        .await
+        .expect("Failed to get json from task");
+
+    let mut count = 0;
+    for task in tasks {
+        let id = task.id;
+        assert_eq!(
+            task.status, status,
+            "Expected a different task status on task {id} based on filter {status:?}"
+        );
+
+        count += 1;
+    }
+
+    assert_eq!(
+        count, expected,
+        "Got a different amount of tasks than expected for the status filter {status:?}."
+    );
 
     Ok(())
 }

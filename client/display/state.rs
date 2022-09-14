@@ -15,7 +15,7 @@ use crate::query::apply_query;
 /// We pass the tasks as a separate parameter and as a list.
 /// This allows us to print the tasks in the order passed to the `format-status` subcommand.
 pub fn print_state<'a>(
-    state: State,
+    mut state: State,
     mut tasks: Vec<Task>,
     cli_command: &SubCommand,
     style: &'a OutputStyle,
@@ -39,7 +39,12 @@ pub fn print_state<'a>(
 
     // If the json flag is specified, print the state as json and exit.
     if json {
-        println!("{}", serde_json::to_string(&state).unwrap());
+        if query.is_some() {
+            state.tasks = tasks.into_iter().map(|task| (task.id, task)).collect();
+            println!("{}", serde_json::to_string(&state).unwrap());
+        } else {
+            println!("{}", serde_json::to_string(&state).unwrap());
+        }
         return Ok(());
     }
 
