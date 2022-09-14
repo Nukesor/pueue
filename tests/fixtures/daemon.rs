@@ -155,7 +155,7 @@ pub fn daemon_base_setup() -> Result<(Settings, TempDir)> {
         dark_mode: false,
         max_status_lines: Some(15),
         status_time_format: "%H:%M:%S".into(),
-        status_datetime_format: "%Y-%m-%d\n%H:%M:%S".into(),
+        status_datetime_format: "%Y-%m-%d %H:%M:%S".into(),
     };
 
     #[allow(deprecated)]

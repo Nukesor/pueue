@@ -6,6 +6,7 @@ use std::process::{Command, Output, Stdio};
 use anyhow::{bail, Context, Result};
 use assert_cmd::prelude::*;
 
+use chrono::Local;
 use handlebars::Handlebars;
 use pueue_lib::settings::*;
 use pueue_lib::task::TaskStatus;
@@ -72,14 +73,26 @@ pub async fn get_task_context(settings: &Settings) -> Result<HashMap<String, Str
         let task_name = format!("task_{}", id);
 
         if let Some(start) = task.start {
-            let formatted = start
-                .format(&settings.client.status_time_format)
-                .to_string();
+            // Use datetime format for datetimes that aren't today.
+            let format = if start.date() == Local::today() {
+                &settings.client.status_time_format
+            } else {
+                &settings.client.status_datetime_format
+            };
+
+            let formatted = start.format(format).to_string();
             context.insert(format!("{task_name}_start"), formatted);
             context.insert(format!("{task_name}_start_long"), start.to_rfc2822());
         }
         if let Some(end) = task.end {
-            let formatted = end.format(&settings.client.status_time_format).to_string();
+            // Use datetime format for datetimes that aren't today.
+            let format = if end.date() == Local::today() {
+                &settings.client.status_time_format
+            } else {
+                &settings.client.status_datetime_format
+            };
+
+            let formatted = end.format(format).to_string();
             context.insert(format!("{task_name}_end"), formatted);
             context.insert(format!("{task_name}_end_long"), end.to_rfc2822());
         }
@@ -91,7 +104,14 @@ pub async fn get_task_context(settings: &Settings) -> Result<HashMap<String, Str
             enqueue_at: Some(enqueue_at),
         } = task.status
         {
-            let enqueue_at = enqueue_at.format(&settings.client.status_time_format);
+            // Use datetime format for datetimes that aren't today.
+            let format = if enqueue_at.date() == Local::today() {
+                &settings.client.status_time_format
+            } else {
+                &settings.client.status_datetime_format
+            };
+
+            let enqueue_at = enqueue_at.format(format);
             context.insert(format!("{task_name}_enqueue_at"), enqueue_at.to_string());
         }
     }
