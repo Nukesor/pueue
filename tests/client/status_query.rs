@@ -61,7 +61,7 @@ async fn daemon_with_test_state() -> Result<PueueDaemon> {
     // Scheduled task
     let mut successful = build_task();
     successful.status = TaskStatus::Stashed {
-        enqueue_at: Some(Local::now() + Duration::hours(1)),
+        enqueue_at: Some(Local::now() + Duration::minutes(2)),
     };
     successful.id = 3;
     state.tasks.insert(successful.id, successful);
