@@ -116,6 +116,34 @@ async fn column_selection() -> Result<()> {
     Ok(())
 }
 
+/// Select the first few entries of the list
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn limit_first() -> Result<()> {
+    let daemon = daemon_with_test_state().await?;
+    let shared = &daemon.settings.shared;
+
+    let output = run_client_command(shared, &["status", "first 4"])?;
+
+    let context = get_task_context(&daemon.settings).await?;
+    assert_stdout_matches("query__first_4", output.stdout, context)?;
+
+    Ok(())
+}
+
+/// Select the first few entries of the list
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn limit_last() -> Result<()> {
+    let daemon = daemon_with_test_state().await?;
+    let shared = &daemon.settings.shared;
+
+    let output = run_client_command(shared, &["status", "last 4"])?;
+
+    let context = get_task_context(&daemon.settings).await?;
+    assert_stdout_matches("query__last_4", output.stdout, context)?;
+
+    Ok(())
+}
+
 /// Order the test state by task status.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn order_by_status() -> Result<()> {
