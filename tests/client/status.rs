@@ -101,6 +101,33 @@ async fn single_group() -> Result<()> {
     Ok(())
 }
 
+/// Multiple groups
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn multiple_groups() -> Result<()> {
+    let daemon = daemon().await?;
+    let shared = &daemon.settings.shared;
+
+    // Add a new group
+    add_group_with_slots(shared, "testgroup", 1).await?;
+    add_group_with_slots(shared, "testgroup2", 1).await?;
+
+    // Add a task to the new testgroup.
+    run_client_command(shared, &["add", "--group", "testgroup", "ls"])?;
+    // Add another task to the default group.
+    run_client_command(shared, &["add", "--group", "testgroup2", "ls"])?;
+
+    // Make sure the second task finished.
+    wait_for_task_condition(shared, 1, |task| task.is_done()).await?;
+
+    let output = run_client_command(shared, &["status"])?;
+
+    // The output should show multiple groups
+    let context = get_task_context(&daemon.settings).await?;
+    assert_stdout_matches("status__multiple_groups", output.stdout, context)?;
+
+    Ok(())
+}
+
 /// Calling `pueue status --json` will result in the current state being printed to the cli.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn json() -> Result<()> {
