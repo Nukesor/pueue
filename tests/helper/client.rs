@@ -132,13 +132,19 @@ pub fn assert_stdout_matches(
         .join("snapshots")
         .join(&name);
 
-    let stdout = String::from_utf8(stdout).context("Got invalid utf8 as stdout!")?;
+    let actual = String::from_utf8(stdout).context("Got invalid utf8 as stdout!")?;
+    // Trim all trailing whitespaces from the actual stdout output.
+    let actual = actual
+        .lines()
+        .map(|line| line.trim_end())
+        .collect::<Vec<&str>>()
+        .join("\n");
 
     let template = read_to_string(&path);
     let template = match template {
         Ok(template) => template,
         Err(_) => {
-            println!("Current stdout:\n{stdout}");
+            println!("Actual output:\n{actual}");
             bail!("Failed to read template file {path:?}")
         }
     };
@@ -153,12 +159,19 @@ pub fn assert_stdout_matches(
             "Failed to render template for file: {name} with context {context:?}"
         ))?;
 
-    if expected != stdout {
+    // Trim all trailing whitespaces from the expected output.
+    let expected = expected
+        .lines()
+        .map(|line| line.trim_end())
+        .collect::<Vec<&str>>()
+        .join("\n");
+
+    if expected != actual {
         println!("Expected output:\n-----\n{expected}\n-----");
-        println!("\nGot output:\n-----\n{stdout}\n-----");
+        println!("\nGot output:\n-----\n{actual}\n-----");
         println!(
             "\n{}",
-            similar_asserts::SimpleDiff::from_str(&expected, &stdout, "expected", "actual")
+            similar_asserts::SimpleDiff::from_str(&expected, &actual, "expected", "actual")
         );
         bail!("The stdout of the command doesn't match the expected string");
     }

@@ -1,12 +1,12 @@
 Group "default" (1 parallel): running
 ──────────────────────────────────────────────────────────────────────
- Id   Status    Enqueue At   Command    Path              Start   End 
+ Id   Status    Enqueue At   Command    Path              Start   End
 ══════════════════════════════════════════════════════════════════════
- 3    Stashed   {{ task_3_enqueue_at }}     sleep 60   /tmp                          
+ 3    Stashed   {{ task_3_enqueue_at }}     sleep 60   /tmp
 ──────────────────────────────────────────────────────────────────────
- 4    Queued                 sleep 60   {{ cwd }}               
+ 4    Queued                 sleep 60   {{ cwd }}
 ──────────────────────────────────────────────────────────────────────
- 5    Queued                 sleep 60   {{ cwd }}               
+ 5    Queued                 sleep 60   {{ cwd }}
 ──────────────────────────────────────────────────────────────────────
- 6    Queued                 sleep 60   {{ cwd }}               
+ 6    Queued                 sleep 60   {{ cwd }}
 ──────────────────────────────────────────────────────────────────────
