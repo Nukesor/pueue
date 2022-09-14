@@ -12,7 +12,7 @@ use crate::helper::*;
 #[case(false)]
 #[case(true)]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn default_status(#[case] use_subcommand: bool) -> Result<()> {
+async fn default(#[case] use_subcommand: bool) -> Result<()> {
     let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 
@@ -29,14 +29,14 @@ async fn default_status(#[case] use_subcommand: bool) -> Result<()> {
     let output = run_client_command(shared, &subcommand)?;
 
     let context = get_task_context(&daemon.settings).await?;
-    assert_stdout_matches("status__default_status", output.stdout, context)?;
+    assert_stdout_matches("status__default", output.stdout, context)?;
 
     Ok(())
 }
 
 /// Test the status output with all columns enabled.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn full_status() -> Result<()> {
+async fn full() -> Result<()> {
     let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 
@@ -52,14 +52,14 @@ async fn full_status() -> Result<()> {
     let output = run_client_command(shared, &["status"])?;
 
     let context = get_task_context(&daemon.settings).await?;
-    assert_stdout_matches("status__full_status", output.stdout, context)?;
+    assert_stdout_matches("status__full", output.stdout, context)?;
 
     Ok(())
 }
 
 /// Calling `status` with the `--color=always` flag, colors the output as expected.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn colored_status() -> Result<()> {
+async fn colored() -> Result<()> {
     let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 
@@ -70,14 +70,14 @@ async fn colored_status() -> Result<()> {
     let output = run_client_command(shared, &["--color", "always", "status"])?;
 
     let context = get_task_context(&daemon.settings).await?;
-    assert_stdout_matches("status__status_with_color", output.stdout, context)?;
+    assert_stdout_matches("status__colored", output.stdout, context)?;
 
     Ok(())
 }
 
 /// Calling `pueue status --json` will result in the current state being printed to the cli.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn status_json() -> Result<()> {
+async fn json() -> Result<()> {
     let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 
