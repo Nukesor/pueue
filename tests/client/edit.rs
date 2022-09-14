@@ -23,7 +23,7 @@ async fn edit_task_default() -> Result<()> {
     // Update the task's command by piping a string to the temporary file.
     let mut envs = HashMap::new();
     envs.insert("EDITOR", "echo 'expected command string' > ");
-    run_client_command_with_env(shared, &["edit", "0"], envs).await?;
+    run_client_command_with_env(shared, &["edit", "0"], envs)?;
 
     // Make sure that both the command has been updated.
     let state = get_state(shared).await?;
@@ -57,8 +57,7 @@ async fn edit_all_task_properties() -> Result<()> {
         shared,
         &["edit", "--command", "--path", "--label", "0"],
         envs,
-    )
-    .await?;
+    )?;
 
     // Make sure that all properties have been updated.
     let state = get_state(shared).await?;
@@ -87,7 +86,7 @@ async fn edit_delete_label() -> Result<()> {
     // Echo an empty string into the file.
     let mut envs = HashMap::new();
     envs.insert("EDITOR", "echo '' > ");
-    run_client_command_with_env(shared, &["edit", "--label", "0"], envs).await?;
+    run_client_command_with_env(shared, &["edit", "--label", "0"], envs)?;
 
     // Make sure that the label has indeed be deleted
     let state = get_state(shared).await?;
@@ -114,7 +113,7 @@ async fn fail_to_edit_task() -> Result<()> {
     // Run a editor command that crashes.
     let mut envs = HashMap::new();
     envs.insert("EDITOR", "non_existing_test_binary");
-    let command = run_client_command_with_env(shared, &["edit", "0"], envs).await;
+    let command = run_client_command_with_env(shared, &["edit", "0"], envs);
     assert!(
         command.is_err(),
         "The command should fail, as the command isn't valid"

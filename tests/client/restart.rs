@@ -21,7 +21,7 @@ async fn restart_and_edit_task_command() -> Result<()> {
     envs.insert("EDITOR", "echo 'sleep 60' > ");
 
     // Restart the command, edit its command and wait for it to start.
-    run_client_command_with_env(shared, &["restart", "--in-place", "--edit", "0"], envs).await?;
+    run_client_command_with_env(shared, &["restart", "--in-place", "--edit", "0"], envs)?;
     wait_for_task_condition(shared, 0, |task| task.is_running()).await?;
 
     // Make sure that both the command has been updated.
@@ -48,8 +48,7 @@ async fn restart_and_edit_task_path() -> Result<()> {
     envs.insert("EDITOR", "echo '/tmp' > ");
 
     // Restart the command, edit its command and wait for it to start.
-    run_client_command_with_env(shared, &["restart", "--in-place", "--edit-path", "0"], envs)
-        .await?;
+    run_client_command_with_env(shared, &["restart", "--in-place", "--edit-path", "0"], envs)?;
     wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
 
     // Make sure that both the path has been updated.
@@ -87,8 +86,7 @@ async fn restart_and_edit_task_path_and_command() -> Result<()> {
             "0",
         ],
         envs,
-    )
-    .await?;
+    )?;
     wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
 
     // Make sure that both the path has been updated.

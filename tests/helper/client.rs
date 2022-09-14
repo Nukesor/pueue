@@ -13,18 +13,18 @@ use pueue_lib::task::TaskStatus;
 use super::get_state;
 
 /// Spawn a client command that connects to a specific daemon.
-pub async fn run_client_command(shared: &Shared, args: &[&str]) -> Result<Output> {
+pub fn run_client_command(shared: &Shared, args: &[&str]) -> Result<Output> {
     // Inject an environment variable into the pueue command.
     // This is used to ensure that the environment is properly captured and forwarded.
     let mut envs = HashMap::new();
     envs.insert("PUEUED_TEST_ENV_VARIABLE", "Test");
 
-    run_client_command_with_env(shared, args, envs).await
+    run_client_command_with_env(shared, args, envs)
 }
 
 /// Spawn a client command that connects to a specific daemon.
 /// Accepts a list of environment variables that'll be injected into the client's env.
-pub async fn run_client_command_with_env(
+pub fn run_client_command_with_env(
     shared: &Shared,
     args: &[&str],
     envs: HashMap<&str, &str>,

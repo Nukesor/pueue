@@ -17,7 +17,7 @@ async fn default_follow() -> Result<()> {
 
     // Execute `follow`.
     // This will result in the client receiving the streamed output until the task finished.
-    let output = run_client_command(shared, &["follow"]).await?;
+    let output = run_client_command(shared, &["follow"])?;
 
     assert_stdout_matches("follow__default_follow", output.stdout, HashMap::new())?;
 
@@ -44,7 +44,7 @@ async fn remote_follow() -> Result<()> {
 
     // Execute `follow`.
     // This will result in the client receiving the streamed output until the task finished.
-    let output = run_client_command(shared, &["follow"]).await?;
+    let output = run_client_command(shared, &["follow"])?;
 
     assert_stdout_matches("follow__default_follow", output.stdout, HashMap::new())?;
 
@@ -72,7 +72,7 @@ async fn remote_follow_with_last_lines() -> Result<()> {
 
     // Execute `follow`.
     // This will result in the client receiving the streamed output until the task finished.
-    let output = run_client_command(shared, &["follow", "--lines=4"]).await?;
+    let output = run_client_command(shared, &["follow", "--lines=4"])?;
 
     assert_stdout_matches("follow__last_lines", output.stdout, HashMap::new())?;
 

@@ -31,7 +31,7 @@ async fn read_log(#[case] read_local_logs: bool) -> Result<()> {
     assert_success(add_task(shared, "echo test", false).await?);
     wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
 
-    let output = run_client_command(shared, &["log"]).await?;
+    let output = run_client_command(shared, &["log"])?;
 
     let context = get_task_context(&daemon.settings).await?;
     assert_stdout_matches("log__default_log", output.stdout, context)?;
@@ -62,7 +62,7 @@ async fn read_truncated_log(#[case] read_local_logs: bool) -> Result<()> {
     assert_success(add_task(shared, "echo '1\n2\n3\n4\n5\n6\n7\n8\n9\n10'", false).await?);
     wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
 
-    let output = run_client_command(shared, &["log", "--lines=5"]).await?;
+    let output = run_client_command(shared, &["log", "--lines=5"])?;
 
     let context = get_task_context(&daemon.settings).await?;
     assert_stdout_matches("log__last_lines_log", output.stdout, context)?;
@@ -77,10 +77,10 @@ async fn task_with_label() -> Result<()> {
     let shared = &daemon.settings.shared;
 
     // Add a task and wait until it finishes.
-    run_client_command(shared, &["add", "--label", "test_label", "echo test"]).await?;
+    run_client_command(shared, &["add", "--label", "test_label", "echo test"])?;
     wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
 
-    let output = run_client_command(shared, &["log"]).await?;
+    let output = run_client_command(shared, &["log"])?;
 
     let context = get_task_context(&daemon.settings).await?;
     assert_stdout_matches("log__log_with_label", output.stdout, context)?;
@@ -98,7 +98,7 @@ async fn colored_log() -> Result<()> {
     assert_success(add_task(shared, "echo test", false).await?);
     wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
 
-    let output = run_client_command(shared, &["--color", "always", "log"]).await?;
+    let output = run_client_command(shared, &["--color", "always", "log"])?;
 
     let context = get_task_context(&daemon.settings).await?;
     assert_stdout_matches("log__log_with_color", output.stdout, context)?;
@@ -125,7 +125,7 @@ async fn status_json() -> Result<()> {
     assert_success(add_task(shared, "echo test", false).await?);
     wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
 
-    let output = run_client_command(shared, &["log", "--json"]).await?;
+    let output = run_client_command(shared, &["log", "--json"])?;
 
     // Deserialize the json back to the original task BTreeMap.
     let json = String::from_utf8_lossy(&output.stdout);
