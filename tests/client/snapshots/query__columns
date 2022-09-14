@@ -10,7 +10,7 @@ Group "default" (1 parallel): running
 ──────────────────────────────
  3    Stashed        sleep 60
 ──────────────────────────────
- 4    Queued         sleep 60
+ 4    Running        sleep 60
 ──────────────────────────────
  5    Queued         sleep 60
 ──────────────────────────────

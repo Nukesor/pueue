@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 
-use anyhow::Result;
+use anyhow::{ensure, Result};
 use chrono::{Duration, Local};
 use pueue_daemon_lib::state_helper::save_state;
 
@@ -48,8 +48,8 @@ async fn daemon_with_test_state() -> Result<PueueDaemon> {
     let mut successful = build_task();
     successful.id = 1;
     successful.status = TaskStatus::Done(TaskResult::Success);
-    successful.start = Some(Local::now() - Duration::days(2));
-    successful.end = Some(Local::now() - Duration::days(2) + Duration::minutes(1));
+    successful.start = Some(Local::now() - Duration::days(2) + Duration::minutes(1));
+    successful.end = Some(Local::now() - Duration::days(2) + Duration::minutes(5));
     state.tasks.insert(successful.id, successful);
 
     // Stashed task
@@ -79,6 +79,7 @@ async fn daemon_with_test_state() -> Result<PueueDaemon> {
 
     // Running task
     assert_success(add_task(shared, "sleep 60", false).await?);
+    wait_for_task_condition(shared, 4, |task| task.is_running()).await?;
 
     // 2 Queued tasks
     assert_success(add_task(shared, "sleep 60", false).await?);
