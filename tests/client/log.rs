@@ -15,7 +15,7 @@ use crate::helper::*;
 #[case(true)]
 #[case(false)]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn read_log(#[case] read_local_logs: bool) -> Result<()> {
+async fn read(#[case] read_local_logs: bool) -> Result<()> {
     let mut daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 
@@ -34,7 +34,7 @@ async fn read_log(#[case] read_local_logs: bool) -> Result<()> {
     let output = run_client_command(shared, &["log"])?;
 
     let context = get_task_context(&daemon.settings).await?;
-    assert_stdout_matches("log__default_log", output.stdout, context)?;
+    assert_stdout_matches("log__default", output.stdout, context)?;
 
     Ok(())
 }
@@ -46,7 +46,7 @@ async fn read_log(#[case] read_local_logs: bool) -> Result<()> {
 #[case(true)]
 #[case(false)]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn read_truncated_log(#[case] read_local_logs: bool) -> Result<()> {
+async fn read_truncated(#[case] read_local_logs: bool) -> Result<()> {
     let mut daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 
@@ -65,7 +65,7 @@ async fn read_truncated_log(#[case] read_local_logs: bool) -> Result<()> {
     let output = run_client_command(shared, &["log", "--lines=5"])?;
 
     let context = get_task_context(&daemon.settings).await?;
-    assert_stdout_matches("log__last_lines_log", output.stdout, context)?;
+    assert_stdout_matches("log__last_lines", output.stdout, context)?;
 
     Ok(())
 }
@@ -83,14 +83,14 @@ async fn task_with_label() -> Result<()> {
     let output = run_client_command(shared, &["log"])?;
 
     let context = get_task_context(&daemon.settings).await?;
-    assert_stdout_matches("log__log_with_label", output.stdout, context)?;
+    assert_stdout_matches("log__with_label", output.stdout, context)?;
 
     Ok(())
 }
 
 /// Calling `log` with the `--color=always` flag, colors the output as expected.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn colored_log() -> Result<()> {
+async fn colored() -> Result<()> {
     let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 
@@ -101,7 +101,7 @@ async fn colored_log() -> Result<()> {
     let output = run_client_command(shared, &["--color", "always", "log"])?;
 
     let context = get_task_context(&daemon.settings).await?;
-    assert_stdout_matches("log__log_with_color", output.stdout, context)?;
+    assert_stdout_matches("log__colored", output.stdout, context)?;
 
     Ok(())
 }
@@ -117,7 +117,7 @@ pub struct TaskLog {
 
 /// Calling `pueue log --json` prints the expected json output to stdout.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn status_json() -> Result<()> {
+async fn json() -> Result<()> {
     let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 
@@ -148,11 +148,7 @@ async fn status_json() -> Result<()> {
     // with the shell.
     task_log.output.push('\n');
 
-    assert_stdout_matches(
-        "log__json_log_output",
-        task_log.output.clone().into(),
-        HashMap::new(),
-    )?;
+    assert_stdout_matches("log__json", task_log.output.clone().into(), HashMap::new())?;
 
     Ok(())
 }
