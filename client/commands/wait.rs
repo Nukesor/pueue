@@ -120,7 +120,12 @@ pub async fn wait(
         }
 
         // Sleep for a few seconds. We don't want to hurt the CPU.
-        sleep(Duration::from_millis(2000));
+        // However, we allow faster polling when in a test environment.
+        let mut sleep_time = 2000;
+        if std::env::var("PUEUED_TEST_ENV_VARIABLE").is_ok() {
+            sleep_time = 250;
+        }
+        sleep(Duration::from_millis(sleep_time));
         first_run = false;
     }
 
