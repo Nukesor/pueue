@@ -26,7 +26,7 @@ async fn default_status(#[case] use_subcommand: bool) -> Result<()> {
         Vec::new()
     };
 
-    let output = run_client_command(shared, &subcommand).await?;
+    let output = run_client_command(shared, &subcommand)?;
 
     let context = get_task_context(&daemon.settings).await?;
     assert_stdout_matches("status__default_status", output.stdout, context)?;
@@ -44,13 +44,12 @@ async fn full_status() -> Result<()> {
     run_client_command(
         shared,
         &["add", "--label", "test", "--delay", "1 minute", "ls"],
-    )
-    .await?;
+    )?;
 
     // Add a second command that depends on the first one.
-    run_client_command(shared, &["add", "--after=0", "ls"]).await?;
+    run_client_command(shared, &["add", "--after=0", "ls"])?;
 
-    let output = run_client_command(shared, &["status"]).await?;
+    let output = run_client_command(shared, &["status"])?;
 
     let context = get_task_context(&daemon.settings).await?;
     assert_stdout_matches("status__full_status", output.stdout, context)?;
@@ -68,7 +67,7 @@ async fn colored_status() -> Result<()> {
     assert_success(add_task(shared, "ls", false).await?);
     wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
 
-    let output = run_client_command(shared, &["--color", "always", "status"]).await?;
+    let output = run_client_command(shared, &["--color", "always", "status"])?;
 
     let context = get_task_context(&daemon.settings).await?;
     assert_stdout_matches("status__status_with_color", output.stdout, context)?;
@@ -86,7 +85,7 @@ async fn status_json() -> Result<()> {
     assert_success(add_task(shared, "ls", false).await?);
     wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
 
-    let output = run_client_command(shared, &["status", "--json"]).await?;
+    let output = run_client_command(shared, &["status", "--json"])?;
 
     let json = String::from_utf8_lossy(&output.stdout);
     let deserialized_state: State =

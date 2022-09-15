@@ -7,7 +7,7 @@ use crate::helper::*;
 
 /// Test that the local `follow` command works as expected.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn default_follow() -> Result<()> {
+async fn default() -> Result<()> {
     let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 
@@ -17,16 +17,16 @@ async fn default_follow() -> Result<()> {
 
     // Execute `follow`.
     // This will result in the client receiving the streamed output until the task finished.
-    let output = run_client_command(shared, &["follow"]).await?;
+    let output = run_client_command(shared, &["follow"])?;
 
-    assert_stdout_matches("follow__default_follow", output.stdout, HashMap::new())?;
+    assert_stdout_matches("follow__default", output.stdout, HashMap::new())?;
 
     Ok(())
 }
 
 /// Test that the `follow` command works with the log being streamed by the daemon works as expected.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn remote_follow() -> Result<()> {
+async fn remote() -> Result<()> {
     let mut daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 
@@ -44,9 +44,9 @@ async fn remote_follow() -> Result<()> {
 
     // Execute `follow`.
     // This will result in the client receiving the streamed output until the task finished.
-    let output = run_client_command(shared, &["follow"]).await?;
+    let output = run_client_command(shared, &["follow"])?;
 
-    assert_stdout_matches("follow__default_follow", output.stdout, HashMap::new())?;
+    assert_stdout_matches("follow__default", output.stdout, HashMap::new())?;
 
     Ok(())
 }
@@ -54,7 +54,7 @@ async fn remote_follow() -> Result<()> {
 /// Test that the remote `follow` command works, if one specifies to only show the last few lines
 /// of recent output.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn remote_follow_with_last_lines() -> Result<()> {
+async fn remote_with_last_lines() -> Result<()> {
     let mut daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 
@@ -72,7 +72,7 @@ async fn remote_follow_with_last_lines() -> Result<()> {
 
     // Execute `follow`.
     // This will result in the client receiving the streamed output until the task finished.
-    let output = run_client_command(shared, &["follow", "--lines=4"]).await?;
+    let output = run_client_command(shared, &["follow", "--lines=4"])?;
 
     assert_stdout_matches("follow__last_lines", output.stdout, HashMap::new())?;
 
