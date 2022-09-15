@@ -8,7 +8,7 @@ use crate::helper::*;
 
 /// Test that adding a group and getting the group overview works.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn default_group() -> Result<()> {
+async fn default() -> Result<()> {
     let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 
@@ -17,14 +17,14 @@ async fn default_group() -> Result<()> {
 
     // Get the group status output
     let output = run_client_command(shared, &["group"])?;
-    assert_stdout_matches("group__default_group", output.stdout, HashMap::new())?;
+    assert_stdout_matches("group__default", output.stdout, HashMap::new())?;
 
     Ok(())
 }
 
 /// Test that adding a group and getting the group overview with the `--color=always` flag works.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn colored_group() -> Result<()> {
+async fn colored() -> Result<()> {
     let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 
@@ -44,7 +44,7 @@ async fn colored_group() -> Result<()> {
 
     // Get the group status output
     let output = run_client_command(shared, &["--color", "always", "group"])?;
-    assert_stdout_matches("group__group_with_color", output.stdout, HashMap::new())?;
+    assert_stdout_matches("group__colored", output.stdout, HashMap::new())?;
 
     Ok(())
 }
