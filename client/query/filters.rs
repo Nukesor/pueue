@@ -64,7 +64,7 @@ enum DateOrDateTime {
 ///         },
 ///     ],
 /// }
-pub fn datetime<'i>(section: Pair<'i, Rule>, query_result: &mut QueryResult) -> Result<()> {
+pub fn datetime(section: Pair<'_, Rule>, query_result: &mut QueryResult) -> Result<()> {
     let mut filter = section.into_inner();
     // Get the column this filter should be applied to.
     // Either of [Rule::column_enqueue_at | Rule::column_start | Rule::column_end]
@@ -219,7 +219,7 @@ pub fn datetime<'i>(section: Pair<'i, Rule>, query_result: &mut QueryResult) -> 
 ///         },
 ///     ],
 /// }
-pub fn label<'i>(section: Pair<'i, Rule>, query_result: &mut QueryResult) -> Result<()> {
+pub fn label(section: Pair<'_, Rule>, query_result: &mut QueryResult) -> Result<()> {
     let mut filter = section.into_inner();
     // The first word should be the `label` keyword.
     let _label = filter.next().unwrap();
@@ -293,7 +293,7 @@ pub fn label<'i>(section: Pair<'i, Rule>, query_result: &mut QueryResult) -> Res
 ///         },
 ///     ],
 /// }
-pub fn status<'i>(section: Pair<'i, Rule>, query_result: &mut QueryResult) -> Result<()> {
+pub fn status(section: Pair<'_, Rule>, query_result: &mut QueryResult) -> Result<()> {
     let mut filter = section.into_inner();
     // The first word should be the `status` keyword.
     let _status = filter.next().unwrap();
