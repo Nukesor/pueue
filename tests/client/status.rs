@@ -12,7 +12,7 @@ use crate::helper::*;
 #[case(false)]
 #[case(true)]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn default_status(#[case] use_subcommand: bool) -> Result<()> {
+async fn default(#[case] use_subcommand: bool) -> Result<()> {
     let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 
@@ -29,14 +29,14 @@ async fn default_status(#[case] use_subcommand: bool) -> Result<()> {
     let output = run_client_command(shared, &subcommand)?;
 
     let context = get_task_context(&daemon.settings).await?;
-    assert_stdout_matches("status__default_status", output.stdout, context)?;
+    assert_stdout_matches("status__default", output.stdout, context)?;
 
     Ok(())
 }
 
 /// Test the status output with all columns enabled.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn full_status() -> Result<()> {
+async fn full() -> Result<()> {
     let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 
@@ -52,14 +52,14 @@ async fn full_status() -> Result<()> {
     let output = run_client_command(shared, &["status"])?;
 
     let context = get_task_context(&daemon.settings).await?;
-    assert_stdout_matches("status__full_status", output.stdout, context)?;
+    assert_stdout_matches("status__full", output.stdout, context)?;
 
     Ok(())
 }
 
 /// Calling `status` with the `--color=always` flag, colors the output as expected.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn colored_status() -> Result<()> {
+async fn colored() -> Result<()> {
     let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 
@@ -70,14 +70,67 @@ async fn colored_status() -> Result<()> {
     let output = run_client_command(shared, &["--color", "always", "status"])?;
 
     let context = get_task_context(&daemon.settings).await?;
-    assert_stdout_matches("status__status_with_color", output.stdout, context)?;
+    assert_stdout_matches("status__colored", output.stdout, context)?;
+
+    Ok(())
+}
+
+/// Test status for single group
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn single_group() -> Result<()> {
+    let daemon = daemon().await?;
+    let shared = &daemon.settings.shared;
+
+    // Add a new group
+    add_group_with_slots(shared, "testgroup", 1).await?;
+
+    // Add a task to the new testgroup.
+    run_client_command(shared, &["add", "--group", "testgroup", "ls"])?;
+    // Add another task to the default group.
+    run_client_command(shared, &["add", "--stashed", "ls"])?;
+
+    // Make sure the first task finished.
+    wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
+
+    let output = run_client_command(shared, &["status", "--group", "testgroup"])?;
+
+    // The output should only show the first task
+    let context = get_task_context(&daemon.settings).await?;
+    assert_stdout_matches("status__single_group", output.stdout, context)?;
+
+    Ok(())
+}
+
+/// Multiple groups
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn multiple_groups() -> Result<()> {
+    let daemon = daemon().await?;
+    let shared = &daemon.settings.shared;
+
+    // Add a new group
+    add_group_with_slots(shared, "testgroup", 1).await?;
+    add_group_with_slots(shared, "testgroup2", 1).await?;
+
+    // Add a task to the new testgroup.
+    run_client_command(shared, &["add", "--group", "testgroup", "ls"])?;
+    // Add another task to the default group.
+    run_client_command(shared, &["add", "--group", "testgroup2", "ls"])?;
+
+    // Make sure the second task finished.
+    wait_for_task_condition(shared, 1, |task| task.is_done()).await?;
+
+    let output = run_client_command(shared, &["status"])?;
+
+    // The output should show multiple groups
+    let context = get_task_context(&daemon.settings).await?;
+    assert_stdout_matches("status__multiple_groups", output.stdout, context)?;
 
     Ok(())
 }
 
 /// Calling `pueue status --json` will result in the current state being printed to the cli.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn status_json() -> Result<()> {
+async fn json() -> Result<()> {
     let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 

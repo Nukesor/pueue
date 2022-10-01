@@ -7,10 +7,11 @@ use simplelog::{Config, LevelFilter, SimpleLogger};
 
 use pueue_lib::settings::Settings;
 
-pub mod cli;
-pub mod client;
-pub mod commands;
-pub mod display;
+mod cli;
+mod client;
+mod commands;
+pub(crate) mod display;
+mod query;
 
 use crate::cli::{CliArguments, Shell, SubCommand};
 use crate::client::Client;
