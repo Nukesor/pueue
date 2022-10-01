@@ -6,6 +6,7 @@ eq = { ^"=" }
 neq = { ^"!=" }
 lt = { ^"<" }
 gt = { ^">" }
+contains = { ^"%=" }
 
 // Definition of all columns
 column_id = { ^"id" }
@@ -42,7 +43,7 @@ status_filter = { column_status ~ (eq | neq) ~ (status_queued | status_stashed |
 
 // Label filter
 label = { ANY* }
-label_filter = { column_label ~ ( eq | neq ) ~ label }
+label_filter = { column_label ~ ( eq | neq | contains ) ~ label }
 
 // Time related filters
 datetime = { ASCII_DIGIT{4} ~ "-" ~ ASCII_DIGIT{2} ~ "-" ~ ASCII_DIGIT{2}  ~ ASCII_DIGIT{2} ~ ":" ~ ASCII_DIGIT{2} ~ (":" ~ ASCII_DIGIT{2})? }
