@@ -242,6 +242,7 @@ pub fn label(section: Pair<'_, Rule>, query_result: &mut QueryResult) -> Result<
         match operator {
             Rule::eq => label == &operand,
             Rule::neq => label != &operand,
+            Rule::contains => label.contains(&operand),
             _ => false,
         }
     });
