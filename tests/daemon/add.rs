@@ -27,6 +27,7 @@ async fn test_normal_add() -> Result<()> {
     Ok(())
 }
 
+
 /// Test if adding a task in stashed state work.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn test_stashed_add() -> Result<()> {
@@ -48,6 +49,49 @@ async fn test_stashed_add() -> Result<()> {
     Ok(())
 }
 
+
+/// Test if the `created_at` field persists after submission.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn test_time_metadata_persistence() -> Result<()> {
+    let daemon = daemon().await?;
+    let shared = &daemon.settings.shared;
+
+    // Add a task that instantly finishes
+    let message = add_task(shared, "sleep 2.0", false).await?;
+
+    assert!(false);
+    todo!("Update `tests/helper/task.rs#L25-L38` to use the `created_at` field");
+    todo!(
+        "Update `lib/src/network/message.rs#L77-L159` for backward-compatible \
+      AddMessage fields"
+    );
+    todo!("Inspect message from this scope && verify created_at + enqueue_at");
+
+    // Wait until the task is done to get its state
+    wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
+    Ok(())
+}
+
+/// Test if adding a task in stashed state work.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn test_stashed_add() -> Result<()> {
+    let daemon = daemon().await?;
+    let shared = &daemon.settings.shared;
+
+    // Tell the daemon to add a task in stashed state.
+    let mut inner_message = create_add_message(shared, "sleep 60");
+    inner_message.stashed = true;
+    let message = Message::Add(inner_message);
+    assert_success(send_message(shared, message).await?);
+
+    // Make sure the task is actually stashed.
+    wait_for_task_condition(shared, 0, |task| {
+        matches!(task.status, TaskStatus::Stashed { .. })
+    })
+    .await?;
+
+    Ok(())
+}
 /// Pause the default group and make sure that immediately spawning a task still works.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn test_add_with_immediate_start() -> Result<()> {
