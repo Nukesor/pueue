@@ -1,22 +1,45 @@
-[package]
-name = "pueue"
-description = "A cli tool for managing long running shell commands."
-version = "2.1.0"
+# The project is a top-level crate *as well* as a workspace.
+# The `pueue_lib` crate lives in the `lib` folder.
+# The following is the shared configuration for both pueue and its lib
+[workspace]
+members = ["lib"]
+
+[workspace.package]
 authors = ["Arne Beer <contact@arne.beer>"]
 homepage = "https://github.com/nukesor/pueue"
 repository = "https://github.com/nukesor/pueue"
-documentation = "https://docs.rs/pueue/"
 license = "MIT"
+edition = "2021"
+rust-version = "1.63"
+
+[workspace.dependencies]
+chrono = { version = "0.4", features = ["serde"] }
+log = "0.4"
+serde = "1"
+serde_json = "1"
+serde_derive = "1"
+snap = "1"
+tokio = { version = "1", features = ["rt-multi-thread", "time", "io-std"] }
+
+
+# ------------------------
+# Start of the actual "pueue" config.
+# ------------------------
+[package]
+name = "pueue"
+version = "2.1.0"
+description = "A cli tool for managing long running shell commands."
 keywords = ["shell", "command", "parallel", "task", "queue"]
 readme = "README.md"
-rust-version = "1.58"
-edition = "2021"
+authors.workspace = true
+homepage.workspace = true
+repository.workspace = true
+license.workspace = true
+edition.workspace = true
+rust-version.workspace = true
 
 [badges]
 maintenance = { status = "actively-developed" }
-
-[workspace]
-members = ["lib"]
 
 [[bin]]
 name = "pueue"
@@ -36,7 +59,6 @@ path = "daemon/lib.rs"
 pueue-lib = { version = "0.21.0", path = "lib" }
 
 anyhow = "1"
-chrono = { version = "0.4", features = ["serde"] }
 chrono-english = "0.1"
 clap = { version = "3", features = ["derive", "cargo"] }
 clap_complete = "3"
@@ -45,18 +67,21 @@ crossbeam-channel = "0.5"
 crossterm = "0.25"
 ctrlc = { version = "3", features = ["termination"] }
 handlebars = "4"
-log = "0.4"
-serde = "1"
-serde_derive = "1"
-serde_json = "1"
+pest = "2"
+pest_derive = "2"
 shell-escape = "0.1"
 simplelog = { version = "0.12", default-features = false }
-snap = "1"
 tempfile = "3"
-tokio = { version = "1", features = ["rt-multi-thread", "time", "io-std"] }
+
+chrono = { workspace = true }
+log = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_derive = { workspace = true }
+snap = { workspace = true }
+tokio = { workspace = true }
 
 [dev-dependencies]
-anyhow = "1"
 assert_cmd = "2"
 better-panic = "0.3"
 pretty_assertions = "1"

@@ -12,7 +12,7 @@ async fn test_single_worker() -> Result<()> {
     let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 
-    // Add some tasks that instantly finish.
+    // Add some tasks that finish instantly.
     for _ in 0..3 {
         assert_success(add_env_task(shared, "sleep 0.1").await?);
     }
@@ -42,21 +42,23 @@ async fn test_multiple_worker() -> Result<()> {
     let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 
-    // Spawn three tasks and wait for them
+    // Spawn three tasks that run in parallel and wait for them.
     for _ in 0..3 {
-        assert_success(add_env_task_to_group(shared, "sleep 0.1", "test_3").await?);
+        assert_success(add_env_task_to_group(shared, "sleep 0.3", "test_3").await?);
     }
     wait_for_task_condition(shared, 2, |task| task.is_done()).await?;
 
     // The first three tasks should have the same worker id's as the task ids.
+    // They ran in parallel and each should have their own worker id assigned.
     let state = get_state(shared).await?;
     for task_id in 0..3 {
         assert_worker_envs(shared, &state, task_id, task_id, "test_3").await?;
     }
 
-    // Spawn two more tasks and wait for them
+    // Spawn two more tasks and wait for them.
+    // They should now get worker0 and worker1, as there aren't any other running tasks.
     for _ in 0..2 {
-        assert_success(add_env_task_to_group(shared, "sleep 0.5", "test_3").await?);
+        assert_success(add_env_task_to_group(shared, "sleep 0.3", "test_3").await?);
     }
     wait_for_task_condition(shared, 4, |task| task.is_done()).await?;
 
@@ -78,7 +80,7 @@ async fn test_worker_for_new_pool() -> Result<()> {
     // Add a new group
     add_group_with_slots(shared, "testgroup", 1).await?;
 
-    // Add some tasks that instantly finish.
+    // Add a tasks that finishes instantly.
     assert_success(add_env_task_to_group(shared, "sleep 0.1", "testgroup").await?);
     wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
 

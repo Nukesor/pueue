@@ -8,6 +8,7 @@ pub mod helper;
 mod log;
 mod state;
 pub mod style;
+pub mod table_builder;
 
 use crossterm::style::Color;
 

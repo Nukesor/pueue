@@ -129,6 +129,7 @@ impl Client {
         let subcommand = opt.cmd.unwrap_or(SubCommand::Status {
             json: false,
             group: None,
+            query: Vec::new(),
         });
 
         Ok(Client {
@@ -194,7 +195,7 @@ impl Client {
                 label,
             } => {
                 let message = edit(&mut self.stream, *task_id, *command, *path, *label).await?;
-                self.handle_response(message);
+                self.handle_response(message)?;
                 Ok(true)
             }
             SubCommand::Wait {
@@ -292,7 +293,7 @@ impl Client {
         let mut response = receive_message(&mut self.stream).await?;
 
         // Check if we can receive the response from the daemon
-        while self.handle_response(response) {
+        while self.handle_response(response)? {
             response = receive_message(&mut self.stream).await?;
         }
 
@@ -304,7 +305,7 @@ impl Client {
     ///
     /// If this function returns `Ok(true)`, the parent function will continue to receive
     /// and handle messages from the daemon. Otherwise the client will simply exit.
-    fn handle_response(&self, message: Message) -> bool {
+    fn handle_response(&self, message: Message) -> Result<bool> {
         match message {
             Message::Success(text) => print_success(&self.style, &text),
             Message::Failure(text) => {
@@ -313,7 +314,7 @@ impl Client {
             }
             Message::StatusResponse(state) => {
                 let tasks = state.tasks.iter().map(|(_, task)| task.clone()).collect();
-                print_state(*state, tasks, &self.subcommand, &self.style, &self.settings)
+                print_state(*state, tasks, &self.subcommand, &self.style, &self.settings)?;
             }
             Message::LogResponse(task_logs) => {
                 print_logs(task_logs, &self.subcommand, &self.style, &self.settings)
@@ -322,13 +323,13 @@ impl Client {
             Message::Stream(text) => {
                 print!("{}", text);
                 io::stdout().flush().unwrap();
-                return true;
+                return Ok(true);
             }
-            Message::Close => return false,
+            Message::Close => return Ok(false),
             _ => error!("Received unhandled response message"),
         };
 
-        false
+        Ok(false)
     }
 
     /// Prints a warning and prompt for given action and tasks.

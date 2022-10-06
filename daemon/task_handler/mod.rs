@@ -114,6 +114,10 @@ impl TaskHandler {
     /// - Whether whe should perform a shutdown.
     /// - If the client requested a reset: reset the state if all children have been killed and handled.
     /// - Check whether we can spawn new tasks.
+    ///
+    /// This first step waits for 200ms while receiving new messages.
+    /// This prevents this loop from running hot, but also means that we only check if a new task
+    /// can be scheduled or if tasks are finished, every 200ms.
     pub fn run(&mut self) {
         loop {
             self.receive_messages();
