@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use anyhow::{bail, Context, Result};
-use clap::{IntoApp, Parser};
+use clap::{CommandFactory, Parser};
 use clap_complete::{generate_to, shells};
 use simplelog::{Config, LevelFilter, SimpleLogger};
 
