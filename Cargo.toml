@@ -91,6 +91,6 @@ similar-asserts = "1"
 
 # Test specific dev-dependencies
 [target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]
-nix = "0.24"
+nix = "0.25"
 whoami = "1"
 procfs = { version = "0.14", default-features = false }
