@@ -28,7 +28,7 @@ jobs:
             - arm-unknown-linux-musleabihf
             - x86_64-pc-windows-msvc
             - x86_64-apple-darwin
-            - aarch64-apple-ios
+            - aarch64-apple-darwin
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-musl
@@ -79,11 +79,11 @@ jobs:
             cross: false
             strip: true
           - os: macos-latest
-            target: aarch64-apple-ios
-            client_artifact_name: target/aarch64-apple-ios/release/pueue
-            daemon_artifact_name: target/aarch64-apple-ios/release/pueued
-            client_release_name: pueue-ios-aarch64
-            daemon_release_name: pueued-ios-aarch64
+            target: aarch64-apple-darwin
+            client_artifact_name: target/aarch64-apple-darwin/release/pueue
+            daemon_artifact_name: target/aarch64-apple-darwin/release/pueued
+            client_release_name: pueue-darwin-aarch64
+            daemon_release_name: pueued-darwin-aarch64
             cross: false
             strip: true
 
