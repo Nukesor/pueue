@@ -12,10 +12,11 @@ async fn test_ctrlc() -> Result<()> {
     let (settings, _tempdir) = daemon_base_setup()?;
     let mut child = standalone_daemon(&settings.shared).await?;
 
-    use nix::sys::signal::{kill, Signal};
+    use command_group::{Signal, UnixChildExt};
     // Send SIGTERM signal to process via nix
-    let nix_pid = nix::unistd::Pid::from_raw(child.id() as i32);
-    kill(nix_pid, Signal::SIGTERM).context("Failed to send SIGTERM to pid")?;
+    child
+        .signal(Signal::SIGTERM)
+        .context("Failed to send SIGTERM to daemon")?;
 
     // Sleep for 500ms and give the daemon time to shut down
     sleep_ms(500);

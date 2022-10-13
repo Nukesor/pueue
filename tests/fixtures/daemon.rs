@@ -127,7 +127,7 @@ pub fn daemon_base_setup() -> Result<(Settings, TempDir)> {
 
     // Create a temporary directory used for testing.
     let tempdir = TempDir::new().unwrap();
-    let tempdir_path = tempdir.path();
+    let tempdir_path = std::fs::canonicalize(tempdir.path())?;
 
     std::fs::create_dir(tempdir_path.join("certs")).unwrap();
 

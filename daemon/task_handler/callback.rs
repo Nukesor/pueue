@@ -25,7 +25,7 @@ impl TaskHandler {
         let mut command = compile_shell_command(&callback_command);
 
         // Spawn the callback subprocess and log if it fails.
-        let spawn_result = command.spawn();
+        let spawn_result = command.group_spawn();
         let child = match spawn_result {
             Err(error) => {
                 error!("Failed to spawn callback with error: {error}");

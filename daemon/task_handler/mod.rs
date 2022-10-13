@@ -1,10 +1,10 @@
 use std::collections::{BTreeMap, HashMap};
 use std::path::PathBuf;
-use std::process::Child;
 use std::process::Stdio;
 
 use anyhow::Result;
 use chrono::prelude::*;
+use command_group::{CommandGroup, GroupChild};
 use crossbeam_channel::Receiver;
 use handlebars::Handlebars;
 use log::{debug, error, info};
@@ -65,7 +65,7 @@ pub struct TaskHandler {
     /// BTreeMap<group, BTreeMap<group_worker_id, (task_id, Subprocess handle)>
     children: Children,
     /// These are the currently running callbacks. They're usually very short-lived.
-    callbacks: Vec<Child>,
+    callbacks: Vec<GroupChild>,
     /// A simple flag which is used to signal that we're currently doing a full reset of the daemon.
     /// This flag prevents new tasks from being spawned.
     full_reset: bool,
@@ -240,7 +240,7 @@ impl TaskHandler {
     /// This is a small wrapper around the real platform dependant process handling logic
     /// It only ensures, that the process we want to manipulate really does exists.
     fn perform_action(&mut self, id: usize, action: ProcessAction, children: bool) -> Result<bool> {
-        match self.children.get_child(id) {
+        match self.children.get_child_mut(id) {
             Some(child) => {
                 debug!("Executing action {action:?} to {id}");
                 run_action_on_child(child, &action, children)?;

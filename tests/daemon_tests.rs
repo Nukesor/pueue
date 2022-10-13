@@ -1,8 +1,8 @@
-#[cfg(target_os = "linux")]
+#[cfg(unix)]
 mod helper;
 
-#[cfg(target_os = "linux")]
+#[cfg(unix)]
 mod daemon;
 
-#[cfg(target_os = "linux")]
+#[cfg(unix)]
 mod fixtures;

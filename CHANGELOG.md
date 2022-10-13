@@ -8,17 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
-- pueue log output now includes the task label, if any. [#355](https://github.com/Nukesor/pueue/issues/355)
+- `pueue log` output now includes the task label, if any. [#355](https://github.com/Nukesor/pueue/issues/355)
+- Enable `pueue edit` to edit multiple properties in one go.
+- Tasks are now started in a process group, and pueue kill --children will kill all processes in the group. [#372](https://github.com/Nukesor/pueue/issues/372)
 
 ### Added
 
 - Show a hint when calling `pueue log` if the task output has been truncated. [#318](https://github.com/Nukesor/pueue/issues/318)
 - Add `Settings.shared.alias_file`, which allows to set the location of the `pueue_aliases.yml` file.
 - Added functionality to edit a task's label [#354](https://github.com/Nukesor/pueue/issues/354).
-
-### Changed
-
-- Enable `pueue edit` to edit multiple properties in one go.
 
 ### Fixed
 
@@ -30,6 +28,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Misc
 
 - Continuation of testing the `pueue` client, pushing the test coverage from ~70% to ~73%.
+- Mac OS X is now tested in the CI pipeline.
 
 ## [2.1.0] - 2022-07-21
 
