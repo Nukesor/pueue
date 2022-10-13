@@ -32,7 +32,7 @@ jobs:
             - arm-unknown-linux-musleabihf
             - x86_64-pc-windows-msvc
             - x86_64-apple-darwin
-            - aarch64-apple-ios
+            - aarch64-apple-darwin
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
@@ -59,7 +59,7 @@ jobs:
             cross: false
             strip: true
           - os: macos-latest
-            target: aarch64-apple-ios
+            target: aarch64-apple-darwin
             cross: true
             strip: true
 
