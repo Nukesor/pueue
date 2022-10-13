@@ -3,7 +3,8 @@ use std::path::PathBuf;
 use chrono::prelude::*;
 use chrono::Duration;
 use chrono_english::*;
-use clap::{ArgEnum, Parser, ValueHint};
+use clap::ArgAction;
+use clap::{Parser, ValueEnum, ValueHint};
 
 use pueue_lib::network::message::Signal;
 
@@ -13,7 +14,7 @@ pub enum SubCommand {
     #[clap(trailing_var_arg = true)]
     Add {
         /// The command to be added.
-        #[clap(required = true, multiple_values = true, value_hint = ValueHint::CommandWithArguments)]
+        #[clap(required = true, num_args(1..), value_hint = ValueHint::CommandWithArguments)]
         command: Vec<String>,
 
         /// Specify current working directory.
@@ -35,7 +36,7 @@ pub enum SubCommand {
         stashed: bool,
 
         /// Prevents the task from being enqueued until <delay> elapses. See "enqueue" for accepted formats.
-        #[clap(name = "delay", short, long, conflicts_with = "immediate", parse(try_from_str=parse_delay_until))]
+        #[clap(name = "delay", short, long, conflicts_with = "immediate", value_parser = parse_delay_until)]
         delay_until: Option<DateTime<Local>>,
 
         /// Assign the task to a group. Groups kind of act as separate queues.
@@ -46,7 +47,7 @@ pub enum SubCommand {
 
         /// Start the task once all specified tasks have successfully finished.
         /// As soon as one of the dependencies fails, this task will fail as well.
-        #[clap(name = "after", short, long, multiple_values(true))]
+        #[clap(name = "after", short, long, num_args(1..))]
         dependencies: Vec<usize>,
 
         /// Add some information for yourself.
@@ -111,7 +112,7 @@ pub enum SubCommand {
         task_ids: Vec<usize>,
 
         /// Delay enqueuing these tasks until <delay> elapses. See DELAY FORMAT below.
-        #[clap(name = "delay", short, long, parse(try_from_str=parse_delay_until))]
+        #[clap(name = "delay", short, long, value_parser = parse_delay_until)]
         delay_until: Option<DateTime<Local>>,
     },
 
@@ -155,7 +156,7 @@ pub enum SubCommand {
 
         /// Like `--all-failed`, but only restart tasks failed tasks of a specific group.
         /// The group will be set to running and its paused tasks will be resumed.
-        #[clap(short = 'g', long, conflicts_with = "all-failed")]
+        #[clap(short = 'g', long, conflicts_with = "all_failed")]
         failed_in_group: Option<String>,
 
         /// Immediately start the tasks, no matter how many open slots there are.
@@ -401,7 +402,7 @@ pub enum SubCommand {
     /// By default, adjusts the amount of the default group.
     Parallel {
         /// The amount of allowed parallel tasks.
-        #[clap(validator=min_one)]
+        #[clap(value_parser = min_one)]
         parallel_tasks: Option<usize>,
 
         /// Set the amount for a specific group.
@@ -413,7 +414,7 @@ pub enum SubCommand {
     /// This can be ignored during normal operations.
     Completions {
         /// The target shell.
-        #[clap(arg_enum)]
+        #[clap(value_enum)]
         shell: Shell,
         /// The output directory to which the file should be written.
         #[clap(value_hint = ValueHint::DirPath)]
@@ -428,7 +429,7 @@ pub enum GroupCommand {
         name: String,
 
         /// Set the amount of parallel tasks this group can have.
-        #[clap(short, long, validator = min_one)]
+        #[clap(short, long, value_parser = min_one)]
         parallel: Option<usize>,
     },
 
@@ -437,14 +438,14 @@ pub enum GroupCommand {
     Remove { name: String },
 }
 
-#[derive(Parser, ArgEnum, Debug, Clone, PartialEq, Eq)]
+#[derive(Parser, ValueEnum, Debug, Clone, PartialEq, Eq)]
 pub enum ColorChoice {
     Auto,
     Never,
     Always,
 }
 
-#[derive(Parser, ArgEnum, Debug, Clone, PartialEq, Eq)]
+#[derive(Parser, ValueEnum, Debug, Clone, PartialEq, Eq)]
 pub enum Shell {
     Bash,
     Elvish,
@@ -462,11 +463,11 @@ pub enum Shell {
 )]
 pub struct CliArguments {
     /// Verbose mode (-v, -vv, -vvv)
-    #[clap(short, long, parse(from_occurrences))]
+    #[clap(short, long, action = ArgAction::Count)]
     pub verbose: u8,
 
     /// Colorize the output; auto enables color output when connected to a tty.
-    #[clap(long, arg_enum, default_value = "auto")]
+    #[clap(long, value_enum, default_value = "auto")]
     pub color: ColorChoice,
 
     /// Path to a specific pueue config file to use.
@@ -498,13 +499,13 @@ fn parse_delay_until(src: &str) -> Result<DateTime<Local>, String> {
 }
 
 /// Validator function. The input string has to be parsable as int and bigger than 0
-fn min_one(value: &str) -> Result<(), String> {
+fn min_one(value: &str) -> Result<usize, String> {
     match value.parse::<usize>() {
         Ok(value) => {
             if value < 1 {
                 return Err("You must provide a value that's bigger than 0".into());
             }
-            Ok(())
+            Ok(value)
         }
         Err(_) => Err("Failed to parse integer".into()),
     }

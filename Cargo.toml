@@ -60,8 +60,8 @@ pueue-lib = { version = "0.21.0", path = "lib" }
 
 anyhow = "1"
 chrono-english = "0.1"
-clap = { version = "3", features = ["derive", "cargo"] }
-clap_complete = "3"
+clap = { version = "4", features = ["derive", "cargo"] }
+clap_complete = "4"
 comfy-table = "6"
 crossbeam-channel = "0.5"
 crossterm = "0.25"
@@ -91,6 +91,6 @@ similar-asserts = "1"
 
 # Test specific dev-dependencies
 [target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]
-nix = "0.24"
+nix = "0.25"
 whoami = "1"
 procfs = { version = "0.14", default-features = false }
