@@ -3,8 +3,8 @@ use std::io::Read;
 use std::path::Path;
 
 use anyhow::{anyhow, bail, Context, Result};
-use procfs::process::Process;
 use pueue_lib::network::message::*;
+use pueue_lib::process_helper::process_exists;
 use pueue_lib::settings::*;
 
 use super::*;
@@ -59,9 +59,8 @@ pub fn get_pid(pid_path: &Path) -> Result<i32> {
 /// This is done by waiting for the pid to disappear.
 pub fn wait_for_shutdown(pid: i32) -> Result<()> {
     // Try to read the process. If this fails, the daemon already exited.
-    let process = match Process::new(pid) {
-        Ok(process) => process,
-        Err(_) => return Ok(()),
+    if !process_exists(pid as u32) {
+        return Ok(());
     };
 
     // Give the daemon about 1 sec to shutdown.
@@ -70,7 +69,7 @@ pub fn wait_for_shutdown(pid: i32) -> Result<()> {
 
     while current_try < tries {
         // Process is still alive, wait a little longer
-        if process.is_alive() {
+        if process_exists(pid as u32) {
             sleep_ms(50);
             current_try += 1;
             continue;

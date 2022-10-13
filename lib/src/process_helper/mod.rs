@@ -5,13 +5,20 @@
 //! Depending on the target, the respective platform is read and loaded into this scope.
 
 // Unix specific process handling
-#[cfg(any(target_os = "linux", target_os = "freebsd"))]
+// Shared between Linux and Apple
+#[cfg(unix)]
+mod unix;
+#[cfg(unix)]
+pub use self::unix::*;
+
+// Linux specific process support
+#[cfg(target_os = "linux")]
 mod linux;
-#[cfg(any(target_os = "linux", target_os = "freebsd"))]
+#[cfg(target_os = "linux")]
 pub use self::linux::*;
 
-// Apple specific process handling
-#[cfg(any(target_vendor = "apple"))]
+// Apple specific process support
+#[cfg(target_vendor = "apple")]
 mod apple;
 #[cfg(target_vendor = "apple")]
 pub use self::apple::*;

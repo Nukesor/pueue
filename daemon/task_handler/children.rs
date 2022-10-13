@@ -1,12 +1,12 @@
+use command_group::GroupChild;
 use std::collections::BTreeMap;
-use std::process::Child;
 
 /// This structure is needed to manage worker pools for groups.
 /// It's a newtype pattern around a nested BTreeMap, which implements some convenience functions.
 ///
 /// The datastructure contains these types of data:
 /// BTreeMap<group, BTreeMap<group_worker_id, (task_id, Subprocess handle)>
-pub struct Children(pub BTreeMap<String, BTreeMap<usize, (usize, Child)>>);
+pub struct Children(pub BTreeMap<String, BTreeMap<usize, (usize, GroupChild)>>);
 
 impl Children {
     /// Returns whether there are any active tasks across all groups.
@@ -28,25 +28,10 @@ impl Children {
         false
     }
 
-    /// A convenience function to get a child by its respective task_id.
-    /// We have to do a nested linear search over all children of all pools,
-    /// beceause these datastructure aren't indexed via task_ids.
-    pub fn get_child(&self, task_id: usize) -> Option<&Child> {
-        for pool in self.0.values() {
-            for (child_task_id, child) in pool.values() {
-                if child_task_id == &task_id {
-                    return Some(child);
-                }
-            }
-        }
-
-        None
-    }
-
     /// A convenience function to get a mutable child by its respective task_id.
     /// We have to do a nested linear search over all children of all pools,
     /// beceause these datastructure aren't indexed via task_ids.
-    pub fn get_child_mut(&mut self, task_id: usize) -> Option<&mut Child> {
+    pub fn get_child_mut(&mut self, task_id: usize) -> Option<&mut GroupChild> {
         for pool in self.0.values_mut() {
             for (child_task_id, child) in pool.values_mut() {
                 if child_task_id == &task_id {
@@ -107,7 +92,7 @@ impl Children {
     /// This function should only be called when spawning a new process.
     /// At this point, we're sure that the worker pool for the given group already exists, hence
     /// the expect call.
-    pub fn add_child(&mut self, group: &str, worker_id: usize, task_id: usize, child: Child) {
+    pub fn add_child(&mut self, group: &str, worker_id: usize, task_id: usize, child: GroupChild) {
         let pool = self
             .0
             .get_mut(group)
