@@ -20,10 +20,19 @@ on:
 
 jobs:
   publish:
-    name: Create test coverage
-    runs-on: ubuntu-latest
+    name: Create test coverage on ${{ matrix.os }} for ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
+      matrix:
+        target:
+            - x86_64-unknown-linux-gnu
+            - x86_64-apple-darwin
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: macos-latest
+            target: x86_64-apple-darwin
 
     steps:
       - name: Checkout code
@@ -35,6 +44,7 @@ jobs:
           toolchain: stable
           override: true
           components: llvm-tools-preview
+          target: ${{ matrix.target }}
 
       - uses: actions/cache@v3
         with:
@@ -44,8 +54,9 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-cargo-coverage-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-coverage-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
+            ${{ runner.os }}-cargo-coverage-${{ matrix.target }}-
             ${{ runner.os }}-cargo-${{ matrix.target }}-
 
       - name: Install cargo-llvm-cov and nextest
