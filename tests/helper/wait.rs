@@ -161,23 +161,28 @@ pub async fn wait_for_group_status(
     group: &str,
     expected_status: GroupStatus,
 ) -> Result<()> {
-    let state = get_state(shared).await?;
-
-    // Give the daemon about 1 sec to shutdown.
+    // Give the daemon about 1 second to change group status.
     let tries = 20;
     let mut current_try = 0;
 
     while current_try < tries {
-        // Process is still alive, wait a little longer
-        if let Some(status) = state.groups.get(group) {
-            if matches!(status, _expected_status) {
-                return Ok(());
+        let state = get_state(shared).await?;
+        match state.groups.get(group) {
+            Some(group) => {
+                if group.status == expected_status {
+                    return Ok(());
+                }
+
+                // The status didn't change to the expected status. Try again.
+                current_try += 1;
+                sleep_ms(50).await;
+                continue;
+            }
+            None => {
+                bail!("Couldn't find group {group} while waiting for status change")
             }
         }
-
-        sleep_ms(50).await;
-        current_try += 1;
     }
 
-    bail!("Group {group} didn't change to state {expected_status:?} after about 1 sec.",);
+    bail!("Group {group} didn't change to state {expected_status:?} after about 1 second",);
 }
