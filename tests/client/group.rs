@@ -15,6 +15,7 @@ async fn default() -> Result<()> {
 
     // Add a group via the cli interface.
     run_client_command(shared, &["group", "add", "testgroup", "--parallel=2"])?;
+    wait_for_group(shared, "testgroup").await?;
 
     // Get the group status output
     let output = run_client_command(shared, &["group"])?;
