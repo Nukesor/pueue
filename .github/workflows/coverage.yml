@@ -1,4 +1,4 @@
-name: Test build
+name: 'Test Coverage'
 
 on:
   push:

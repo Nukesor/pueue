@@ -1,4 +1,4 @@
-name: Test build
+name: 'Test Build'
 
 on:
   push:
@@ -106,3 +106,24 @@ jobs:
           command: nextest
           args:  run --workspace --target=${{ matrix.target }}
           use-cross: ${{ matrix.cross }}
+
+      # The test result artifacts are used by the test-report.yaml workflow.
+      - name: upload test results
+        uses: actions/upload-artifact@v3
+        if: ${{ !matrix.cross }}
+        with:
+          name: Test results (${{ matrix.target }})
+          path: target/nextest/ci/junit.xml
+
+  # the event file (containing the JSON payload for the webhook triggering this
+  # workflow) is needed to generate test result reports with the correct
+  # context. See the test-report.yaml workflow for details.
+  event_file:
+    name: "Event File"
+    runs-on: ubuntu-latest
+    steps:
+    - name: Upload
+      uses: actions/upload-artifact@v3
+      with:
+        name: Event File
+        path: ${{ github.event_path }}

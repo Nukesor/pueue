@@ -6,6 +6,7 @@
 # - Call out every test as it finishes, including slow, skipped and flaky tests
 # - List failures again at the end.
 # - Run all tests even if some failed.
+# - Output test results in JUnit format.
 [profile.ci]
 # "retries" defines the number of times a test should be retried. If set to a
 # non-zero value, tests that succeed on a subsequent attempt will be marked as
@@ -31,6 +32,12 @@ failure-output = "immediate-final"
 # Cancel the test run on the first failure. For CI runs, consider setting this
 # to false.
 fail-fast = false
+
+[profile.ci.junit]
+# Output a JUnit report into the given file inside 'store.dir/<profile-name>'.
+# The default value for store.dir is 'target/nextest', so the following file
+# is written to the target/nextest/ci/ directory.
+path = "junit.xml"
 
 # profile used in GitHub coverage runs
 # - lower retry count as a compromise between speed and resilience
