@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use anyhow::{Context, Result};
 use pueue_lib::network::message::*;
+use pueue_lib::state::GroupStatus;
 
 use crate::fixtures::*;
 use crate::helper::*;
@@ -41,6 +42,8 @@ async fn colored() -> Result<()> {
     send_message(shared, message)
         .await
         .context("Failed to send message")?;
+
+    wait_for_group_status(shared, PUEUE_DEFAULT_GROUP, GroupStatus::Paused).await?;
 
     // Get the group status output
     let output = run_client_command(shared, &["--color", "always", "group"])?;
