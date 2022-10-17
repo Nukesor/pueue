@@ -89,6 +89,13 @@ rstest = "0.15"
 serde_yaml = "0.9"
 similar-asserts = "1"
 
+# Make it easy to view log output for select tests.
+# Set log level for tests with RUST_LOG=<level>, use with failed tests or
+# disable test stdout/stderr capture (`cargo test -- --nocapture` / `cargo
+# nextest run --no-capture`)
+env_logger = "0.9.1"
+test-log = "0.2.11"
+
 # Test specific dev-dependencies
 [target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]
 nix = "0.24"
