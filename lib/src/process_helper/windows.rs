@@ -1,22 +1,21 @@
-use std::process::{Child, Command};
+use std::process::Command;
 
 // We allow anyhow in here, as this is a module that'll be strictly used internally.
 // As soon as it's obvious that this is code is intended to be exposed to library users, we have to
 // go ahead and replace any `anyhow` usage by proper error handling via our own Error type.
 use anyhow::{bail, Result};
+use command_group::GroupChild;
 use log::{error, info, warn};
 use winapi::shared::minwindef::FALSE;
 use winapi::shared::ntdef::NULL;
 use winapi::um::errhandlingapi::GetLastError;
 use winapi::um::handleapi::{CloseHandle, INVALID_HANDLE_VALUE};
-use winapi::um::processthreadsapi::{
-    OpenProcess, OpenThread, ResumeThread, SuspendThread, TerminateProcess,
-};
+use winapi::um::processthreadsapi::{OpenThread, ResumeThread, SuspendThread};
 use winapi::um::tlhelp32::{
     CreateToolhelp32Snapshot, Process32First, Process32Next, Thread32First, Thread32Next,
     PROCESSENTRY32, TH32CS_SNAPPROCESS, TH32CS_SNAPTHREAD, THREADENTRY32,
 };
-use winapi::um::winnt::{PROCESS_TERMINATE, THREAD_SUSPEND_RESUME};
+use winapi::um::winnt::THREAD_SUSPEND_RESUME;
 
 use super::ProcessAction;
 use crate::network::message::Signal as InternalSignal;
@@ -33,15 +32,19 @@ pub fn compile_shell_command(command_string: &str) -> Command {
 }
 
 pub fn send_internal_signal_to_child(
-    _child: &Child,
+    _child: &mut GroupChild,
     _signal: InternalSignal,
     _send_to_children: bool,
-) -> Result<bool> {
+) -> Result<()> {
     bail!("Trying to send unix signal on a windows machine. This isn't supported.");
 }
 
 /// Send a signal to a windows process.
-pub fn run_action_on_child(child: &Child, action: &ProcessAction, _children: bool) -> Result<bool> {
+pub fn run_action_on_child(
+    child: &mut GroupChild,
+    action: &ProcessAction,
+    _children: bool,
+) -> Result<()> {
     let pids = get_cur_task_processes(child.id());
     if pids.is_empty() {
         bail!("Process has just gone away");
@@ -64,28 +67,34 @@ pub fn run_action_on_child(child: &Child, action: &ProcessAction, _children: boo
         }
     }
 
-    Ok(true)
+    Ok(())
 }
 
 /// Kill a child process
-pub fn kill_child(task_id: usize, child: &mut Child, _kill_children: bool) -> bool {
-    match child.kill() {
-        Err(_) => {
-            info!("Task {task_id} has already finished by itself");
-            false
+pub fn kill_child(
+    task_id: usize,
+    child: &mut GroupChild,
+    kill_children: bool,
+) -> std::io::Result<()> {
+    let result = if kill_children {
+        child.kill()
+    } else {
+        child.inner().kill()
+    };
+    match result {
+        Ok(_) => Ok(()),
+        Err(ref e) if e.kind() == std::io::ErrorKind::InvalidData => {
+            // Process already exited
+            info!("Task {task_id} has already finished by itself.");
+            Ok(())
         }
-        Ok(_) => {
-            let pids = get_cur_task_processes(child.id());
-
-            for pid in pids {
-                terminate_process(pid);
-            }
-            true
-        }
+        Err(err) => Err(err),
     }
 }
 
 /// Get current task pid, all child pid and all children's children
+/// TODO: see if this can be simplified using QueryInformationJobObject
+/// on the job object created by command_group.
 fn get_cur_task_processes(task_pid: u32) -> Vec<u32> {
     let mut all_pids = Vec::new();
 
@@ -221,22 +230,6 @@ fn resume_thread(tid: u32) {
     }
 }
 
-/// Terminate a process
-/// [TerminateProcess](https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-terminateprocess)
-fn terminate_process(pid: u32) {
-    unsafe {
-        // Get a handle for the target process
-        let process_handle = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
-        // If TerminateProcess fails, the return value is zero.
-        if 0 == TerminateProcess(process_handle, 1) {
-            let err_code = GetLastError();
-            warn!("Failed to terminate process {pid} with error code {err_code}");
-        }
-
-        CloseHandle(process_handle);
-    }
-}
-
 /// Assert that certain process id no longer exists
 pub fn process_exists(pid: u32) -> bool {
     unsafe {
@@ -268,6 +261,8 @@ pub fn process_exists(pid: u32) -> bool {
 mod test {
     use std::thread::sleep;
     use std::time::Duration;
+
+    use command_group::CommandGroup;
 
     use super::*;
 
@@ -306,7 +301,7 @@ mod test {
     #[test]
     fn test_spawn_command() {
         let mut child = compile_shell_command("sleep 0.1")
-            .spawn()
+            .group_spawn()
             .expect("Failed to spawn echo");
 
         let ecode = child.wait().expect("failed to wait on echo");
@@ -322,7 +317,7 @@ mod test {
     /// See https://github.com/Nukesor/pueue/issues/315
     fn test_shell_command_is_killed() -> Result<()> {
         let mut child = compile_shell_command("sleep 60; sleep 60; echo 'this is a test'")
-            .spawn()
+            .group_spawn()
             .expect("Failed to spawn echo");
         let pid = child.id();
 
@@ -330,7 +325,7 @@ mod test {
         let process_ids = assert_process_ids(pid, 1, 5000)?;
 
         // Kill the process and make sure it'll be killed.
-        assert!(kill_child(0, &mut child, false));
+        assert!(kill_child(0, &mut child, false).is_ok());
 
         // Sleep a little to give all processes time to shutdown.
         sleep(Duration::from_millis(500));
@@ -352,14 +347,14 @@ mod test {
     /// will properly kill all processes and their children's children without detached processes.
     fn test_shell_command_children_are_killed() -> Result<()> {
         let mut child = compile_shell_command("powershell -c 'sleep 60; sleep 60'; sleep 60")
-            .spawn()
+            .group_spawn()
             .expect("Failed to spawn echo");
         let pid = child.id();
         // Get all processes, so we can make sure they no longer exist afterwards.
         let process_ids = assert_process_ids(pid, 2, 5000)?;
 
         // Kill the process and make sure it'll be killed.
-        assert!(kill_child(0, &mut child, false));
+        assert!(kill_child(0, &mut child, false).is_ok());
 
         // Assert that the direct child (powershell -c) has been killed.
         sleep(Duration::from_millis(500));
@@ -380,7 +375,7 @@ mod test {
         let mut child = Command::new("ping")
             .arg("localhost")
             .arg("-t")
-            .spawn()
+            .group_spawn()
             .expect("Failed to spawn ping");
         let pid = child.id();
 
@@ -388,7 +383,7 @@ mod test {
         let _ = assert_process_ids(pid, 1, 5000)?;
 
         // Kill the process and make sure it'll be killed.
-        assert!(kill_child(0, &mut child, false));
+        assert!(kill_child(0, &mut child, false).is_ok());
 
         // Sleep a little to give all processes time to shutdown.
         sleep(Duration::from_millis(500));
@@ -406,7 +401,7 @@ mod test {
         let mut child = Command::new("powershell")
             .arg("-c")
             .arg("sleep 60; sleep 60; sleep 60")
-            .spawn()
+            .group_spawn()
             .expect("Failed to spawn echo");
         let pid = child.id();
 
@@ -414,7 +409,7 @@ mod test {
         let process_ids = assert_process_ids(pid, 1, 5000)?;
 
         // Kill the process and make sure it'll be killed.
-        assert!(kill_child(0, &mut child, true));
+        assert!(kill_child(0, &mut child, true).is_ok());
 
         // Sleep a little to give all processes time to shutdown.
         sleep(Duration::from_millis(500));

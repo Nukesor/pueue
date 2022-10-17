@@ -5,6 +5,7 @@ use std::process::Stdio;
 
 use anyhow::Result;
 use chrono::prelude::*;
+use command_group::CommandGroup;
 use crossbeam_channel::{Receiver, SendError, Sender};
 use handlebars::Handlebars;
 use log::{debug, error, info};
@@ -261,7 +262,7 @@ impl TaskHandler {
     /// This is a small wrapper around the real platform dependant process handling logic
     /// It only ensures, that the process we want to manipulate really does exists.
     fn perform_action(&mut self, id: usize, action: ProcessAction, children: bool) -> Result<bool> {
-        match self.children.get_child(id) {
+        match self.children.get_child_mut(id) {
             Some(child) => {
                 debug!("Executing action {action:?} to {id}");
                 run_action_on_child(child, &action, children)?;

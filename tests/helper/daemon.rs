@@ -1,9 +1,9 @@
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
+use std::process::Child;
 
 use anyhow::{anyhow, bail, Context, Result};
-use procfs::process::Process;
 use pueue_lib::network::message::*;
 use pueue_lib::settings::*;
 
@@ -56,26 +56,23 @@ pub async fn get_pid(pid_path: &Path) -> Result<i32> {
 }
 
 /// Waits for a daemon to shut down.
-/// This is done by waiting for the pid to disappear.
-pub async fn wait_for_shutdown(pid: i32) -> Result<()> {
-    // Try to read the process. If this fails, the daemon already exited.
-    let process = match Process::new(pid) {
-        Ok(process) => process,
-        Err(_) => return Ok(()),
-    };
-
+pub async fn wait_for_shutdown(child: &mut Child) -> Result<()> {
     // Give the daemon about 1 sec to shutdown.
     let tries = 40;
     let mut current_try = 0;
 
     while current_try < tries {
-        // Process is still alive, wait a little longer
-        if process.is_alive() {
+        // Try to read the process exit code. If this succeeds or
+        // an error is returned, the process is gone.
+        if let Ok(None) = child.try_wait() {
+            // Process is still alive, wait a little longer
             sleep_ms(50).await;
             current_try += 1;
             continue;
         }
-
+        // Process is gone; either there was a status code
+        // or the child is not a child of this process (highly
+        // unlikely).
         return Ok(());
     }
 

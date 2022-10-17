@@ -8,7 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
-- pueue log output now includes the task label, if any. [#355](https://github.com/Nukesor/pueue/issues/355)
+- `pueue log` output now includes the task label, if any. [#355](https://github.com/Nukesor/pueue/issues/355)
+- Enable `pueue edit` to edit multiple properties in one go.
+- Tasks are now started in a process group, and pueue kill --children will kill all processes in the group. [#372](https://github.com/Nukesor/pueue/issues/372)
 
 ### Added
 
@@ -29,10 +31,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Added the `created_at` and `enqueued_at` metadata fields on `Task` [#356](https://github.com/Nukesor/pueue/issues/356).
     They'll only be exposed when running `status --json` for now.
 
-### Changed
-
-- Enable `pueue edit` to edit multiple properties in one go.
-
 ### Fixed
 
 - Interpret the `$EDITOR` command, when editing a task's command/path, as a shell expression instead of an executable ([#336](https://github.com/Nukesor/pueue/issues/336)).
@@ -40,6 +38,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Don't show the version warning message between daemon and client, when using any `--json` flag.
 - Fix some test failures in non-standard environments for NixOS test suite ([#346](https://github.com/Nukesor/pueue/issues/346)).
 - The time in pueue's logs will now be in localtime instead of UTC [#385](https://github.com/Nukesor/pueue/issues/385).
+- macos support has been brought on par with Linux.
 
 ### Misc
 

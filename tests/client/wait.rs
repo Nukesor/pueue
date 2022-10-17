@@ -16,7 +16,7 @@ async fn multiple_tasks() -> Result<()> {
     // Run a command that'll run for a short time after a delay.
     // The `pueue wait` command will be spawne directly afterwards, resulting in the spawned
     // process to wait for this command to finish.
-    run_client_command(shared, &["add", "--delay", "1 second", "sleep 1"])?;
+    run_client_command(shared, &["add", "--delay", "2 seconds", "sleep 1"])?;
 
     // Spawn the `pueue wait` command in a separate thread.
     // We expect it to finish later on its own.

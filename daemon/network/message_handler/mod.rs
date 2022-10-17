@@ -93,7 +93,7 @@ macro_rules! ok_or_return_failure_message {
 mod fixtures {
     pub use crossbeam_channel::Sender;
     use std::collections::HashMap;
-    use std::path::PathBuf;
+    use std::env::temp_dir;
     use std::sync::{Arc, Mutex};
     use tempfile::TempDir;
 
@@ -135,7 +135,7 @@ mod fixtures {
     pub fn get_stub_task_in_group(id: &str, group: &str, status: TaskStatus) -> Task {
         Task::new(
             id.to_string(),
-            PathBuf::from("/tmp"),
+            temp_dir(),
             HashMap::new(),
             group.to_string(),
             status,

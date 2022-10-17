@@ -53,9 +53,8 @@ The queue will be continuously processed, even if you no longer have any active 
 - A lot more. Check the -h options for each subcommand for detailed options.
 - Cross Platform
     * Linux is fully supported and battle-tested.
+    * MacOS is fully supported and on par with Linux.
     * Windows is fully supported and working fine for quite a while.
-    * MacOS only has **rudimentary** process handling, but it's still usable.
-        Check this [issue](https://github.com/Nukesor/pueue/issues/115) to find out what's missing.
 - [Why should I use it](https://github.com/Nukesor/pueue/wiki/FAQ#why-should-i-use-it)
 - [Advantages over Using a Terminal Multiplexer](https://github.com/Nukesor/pueue/wiki/FAQ#advantages-over-using-a-terminal-multiplexer)
 

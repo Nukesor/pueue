@@ -1,5 +1,3 @@
-use std::convert::TryInto;
-
 use anyhow::Result;
 use pretty_assertions::assert_eq;
 
@@ -14,12 +12,12 @@ use crate::helper::*;
 #[tokio::test]
 async fn test_start_running() -> Result<()> {
     let (settings, _tempdir) = daemon_base_setup()?;
-    let child = standalone_daemon(&settings.shared).await?;
+    let mut child = standalone_daemon(&settings.shared).await?;
     let shared = &settings.shared;
 
     // Kill the daemon and wait for it to shut down.
     assert_success(shutdown_daemon(shared).await?);
-    wait_for_shutdown(child.id().try_into()?).await?;
+    wait_for_shutdown(&mut child).await?;
 
     // Boot it up again
     let mut child = standalone_daemon(&settings.shared).await?;
@@ -40,7 +38,7 @@ async fn test_start_running() -> Result<()> {
 #[tokio::test]
 async fn test_start_paused() -> Result<()> {
     let (settings, _tempdir) = daemon_base_setup()?;
-    let child = standalone_daemon(&settings.shared).await?;
+    let mut child = standalone_daemon(&settings.shared).await?;
     let shared = &settings.shared;
 
     // This pauses the daemon
@@ -48,7 +46,7 @@ async fn test_start_paused() -> Result<()> {
 
     // Kill the daemon and wait for it to shut down.
     assert_success(shutdown_daemon(shared).await?);
-    wait_for_shutdown(child.id().try_into()?).await?;
+    wait_for_shutdown(&mut child).await?;
 
     // Boot it up again
     let mut child = standalone_daemon(&settings.shared).await?;
