@@ -16,14 +16,11 @@ pub fn pause(message: PauseMessage, sender: &TaskSender, state: &SharedState) ->
         }
     }
 
-    // Forward the message to the task handler.
-    sender.send(message.clone()).expect(SENDER_ERR);
-
-    // Return a response depending on the selected tasks.
-    match message.tasks {
+    // Construct a response depending on the selected tasks.
+    let response = match &message.tasks {
         TaskSelection::TaskIds(task_ids) => task_action_response_helper(
             "Tasks are being paused",
-            task_ids,
+            task_ids.clone(),
             |task| matches!(task.status, TaskStatus::Running),
             &state,
         ),
@@ -31,5 +28,12 @@ pub fn pause(message: PauseMessage, sender: &TaskSender, state: &SharedState) ->
             create_success_message(format!("Group \"{group}\" is being paused."))
         }
         TaskSelection::All => create_success_message("All queues are being paused."),
+    };
+
+    if let Message::Success(_) = response {
+        // Forward the message to the task handler, but only if there is something to pause.
+        sender.send(message).expect(SENDER_ERR);
     }
+
+    response
 }

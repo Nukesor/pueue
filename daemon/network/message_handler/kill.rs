@@ -16,13 +16,12 @@ pub fn kill(message: KillMessage, sender: &TaskSender, state: &SharedState) -> M
         }
     }
 
-    sender.send(message.clone()).expect(SENDER_ERR);
-
-    if let Some(signal) = message.signal {
-        match message.tasks {
+    // Construct a response depending on the selected tasks.
+    let response = if let Some(signal) = &message.signal {
+        match &message.tasks {
             TaskSelection::TaskIds(task_ids) => task_action_response_helper(
                 "Tasks are being killed",
-                task_ids,
+                task_ids.clone(),
                 |task| task.is_running(),
                 &state,
             ),
@@ -34,10 +33,10 @@ pub fn kill(message: KillMessage, sender: &TaskSender, state: &SharedState) -> M
             }
         }
     } else {
-        match message.tasks {
+        match &message.tasks {
             TaskSelection::TaskIds(task_ids) => task_action_response_helper(
                 "Tasks are being killed",
-                task_ids,
+                task_ids.clone(),
                 |task| task.is_running(),
                 &state,
             ),
@@ -48,5 +47,12 @@ pub fn kill(message: KillMessage, sender: &TaskSender, state: &SharedState) -> M
                 create_success_message("All tasks are being killed. All groups will be paused!!!")
             }
         }
+    };
+
+    if let Message::Success(_) = response {
+        // Forward the message to the task handler, but only if there is something to kill.
+        sender.send(message).expect(SENDER_ERR);
     }
+
+    response
 }
