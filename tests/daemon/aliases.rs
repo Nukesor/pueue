@@ -59,7 +59,7 @@ async fn test_restart_with_alias() -> Result<()> {
     create_test_alias_file(daemon.tempdir.path(), aliases)?;
 
     // Restart the task while editing its command.
-    let message = Message::Restart(RestartMessage {
+    let message = RestartMessage {
         tasks: vec![TaskToRestart {
             task_id: 0,
             command: Some("replaced_cmd test".to_string()),
@@ -69,7 +69,7 @@ async fn test_restart_with_alias() -> Result<()> {
         }],
         start_immediately: true,
         stashed: false,
-    });
+    };
     send_message(shared, message).await?;
     let task = wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
 

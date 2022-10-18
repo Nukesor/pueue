@@ -104,7 +104,7 @@ pub async fn restart(
 
         // In case we don't do in-place restarts, we have to add a new task.
         // Create a AddMessage to send the task to the daemon from the updated info and the old task.
-        let add_task_message = Message::Add(AddMessage {
+        let add_task_message = AddMessage {
             command: edited_props.command.unwrap_or_else(|| task.command.clone()),
             path: edited_props.path.unwrap_or_else(|| task.path.clone()),
             envs: task.envs.clone(),
@@ -115,7 +115,7 @@ pub async fn restart(
             dependencies: Vec::new(),
             label: edited_props.label.or_else(|| task.label.clone()),
             print_task_id: false,
-        });
+        };
 
         // Send the cloned task to the daemon and abort on any failure messages.
         send_message(add_task_message, stream).await?;
@@ -126,7 +126,7 @@ pub async fn restart(
 
     // Send the singular in-place restart message to the daemon.
     if in_place {
-        send_message(Message::Restart(restart_message), stream).await?;
+        send_message(restart_message, stream).await?;
         if let Message::Failure(message) = receive_message(stream).await? {
             bail!(message);
         };

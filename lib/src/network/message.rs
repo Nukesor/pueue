@@ -8,6 +8,19 @@ use strum_macros::{Display, EnumString};
 use crate::state::{Group, State};
 use crate::task::Task;
 
+/// Macro to simplify creating From implementations for each variant-contained
+/// struct; e.g. `impl_into_message!(AddMessage, Message::Add)` to make it possible
+/// to use `AddMessage { }.into()` and get a `Message::Add()` value.
+macro_rules! impl_into_message {
+    ($inner:ident, $variant:expr) => {
+        impl From<$inner> for Message {
+            fn from(message: $inner) -> Self {
+                $variant(message)
+            }
+        }
+    };
+}
+
 /// This is the main message enum. \
 /// Everything that's communicated in Pueue can be serialized as this enum.
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
@@ -110,11 +123,15 @@ impl std::fmt::Debug for AddMessage {
     }
 }
 
+impl_into_message!(AddMessage, Message::Add);
+
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct SwitchMessage {
     pub task_id_1: usize,
     pub task_id_2: usize,
 }
+
+impl_into_message!(SwitchMessage, Message::Switch);
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct EnqueueMessage {
@@ -122,11 +139,15 @@ pub struct EnqueueMessage {
     pub enqueue_at: Option<DateTime<Local>>,
 }
 
+impl_into_message!(EnqueueMessage, Message::Enqueue);
+
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct StartMessage {
     pub tasks: TaskSelection,
     pub children: bool,
 }
+
+impl_into_message!(StartMessage, Message::Start);
 
 /// The messages used to restart tasks.
 /// It's possible to update the command and paths when restarting tasks.
@@ -136,6 +157,8 @@ pub struct RestartMessage {
     pub start_immediately: bool,
     pub stashed: bool,
 }
+
+impl_into_message!(RestartMessage, Message::Restart);
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct TaskToRestart {
@@ -157,6 +180,8 @@ pub struct PauseMessage {
     pub wait: bool,
     pub children: bool,
 }
+
+impl_into_message!(PauseMessage, Message::Pause);
 
 /// This is a small custom Enum for all currently supported unix signals.
 /// Supporting all unix signals would be a mess, since there is a LOT of them.
@@ -184,11 +209,15 @@ pub struct KillMessage {
     pub signal: Option<Signal>,
 }
 
+impl_into_message!(KillMessage, Message::Kill);
+
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct SendMessage {
     pub task_id: usize,
     pub input: String,
 }
+
+impl_into_message!(SendMessage, Message::Send);
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct EditResponseMessage {
@@ -197,6 +226,8 @@ pub struct EditResponseMessage {
     pub path: PathBuf,
     pub label: Option<String>,
 }
+
+impl_into_message!(EditResponseMessage, Message::EditResponse);
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct EditMessage {
@@ -209,6 +240,8 @@ pub struct EditMessage {
     pub delete_label: bool,
 }
 
+impl_into_message!(EditMessage, Message::Edit);
+
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub enum GroupMessage {
     Add {
@@ -219,15 +252,21 @@ pub enum GroupMessage {
     List,
 }
 
+impl_into_message!(GroupMessage, Message::Group);
+
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct GroupResponseMessage {
     pub groups: BTreeMap<String, Group>,
 }
 
+impl_into_message!(GroupResponseMessage, Message::GroupResponse);
+
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct ResetMessage {
     pub children: bool,
 }
+
+impl_into_message!(ResetMessage, Message::Reset);
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct CleanMessage {
@@ -238,6 +277,8 @@ pub struct CleanMessage {
     pub group: Option<String>,
 }
 
+impl_into_message!(CleanMessage, Message::Clean);
+
 /// Determines which type of shutdown we're dealing with.
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub enum Shutdown {
@@ -247,11 +288,15 @@ pub enum Shutdown {
     Graceful,
 }
 
+impl_into_message!(Shutdown, Message::DaemonShutdown);
+
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct StreamRequestMessage {
     pub task_id: Option<usize>,
     pub lines: Option<usize>,
 }
+
+impl_into_message!(StreamRequestMessage, Message::StreamRequest);
 
 /// Request logs for specific tasks.
 ///
@@ -264,6 +309,8 @@ pub struct LogRequestMessage {
     pub send_logs: bool,
     pub lines: Option<usize>,
 }
+
+impl_into_message!(LogRequestMessage, Message::Log);
 
 /// Helper struct for sending tasks and their log output to the client.
 #[derive(PartialEq, Eq, Clone, Deserialize, Serialize)]
@@ -292,6 +339,8 @@ pub struct ParallelMessage {
     pub parallel_tasks: usize,
     pub group: String,
 }
+
+impl_into_message!(ParallelMessage, Message::Parallel);
 
 pub fn create_success_message<T: ToString>(text: T) -> Message {
     Message::Success(text.to_string())

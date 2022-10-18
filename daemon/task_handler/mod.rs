@@ -5,7 +5,7 @@ use std::process::Stdio;
 
 use anyhow::Result;
 use chrono::prelude::*;
-use crossbeam_channel::Receiver;
+use crossbeam_channel::{Receiver, SendError, Sender};
 use handlebars::Handlebars;
 use log::{debug, error, info};
 
@@ -34,7 +34,7 @@ mod messages;
 /// Everything regarding actually spawning task processes.
 mod spawn_task;
 
-use children::Children;
+use self::children::Children;
 
 /// This is a little helper macro, which looks at a critical result and shuts the
 /// TaskHandler down, if an error occurred. This is mostly used if the state cannot.
@@ -53,6 +53,26 @@ macro_rules! ok_or_shutdown {
             Ok(inner) => inner,
         }
     };
+}
+
+/// Sender<TaskMessage> wrapper that takes Into<Message> as a convenience option
+#[derive(Debug, Clone)]
+pub struct TaskSender {
+    sender: Sender<Message>,
+}
+
+impl TaskSender {
+    pub fn new(sender: Sender<Message>) -> Self {
+        Self { sender }
+    }
+
+    #[inline]
+    pub fn send<T>(&self, message: T) -> Result<(), SendError<Message>>
+    where
+        T: Into<Message>,
+    {
+        self.sender.send(message.into())
+    }
 }
 
 pub struct TaskHandler {

@@ -1,14 +1,12 @@
-use crossbeam_channel::Sender;
-
 use pueue_lib::network::message::*;
 use pueue_lib::state::SharedState;
 
-use super::SENDER_ERR;
+use super::{TaskSender, SENDER_ERR};
 use crate::network::response_helper::{ensure_group_exists, task_action_response_helper};
 
 /// Invoked when calling `pueue kill`.
 /// Forward the kill message to the task handler, which then kills the process.
-pub fn kill(message: KillMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
+pub fn kill(message: KillMessage, sender: &TaskSender, state: &SharedState) -> Message {
     let mut state = state.lock().unwrap();
 
     // If a group is selected, make sure it exists.
@@ -18,9 +16,7 @@ pub fn kill(message: KillMessage, sender: &Sender<Message>, state: &SharedState)
         }
     }
 
-    sender
-        .send(Message::Kill(message.clone()))
-        .expect(SENDER_ERR);
+    sender.send(message.clone()).expect(SENDER_ERR);
 
     if let Some(signal) = message.signal {
         match message.tasks {

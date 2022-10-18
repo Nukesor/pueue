@@ -33,11 +33,11 @@ async fn colored() -> Result<()> {
 
     // Pauses the default queue while waiting for tasks
     // We do this to ensure that paused groups are properly colored.
-    let message = Message::Pause(PauseMessage {
+    let message = PauseMessage {
         tasks: TaskSelection::Group(PUEUE_DEFAULT_GROUP.into()),
         wait: true,
         children: false,
-    });
+    };
     send_message(shared, message)
         .await
         .context("Failed to send message")?;

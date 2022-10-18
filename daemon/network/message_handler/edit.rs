@@ -21,13 +21,13 @@ pub fn edit_request(task_id: usize, state: &SharedState) -> Message {
             task.prev_status = task.status.clone();
             task.status = TaskStatus::Locked;
 
-            let message = EditResponseMessage {
+            EditResponseMessage {
                 task_id: task.id,
                 command: task.original_command.clone(),
                 path: task.path.clone(),
                 label: task.label.clone(),
-            };
-            Message::EditResponse(message)
+            }
+            .into()
         }
         None => create_failure_message("No task with this id."),
     }

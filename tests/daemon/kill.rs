@@ -11,25 +11,25 @@ use crate::helper::*;
 
 #[rstest]
 #[case(
-    Message::Kill(KillMessage {
+    KillMessage {
         tasks: TaskSelection::All,
         children: false,
         signal: None,
-    }), true
+    }, true
 )]
 #[case(
-    Message::Kill(KillMessage {
+    KillMessage {
         tasks: TaskSelection::Group(PUEUE_DEFAULT_GROUP.into()),
         children: false,
         signal: None,
-    }), true
+    }, true
 )]
 #[case(
-    Message::Kill(KillMessage {
+    KillMessage {
         tasks: TaskSelection::TaskIds(vec![0, 1, 2]),
         children: false,
         signal: None,
-    }), false
+    }, false
 )]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Test if killing running tasks works as intended.
@@ -42,7 +42,7 @@ use crate::helper::*;
 /// If a whole group or everything is killed, the respective groups should also be paused!
 /// This is security measure to prevent unwanted task execution in an emergency.
 async fn test_kill_tasks(
-    #[case] kill_message: Message,
+    #[case] kill_message: KillMessage,
     #[case] group_should_pause: bool,
 ) -> Result<()> {
     let daemon = daemon().await?;

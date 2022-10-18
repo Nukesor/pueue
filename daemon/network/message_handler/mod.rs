@@ -1,11 +1,10 @@
 use std::fmt::Display;
 
-use crossbeam_channel::Sender;
-
 use pueue_lib::network::message::*;
 use pueue_lib::settings::Settings;
 use pueue_lib::state::SharedState;
 
+use super::TaskSender;
 use crate::network::response_helper::*;
 
 mod add;
@@ -28,7 +27,7 @@ pub static SENDER_ERR: &str = "Failed to send message to task handler thread";
 
 pub fn handle_message(
     message: Message,
-    sender: &Sender<Message>,
+    sender: &TaskSender,
     state: &SharedState,
     settings: &Settings,
 ) -> Message {
@@ -59,8 +58,8 @@ pub fn handle_message(
 /// Invoked when calling `pueue reset`.
 /// Forward the reset request to the task handler.
 /// The handler then kills all children and clears the task queue.
-fn reset(message: ResetMessage, sender: &Sender<Message>) -> Message {
-    sender.send(Message::Reset(message)).expect(SENDER_ERR);
+fn reset(message: ResetMessage, sender: &TaskSender) -> Message {
+    sender.send(message).expect(SENDER_ERR);
     create_success_message("Everything is being reset right now.")
 }
 
