@@ -7,9 +7,6 @@ use anyhow::Result;
 use command_group::{GroupChild, Signal, UnixChildExt};
 use log::info;
 
-use super::ProcessAction;
-use crate::network::message::Signal as InternalSignal;
-
 pub fn compile_shell_command(command_string: &str) -> Command {
     let mut command = Command::new("sh");
     command.arg("-c").arg(command_string);
@@ -17,57 +14,21 @@ pub fn compile_shell_command(command_string: &str) -> Command {
     command
 }
 
-fn map_action_to_signal(action: &ProcessAction) -> Signal {
-    match action {
-        ProcessAction::Pause => Signal::SIGSTOP,
-        ProcessAction::Resume => Signal::SIGCONT,
-    }
-}
-
-fn map_internal_signal_to_nix_signal(signal: InternalSignal) -> Signal {
-    match signal {
-        InternalSignal::SigKill => Signal::SIGKILL,
-        InternalSignal::SigInt => Signal::SIGINT,
-        InternalSignal::SigTerm => Signal::SIGTERM,
-        InternalSignal::SigCont => Signal::SIGCONT,
-        InternalSignal::SigStop => Signal::SIGSTOP,
-    }
-}
-
-/// Convenience wrapper around `send_signal_to_child` for raw unix signals.
-/// Its purpose is to hide platform specific logic.
-pub fn send_internal_signal_to_child(
-    child: &mut GroupChild,
-    signal: InternalSignal,
-    send_to_children: bool,
-) -> Result<()> {
-    let signal = map_internal_signal_to_nix_signal(signal);
-    send_signal_to_child(child, signal, send_to_children)
-}
-
-/// Convenience wrapper around `send_signal_to_child` for internal actions on processes.
-/// Its purpose is to hide platform specific logic.
-pub fn run_action_on_child(
-    child: &mut GroupChild,
-    action: &ProcessAction,
-    send_to_children: bool,
-) -> Result<()> {
-    let signal = map_action_to_signal(action);
-    send_signal_to_child(child, signal, send_to_children)
-}
-
 /// Send a signal to one of Pueue's child process or process group handles.
-pub fn send_signal_to_child(
+pub fn send_signal_to_child<T>(
     child: &mut GroupChild,
-    signal: Signal,
+    signal: T,
     send_to_children: bool,
-) -> Result<()> {
+) -> Result<()>
+where
+    T: Into<Signal>,
+{
     if send_to_children {
         // Send the signal to the process group
-        child.signal(signal)?;
+        child.signal(signal.into())?;
     } else {
         // Send the signal to the process itself
-        child.inner().signal(signal)?;
+        child.inner().signal(signal.into())?;
     }
     Ok(())
 }

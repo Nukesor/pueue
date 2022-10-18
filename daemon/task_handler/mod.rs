@@ -265,7 +265,7 @@ impl TaskHandler {
         match self.children.get_child_mut(id) {
             Some(child) => {
                 debug!("Executing action {action:?} to {id}");
-                run_action_on_child(child, &action, children)?;
+                send_signal_to_child(child, &action, children)?;
 
                 Ok(true)
             }

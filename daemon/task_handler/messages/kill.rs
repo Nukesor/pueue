@@ -73,7 +73,7 @@ impl TaskHandler {
     }
 
     /// Send a signal to a specific child process.
-    /// This is a wrapper around [send_internal_signal_to_child], which does a little bit of
+    /// This is a wrapper around [send_signal_to_child], which does a little bit of
     /// additional error handling.
     pub fn send_internal_signal(&mut self, task_id: usize, signal: Signal, send_to_children: bool) {
         let child = match self.children.get_child_mut(task_id) {
@@ -84,7 +84,7 @@ impl TaskHandler {
             }
         };
 
-        if let Err(err) = send_internal_signal_to_child(child, signal, send_to_children) {
+        if let Err(err) = send_signal_to_child(child, signal, send_to_children) {
             warn!("Failed to send signal to task {task_id} with error: {err}");
         };
     }

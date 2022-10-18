@@ -17,8 +17,14 @@ use winapi::um::tlhelp32::{
 };
 use winapi::um::winnt::THREAD_SUSPEND_RESUME;
 
-use super::ProcessAction;
-use crate::network::message::Signal as InternalSignal;
+/// Shim signal enum for windows.
+pub enum Signal {
+    SIGINT,
+    SIGKILL,
+    SIGTERM,
+    SIGCONT,
+    SIGSTOP,
+}
 
 pub fn compile_shell_command(command_string: &str) -> Command {
     // Chain two `powershell` commands, one that sets the output encoding to utf8 and then the user provided one.
@@ -31,39 +37,35 @@ pub fn compile_shell_command(command_string: &str) -> Command {
     command
 }
 
-pub fn send_internal_signal_to_child(
-    _child: &mut GroupChild,
-    _signal: InternalSignal,
-    _send_to_children: bool,
-) -> Result<()> {
-    bail!("Trying to send unix signal on a windows machine. This isn't supported.");
-}
-
 /// Send a signal to a windows process.
-pub fn run_action_on_child(
-    child: &mut GroupChild,
-    action: &ProcessAction,
-    _children: bool,
-) -> Result<()> {
+pub fn send_signal_to_child<T>(child: &mut GroupChild, signal: T, _children: bool) -> Result<()>
+where
+    T: Into<Signal>,
+{
     let pids = get_cur_task_processes(child.id());
     if pids.is_empty() {
         bail!("Process has just gone away");
     }
 
-    match action {
-        ProcessAction::Pause => {
+    let signal: Signal = signal.into();
+
+    match signal {
+        Signal::SIGSTOP => {
             for pid in pids {
                 for thread in get_threads(pid) {
                     suspend_thread(thread);
                 }
             }
         }
-        ProcessAction::Resume => {
+        Signal::SIGCONT => {
             for pid in pids {
                 for thread in get_threads(pid) {
                     resume_thread(thread);
                 }
             }
+        }
+        _ => {
+            bail!("Trying to send unix signal on a windows machine. This isn't supported.");
         }
     }
 

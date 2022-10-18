@@ -4,12 +4,16 @@
 //! each supported platform.
 //! Depending on the target, the respective platform is read and loaded into this scope.
 
+use crate::network::message::Signal as InternalSignal;
+
 // Unix specific process handling
 // Shared between Linux and Apple
 #[cfg(unix)]
 mod unix;
 #[cfg(unix)]
 pub use self::unix::*;
+#[cfg(unix)]
+use command_group::Signal;
 
 // Linux specific process support
 #[cfg(target_os = "linux")]
@@ -41,4 +45,25 @@ pub use self::windows::*;
 pub enum ProcessAction {
     Pause,
     Resume,
+}
+
+impl From<&ProcessAction> for Signal {
+    fn from(action: &ProcessAction) -> Self {
+        match action {
+            ProcessAction::Pause => Signal::SIGSTOP,
+            ProcessAction::Resume => Signal::SIGCONT,
+        }
+    }
+}
+
+impl From<InternalSignal> for Signal {
+    fn from(signal: InternalSignal) -> Self {
+        match signal {
+            InternalSignal::SigKill => Signal::SIGKILL,
+            InternalSignal::SigInt => Signal::SIGINT,
+            InternalSignal::SigTerm => Signal::SIGTERM,
+            InternalSignal::SigCont => Signal::SIGCONT,
+            InternalSignal::SigStop => Signal::SIGSTOP,
+        }
+    }
 }
