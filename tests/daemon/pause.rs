@@ -19,7 +19,7 @@ async fn test_pause_daemon() -> Result<()> {
 
     // Add a task and give the taskmanager time to theoretically start the process
     add_task(shared, "ls", false).await?;
-    sleep_ms(500);
+    sleep_ms(500).await;
 
     // Make sure it's not started
     assert_eq!(get_task_status(shared, 0).await?, TaskStatus::Queued);

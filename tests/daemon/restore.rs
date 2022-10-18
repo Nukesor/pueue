@@ -19,7 +19,7 @@ async fn test_start_running() -> Result<()> {
 
     // Kill the daemon and wait for it to shut down.
     assert_success(shutdown_daemon(shared).await?);
-    wait_for_shutdown(child.id().try_into()?)?;
+    wait_for_shutdown(child.id().try_into()?).await?;
 
     // Boot it up again
     let mut child = standalone_daemon(&settings.shared).await?;
@@ -48,7 +48,7 @@ async fn test_start_paused() -> Result<()> {
 
     // Kill the daemon and wait for it to shut down.
     assert_success(shutdown_daemon(shared).await?);
-    wait_for_shutdown(child.id().try_into()?)?;
+    wait_for_shutdown(child.id().try_into()?).await?;
 
     // Boot it up again
     let mut child = standalone_daemon(&settings.shared).await?;

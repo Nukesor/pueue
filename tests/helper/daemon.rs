@@ -21,7 +21,7 @@ pub async fn shutdown_daemon(shared: &Shared) -> Result<Message> {
 /// Get a daemon pid from a specific pueue directory.
 /// This function gives the daemon a little time to boot up, but ultimately crashes if it takes too
 /// long.
-pub fn get_pid(pid_path: &Path) -> Result<i32> {
+pub async fn get_pid(pid_path: &Path) -> Result<i32> {
     // Give the daemon about 1 sec to boot and create the pid file.
     let tries = 20;
     let mut current_try = 0;
@@ -29,7 +29,7 @@ pub fn get_pid(pid_path: &Path) -> Result<i32> {
     while current_try < tries {
         // The daemon didn't create the pid file yet. Wait for 100ms and try again.
         if !pid_path.exists() {
-            sleep_ms(50);
+            sleep_ms(50).await;
             current_try += 1;
             continue;
         }
@@ -41,7 +41,7 @@ pub fn get_pid(pid_path: &Path) -> Result<i32> {
 
         // The file has been created but not yet been written to.
         if content.is_empty() {
-            sleep_ms(50);
+            sleep_ms(50).await;
             current_try += 1;
             continue;
         }
@@ -57,7 +57,7 @@ pub fn get_pid(pid_path: &Path) -> Result<i32> {
 
 /// Waits for a daemon to shut down.
 /// This is done by waiting for the pid to disappear.
-pub fn wait_for_shutdown(pid: i32) -> Result<()> {
+pub async fn wait_for_shutdown(pid: i32) -> Result<()> {
     // Try to read the process. If this fails, the daemon already exited.
     let process = match Process::new(pid) {
         Ok(process) => process,
@@ -71,7 +71,7 @@ pub fn wait_for_shutdown(pid: i32) -> Result<()> {
     while current_try < tries {
         // Process is still alive, wait a little longer
         if process.is_alive() {
-            sleep_ms(50);
+            sleep_ms(50).await;
             current_try += 1;
             continue;
         }

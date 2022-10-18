@@ -28,8 +28,8 @@ pub use wait::*;
 
 /// A helper function to sleep for ms time.
 /// Only used to avoid the biolerplate of importing the same stuff all over the place.
-pub fn sleep_ms(ms: u64) {
-    std::thread::sleep(std::time::Duration::from_millis(ms));
+pub async fn sleep_ms(ms: u64) {
+    tokio::time::sleep(std::time::Duration::from_millis(ms)).await;
 }
 
 /// A small helper function, which instantly writes the given string to stdout with a newline.
