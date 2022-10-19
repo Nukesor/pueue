@@ -4,6 +4,7 @@ use anyhow::{bail, Context, Result};
 use clap::crate_version;
 use crossbeam_channel::Sender;
 use log::{debug, info, warn};
+use tokio::time::sleep;
 
 use pueue_lib::error::Error;
 use pueue_lib::network::message::*;
@@ -86,7 +87,7 @@ async fn handle_incoming(
             - SystemTime::now()
                 .duration_since(start)
                 .context("Couldn't calculate duration. Did the system time change?")?;
-        std::thread::sleep(remaining_sleep_time);
+        sleep(remaining_sleep_time).await;
         bail!("Received invalid secret");
     }
 

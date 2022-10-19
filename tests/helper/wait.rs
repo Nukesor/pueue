@@ -21,7 +21,7 @@ pub async fn wait_for_task(shared: &Shared, task_id: usize) -> Result<Task> {
         let state = get_state(shared).await?;
         if !state.tasks.contains_key(&task_id) {
             current_try += 1;
-            sleep_ms(50);
+            sleep_ms(50).await;
             continue;
         }
 
@@ -51,7 +51,7 @@ pub async fn wait_for_status_change(
 
                 // The status didn't change. Try again.
                 current_try += 1;
-                sleep_ms(50);
+                sleep_ms(50).await;
                 continue;
             }
             None => {
@@ -87,7 +87,7 @@ where
 
                 // The status didn't change to target. Try again.
                 current_try += 1;
-                sleep_ms(50);
+                sleep_ms(50).await;
                 continue;
             }
             None => {
@@ -107,7 +107,7 @@ pub async fn wait_for_task_absence(shared: &Shared, task_id: usize) -> Result<()
         let state = get_state(shared).await?;
         if state.tasks.contains_key(&task_id) {
             current_try += 1;
-            sleep_ms(50);
+            sleep_ms(50).await;
             continue;
         }
 
@@ -126,7 +126,7 @@ pub async fn wait_for_group(shared: &Shared, group: &str) -> Result<()> {
         let state = get_state(shared).await?;
         if !state.groups.contains_key(group) {
             current_try += 1;
-            sleep_ms(50);
+            sleep_ms(50).await;
             continue;
         }
 
@@ -145,7 +145,7 @@ pub async fn wait_for_group_absence(shared: &Shared, group: &str) -> Result<()> 
         let state = get_state(shared).await?;
         if state.groups.contains_key(group) {
             current_try += 1;
-            sleep_ms(50);
+            sleep_ms(50).await;
             continue;
         }
 
@@ -175,7 +175,7 @@ pub async fn wait_for_group_status(
             }
         }
 
-        sleep_ms(50);
+        sleep_ms(50).await;
         current_try += 1;
     }
 

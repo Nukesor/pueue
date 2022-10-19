@@ -1,10 +1,10 @@
 use std::collections::HashMap;
-use std::thread::sleep;
 use std::time::Duration;
 
 use anyhow::Result;
 use chrono::Local;
 use crossterm::style::{Attribute, Color};
+use tokio::time::sleep;
 
 use pueue_lib::network::protocol::GenericStream;
 use pueue_lib::task::{Task, TaskResult, TaskStatus};
@@ -125,7 +125,7 @@ pub async fn wait(
         if std::env::var("PUEUED_TEST_ENV_VARIABLE").is_ok() {
             sleep_time = 250;
         }
-        sleep(Duration::from_millis(sleep_time));
+        sleep(Duration::from_millis(sleep_time)).await;
         first_run = false;
     }
 

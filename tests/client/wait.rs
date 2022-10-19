@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::thread;
 
 use anyhow::Result;
+use tokio::time::sleep;
 
 use crate::fixtures::*;
 use crate::helper::*;
@@ -22,7 +23,7 @@ async fn multiple_tasks() -> Result<()> {
     let shared_clone = shared.clone();
     let wait_handle = thread::spawn(move || run_client_command(&shared_clone, &["wait"]));
     // Sleep for half a second to give `pueue wait` time to properly start.
-    std::thread::sleep(std::time::Duration::from_millis(500));
+    sleep(std::time::Duration::from_millis(500)).await;
 
     // We now spawn another task that should be picked up by and waited upon completion
     // by the `wait` process.

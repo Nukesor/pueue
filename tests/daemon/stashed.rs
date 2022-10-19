@@ -97,7 +97,7 @@ async fn test_delayed_tasks() -> Result<()> {
     .await?;
 
     // Make sure the task is started after being automatically enqueued.
-    sleep_ms(800);
+    sleep_ms(800).await;
     wait_for_task_condition(shared, 0, |task| task.is_running()).await?;
 
     Ok(())
