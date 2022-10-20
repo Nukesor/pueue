@@ -10,7 +10,7 @@ ignore:
   - ".github"
   - ".gitignore"
 
-codecov:
+coverage:
   status:
     project:
       default:
