@@ -75,6 +75,9 @@ jobs:
           components: llvm-tools-preview
           target: ${{ matrix.target }}
 
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@nextest
+
       - uses: actions/cache@v3
         with:
           path: |
@@ -97,7 +100,9 @@ jobs:
       - name: cargo test
         uses: actions-rs/cargo@v1
         if: ${{ !matrix.cross }}
+        env:
+          NEXTEST_PROFILE: ci   # defined in .config/nextest.toml
         with:
-          command: test
-          args:  --workspace --target=${{ matrix.target }}
+          command: nextest
+          args:  run --workspace --target=${{ matrix.target }}
           use-cross: ${{ matrix.cross }}
