@@ -30,6 +30,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Misc
 
 - Continuation of testing the `pueue` client, pushing the test coverage from ~70% to ~73%.
+- A codecov.yml syntax error was corrected, which prevented Codecov from applying the
+  repository-specific configuration.
 
 ## [2.1.0] - 2022-07-21
 
