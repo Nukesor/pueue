@@ -1,5 +1,3 @@
-use crossbeam_channel::Sender;
-
 use pueue_lib::aliasing::insert_alias;
 use pueue_lib::network::message::*;
 use pueue_lib::state::{GroupStatus, SharedState};
@@ -14,7 +12,7 @@ use crate::state_helper::save_state;
 /// If the start_immediately flag is set, send a StartMessage to the task handler.
 pub fn add_task(
     message: AddMessage,
-    sender: &Sender<Message>,
+    sender: &TaskSender,
     state: &SharedState,
     settings: &Settings,
 ) -> Message {
@@ -75,10 +73,10 @@ pub fn add_task(
     // Notify the task handler, in case the client wants to start the task immediately.
     if message.start_immediately {
         sender
-            .send(Message::Start(StartMessage {
+            .send(StartMessage {
                 tasks: TaskSelection::TaskIds(vec![task_id]),
                 children: false,
-            }))
+            })
             .expect(SENDER_ERR);
     }
 

@@ -62,11 +62,11 @@ async fn test_pause_with_wait() -> Result<()> {
     wait_for_task_condition(shared, 0, |task| task.is_running()).await?;
 
     // Pauses the default queue while waiting for tasks
-    let message = Message::Pause(PauseMessage {
+    let message = PauseMessage {
         tasks: TaskSelection::Group(PUEUE_DEFAULT_GROUP.into()),
         wait: true,
         children: false,
-    });
+    };
     send_message(shared, message)
         .await
         .context("Failed to send message")?;

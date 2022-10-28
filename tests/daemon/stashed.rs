@@ -16,10 +16,9 @@ pub async fn add_stashed_task(
     stashed: bool,
     enqueue_at: Option<DateTime<Local>>,
 ) -> Result<Message> {
-    let mut inner_message = create_add_message(shared, command);
-    inner_message.stashed = stashed;
-    inner_message.enqueue_at = enqueue_at;
-    let message = Message::Add(inner_message);
+    let mut message = create_add_message(shared, command);
+    message.stashed = stashed;
+    message.enqueue_at = enqueue_at;
 
     send_message(shared, message)
         .await
@@ -60,10 +59,10 @@ async fn test_enqueued_tasks(
     }
 
     // Manually enqueue the task
-    let enqueue_message = Message::Enqueue(EnqueueMessage {
+    let enqueue_message = EnqueueMessage {
         task_ids: vec![0],
         enqueue_at: None,
-    });
+    };
     send_message(shared, enqueue_message)
         .await
         .context("Failed to to add task message")?;

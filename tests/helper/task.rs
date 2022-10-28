@@ -11,9 +11,8 @@ use crate::helper::*;
 
 /// Adds a task to the test daemon.
 pub async fn add_task(shared: &Shared, command: &str, start_immediately: bool) -> Result<Message> {
-    let mut inner_message = create_add_message(shared, command);
-    inner_message.start_immediately = start_immediately;
-    let message = Message::Add(inner_message);
+    let mut message = create_add_message(shared, command);
+    message.start_immediately = start_immediately;
 
     send_message(shared, message)
         .await
@@ -42,7 +41,7 @@ pub async fn add_task_to_group(shared: &Shared, command: &str, group: &str) -> R
     let mut message = create_add_message(shared, command);
     message.group = group.to_string();
 
-    send_message(shared, Message::Add(message))
+    send_message(shared, message)
         .await
         .context("Failed to to add task to group.")
 }
@@ -65,10 +64,10 @@ pub async fn add_env_task_to_group(shared: &Shared, command: &str, group: &str) 
 
 /// Helper to either continue the daemon or start specific tasks
 pub async fn start_tasks(shared: &Shared, tasks: TaskSelection) -> Result<Message> {
-    let message = Message::Start(StartMessage {
+    let message = StartMessage {
         tasks,
         children: false,
-    });
+    };
 
     send_message(shared, message)
         .await
@@ -77,11 +76,11 @@ pub async fn start_tasks(shared: &Shared, tasks: TaskSelection) -> Result<Messag
 
 /// Helper to pause the default group of the daemon
 pub async fn pause_tasks(shared: &Shared, tasks: TaskSelection) -> Result<Message> {
-    let message = Message::Pause(PauseMessage {
+    let message = PauseMessage {
         tasks,
         wait: false,
         children: false,
-    });
+    };
 
     send_message(shared, message)
         .await

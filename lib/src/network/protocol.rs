@@ -17,7 +17,11 @@ pub const PACKET_SIZE: usize = 1280;
 
 /// Convenience wrapper around send_bytes.
 /// Deserialize a message and feed the bytes into send_bytes.
-pub async fn send_message(message: Message, stream: &mut GenericStream) -> Result<(), Error> {
+pub async fn send_message<T>(message: T, stream: &mut GenericStream) -> Result<(), Error>
+where
+    T: Into<Message>,
+{
+    let message: Message = message.into();
     debug!("Sending message: {message:#?}",);
     // Prepare command for transfer and determine message byte size
     let payload = to_vec(&message).map_err(|err| Error::MessageDeserialization(err.to_string()))?;

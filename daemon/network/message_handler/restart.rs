@@ -1,4 +1,3 @@
-use crossbeam_channel::Sender;
 use pueue_lib::settings::Settings;
 use std::sync::MutexGuard;
 
@@ -7,7 +6,7 @@ use pueue_lib::network::message::*;
 use pueue_lib::state::{SharedState, State};
 use pueue_lib::task::TaskStatus;
 
-use super::{task_action_response_helper, SENDER_ERR};
+use super::{task_action_response_helper, TaskSender, SENDER_ERR};
 
 /// This is a small wrapper around the actual in-place task `restart` functionality.
 ///
@@ -15,7 +14,7 @@ use super::{task_action_response_helper, SENDER_ERR};
 /// new task, which is completely handled on the client-side.
 pub fn restart_multiple(
     message: RestartMessage,
-    sender: &Sender<Message>,
+    sender: &TaskSender,
     state: &SharedState,
     settings: &Settings,
 ) -> Message {
@@ -39,10 +38,10 @@ pub fn restart_multiple(
     // Tell the task manager to start the task immediately if requested.
     if message.start_immediately {
         sender
-            .send(Message::Start(StartMessage {
+            .send(StartMessage {
                 tasks: TaskSelection::TaskIds(task_ids),
                 children: false,
-            }))
+            })
             .expect(SENDER_ERR);
     }
 

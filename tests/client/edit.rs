@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use anyhow::{Context, Result};
-use pueue_lib::network::message::Message;
 use pueue_lib::task::TaskStatus;
 
 use crate::fixtures::*;
@@ -16,7 +15,7 @@ async fn edit_task_default() -> Result<()> {
     // Create a stashed message which we'll edit later on.
     let mut message = create_add_message(shared, "this is a test");
     message.stashed = true;
-    send_message(shared, Message::Add(message))
+    send_message(shared, message)
         .await
         .context("Failed to to add stashed task.")?;
 
@@ -46,7 +45,7 @@ async fn edit_all_task_properties() -> Result<()> {
     // Create a stashed message which we'll edit later on.
     let mut message = create_add_message(shared, "this is a test");
     message.stashed = true;
-    send_message(shared, Message::Add(message))
+    send_message(shared, message)
         .await
         .context("Failed to to add stashed task.")?;
 
@@ -79,7 +78,7 @@ async fn edit_delete_label() -> Result<()> {
     let mut message = create_add_message(shared, "this is a test");
     message.stashed = true;
     message.label = Some("Testlabel".to_owned());
-    send_message(shared, Message::Add(message))
+    send_message(shared, message)
         .await
         .context("Failed to to add stashed task.")?;
 
@@ -106,7 +105,7 @@ async fn fail_to_edit_task() -> Result<()> {
     // Create a stashed message which we'll edit later on.
     let mut message = create_add_message(shared, "this is a test");
     message.stashed = true;
-    send_message(shared, Message::Add(message))
+    send_message(shared, message)
         .await
         .context("Failed to to add stashed task.")?;
 

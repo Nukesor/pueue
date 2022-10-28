@@ -20,7 +20,7 @@ async fn test_restart_in_place() -> Result<()> {
     wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
 
     // Restart task 0 with an extended sleep command with a different path.
-    let restart_message = Message::Restart(RestartMessage {
+    let restart_message = RestartMessage {
         tasks: vec![TaskToRestart {
             task_id: 0,
             command: Some("sleep 60".to_string()),
@@ -30,7 +30,7 @@ async fn test_restart_in_place() -> Result<()> {
         }],
         start_immediately: false,
         stashed: false,
-    });
+    };
     assert_success(send_message(shared, restart_message).await?);
 
     let state = get_state(shared).await?;
@@ -62,7 +62,7 @@ async fn test_cannot_restart_running() -> Result<()> {
     wait_for_task_condition(shared, 0, |task| task.is_running()).await?;
 
     // Restart task 0 with an extended sleep command.
-    let restart_message = Message::Restart(RestartMessage {
+    let restart_message = RestartMessage {
         tasks: vec![TaskToRestart {
             task_id: 0,
             command: None,
@@ -72,7 +72,7 @@ async fn test_cannot_restart_running() -> Result<()> {
         }],
         start_immediately: false,
         stashed: false,
-    });
+    };
     assert_failure(send_message(shared, restart_message).await?);
 
     Ok(())

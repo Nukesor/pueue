@@ -1,15 +1,13 @@
-use crossbeam_channel::Sender;
-
 use pueue_lib::network::message::*;
 use pueue_lib::state::SharedState;
 use pueue_lib::task::TaskStatus;
 
-use super::SENDER_ERR;
+use super::{TaskSender, SENDER_ERR};
 use crate::network::response_helper::*;
 
 /// Invoked when calling `pueue start`.
 /// Forward the start message to the task handler, which then starts the process(es).
-pub fn start(message: StartMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
+pub fn start(message: StartMessage, sender: &TaskSender, state: &SharedState) -> Message {
     let mut state = state.lock().unwrap();
     // If a group is selected, make sure it exists.
     if let TaskSelection::Group(group) = &message.tasks {
@@ -19,9 +17,7 @@ pub fn start(message: StartMessage, sender: &Sender<Message>, state: &SharedStat
     }
 
     // Forward the message to the task handler.
-    sender
-        .send(Message::Start(message.clone()))
-        .expect(SENDER_ERR);
+    sender.send(message.clone()).expect(SENDER_ERR);
 
     // Return a response depending on the selected tasks.
     match message.tasks {

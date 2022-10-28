@@ -2,7 +2,6 @@ use std::time::{Duration, SystemTime};
 
 use anyhow::{bail, Context, Result};
 use clap::crate_version;
-use crossbeam_channel::Sender;
 use log::{debug, info, warn};
 use tokio::time::sleep;
 
@@ -15,11 +14,12 @@ use pueue_lib::state::SharedState;
 
 use crate::network::follow_log::handle_follow;
 use crate::network::message_handler::{handle_message, SENDER_ERR};
+use crate::task_handler::TaskSender;
 
 /// Poll the listener and accept new incoming connections.
 /// Create a new future to handle the message and spawn it.
 pub async fn accept_incoming(
-    sender: Sender<Message>,
+    sender: TaskSender,
     state: SharedState,
     settings: Settings,
 ) -> Result<()> {
@@ -60,7 +60,7 @@ pub async fn accept_incoming(
 /// The response future is added to unix_responses and handled in a separate function.
 async fn handle_incoming(
     mut stream: GenericStream,
-    sender: Sender<Message>,
+    sender: TaskSender,
     state: SharedState,
     settings: Settings,
     secret: Vec<u8>,
@@ -138,9 +138,7 @@ async fn handle_incoming(
                 send_message(response, &mut stream).await?;
 
                 // Notify the task handler.
-                sender
-                    .send(Message::DaemonShutdown(shutdown_type))
-                    .expect(SENDER_ERR);
+                sender.send(shutdown_type).expect(SENDER_ERR);
 
                 return Ok(());
             }

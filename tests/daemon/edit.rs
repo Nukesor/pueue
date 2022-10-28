@@ -51,13 +51,13 @@ async fn test_edit_flow() -> Result<()> {
     // Send the final message of the protocol and actually change the task.
     let response = send_message(
         shared,
-        Message::Edit(EditMessage {
+        EditMessage {
             task_id: 0,
             command: Some("ls -ahl".into()),
             path: Some("/tmp".into()),
             label: Some("test".to_string()),
             delete_label: false,
-        }),
+        },
     )
     .await?;
     assert_success(response);

@@ -75,13 +75,13 @@ pub async fn edit(
     };
 
     // Create a new message with the edited properties.
-    let edit_message = Message::Edit(EditMessage {
+    let edit_message = EditMessage {
         task_id,
         command: edited_props.command,
         path: edited_props.path,
         label: edited_props.label,
         delete_label: edited_props.delete_label,
-    });
+    };
     send_message(edit_message, stream).await?;
 
     Ok(receive_message(stream).await?)

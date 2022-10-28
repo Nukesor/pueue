@@ -15,14 +15,14 @@ async fn test_add_and_remove() -> Result<()> {
     add_group_with_slots(shared, "testgroup", 1).await?;
 
     // Try to add the same group again. This should fail
-    let add_message = Message::Group(GroupMessage::Add {
+    let add_message = GroupMessage::Add {
         name: "testgroup".to_string(),
         parallel_tasks: None,
-    });
+    };
     assert_failure(send_message(shared, add_message).await?);
 
     // Remove the newly added group and wait for the deletion to be processed.
-    let remove_message = Message::Group(GroupMessage::Remove("testgroup".to_string()));
+    let remove_message = GroupMessage::Remove("testgroup".to_string());
     assert_success(send_message(shared, remove_message.clone()).await?);
     wait_for_group_absence(shared, "testgroup").await?;
 
@@ -38,7 +38,7 @@ async fn test_add_and_remove() -> Result<()> {
 async fn test_cannot_delete_default() -> Result<()> {
     let daemon = daemon().await?;
 
-    let message = Message::Group(GroupMessage::Remove(PUEUE_DEFAULT_GROUP.to_string()));
+    let message = GroupMessage::Remove(PUEUE_DEFAULT_GROUP.to_string());
     assert_failure(send_message(&daemon.settings.shared, message).await?);
 
     Ok(())
@@ -49,7 +49,7 @@ async fn test_cannot_delete_default() -> Result<()> {
 async fn test_cannot_delete_non_existing() -> Result<()> {
     let daemon = daemon().await?;
 
-    let message = Message::Group(GroupMessage::Remove("doesnt_exist".to_string()));
+    let message = GroupMessage::Remove("doesnt_exist".to_string());
     assert_failure(send_message(&daemon.settings.shared, message).await?);
 
     Ok(())
@@ -69,7 +69,7 @@ async fn test_cannot_delete_group_with_tasks() -> Result<()> {
     wait_for_task_condition(&daemon.settings.shared, 0, |task| task.is_done()).await?;
 
     // We shouldn't be capable of removing that group
-    let message = Message::Group(GroupMessage::Remove("testgroup".to_string()));
+    let message = GroupMessage::Remove("testgroup".to_string());
     assert_failure(send_message(shared, message).await?);
 
     // Remove the task from the group
@@ -77,7 +77,7 @@ async fn test_cannot_delete_group_with_tasks() -> Result<()> {
     send_message(shared, remove_message).await?;
 
     // Removal should now work.
-    let message = Message::Group(GroupMessage::Remove("testgroup".to_string()));
+    let message = GroupMessage::Remove("testgroup".to_string());
     assert_success(send_message(shared, message).await?);
 
     Ok(())

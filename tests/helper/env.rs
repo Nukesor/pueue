@@ -32,11 +32,11 @@ pub async fn assert_worker_envs(
     // Get the log output for the task.
     let response = send_message(
         shared,
-        Message::Log(LogRequestMessage {
+        LogRequestMessage {
             task_ids: vec![task_id],
             send_logs: true,
             lines: None,
-        }),
+        },
     )
     .await?;
 
