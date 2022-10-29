@@ -16,14 +16,10 @@ pub fn start(message: StartMessage, sender: &TaskSender, state: &SharedState) ->
         }
     }
 
-    // Forward the message to the task handler.
-    sender.send(message.clone()).expect(SENDER_ERR);
-
-    // Return a response depending on the selected tasks.
-    match message.tasks {
+    let response = match &message.tasks {
         TaskSelection::TaskIds(task_ids) => task_action_response_helper(
             "Tasks are being started",
-            task_ids,
+            task_ids.clone(),
             |task| {
                 matches!(
                     task.status,
@@ -36,5 +32,13 @@ pub fn start(message: StartMessage, sender: &TaskSender, state: &SharedState) ->
             create_success_message(format!("Group \"{group}\" is being resumed."))
         }
         TaskSelection::All => create_success_message("All queues are being resumed."),
+    };
+
+    if let Message::Success(_) = response {
+        // Forward the message to the task handler, but only if something can be started
+        sender.send(message).expect(SENDER_ERR);
     }
+
+    // Return a response depending on the selected tasks.
+    response
 }
