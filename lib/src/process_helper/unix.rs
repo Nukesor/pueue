@@ -14,38 +14,19 @@ pub fn compile_shell_command(command_string: &str) -> Command {
     command
 }
 
-/// Send a signal to one of Pueue's child process or process group handles.
-pub fn send_signal_to_child<T>(
-    child: &mut GroupChild,
-    signal: T,
-    send_to_children: bool,
-) -> Result<()>
+/// Send a signal to one of Pueue's child process group handle.
+pub fn send_signal_to_child<T>(child: &mut GroupChild, signal: T) -> Result<()>
 where
     T: Into<Signal>,
 {
-    if send_to_children {
-        // Send the signal to the process group
-        child.signal(signal.into())?;
-    } else {
-        // Send the signal to the process itself
-        child.inner().signal(signal.into())?;
-    }
+    child.signal(signal.into())?;
     Ok(())
 }
 
-/// This is a helper function to safely kill a child process or process group.
+/// This is a helper function to safely kill a child process group.
 /// Its purpose is to properly kill all processes and prevent any dangling processes.
-pub fn kill_child(
-    task_id: usize,
-    child: &mut GroupChild,
-    kill_children: bool,
-) -> std::io::Result<()> {
-    let result = if kill_children {
-        child.kill()
-    } else {
-        child.inner().kill()
-    };
-    match result {
+pub fn kill_child(task_id: usize, child: &mut GroupChild) -> std::io::Result<()> {
+    match child.kill() {
         Ok(_) => Ok(()),
         Err(ref e) if e.kind() == std::io::ErrorKind::InvalidData => {
             // Process already exited
@@ -101,7 +82,7 @@ mod tests {
         assert_eq!(group_pids.len(), 3);
 
         // Kill the process and make sure it'll be killed.
-        assert!(kill_child(0, &mut child, true).is_ok());
+        assert!(kill_child(0, &mut child).is_ok());
 
         // Sleep a little to give all processes time to shutdown.
         sleep(Duration::from_millis(500));
@@ -134,7 +115,7 @@ mod tests {
         assert_eq!(group_pids.len(), 3);
 
         // Kill the process and make sure it'll be killed.
-        send_signal_to_child(&mut child, Signal::SIGKILL, true).unwrap();
+        send_signal_to_child(&mut child, Signal::SIGKILL).unwrap();
 
         // Sleep a little to give all processes time to shutdown.
         sleep(Duration::from_millis(500));
@@ -167,7 +148,7 @@ mod tests {
         assert_eq!(group_pids.len(), 3);
 
         // Kill the process and make sure its childen will be killed.
-        assert!(kill_child(0, &mut child, true).is_ok());
+        assert!(kill_child(0, &mut child).is_ok());
 
         // Sleep a little to give all processes time to shutdown.
         sleep(Duration::from_millis(500));
@@ -199,7 +180,7 @@ mod tests {
         assert_eq!(group_pids.len(), 1);
 
         // Kill the process and make sure it'll be killed.
-        assert!(kill_child(0, &mut child, false).is_ok());
+        assert!(kill_child(0, &mut child).is_ok());
 
         // Sleep a little to give all processes time to shutdown.
         sleep(Duration::from_millis(500));
@@ -230,7 +211,7 @@ mod tests {
         assert_eq!(group_pids.len(), 3);
 
         // Kill the process and make sure it'll be killed.
-        assert!(kill_child(0, &mut child, true).is_ok());
+        assert!(kill_child(0, &mut child).is_ok());
 
         // Sleep a little to give all processes time to shutdown.
         sleep(Duration::from_millis(500));
@@ -241,47 +222,6 @@ mod tests {
         assert!(process_is_gone(pid as u32));
 
         // Assert that all child processes have been killed.
-        assert_eq!(get_process_group_pids(pid).len(), 0);
-
-        Ok(())
-    }
-
-    #[test]
-    /// Ensure a command with children can be killed separately from
-    /// the child process.
-    fn test_kill_command_only() -> Result<()> {
-        let mut child = Command::new("bash")
-            .arg("-c")
-            .arg("sleep 60 & sleep 60 && sleep 60")
-            .group_spawn()
-            .expect("Failed to spawn echo");
-        let pid: i32 = child.id().try_into().unwrap();
-        // Sleep a little to give everything a chance to spawn.
-        sleep(Duration::from_millis(500));
-
-        // Get all child processes, so we can make sure they no longer exist afterwards.
-        // The process group id is the same as the parent process id.
-        let group_pids = get_process_group_pids(pid);
-        assert_eq!(group_pids.len(), 3);
-
-        // Kill the process and make sure it'll be killed.
-        assert!(kill_child(0, &mut child, false).is_ok());
-
-        // Sleep a little to give the process time to shutdown.
-        sleep(Duration::from_millis(500));
-        // collect the exit status; otherwise the child process hangs around as a zombie.
-        child.try_wait().unwrap_or_default();
-
-        // Assert that the direct child (sh -c) has been killed.
-        assert!(process_is_gone(pid as u32));
-        assert!(kill_child(0, &mut child, false).is_err());
-
-        // Assert that the remaining processes are still there
-        assert_eq!(get_process_group_pids(pid).len(), 2);
-
-        // Kill the group
-        assert!(kill_child(0, &mut child, true).is_ok());
-        sleep(Duration::from_millis(500));
         assert_eq!(get_process_group_pids(pid).len(), 0);
 
         Ok(())

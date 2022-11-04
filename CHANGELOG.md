@@ -10,7 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - `pueue log` output now includes the task label, if any. [#355](https://github.com/Nukesor/pueue/issues/355)
 - Enable `pueue edit` to edit multiple properties in one go.
-- Tasks are now started in a process group, and pueue kill --children will kill all processes in the group. [#372](https://github.com/Nukesor/pueue/issues/372)
+- Tasks are now started in a process group, and pueue kill will kill all processes in the group. The `--children` cli flag has been deprecated (signals go to the whole group, always). This makes brings pueue's task handling in line with how interactive shells handle jobs. [#372](https://github.com/Nukesor/pueue/issues/372)
 
 ### Added
 

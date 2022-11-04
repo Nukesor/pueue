@@ -38,7 +38,7 @@ pub fn compile_shell_command(command_string: &str) -> Command {
 }
 
 /// Send a signal to a windows process.
-pub fn send_signal_to_child<T>(child: &mut GroupChild, signal: T, _children: bool) -> Result<()>
+pub fn send_signal_to_child<T>(child: &mut GroupChild, signal: T) -> Result<()>
 where
     T: Into<Signal>,
 {
@@ -73,17 +73,8 @@ where
 }
 
 /// Kill a child process
-pub fn kill_child(
-    task_id: usize,
-    child: &mut GroupChild,
-    kill_children: bool,
-) -> std::io::Result<()> {
-    let result = if kill_children {
-        child.kill()
-    } else {
-        child.inner().kill()
-    };
-    match result {
+pub fn kill_child(task_id: usize, child: &mut GroupChild) -> std::io::Result<()> {
+    match child.kill() {
         Ok(_) => Ok(()),
         Err(ref e) if e.kind() == std::io::ErrorKind::InvalidData => {
             // Process already exited
@@ -327,7 +318,7 @@ mod test {
         let process_ids = assert_process_ids(pid, 1, 5000)?;
 
         // Kill the process and make sure it'll be killed.
-        assert!(kill_child(0, &mut child, false).is_ok());
+        assert!(kill_child(0, &mut child).is_ok());
 
         // Sleep a little to give all processes time to shutdown.
         sleep(Duration::from_millis(500));
@@ -356,7 +347,7 @@ mod test {
         let process_ids = assert_process_ids(pid, 2, 5000)?;
 
         // Kill the process and make sure it'll be killed.
-        assert!(kill_child(0, &mut child, false).is_ok());
+        assert!(kill_child(0, &mut child).is_ok());
 
         // Assert that the direct child (powershell -c) has been killed.
         sleep(Duration::from_millis(500));
@@ -385,7 +376,7 @@ mod test {
         let _ = assert_process_ids(pid, 1, 5000)?;
 
         // Kill the process and make sure it'll be killed.
-        assert!(kill_child(0, &mut child, false).is_ok());
+        assert!(kill_child(0, &mut child).is_ok());
 
         // Sleep a little to give all processes time to shutdown.
         sleep(Duration::from_millis(500));
@@ -411,7 +402,7 @@ mod test {
         let process_ids = assert_process_ids(pid, 1, 5000)?;
 
         // Kill the process and make sure it'll be killed.
-        assert!(kill_child(0, &mut child, true).is_ok());
+        assert!(kill_child(0, &mut child).is_ok());
 
         // Sleep a little to give all processes time to shutdown.
         sleep(Duration::from_millis(500));

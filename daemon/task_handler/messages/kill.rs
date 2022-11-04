@@ -15,17 +15,10 @@ impl TaskHandler {
     /// By default, this kills tasks with Rust's subprocess handling "kill" logic.
     /// However, the user can decide to send unix signals to the processes as well.
     ///
-    /// `kill_children` Kill all direct child processes as well
     /// `pause_groups` If `group` or `all` is given, the groups should be paused under some
     ///     circumstances. This is mostly to prevent any further task execution during an emergency
     /// `signal` Don't kill the task as usual, but rather send a unix process signal.
-    pub fn kill(
-        &mut self,
-        tasks: TaskSelection,
-        kill_children: bool,
-        pause_groups: bool,
-        signal: Option<Signal>,
-    ) {
+    pub fn kill(&mut self, tasks: TaskSelection, pause_groups: bool, signal: Option<Signal>) {
         let cloned_state_mutex = self.state.clone();
         let mut state = cloned_state_mutex.lock().unwrap();
         // Get the keys of all tasks that should be resumed
@@ -63,9 +56,9 @@ impl TaskHandler {
 
         for task_id in task_ids {
             if let Some(signal) = signal.clone() {
-                self.send_internal_signal(task_id, signal, kill_children);
+                self.send_internal_signal(task_id, signal);
             } else {
-                self.kill_task(task_id, kill_children);
+                self.kill_task(task_id);
             }
         }
 
@@ -75,7 +68,7 @@ impl TaskHandler {
     /// Send a signal to a specific child process.
     /// This is a wrapper around [send_signal_to_child], which does a little bit of
     /// additional error handling.
-    pub fn send_internal_signal(&mut self, task_id: usize, signal: Signal, send_to_children: bool) {
+    pub fn send_internal_signal(&mut self, task_id: usize, signal: Signal) {
         let child = match self.children.get_child_mut(task_id) {
             Some(child) => child,
             None => {
@@ -84,16 +77,16 @@ impl TaskHandler {
             }
         };
 
-        if let Err(err) = send_signal_to_child(child, signal, send_to_children) {
+        if let Err(err) = send_signal_to_child(child, signal) {
             warn!("Failed to send signal to task {task_id} with error: {err}");
         };
     }
 
     /// Kill a specific task and handle it accordingly.
     /// Triggered on `reset` and `kill`.
-    pub fn kill_task(&mut self, task_id: usize, kill_children: bool) {
+    pub fn kill_task(&mut self, task_id: usize) {
         if let Some(child) = self.children.get_child_mut(task_id) {
-            kill_child(task_id, child, kill_children).unwrap_or_else(|err| {
+            kill_child(task_id, child).unwrap_or_else(|err| {
                 warn!("Failed to send kill to task {task_id} child process {child:?} with error {err:?}");
             })
         } else {

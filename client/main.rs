@@ -84,6 +84,22 @@ async fn main() -> Result<()> {
         bail!("Couldn't find a configuration file. Did you start the daemon yet?");
     }
 
+    // Warn if the deprecated --children option was used
+    if let Some(subcommand) = &opt.cmd {
+        if matches!(
+            subcommand,
+            SubCommand::Start { children: true, .. }
+                | SubCommand::Pause { children: true, .. }
+                | SubCommand::Kill { children: true, .. }
+                | SubCommand::Reset { children: true, .. }
+        ) {
+            println!(concat!(
+                "Note: The --children flag is deprecated and will be removed in a future release. ",
+                "It no longer has any effect, as this command now always applies to all processes in a task."
+            ));
+        }
+    }
+
     // Create client to talk with the daemon and connect.
     let mut client = Client::new(settings, opt)
         .await
