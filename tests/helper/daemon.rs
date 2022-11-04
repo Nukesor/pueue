@@ -34,7 +34,7 @@ pub async fn get_pid(pid_path: &Path) -> Result<i32> {
             continue;
         }
 
-        let mut file = File::open(&pid_path).context("Couldn't open pid file")?;
+        let mut file = File::open(pid_path).context("Couldn't open pid file")?;
         let mut content = String::new();
         file.read_to_string(&mut content)
             .context("Couldn't write to file")?;

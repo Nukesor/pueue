@@ -12,7 +12,7 @@ use pueue_lib::process_helper::process_exists;
 fn check_for_running_daemon(pid_path: &Path) -> Result<()> {
     info!("Placing pid file at {pid_path:?}");
     let mut file =
-        File::open(&pid_path).map_err(|err| Error::IoError("opening pid file".to_string(), err))?;
+        File::open(pid_path).map_err(|err| Error::IoError("opening pid file".to_string(), err))?;
     let mut pid = String::new();
     file.read_to_string(&mut pid)
         .map_err(|err| Error::IoError("reading pid file".to_string(), err))?;

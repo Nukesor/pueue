@@ -129,7 +129,7 @@ async fn json() -> Result<()> {
 
     // Deserialize the json back to the original task BTreeMap.
     let json = String::from_utf8_lossy(&output.stdout);
-    let mut task_logs: BTreeMap<usize, TaskLog> = serde_json::from_str(&*json)
+    let mut task_logs: BTreeMap<usize, TaskLog> = serde_json::from_str(&json)
         .context(format!("Failed to deserialize json tasks: \n{json}"))?;
 
     // Get the actual BTreeMap from the daemon

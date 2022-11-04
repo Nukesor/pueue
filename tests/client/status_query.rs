@@ -287,7 +287,7 @@ async fn filter_label(
         if operator == "%=" {
             // Make sure the label contained our filter.
             assert!(
-                label.contains(&label_filter),
+                label.contains(label_filter),
                 "Label '{label}' didn't contain filter '{label_filter}'"
             );
         } else if operator == "=" {

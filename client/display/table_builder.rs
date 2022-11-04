@@ -189,7 +189,7 @@ impl<'a> TableBuilder<'a> {
             }
 
             if self.id {
-                row.add_cell(Cell::new(&task.id));
+                row.add_cell(Cell::new(task.id));
             }
 
             if self.status {
@@ -242,7 +242,7 @@ impl<'a> TableBuilder<'a> {
             }
 
             if self.label {
-                row.add_cell(Cell::new(&task.label.as_deref().unwrap_or_default()));
+                row.add_cell(Cell::new(task.label.as_deref().unwrap_or_default()));
             }
 
             // Add command and path.

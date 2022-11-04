@@ -111,7 +111,7 @@ pub async fn run(config_path: Option<PathBuf>, profile: Option<String>, test: bo
 fn init_directories(pueue_dir: &Path) -> Result<()> {
     // Pueue base path
     if !pueue_dir.exists() {
-        create_dir_all(&pueue_dir).map_err(|err| {
+        create_dir_all(pueue_dir).map_err(|err| {
             Error::IoPathError(pueue_dir.to_path_buf(), "creating main directory", err)
         })?;
     }

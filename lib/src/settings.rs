@@ -345,7 +345,7 @@ impl Settings {
 
         // Create the config dir, if it doesn't exist yet
         if !config_dir.exists() {
-            create_dir_all(&config_dir).map_err(|err| {
+            create_dir_all(config_dir).map_err(|err| {
                 Error::IoPathError(config_dir.to_path_buf(), "creating config dir", err)
             })?;
         }
