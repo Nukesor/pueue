@@ -130,7 +130,7 @@ pub fn assert_stdout_matches(
         .join("tests")
         .join("client")
         .join("snapshots")
-        .join(&name);
+        .join(name);
 
     let actual = String::from_utf8(stdout).context("Got invalid utf8 as stdout!")?;
     // Trim all trailing whitespaces from the actual stdout output.
