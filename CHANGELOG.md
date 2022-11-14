@@ -12,6 +12,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+- *status querying*! `pueue status` now implements the first version of a simple query logic.
+    The filtering/order/limit logic is also applied to the `--json` output.
+    This allows you to:
+  - `columns=id,status,path` select the exact columns you want to be shown.
+  - `[column] [<|>|=|~] [value]` Apply various filters to columns.
+      There's only a fix amount of operations on a small amount of columns available for now.
+      If you need more filtering capabilities, please create an issue or a PR :).
+  - `limit [last|first] 10` limit the results that'll be shown.
+  - `order_by [column] [asc|desc]` order by certain columns.
+  - For exact info on the syntax check the [syntax file](https://github.com/Nukesor/pueue/blob/main/client/query/syntax.pest).
+    I still have to write detailed docs on how to use it.
 - Show a hint when calling `pueue log` if the task output has been truncated. [#318](https://github.com/Nukesor/pueue/issues/318)
 - Add `Settings.shared.alias_file`, which allows to set the location of the `pueue_aliases.yml` file.
 - Added functionality to edit a task's label [#354](https://github.com/Nukesor/pueue/issues/354).
