@@ -3,7 +3,8 @@ use std::path::PathBuf;
 use anyhow::{bail, Context, Result};
 use clap::{IntoApp, Parser};
 use clap_complete::{generate_to, shells};
-use simplelog::{Config, LevelFilter, SimpleLogger};
+use log::warn;
+use simplelog::{Config, ConfigBuilder, LevelFilter, SimpleLogger};
 
 use pueue_lib::settings::Settings;
 
@@ -45,7 +46,18 @@ async fn main() -> Result<()> {
         2 => LevelFilter::Info,
         _ => LevelFilter::Debug,
     };
-    SimpleLogger::init(level, Config::default()).unwrap();
+
+    // Try to initialize the logger with the timezone set to the Local time of the machine.
+    let mut builder = ConfigBuilder::new();
+    let logger_config = match builder.set_time_offset_to_local() {
+        Err(_) => {
+            warn!("Failed to determine the local time of this machine. Fallback to UTC.");
+            Config::default()
+        }
+        Ok(builder) => builder.build(),
+    };
+
+    SimpleLogger::init(level, logger_config).unwrap();
 
     // Try to read settings from the configuration file.
     let (mut settings, config_found) =

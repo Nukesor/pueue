@@ -70,7 +70,7 @@ handlebars = "4"
 pest = "2"
 pest_derive = "2"
 shell-escape = "0.1"
-simplelog = { version = "0.12", default-features = false }
+simplelog = "0.12"
 tempfile = "3"
 
 chrono = { workspace = true }
