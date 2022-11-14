@@ -5,8 +5,8 @@ use pueue_lib::network::message::*;
 use crate::fixtures::*;
 use crate::helper::*;
 
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Add and directly remove a group.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn test_add_and_remove() -> Result<()> {
     let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
@@ -33,8 +33,8 @@ async fn test_add_and_remove() -> Result<()> {
     Ok(())
 }
 
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Users cannot delete the default group.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn test_cannot_delete_default() -> Result<()> {
     let daemon = daemon().await?;
 
@@ -44,8 +44,8 @@ async fn test_cannot_delete_default() -> Result<()> {
     Ok(())
 }
 
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Users cannot delete a non-existing group.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn test_cannot_delete_non_existing() -> Result<()> {
     let daemon = daemon().await?;
 
@@ -55,8 +55,8 @@ async fn test_cannot_delete_non_existing() -> Result<()> {
     Ok(())
 }
 
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Groups with tasks shouldn't be able to be removed.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn test_cannot_delete_group_with_tasks() -> Result<()> {
     let daemon = daemon().await?;
     let shared = &daemon.settings.shared;

@@ -14,8 +14,8 @@ mod tests {
 
     use super::*;
 
-    #[tokio::test]
     /// This tests whether we can create a listener and client, that communicate via unix sockets.
+    #[tokio::test]
     async fn test_unix_socket() -> Result<()> {
         better_panic::install();
         let (shared_settings, _tempdir) = helper::get_shared_settings(true);

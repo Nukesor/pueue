@@ -6,8 +6,8 @@ use pueue_lib::task::*;
 use crate::fixtures::*;
 use crate::helper::*;
 
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Make sure that no tasks will be started in a paused queue
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn test_pause_daemon() -> Result<()> {
     let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
@@ -27,8 +27,8 @@ async fn test_pause_daemon() -> Result<()> {
     Ok(())
 }
 
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Make sure that running tasks will be properly paused
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn test_pause_running_task() -> Result<()> {
     let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
@@ -51,8 +51,8 @@ async fn test_pause_running_task() -> Result<()> {
     Ok(())
 }
 
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// A queue can get paused, while the tasks may finish on their own.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn test_pause_with_wait() -> Result<()> {
     let daemon = daemon().await?;
     let shared = &daemon.settings.shared;

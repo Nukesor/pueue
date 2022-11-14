@@ -22,8 +22,8 @@ pub struct SwitchMessage {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct CleanMessage {}
 
-#[test]
 /// Make sure we can deserialize old messages as long as we have default values set.
+#[test]
 fn test_deserialize_old_message() {
     let message = Message::Clean(CleanMessage {});
     let payload_bytes = to_vec(&message).unwrap();
@@ -38,8 +38,8 @@ fn test_deserialize_old_message() {
     }
 }
 
-#[test]
 /// Make sure we can deserialize new messages, even if new values exist.
+#[test]
 fn test_deserialize_new_message() {
     let message = Message::Switch(SwitchMessage {
         task_id_1: 0,

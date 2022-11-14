@@ -5,9 +5,9 @@ use pueue_lib::state::PUEUE_DEFAULT_GROUP;
 use crate::fixtures::*;
 use crate::helper::*;
 
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Make sure that the expected worker variables are injected into the tasks' environment variables
 /// for a single task on the default queue.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn test_single_worker() -> Result<()> {
     let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
@@ -29,7 +29,6 @@ async fn test_single_worker() -> Result<()> {
     Ok(())
 }
 
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Make sure the correct workers are used when having multiple slots.
 ///
 /// Slots should be properly freed and re-used.
@@ -38,6 +37,7 @@ async fn test_single_worker() -> Result<()> {
 /// Task0-2 should be started in quick succession.
 /// Task3 should take Task0's slot once it's finished.
 /// Task4 should take Task1's slot.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn test_multiple_worker() -> Result<()> {
     let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
@@ -71,8 +71,8 @@ async fn test_multiple_worker() -> Result<()> {
     Ok(())
 }
 
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Make sure the worker pools are properly initialized when maually adding a new group.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn test_worker_for_new_pool() -> Result<()> {
     let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
