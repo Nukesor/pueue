@@ -9,6 +9,15 @@ use pueue_lib::task::*;
 use crate::fixtures::*;
 use crate::helper::*;
 
+/// Test if killing running tasks works as intended.
+///
+/// We test different ways of killing those tasks.
+/// - Via the --all flag, which just kills everything.
+/// - Via the --group flag, which just kills everything in the default group.
+/// - Via specific ids.
+///
+/// If a whole group or everything is killed, the respective groups should also be paused!
+/// This is security measure to prevent unwanted task execution in an emergency.
 #[rstest]
 #[case(
     KillMessage {
@@ -32,15 +41,6 @@ use crate::helper::*;
     }, false
 )]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-/// Test if killing running tasks works as intended.
-///
-/// We test different ways of killing those tasks.
-/// - Via the --all flag, which just kills everything.
-/// - Via the --group flag, which just kills everything in the default group.
-/// - Via specific ids.
-///
-/// If a whole group or everything is killed, the respective groups should also be paused!
-/// This is security measure to prevent unwanted task execution in an emergency.
 async fn test_kill_tasks(
     #[case] kill_message: KillMessage,
     #[case] group_should_pause: bool,

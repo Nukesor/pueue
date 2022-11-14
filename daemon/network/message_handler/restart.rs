@@ -1,3 +1,4 @@
+use chrono::Local;
 use pueue_lib::settings::Settings;
 use std::sync::MutexGuard;
 
@@ -72,10 +73,12 @@ fn restart(
     }
 
     // Either enqueue the task or stash it.
-    task.status = if stashed {
-        TaskStatus::Stashed { enqueue_at: None }
+    if stashed {
+        task.status = TaskStatus::Stashed { enqueue_at: None };
+        task.enqueued_at = None;
     } else {
-        TaskStatus::Queued
+        task.status = TaskStatus::Queued;
+        task.enqueued_at = Some(Local::now());
     };
 
     // Update command if applicable.

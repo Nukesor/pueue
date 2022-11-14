@@ -4,8 +4,8 @@ use pueue_lib::network::message::*;
 use crate::fixtures::*;
 use crate::helper::*;
 
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Ensure that only removable tasks can be removed.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn test_normal_remove() -> Result<()> {
     let daemon = daemon().await?;
     let shared = &daemon.settings.shared;

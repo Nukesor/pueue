@@ -6,6 +6,12 @@ use rstest::rstest;
 use crate::fixtures::*;
 use crate::helper::*;
 
+/// Test if explicitely starting tasks and resuming tasks works as intended.
+///
+/// We test different ways of resumes tasks.
+/// - Via the --all flag, which resumes everything.
+/// - Via the --group flag, which resumes everything in a specific group (in our case 'default').
+/// - Via specific ids.
 #[rstest]
 #[case(
     StartMessage {
@@ -26,12 +32,6 @@ use crate::helper::*;
     }
 )]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-/// Test if explicitely starting tasks and resuming tasks works as intended.
-///
-/// We test different ways of resumes tasks.
-/// - Via the --all flag, which resumes everything.
-/// - Via the --group flag, which resumes everything in a specific group (in our case 'default').
-/// - Via specific ids.
 async fn test_start_tasks(#[case] start_message: StartMessage) -> Result<()> {
     let daemon = daemon().await?;
     let shared = &daemon.settings.shared;

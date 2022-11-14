@@ -5,9 +5,9 @@ use anyhow::{Context, Result};
 use crate::fixtures::*;
 use crate::helper::*;
 
-#[tokio::test]
 /// Spin up the daemon and send a SIGTERM shortly afterwards.
 /// This should trigger the graceful shutdown and kill the process.
+#[tokio::test]
 async fn test_ctrlc() -> Result<()> {
     let (settings, _tempdir) = daemon_base_setup()?;
     let mut child = standalone_daemon(&settings.shared).await?;
@@ -28,9 +28,9 @@ async fn test_ctrlc() -> Result<()> {
     Ok(())
 }
 
-#[tokio::test]
 /// Spin up the daemon and send a graceful shutdown message afterwards.
 /// The daemon should shutdown normally and exit with a 0.
+#[tokio::test]
 async fn test_graceful_shutdown() -> Result<()> {
     let (settings, _tempdir) = daemon_base_setup()?;
     let mut child = standalone_daemon(&settings.shared).await?;

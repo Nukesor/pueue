@@ -16,6 +16,7 @@ The concept of SemVer is applied to the daemon/client API, but not the library A
   - `TaskToRestart.delete_label`
   - `EditMessage.label`
   - `EditMessage.delete_label`
+- Added `Task.enqueued_at` and `Task.created_at` metadata fields [#356](https://github.com/Nukesor/pueue/issues/356).
 
 ### Changed
 

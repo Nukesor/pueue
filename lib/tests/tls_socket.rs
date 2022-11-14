@@ -10,8 +10,8 @@ use pueue_lib::network::protocol::*;
 
 mod helper;
 
-#[tokio::test]
 /// This tests whether we can create a listener and client, that communicate via TLS sockets.
+#[tokio::test]
 async fn test_tls_socket() -> Result<()> {
     better_panic::install();
     let (shared_settings, _tempdir) = helper::get_shared_settings(false);

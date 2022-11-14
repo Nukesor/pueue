@@ -27,8 +27,8 @@ async fn create_edited_task(shared: &Shared) -> Result<EditResponseMessage> {
     }
 }
 
-#[test(tokio::test(flavor = "multi_thread", worker_threads = 2))]
 /// Test if adding a normal task works as intended.
+#[test(tokio::test(flavor = "multi_thread", worker_threads = 2))]
 async fn test_edit_flow() -> Result<()> {
     let daemon = daemon().await?;
     let shared = &daemon.settings.shared;

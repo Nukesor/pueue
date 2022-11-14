@@ -247,6 +247,7 @@ impl TaskHandler {
                     info!("Enqueuing delayed task : {}", task.id);
 
                     task.status = TaskStatus::Queued;
+                    task.enqueued_at = Some(Local::now());
                     changed = true;
                 }
             }

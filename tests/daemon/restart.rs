@@ -6,9 +6,9 @@ use pueue_lib::network::message::*;
 use crate::fixtures::*;
 use crate::helper::*;
 
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Ensure that restarting a task in-place, resets it's state and possibly updates the command and
 /// path to the new values.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn test_restart_in_place() -> Result<()> {
     let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
@@ -17,7 +17,11 @@ async fn test_restart_in_place() -> Result<()> {
     assert_success(add_task(shared, "sleep 0.1", false).await?);
 
     // Wait for task 0 to finish.
-    wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
+    let original_task = wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
+    assert!(
+        original_task.enqueued_at.is_some(),
+        "Task is done and should have enqueue_at set."
+    );
 
     // Restart task 0 with an extended sleep command with a different path.
     let restart_message = RestartMessage {
@@ -37,7 +41,18 @@ async fn test_restart_in_place() -> Result<()> {
     assert_eq!(state.tasks.len(), 1, "No new task should be created");
 
     // Task 0 should soon be started again
-    wait_for_task_condition(shared, 0, |task| task.is_running()).await?;
+    let task = wait_for_task_condition(shared, 0, |task| task.is_running()).await?;
+
+    // The created_at time should be the same, as we updated in place
+    assert_eq!(
+        original_task.created_at, task.created_at,
+        "created_at shouldn't change on 'restart -i'"
+    );
+    // The created_at time should have been updated
+    assert!(
+        original_task.enqueued_at.unwrap() < task.enqueued_at.unwrap(),
+        "The second run should be enqueued before the first run."
+    );
 
     // Make sure both command and path were changed
     let state = get_state(shared).await?;
@@ -49,8 +64,8 @@ async fn test_restart_in_place() -> Result<()> {
     Ok(())
 }
 
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Ensure that running task cannot be restarted.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn test_cannot_restart_running() -> Result<()> {
     let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
