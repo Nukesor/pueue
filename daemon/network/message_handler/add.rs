@@ -1,3 +1,4 @@
+use chrono::Local;
 use pueue_lib::aliasing::insert_alias;
 use pueue_lib::network::message::*;
 use pueue_lib::state::{GroupStatus, SharedState};
@@ -21,14 +22,6 @@ pub fn add_task(
         return message;
     }
 
-    let starting_status = if message.stashed || message.enqueue_at.is_some() {
-        TaskStatus::Stashed {
-            enqueue_at: message.enqueue_at,
-        }
-    } else {
-        TaskStatus::Queued
-    };
-
     // Ensure that specified dependencies actually exist.
     let not_found: Vec<_> = message
         .dependencies
@@ -47,14 +40,30 @@ pub fn add_task(
         message.path,
         message.envs,
         message.group,
-        starting_status,
+        TaskStatus::Locked,
         message.dependencies,
         message.label,
     );
-    // Insert the client alias if we applicable.
+
+    // Set the starting status.
+    if message.stashed || message.enqueue_at.is_some() {
+        task.status = TaskStatus::Stashed {
+            enqueue_at: message.enqueue_at,
+        };
+    } else {
+        task.status = TaskStatus::Queued;
+        task.enqueued_at = Some(Local::now());
+    }
+
+    // Check if there're any aliases that should be applied.
+    // If one is found, we expand the command, otherwise we just take the original command.
+    // Anyhow, we save this seperately and keep the original command in a seperate field.
+    //
+    // This allows us to have a debug experience and the user can opt to either show the
+    // original command or the expanded command in their `status` view.
     task.command = insert_alias(settings, task.original_command.clone());
 
-    // Sort and deduplicate dependency id.
+    // Sort and deduplicate dependency ids.
     task.dependencies.sort_unstable();
     task.dependencies.dedup();
 

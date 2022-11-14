@@ -26,6 +26,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Show a hint when calling `pueue log` if the task output has been truncated. [#318](https://github.com/Nukesor/pueue/issues/318)
 - Add `Settings.shared.alias_file`, which allows to set the location of the `pueue_aliases.yml` file.
 - Added functionality to edit a task's label [#354](https://github.com/Nukesor/pueue/issues/354).
+- Added the `created_at` and `enqueued_at` metadata fields on `Task` [#356](https://github.com/Nukesor/pueue/issues/356).
+    They'll only be exposed when running `status --json` for now.
 
 ### Changed
 

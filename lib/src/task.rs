@@ -48,6 +48,10 @@ pub enum TaskResult {
 #[derive(PartialEq, Eq, Clone, Deserialize, Serialize)]
 pub struct Task {
     pub id: usize,
+    #[serde(default = "Local::now")]
+    pub created_at: DateTime<Local>,
+    #[serde(default = "Default::default")]
+    pub enqueued_at: Option<DateTime<Local>>,
     pub original_command: String,
     pub command: String,
     pub path: PathBuf,
@@ -79,6 +83,8 @@ impl Task {
     ) -> Task {
         Task {
             id: 0,
+            created_at: Local::now(),
+            enqueued_at: None,
             original_command: original_command.clone(),
             command: original_command,
             path,
@@ -97,6 +103,8 @@ impl Task {
     pub fn from_task(task: &Task) -> Task {
         Task {
             id: 0,
+            created_at: Local::now(),
+            enqueued_at: None,
             original_command: task.original_command.clone(),
             command: task.command.clone(),
             path: task.path.clone(),
