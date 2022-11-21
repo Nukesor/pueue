@@ -28,7 +28,7 @@ tokio = { version = "1", features = ["rt-multi-thread", "time", "io-std"] }
 # ------------------------
 [package]
 name = "pueue"
-version = "2.1.0"
+version = "3.0.0-rc.0"
 description = "A cli tool for managing long running shell commands."
 keywords = ["shell", "command", "parallel", "task", "queue"]
 readme = "README.md"
@@ -57,7 +57,7 @@ name = "pueue_daemon_lib"
 path = "daemon/lib.rs"
 
 [dependencies]
-pueue-lib = { version = "0.21.0", path = "lib" }
+pueue-lib = { version = "0.21.0-rc.0", path = "lib" }
 
 anyhow = "1"
 chrono-english = "0.1"
