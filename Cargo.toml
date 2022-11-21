@@ -74,8 +74,8 @@ shell-escape = "0.1"
 simplelog = "0.12"
 tempfile = "3"
 
-command-group = { workspace = true }
 chrono = { workspace = true }
+command-group = { workspace = true }
 log = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

@@ -75,4 +75,4 @@ libproc = "0.12.0"
 [target.'cfg(target_vendor = "apple")'.dev-dependencies]
 # fork that fixes a version conflict, see heim-rs/darwin-libproc#3
 # only used as a test dependency.
-darwin-libproc = { version="0.2.0", git = "https://github.com/jamwaffles/darwin-libproc.git", rev = "cbd571e4be87a6603de328d1f1f0ad54d7bdfedf" }
+darwin-libproc = { version = "0.2.0", git = "https://github.com/jamwaffles/darwin-libproc.git", rev = "cbd571e4be87a6603de328d1f1f0ad54d7bdfedf" }
