@@ -1,4 +1,4 @@
-name: 'Test Coverage'
+name: "Test Coverage"
 
 on:
   push:
@@ -6,17 +6,16 @@ on:
       - main
       - development
     paths:
-      - '.github/**/*'
-      - '**.rs'
-      - 'Cargo.toml'
-      - 'Cargo.lock'
+      - ".github/**/*"
+      - "**.rs"
+      - "Cargo.toml"
+      - "Cargo.lock"
   pull_request:
     paths:
-      - '.github/**/*'
-      - '**.rs'
-      - 'Cargo.toml'
-      - 'Cargo.lock'
-
+      - ".github/**/*"
+      - "**.rs"
+      - "Cargo.toml"
+      - "Cargo.lock"
 
 jobs:
   publish:
@@ -26,8 +25,8 @@ jobs:
       fail-fast: false
       matrix:
         target:
-            - x86_64-unknown-linux-gnu
-            - x86_64-apple-darwin
+          - x86_64-unknown-linux-gnu
+          - x86_64-apple-darwin
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
@@ -66,7 +65,7 @@ jobs:
 
       - name: Generate code coverage
         env:
-          NEXTEST_PROFILE: coverage   # defined in .config/nextest.toml
+          NEXTEST_PROFILE: coverage # defined in .config/nextest.toml
         run: cargo llvm-cov nextest --all-features --workspace --lcov --output-path lcov.info
 
       - name: Upload coverage to Codecov

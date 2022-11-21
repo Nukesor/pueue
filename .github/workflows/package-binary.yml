@@ -3,7 +3,7 @@ name: Packaging
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - "v*.*.*"
 
 jobs:
   publish:
@@ -13,13 +13,13 @@ jobs:
       fail-fast: false
       matrix:
         target:
-            - x86_64-unknown-linux-musl
-            - aarch64-unknown-linux-musl
-            - armv7-unknown-linux-musleabihf
-            - arm-unknown-linux-musleabihf
-            - x86_64-pc-windows-msvc
-            - x86_64-apple-darwin
-            - aarch64-apple-darwin
+          - x86_64-unknown-linux-musl
+          - aarch64-unknown-linux-musl
+          - armv7-unknown-linux-musleabihf
+          - arm-unknown-linux-musleabihf
+          - x86_64-pc-windows-msvc
+          - x86_64-apple-darwin
+          - aarch64-apple-darwin
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-musl
@@ -78,62 +78,61 @@ jobs:
             cross: false
             strip: true
 
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Setup Rust toolchain
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        target: ${{ matrix.target }}
-        override: true
+      - name: Setup Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: ${{ matrix.target }}
+          override: true
 
-    - name: cargo build
-      uses: actions-rs/cargo@v1
-      with:
-        command: build
-        args: --release --locked --target=${{ matrix.target }}
-        use-cross: ${{ matrix.cross }}
+      - name: cargo build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --locked --target=${{ matrix.target }}
+          use-cross: ${{ matrix.cross }}
 
-    - name: Compress client
-      uses: svenstaro/upx-action@v2
-      with:
-        file: ${{ matrix.client_artifact_name }}
-        args: --lzma
-        strip: ${{ matrix.strip }}
+      - name: Compress client
+        uses: svenstaro/upx-action@v2
+        with:
+          file: ${{ matrix.client_artifact_name }}
+          args: --lzma
+          strip: ${{ matrix.strip }}
 
-    - name: Compress daemon
-      uses: svenstaro/upx-action@v2
-      with:
-        file: ${{ matrix.daemon_artifact_name }}
-        args: --lzma
-        strip: ${{ matrix.strip }}
+      - name: Compress daemon
+        uses: svenstaro/upx-action@v2
+        with:
+          file: ${{ matrix.daemon_artifact_name }}
+          args: --lzma
+          strip: ${{ matrix.strip }}
 
-    - name: Upload client binaries to release
-      uses: svenstaro/upload-release-action@v2
-      with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: ${{ matrix.client_artifact_name }}
-        asset_name: ${{ matrix.client_release_name }}
-        tag: ${{ github.ref }}
-        overwrite: true
+      - name: Upload client binaries to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ${{ matrix.client_artifact_name }}
+          asset_name: ${{ matrix.client_release_name }}
+          tag: ${{ github.ref }}
+          overwrite: true
 
-    - name: Upload daemon binaries to release
-      uses: svenstaro/upload-release-action@v2
-      with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: ${{ matrix.daemon_artifact_name }}
-        asset_name: ${{ matrix.daemon_release_name }}
-        tag: ${{ github.ref }}
-        overwrite: true
+      - name: Upload daemon binaries to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ${{ matrix.daemon_artifact_name }}
+          asset_name: ${{ matrix.daemon_release_name }}
+          tag: ${{ github.ref }}
+          overwrite: true
 
-    - uses: svenstaro/upload-release-action@v2
-      with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: utils/pueued.service
-        tag: ${{ github.ref }}
-        asset_name: systemd.pueued.service
-        body: ${{ steps.changelog_reader.outputs.log_entry }}
-      if: matrix.target == 'x86_64-unknown-linux-musl'
+      - uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: utils/pueued.service
+          tag: ${{ github.ref }}
+          asset_name: systemd.pueued.service
+          body: ${{ steps.changelog_reader.outputs.log_entry }}
+        if: matrix.target == 'x86_64-unknown-linux-musl'

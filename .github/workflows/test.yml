@@ -1,4 +1,4 @@
-name: 'Test Build'
+name: "Test Build"
 
 on:
   push:
@@ -6,17 +6,16 @@ on:
       - main
       - development
     paths:
-      - '.github/**/*'
-      - '**.rs'
-      - 'Cargo.toml'
-      - 'Cargo.lock'
+      - ".github/**/*"
+      - "**.rs"
+      - "Cargo.toml"
+      - "Cargo.lock"
   pull_request:
     paths:
-      - '.github/**/*'
-      - '**.rs'
-      - 'Cargo.toml'
-      - 'Cargo.lock'
-
+      - ".github/**/*"
+      - "**.rs"
+      - "Cargo.toml"
+      - "Cargo.lock"
 
 jobs:
   publish:
@@ -26,13 +25,13 @@ jobs:
       fail-fast: false
       matrix:
         target:
-            - x86_64-unknown-linux-gnu
-            - aarch64-unknown-linux-musl
-            - armv7-unknown-linux-musleabihf
-            - arm-unknown-linux-musleabihf
-            - x86_64-pc-windows-msvc
-            - x86_64-apple-darwin
-            - aarch64-apple-darwin
+          - x86_64-unknown-linux-gnu
+          - aarch64-unknown-linux-musl
+          - armv7-unknown-linux-musleabihf
+          - arm-unknown-linux-musleabihf
+          - x86_64-pc-windows-msvc
+          - x86_64-apple-darwin
+          - aarch64-apple-darwin
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
@@ -101,10 +100,10 @@ jobs:
         uses: actions-rs/cargo@v1
         if: ${{ !matrix.cross }}
         env:
-          NEXTEST_PROFILE: ci   # defined in .config/nextest.toml
+          NEXTEST_PROFILE: ci # defined in .config/nextest.toml
         with:
           command: nextest
-          args:  run --workspace --target=${{ matrix.target }}
+          args: run --workspace --target=${{ matrix.target }}
           use-cross: ${{ matrix.cross }}
 
       # The test result artifacts are used by the test-report.yaml workflow.
@@ -122,8 +121,8 @@ jobs:
     name: "Event File"
     runs-on: ubuntu-latest
     steps:
-    - name: Upload
-      uses: actions/upload-artifact@v3
-      with:
-        name: Event File
-        path: ${{ github.event_path }}
+      - name: Upload
+        uses: actions/upload-artifact@v3
+        with:
+          name: Event File
+          path: ${{ github.event_path }}

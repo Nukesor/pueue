@@ -6,17 +6,16 @@ on:
       - main
       - development
     paths:
-      - '.github/**/*'
-      - '**.rs'
-      - 'Cargo.toml'
-      - 'Cargo.lock'
+      - ".github/**/*"
+      - "**.rs"
+      - "Cargo.toml"
+      - "Cargo.lock"
   pull_request:
     paths:
-      - '.github/**/*'
-      - '**.rs'
-      - 'Cargo.toml'
-      - 'Cargo.lock'
-
+      - ".github/**/*"
+      - "**.rs"
+      - "Cargo.toml"
+      - "Cargo.lock"
 
 jobs:
   linting:
@@ -26,13 +25,13 @@ jobs:
       fail-fast: false
       matrix:
         target:
-            - x86_64-unknown-linux-gnu
-            - aarch64-unknown-linux-musl
-            - armv7-unknown-linux-musleabihf
-            - arm-unknown-linux-musleabihf
-            - x86_64-pc-windows-msvc
-            - x86_64-apple-darwin
-            - aarch64-apple-darwin
+          - x86_64-unknown-linux-gnu
+          - aarch64-unknown-linux-musl
+          - armv7-unknown-linux-musleabihf
+          - arm-unknown-linux-musleabihf
+          - x86_64-pc-windows-msvc
+          - x86_64-apple-darwin
+          - aarch64-apple-darwin
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu

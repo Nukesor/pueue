@@ -9,10 +9,10 @@
 #
 # [ptr]: https://github.com/marketplace/actions/publish-test-results#support-fork-repositories-and-dependabot-branches
 
-name: 'Test Report'
+name: "Test Report"
 on:
   workflow_run:
-    workflows: ['Test Build']
+    workflows: ["Test Build"]
     types:
       - completed
 
@@ -38,26 +38,26 @@ jobs:
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
         run: |
-            # Unzip all artifacts created by the triggering workflow into
-            # directories under an `artifacts/` directory.
-            # 
-            # This uses `gh api` to output the name and URL for each artifact as
-            # tab-separated lines, then uses `read` to take each name and URL
-            # and download those to named zip files, and finally extracting those
-            # zip files into directories with matching names.
+          # Unzip all artifacts created by the triggering workflow into
+          # directories under an `artifacts/` directory.
+          #
+          # This uses `gh api` to output the name and URL for each artifact as
+          # tab-separated lines, then uses `read` to take each name and URL
+          # and download those to named zip files, and finally extracting those
+          # zip files into directories with matching names.
 
-            mkdir -p artifacts && cd artifacts
+          mkdir -p artifacts && cd artifacts
 
-            # The artifacts URL from the *triggering* test workflow, not *this*
-            # workflow.
-            artifacts_url=${{ github.event.workflow_run.artifacts_url }}
+          # The artifacts URL from the *triggering* test workflow, not *this*
+          # workflow.
+          artifacts_url=${{ github.event.workflow_run.artifacts_url }}
 
-            gh api "$artifacts_url" -q '.artifacts[] | [.name, .archive_download_url] | @tsv' | while read artifact
-            do
-                IFS=$'\t' read name url <<< "$artifact"
-                gh api $url > "$name.zip"
-                unzip -d "$name" "$name.zip"
-            done
+          gh api "$artifacts_url" -q '.artifacts[] | [.name, .archive_download_url] | @tsv' | while read artifact
+          do
+              IFS=$'\t' read name url <<< "$artifact"
+              gh api $url > "$name.zip"
+              unzip -d "$name" "$name.zip"
+          done
 
       # Run the publisher. Note that it is given the 'Event File' artifact
       # created by the test workflow so it has the *original* webhook payload
