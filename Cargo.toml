@@ -65,7 +65,7 @@ clap = { version = "3", features = ["derive", "cargo"] }
 clap_complete = "3"
 comfy-table = "6"
 crossbeam-channel = "0.5"
-crossterm = "0.25"
+crossterm = { version = "0.25", default-features = false }
 ctrlc = { version = "3", features = ["termination"] }
 handlebars = "4"
 pest = "2"
@@ -74,8 +74,8 @@ shell-escape = "0.1"
 simplelog = "0.12"
 tempfile = "3"
 
-command-group = { workspace = true }
 chrono = { workspace = true }
+command-group = { workspace = true }
 log = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

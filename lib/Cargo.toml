@@ -23,7 +23,7 @@ dirs = "4"
 rand = "0.8"
 rcgen = "0.9"
 rev_buf_reader = "0.3"
-rustls = "0.20"
+rustls = { version = "0.20", default-features = false }
 rustls-pemfile = "1"
 serde_cbor = "0.11"
 serde_yaml = "0.9"
@@ -31,7 +31,7 @@ shellexpand = "2.1"
 strum = "0.24"
 strum_macros = "0.24"
 thiserror = "1"
-tokio-rustls = "0.23"
+tokio-rustls = { version = "0.23", default-features = false }
 
 command-group = { workspace = true }
 log = { workspace = true }
@@ -66,7 +66,7 @@ whoami = "1"
 
 # Linux only
 [target.'cfg(target_os = "linux")'.dependencies]
-procfs = "0.14.1"
+procfs = { version = "0.14.1", default-features = false }
 
 # Apple only
 [target.'cfg(target_vendor = "apple")'.dependencies]
@@ -75,4 +75,4 @@ libproc = "0.12.0"
 [target.'cfg(target_vendor = "apple")'.dev-dependencies]
 # fork that fixes a version conflict, see heim-rs/darwin-libproc#3
 # only used as a test dependency.
-darwin-libproc = { version="0.2.0", git = "https://github.com/jamwaffles/darwin-libproc.git", rev = "cbd571e4be87a6603de328d1f1f0ad54d7bdfedf" }
+darwin-libproc = { version = "0.2.0", git = "https://github.com/jamwaffles/darwin-libproc.git", rev = "cbd571e4be87a6603de328d1f1f0ad54d7bdfedf" }

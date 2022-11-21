@@ -4,13 +4,28 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.2.0] - unreleased
+## [3.0.0] - unreleased
+
+This release was planned to be a much smaller one, but you know how it goes.
+
+A new major version is appropriate, as the process handling has been completely refactored.
+Thanks to the work of [@mjpieters](https://github.com/mjpieters), Pueue now uses process groups to manage subprocesses, preventing detached processes by default!
+This also closes a long standing issue and brings the support for MacOs on par with Linux!
+
+v3.0.0 also adds the long-requested feature to add a query/filter logic for the `status` command and lots of other quality of life improvements.
+The test coverage and development tooling has never been better, the project continues to improve!
+
+### Breaking Changes
+
+- Tasks are now started in a process group, and `pueue kill` will kill all processes in the group [#372](https://github.com/Nukesor/pueue/issues/372).
+    The `--children` cli flag has been deprecated (signals go to the whole group, always).
+    This brings pueue's task handling in line with how interactive shells handle jobs.
+    As a side-effect it prevents detached processes and thereby covers the 90% usecase users usually expect.
 
 ### Changed
 
 - `pueue log` output now includes the task label, if any. [#355](https://github.com/Nukesor/pueue/issues/355)
 - Enable `pueue edit` to edit multiple properties in one go.
-- Tasks are now started in a process group, and pueue kill will kill all processes in the group. The `--children` cli flag has been deprecated (signals go to the whole group, always). This makes brings pueue's task handling in line with how interactive shells handle jobs. [#372](https://github.com/Nukesor/pueue/issues/372)
 
 ### Added
 
@@ -38,13 +53,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Don't show the version warning message between daemon and client, when using any `--json` flag.
 - Fix some test failures in non-standard environments for NixOS test suite ([#346](https://github.com/Nukesor/pueue/issues/346)).
 - The time in pueue's logs will now be in localtime instead of UTC [#385](https://github.com/Nukesor/pueue/issues/385).
-- macos support has been brought on par with Linux.
+- MacOs support has been brought on par with Linux.
 
 ### Misc
 
 - Continuation of testing the `pueue` client, pushing the test coverage from ~70% to ~73%.
-- A codecov.yml syntax error was corrected, which prevented Codecov from applying the
-  repository-specific configuration.
+- A codecov.yml syntax error was corrected, which prevented Codecov from applying the repository-specific configuration.
 - CI tests are now run using cargo nextest, for faster test execution, flaky test handling and better test output.
 - The macos test suite is now the same as that for Linux, including the client and daemon test suites.
 

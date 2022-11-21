@@ -63,7 +63,6 @@ pub enum Message {
     /// The next chunk of output, that's send to the client.
     Stream(String),
 
-    /// The boolean decides, whether the children should be get a SIGTERM as well.
     Reset(ResetMessage),
     Clean(CleanMessage),
     DaemonShutdown(Shutdown),
@@ -144,7 +143,6 @@ impl_into_message!(EnqueueMessage, Message::Enqueue);
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct StartMessage {
     pub tasks: TaskSelection,
-    pub children: bool, // deprecated, no longer has any effect
 }
 
 impl_into_message!(StartMessage, Message::Start);
@@ -178,7 +176,6 @@ pub struct TaskToRestart {
 pub struct PauseMessage {
     pub tasks: TaskSelection,
     pub wait: bool,
-    pub children: bool, // deprecated, no longer has any effect
 }
 
 impl_into_message!(PauseMessage, Message::Pause);
@@ -205,7 +202,6 @@ pub enum Signal {
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct KillMessage {
     pub tasks: TaskSelection,
-    pub children: bool, // deprecated, no longer has any effect
     pub signal: Option<Signal>,
 }
 
@@ -262,9 +258,7 @@ pub struct GroupResponseMessage {
 impl_into_message!(GroupResponseMessage, Message::GroupResponse);
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
-pub struct ResetMessage {
-    pub children: bool, // deprecated, no longer has any effect
-}
+pub struct ResetMessage {}
 
 impl_into_message!(ResetMessage, Message::Reset);
 

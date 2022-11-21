@@ -1,8 +1,26 @@
 use std::collections::BTreeMap;
 
-use chrono::Local;
+use chrono::{DateTime, Local, LocalResult};
 
 use pueue_lib::{settings::Settings, task::Task};
+
+/// Try to get the start of the current date to the best of our abilities.
+/// Throw an error, if we can't.
+pub fn start_of_today() -> DateTime<Local> {
+    let result = Local::now()
+        .date_naive()
+        .and_hms_opt(0, 0, 0)
+        .expect("Failed to find start of today.")
+        .and_local_timezone(Local);
+
+    // Try to get the start of the current date.
+    // If there's no unambiguous result for today's midnight, we pick the first value as a backup.
+    match result {
+        LocalResult::None => panic!("Failed to find start of today."),
+        LocalResult::Single(today) => today,
+        LocalResult::Ambiguous(today, _) => today,
+    }
+}
 
 /// Sort given tasks by their groups.
 /// This is needed to print a table for each group.
@@ -36,7 +54,7 @@ pub fn formatted_start_end(task: &Task, settings: &Settings) -> (String, String)
 
     // If the task started today, just show the time.
     // Otherwise show the full date and time.
-    let started_today = start >= Local::today().and_hms(0, 0, 0);
+    let started_today = start >= start_of_today();
     let formatted_start = if started_today {
         start
             .format(&settings.client.status_time_format)
@@ -55,7 +73,7 @@ pub fn formatted_start_end(task: &Task, settings: &Settings) -> (String, String)
 
     // If the task ended today we only show the time.
     // In all other circumstances, we show the full date.
-    let finished_today = end >= Local::today().and_hms(0, 0, 0);
+    let finished_today = end >= start_of_today();
     let formatted_end = if finished_today {
         end.format(&settings.client.status_time_format).to_string()
     } else {

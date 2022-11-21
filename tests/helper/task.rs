@@ -64,10 +64,7 @@ pub async fn add_env_task_to_group(shared: &Shared, command: &str, group: &str) 
 
 /// Helper to either continue the daemon or start specific tasks
 pub async fn start_tasks(shared: &Shared, tasks: TaskSelection) -> Result<Message> {
-    let message = StartMessage {
-        tasks,
-        children: false,
-    };
+    let message = StartMessage { tasks };
 
     send_message(shared, message)
         .await
@@ -76,11 +73,7 @@ pub async fn start_tasks(shared: &Shared, tasks: TaskSelection) -> Result<Messag
 
 /// Helper to pause the default group of the daemon
 pub async fn pause_tasks(shared: &Shared, tasks: TaskSelection) -> Result<Message> {
-    let message = PauseMessage {
-        tasks,
-        wait: false,
-        children: false,
-    };
+    let message = PauseMessage { tasks, wait: false };
 
     send_message(shared, message)
         .await

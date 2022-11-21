@@ -22,21 +22,18 @@ use crate::helper::*;
 #[case(
     KillMessage {
         tasks: TaskSelection::All,
-        children: false,
         signal: None,
     }, true
 )]
 #[case(
     KillMessage {
         tasks: TaskSelection::Group(PUEUE_DEFAULT_GROUP.into()),
-        children: false,
         signal: None,
     }, true
 )]
 #[case(
     KillMessage {
         tasks: TaskSelection::TaskIds(vec![0, 1, 2]),
-        children: false,
         signal: None,
     }, false
 )]
