@@ -15,6 +15,8 @@ The concept of SemVer is applied to the daemon/client API, but not the library A
 - Make `TaskToRestart::path` and `TaskToRestart::command` optional.
 - Make `EditMessage::path` and `EditMessage::command` optional.
 - The `children` flag has been removed for the `Start`-,`Pause`-,`Kill`- and `ResetMessage`.
+- No longer support TLS 1.2 certificates, only accept version 1.3.
+    All generated certificates were 1.3 anyway, so there shouldn't be any breakage, except users created their own certs.
 
 ### Added
 
