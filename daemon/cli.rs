@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use clap::{Parser, ValueHint};
+use clap::{ArgAction, Parser, ValueHint};
 
 #[derive(Parser, Debug)]
 #[clap(
@@ -11,7 +11,7 @@ use clap::{Parser, ValueHint};
 )]
 pub struct CliArguments {
     /// Verbose mode (-v, -vv, -vvv)
-    #[clap(short, long, parse(from_occurrences))]
+    #[clap(short, long, action = ArgAction::Count)]
     pub verbose: u8,
 
     /// If this flag is set, the daemon will start and fork itself into the background.

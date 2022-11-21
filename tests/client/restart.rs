@@ -66,8 +66,10 @@ async fn restart_and_edit_task_path_and_command() -> Result<()> {
     let shared = &daemon.settings.shared;
 
     // Create a task and wait for it to finish.
-    assert_success(add_task(shared, "ls", false).await?);
-    wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
+    assert_success(add_task(shared, "ls", false).await.unwrap());
+    wait_for_task_condition(shared, 0, |task| task.is_done())
+        .await
+        .unwrap();
 
     // Set the editor to a command which replaces the temporary file's content.
     let mut envs = HashMap::new();
