@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [3.0.0] - unreleased
 
-This release was planned to be a much smaller one, but you know how it goes.
+This release was planned to be a much smaller one, but you know how it's like.
 
 A new major version is appropriate, as the process handling has been completely refactored.
 Thanks to the work of [@mjpieters](https://github.com/mjpieters), Pueue now uses process groups to manage subprocesses, preventing detached processes by default!
