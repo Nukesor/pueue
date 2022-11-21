@@ -66,7 +66,7 @@ whoami = "1"
 
 # Linux only
 [target.'cfg(target_os = "linux")'.dependencies]
-procfs = "0.14.1"
+procfs = { version = "0.14.1", default-features = false }
 
 # Apple only
 [target.'cfg(target_vendor = "apple")'.dependencies]
