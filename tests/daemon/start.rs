@@ -16,19 +16,16 @@ use crate::helper::*;
 #[case(
     StartMessage {
         tasks: TaskSelection::All,
-        children: false,
     }
 )]
 #[case(
     StartMessage {
         tasks: TaskSelection::Group(PUEUE_DEFAULT_GROUP.into()),
-        children: false,
     }
 )]
 #[case(
     StartMessage {
         tasks: TaskSelection::TaskIds(vec![0, 1, 2]),
-        children: false,
     }
 )]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]

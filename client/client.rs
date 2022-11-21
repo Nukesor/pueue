@@ -445,10 +445,9 @@ impl Client {
                 task_ids,
                 group,
                 all,
-                children,
+                ..
             } => StartMessage {
                 tasks: selection_from_params(*all, group, task_ids),
-                children: *children,
             }
             .into(),
             SubCommand::Pause {
@@ -456,26 +455,24 @@ impl Client {
                 group,
                 wait,
                 all,
-                children,
+                ..
             } => PauseMessage {
                 tasks: selection_from_params(*all, group, task_ids),
                 wait: *wait,
-                children: *children,
             }
             .into(),
             SubCommand::Kill {
                 task_ids,
                 group,
                 all,
-                children,
                 signal,
+                ..
             } => {
                 if self.settings.client.show_confirmation_questions {
                     self.handle_user_confirmation("kill", task_ids)?;
                 }
                 KillMessage {
                     tasks: selection_from_params(*all, group, task_ids),
-                    children: *children,
                     signal: signal.clone(),
                 }
                 .into()
@@ -523,15 +520,12 @@ impl Client {
                 group: group.clone(),
             }
             .into(),
-            SubCommand::Reset { children, force } => {
+            SubCommand::Reset { force, .. } => {
                 if self.settings.client.show_confirmation_questions && !force {
                     self.handle_user_confirmation("reset", &Vec::new())?;
                 }
 
-                ResetMessage {
-                    children: *children,
-                }
-                .into()
+                ResetMessage {}.into()
             }
             SubCommand::Shutdown => Shutdown::Graceful.into(),
             SubCommand::Parallel {

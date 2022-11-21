@@ -65,7 +65,6 @@ async fn test_pause_with_wait() -> Result<()> {
     let message = PauseMessage {
         tasks: TaskSelection::Group(PUEUE_DEFAULT_GROUP.into()),
         wait: true,
-        children: false,
     };
     send_message(shared, message)
         .await

@@ -84,7 +84,6 @@ pub fn add_task(
         sender
             .send(StartMessage {
                 tasks: TaskSelection::TaskIds(vec![task_id]),
-                children: false,
             })
             .expect(SENDER_ERR);
     }

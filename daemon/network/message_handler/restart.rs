@@ -41,7 +41,6 @@ pub fn restart_multiple(
         sender
             .send(StartMessage {
                 tasks: TaskSelection::TaskIds(task_ids),
-                children: false,
             })
             .expect(SENDER_ERR);
     }

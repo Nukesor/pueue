@@ -18,7 +18,7 @@ async fn test_reset() -> Result<()> {
     wait_for_task_condition(shared, 1, |task| task.is_running()).await?;
 
     // Reset the daemon
-    send_message(shared, ResetMessage { children: true })
+    send_message(shared, ResetMessage {})
         .await
         .context("Failed to send Start tasks message")?;
 
