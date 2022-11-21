@@ -1,5 +1,3 @@
-use std::convert::TryInto;
-
 use anyhow::Result;
 use pretty_assertions::assert_eq;
 
@@ -9,17 +7,17 @@ use pueue_lib::state::GroupStatus;
 use crate::fixtures::*;
 use crate::helper::*;
 
-#[tokio::test]
 /// The daemon should start in the same state as before shutdown, if no tasks are queued.
 /// This function tests for the running state.
+#[tokio::test]
 async fn test_start_running() -> Result<()> {
     let (settings, _tempdir) = daemon_base_setup()?;
-    let child = standalone_daemon(&settings.shared).await?;
+    let mut child = standalone_daemon(&settings.shared).await?;
     let shared = &settings.shared;
 
     // Kill the daemon and wait for it to shut down.
     assert_success(shutdown_daemon(shared).await?);
-    wait_for_shutdown(child.id().try_into()?)?;
+    wait_for_shutdown(&mut child).await?;
 
     // Boot it up again
     let mut child = standalone_daemon(&settings.shared).await?;
@@ -35,12 +33,12 @@ async fn test_start_running() -> Result<()> {
     Ok(())
 }
 
-#[tokio::test]
 /// The daemon should start in the same state as before shutdown, if no tasks are queued.
 /// This function tests for the paused state.
+#[tokio::test]
 async fn test_start_paused() -> Result<()> {
     let (settings, _tempdir) = daemon_base_setup()?;
-    let child = standalone_daemon(&settings.shared).await?;
+    let mut child = standalone_daemon(&settings.shared).await?;
     let shared = &settings.shared;
 
     // This pauses the daemon
@@ -48,7 +46,7 @@ async fn test_start_paused() -> Result<()> {
 
     // Kill the daemon and wait for it to shut down.
     assert_success(shutdown_daemon(shared).await?);
-    wait_for_shutdown(child.id().try_into()?)?;
+    wait_for_shutdown(&mut child).await?;
 
     // Boot it up again
     let mut child = standalone_daemon(&settings.shared).await?;

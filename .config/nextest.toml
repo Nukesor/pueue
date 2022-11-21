@@ -1,0 +1,47 @@
+# See https://nexte.st/book/configuration.html for format and defaults
+# Profiles defined here inherit from profile.default
+
+# profile used in GitHub test runs
+# - Retry a few times to detect flaky tests
+# - Call out every test as it finishes, including slow, skipped and flaky tests
+# - List failures again at the end.
+# - Run all tests even if some failed.
+# - Output test results in JUnit format.
+[profile.ci]
+# "retries" defines the number of times a test should be retried. If set to a
+# non-zero value, tests that succeed on a subsequent attempt will be marked as
+# non-flaky. Can be overridden through the `--retries` option.
+retries = 2
+
+# * none: no output
+# * fail: show failed (including exec-failed) tests
+# * retry: show flaky and retried tests
+# * slow: show slow tests
+# * pass: show passed tests
+# * skip: show skipped tests (most useful for CI)
+# * all: all of the above
+#
+# Each value includes all the values above it; for example, "slow" includes
+# failed and retried tests.
+status-level = "all"
+
+# * "immediate-final": output failures as soon as they happen and at the end of
+#   the test run; combination of "immediate" and "final"
+failure-output = "immediate-final"
+
+# Cancel the test run on the first failure. For CI runs, consider setting this
+# to false.
+fail-fast = false
+
+[profile.ci.junit]
+# Output a JUnit report into the given file inside 'store.dir/<profile-name>'.
+# The default value for store.dir is 'target/nextest', so the following file
+# is written to the target/nextest/ci/ directory.
+path = "junit.xml"
+
+# profile used in GitHub coverage runs
+# - lower retry count as a compromise between speed and resilience
+# - no fail-fast to at least keep coverage percentages accurate.
+[profile.coverage]
+retries = 1
+fail-fast = false

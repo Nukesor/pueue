@@ -142,7 +142,7 @@ async fn json() -> Result<()> {
 
     let json = String::from_utf8_lossy(&output.stdout);
     let deserialized_state: State =
-        serde_json::from_str(&*json).context("Failed to deserialize json state")?;
+        serde_json::from_str(&json).context("Failed to deserialize json state")?;
 
     let state = get_state(shared).await?;
     assert_eq!(

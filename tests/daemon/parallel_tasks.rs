@@ -6,10 +6,10 @@ use pueue_lib::task::*;
 use crate::fixtures::*;
 use crate::helper::*;
 
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Test that multiple groups with multiple slots work.
 ///
 /// For each group, Pueue should start tasks until all slots are filled.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn test_parallel_tasks() -> Result<()> {
     let daemon = daemon().await?;
     let shared = &daemon.settings.shared;

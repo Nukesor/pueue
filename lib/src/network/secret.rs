@@ -37,7 +37,7 @@ pub fn init_shared_secret(path: &Path) -> Result<(), Error> {
         .take(PASSWORD_LEN)
         .collect();
 
-    let mut file = File::create(&path)
+    let mut file = File::create(path)
         .map_err(|err| Error::IoPathError(path.to_path_buf(), "creating shared secret", err))?;
     file.write_all(&secret.into_bytes())
         .map_err(|err| Error::IoPathError(path.to_path_buf(), "writing shared secret", err))?;

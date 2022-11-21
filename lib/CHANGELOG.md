@@ -8,6 +8,16 @@ The concept of SemVer is applied to the daemon/client API, but not the library A
 
 ## [0.21.0] - unreleased
 
+### Breaking Changes
+
+- Tasks are now started in a process group, with signals (including SIGTERM) optionally sent to the whole group. [#372](https://github.com/Nukesor/pueue/issues/372)
+- Renamed `TasksToRestart` to `TaskToRestart`.
+- Make `TaskToRestart::path` and `TaskToRestart::command` optional.
+- Make `EditMessage::path` and `EditMessage::command` optional.
+- The `children` flag has been removed for the `Start`-,`Pause`-,`Kill`- and `ResetMessage`.
+- No longer support TLS 1.2 certificates, only accept version 1.3.
+    All generated certificates were 1.3 anyway, so there shouldn't be any breakage, except users created their own certs.
+
 ### Added
 
 - Added `Settings.shared.alias_file`, which can be used to specify the location of the `pueue_aliases.yml`.
@@ -16,15 +26,13 @@ The concept of SemVer is applied to the daemon/client API, but not the library A
   - `TaskToRestart.delete_label`
   - `EditMessage.label`
   - `EditMessage.delete_label`
+- Added `Task.enqueued_at` and `Task.created_at` metadata fields [#356](https://github.com/Nukesor/pueue/issues/356).
 
 ### Changed
 
+- The module structure of the platform specific networking code has been streamlined.
 - The process handling code has been moved from the daemon to `pueue_lib`. See [#336](https://github.com/Nukesor/pueue/issues/336).
     The reason for this is, that the client will need some of these process handling capabilitites to spawn shell commands when editing tasks.
-- The module structure of the platform specific networking code has been streamlined.
-- Renamed `TasksToRestart` to `TaskToRestart`.
-- Make `TaskToRestart::path` and `TaskToRestart::command` optional.
-- Make `EditMessage::path` and `EditMessage::command` optional.
 
 ## [0.20.0] - 2022-07-21
 

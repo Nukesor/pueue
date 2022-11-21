@@ -374,7 +374,7 @@ impl Client {
     /// This function is pretty large, but it consists mostly of simple conversions
     /// of [SubCommand] variant to a [Message] variant.
     fn get_message_from_opt(&self) -> Result<Message> {
-        match &self.subcommand {
+        Ok(match &self.subcommand {
             SubCommand::Add {
                 command,
                 working_directory,
@@ -403,7 +403,7 @@ impl Client {
                         .collect();
                 }
 
-                Ok(Message::Add(AddMessage {
+                AddMessage {
                     command: command.join(" "),
                     path,
                     // Catch the current environment for later injection into the task's process.
@@ -415,101 +415,83 @@ impl Client {
                     dependencies: dependencies.to_vec(),
                     label: label.clone(),
                     print_task_id: *print_task_id,
-                }))
+                }
+                .into()
             }
             SubCommand::Remove { task_ids } => {
                 if self.settings.client.show_confirmation_questions {
                     self.handle_user_confirmation("remove", task_ids)?;
                 }
-                Ok(Message::Remove(task_ids.clone()))
+                Message::Remove(task_ids.clone())
             }
-            SubCommand::Stash { task_ids } => Ok(Message::Stash(task_ids.clone())),
+            SubCommand::Stash { task_ids } => Message::Stash(task_ids.clone()),
             SubCommand::Switch {
                 task_id_1,
                 task_id_2,
-            } => {
-                let message = SwitchMessage {
-                    task_id_1: *task_id_1,
-                    task_id_2: *task_id_2,
-                };
-                Ok(Message::Switch(message))
+            } => SwitchMessage {
+                task_id_1: *task_id_1,
+                task_id_2: *task_id_2,
             }
+            .into(),
             SubCommand::Enqueue {
                 task_ids,
                 delay_until,
-            } => {
-                let message = EnqueueMessage {
-                    task_ids: task_ids.clone(),
-                    enqueue_at: *delay_until,
-                };
-                Ok(Message::Enqueue(message))
+            } => EnqueueMessage {
+                task_ids: task_ids.clone(),
+                enqueue_at: *delay_until,
             }
+            .into(),
             SubCommand::Start {
                 task_ids,
                 group,
                 all,
-                children,
-            } => {
-                let selection = selection_from_params(*all, group, task_ids);
-                let message = StartMessage {
-                    tasks: selection,
-                    children: *children,
-                };
-                Ok(Message::Start(message))
+                ..
+            } => StartMessage {
+                tasks: selection_from_params(*all, group, task_ids),
             }
+            .into(),
             SubCommand::Pause {
                 task_ids,
                 group,
                 wait,
                 all,
-                children,
-            } => {
-                let selection = selection_from_params(*all, group, task_ids);
-                let message = PauseMessage {
-                    tasks: selection,
-                    wait: *wait,
-                    children: *children,
-                };
-                Ok(Message::Pause(message))
+                ..
+            } => PauseMessage {
+                tasks: selection_from_params(*all, group, task_ids),
+                wait: *wait,
             }
+            .into(),
             SubCommand::Kill {
                 task_ids,
                 group,
                 all,
-                children,
                 signal,
+                ..
             } => {
                 if self.settings.client.show_confirmation_questions {
                     self.handle_user_confirmation("kill", task_ids)?;
                 }
-                let selection = selection_from_params(*all, group, task_ids);
-                let message = KillMessage {
-                    tasks: selection,
-                    children: *children,
+                KillMessage {
+                    tasks: selection_from_params(*all, group, task_ids),
                     signal: signal.clone(),
-                };
-                Ok(Message::Kill(message))
+                }
+                .into()
             }
-            SubCommand::Send { task_id, input } => {
-                let message = SendMessage {
-                    task_id: *task_id,
-                    input: input.clone(),
-                };
-                Ok(Message::Send(message))
+            SubCommand::Send { task_id, input } => SendMessage {
+                task_id: *task_id,
+                input: input.clone(),
             }
+            .into(),
             SubCommand::Group { cmd } => match cmd {
-                Some(GroupCommand::Add { name, parallel }) => {
-                    Ok(Message::Group(GroupMessage::Add {
-                        name: name.to_owned(),
-                        parallel_tasks: parallel.to_owned(),
-                    }))
-                }
-                Some(GroupCommand::Remove { name }) => {
-                    Ok(Message::Group(GroupMessage::Remove(name.to_owned())))
-                }
-                None => Ok(Message::Group(GroupMessage::List)),
-            },
-            SubCommand::Status { .. } => Ok(Message::Status),
+                Some(GroupCommand::Add { name, parallel }) => GroupMessage::Add {
+                    name: name.to_owned(),
+                    parallel_tasks: parallel.to_owned(),
+                },
+                Some(GroupCommand::Remove { name }) => GroupMessage::Remove(name.to_owned()),
+                None => GroupMessage::List,
+            }
+            .into(),
+            SubCommand::Status { .. } => Message::Status,
             SubCommand::Log {
                 task_ids,
                 lines,
@@ -523,56 +505,48 @@ impl Client {
                     send_logs: !self.settings.client.read_local_logs,
                     lines,
                 };
-                Ok(Message::Log(message))
+                Message::Log(message)
             }
-            SubCommand::Follow { task_id, lines } => {
-                let message = StreamRequestMessage {
-                    task_id: *task_id,
-                    lines: *lines,
-                };
-                Ok(Message::StreamRequest(message))
+            SubCommand::Follow { task_id, lines } => StreamRequestMessage {
+                task_id: *task_id,
+                lines: *lines,
             }
+            .into(),
             SubCommand::Clean {
                 successful_only,
                 group,
-            } => {
-                let message = CleanMessage {
-                    successful_only: *successful_only,
-                    group: group.clone(),
-                };
-
-                Ok(Message::Clean(message))
+            } => CleanMessage {
+                successful_only: *successful_only,
+                group: group.clone(),
             }
-            SubCommand::Reset { children, force } => {
+            .into(),
+            SubCommand::Reset { force, .. } => {
                 if self.settings.client.show_confirmation_questions && !force {
                     self.handle_user_confirmation("reset", &Vec::new())?;
                 }
 
-                let message = ResetMessage {
-                    children: *children,
-                };
-                Ok(Message::Reset(message))
+                ResetMessage {}.into()
             }
-            SubCommand::Shutdown => Ok(Message::DaemonShutdown(Shutdown::Graceful)),
+            SubCommand::Shutdown => Shutdown::Graceful.into(),
             SubCommand::Parallel {
                 parallel_tasks,
                 group,
             } => match parallel_tasks {
                 Some(parallel_tasks) => {
                     let group = group_or_default(group);
-                    let message = ParallelMessage {
+                    ParallelMessage {
                         parallel_tasks: *parallel_tasks,
                         group,
-                    };
-                    Ok(Message::Parallel(message))
+                    }
+                    .into()
                 }
-                None => Ok(Message::Group(GroupMessage::List)),
+                None => GroupMessage::List.into(),
             },
             SubCommand::FormatStatus { .. } => bail!("FormatStatus has to be handled earlier"),
             SubCommand::Completions { .. } => bail!("Completions have to be handled earlier"),
             SubCommand::Restart { .. } => bail!("Restarts have to be handled earlier"),
             SubCommand::Edit { .. } => bail!("Edits have to be handled earlier"),
             SubCommand::Wait { .. } => bail!("Wait has to be handled earlier"),
-        }
+        })
     }
 }

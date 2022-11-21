@@ -4,21 +4,47 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.2.0] - unreleased
+## [3.0.0] - unreleased
+
+This release was planned to be a much smaller one, but you know how it goes.
+
+A new major version is appropriate, as the process handling has been completely refactored.
+Thanks to the work of [@mjpieters](https://github.com/mjpieters), Pueue now uses process groups to manage subprocesses, preventing detached processes by default!
+This also closes a long standing issue and brings the support for MacOs on par with Linux!
+
+v3.0.0 also adds the long-requested feature to add a query/filter logic for the `status` command and lots of other quality of life improvements.
+The test coverage and development tooling has never been better, the project continues to improve!
+
+### Breaking Changes
+
+- Tasks are now started in a process group, and `pueue kill` will kill all processes in the group [#372](https://github.com/Nukesor/pueue/issues/372).
+    The `--children` cli flag has been deprecated (signals go to the whole group, always).
+    This brings pueue's task handling in line with how interactive shells handle jobs.
+    As a side-effect it prevents detached processes and thereby covers the 90% usecase users usually expect.
 
 ### Changed
 
-- pueue log output now includes the task label, if any. [#355](https://github.com/Nukesor/pueue/issues/355)
+- `pueue log` output now includes the task label, if any. [#355](https://github.com/Nukesor/pueue/issues/355)
+- Enable `pueue edit` to edit multiple properties in one go.
 
 ### Added
 
+- *status querying*! `pueue status` now implements the first version of a simple query logic.
+    The filtering/order/limit logic is also applied to the `--json` output.
+    This allows you to:
+  - `columns=id,status,path` select the exact columns you want to be shown.
+  - `[column] [<|>|=|~] [value]` Apply various filters to columns.
+      There's only a fix amount of operations on a small amount of columns available for now.
+      If you need more filtering capabilities, please create an issue or a PR :).
+  - `limit [last|first] 10` limit the results that'll be shown.
+  - `order_by [column] [asc|desc]` order by certain columns.
+  - For exact info on the syntax check the [syntax file](https://github.com/Nukesor/pueue/blob/main/client/query/syntax.pest).
+    I still have to write detailed docs on how to use it.
 - Show a hint when calling `pueue log` if the task output has been truncated. [#318](https://github.com/Nukesor/pueue/issues/318)
 - Add `Settings.shared.alias_file`, which allows to set the location of the `pueue_aliases.yml` file.
 - Added functionality to edit a task's label [#354](https://github.com/Nukesor/pueue/issues/354).
-
-### Changed
-
-- Enable `pueue edit` to edit multiple properties in one go.
+- Added the `created_at` and `enqueued_at` metadata fields on `Task` [#356](https://github.com/Nukesor/pueue/issues/356).
+    They'll only be exposed when running `status --json` for now.
 
 ### Fixed
 
@@ -26,10 +52,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
     This gives users more control over how their editor should be started.
 - Don't show the version warning message between daemon and client, when using any `--json` flag.
 - Fix some test failures in non-standard environments for NixOS test suite ([#346](https://github.com/Nukesor/pueue/issues/346)).
+- The time in pueue's logs will now be in localtime instead of UTC [#385](https://github.com/Nukesor/pueue/issues/385).
+- MacOs support has been brought on par with Linux.
 
 ### Misc
 
 - Continuation of testing the `pueue` client, pushing the test coverage from ~70% to ~73%.
+- A codecov.yml syntax error was corrected, which prevented Codecov from applying the repository-specific configuration.
+- CI tests are now run using cargo nextest, for faster test execution, flaky test handling and better test output.
+- The macos test suite is now the same as that for Linux, including the client and daemon test suites.
 
 ## [2.1.0] - 2022-07-21
 

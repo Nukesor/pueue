@@ -1,11 +1,11 @@
-use chrono::{Duration, Local};
+use chrono::Duration;
 use comfy_table::presets::UTF8_HORIZONTAL_ONLY;
 use comfy_table::*;
 
 use pueue_lib::settings::Settings;
 use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
-use super::helper::formatted_start_end;
+use super::helper::{formatted_start_end, start_of_today};
 use super::OutputStyle;
 use crate::query::Rule;
 
@@ -189,7 +189,7 @@ impl<'a> TableBuilder<'a> {
             }
 
             if self.id {
-                row.add_cell(Cell::new(&task.id));
+                row.add_cell(Cell::new(task.id));
             }
 
             if self.status {
@@ -218,8 +218,7 @@ impl<'a> TableBuilder<'a> {
                 } = task.status
                 {
                     // Only show the date if the task is not supposed to be enqueued today.
-                    let enqueue_today =
-                        enqueue_at <= Local::today().and_hms(0, 0, 0) + Duration::days(1);
+                    let enqueue_today = enqueue_at <= start_of_today() + Duration::days(1);
                     let formatted_enqueue_at = if enqueue_today {
                         enqueue_at.format(&self.settings.client.status_time_format)
                     } else {
@@ -242,7 +241,7 @@ impl<'a> TableBuilder<'a> {
             }
 
             if self.label {
-                row.add_cell(Cell::new(&task.label.as_deref().unwrap_or_default()));
+                row.add_cell(Cell::new(task.label.as_deref().unwrap_or_default()));
             }
 
             // Add command and path.

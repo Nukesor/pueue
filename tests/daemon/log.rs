@@ -46,8 +46,8 @@ fn create_test_files(path: &Path, partial: bool) -> Result<String> {
     Ok(expected_output)
 }
 
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Make sure that receiving partial output from the daemon works.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn test_full_log() -> Result<()> {
     let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
@@ -72,8 +72,8 @@ async fn test_full_log() -> Result<()> {
     Ok(())
 }
 
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Make sure that receiving partial output from the daemon works.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn test_partial_log() -> Result<()> {
     let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
@@ -120,8 +120,8 @@ async fn test_partial_log() -> Result<()> {
     Ok(())
 }
 
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Ensure that stdout and stderr are properly ordered in log output.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn test_correct_log_order() -> Result<()> {
     let daemon = daemon().await?;
     let shared = &daemon.settings.shared;

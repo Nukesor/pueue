@@ -16,7 +16,10 @@ pub fn stash(task_ids: Vec<usize>, state: &SharedState) -> Message {
         );
 
         for task_id in &matching {
-            state.change_status(*task_id, TaskStatus::Stashed { enqueue_at: None });
+            if let Some(ref mut task) = state.tasks.get_mut(task_id) {
+                task.status = TaskStatus::Stashed { enqueue_at: None };
+                task.enqueued_at = None;
+            }
         }
 
         (matching, mismatching)

@@ -25,13 +25,11 @@ impl TaskHandler {
 
     fn handle_message(&mut self, message: Message) {
         match message {
-            Message::Pause(message) => self.pause(message.tasks, message.children, message.wait),
-            Message::Start(message) => self.start(message.tasks, message.children),
-            Message::Kill(message) => {
-                self.kill(message.tasks, message.children, true, message.signal)
-            }
+            Message::Pause(message) => self.pause(message.tasks, message.wait),
+            Message::Start(message) => self.start(message.tasks),
+            Message::Kill(message) => self.kill(message.tasks, true, message.signal),
             Message::Send(message) => self.send(message.task_id, message.input),
-            Message::Reset(message) => self.reset(message.children),
+            Message::Reset(_) => self.reset(),
             Message::Group(message) => self.handle_group_message(message),
             Message::DaemonShutdown(shutdown) => {
                 self.initiate_shutdown(shutdown);

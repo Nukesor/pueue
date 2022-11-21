@@ -3,12 +3,12 @@ use std::sync::{Arc, Mutex};
 use std::{fs::create_dir_all, path::PathBuf};
 
 use anyhow::{bail, Context, Result};
-use crossbeam_channel::{unbounded, Sender};
+use crossbeam_channel::unbounded;
 use log::{error, warn};
 
 use pueue_lib::error::Error;
 use pueue_lib::network::certificate::create_certificates;
-use pueue_lib::network::message::{Message, Shutdown};
+use pueue_lib::network::message::Shutdown;
 use pueue_lib::network::protocol::socket_cleanup;
 use pueue_lib::network::secret::init_shared_secret;
 use pueue_lib::settings::Settings;
@@ -16,7 +16,7 @@ use pueue_lib::state::State;
 
 use self::state_helper::{restore_state, save_state};
 use crate::network::socket::accept_incoming;
-use crate::task_handler::TaskHandler;
+use crate::task_handler::{TaskHandler, TaskSender};
 
 pub mod cli;
 mod network;
@@ -88,6 +88,7 @@ pub async fn run(config_path: Option<PathBuf>, profile: Option<String>, test: bo
     let state = Arc::new(Mutex::new(state));
 
     let (sender, receiver) = unbounded();
+    let sender = TaskSender::new(sender);
     let mut task_handler = TaskHandler::new(state.clone(), settings.clone(), receiver);
 
     // Don't set ctrlc and panic handlers during testing.
@@ -110,7 +111,7 @@ pub async fn run(config_path: Option<PathBuf>, profile: Option<String>, test: bo
 fn init_directories(pueue_dir: &Path) -> Result<()> {
     // Pueue base path
     if !pueue_dir.exists() {
-        create_dir_all(&pueue_dir).map_err(|err| {
+        create_dir_all(pueue_dir).map_err(|err| {
             Error::IoPathError(pueue_dir.to_path_buf(), "creating main directory", err)
         })?;
     }
@@ -145,7 +146,7 @@ fn init_directories(pueue_dir: &Path) -> Result<()> {
 /// TaskHandler. This is to prevent dangling processes and other weird edge-cases.
 ///
 /// On panic, we want to cleanup existing unix sockets and the PID file.
-fn setup_signal_panic_handling(settings: &Settings, sender: &Sender<Message>) -> Result<()> {
+fn setup_signal_panic_handling(settings: &Settings, sender: &TaskSender) -> Result<()> {
     let sender_clone = sender.clone();
 
     // This section handles Shutdown via SigTerm/SigInt process signals
@@ -154,7 +155,7 @@ fn setup_signal_panic_handling(settings: &Settings, sender: &Sender<Message>) ->
     ctrlc::set_handler(move || {
         // Notify the task handler
         sender_clone
-            .send(Message::DaemonShutdown(Shutdown::Emergency))
+            .send(Shutdown::Emergency)
             .expect("Failed to send Message to TaskHandler on Shutdown");
     })?;
 

@@ -1,9 +1,9 @@
 use std::io;
 use std::path::Path;
-use std::thread::sleep;
 use std::time::Duration;
 
 use anyhow::Result;
+use tokio::time::sleep;
 
 use pueue_lib::{
     log::{get_log_file_handle, get_log_path, seek_to_last_lines},
@@ -89,6 +89,6 @@ pub async fn follow_local_task_logs(
 
         last_check += log_check_interval;
         let timeout = Duration::from_millis(log_check_interval);
-        sleep(timeout);
+        sleep(timeout).await;
     }
 }

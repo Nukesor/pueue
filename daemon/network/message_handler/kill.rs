@@ -1,14 +1,12 @@
-use crossbeam_channel::Sender;
-
 use pueue_lib::network::message::*;
 use pueue_lib::state::SharedState;
 
-use super::SENDER_ERR;
+use super::{TaskSender, SENDER_ERR};
 use crate::network::response_helper::{ensure_group_exists, task_action_response_helper};
 
 /// Invoked when calling `pueue kill`.
 /// Forward the kill message to the task handler, which then kills the process.
-pub fn kill(message: KillMessage, sender: &Sender<Message>, state: &SharedState) -> Message {
+pub fn kill(message: KillMessage, sender: &TaskSender, state: &SharedState) -> Message {
     let mut state = state.lock().unwrap();
 
     // If a group is selected, make sure it exists.
@@ -18,15 +16,12 @@ pub fn kill(message: KillMessage, sender: &Sender<Message>, state: &SharedState)
         }
     }
 
-    sender
-        .send(Message::Kill(message.clone()))
-        .expect(SENDER_ERR);
-
-    if let Some(signal) = message.signal {
-        match message.tasks {
+    // Construct a response depending on the selected tasks.
+    let response = if let Some(signal) = &message.signal {
+        match &message.tasks {
             TaskSelection::TaskIds(task_ids) => task_action_response_helper(
                 "Tasks are being killed",
-                task_ids,
+                task_ids.clone(),
                 |task| task.is_running(),
                 &state,
             ),
@@ -38,10 +33,10 @@ pub fn kill(message: KillMessage, sender: &Sender<Message>, state: &SharedState)
             }
         }
     } else {
-        match message.tasks {
+        match &message.tasks {
             TaskSelection::TaskIds(task_ids) => task_action_response_helper(
                 "Tasks are being killed",
-                task_ids,
+                task_ids.clone(),
                 |task| task.is_running(),
                 &state,
             ),
@@ -52,5 +47,12 @@ pub fn kill(message: KillMessage, sender: &Sender<Message>, state: &SharedState)
                 create_success_message("All tasks are being killed. All groups will be paused!!!")
             }
         }
+    };
+
+    if let Message::Success(_) = response {
+        // Forward the message to the task handler, but only if there is something to kill.
+        sender.send(message).expect(SENDER_ERR);
     }
+
+    response
 }

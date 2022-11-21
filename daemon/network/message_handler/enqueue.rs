@@ -1,3 +1,4 @@
+use chrono::Local;
 use pueue_lib::network::message::*;
 use pueue_lib::state::SharedState;
 use pueue_lib::task::TaskStatus;
@@ -29,6 +30,7 @@ pub fn enqueue(message: EnqueueMessage, state: &SharedState) -> Message {
             };
         } else {
             task.status = TaskStatus::Queued;
+            task.enqueued_at = Some(Local::now());
         }
     }
 

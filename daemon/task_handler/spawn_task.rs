@@ -128,7 +128,7 @@ impl TaskHandler {
             .envs(envs.clone())
             .stdout(Stdio::from(stdout_log))
             .stderr(Stdio::from(stderr_log))
-            .spawn();
+            .group_spawn();
 
         // Check if the task managed to spawn
         let child = match spawned_command {

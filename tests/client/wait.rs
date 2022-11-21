@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::thread;
 
 use anyhow::Result;
+use tokio::time::sleep;
 
 use crate::fixtures::*;
 use crate::helper::*;
@@ -15,14 +16,14 @@ async fn multiple_tasks() -> Result<()> {
     // Run a command that'll run for a short time after a delay.
     // The `pueue wait` command will be spawne directly afterwards, resulting in the spawned
     // process to wait for this command to finish.
-    run_client_command(shared, &["add", "--delay", "2 second", "sleep 1"])?;
+    run_client_command(shared, &["add", "--delay", "2 seconds", "sleep 1"])?;
 
     // Spawn the `pueue wait` command in a separate thread.
     // We expect it to finish later on its own.
     let shared_clone = shared.clone();
     let wait_handle = thread::spawn(move || run_client_command(&shared_clone, &["wait"]));
     // Sleep for half a second to give `pueue wait` time to properly start.
-    std::thread::sleep(std::time::Duration::from_millis(500));
+    sleep(std::time::Duration::from_millis(500)).await;
 
     // We now spawn another task that should be picked up by and waited upon completion
     // by the `wait` process.

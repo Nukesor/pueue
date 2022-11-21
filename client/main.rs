@@ -3,7 +3,8 @@ use std::path::PathBuf;
 use anyhow::{bail, Context, Result};
 use clap::{CommandFactory, Parser};
 use clap_complete::{generate_to, shells};
-use simplelog::{Config, LevelFilter, SimpleLogger};
+use log::warn;
+use simplelog::{Config, ConfigBuilder, LevelFilter, SimpleLogger};
 
 use pueue_lib::settings::Settings;
 
@@ -45,7 +46,18 @@ async fn main() -> Result<()> {
         2 => LevelFilter::Info,
         _ => LevelFilter::Debug,
     };
-    SimpleLogger::init(level, Config::default()).unwrap();
+
+    // Try to initialize the logger with the timezone set to the Local time of the machine.
+    let mut builder = ConfigBuilder::new();
+    let logger_config = match builder.set_time_offset_to_local() {
+        Err(_) => {
+            warn!("Failed to determine the local time of this machine. Fallback to UTC.");
+            Config::default()
+        }
+        Ok(builder) => builder.build(),
+    };
+
+    SimpleLogger::init(level, logger_config).unwrap();
 
     // Try to read settings from the configuration file.
     let (mut settings, config_found) =
@@ -70,6 +82,22 @@ async fn main() -> Result<()> {
     // been started yet.
     if !config_found {
         bail!("Couldn't find a configuration file. Did you start the daemon yet?");
+    }
+
+    // Warn if the deprecated --children option was used
+    if let Some(subcommand) = &opt.cmd {
+        if matches!(
+            subcommand,
+            SubCommand::Start { children: true, .. }
+                | SubCommand::Pause { children: true, .. }
+                | SubCommand::Kill { children: true, .. }
+                | SubCommand::Reset { children: true, .. }
+        ) {
+            println!(concat!(
+                "Note: The --children flag is deprecated and will be removed in a future release. ",
+                "It no longer has any effect, as this command now always applies to all processes in a task."
+            ));
+        }
     }
 
     // Create client to talk with the daemon and connect.

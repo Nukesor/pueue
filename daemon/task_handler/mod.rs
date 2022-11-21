@@ -5,7 +5,8 @@ use std::process::Stdio;
 
 use anyhow::Result;
 use chrono::prelude::*;
-use crossbeam_channel::Receiver;
+use command_group::CommandGroup;
+use crossbeam_channel::{Receiver, SendError, Sender};
 use handlebars::Handlebars;
 use log::{debug, error, info};
 
@@ -34,7 +35,7 @@ mod messages;
 /// Everything regarding actually spawning task processes.
 mod spawn_task;
 
-use children::Children;
+use self::children::Children;
 
 /// This is a little helper macro, which looks at a critical result and shuts the
 /// TaskHandler down, if an error occurred. This is mostly used if the state cannot.
@@ -53,6 +54,26 @@ macro_rules! ok_or_shutdown {
             Ok(inner) => inner,
         }
     };
+}
+
+/// Sender<TaskMessage> wrapper that takes Into<Message> as a convenience option
+#[derive(Debug, Clone)]
+pub struct TaskSender {
+    sender: Sender<Message>,
+}
+
+impl TaskSender {
+    pub fn new(sender: Sender<Message>) -> Self {
+        Self { sender }
+    }
+
+    #[inline]
+    pub fn send<T>(&self, message: T) -> Result<(), SendError<Message>>
+    where
+        T: Into<Message>,
+    {
+        self.sender.send(message.into())
+    }
 }
 
 pub struct TaskHandler {
@@ -147,7 +168,7 @@ impl TaskHandler {
     fn initiate_shutdown(&mut self, shutdown: Shutdown) {
         self.shutdown = Some(shutdown);
 
-        self.kill(TaskSelection::All, false, false, None);
+        self.kill(TaskSelection::All, false, None);
     }
 
     /// Check if all tasks are killed.
@@ -206,9 +227,9 @@ impl TaskHandler {
 
     /// Kill all children by using the `kill` function.
     /// Set the respective group's statuses to `Reset`. This will prevent new tasks from being spawned.
-    fn reset(&mut self, kill_children: bool) {
+    fn reset(&mut self) {
         self.full_reset = true;
-        self.kill(TaskSelection::All, kill_children, false, None);
+        self.kill(TaskSelection::All, false, None);
     }
 
     /// As time passes, some delayed tasks may need to be enqueued.
@@ -227,6 +248,7 @@ impl TaskHandler {
                     info!("Enqueuing delayed task : {}", task.id);
 
                     task.status = TaskStatus::Queued;
+                    task.enqueued_at = Some(Local::now());
                     changed = true;
                 }
             }
@@ -239,11 +261,11 @@ impl TaskHandler {
 
     /// This is a small wrapper around the real platform dependant process handling logic
     /// It only ensures, that the process we want to manipulate really does exists.
-    fn perform_action(&mut self, id: usize, action: ProcessAction, children: bool) -> Result<bool> {
-        match self.children.get_child(id) {
+    fn perform_action(&mut self, id: usize, action: ProcessAction) -> Result<bool> {
+        match self.children.get_child_mut(id) {
             Some(child) => {
                 debug!("Executing action {action:?} to {id}");
-                run_action_on_child(child, &action, children)?;
+                send_signal_to_child(child, &action)?;
 
                 Ok(true)
             }

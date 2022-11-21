@@ -6,33 +6,30 @@ use rstest::rstest;
 use crate::fixtures::*;
 use crate::helper::*;
 
-#[rstest]
-#[case(
-    Message::Start(StartMessage {
-        tasks: TaskSelection::All,
-        children: false,
-    })
-)]
-#[case(
-    Message::Start(StartMessage {
-        tasks: TaskSelection::Group(PUEUE_DEFAULT_GROUP.into()),
-        children: false,
-    })
-)]
-#[case(
-    Message::Start(StartMessage {
-        tasks: TaskSelection::TaskIds(vec![0, 1, 2]),
-        children: false,
-    })
-)]
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Test if explicitely starting tasks and resuming tasks works as intended.
 ///
 /// We test different ways of resumes tasks.
 /// - Via the --all flag, which resumes everything.
 /// - Via the --group flag, which resumes everything in a specific group (in our case 'default').
 /// - Via specific ids.
-async fn test_start_tasks(#[case] start_message: Message) -> Result<()> {
+#[rstest]
+#[case(
+    StartMessage {
+        tasks: TaskSelection::All,
+    }
+)]
+#[case(
+    StartMessage {
+        tasks: TaskSelection::Group(PUEUE_DEFAULT_GROUP.into()),
+    }
+)]
+#[case(
+    StartMessage {
+        tasks: TaskSelection::TaskIds(vec![0, 1, 2]),
+    }
+)]
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn test_start_tasks(#[case] start_message: StartMessage) -> Result<()> {
     let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 

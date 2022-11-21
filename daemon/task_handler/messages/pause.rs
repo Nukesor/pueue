@@ -11,9 +11,8 @@ use crate::task_handler::{ProcessAction, Shutdown, TaskHandler};
 impl TaskHandler {
     /// Pause specific tasks or groups.
     ///
-    /// `pause_children` decides, whether the pause signal will be send to child processes as well.
     /// `wait` decides, whether running tasks will kept running until they finish on their own.
-    pub fn pause(&mut self, tasks: TaskSelection, pause_children: bool, wait: bool) {
+    pub fn pause(&mut self, tasks: TaskSelection, wait: bool) {
         let cloned_state_mutex = self.state.clone();
         let mut state = cloned_state_mutex.lock().unwrap();
 
@@ -49,7 +48,7 @@ impl TaskHandler {
         // Pause all tasks that were found.
         if !wait {
             for id in keys {
-                self.pause_task(&mut state, id, pause_children);
+                self.pause_task(&mut state, id);
             }
         }
 
@@ -57,8 +56,8 @@ impl TaskHandler {
     }
     /// Pause a specific task.
     /// Send a signal to the process to actually pause the OS process.
-    fn pause_task(&mut self, state: &mut LockedState, id: usize, pause_children: bool) {
-        match self.perform_action(id, ProcessAction::Pause, pause_children) {
+    fn pause_task(&mut self, state: &mut LockedState, id: usize) {
+        match self.perform_action(id, ProcessAction::Pause) {
             Err(err) => error!("Failed pausing task {id}: {err:?}"),
             Ok(success) => {
                 if success {

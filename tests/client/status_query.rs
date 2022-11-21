@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::env::temp_dir;
 
 use anyhow::Result;
 use chrono::{Duration, Local};
@@ -16,7 +16,7 @@ use crate::helper::*;
 fn build_task() -> Task {
     Task::new(
         "sleep 60".to_owned(),
-        PathBuf::from("/tmp"),
+        temp_dir(),
         HashMap::new(),
         PUEUE_DEFAULT_GROUP.to_owned(),
         TaskStatus::Queued,
@@ -287,7 +287,7 @@ async fn filter_label(
         if operator == "%=" {
             // Make sure the label contained our filter.
             assert!(
-                label.contains(&label_filter),
+                label.contains(label_filter),
                 "Label '{label}' didn't contain filter '{label_filter}'"
             );
         } else if operator == "=" {

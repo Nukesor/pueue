@@ -22,11 +22,11 @@ pub fn decompress_log(bytes: Vec<u8>) -> Result<String> {
 /// Convenience function to get the log of a specific task.
 /// `lines: None` requests all log lines.
 pub async fn get_task_log(shared: &Shared, task_id: usize, lines: Option<usize>) -> Result<String> {
-    let message = Message::Log(LogRequestMessage {
+    let message = LogRequestMessage {
         task_ids: vec![task_id],
         send_logs: true,
         lines,
-    });
+    };
     let response = send_message(shared, message).await?;
 
     let mut logs = match response {

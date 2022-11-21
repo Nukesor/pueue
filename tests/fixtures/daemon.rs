@@ -1,12 +1,13 @@
 use std::collections::HashMap;
-use std::fs::File;
+use std::env::temp_dir;
+use std::fs::{canonicalize, File};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
 
 use anyhow::{bail, Context, Result};
 use assert_cmd::prelude::*;
-use tempfile::TempDir;
+use tempfile::{Builder, TempDir};
 use tokio::io::{self, AsyncWriteExt};
 
 use pueue_daemon_lib::run;
@@ -42,7 +43,7 @@ pub async fn daemon_with_settings(settings: Settings, tempdir: TempDir) -> Resul
     let path = pueue_dir.to_path_buf();
     // Start/spin off the daemon and get its PID
     tokio::spawn(run_and_handle_error(path, true));
-    let pid = get_pid(&settings.shared.pid_path())?;
+    let pid = get_pid(&settings.shared.pid_path()).await?;
 
     let tries = 20;
     let mut current_try = 0;
@@ -50,7 +51,7 @@ pub async fn daemon_with_settings(settings: Settings, tempdir: TempDir) -> Resul
     // Wait up to 1s for the unix socket to pop up.
     let socket_path = settings.shared.unix_socket_path();
     while current_try < tries {
-        sleep_ms(50);
+        sleep_ms(50).await;
         if socket_path.exists() {
             create_test_groups(&settings.shared).await?;
             return Ok(PueueDaemon {
@@ -105,7 +106,7 @@ pub async fn standalone_daemon(shared: &Shared) -> Result<Child> {
     // Wait up to 1s for the unix socket to pop up.
     let socket_path = shared.unix_socket_path();
     while current_try < tries {
-        sleep_ms(50);
+        sleep_ms(50).await;
         if socket_path.exists() {
             return Ok(child);
         }
@@ -126,7 +127,8 @@ pub fn daemon_base_setup() -> Result<(Settings, TempDir)> {
     //let _ = SimpleLogger::init(LevelFilter::Info, Config::default());
 
     // Create a temporary directory used for testing.
-    let tempdir = TempDir::new().unwrap();
+    // The path is canonicalized to ensure test consistency across platforms.
+    let tempdir = Builder::new().tempdir_in(canonicalize(temp_dir())?)?;
     let tempdir_path = tempdir.path();
 
     std::fs::create_dir(tempdir_path.join("certs")).unwrap();

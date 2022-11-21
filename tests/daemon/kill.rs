@@ -9,29 +9,6 @@ use pueue_lib::task::*;
 use crate::fixtures::*;
 use crate::helper::*;
 
-#[rstest]
-#[case(
-    Message::Kill(KillMessage {
-        tasks: TaskSelection::All,
-        children: false,
-        signal: None,
-    }), true
-)]
-#[case(
-    Message::Kill(KillMessage {
-        tasks: TaskSelection::Group(PUEUE_DEFAULT_GROUP.into()),
-        children: false,
-        signal: None,
-    }), true
-)]
-#[case(
-    Message::Kill(KillMessage {
-        tasks: TaskSelection::TaskIds(vec![0, 1, 2]),
-        children: false,
-        signal: None,
-    }), false
-)]
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 /// Test if killing running tasks works as intended.
 ///
 /// We test different ways of killing those tasks.
@@ -41,8 +18,28 @@ use crate::helper::*;
 ///
 /// If a whole group or everything is killed, the respective groups should also be paused!
 /// This is security measure to prevent unwanted task execution in an emergency.
+#[rstest]
+#[case(
+    KillMessage {
+        tasks: TaskSelection::All,
+        signal: None,
+    }, true
+)]
+#[case(
+    KillMessage {
+        tasks: TaskSelection::Group(PUEUE_DEFAULT_GROUP.into()),
+        signal: None,
+    }, true
+)]
+#[case(
+    KillMessage {
+        tasks: TaskSelection::TaskIds(vec![0, 1, 2]),
+        signal: None,
+    }, false
+)]
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn test_kill_tasks(
-    #[case] kill_message: Message,
+    #[case] kill_message: KillMessage,
     #[case] group_should_pause: bool,
 ) -> Result<()> {
     let daemon = daemon().await?;
