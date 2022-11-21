@@ -83,8 +83,9 @@ pub fn datetime(section: Pair<'_, Rule>, query_result: &mut QueryResult) -> Resu
         Rule::time => {
             let time = NaiveTime::parse_from_str(operand.as_str(), "%X")
                 .context("Expected hh:mm:ss time format")?;
-            let date = Local::today();
-            DateOrDateTime::DateTime(date.and_time(time).unwrap())
+            let today = Local::now().date_naive();
+            let datetime = today.and_time(time).and_local_timezone(Local).unwrap();
+            DateOrDateTime::DateTime(datetime)
         }
         Rule::datetime => {
             let datetime = NaiveDateTime::parse_from_str(operand.as_str(), "%F %X")
@@ -145,7 +146,10 @@ pub fn datetime(section: Pair<'_, Rule>, query_result: &mut QueryResult) -> Resu
             DateOrDateTime::Date(date) => {
                 // Get the start of the given day.
                 // Use the most inclusive datetime in case of ambiguity
-                let start_of_day = date.and_hms(0, 0, 0).and_local_timezone(Local);
+                let start_of_day = date
+                    .and_hms_opt(0, 0, 0)
+                    .expect("Couldn't determine start of day for given date.")
+                    .and_local_timezone(Local);
                 let start_of_day = match start_of_day.latest() {
                     None => return false,
                     Some(datetime) => datetime,
@@ -154,7 +158,8 @@ pub fn datetime(section: Pair<'_, Rule>, query_result: &mut QueryResult) -> Resu
                 // Get the end of the given day.
                 // Use the most inclusive datetime in case of ambiguity
                 let end_of_day = (date + Duration::days(1))
-                    .and_hms(0, 0, 0)
+                    .and_hms_opt(0, 0, 0)
+                    .expect("Couldn't determine start of day for given date.")
                     .and_local_timezone(Local);
                 let end_of_day = match end_of_day.latest() {
                     None => return false,

@@ -76,7 +76,7 @@ pub async fn get_task_context(settings: &Settings) -> Result<HashMap<String, Str
 
         if let Some(start) = task.start {
             // Use datetime format for datetimes that aren't today.
-            let format = if start.date() == Local::today() {
+            let format = if start.date_naive() == Local::now().date_naive() {
                 &settings.client.status_time_format
             } else {
                 &settings.client.status_datetime_format
@@ -88,7 +88,7 @@ pub async fn get_task_context(settings: &Settings) -> Result<HashMap<String, Str
         }
         if let Some(end) = task.end {
             // Use datetime format for datetimes that aren't today.
-            let format = if end.date() == Local::today() {
+            let format = if end.date_naive() == Local::now().date_naive() {
                 &settings.client.status_time_format
             } else {
                 &settings.client.status_datetime_format
@@ -107,7 +107,7 @@ pub async fn get_task_context(settings: &Settings) -> Result<HashMap<String, Str
         } = task.status
         {
             // Use datetime format for datetimes that aren't today.
-            let format = if enqueue_at.date() == Local::today() {
+            let format = if enqueue_at.date_naive() == Local::now().date_naive() {
                 &settings.client.status_time_format
             } else {
                 &settings.client.status_datetime_format
