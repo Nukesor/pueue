@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::env::temp_dir;
 
 use anyhow::Result;
 use chrono::{Duration, Local};
@@ -16,7 +16,7 @@ use crate::helper::*;
 fn build_task() -> Task {
     Task::new(
         "sleep 60".to_owned(),
-        PathBuf::from("/tmp"),
+        temp_dir(),
         HashMap::new(),
         PUEUE_DEFAULT_GROUP.to_owned(),
         TaskStatus::Queued,

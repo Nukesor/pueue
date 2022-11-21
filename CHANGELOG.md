@@ -8,7 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
-- pueue log output now includes the task label, if any. [#355](https://github.com/Nukesor/pueue/issues/355)
+- `pueue log` output now includes the task label, if any. [#355](https://github.com/Nukesor/pueue/issues/355)
+- Enable `pueue edit` to edit multiple properties in one go.
+- Tasks are now started in a process group, and pueue kill will kill all processes in the group. The `--children` cli flag has been deprecated (signals go to the whole group, always). This makes brings pueue's task handling in line with how interactive shells handle jobs. [#372](https://github.com/Nukesor/pueue/issues/372)
 
 ### Added
 
@@ -29,10 +31,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Added the `created_at` and `enqueued_at` metadata fields on `Task` [#356](https://github.com/Nukesor/pueue/issues/356).
     They'll only be exposed when running `status --json` for now.
 
-### Changed
-
-- Enable `pueue edit` to edit multiple properties in one go.
-
 ### Fixed
 
 - Interpret the `$EDITOR` command, when editing a task's command/path, as a shell expression instead of an executable ([#336](https://github.com/Nukesor/pueue/issues/336)).
@@ -40,6 +38,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Don't show the version warning message between daemon and client, when using any `--json` flag.
 - Fix some test failures in non-standard environments for NixOS test suite ([#346](https://github.com/Nukesor/pueue/issues/346)).
 - The time in pueue's logs will now be in localtime instead of UTC [#385](https://github.com/Nukesor/pueue/issues/385).
+- macos support has been brought on par with Linux.
 
 ### Misc
 
@@ -47,6 +46,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - A codecov.yml syntax error was corrected, which prevented Codecov from applying the
   repository-specific configuration.
 - CI tests are now run using cargo nextest, for faster test execution, flaky test handling and better test output.
+- The macos test suite is now the same as that for Linux, including the client and daemon test suites.
 
 ## [2.1.0] - 2022-07-21
 

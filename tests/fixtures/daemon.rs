@@ -1,12 +1,13 @@
 use std::collections::HashMap;
-use std::fs::File;
+use std::env::temp_dir;
+use std::fs::{canonicalize, File};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
 
 use anyhow::{bail, Context, Result};
 use assert_cmd::prelude::*;
-use tempfile::TempDir;
+use tempfile::{Builder, TempDir};
 use tokio::io::{self, AsyncWriteExt};
 
 use pueue_daemon_lib::run;
@@ -126,7 +127,8 @@ pub fn daemon_base_setup() -> Result<(Settings, TempDir)> {
     //let _ = SimpleLogger::init(LevelFilter::Info, Config::default());
 
     // Create a temporary directory used for testing.
-    let tempdir = TempDir::new().unwrap();
+    // The path is canonicalized to ensure test consistency across platforms.
+    let tempdir = Builder::new().tempdir_in(canonicalize(temp_dir())?)?;
     let tempdir_path = tempdir.path();
 
     std::fs::create_dir(tempdir_path.join("certs")).unwrap();

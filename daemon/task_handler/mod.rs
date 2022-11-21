@@ -5,6 +5,7 @@ use std::process::Stdio;
 
 use anyhow::Result;
 use chrono::prelude::*;
+use command_group::CommandGroup;
 use crossbeam_channel::{Receiver, SendError, Sender};
 use handlebars::Handlebars;
 use log::{debug, error, info};
@@ -167,7 +168,7 @@ impl TaskHandler {
     fn initiate_shutdown(&mut self, shutdown: Shutdown) {
         self.shutdown = Some(shutdown);
 
-        self.kill(TaskSelection::All, false, false, None);
+        self.kill(TaskSelection::All, false, None);
     }
 
     /// Check if all tasks are killed.
@@ -226,9 +227,9 @@ impl TaskHandler {
 
     /// Kill all children by using the `kill` function.
     /// Set the respective group's statuses to `Reset`. This will prevent new tasks from being spawned.
-    fn reset(&mut self, kill_children: bool) {
+    fn reset(&mut self) {
         self.full_reset = true;
-        self.kill(TaskSelection::All, kill_children, false, None);
+        self.kill(TaskSelection::All, false, None);
     }
 
     /// As time passes, some delayed tasks may need to be enqueued.
@@ -260,11 +261,11 @@ impl TaskHandler {
 
     /// This is a small wrapper around the real platform dependant process handling logic
     /// It only ensures, that the process we want to manipulate really does exists.
-    fn perform_action(&mut self, id: usize, action: ProcessAction, children: bool) -> Result<bool> {
-        match self.children.get_child(id) {
+    fn perform_action(&mut self, id: usize, action: ProcessAction) -> Result<bool> {
+        match self.children.get_child_mut(id) {
             Some(child) => {
                 debug!("Executing action {action:?} to {id}");
-                run_action_on_child(child, &action, children)?;
+                send_signal_to_child(child, &action)?;
 
                 Ok(true)
             }

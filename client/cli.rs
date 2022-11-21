@@ -134,8 +134,7 @@ pub enum SubCommand {
         #[clap(short, long)]
         all: bool,
 
-        /// Also resume direct child processes of your paused tasks.
-        /// By default only the main process will get a SIGSTART.
+        /// Deprecated: this switch no longer has any effect.
         #[clap(short, long)]
         children: bool,
     },
@@ -212,10 +211,7 @@ pub enum SubCommand {
         #[clap(short, long)]
         wait: bool,
 
-        /// Also pause direct child processes of a task's main process.
-        /// By default only the main process will get a SIGSTOP.
-        /// This is useful when calling bash scripts, which start other processes themselves.
-        /// This operation is not recursive!
+        /// Deprecated: this switch no longer has any effect.
         #[clap(short, long)]
         children: bool,
     },
@@ -234,8 +230,7 @@ pub enum SubCommand {
         #[clap(short, long)]
         all: bool,
 
-        /// Send the SIGTERM signal to all children as well.
-        /// Useful when working with shell scripts.
+        /// Deprecated: this switch no longer has any effect.
         #[clap(short, long)]
         children: bool,
 
@@ -384,8 +379,7 @@ pub enum SubCommand {
 
     /// Kill all tasks, clean up afterwards and reset EVERYTHING!
     Reset {
-        /// Send the SIGTERM signal to all children as well.
-        /// Useful when working with shell scripts.
+        /// Deprecated: this switch no longer has any effect.
         #[clap(short, long)]
         children: bool,
 

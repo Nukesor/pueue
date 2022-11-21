@@ -14,6 +14,7 @@ rust-version = "1.63"
 
 [workspace.dependencies]
 chrono = { version = "0.4", features = ["serde"] }
+command-group = "1.0.8"
 log = "0.4"
 serde = "1"
 serde_json = "1"
@@ -73,6 +74,7 @@ shell-escape = "0.1"
 simplelog = "0.12"
 tempfile = "3"
 
+command-group = { workspace = true }
 chrono = { workspace = true }
 log = { workspace = true }
 serde = { workspace = true }
@@ -95,9 +97,3 @@ similar-asserts = "1"
 # nextest run --no-capture`)
 env_logger = "0.9.1"
 test-log = "0.2.11"
-
-# Test specific dev-dependencies
-[target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]
-nix = "0.24"
-whoami = "1"
-procfs = { version = "0.14", default-features = false }
