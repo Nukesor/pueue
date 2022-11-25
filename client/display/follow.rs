@@ -74,9 +74,7 @@ pub async fn follow_local_task_logs(
         // In case it's not, exit.
         if (last_check % task_check_interval) == 0 {
             let state = get_state(stream).await?;
-            let task = if let Some(task) = state.tasks.get(&task_id) {
-                task
-            } else {
+            let Some(task) = state.tasks.get(&task_id) else {
                 println!("Pueue: The followed task has been removed.",);
                 return Ok(());
             };

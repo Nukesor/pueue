@@ -114,18 +114,16 @@ pub fn datetime(section: Pair<'_, Rule>, query_result: &mut QueryResult) -> Resu
                 }
             }
             Rule::column_start => {
-                if let Some(start) = task.start {
-                    start
-                } else {
+                let Some(start) = task.start else {
                     return false;
-                }
+                };
+                start
             }
             Rule::column_end => {
-                if let Some(end) = task.end {
-                    end
-                } else {
+                let Some(end) = task.end else {
                     return false;
-                }
+                };
+                end
             }
             _ => return true,
         };
@@ -238,9 +236,7 @@ pub fn label(section: Pair<'_, Rule>, query_result: &mut QueryResult) -> Result<
 
     // Build the label filter function.
     let filter_function = Box::new(move |task: &Task| -> bool {
-        let label = if let Some(label) = &task.label {
-            label
-        } else {
+        let Some(label) = &task.label else {
             return operator == Rule::neq;
         };
 

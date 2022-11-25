@@ -40,9 +40,7 @@ pub async fn assert_worker_envs(
     )
     .await?;
 
-    let message = if let Message::LogResponse(message) = response {
-        message
-    } else {
+    let Message::LogResponse(message) = response else {
         bail!("Expected LogResponse got {response:?}")
     };
 

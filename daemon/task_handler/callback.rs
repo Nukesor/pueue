@@ -7,9 +7,7 @@ impl TaskHandler {
     /// Execute the callback by spawning a new subprocess.
     pub fn spawn_callback(&mut self, task: &Task) {
         // Return early, if there's no callback specified
-        let template_string = if let Some(callback) = &self.settings.daemon.callback {
-            callback
-        } else {
+        let Some(template_string) = &self.settings.daemon.callback else {
             return;
         };
 

@@ -14,11 +14,10 @@ fn construct_success_clean_message(message: CleanMessage) -> String {
         ""
     };
 
-    let group_fix = if let Some(group) = message.group {
-        format!(" from group '{}'", group)
-    } else {
-        String::new()
-    };
+    let group_fix = message
+        .group
+        .map(|name| format!(" from group '{name}'"))
+        .unwrap_or_default();
 
     format!("All{successfull_only_fix} finished tasks have been removed{group_fix}")
 }

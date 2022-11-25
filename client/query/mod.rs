@@ -47,9 +47,7 @@ impl QueryResult {
     /// Take a list of tasks and apply all filters to it.
     pub fn order_tasks(&self, mut tasks: Vec<Task>) -> Vec<Task> {
         // Only apply ordering if it was requested.
-        let (column, direction) = if let Some(inner) = &self.order_by {
-            inner
-        } else {
+        let Some((column, direction)) = &self.order_by else {
             return tasks;
         };
 
@@ -94,9 +92,7 @@ impl QueryResult {
     /// Take a list of tasks and apply all filters to it.
     pub fn limit_tasks(&self, tasks: Vec<Task>) -> Vec<Task> {
         // Only apply limits if it was requested.
-        let (direction, count) = if let Some(inner) = &self.limit {
-            inner
-        } else {
+        let Some((direction, count)) = &self.limit else {
             return tasks;
         };
 
@@ -127,9 +123,7 @@ pub fn apply_query(query: String) -> Result<QueryResult> {
 
     // Expect there to be exactly one pair for the full query.
     // Return early if we got an empty query.
-    let parsed = if let Some(pair) = parsed.next() {
-        pair
-    } else {
+    let Some(parsed) = parsed.next() else {
         return Ok(query_result);
     };
 

@@ -69,9 +69,7 @@ fn print_single_group(
     // Sort all tasks by their respective group;
     let mut sorted_tasks = sort_tasks_by_group(tasks);
 
-    let group = if let Some(group) = state.groups.get(&group_name) {
-        group
-    } else {
+    let Some(group) = state.groups.get(&group_name) else {
         eprintln!("There exists no group \"{group_name}\"");
         return;
     };

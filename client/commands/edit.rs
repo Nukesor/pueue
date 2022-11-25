@@ -32,9 +32,7 @@ pub async fn edit(
     // In case we don't receive an EditResponse, something went wrong
     // Return the response to the parent function and let the client handle it
     // by the generic message handler.
-    let init_response = if let Message::EditResponse(message) = init_response {
-        message
-    } else {
+    let Message::EditResponse(init_response ) = init_response else {
         return Ok(init_response);
     };
 

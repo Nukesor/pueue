@@ -102,9 +102,7 @@ pub async fn handle_follow(
         // In case it's not, close the stream.
         {
             let state = state.lock().unwrap();
-            let task = if let Some(task) = state.tasks.get(&task_id) {
-                task
-            } else {
+            let Some(task) = state.tasks.get(&task_id) else {
                 return Ok(create_success_message(
                     "Pueue: The followed task has been removed.",
                 ));

@@ -60,9 +60,7 @@ fn restart(
     settings: &Settings,
 ) {
     // Check if we actually know this task.
-    let task = if let Some(task) = state.tasks.get_mut(&to_restart.task_id) {
-        task
-    } else {
+    let Some(task) = state.tasks.get_mut(&to_restart.task_id) else {
         return;
     };
 
