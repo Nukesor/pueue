@@ -28,7 +28,7 @@ tokio = { version = "1", features = ["rt-multi-thread", "time", "io-std"] }
 # ------------------------
 [package]
 name = "pueue"
-version = "3.0.0-rc.0"
+version = "3.0.0"
 description = "A cli tool for managing long running shell commands."
 keywords = ["shell", "command", "parallel", "task", "queue"]
 readme = "README.md"
