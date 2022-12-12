@@ -14,7 +14,7 @@ rust-version = "1.65"
 
 [workspace.dependencies]
 chrono = { version = "0.4", features = ["serde"] }
-command-group = "1.0.8"
+command-group = "2.0.0"
 log = "0.4"
 serde = "1"
 serde_json = "1"
@@ -59,20 +59,20 @@ path = "daemon/lib.rs"
 [dependencies]
 pueue-lib = { version = "0.21.0-rc.0", path = "lib" }
 
-anyhow = "1"
+anyhow = "1.0"
 chrono-english = "0.1"
-clap = { version = "4", features = ["derive", "cargo"] }
-clap_complete = "4"
-comfy-table = "6"
+clap = { version = "4.0", features = ["derive", "cargo"] }
+clap_complete = "4.0"
+comfy-table = "6.1"
 crossbeam-channel = "0.5"
 crossterm = { version = "0.25", default-features = false }
 ctrlc = { version = "3", features = ["termination"] }
-handlebars = "4"
-pest = "2"
-pest_derive = "2"
+handlebars = "4.3"
+pest = "2.5"
+pest_derive = "2.5"
 shell-escape = "0.1"
 simplelog = "0.12"
-tempfile = "3"
+tempfile = "3.3"
 
 chrono = { workspace = true }
 command-group = { workspace = true }
@@ -87,7 +87,7 @@ tokio = { workspace = true }
 assert_cmd = "2"
 better-panic = "0.3"
 pretty_assertions = "1"
-rstest = "0.15"
+rstest = "0.16"
 serde_yaml = "0.9"
 similar-asserts = "1"
 
@@ -95,11 +95,11 @@ similar-asserts = "1"
 # Set log level for tests with RUST_LOG=<level>, use with failed tests or
 # disable test stdout/stderr capture (`cargo test -- --nocapture` / `cargo
 # nextest run --no-capture`)
-env_logger = "0.9.1"
-test-log = "0.2.11"
+env_logger = "0.10"
+test-log = "0.2"
 
 # Test specific dev-dependencies
 [target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]
-nix = "0.25"
+nix = "0.26"
 whoami = "1"
 procfs = { version = "0.14", default-features = false }
