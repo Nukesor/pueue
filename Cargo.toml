@@ -57,7 +57,7 @@ name = "pueue_daemon_lib"
 path = "daemon/lib.rs"
 
 [dependencies]
-pueue-lib = { version = "0.21.0-rc.0", path = "lib" }
+pueue-lib = { version = "0.21.0", path = "lib" }
 
 anyhow = "1.0"
 chrono-english = "0.1"
