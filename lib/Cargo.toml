@@ -15,22 +15,22 @@ rust-version.workspace = true
 maintenance = { status = "actively-developed" }
 
 [dependencies]
-anyhow = "1"
+anyhow = "1.0"
 async-trait = "0.1"
-byteorder = "1"
+byteorder = "1.4"
 chrono = { version = "0.4", features = ["serde"] }
-dirs = "4"
+dirs = "4.0"
 rand = "0.8"
-rcgen = "0.9"
+rcgen = "0.10"
 rev_buf_reader = "0.3"
 rustls = { version = "0.20", default-features = false }
-rustls-pemfile = "1"
+rustls-pemfile = "1.0"
 serde_cbor = "0.11"
 serde_yaml = "0.9"
-shellexpand = "2.1"
+shellexpand = "3.0"
 strum = "0.24"
 strum_macros = "0.24"
-thiserror = "1"
+thiserror = "1.0"
 tokio-rustls = { version = "0.23", default-features = false }
 
 command-group = { workspace = true }
@@ -66,7 +66,7 @@ whoami = "1"
 
 # Linux only
 [target.'cfg(target_os = "linux")'.dependencies]
-procfs = { version = "0.14.1", default-features = false }
+procfs = { version = "0.14.2", default-features = false }
 
 # Apple only
 [target.'cfg(target_vendor = "apple")'.dependencies]
