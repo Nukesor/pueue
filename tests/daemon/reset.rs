@@ -4,7 +4,7 @@ use pueue_lib::network::message::*;
 use crate::fixtures::*;
 use crate::helper::*;
 
-/// A reset command kills all tasks and forces a clean slate.
+/// A reset command kills all tasks and forces a clean state.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn test_reset() -> Result<()> {
     let daemon = daemon().await?;
@@ -15,7 +15,7 @@ async fn test_reset() -> Result<()> {
     add_task(shared, "failed", false).await?;
     add_task(shared, "sleep 60", false).await?;
     add_task(shared, "ls", false).await?;
-    wait_for_task_condition(shared, 1, |task| task.is_running()).await?;
+    wait_for_task_condition(shared, 2, |task| task.is_running()).await?;
 
     // Reset the daemon
     send_message(shared, ResetMessage {})
