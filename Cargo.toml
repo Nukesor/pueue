@@ -56,6 +56,9 @@ path = "daemon/main.rs"
 name = "pueue_daemon_lib"
 path = "daemon/lib.rs"
 
+[profile.release]
+lto = "thin"
+
 [dependencies]
 pueue-lib = { version = "0.21.0", path = "lib" }
 
