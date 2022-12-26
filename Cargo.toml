@@ -103,6 +103,5 @@ test-log = "0.2"
 
 # Test specific dev-dependencies
 [target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]
-nix = "0.26"
 whoami = "1"
 procfs = { version = "0.14", default-features = false }
