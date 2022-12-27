@@ -45,7 +45,8 @@ pub async fn format_state(
         .await
         .context("Failed to get the current state from daemon")?;
 
-    print_state(state, tasks, command, style, settings)?;
+    let output = print_state(state, tasks, command, style, settings)?;
+    print!("{output}");
 
     Ok(())
 }

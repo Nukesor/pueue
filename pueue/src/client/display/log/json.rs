@@ -1,5 +1,4 @@
 use std::collections::{BTreeMap, HashMap};
-use std::fmt::Write;
 use std::io::Read;
 
 use serde_derive::{Deserialize, Serialize};
@@ -60,35 +59,32 @@ fn get_local_log(settings: &Settings, id: usize, lines: Option<usize>) -> String
         }
     };
 
+    // Only return the last few lines.
     if let Some(lines) = lines {
-        read_last_lines(&mut file, lines)
-    } else {
-        let mut output = String::new();
-        if let Err(error) = file.read_to_string(&mut output) {
-            let _ = write!(
-                output,
-                "(Pueue error) Failed to read local log output file: {error:?}"
-            );
-        };
-
-        output
+        return read_last_lines(&mut file, lines);
     }
+
+    // Read the whole local log output.
+    let mut output = String::new();
+    if let Err(error) = file.read_to_string(&mut output) {
+        return format!("(Pueue error) Failed to read local log output file: {error:?}");
+    };
+
+    output
 }
 
 /// Read logs from from compressed remote logs.
 /// If logs don't exist, an empty string will be returned.
 fn get_remote_log(output_bytes: Option<Vec<u8>>) -> String {
-    if let Some(bytes) = output_bytes {
-        let mut decoder = FrameDecoder::new(&bytes[..]);
-        let mut output = String::new();
-        if let Err(error) = decoder.read_to_string(&mut output) {
-            let _ = write!(
-                output,
-                "(Pueue error) Failed to decompress remote log output: {error:?}"
-            );
-        }
-        output
-    } else {
-        String::new()
+    let Some(bytes) = output_bytes else {
+        return String::new();
+    };
+
+    let mut decoder = FrameDecoder::new(&bytes[..]);
+    let mut output = String::new();
+    if let Err(error) = decoder.read_to_string(&mut output) {
+        return format!("(Pueue error) Failed to decompress remote log output: {error:?}");
     }
+
+    output
 }

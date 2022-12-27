@@ -314,7 +314,9 @@ impl Client {
             }
             Message::StatusResponse(state) => {
                 let tasks = state.tasks.values().cloned().collect();
-                print_state(*state, tasks, &self.subcommand, &self.style, &self.settings)?;
+                let output =
+                    print_state(*state, tasks, &self.subcommand, &self.style, &self.settings)?;
+                print!("{output}");
             }
             Message::LogResponse(task_logs) => {
                 print_logs(task_logs, &self.subcommand, &self.style, &self.settings)
