@@ -104,7 +104,7 @@ async fn default() -> Result<()> {
     let daemon = daemon_with_test_state(false).await?;
     let shared = &daemon.settings.shared;
 
-    let output = run_client_command(shared, &["status"])?;
+    let output = run_status_without_path(shared, &[]).await?;
 
     let context = get_task_context(&daemon.settings).await?;
     assert_stdout_matches("query__default_status", output.stdout, context)?;
@@ -132,7 +132,7 @@ async fn limit_first() -> Result<()> {
     let daemon = daemon_with_test_state(false).await?;
     let shared = &daemon.settings.shared;
 
-    let output = run_client_command(shared, &["status", "first 4"])?;
+    let output = run_status_without_path(shared, &["first 4"]).await?;
 
     let context = get_task_context(&daemon.settings).await?;
     assert_stdout_matches("query__first_4", output.stdout, context)?;
@@ -146,7 +146,7 @@ async fn limit_last() -> Result<()> {
     let daemon = daemon_with_test_state(false).await?;
     let shared = &daemon.settings.shared;
 
-    let output = run_client_command(shared, &["status", "last 4"])?;
+    let output = run_status_without_path(shared, &["last 4"]).await?;
 
     let context = get_task_context(&daemon.settings).await?;
     assert_stdout_matches("query__last_4", output.stdout, context)?;
@@ -160,7 +160,7 @@ async fn order_by_status() -> Result<()> {
     let daemon = daemon_with_test_state(false).await?;
     let shared = &daemon.settings.shared;
 
-    let output = run_client_command(shared, &["status", "order_by status"])?;
+    let output = run_status_without_path(shared, &["order_by status"]).await?;
 
     let context = get_task_context(&daemon.settings).await?;
     assert_stdout_matches("query__order_by_status", output.stdout, context)?;
@@ -176,7 +176,14 @@ async fn filter_start() -> Result<()> {
 
     // Filter tasks by their start time. This includes only task 0, which was started 1 day ago.
     let time = (Local::now() - Duration::days(1)).format("%F %T");
-    let output = run_client_command(shared, &["status", &format!("start>{time}")])?;
+    let output = run_client_command(
+        shared,
+        &[
+            "status",
+            "columns=id,status,command,start,end",
+            &format!("start>{time}"),
+        ],
+    )?;
 
     let context = get_task_context(&daemon.settings).await?;
     assert_stdout_matches("query__filter_start", output.stdout, context)?;
@@ -196,7 +203,14 @@ async fn filter_end_with_time(#[case] format: &'static str) -> Result<()> {
     // Filter tasks by their end time, once by day (today) and time (now).
     // This includes tasks 1 and 2, which were started 1 and 2 days ago.
     let time = Local::now().format(format);
-    let output = run_client_command(shared, &["status", &format!("end<{time}")])?;
+    let output = run_client_command(
+        shared,
+        &[
+            "status",
+            "columns=id,status,command,start,end",
+            &format!("end<{time}"),
+        ],
+    )?;
 
     let context = get_task_context(&daemon.settings).await?;
     assert_stdout_matches("query__filter_end", output.stdout, context)?;

@@ -1,6 +1,4 @@
-use std::borrow::Cow;
 use std::collections::HashMap;
-use std::env::temp_dir;
 use std::fs::read_to_string;
 use std::path::PathBuf;
 use std::process::{Command, Output, Stdio};
@@ -23,6 +21,58 @@ pub fn run_client_command(shared: &Shared, args: &[&str]) -> Result<Output> {
     envs.insert("PUEUED_TEST_ENV_VARIABLE", "Test");
 
     run_client_command_with_env(shared, args, envs)
+}
+
+/// Run the status command without the path being included in the output.
+pub async fn run_status_without_path(shared: &Shared, args: &[&str]) -> Result<Output> {
+    // Inject an environment variable into the pueue command.
+    // This is used to ensure that the environment is properly captured and forwarded.
+    let mut envs = HashMap::new();
+    envs.insert("PUEUED_TEST_ENV_VARIABLE", "Test");
+
+    let state = get_state(shared).await?;
+    println!("{state:?}");
+    let mut base_args = vec!["status"];
+
+    // Since we want to exclude the path, we have to manually assemble the
+    // list of columns that should be displayed.
+    // We start with the base columns, check which optional columns should be
+    // included based on the current task list and add any of those columns at
+    // the correct position.
+    let mut columns = vec!["id,status"];
+
+    // Add the enqueue_at column if necessary.
+    if state.tasks.iter().any(|(_, task)| {
+        if let TaskStatus::Stashed { enqueue_at } = task.status {
+            return enqueue_at.is_some();
+        }
+        false
+    }) {
+        columns.push("enqueue_at");
+    }
+
+    // Add the `deps` column if necessary.
+    if state
+        .tasks
+        .iter()
+        .any(|(_, task)| !task.dependencies.is_empty())
+    {
+        columns.push("dependencies");
+    }
+
+    // Add the `label` column if necessary.
+    if state.tasks.iter().any(|(_, task)| task.label.is_some()) {
+        columns.push("label");
+    }
+
+    // Add the remaining base columns.
+    columns.extend_from_slice(&["command", "start", "end"]);
+
+    let column_filter = format!("columns={}", columns.join(","));
+    base_args.push(&column_filter);
+
+    base_args.extend_from_slice(args);
+    run_client_command_with_env(shared, &base_args, envs)
 }
 
 /// Spawn a client command that connects to a specific daemon.
@@ -155,9 +205,17 @@ pub fn assert_stdout_matches(
             "Failed to render template for file: {name} with context {context:?}"
         ))?;
 
-    let expected = canonicalize_snapshot(expected, None);
-    let path_column_width = find_path_column(&expected);
-    let actual = canonicalize_snapshot(actual, path_column_width);
+    let expected = expected
+        .lines()
+        .map(|line| line.trim().to_owned())
+        .collect::<Vec<String>>()
+        .join("\n");
+
+    let actual = actual
+        .lines()
+        .map(|line| line.trim().to_owned())
+        .collect::<Vec<String>>()
+        .join("\n");
 
     if expected != actual {
         println!("Expected output:\n-----\n{expected}\n-----");
@@ -174,102 +232,4 @@ pub fn assert_stdout_matches(
 
 fn is_table(line: &str) -> bool {
     line.chars().all(|c| c == '\u{2500}')
-}
-
-/// Find the position and length of the Path column in the expected output
-/// Path must be a space-separate word on first line following a table starting line.
-fn find_path_column(output: &str) -> Option<(usize, usize)> {
-    let header = output.lines().skip_while(|&line| !is_table(line)).nth(1)?;
-    // Scan through the columns until we find the Path column, then produce its offset
-    // and length (including whitespace padding).
-    // colwidth doubles as a flag; if it is 0 we have not found the Path label (yet).
-    let mut colwidth = 0;
-    let mut offset = 0;
-    for chunk in header.split_inclusive(char::is_whitespace) {
-        match (colwidth, chunk) {
-            (0, "Path") | (0, "Path ") | (1.., " ") => {
-                // We found the Path column, accumulate column width
-                colwidth += chunk.len();
-            }
-            (0, _) => {
-                // We haven't yet found the Path label, accumulate column offset.
-                offset += chunk.len();
-            }
-            _ => {
-                // Path column has ended, we have reached the next label
-                break;
-            }
-        }
-    }
-    if colwidth == 0 {
-        None
-    } else {
-        Some((offset, colwidth))
-    }
-}
-
-/// Canonicalize test and template outputs to handle expected differences.
-/// If path_column is given, use the width to trim the Path column in this output.
-fn canonicalize_snapshot(output: String, path_column: Option<(usize, usize)>) -> String {
-    // Replace the temporary path with a symbolic reference, both the base
-    // temporary directory and its canonical path (which on some platforms can differ)
-    // These replacements should only apply to the Path column.
-    const TMPVAR: &str = "$TMP";
-    let tmp = temp_dir();
-    let tmp_canonical = std::fs::canonicalize(&tmp).unwrap();
-    let replacements = vec![
-        (tmp_canonical.to_string_lossy(), &TMPVAR),
-        (tmp.to_string_lossy(), &TMPVAR),
-    ];
-
-    // Set optional path column information to configure a line scan operationn below.
-    let trim_path_col = match path_column {
-        // Expected output has no Path column, nothing to trim here.
-        None => None,
-        // Determine the output Path column to see if trimming is needed.
-        Some((_, target_width)) => match find_path_column(&output) {
-            Some((col, actual_width)) if actual_width > target_width => {
-                Some((col + target_width, col + actual_width))
-            }
-            // Output has no Path column or the column is not wider than the expected width
-            _ => None,
-        },
-    };
-
-    output
-        .lines()
-        .map(|line| {
-            // - Trim all trailing whitespace and apply Path column replacements
-            let mut tmp = Cow::from(line.trim_end());
-            let before = tmp.len();
-            for (from, to) in replacements.iter() {
-                tmp = tmp.replace(&**from, to).into();
-            }
-            // pass on the trimmed string as well as how much we removed when replacing;
-            // this is used to adjust column trimming in the scan operation, below.
-            (tmp.to_string(), before - tmp.len())
-        })
-        .scan(
-            false,
-            |table_started, (line, trimmed)| match trim_path_col {
-                // No trim configuration set, no further trimming needed
-                None => Some(line),
-                // Use trim configuration to trim Path columns
-                Some((from, until)) => {
-                    if !(*table_started || is_table(&line)) {
-                        Some(line)
-                    } else {
-                        *table_started = true;
-                        // Once we are inside a table, trim the path column by cutting out the characters
-                        // at [from, until) (taking into account how much the line has already shrunk due
-                        // to replacements)
-                        let until = until - trimmed;
-                        let chars = line.chars();
-                        Some(chars.clone().take(from).chain(chars.skip(until)).collect())
-                    }
-                }
-            },
-        )
-        .collect::<Vec<String>>()
-        .join("\n")
 }
