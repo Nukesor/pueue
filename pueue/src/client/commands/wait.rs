@@ -46,7 +46,7 @@ pub async fn wait(
                 .collect()
         } else if all {
             // Get all tasks
-            state.tasks.iter().map(|(_, task)| task.clone()).collect()
+            state.tasks.values().cloned().collect()
         } else {
             // Get all tasks of a specific group
             let tasks = state

@@ -1,5 +1,4 @@
 use std::convert::TryFrom;
-use std::path::PathBuf;
 
 use async_trait::async_trait;
 use log::info;
@@ -15,8 +14,8 @@ use crate::settings::Shared;
 /// Unix specific cleanup handling when getting a SIGINT/SIGTERM.
 pub fn socket_cleanup(settings: &Shared) -> Result<(), std::io::Error> {
     // Clean up the unix socket if we're using it and it exists.
-    if settings.use_unix_socket && PathBuf::from(&settings.unix_socket_path()).exists() {
-        std::fs::remove_file(&settings.unix_socket_path())?;
+    if settings.use_unix_socket && settings.unix_socket_path().exists() {
+        std::fs::remove_file(settings.unix_socket_path())?;
     }
 
     Ok(())

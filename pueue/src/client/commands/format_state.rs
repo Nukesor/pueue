@@ -36,7 +36,7 @@ pub async fn format_state(
     let map_deserialize = serde_json::from_str::<BTreeMap<usize, Task>>(&json);
 
     let tasks: Vec<Task> = if let Ok(map) = map_deserialize {
-        map.into_iter().map(|(_, task)| task).collect()
+        map.into_values().collect()
     } else {
         serde_json::from_str(&json).context("Failed to deserialize from JSON input.")?
     };

@@ -173,7 +173,7 @@ fn print_task_info(task: &Task, style: &OutputStyle) {
     ]);
     table.add_row(vec![
         style.styled_cell("Path:", None, Some(Attribute::Bold)),
-        Cell::new(&task.path.to_string_lossy()),
+        Cell::new(task.path.to_string_lossy()),
     ]);
     if let Some(label) = &task.label {
         table.add_row(vec![

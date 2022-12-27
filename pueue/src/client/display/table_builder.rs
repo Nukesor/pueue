@@ -254,7 +254,7 @@ impl<'a> TableBuilder<'a> {
             }
 
             if self.path {
-                row.add_cell(Cell::new(&task.path.to_string_lossy()));
+                row.add_cell(Cell::new(task.path.to_string_lossy()));
             }
 
             // Add start and end info

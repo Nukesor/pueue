@@ -203,7 +203,7 @@ pub fn create_test_alias_file(config_dir: &Path, aliases: HashMap<String, String
 
     // Write the deserialized content to our alias file.
     let path = config_dir.join("pueue_aliases.yml");
-    let mut alias_file = File::create(&path).context("Failed to open alias file")?;
+    let mut alias_file = File::create(path).context("Failed to open alias file")?;
 
     alias_file
         .write_all(content.as_bytes())

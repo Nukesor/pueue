@@ -25,7 +25,7 @@ fn test_restore_from_old_state() -> Result<()> {
 
     // Open v0.12.2 file and write old state to it.
     let temp_state_path = temp_dir.path().join("state.json");
-    let mut file = File::create(&temp_state_path)?;
+    let mut file = File::create(temp_state_path)?;
     file.write_all(old_state.as_bytes())?;
 
     let mut settings = Settings::default();
