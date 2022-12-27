@@ -116,8 +116,8 @@ impl QueryResult {
 /// - TableBuilder: The component responsible for building the table and determining which
 ///         columns should or need to be displayed.
 ///         A `columns [columns]` statement will define the set of visible columns.
-pub fn apply_query(query: String) -> Result<QueryResult> {
-    let mut parsed = QueryParser::parse(Rule::query, &query).context("Failed to parse query")?;
+pub fn apply_query(query: &str) -> Result<QueryResult> {
+    let mut parsed = QueryParser::parse(Rule::query, query).context("Failed to parse query")?;
 
     let mut query_result = QueryResult::default();
 

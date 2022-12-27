@@ -14,7 +14,7 @@ use crossterm::style::Color;
 
 // Re-exports
 pub use self::follow::follow_local_task_logs;
-pub use self::group::print_groups;
+pub use self::group::format_groups;
 pub use self::log::{determine_log_line_amount, print_logs};
 pub use self::state::print_state;
 pub use self::style::OutputStyle;

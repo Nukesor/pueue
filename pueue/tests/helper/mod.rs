@@ -1,26 +1,24 @@
-#![allow(dead_code)]
+//! This module contains helper functions, which are used by both, the client and daemon tests.
 use anyhow::Result;
 use tokio::io::{self, AsyncWriteExt};
 
 pub use pueue_lib::state::PUEUE_DEFAULT_GROUP;
 
-mod client;
+mod asserts;
 mod daemon;
-mod env;
-mod group;
+mod factories;
+mod fixtures;
 mod log;
-mod message;
 mod network;
 mod state;
 mod task;
 mod wait;
 
 pub use self::log::*;
-pub use client::*;
+pub use asserts::*;
 pub use daemon::*;
-pub use env::*;
-pub use group::*;
-pub use message::*;
+pub use factories::*;
+pub use fixtures::*;
 pub use network::*;
 pub use state::*;
 pub use task::*;

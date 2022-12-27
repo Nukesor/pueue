@@ -1,9 +1,3 @@
-mod completions;
-mod edit;
-mod follow;
-mod group;
-mod log;
-mod restart;
-mod status;
-mod status_query;
-mod wait;
+mod helper;
+mod integration;
+mod unit;

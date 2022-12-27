@@ -321,7 +321,10 @@ impl Client {
             Message::LogResponse(task_logs) => {
                 print_logs(task_logs, &self.subcommand, &self.style, &self.settings)
             }
-            Message::GroupResponse(groups) => print_groups(groups, &self.style),
+            Message::GroupResponse(groups) => {
+                let group_text = format_groups(groups, &self.style);
+                print!("{group_text}");
+            }
             Message::Stream(text) => {
                 print!("{}", text);
                 io::stdout().flush().unwrap();
