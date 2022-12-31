@@ -1,0 +1,62 @@
+[package]
+name = "pueue"
+version = "3.0.1"
+description = "A cli tool for managing long running shell commands."
+keywords = ["shell", "command", "parallel", "task", "queue"]
+readme = "README.md"
+authors.workspace = true
+homepage.workspace = true
+repository.workspace = true
+license.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[badges]
+maintenance = { status = "actively-developed" }
+
+[dependencies]
+pueue-lib = { version = "0.21.0", path = "../pueue_lib" }
+
+anyhow = "1.0"
+chrono-english = "0.1"
+clap = { version = "4.0", features = ["derive", "cargo"] }
+clap_complete = "4.0"
+comfy-table = "6.1"
+crossbeam-channel = "0.5"
+crossterm = { version = "0.25", default-features = false }
+ctrlc = { version = "3", features = ["termination"] }
+handlebars = "4.3"
+pest = "2.5"
+pest_derive = "2.5"
+shell-escape = "0.1"
+simplelog = "0.12"
+tempfile = "3.3"
+
+chrono = { workspace = true }
+command-group = { workspace = true }
+log = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_derive = { workspace = true }
+snap = { workspace = true }
+tokio = { workspace = true }
+
+[dev-dependencies]
+assert_cmd = "2"
+better-panic = "0.3"
+pretty_assertions = "1"
+rstest = "0.16"
+serde_yaml = "0.9"
+similar-asserts = "1"
+
+# Make it easy to view log output for select tests.
+# Set log level for tests with RUST_LOG=<level>, use with failed tests or
+# disable test stdout/stderr capture (`cargo test -- --nocapture` / `cargo
+# nextest run --no-capture`)
+env_logger = "0.10"
+test-log = "0.2"
+
+# Test specific dev-dependencies
+[target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]
+whoami = "1"
+procfs = { version = "0.14", default-features = false }

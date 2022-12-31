@@ -29,10 +29,10 @@ This includes:
 
 The daemon is composed of two main components.
 
-1. Request handling in `daemon/network/`.
+1. Request handling in `pueue/src/daemon/network/`.
     This is the code responsible for communicating with clients.
-    In `daemon/network/message_handler/` you can find neatly separated handlers for all of Pueue's subcommands.
-2. The TaskHandler in `daemon/task_handler/`.
+    In `pueue/src/daemon/network/message_handler/` you can find neatly separated handlers for all of Pueue's subcommands.
+2. The TaskHandler in `pueue/src/daemon/task_handler/`.
     It's responsible for everything regarding process interaction.
 
 All information that's not sub-process specific, is stored in the `State` (`pueue-lib/state.rs`) struct. \
@@ -45,11 +45,11 @@ This includes stuff like "Start/Pause/Kill" sub-processes or "Reset everything".
 
 ### Request handling
 
-The `daemon/network/socket.rs` module contains the logic for accepting client connections and receiving payloads.
+The `pueue/src/daemon/network/socket.rs` module contains the logic for accepting client connections and receiving payloads.
 The request accept and handle logic is a single async-await loop run by the main thread.
 
 The payload is then deserialized to `Message` (`pueue-lib/message.rs`) and handled by its respective function.
-All functions used for handling these messages can be found in `daemon/network/message_handler`.
+All functions used for handling these messages can be found in `pueue/src/daemon/network/message_handler`.
 
 Many messages can be instantly handled by simply modifying or reading the state. \ 
 However, sometimes the TaskHandler has to be notified, if something involves modifying actual system processes (start/pause/kill tasks).
@@ -66,7 +66,7 @@ The TaskHandler runs a never ending loop, which checks a few times each second, 
 - a new task can be started.
 - tasks finished and can be finalized.
 - delayed tasks can be enqueued (`-d` flag on `pueue add`)
-- A few other things. Check the `TaskHandler::run` function in `daemon/task_handler/mod.rs`.
+- A few other things. Check the `TaskHandler::run` function in `pueue/src/daemon/task_handler/mod.rs`.
 
 The TaskHandler is by far the most complex piece of code in this project, but there is also a lot of documentation.
 
@@ -83,23 +83,23 @@ Anyhow, working with mutexes is usually straight-forward, but can sometimes be a
 
 ## Code Style
 
-This is a result of `tokei ./client ./daemon` on commit `eed378e` at the 2022-12-13.
+This is a result of `tokei ./pueue ./pueue_lib` on commit `84a2d47` at the 2022-12-27.
 
 ```
 ===============================================================================
  Language            Files        Lines         Code     Comments       Blanks
 ===============================================================================
- JSON                    1          119          119            0            0
+ JSON                    2          238          238            0            0
  Markdown                2          310            0          192          118
  Pest                    1           69           43           12           14
- TOML                    1           78           62            7            9
+ TOML                    2          140          112           12           16
  YAML                    1           27           27            0            0
 -------------------------------------------------------------------------------
- Rust                   90         9403         7116          808         1479
- |- Markdown            87         1367            0         1258          109
- (Total)                          10770         7116         2066         1588
+ Rust                  137        12983         9645         1179         2159
+ |- Markdown           127         1571            0         1450          121
+ (Total)                          14554         9645         2629         2280
 ===============================================================================
- Total                  96        10006         7367         1019         1620
+ Total                 145        13767        10065         1395         2307
 ===============================================================================
 ```
 

@@ -97,7 +97,7 @@ It might compile on older versions, but this isn't tested or officially supporte
 ```bash
 git clone git@github.com:Nukesor/pueue
 cd pueue
-cargo build --release --locked --path .
+cargo build --release --locked --path ./pueue
 ```
 
 The final binaries will be located in `target/release/{pueue,pueued}`.
