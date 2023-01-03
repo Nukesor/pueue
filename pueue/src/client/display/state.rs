@@ -14,12 +14,12 @@ use crate::client::query::apply_query;
 ///
 /// We pass the tasks as a separate parameter and as a list.
 /// This allows us to print the tasks in the order passed to the `format-status` subcommand.
-pub fn print_state<'a>(
+pub fn print_state(
     mut state: State,
     mut tasks: Vec<Task>,
     cli_command: &SubCommand,
-    style: &'a OutputStyle,
-    settings: &'a Settings,
+    style: &OutputStyle,
+    settings: &Settings,
 ) -> Result<String> {
     let mut output = String::new();
 
