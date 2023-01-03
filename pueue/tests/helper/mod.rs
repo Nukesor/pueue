@@ -32,6 +32,7 @@ pub async fn sleep_ms(ms: u64) {
 
 /// A small helper function, which instantly writes the given string to stdout with a newline.
 /// Useful for debugging async tests.
+#[allow(dead_code)]
 pub async fn async_println(out: &str) -> Result<()> {
     let mut stdout = io::stdout();
     stdout

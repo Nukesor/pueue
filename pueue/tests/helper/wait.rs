@@ -8,60 +8,9 @@ use anyhow::{bail, Result};
 
 use pueue_lib::settings::Shared;
 use pueue_lib::state::GroupStatus;
-use pueue_lib::task::{Task, TaskStatus};
+use pueue_lib::task::Task;
 
 use super::{get_state, sleep_ms};
-
-/// This is a small helper function, which checks in very short intervals, whether a task showed up
-/// in the daemon or not.
-pub async fn wait_for_task(shared: &Shared, task_id: usize) -> Result<Task> {
-    let tries = 20;
-    let mut current_try = 0;
-    while current_try <= tries {
-        let state = get_state(shared).await?;
-        if !state.tasks.contains_key(&task_id) {
-            current_try += 1;
-            sleep_ms(50).await;
-            continue;
-        }
-
-        return Ok(state.tasks.get(&task_id).unwrap().clone());
-    }
-
-    bail!("Task {} didn't show up in about 1 second.", task_id)
-}
-
-/// This is a small helper function, which checks in very short intervals, whether a task changed
-/// it's state or not.
-pub async fn wait_for_status_change(
-    shared: &Shared,
-    task_id: usize,
-    original_status: TaskStatus,
-) -> Result<Task> {
-    let tries = 20;
-    let mut current_try = 0;
-    while current_try <= tries {
-        let state = get_state(shared).await?;
-        match state.tasks.get(&task_id) {
-            Some(task) => {
-                // The status changed. We can give our ok!
-                if task.status != original_status {
-                    return Ok(task.clone());
-                }
-
-                // The status didn't change. Try again.
-                current_try += 1;
-                sleep_ms(50).await;
-                continue;
-            }
-            None => {
-                bail!("Couldn't find task {task_id} while waiting for status change")
-            }
-        }
-    }
-
-    bail!("Task {task_id} didn't change state in about 1 second.")
-}
 
 /// This is a small helper function, which checks in very short intervals, whether a task fulfills
 /// a certain criteria. This is necessary to prevent long or potentially flaky timeouts in our tests.
