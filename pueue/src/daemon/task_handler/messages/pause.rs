@@ -12,12 +12,12 @@ impl TaskHandler {
     /// Pause specific tasks or groups.
     ///
     /// `wait` decides, whether running tasks will kept running until they finish on their own.
-    pub fn pause(&mut self, tasks: TaskSelection, wait: bool) {
+    pub fn pause(&mut self, selection: TaskSelection, wait: bool) {
         let cloned_state_mutex = self.state.clone();
         let mut state = cloned_state_mutex.lock().unwrap();
 
         // Get the keys of all tasks that should be paused
-        let keys: Vec<usize> = match tasks {
+        let keys: Vec<usize> = match selection {
             TaskSelection::TaskIds(task_ids) => task_ids,
             TaskSelection::Group(group_name) => {
                 // Ensure that a given group exists. (Might not happen due to concurrency)

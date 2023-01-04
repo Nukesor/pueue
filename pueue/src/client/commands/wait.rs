@@ -4,6 +4,8 @@ use std::time::Duration;
 use anyhow::Result;
 use chrono::Local;
 use crossterm::style::{Attribute, Color};
+use pueue_lib::network::message::TaskSelection;
+use pueue_lib::state::State;
 use tokio::time::sleep;
 
 use pueue_lib::network::protocol::GenericStream;
@@ -22,9 +24,7 @@ use crate::client::{commands::get_state, display::OutputStyle};
 /// Pass `quiet == true` to supress any logging.
 pub async fn wait(
     stream: &mut GenericStream,
-    task_ids: &[usize],
-    group: &str,
-    all: bool,
+    selection: TaskSelection,
     quiet: bool,
     style: &OutputStyle,
 ) -> Result<()> {
@@ -35,76 +35,38 @@ pub async fn wait(
 
     loop {
         let state = get_state(stream).await?;
+        let tasks = get_tasks(&state, &selection);
 
-        let tasks: Vec<Task> = if !task_ids.is_empty() {
-            // Get all tasks of a specific group
-            state
-                .tasks
-                .iter()
-                .filter(|(id, _)| task_ids.contains(id))
-                .map(|(_, task)| task.clone())
-                .collect()
-        } else if all {
-            // Get all tasks
-            state.tasks.values().cloned().collect()
-        } else {
-            // Get all tasks of a specific group
-            let tasks = state
-                .tasks
-                .iter()
-                .filter(|(_, task)| task.group.eq(group))
-                .map(|(_, task)| task.clone())
-                .collect::<Vec<Task>>();
-
-            if tasks.is_empty() {
-                println!("No tasks found for group {group}");
-                return Ok(());
-            }
-
-            tasks
-        };
+        if tasks.is_empty() {
+            println!("No tasks found for selection {selection:?}");
+            return Ok(());
+        }
 
         // Get current time for log output
-        let current_time = Local::now().format("%H:%M:%S").to_string();
 
         // Iterate over all matching tasks
         for task in tasks.iter() {
-            // Check if we already know this task or if it is new.
-            let previous_status = match watched_tasks.get(&task.id) {
-                None => {
-                    // Add any unknown tasks to our watchlist
-                    if !quiet {
-                        let color = get_color_for_status(&task.status);
-                        let task_id = style.style_text(task.id, None, Some(Attribute::Bold));
-                        let status = style.style_text(&task.status, Some(color), None);
-
-                        if !first_run {
-                            // Don't log non-active tasks in the initial loop.
-                            println!("{current_time} - New task {task_id} with status {status}",);
-                        } else if task.is_running() {
-                            // Show currently running tasks for better user feedback.
-                            println!(
-                                "{current_time} - Found active Task {task_id} with status {status}",
-                            );
-                        }
-                    }
-
-                    watched_tasks.insert(task.id, task.status.clone());
-
-                    continue;
+            // Get the previous status of the task.
+            // Add it to the watchlist we we know this task yet.
+            let Some(previous_status) = watched_tasks.get(&task.id).cloned() else {
+                // Add new/unknown tasks to our watchlist
+                watched_tasks.insert(task.id, task.status.clone());
+                if !quiet {
+                    log_new_task(task, style, first_run);
                 }
-                Some(previous_status) => {
-                    if previous_status == &task.status {
-                        continue;
-                    }
-                    previous_status.clone()
-                }
+
+                continue;
             };
+
+            // The task's status didn't change, continue as there's nothing to do.
+            if previous_status == task.status {
+                continue;
+            }
 
             // Update the (previous) task status and log any changes
             watched_tasks.insert(task.id, task.status.clone());
             if !quiet {
-                log_status_change(&current_time, previous_status, task, style);
+                log_status_change(previous_status, task, style);
             }
         }
 
@@ -132,12 +94,50 @@ pub async fn wait(
     Ok(())
 }
 
-fn log_status_change(
-    current_time: &str,
-    previous_status: TaskStatus,
-    task: &Task,
-    style: &OutputStyle,
-) {
+/// Get the correct tasks depending on a given TaskSelection.
+fn get_tasks(state: &State, selection: &TaskSelection) -> Vec<Task> {
+    match selection {
+        // Get all tasks
+        TaskSelection::All => state.tasks.values().cloned().collect(),
+        // Get all tasks of a specific group
+        TaskSelection::TaskIds(task_ids) => state
+            .tasks
+            .iter()
+            .filter(|(id, _)| task_ids.contains(id))
+            .map(|(_, task)| task.clone())
+            .collect(),
+        // Get all tasks of a specific group
+        TaskSelection::Group(group) => state
+            .tasks
+            .iter()
+            .filter(|(_, task)| task.group.eq(group))
+            .map(|(_, task)| task.clone())
+            .collect::<Vec<Task>>(),
+    }
+}
+
+/// Write a log line about a newly discovered task.
+fn log_new_task(task: &Task, style: &OutputStyle, first_run: bool) {
+    let current_time = Local::now().format("%H:%M:%S").to_string();
+    let color = get_color_for_status(&task.status);
+    let task_id = style.style_text(task.id, None, Some(Attribute::Bold));
+    let status = style.style_text(&task.status, Some(color), None);
+
+    if !first_run {
+        // Don't log non-active tasks in the initial loop.
+        println!("{current_time} - New task {task_id} with status {status}");
+        return;
+    }
+
+    if task.is_running() {
+        // Show currently running tasks for better user feedback.
+        println!("{current_time} - Found active Task {task_id} with status {status}",);
+    }
+}
+
+/// Write a log line about a status changes of a task.
+fn log_status_change(previous_status: TaskStatus, task: &Task, style: &OutputStyle) {
+    let current_time = Local::now().format("%H:%M:%S").to_string();
     let task_id = style.style_text(task.id, None, Some(Attribute::Bold));
 
     // Check if the task has finished.
