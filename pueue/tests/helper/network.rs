@@ -29,7 +29,7 @@ where
 /// Create a new stream that already finished the handshake and secret exchange.
 ///
 /// Pueue creates a new socket stream for each command, which is why we do it the same way.
-pub async fn get_authenticated_stream(shared: &Shared) -> Result<GenericStream> {
+async fn get_authenticated_stream(shared: &Shared) -> Result<GenericStream> {
     // Connect to daemon and get stream used for communication.
     let mut stream = match get_client_stream(shared).await {
         Ok(stream) => stream,

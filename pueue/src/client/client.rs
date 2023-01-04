@@ -314,12 +314,17 @@ impl Client {
             }
             Message::StatusResponse(state) => {
                 let tasks = state.tasks.values().cloned().collect();
-                print_state(*state, tasks, &self.subcommand, &self.style, &self.settings)?;
+                let output =
+                    print_state(*state, tasks, &self.subcommand, &self.style, &self.settings)?;
+                print!("{output}");
             }
             Message::LogResponse(task_logs) => {
                 print_logs(task_logs, &self.subcommand, &self.style, &self.settings)
             }
-            Message::GroupResponse(groups) => print_groups(groups, &self.style),
+            Message::GroupResponse(groups) => {
+                let group_text = format_groups(groups, &self.style);
+                print!("{group_text}");
+            }
             Message::Stream(text) => {
                 print!("{}", text);
                 io::stdout().flush().unwrap();

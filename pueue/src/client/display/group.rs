@@ -9,7 +9,7 @@ use super::OutputStyle;
 
 /// Print some info about the daemon's current groups.
 /// This is used when calling `pueue group`.
-pub fn print_groups(message: GroupResponseMessage, style: &OutputStyle) {
+pub fn format_groups(message: GroupResponseMessage, style: &OutputStyle) -> String {
     let mut text = String::new();
     let mut group_iter = message.groups.iter().peekable();
     while let Some((name, group)) = group_iter.next() {
@@ -20,7 +20,8 @@ pub fn print_groups(message: GroupResponseMessage, style: &OutputStyle) {
             text.push('\n');
         }
     }
-    println!("{}", text);
+
+    text
 }
 
 /// Return some nicely formatted info about a given group.
