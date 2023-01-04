@@ -44,7 +44,7 @@ pub fn print_state(
         if query.is_some() {
             state.tasks = tasks.into_iter().map(|task| (task.id, task)).collect();
         }
-        output.push_str(&format!("{}", serde_json::to_string(&state).unwrap()));
+        output.push_str(&serde_json::to_string(&state).unwrap());
         return Ok(output);
     }
 
@@ -80,7 +80,7 @@ fn print_single_group(
     // Only a single group is requested. Print that group and return.
     let tasks = sorted_tasks.entry(group_name.clone()).or_default();
     let headline = get_group_headline(&group_name, group, style);
-    output.push_str(&format!("{headline}"));
+    output.push_str(&headline);
 
     // Show a message if the requested group doesn't have any tasks.
     if tasks.is_empty() {
@@ -114,9 +114,7 @@ fn print_all_groups(
             style,
         );
         output.push_str(&format!("{headline}\n"));
-        output.push_str(&format!(
-            "\nTask list is empty. Add tasks with `pueue add -- [cmd]`"
-        ));
+        output.push_str("\nTask list is empty. Add tasks with `pueue add -- [cmd]`");
         return;
     }
 
@@ -131,7 +129,7 @@ fn print_all_groups(
             state.groups.get(PUEUE_DEFAULT_GROUP).unwrap(),
             style,
         );
-        output.push_str(&format!("{headline}"));
+        output.push_str(&headline);
         let table = table_builder.clone().build(tasks);
         output.push_str(&format!("\n{table}"));
 
@@ -154,7 +152,7 @@ fn print_all_groups(
         if !output.is_empty() {
             output.push('\n');
         }
-        output.push_str(&format!("{headline}"));
+        output.push_str(&headline);
         let table = table_builder.clone().build(tasks);
         output.push_str(&format!("\n{table}"));
 
