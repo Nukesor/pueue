@@ -1276,6 +1276,8 @@ dependencies = [
  "similar-asserts",
  "simplelog",
  "snap",
+ "strum",
+ "strum_macros",
  "tempfile",
  "test-log",
  "tokio",

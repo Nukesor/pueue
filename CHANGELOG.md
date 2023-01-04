@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.0] - unreleased
+
+### Add
+
+- Allow to wait for specific task stati when using `pueue wait` [#400](https://github.com/Nukesor/pueue/issues/400).
+
 ## [3.0.1] - 2022-12-31
 
 ### Fixed
@@ -460,7 +466,7 @@ Please read this changelog carefully.
 - Change default secret length from 20 to 512 chars. [#52](https://github.com/Nukesor/pueue/issues/52)
 - Lots of internal code cleanup/refactoring/restructuring.
 - Exit client with non-zero exit code when getting a failure message from the daemon.
-- The `group` list output has been properly styled. 
+- The `group` list output has been properly styled.
 - Use unix sockets by default on unix systems. [#165](https://github.com/Nukesor/pueue/issues/165)
 - Any unix socket code or configuration stuff has been removed, when building for Windows.
 
@@ -474,7 +480,7 @@ Please read this changelog carefully.
 - `daemon.pause_group_on_failure` config, which only pauses the group of the affected task instead of everything.
 - Users can add some additional information to tasks with the `task add --label $LABEL` option, which will be displayed when calling `pueue status`. [#155](https://github.com/Nukesor/pueue/issues/155)
 - `--escape` flag on the `add` subcommand, which takes all given Parameter strings and escapes special characters. [#158](https://github.com/Nukesor/pueue/issues/158)
-- Remove `--task-ids` for `wait`. Now it's used the same way as start/kill/pause etc. 
+- Remove `--task-ids` for `wait`. Now it's used the same way as start/kill/pause etc.
 - Add an option `--print-task-id` to only return the task id on `add`. This allows for better scripting. [#151](https://github.com/Nukesor/pueue/issues/151)
 
 ### Removed
@@ -677,14 +683,14 @@ This version adds breaking changes:
 
 ### Added
 
-- Dependencies! This adds the `--after [ids]` option. Implemented by [tinou98](https://github.com/tinou98).  
+- Dependencies! This adds the `--after [ids]` option. Implemented by [tinou98](https://github.com/tinou98).
    Task with this option will only be started, if all specified dependencies successfully finish.
   Tasks with failed dependencies will fail as well.
 - New state `FailedToStart`. Used if the process cannot be started.
 - New state `DependencyFailed`. Used if any dependency of a task fails.
 - New config option `read_local_logs`. Default: `true`
   We assume that the daemon and client run on the same machine by default.
-  This removes the need to send logs via socket, since the client can directly read the log files.  
+  This removes the need to send logs via socket, since the client can directly read the log files.
    Set to `false` if you, for instance, use Pueue in combination with SSH port forwarding.
 
 ### Changed

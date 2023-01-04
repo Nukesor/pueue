@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::time::Duration;
 
 use anyhow::Result;
@@ -6,12 +6,25 @@ use chrono::Local;
 use crossterm::style::{Attribute, Color};
 use pueue_lib::network::message::TaskSelection;
 use pueue_lib::state::State;
+use strum_macros::{Display, EnumString};
 use tokio::time::sleep;
 
 use pueue_lib::network::protocol::GenericStream;
 use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
 use crate::client::{commands::get_state, display::OutputStyle};
+
+/// The `wait` subcommand can wait for these specific stati.
+#[derive(Default, Debug, Clone, Display, EnumString)]
+pub enum WaitTargetStatus {
+    #[default]
+    #[strum(serialize = "done")]
+    Done,
+    #[strum(serialize = "queued")]
+    Queued,
+    #[strum(serialize = "running")]
+    Running,
+}
 
 /// Wait until tasks are done.
 /// Tasks can be specified by:
@@ -24,15 +37,20 @@ use crate::client::{commands::get_state, display::OutputStyle};
 /// Pass `quiet == true` to supress any logging.
 pub async fn wait(
     stream: &mut GenericStream,
+    style: &OutputStyle,
     selection: TaskSelection,
     quiet: bool,
-    style: &OutputStyle,
+    target_status: &Option<WaitTargetStatus>,
 ) -> Result<()> {
     let mut first_run = true;
     // Create a list of tracked tasks.
     // This way we can track any status changes and if any new tasks are added.
     let mut watched_tasks: HashMap<usize, TaskStatus> = HashMap::new();
+    // Since tasks can be removed by users, we have to track tasks that actually finished.
+    let mut finished_tasks: HashSet<usize> = HashSet::new();
 
+    // Wait for either a provided target status or the default (`Done`).
+    let target_status = target_status.clone().unwrap_or_default();
     loop {
         let state = get_state(stream).await?;
         let tasks = get_tasks(&state, &selection);
@@ -49,8 +67,13 @@ pub async fn wait(
             // Get the previous status of the task.
             // Add it to the watchlist we we know this task yet.
             let Some(previous_status) = watched_tasks.get(&task.id).cloned() else {
+                if finished_tasks.contains(&task.id) {
+                    continue
+                }
+
                 // Add new/unknown tasks to our watchlist
                 watched_tasks.insert(task.id, task.status.clone());
+
                 if !quiet {
                     log_new_task(task, style, first_run);
                 }
@@ -70,14 +93,24 @@ pub async fn wait(
             }
         }
 
-        // We can stop waiting, if every task is on `Done`
-        // Always check the actual task list instead of the watched_tasks list.
-        // Otherwise we get locked if tasks get removed.
-        let all_finished = tasks
-            .iter()
-            .all(|task| matches!(task.status, TaskStatus::Done(_)));
+        // We can stop waiting, if every task reached its the target state.
+        // We have to check all watched tasks and handle any tasks that get removed.
+        let task_ids: Vec<usize> = watched_tasks.keys().cloned().collect();
+        for task_id in task_ids {
+            // Get the correct task. If it no longer exists, remove it from the task list.
+            let Some(task) = tasks.iter().find(|task| task.id == task_id) else {
+                watched_tasks.remove(&task_id);
+                    continue;
+            };
 
-        if all_finished {
+            // Check if the task hit the target status.
+            if reached_target_status(task, &target_status) {
+                watched_tasks.remove(&task_id);
+                finished_tasks.insert(task_id);
+            }
+        }
+
+        if watched_tasks.is_empty() {
             break;
         }
 
@@ -92,6 +125,22 @@ pub async fn wait(
     }
 
     Ok(())
+}
+
+/// Check if a task reached the target status.
+/// Other stati that can only occur after that status will also qualify.
+fn reached_target_status(task: &Task, target_status: &WaitTargetStatus) -> bool {
+    match target_status {
+        WaitTargetStatus::Queued => {
+            task.status == TaskStatus::Queued
+                || task.status == TaskStatus::Running
+                || matches!(task.status, TaskStatus::Done(_))
+        }
+        WaitTargetStatus::Running => {
+            task.status == TaskStatus::Running || matches!(task.status, TaskStatus::Done(_))
+        }
+        WaitTargetStatus::Done => matches!(task.status, TaskStatus::Done(_)),
+    }
 }
 
 /// Get the correct tasks depending on a given TaskSelection.
