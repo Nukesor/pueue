@@ -88,7 +88,7 @@ pub fn assert_template_matches(
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("tests")
         .join("client")
-        .join("templates")
+        .join("_templates")
         .join(name);
 
     let actual = String::from_utf8(stdout).context("Got invalid utf8 as stdout!")?;
@@ -128,7 +128,7 @@ pub fn assert_snapshot_matches(name: &str, actual: String) -> Result<()> {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("tests")
         .join("client")
-        .join("snapshots")
+        .join("_snapshots")
         .join(name);
 
     let Ok(expected) = read_to_string(&path) else {
