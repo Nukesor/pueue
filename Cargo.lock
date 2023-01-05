@@ -462,7 +462,7 @@ dependencies = [
 [[package]]
 name = "darwin-libproc"
 version = "0.2.0"
-source = "git+https://github.com/jamwaffles/darwin-libproc.git?rev=cbd571e4be87a6603de328d1f1f0ad54d7bdfedf#cbd571e4be87a6603de328d1f1f0ad54d7bdfedf"
+source = "git+https://github.com/Nukesor/darwin-libproc.git?branch=master#d783719c2f61a347a409ffe4ef1b2d893eec555a"
 dependencies = [
  "darwin-libproc-sys",
  "libc",
@@ -472,7 +472,7 @@ dependencies = [
 [[package]]
 name = "darwin-libproc-sys"
 version = "0.2.0"
-source = "git+https://github.com/jamwaffles/darwin-libproc.git?rev=cbd571e4be87a6603de328d1f1f0ad54d7bdfedf#cbd571e4be87a6603de328d1f1f0ad54d7bdfedf"
+source = "git+https://github.com/Nukesor/darwin-libproc.git?branch=master#d783719c2f61a347a409ffe4ef1b2d893eec555a"
 
 [[package]]
 name = "diff"
