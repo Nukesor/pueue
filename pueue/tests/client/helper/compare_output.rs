@@ -116,7 +116,7 @@ pub fn assert_template_matches(
     Ok(())
 }
 
-/// Convenience wrapper to compare process stdout snapshost.
+/// Convenience wrapper to compare process stdout with snapshots.
 pub fn assert_snapshot_matches_stdout(name: &str, stdout: Vec<u8>) -> Result<()> {
     let actual = String::from_utf8(stdout).context("Got invalid utf8 as stdout!")?;
     assert_snapshot_matches(name, actual)
