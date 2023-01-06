@@ -28,17 +28,17 @@ rustls-pemfile = "1.0"
 serde_cbor = "0.11"
 serde_yaml = "0.9"
 shellexpand = "3.0"
-strum = "0.24"
-strum_macros = "0.24"
 thiserror = "1.0"
 tokio-rustls = { version = "0.23", default-features = false }
 
 command-group = { workspace = true }
 log = { workspace = true }
-snap = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 serde_derive = { workspace = true }
+snap = { workspace = true }
+strum = { workspace = true }
+strum_macros = { workspace = true }
 tokio = { workspace = true, features = ["macros", "net", "io-util"] }
 
 [dev-dependencies]

@@ -20,7 +20,7 @@ pub use edit::edit;
 pub use format_state::format_state;
 pub use local_follow::local_follow;
 pub use restart::restart;
-pub use wait::wait;
+pub use wait::{wait, WaitTargetStatus};
 
 // This is a helper function for easy retrieval of the current daemon state.
 // The current daemon state is often needed in more complex commands.

@@ -8,6 +8,8 @@ use clap::{Parser, ValueEnum, ValueHint};
 
 use pueue_lib::network::message::Signal;
 
+use super::commands::WaitTargetStatus;
+
 #[derive(Parser, Debug)]
 pub enum SubCommand {
     /// Enqueue a task for execution.
@@ -365,6 +367,10 @@ pub enum SubCommand {
         /// Don't show any log output while waiting
         #[clap(short, long)]
         quiet: bool,
+
+        /// Wait for tasks to reach a specific task status.
+        #[clap(short, long)]
+        status: Option<WaitTargetStatus>,
     },
 
     /// Remove all finished tasks from the list.

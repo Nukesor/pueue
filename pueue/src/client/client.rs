@@ -203,17 +203,10 @@ impl Client {
                 group,
                 all,
                 quiet,
+                status,
             } => {
-                let group = group_or_default(group);
-                wait(
-                    &mut self.stream,
-                    task_ids,
-                    &group,
-                    *all,
-                    *quiet,
-                    &self.style,
-                )
-                .await?;
+                let selection = selection_from_params(*all, group, task_ids);
+                wait(&mut self.stream, &self.style, selection, *quiet, status).await?;
                 Ok(true)
             }
             SubCommand::Restart {
