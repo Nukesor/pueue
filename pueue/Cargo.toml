@@ -19,8 +19,8 @@ pueue-lib = { version = "0.21.0", path = "../pueue_lib" }
 
 anyhow = "1.0"
 chrono-english = "0.1"
-clap = { version = "4.0", features = ["derive", "cargo"] }
-clap_complete = "4.0"
+clap = { version = "4.1", features = ["derive", "cargo"] }
+clap_complete = "4.1"
 comfy-table = "6.1"
 crossbeam-channel = "0.5"
 crossterm = { version = "0.25", default-features = false }
