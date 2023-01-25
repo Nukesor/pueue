@@ -28,7 +28,7 @@ pub fn format_groups(message: GroupResponseMessage, style: &OutputStyle) -> Stri
 /// This is also used as a headline that's displayed above group's task tables.
 pub fn get_group_headline(name: &str, group: &Group, style: &OutputStyle) -> String {
     // Style group name
-    let name = style.style_text(format!("Group \"{}\"", name), None, Some(Attribute::Bold));
+    let name = style.style_text(format!("Group \"{name}\""), None, Some(Attribute::Bold));
 
     // Print the current state of the group.
     let status = match group.status {

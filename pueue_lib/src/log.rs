@@ -139,7 +139,7 @@ pub fn seek_to_last_lines(file: &mut File, amount: usize) -> Result<bool, Error>
     // The file size might change while we're reading the file. Hence we have to save it now.
     let start_position = reader
         .get_mut()
-        .seek(SeekFrom::Current(0))
+        .stream_position()
         .map_err(|err| Error::IoError("seeking to start of file".to_string(), err))?;
     let start_position: i64 = start_position.try_into().map_err(|_| {
         Error::Generic("Failed to convert start cursor position to i64".to_string())

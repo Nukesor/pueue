@@ -1,5 +1,5 @@
 use std::env;
-use std::io::{Read, Seek, SeekFrom, Write};
+use std::io::{Read, Seek, Write};
 use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Context, Result};
@@ -146,7 +146,7 @@ pub fn edit_task_properties(
 fn edit_line(line: &str) -> Result<String> {
     // Create a temporary file with the command so we can edit it with the editor.
     let mut file = NamedTempFile::new().expect("Failed to create a temporary file");
-    writeln!(file, "{}", line).context("Failed to write to temporary file.")?;
+    writeln!(file, "{line}").context("Failed to write to temporary file.")?;
 
     // Get the editor that should be used from the environment.
     let editor = match env::var("EDITOR") {
@@ -168,7 +168,7 @@ fn edit_line(line: &str) -> Result<String> {
 
     // Read the file.
     let mut file = file.into_file();
-    file.seek(SeekFrom::Start(0))
+    file.rewind()
         .context("Couldn't seek to start of file. Aborting.")?;
 
     let mut line = String::new();

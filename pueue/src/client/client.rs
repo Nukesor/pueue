@@ -319,7 +319,7 @@ impl Client {
                 print!("{group_text}");
             }
             Message::Stream(text) => {
-                print!("{}", text);
+                print!("{text}");
                 io::stdout().flush().unwrap();
                 return Ok(true);
             }
