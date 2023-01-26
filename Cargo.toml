@@ -10,7 +10,7 @@ homepage = "https://github.com/nukesor/pueue"
 repository = "https://github.com/nukesor/pueue"
 license = "MIT"
 edition = "2021"
-rust-version = "1.65"
+rust-version = "1.67"
 
 [workspace.dependencies]
 chrono = { version = "0.4", features = ["serde"] }

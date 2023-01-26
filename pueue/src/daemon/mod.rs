@@ -3,8 +3,8 @@ use std::sync::{Arc, Mutex};
 use std::{fs::create_dir_all, path::PathBuf};
 
 use anyhow::{bail, Context, Result};
-use crossbeam_channel::unbounded;
 use log::{error, warn};
+use std::sync::mpsc::channel;
 
 use pueue_lib::error::Error;
 use pueue_lib::network::certificate::create_certificates;
@@ -87,7 +87,7 @@ pub async fn run(config_path: Option<PathBuf>, profile: Option<String>, test: bo
     save_state(&state, &settings).context("Failed to save state on startup.")?;
     let state = Arc::new(Mutex::new(state));
 
-    let (sender, receiver) = unbounded();
+    let (sender, receiver) = channel();
     let sender = TaskSender::new(sender);
     let mut task_handler = TaskHandler::new(state.clone(), settings.clone(), receiver);
 

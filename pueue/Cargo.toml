@@ -22,7 +22,6 @@ chrono-english = "0.1"
 clap = { version = "4.1", features = ["derive", "cargo"] }
 clap_complete = "4.1"
 comfy-table = "6.1"
-crossbeam-channel = "0.5"
 crossterm = { version = "0.25", default-features = false }
 ctrlc = { version = "3", features = ["termination"] }
 handlebars = "4.3"

@@ -91,9 +91,9 @@ macro_rules! ok_or_return_failure_message {
 
 #[cfg(test)]
 mod fixtures {
-    pub use crossbeam_channel::Sender;
     use std::collections::HashMap;
     use std::env::temp_dir;
+    pub use std::sync::mpsc::Sender;
     use std::sync::{Arc, Mutex};
     use tempfile::TempDir;
 

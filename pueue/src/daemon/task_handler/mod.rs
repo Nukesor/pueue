@@ -2,11 +2,11 @@ use std::collections::{BTreeMap, HashMap};
 use std::path::PathBuf;
 use std::process::Child;
 use std::process::Stdio;
+use std::sync::mpsc::{Receiver, SendError, Sender};
 
 use anyhow::Result;
 use chrono::prelude::*;
 use command_group::CommandGroup;
-use crossbeam_channel::{Receiver, SendError, Sender};
 use handlebars::Handlebars;
 use log::{debug, error, info};
 
