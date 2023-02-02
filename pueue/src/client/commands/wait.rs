@@ -18,11 +18,11 @@ use crate::client::{commands::get_state, display::OutputStyle};
 #[derive(Default, Debug, Clone, Display, EnumString)]
 pub enum WaitTargetStatus {
     #[default]
-    #[strum(serialize = "done")]
+    #[strum(serialize = "done", serialize = "Done")]
     Done,
-    #[strum(serialize = "queued")]
+    #[strum(serialize = "queued", serialize = "Queued")]
     Queued,
-    #[strum(serialize = "running")]
+    #[strum(serialize = "running", serialize = "Running")]
     Running,
 }
 
