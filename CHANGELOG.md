@@ -10,6 +10,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Allow to wait for specific task stati when using `pueue wait` [#400](https://github.com/Nukesor/pueue/issues/400).
 
+### Fix
+
+- Point to a new patched fork of `darwin-libproc`, as the original has been deleted.
+    This fixes the development builts for pueue on Apple platforms.
+
 ## [3.0.1] - 2022-12-31
 
 ### Fixed
