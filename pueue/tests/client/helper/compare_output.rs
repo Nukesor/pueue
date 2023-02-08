@@ -29,7 +29,7 @@ pub async fn get_task_context(settings: &Settings) -> Result<HashMap<String, Str
     );
 
     for (id, task) in state.tasks {
-        let task_name = format!("task_{}", id);
+        let task_name = format!("task_{id}");
 
         if let Some(start) = task.start {
             // Use datetime format for datetimes that aren't today.

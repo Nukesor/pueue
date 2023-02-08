@@ -28,10 +28,7 @@ pub async fn add_task_to_group(shared: &Shared, command: &str, group: &str) -> R
 /// Mini wrapper around add_task, which creates a task that echos PUEUE's worker environment
 /// variables to `stdout`.
 pub async fn add_env_task(shared: &Shared, command: &str) -> Result<Message> {
-    let command = format!(
-        "echo WORKER_ID: $PUEUE_WORKER_ID; echo GROUP: $PUEUE_GROUP; {}",
-        command
-    );
+    let command = format!("echo WORKER_ID: $PUEUE_WORKER_ID; echo GROUP: $PUEUE_GROUP; {command}");
     add_task(shared, &command, false).await
 }
 

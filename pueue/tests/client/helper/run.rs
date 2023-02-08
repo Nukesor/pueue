@@ -87,7 +87,7 @@ pub fn run_client_command_with_env(
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .output()
-        .context(format!("Failed to execute pueue with {:?}", args))?;
+        .context(format!("Failed to execute pueue with {args:?}"))?;
 
     if !output.status.success() {
         bail!(

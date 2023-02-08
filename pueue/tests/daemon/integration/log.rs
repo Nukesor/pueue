@@ -58,7 +58,7 @@ async fn test_full_log() -> Result<()> {
         create_test_files(tempdir_path, false).context("Failed to create test files.")?;
 
     // Add a task that lists those files and wait for it to finish.
-    let command = format!("ls {:?}", tempdir_path);
+    let command = format!("ls {tempdir_path:?}");
     assert_success(add_task(shared, &command, false).await?);
     wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
 
@@ -91,7 +91,7 @@ async fn test_partial_log() -> Result<()> {
     // Debug output to see what the file actually looks like:
     let real_log_path = shared.pueue_directory().join("task_logs").join("0.log");
     let content = read_to_string(real_log_path).context("Failed to read actual file")?;
-    println!("Actual log file contents: \n{}", content);
+    println!("Actual log file contents: \n{content}");
 
     // Request a partial log for task 0
     let log_message = LogRequestMessage {

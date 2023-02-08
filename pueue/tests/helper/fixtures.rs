@@ -72,7 +72,7 @@ async fn run_and_handle_error(pueue_dir: PathBuf, test: bool) -> Result<()> {
     if let Err(err) = run(Some(pueue_dir.join("pueue.yml")), None, test).await {
         let mut stdout = io::stdout();
         stdout
-            .write_all(format!("Entcountered error: {:?}", err).as_bytes())
+            .write_all(format!("Entcountered error: {err:?}").as_bytes())
             .await
             .expect("Failed to write to stdout.");
         stdout.flush().await?;
