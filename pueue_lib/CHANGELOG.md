@@ -6,7 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project adheres **somewhat** to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 The concept of SemVer is applied to the daemon/client API, but not the library API itself.
 
-## [0.21.0] - unreleased
+## [0.21.1] - 2023-02-08
+
+### Fix
+
+- Point to a new patched fork of `darwin-libproc`, as the original has been deleted.
+    This fixes the development builts for pueue on Apple platforms.
+
+## [0.21.0] - 2022-12-12
 
 ### Breaking Changes
 
