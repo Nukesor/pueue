@@ -62,17 +62,9 @@ winapi = { version = "0.3", features = [
 
 # Unix
 [target.'cfg(unix)'.dependencies]
+libproc = "0.13.0"
 whoami = "1"
 
 # Linux only
 [target.'cfg(target_os = "linux")'.dependencies]
 procfs = { version = "0.14.2", default-features = false }
-
-# Apple only
-[target.'cfg(target_vendor = "apple")'.dependencies]
-libproc = "0.12.0"
-
-[target.'cfg(target_vendor = "apple")'.dev-dependencies]
-# Fork that fixes a version conflict, see heim-rs/darwin-libproc#3
-# only used as a test dependency.
-darwin-libproc = { git = "https://github.com/Nukesor/darwin-libproc.git", branch = "master" }
