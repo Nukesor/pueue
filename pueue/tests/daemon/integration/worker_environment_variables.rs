@@ -15,6 +15,8 @@ async fn test_single_worker() -> Result<()> {
     for _ in 0..3 {
         assert_success(add_env_task(shared, "sleep 0.1").await?);
     }
+    // Wait a second. Since the tasks are run sequentially, the timings are sometimes a bit tight.
+    sleep_ms(1000).await;
 
     // Wait for the last task to finish.
     wait_for_task_condition(shared, 2, |task| task.is_done()).await?;
