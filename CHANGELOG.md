@@ -4,15 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.1.0] - unreleased
+## [3.1.1] - unreleased
 
-### Add
+## Fixed
+
+- Switched the test suite on MacOS to use the new `libproc::processes::pids_by_type()` API to enumerate PIDs in a program group, removing the need to depend on the unmaintained darwing-librproc library. [#409](https://github.com/Nukesor/pueue/issues/409).
+
+## [3.1.0] - 2023-02-08
+
+### Added
 
 - Allow to wait for specific task stati when using `pueue wait` [#400](https://github.com/Nukesor/pueue/issues/400).
 
-### Fix
+### Fixed
 
-- Switched the test suite on MacOS to use the new `libproc::processes::pids_by_type()` API to enumerate PIDs in a program group, removing the need to depend on the unmaintained darwing-librproc library. [#409](https://github.com/Nukesor/pueue/issues/409).
+- Point to a new patched fork of `darwin-libproc`, as the original has been deleted.
+    This fixes the development builts for pueue on Apple platforms.
 
 ## [3.0.1] - 2022-12-31
 
