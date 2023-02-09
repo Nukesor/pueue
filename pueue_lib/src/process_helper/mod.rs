@@ -20,16 +20,12 @@ use command_group::Signal;
 mod linux;
 #[cfg(target_os = "linux")]
 pub use self::linux::process_exists;
-#[cfg(all(test, target_os = "linux"))]
-use self::linux::tests;
 
 // Apple specific process support
 #[cfg(target_vendor = "apple")]
 mod apple;
 #[cfg(target_vendor = "apple")]
 pub use self::apple::process_exists;
-#[cfg(all(test, target_vendor = "apple"))]
-use self::apple::tests;
 
 // Windows specific process handling
 #[cfg(any(target_os = "windows"))]

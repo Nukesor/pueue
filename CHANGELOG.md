@@ -12,8 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fix
 
-- Point to a new patched fork of `darwin-libproc`, as the original has been deleted.
-    This fixes the development builts for pueue on Apple platforms.
+- Switched the test suite on MacOS to use the new `libproc::processes::pids_by_type()` API to enumerate PIDs in a program group, removing the need to depend on the unmaintained darwing-librproc library. [#409](https://github.com/Nukesor/pueue/issues/409).
 
 ## [3.0.1] - 2022-12-31
 

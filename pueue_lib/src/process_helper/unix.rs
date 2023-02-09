@@ -39,16 +39,34 @@ pub fn kill_child(task_id: usize, child: &mut GroupChild) -> std::io::Result<()>
 
 #[cfg(test)]
 mod tests {
+    use log::warn;
     use std::thread::sleep;
     use std::time::Duration;
 
     use anyhow::Result;
     use command_group::CommandGroup;
+    use libproc::processes::{pids_by_type, ProcFilter};
     use pretty_assertions::assert_eq;
 
     use super::*;
     use crate::process_helper::process_exists;
-    use crate::process_helper::tests::get_process_group_pids;
+
+    /// List all PIDs that are part of the process group
+    pub fn get_process_group_pids(pgrp: u32) -> Vec<u32> {
+        match pids_by_type(ProcFilter::ByProgramGroup { pgrpid: pgrp }) {
+            Err(error) => {
+                warn!("Failed to get list of processes in process group {pgrp}: {error}");
+                Vec::new()
+            }
+            Ok(mut processes) => {
+                // MacOS doesn't list the main process in this group
+                if !processes.iter().any(|pid| pid == &pgrp) && !process_is_gone(pgrp) {
+                    processes.push(pgrp)
+                }
+                processes
+            }
+        }
+    }
 
     /// Assert that certain process id no longer exists
     fn process_is_gone(pid: u32) -> bool {
@@ -72,7 +90,7 @@ mod tests {
         let mut child = compile_shell_command("sleep 60 & sleep 60 && echo 'this is a test'")
             .group_spawn()
             .expect("Failed to spawn echo");
-        let pid: i32 = child.id().try_into().unwrap();
+        let pid = child.id();
         // Sleep a little to give everything a chance to spawn.
         sleep(Duration::from_millis(500));
 
@@ -90,7 +108,7 @@ mod tests {
         child.try_wait().unwrap_or_default();
 
         // Assert that the direct child (sh -c) has been killed.
-        assert!(process_is_gone(pid as u32));
+        assert!(process_is_gone(pid));
 
         // Assert that all child processes have been killed.
         assert_eq!(get_process_group_pids(pid).len(), 0);
@@ -105,7 +123,7 @@ mod tests {
         let mut child = compile_shell_command("sleep 60 & sleep 60 && echo 'this is a test'")
             .group_spawn()
             .expect("Failed to spawn echo");
-        let pid: i32 = child.id().try_into().unwrap();
+        let pid = child.id();
         // Sleep a little to give everything a chance to spawn.
         sleep(Duration::from_millis(500));
 
@@ -123,7 +141,7 @@ mod tests {
         child.try_wait().unwrap_or_default();
 
         // Assert that the direct child (sh -c) has been killed.
-        assert!(process_is_gone(pid as u32));
+        assert!(process_is_gone(pid));
 
         // Assert that all child processes have been killed.
         assert_eq!(get_process_group_pids(pid).len(), 0);
@@ -138,7 +156,7 @@ mod tests {
         let mut child = compile_shell_command("bash -c 'sleep 60 && sleep 60' && sleep 60")
             .group_spawn()
             .expect("Failed to spawn echo");
-        let pid: i32 = child.id().try_into().unwrap();
+        let pid = child.id();
         // Sleep a little to give everything a chance to spawn.
         sleep(Duration::from_millis(500));
 
@@ -156,7 +174,7 @@ mod tests {
         child.try_wait().unwrap_or_default();
 
         // Assert that the direct child (sh -c) has been killed.
-        assert!(process_is_gone(pid as u32));
+        assert!(process_is_gone(pid));
 
         // Assert that all child processes have been killed.
         assert_eq!(get_process_group_pids(pid).len(), 0);
@@ -171,7 +189,7 @@ mod tests {
             .arg("60")
             .group_spawn()
             .expect("Failed to spawn echo");
-        let pid: i32 = child.id().try_into().unwrap();
+        let pid = child.id();
         // Sleep a little to give everything a chance to spawn.
         sleep(Duration::from_millis(500));
 
@@ -187,7 +205,7 @@ mod tests {
         // collect the exit status; otherwise the child process hangs around as a zombie.
         child.try_wait().unwrap_or_default();
 
-        assert!(process_is_gone(pid as u32));
+        assert!(process_is_gone(pid));
 
         Ok(())
     }
@@ -201,7 +219,7 @@ mod tests {
             .arg("sleep 60 & sleep 60 && sleep 60")
             .group_spawn()
             .expect("Failed to spawn echo");
-        let pid: i32 = child.id().try_into().unwrap();
+        let pid = child.id();
         // Sleep a little to give everything a chance to spawn.
         sleep(Duration::from_millis(500));
 
@@ -219,7 +237,7 @@ mod tests {
         child.try_wait().unwrap_or_default();
 
         // Assert that the direct child (sh -c) has been killed.
-        assert!(process_is_gone(pid as u32));
+        assert!(process_is_gone(pid));
 
         // Assert that all child processes have been killed.
         assert_eq!(get_process_group_pids(pid).len(), 0);
