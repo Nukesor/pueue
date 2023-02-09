@@ -42,12 +42,13 @@ strum_macros = { workspace = true }
 tokio = { workspace = true, features = ["macros", "net", "io-util"] }
 
 [dev-dependencies]
-anyhow = "1"
-better-panic = "0.3"
-pretty_assertions = "1"
 portpicker = "0.1"
 tempdir = "0.3"
-tokio = { version = "1", features = ["time"] }
+
+anyhow = { workspace = true }
+better-panic = { workspace = true }
+pretty_assertions = { workspace = true }
+tokio = { workspace = true }
 
 # --- Platform specific dependencies ---
 # Windows
