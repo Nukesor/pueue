@@ -6,7 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project adheres **somewhat** to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 The concept of SemVer is applied to the daemon/client API, but not the library API itself.
 
-## [0.21.1] - 2023-02-08
+## [0.21.4] - unreleased
+
+## Fixed
+
+## [0.21.3] - 2023-02-12
+
+### Changed
+
+- Switched the test suite on MacOS to use the new `libproc::processes::pids_by_type()` API to enumerate PIDs in a program group, removing the need to depend on the unmaintained darwing-librproc library. [#409](https://github.com/Nukesor/pueue/issues/409).
+
+## [0.21.2] - 2023-02-08
 
 ### Fix
 
