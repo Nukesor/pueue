@@ -309,14 +309,14 @@ impl Client {
                 let tasks = state.tasks.values().cloned().collect();
                 let output =
                     print_state(*state, tasks, &self.subcommand, &self.style, &self.settings)?;
-                print!("{output}");
+                println!("{output}");
             }
             Message::LogResponse(task_logs) => {
                 print_logs(task_logs, &self.subcommand, &self.style, &self.settings)
             }
             Message::GroupResponse(groups) => {
                 let group_text = format_groups(groups, &self.style);
-                print!("{group_text}");
+                println!("{group_text}");
             }
             Message::Stream(text) => {
                 print!("{text}");
