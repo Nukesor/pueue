@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## Fixed
 
 - Switched the test suite on MacOS to use the new `libproc::processes::pids_by_type()` API to enumerate PIDs in a program group, removing the need to depend on the unmaintained darwing-librproc library. [#409](https://github.com/Nukesor/pueue/issues/409).
+- Fixed missing newlines after `status`, `log` and `follow`
 
 ## [3.1.0] - 2023-02-08
 
