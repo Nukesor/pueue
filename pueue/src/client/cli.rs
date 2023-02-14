@@ -13,62 +13,62 @@ use super::commands::WaitTargetStatus;
 #[derive(Parser, Debug)]
 pub enum SubCommand {
     /// Enqueue a task for execution.
-    #[clap(trailing_var_arg = true)]
+    #[command(trailing_var_arg = true)]
     Add {
         /// The command to be added.
-        #[clap(required = true, num_args(1..), value_hint = ValueHint::CommandWithArguments)]
+        #[arg(required = true, num_args(1..), value_hint = ValueHint::CommandWithArguments)]
         command: Vec<String>,
 
         /// Specify current working directory.
-        #[clap(name = "working-directory", short = 'w', long, value_hint = ValueHint::DirPath)]
+        #[arg(name = "working-directory", short = 'w', long, value_hint = ValueHint::DirPath)]
         working_directory: Option<PathBuf>,
 
         /// Escape any special shell characters (" ", "&", "!", etc.).
         /// Beware: This implicitly disables nearly all shell specific syntax ("&&", "&>").
-        #[clap(short, long)]
+        #[arg(short, long)]
         escape: bool,
 
         /// Immediately start the task.
-        #[clap(name = "immediate", short, long, conflicts_with = "stashed")]
+        #[arg(name = "immediate", short, long, conflicts_with = "stashed")]
         start_immediately: bool,
 
         /// Create the task in Stashed state.
         /// Useful to avoid immediate execution if the queue is empty.
-        #[clap(name = "stashed", short, long, conflicts_with = "immediate")]
+        #[arg(name = "stashed", short, long, conflicts_with = "immediate")]
         stashed: bool,
 
         /// Prevents the task from being enqueued until <delay> elapses. See "enqueue" for accepted formats.
-        #[clap(name = "delay", short, long, conflicts_with = "immediate", value_parser = parse_delay_until)]
+        #[arg(name = "delay", short, long, conflicts_with = "immediate", value_parser = parse_delay_until)]
         delay_until: Option<DateTime<Local>>,
 
         /// Assign the task to a group. Groups kind of act as separate queues.
         /// I.e. all groups run in parallel and you can specify the amount of parallel tasks for each group.
         /// If no group is specified, the default group will be used.
-        #[clap(name = "group", short, long)]
+        #[arg(name = "group", short, long)]
         group: Option<String>,
 
         /// Start the task once all specified tasks have successfully finished.
         /// As soon as one of the dependencies fails, this task will fail as well.
-        #[clap(name = "after", short, long, num_args(1..))]
+        #[arg(name = "after", short, long, num_args(1..))]
         dependencies: Vec<usize>,
 
         /// Add some information for yourself.
         /// This string will be shown in the "status" table.
         /// There's no additional logic connected to it.
-        #[clap(short, long)]
+        #[arg(short, long)]
         label: Option<String>,
 
         /// Only return the task id instead of a text.
         /// This is useful when scripting and working with dependencies.
-        #[clap(short, long)]
+        #[arg(short, long)]
         print_task_id: bool,
     },
     /// Remove tasks from the list.
     /// Running or paused tasks need to be killed first.
-    #[clap(alias("rm"))]
+    #[command(alias("rm"))]
     Remove {
         /// The task ids to be removed.
-        #[clap(required = true)]
+        #[arg(required = true)]
         task_ids: Vec<usize>,
     },
     /// Switches the queue position of two commands.
@@ -83,11 +83,11 @@ pub enum SubCommand {
     /// You have to enqueue them or start them by hand.
     Stash {
         /// Stash these specific tasks.
-        #[clap(required = true)]
+        #[arg(required = true)]
         task_ids: Vec<usize>,
     },
     /// Enqueue stashed tasks. They'll be handled normally afterwards.
-    #[clap(after_help = "DELAY FORMAT:
+    #[command(after_help = "DELAY FORMAT:
 
     The --delay argument must be either a number of seconds or a \"date expression\" similar to GNU \
     \"date -d\" with some extensions. It does not attempt to parse all natural language, but is \
@@ -114,14 +114,14 @@ pub enum SubCommand {
         task_ids: Vec<usize>,
 
         /// Delay enqueuing these tasks until <delay> elapses. See DELAY FORMAT below.
-        #[clap(name = "delay", short, long, value_parser = parse_delay_until)]
+        #[arg(name = "delay", short, long, value_parser = parse_delay_until)]
         delay_until: Option<DateTime<Local>>,
     },
 
     /// Resume operation of specific tasks or groups of tasks.
     /// By default, this resumes the default group and all its tasks.
     /// Can also be used force-start specific tasks.
-    #[clap(verbatim_doc_comment)]
+    #[command(verbatim_doc_comment)]
     Start {
         /// Start these specific tasks. Paused tasks will resumed.
         /// Queued or Stashed tasks will be force-started.
@@ -129,93 +129,93 @@ pub enum SubCommand {
 
         /// Resume a specific group and all paused tasks in it.
         /// The group will be set to running and its paused tasks will be resumed.
-        #[clap(short, long, conflicts_with = "all")]
+        #[arg(short, long, conflicts_with = "all")]
         group: Option<String>,
 
         /// Resume all groups!
         /// All groups will be set to running and paused tasks will be resumed.
-        #[clap(short, long)]
+        #[arg(short, long)]
         all: bool,
 
         /// Deprecated: this switch no longer has any effect.
-        #[clap(short, long)]
+        #[arg(short, long)]
         children: bool,
     },
 
     /// Restart task(s).
     /// Identical tasks will be created and by default enqueued.
     /// By default, a new task will be created.
-    #[clap(alias("re"))]
+    #[command(alias("re"))]
     Restart {
         /// Restart these specific tasks.
         task_ids: Vec<usize>,
 
         /// Restart all failed tasks accross all groups.
         /// Nice to use in combination with `-i/--in-place`.
-        #[clap(short, long)]
+        #[arg(short, long)]
         all_failed: bool,
 
         /// Like `--all-failed`, but only restart tasks failed tasks of a specific group.
         /// The group will be set to running and its paused tasks will be resumed.
-        #[clap(short = 'g', long, conflicts_with = "all_failed")]
+        #[arg(short = 'g', long, conflicts_with = "all_failed")]
         failed_in_group: Option<String>,
 
         /// Immediately start the tasks, no matter how many open slots there are.
         /// This will ignore any dependencies tasks may have.
-        #[clap(short = 'k', long, conflicts_with = "stashed")]
+        #[arg(short = 'k', long, conflicts_with = "stashed")]
         start_immediately: bool,
 
         /// Set the restarted task to a "Stashed" state.
         /// Useful to avoid immediate execution.
-        #[clap(short, long)]
+        #[arg(short, long)]
         stashed: bool,
 
         /// Restart the task by reusing the already existing tasks.
         /// This will overwrite any previous logs of the restarted tasks.
-        #[clap(short, long)]
+        #[arg(short, long)]
         in_place: bool,
 
         /// Restart the task by creating a new identical tasks.
         /// Only applies, if you have the restart_in_place configuration set to true.
-        #[clap(long)]
+        #[arg(long)]
         not_in_place: bool,
 
         /// Edit the tasks' commands before restarting.
-        #[clap(short, long)]
+        #[arg(short, long)]
         edit: bool,
 
         /// Edit the tasks' paths before restarting.
-        #[clap(short = 'p', long)]
+        #[arg(short = 'p', long)]
         edit_path: bool,
 
         /// Edit the tasks' labels before restarting.
-        #[clap(short = 'l', long)]
+        #[arg(short = 'l', long)]
         edit_label: bool,
     },
 
     /// Either pause running tasks or specific groups of tasks.
     /// By default, pauses the default group and all its tasks.
     /// A paused queue (group) won't start any new tasks.
-    #[clap(verbatim_doc_comment)]
+    #[command(verbatim_doc_comment)]
     Pause {
         /// Pause these specific tasks.
         /// Does not affect the default group, groups or any other tasks.
         task_ids: Vec<usize>,
 
         /// Pause a specific group.
-        #[clap(short, long, conflicts_with = "all")]
+        #[arg(short, long, conflicts_with = "all")]
         group: Option<String>,
 
         /// Pause all groups!
-        #[clap(short, long)]
+        #[arg(short, long)]
         all: bool,
 
         /// Only pause the specified group and let already running tasks finish by themselves.
-        #[clap(short, long)]
+        #[arg(short, long)]
         wait: bool,
 
         /// Deprecated: this switch no longer has any effect.
-        #[clap(short, long)]
+        #[arg(short, long)]
         children: bool,
     },
 
@@ -226,21 +226,21 @@ pub enum SubCommand {
         task_ids: Vec<usize>,
 
         /// Kill all running tasks in a group. This also pauses the group.
-        #[clap(short, long, conflicts_with = "all")]
+        #[arg(short, long, conflicts_with = "all")]
         group: Option<String>,
 
         /// Kill all running tasks across ALL groups. This also pauses all groups.
-        #[clap(short, long)]
+        #[arg(short, long)]
         all: bool,
 
         /// Deprecated: this switch no longer has any effect.
-        #[clap(short, long)]
+        #[arg(short, long)]
         children: bool,
 
         /// Send a UNIX signal instead of simply killing the process.
         /// DISCLAIMER: This bypasses Pueue's process handling logic!
         ///     You might enter weird invalid states, use at your own descretion.
-        #[clap(short, long, ignore_case(true))]
+        #[arg(short, long, ignore_case(true))]
         signal: Option<Signal>,
     },
 
@@ -256,28 +256,28 @@ pub enum SubCommand {
     /// Edit the command, path or label of a stashed or queued task.
     /// By default only the command is edited.
     /// Multiple properties can be added in one go.
-    #[clap(verbatim_doc_comment)]
+    #[command(verbatim_doc_comment)]
     Edit {
         /// The task's id.
         task_id: usize,
 
         /// Edit the task's command.
-        #[clap(short, long)]
+        #[arg(short, long)]
         command: bool,
 
         /// Edit the task's path.
-        #[clap(short, long)]
+        #[arg(short, long)]
         path: bool,
 
         /// Edit the task's label.
-        #[clap(short, long)]
+        #[arg(short, long)]
         label: bool,
     },
 
     /// Use this to add or remove groups.
     /// By default, this will simply display all known groups.
     Group {
-        #[clap(subcommand)]
+        #[command(subcommand)]
         cmd: Option<GroupCommand>,
     },
 
@@ -290,10 +290,10 @@ pub enum SubCommand {
         /// Print the current state as json to stdout.
         /// This does not include the output of tasks.
         /// Use `log -j` if you want everything.
-        #[clap(short, long)]
+        #[arg(short, long)]
         json: bool,
 
-        #[clap(short, long)]
+        #[arg(short, long)]
         /// Only show tasks of a specific group
         group: Option<String>,
     },
@@ -301,11 +301,11 @@ pub enum SubCommand {
     /// Accept a list or map of JSON pueue tasks via stdin and display it just like "status".
     /// A simple example might look like this:
     /// "pueue status --json | jq -c '.tasks' | pueue format-status"
-    #[clap(after_help = "DISCLAIMER:
+    #[command(after_help = "DISCLAIMER:
     This command is a temporary workaround until a proper filtering language for \"status\" has
     been implemented. It might be removed in the future.")]
     FormatStatus {
-        #[clap(short, long)]
+        #[arg(short, long)]
         /// Only show tasks of a specific group
         group: Option<String>,
     },
@@ -321,22 +321,22 @@ pub enum SubCommand {
         /// By default only the last lines will be returned unless --full is provided.
         /// Take care, as the json cannot be streamed!
         /// If your logs are really huge, using --full can use all of your machine's RAM.
-        #[clap(short, long)]
+        #[arg(short, long)]
         json: bool,
 
         /// Only print the last X lines of each task's output.
         /// This is done by default if you're looking at multiple tasks.
-        #[clap(short, long, conflicts_with = "full")]
+        #[arg(short, long, conflicts_with = "full")]
         lines: Option<usize>,
 
         /// Show the whole output.
-        #[clap(short, long)]
+        #[arg(short, long)]
         full: bool,
     },
 
     /// Follow the output of a currently running task.
     /// This command works like "tail -f".
-    #[clap(alias("fo"))]
+    #[command(alias("fo"))]
     Follow {
         /// The id of the task you want to watch.
         /// If no or multiple tasks are running, you have to specify the id.
@@ -344,7 +344,7 @@ pub enum SubCommand {
         task_id: Option<usize>,
 
         /// Only print the last X lines of the output before following
-        #[clap(short, long)]
+        #[arg(short, long)]
         lines: Option<usize>,
     },
 
@@ -357,41 +357,41 @@ pub enum SubCommand {
         task_ids: Vec<usize>,
 
         /// Wait for all tasks in a specific group
-        #[clap(short, long, conflicts_with = "all")]
+        #[arg(short, long, conflicts_with = "all")]
         group: Option<String>,
 
         /// Wait for all tasks across all groups and the default group.
-        #[clap(short, long)]
+        #[arg(short, long)]
         all: bool,
 
         /// Don't show any log output while waiting
-        #[clap(short, long)]
+        #[arg(short, long)]
         quiet: bool,
 
         /// Wait for tasks to reach a specific task status.
-        #[clap(short, long)]
+        #[arg(short, long)]
         status: Option<WaitTargetStatus>,
     },
 
     /// Remove all finished tasks from the list.
     Clean {
         /// Only clean tasks that finished successfully.
-        #[clap(short, long)]
+        #[arg(short, long)]
         successful_only: bool,
 
         /// Only clean tasks of a specific group
-        #[clap(short, long)]
+        #[arg(short, long)]
         group: Option<String>,
     },
 
     /// Kill all tasks, clean up afterwards and reset EVERYTHING!
     Reset {
         /// Deprecated: this switch no longer has any effect.
-        #[clap(short, long)]
+        #[arg(short, long)]
         children: bool,
 
         /// Don't ask for any confirmation.
-        #[clap(short, long)]
+        #[arg(short, long)]
         force: bool,
     },
 
@@ -402,11 +402,11 @@ pub enum SubCommand {
     /// By default, adjusts the amount of the default group.
     Parallel {
         /// The amount of allowed parallel tasks.
-        #[clap(value_parser = min_one)]
+        #[arg(value_parser = min_one)]
         parallel_tasks: Option<usize>,
 
         /// Set the amount for a specific group.
-        #[clap(name = "group", short, long)]
+        #[arg(name = "group", short, long)]
         group: Option<String>,
     },
 
@@ -414,10 +414,10 @@ pub enum SubCommand {
     /// This can be ignored during normal operations.
     Completions {
         /// The target shell.
-        #[clap(value_enum)]
+        #[arg(value_enum)]
         shell: Shell,
         /// The output directory to which the file should be written.
-        #[clap(value_hint = ValueHint::DirPath)]
+        #[arg(value_hint = ValueHint::DirPath)]
         output_directory: PathBuf,
     },
 }
@@ -429,7 +429,7 @@ pub enum GroupCommand {
         name: String,
 
         /// Set the amount of parallel tasks this group can have.
-        #[clap(short, long, value_parser = min_one)]
+        #[arg(short, long, value_parser = min_one)]
         parallel: Option<usize>,
     },
 
@@ -455,7 +455,7 @@ pub enum Shell {
 }
 
 #[derive(Parser, Debug)]
-#[clap(
+#[command(
     name = "Pueue client",
     about = "Interact with the Pueue daemon",
     author,
@@ -463,23 +463,23 @@ pub enum Shell {
 )]
 pub struct CliArguments {
     /// Verbose mode (-v, -vv, -vvv)
-    #[clap(short, long, action = ArgAction::Count)]
+    #[arg(short, long, action = ArgAction::Count)]
     pub verbose: u8,
 
     /// Colorize the output; auto enables color output when connected to a tty.
-    #[clap(long, value_enum, default_value = "auto")]
+    #[arg(long, value_enum, default_value = "auto")]
     pub color: ColorChoice,
 
     /// Path to a specific pueue config file to use.
     /// This ignores all other config files.
-    #[clap(short, long, value_hint = ValueHint::FilePath)]
+    #[arg(short, long, value_hint = ValueHint::FilePath)]
     pub config: Option<PathBuf>,
 
     /// The name of the profile that should be loaded from your config file.
-    #[clap(short, long)]
+    #[arg(short, long)]
     pub profile: Option<String>,
 
-    #[clap(subcommand)]
+    #[command(subcommand)]
     pub cmd: Option<SubCommand>,
 }
 
