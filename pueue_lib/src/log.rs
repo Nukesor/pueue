@@ -2,6 +2,8 @@ use std::fs::{read_dir, remove_file, File};
 use std::io::{self, prelude::*, Read, SeekFrom};
 use std::path::{Path, PathBuf};
 
+use chardetng::EncodingDetector;
+use encoding_rs::{CoderResult, Decoder, Encoding, UTF_8};
 use log::error;
 use rev_buf_reader::RevBufReader;
 use snap::write::FrameEncoder;
@@ -201,4 +203,84 @@ pub fn seek_to_last_lines(file: &mut File, amount: usize) -> Result<bool, Error>
     }
 
     Ok(false)
+}
+
+/// Try to detect the encoding of contents in `read`
+pub fn detect_encoding<R>(read: &mut R) -> Result<&'static Encoding, io::Error>
+where
+    R: Read,
+{
+    let mut head_bytes = [0; 1024];
+    let _ = read.read(&mut head_bytes)?;
+
+    let mut detector = EncodingDetector::new();
+    detector.feed(&head_bytes, true);
+    Ok(detector.guess(None, true))
+}
+
+/// Copy `read` into `write` with encode conversions if necessary
+pub fn copy_with_conversion_to_utf8<R, W>(
+    read: &mut R,
+    write: &mut W,
+    mut decoder: Decoder,
+) -> Result<(), io::Error>
+where
+    R: Read,
+    W: Write,
+{
+    if decoder.encoding() == UTF_8 {
+        // no need to convert
+        io::copy(read, write)?;
+        return Ok(());
+    }
+
+    // decode bytes using encoding_rs streaming API
+    // see: https://docs.rs/encoding_rs/latest/encoding_rs/index.html#examples
+    let mut buf_input = [0; 4096];
+    let mut buf_output = [0; 4096];
+    let mut input_pos = 0;
+    let mut output_pos = 0;
+    loop {
+        if read.read(&mut buf_input[0..])? == 0 {
+            // EOF
+            break;
+        }
+        loop {
+            let (result, read, written, _) = decoder.decode_to_utf8(
+                &buf_input[input_pos..],
+                &mut buf_output[output_pos..],
+                false,
+            );
+            input_pos += read;
+            output_pos += written;
+            match result {
+                CoderResult::InputEmpty => {
+                    // have decoded bytes in buf_input completely, so go for next chunk
+                    break;
+                }
+                CoderResult::OutputFull => {
+                    // flush buf_output
+                    write.write_all(&buf_output[..output_pos])?;
+                    output_pos = 0;
+                    continue;
+                }
+            }
+        }
+    }
+    loop {
+        let (result, _, written, _) =
+            decoder.decode_to_utf8(b"", &mut buf_output[output_pos..], true);
+        output_pos += written;
+        write.write_all(&buf_output[..output_pos])?;
+        output_pos = 0;
+        match result {
+            CoderResult::InputEmpty => {
+                break;
+            }
+            CoderResult::OutputFull => {
+                continue;
+            }
+        }
+    }
+    Ok(())
 }

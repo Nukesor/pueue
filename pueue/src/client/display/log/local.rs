@@ -1,9 +1,11 @@
 use std::fs::File;
-use std::io::{self, Stdout};
+use std::io::{self, Seek, Stdout};
 
 use comfy_table::*;
 
-use pueue_lib::log::{get_log_file_handle, seek_to_last_lines};
+use pueue_lib::log::{
+    copy_with_conversion_to_utf8, detect_encoding, get_log_file_handle, seek_to_last_lines,
+};
 use pueue_lib::settings::Settings;
 
 use crate::client::display::OutputStyle;
@@ -64,9 +66,16 @@ fn print_local_file(stdout: &mut Stdout, file: &mut File, lines: &Option<usize>,
             println!("\n{header}{line_info}");
 
             // Print everything
-            if let Err(err) = io::copy(file, stdout) {
-                println!("Failed reading local log file: {err}");
+            if let Err(err) = convert_and_copy(stdout, file) {
+                println!("Failed reading local log file: {err}")
             };
         }
     }
+}
+
+fn convert_and_copy(stdout: &mut Stdout, file: &mut File) -> Result<(), io::Error> {
+    let encoding = detect_encoding(file)?;
+    file.rewind()?;
+    copy_with_conversion_to_utf8(file, stdout, encoding.new_decoder())?;
+    Ok(())
 }
