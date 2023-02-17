@@ -207,6 +207,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
+name = "chardetng"
+version = "0.1.17"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "14b8f0b65b7b08ae3c8187e8d77174de20cb6777864c6b832d8ad365999cf1ea"
+dependencies = [
+ "cfg-if",
+ "encoding_rs",
+ "memchr",
+]
+
+[[package]]
 name = "chrono"
 version = "0.4.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -506,6 +517,15 @@ name = "encode_unicode"
 version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a357d28ed41a50f9c765dbfe56cbc04a64e53e5fc58ba79fbc34c10ef3df831f"
+
+[[package]]
+name = "encoding_rs"
+version = "0.8.32"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "071a31f4ee85403370b58aca746f01041ede6f0da2730960ad001edc2b71b394"
+dependencies = [
+ "cfg-if",
+]
 
 [[package]]
 name = "env_logger"
@@ -1223,6 +1243,7 @@ dependencies = [
  "anyhow",
  "assert_cmd",
  "better-panic",
+ "chardetng",
  "chrono",
  "chrono-english",
  "clap",
@@ -1231,6 +1252,7 @@ dependencies = [
  "command-group",
  "crossterm",
  "ctrlc",
+ "encoding_rs",
  "env_logger",
  "handlebars",
  "log",
@@ -1264,9 +1286,11 @@ dependencies = [
  "async-trait",
  "better-panic",
  "byteorder",
+ "chardetng",
  "chrono",
  "command-group",
  "dirs",
+ "encoding_rs",
  "libproc",
  "log",
  "portpicker",
