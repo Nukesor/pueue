@@ -158,9 +158,12 @@ impl Client {
     }
 
     /// Handle all complex client-side functionalities.
-    /// Complex functionalities need some special handling and are contained
-    /// in their own functions with their own communication code.
-    /// Such functionalities includes reading local filestand sending multiple messages.
+    /// Some functionalities need special handling and are contained in their own functions
+    /// with their own communication code.
+    /// Some examples for special handling includes
+    /// - reading local files
+    /// - sending multiple messages
+    /// - interacting with other programs
     ///
     /// Returns `Ok(true)`, if the current command has been handled by this function.
     /// This indicates that the client can now shut down.
@@ -183,8 +186,9 @@ impl Client {
                     self.handle_user_confirmation("remove running tasks", &running_tasks)?;
                 }
 
-                // Let handle_simple_command to handle `reset` after getting user permission to kill
-                // running tasks
+                // Now that we got the user's consent, we return `false` and let the
+                // `handle_simple_command` function process the subcommand as usual to send
+                // a `reset` message to the daemon.
                 Ok(false)
             }
 
@@ -240,8 +244,9 @@ impl Client {
                 Ok(true)
             }
             SubCommand::Follow { task_id, lines } => {
-                // Simple log output follows for local logs don't need any communication with the daemon.
-                // Thereby we handle this separately over here.
+                // If we're supposed to read the log files from the local system, we don't have to
+                // do any communication with the daemon.
+                // Thereby we handle this in a separate function.
                 if self.settings.client.read_local_logs {
                     local_follow(
                         &mut self.stream,
@@ -252,6 +257,7 @@ impl Client {
                     .await?;
                     return Ok(true);
                 }
+                // Otherwise, we forward this to the `handle_simple_command` function.
                 Ok(false)
             }
             SubCommand::FormatStatus { .. } => {
@@ -285,7 +291,9 @@ impl Client {
         // Check if we can receive the response from the daemon
         let mut response = receive_message(&mut self.stream).await?;
 
-        // Check if we can receive the response from the daemon
+        // Handle the message.
+        // In some scenarios, such as log streaming, we should continue receiving messages
+        // from the daemon, which is why we have a while loop in place.
         while self.handle_response(response)? {
             response = receive_message(&mut self.stream).await?;
         }
@@ -330,7 +338,7 @@ impl Client {
         Ok(false)
     }
 
-    /// Prints a warning and prompt for given action and tasks.
+    /// Prints a warning and prompt for a given action and tasks.
     /// Returns `Ok(())` if the action was confirmed.
     fn handle_user_confirmation(&self, action: &str, task_ids: &[usize]) -> Result<()> {
         // printing warning and prompt

@@ -8,7 +8,7 @@ use strum_macros::{Display, EnumString};
 use crate::state::{Group, State};
 use crate::task::Task;
 
-/// Macro to simplify creating From implementations for each variant-contained
+/// Macro to simplify creating [From] implementations for each variant-contained
 /// struct; e.g. `impl_into_message!(AddMessage, Message::Add)` to make it possible
 /// to use `AddMessage { }.into()` and get a `Message::Add()` value.
 macro_rules! impl_into_message {
@@ -22,7 +22,7 @@ macro_rules! impl_into_message {
 }
 
 /// This is the main message enum. \
-/// Everything that's communicated in Pueue can be serialized as this enum.
+/// Everything that's send between the daemon and a client can be represented by this enum.
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub enum Message {
     Add(AddMessage),
