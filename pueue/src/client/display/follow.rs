@@ -1,4 +1,4 @@
-use std::io;
+use std::io::{self, Write};
 use std::path::Path;
 use std::time::Duration;
 
@@ -64,6 +64,11 @@ pub async fn follow_local_task_logs(
         // Read the next chunk of text from the last position.
         if let Err(err) = io::copy(&mut handle, &mut stdout) {
             println!("Error while reading file: {err}");
+            return Ok(());
+        };
+        // Flush the stdout buffer to actually print the output.
+        if let Err(err) = stdout.flush() {
+            println!("Error while flushing stdout: {err}");
             return Ok(());
         };
 
