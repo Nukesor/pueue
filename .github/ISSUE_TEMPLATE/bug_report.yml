@@ -1,0 +1,77 @@
+name: Bug Report 🐛
+description: Create a report to help improve the project
+labels: ["t: bug"]
+title: "[Bug]"
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please take the time to fill out all relevant the fields below.
+
+  - type: textarea
+    id: description-of-bug
+    attributes:
+      label: Describe the bug
+      description: A clear and concise description of what the bug is.
+      placeholder: A short description
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Steps to reproduce the behavior.
+      placeholder: |
+        1. I added a task with `pueue add -- this is the command`
+        2. Then I did ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: debug-output
+    attributes:
+      label: Debug logs (if relevant)
+      description: |
+        This is mostly important for crashes, panics and super weird daemon behavior.
+        Logs helps me debugging a problem, if the bug is something that's not clearly visible.
+
+        You can get detailed log output by launching `pueue` or `pueued` with the `-vvv` flag directly after the binary name.
+      placeholder: |
+        ```
+        Some log output here
+        ```
+    validations:
+      required: false
+
+  - type: input
+    id: operating-system
+    attributes:
+      label: Operating system
+      description: The operating system you're using.
+      placeholder:  iOS 8 / Windows 10 / Ubuntu 22.04
+    validations:
+      required: true
+
+  - type: input
+    id: pueue-version
+    attributes:
+      label: Pueue version
+      description: |
+        The current pueue version you're using.
+        You get the `pueue`/`pueued` version by calling `pueue --version`.
+      placeholder: v3.1.2
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: Add any other context about the problem here.
+      placeholder: |
+        Anything else you want to add.
+    validations:
+      required: false
+
