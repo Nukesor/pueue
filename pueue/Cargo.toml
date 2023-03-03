@@ -29,7 +29,7 @@ pest = "2.5"
 pest_derive = "2.5"
 shell-escape = "0.1"
 simplelog = "0.12"
-tempfile = "3.3"
+tempfile = "3"
 
 chrono = { workspace = true }
 command-group = { workspace = true }
@@ -62,4 +62,4 @@ test-log = "0.2"
 # Test specific dev-dependencies
 [target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]
 whoami = "1"
-procfs = { version = "0.14", default-features = false }
+procfs = { version = "0.15", default-features = false }
