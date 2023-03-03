@@ -13,12 +13,12 @@ body:
     attributes:
       label: A detailed description of the feature you would like to see added.
       description: |
-          Explain how that feature would look like and how it should behave.
+        Explain how that feature would look like and how it should behave.
       placeholder: |
-          I would love to see a configuration option to configure the color temperature of the terminal output.
-          For instance, this could be done by adding a new configuration field to the `pueue.yml`.
+        I would love to see a configuration option to configure the color temperature of the terminal output.
+        For instance, this could be done by adding a new configuration field to the `pueue.yml`.
 
-          It would be enough for me to have a simple toggle between a `light` and `dark` mode.
+        It would be enough for me to have a simple toggle between a `light` and `dark` mode.
     validations:
       required: true
 
@@ -31,9 +31,9 @@ body:
 
         The more information you provide, the better I understand your problem ;).
       placeholder: |
-          I'm using a light terminal colorscheme and reading Pueue's output can be really hard from time to time.
+        I'm using a light terminal colorscheme and reading Pueue's output can be really hard from time to time.
 
-          It would be awesome, if there was an option to have darker colors, so I'ts easier to read the output.
+        It would be awesome, if there was an option to have darker colors, so I'ts easier to read the output.
     validations:
       required: true
 
@@ -42,14 +42,14 @@ body:
     attributes:
       label: Alternatives
       description: |
-          If your problem can be solved in multiple ways, I would like to hear the possible alternatives you've considered.
+        If your problem can be solved in multiple ways, I would like to hear the possible alternatives you've considered.
 
-          Some problems really don't have any feasible alternatives, in that case don't bother answering this question :)
+        Some problems really don't have any feasible alternatives, in that case don't bother answering this question :)
       placeholder: |
-          I could add a wrapper around `pueue`, which takes any output and rewrites the ANSI escape codes.
-          However, this is very cumbersome and not user-friendly.
+        I could add a wrapper around `pueue` that takes any output and rewrites the ANSI escape codes.
+        However, this is very cumbersome and not user-friendly.
 
-          This is why I think this should be in the upstream project.
+        This is why I think this should be in the upstream project.
     validations:
       required: false
 
@@ -59,7 +59,6 @@ body:
       label: Additional context
       description: Add any other context about the problem here.
       placeholder: |
-        Anything else you want to add, such as sketches, screenshots, etc.
+        Anything else you want to add such as sketches, screenshots, etc.
     validations:
       required: false
-
