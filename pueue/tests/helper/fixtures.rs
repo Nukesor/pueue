@@ -128,7 +128,9 @@ pub fn daemon_base_setup() -> Result<(Settings, TempDir)> {
 
     // Create a temporary directory used for testing.
     // The path is canonicalized to ensure test consistency across platforms.
-    let tempdir = Builder::new().tempdir_in(canonicalize(temp_dir())?)?;
+    let tempdir = Builder::new()
+        .prefix("pueue-")
+        .tempdir_in(canonicalize(temp_dir())?)?;
     let tempdir_path = tempdir.path();
 
     std::fs::create_dir(tempdir_path.join("certs")).unwrap();

@@ -1,4 +1,4 @@
-use tempdir::TempDir;
+use tempfile::{Builder, TempDir};
 
 use portpicker::pick_unused_port;
 use pueue_lib::settings::*;
@@ -7,7 +7,7 @@ pub fn get_shared_settings(
     #[cfg_attr(target_os = "windows", allow(unused_variables))] use_unix_socket: bool,
 ) -> (Shared, TempDir) {
     // Create a temporary directory used for testing.
-    let tempdir = TempDir::new("pueue_lib").unwrap();
+    let tempdir = Builder::new().prefix("pueue_lib-").tempdir().unwrap();
     let tempdir_path = tempdir.path();
 
     std::fs::create_dir(tempdir_path.join("certs")).unwrap();

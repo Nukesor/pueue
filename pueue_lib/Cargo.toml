@@ -43,7 +43,7 @@ tokio = { workspace = true, features = ["macros", "net", "io-util"] }
 
 [dev-dependencies]
 portpicker = "0.1"
-tempdir = "0.3"
+tempfile = "3"
 
 anyhow = { workspace = true }
 better-panic = { workspace = true }
