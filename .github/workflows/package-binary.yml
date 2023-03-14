@@ -102,6 +102,7 @@ jobs:
           file: ${{ matrix.client_artifact_name }}
           args: --lzma
           strip: ${{ matrix.strip }}
+        if: matrix.target != 'x86_64-pc-windows-msvc'
 
       - name: Compress daemon
         uses: svenstaro/upx-action@v2
@@ -109,6 +110,7 @@ jobs:
           file: ${{ matrix.daemon_artifact_name }}
           args: --lzma
           strip: ${{ matrix.strip }}
+        if: matrix.target != 'x86_64-pc-windows-msvc'
 
       - name: Upload client binaries to release
         uses: svenstaro/upload-release-action@v2
