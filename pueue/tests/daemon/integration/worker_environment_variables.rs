@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use pueue_lib::state::PUEUE_DEFAULT_GROUP;
+use pueue_lib::{network::message::TaskSelection, state::PUEUE_DEFAULT_GROUP};
 
 use crate::helper::*;
 
@@ -35,18 +35,26 @@ async fn test_single_worker() -> Result<()> {
 /// Slots should be properly freed and re-used.
 /// Add some tasks to a group with three slots:
 ///
-/// Task0-2 should be started in quick succession.
-/// Task3 should take Task0's slot once it's finished.
-/// Task4 should take Task1's slot.
+/// Task0-2 are started in parallel.
+/// Task3-4 are started in parallel once Task0-2 finished.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn test_multiple_worker() -> Result<()> {
     let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 
-    // Spawn three tasks that run in parallel and wait for them.
+    // Pause the group before adding the tasks.
+    // Adding tasks takes a while and the first task might already be finished
+    // when we add the last one.
+    pause_tasks(shared, TaskSelection::Group("test_3".to_string())).await?;
+
+    // Add three tasks. They will be started in the same main loop iteration
+    // and run in parallel.
     for _ in 0..3 {
-        assert_success(add_env_task_to_group(shared, "sleep 0.3", "test_3").await?);
+        assert_success(add_env_task_to_group(shared, "sleep 0.1", "test_3").await?);
     }
+
+    // Start and wait for the tasks
+    start_tasks(shared, TaskSelection::Group("test_3".to_string())).await?;
     wait_for_task_condition(shared, 2, |task| task.is_done()).await?;
 
     // The first three tasks should have the same worker id's as the task ids.
@@ -58,9 +66,11 @@ async fn test_multiple_worker() -> Result<()> {
 
     // Spawn two more tasks and wait for them.
     // They should now get worker0 and worker1, as there aren't any other running tasks.
+    pause_tasks(shared, TaskSelection::Group("test_3".to_string())).await?;
     for _ in 0..2 {
-        assert_success(add_env_task_to_group(shared, "sleep 0.3", "test_3").await?);
+        assert_success(add_env_task_to_group(shared, "sleep 0.1", "test_3").await?);
     }
+    start_tasks(shared, TaskSelection::Group("test_3".to_string())).await?;
     wait_for_task_condition(shared, 4, |task| task.is_done()).await?;
 
     let state = get_state(shared).await?;
@@ -72,7 +82,7 @@ async fn test_multiple_worker() -> Result<()> {
     Ok(())
 }
 
-/// Make sure the worker pools are properly initialized when maually adding a new group.
+/// Make sure the worker pools are properly initialized when manually adding a new group.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn test_worker_for_new_pool() -> Result<()> {
     let daemon = daemon().await?;

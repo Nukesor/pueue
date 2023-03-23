@@ -4,8 +4,8 @@ use std::collections::BTreeMap;
 /// This structure is needed to manage worker pools for groups.
 /// It's a newtype pattern around a nested BTreeMap, which implements some convenience functions.
 ///
-/// The datastructure contains these types of data:
-/// BTreeMap<group, BTreeMap<group_worker_id, (task_id, Subprocess handle)>
+/// The datastructure represents the following data:
+/// BTreeMap<group_name, BTreeMap<group_worker_id, (task_id, subprocess_handle)>
 pub struct Children(pub BTreeMap<String, BTreeMap<usize, (usize, GroupChild)>>);
 
 impl Children {
