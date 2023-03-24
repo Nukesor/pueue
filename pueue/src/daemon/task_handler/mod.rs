@@ -38,7 +38,7 @@ mod spawn_task;
 use self::children::Children;
 
 /// This is a little helper macro, which looks at a critical result and shuts the
-/// TaskHandler down, if an error occurred. This is mostly used if the state cannot.
+/// TaskHandler down, if an error occurred. This is mostly used if the state cannot
 /// be written due to IO errors.
 /// Those errors are considered unrecoverable and we should initiate a graceful shutdown
 /// immediately.
@@ -82,8 +82,7 @@ pub struct TaskHandler {
     /// The receiver for the MPSC channel that's used to push notificatoins from our message
     /// handling to the TaskHandler.
     receiver: Receiver<Message>,
-    /// A mapping with this structure:
-    /// BTreeMap<group, BTreeMap<group_worker_id, (task_id, Subprocess handle)>
+    /// Pueue's subprocess and worker pool representation. Take a look at [Children] for more info.
     children: Children,
     /// These are the currently running callbacks. They're usually very short-lived.
     callbacks: Vec<Child>,

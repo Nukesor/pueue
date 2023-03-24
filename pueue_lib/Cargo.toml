@@ -19,7 +19,7 @@ anyhow = "1.0"
 async-trait = "0.1"
 byteorder = "1.4"
 chrono = { version = "0.4", features = ["serde"] }
-dirs = "4.0"
+dirs = "5.0"
 rand = "0.8"
 rcgen = "0.10"
 rev_buf_reader = "0.3"
