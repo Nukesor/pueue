@@ -4,9 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.1.3] - unreleased
+## [3.2.0] - unreleased
 
-...
+### Fix
+
+- Fix broken bash autocompletion. Temporarily changes the name in the help texts to `pueue` and `pueued` [#426](https://github.com/Nukesor/pueue/issues/426)
 
 ## [3.1.2] - 2023-02-26
 
