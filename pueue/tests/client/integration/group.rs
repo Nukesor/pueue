@@ -1,6 +1,8 @@
+use std::collections::BTreeMap;
+
 use anyhow::{Context, Result};
 use pueue_lib::network::message::*;
-use pueue_lib::state::GroupStatus;
+use pueue_lib::state::{Group, GroupStatus};
 
 use crate::client::helper::*;
 
@@ -47,6 +49,29 @@ async fn colored() -> Result<()> {
     let output = run_client_command(shared, &["--color", "always", "group"])?;
 
     assert_snapshot_matches_stdout("group__colored", output.stdout)?;
+
+    Ok(())
+}
+
+/// Make sure that getting the list of groups as json works.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn json() -> Result<()> {
+    let daemon = daemon().await?;
+    let shared = &daemon.settings.shared;
+
+    // Get the group status output
+    let output = run_client_command(shared, &["group", "--json"])?;
+    let json = String::from_utf8_lossy(&output.stdout);
+    println!("{json}");
+
+    let state = get_state(shared).await?;
+    let deserialized_groups: BTreeMap<String, Group> =
+        serde_json::from_str(&json).context("Failed to deserialize json state")?;
+
+    assert_eq!(
+        deserialized_groups, state.groups,
+        "The serialized groups differ from the actual groups from the state."
+    );
 
     Ok(())
 }
