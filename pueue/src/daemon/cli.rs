@@ -4,7 +4,7 @@ use clap::{ArgAction, Parser, ValueHint};
 
 #[derive(Parser, Debug)]
 #[command(
-    name = "Pueue daemon",
+    name = "pueued",
     about = "Start the Pueue daemon",
     author,
     version

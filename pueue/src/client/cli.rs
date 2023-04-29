@@ -456,7 +456,7 @@ pub enum Shell {
 
 #[derive(Parser, Debug)]
 #[command(
-    name = "Pueue client",
+    name = "pueue",
     about = "Interact with the Pueue daemon",
     author,
     version
