@@ -48,20 +48,19 @@ pub fn print_logs(
 ) {
     // Get actual commandline options.
     // This is necessary to know how we should display/return the log information.
-    let (json, task_ids, lines, full) = match cli_command {
-        SubCommand::Log {
-            json,
-            task_ids,
-            lines,
-            full,
-        } => (*json, task_ids.clone(), *lines, *full),
-        _ => panic!("Got wrong Subcommand {cli_command:?} in print_log. This shouldn't happen"),
+    let SubCommand::Log {
+        json,
+        task_ids,
+        lines,
+        full,
+        } = cli_command else {
+        panic!("Got wrong Subcommand {cli_command:?} in print_log. This shouldn't happen");
     };
 
-    let lines = determine_log_line_amount(full, &lines);
+    let lines = determine_log_line_amount(*full, &lines);
 
     // Return the server response in json representation.
-    if json {
+    if *json {
         print_log_json(task_logs, settings, lines);
         return;
     }

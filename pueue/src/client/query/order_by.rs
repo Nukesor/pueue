@@ -1,3 +1,4 @@
+#![allow(bindings_with_variant_name)]
 use anyhow::Result;
 use pest::iterators::Pair;
 

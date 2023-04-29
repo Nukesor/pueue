@@ -1,3 +1,4 @@
+#![allow(bindings_with_variant_name)]
 use anyhow::{bail, Context, Result};
 use chrono::{DateTime, Duration, Local, NaiveDate, NaiveDateTime, NaiveTime};
 use pest::iterators::Pair;
