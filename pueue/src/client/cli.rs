@@ -42,7 +42,7 @@ pub enum SubCommand {
 
         /// Create the task in Stashed state.
         /// Useful to avoid immediate execution if the queue is empty.
-        #[arg(name = "stashed", short, long, conflicts_with = "immediate")]
+        #[arg(short, long, conflicts_with = "immediate")]
         stashed: bool,
 
         /// Prevents the task from being enqueued until <delay> elapses. See "enqueue" for accepted formats.
@@ -52,13 +52,18 @@ pub enum SubCommand {
         /// Assign the task to a group. Groups kind of act as separate queues.
         /// I.e. all groups run in parallel and you can specify the amount of parallel tasks for each group.
         /// If no group is specified, the default group will be used.
-        #[arg(name = "group", short, long)]
+        #[arg(short, long)]
         group: Option<String>,
 
         /// Start the task once all specified tasks have successfully finished.
         /// As soon as one of the dependencies fails, this task will fail as well.
         #[arg(name = "after", short, long, num_args(1..))]
         dependencies: Vec<usize>,
+
+        /// Start this task with a higher priority.
+        /// The higher the number, the faster it will be processed.
+        #[arg(short='o', long, num_args(1..))]
+        priority: Option<i32>,
 
         /// Add some information for yourself.
         /// This string will be shown in the "status" table.

@@ -21,6 +21,7 @@ pub fn create_add_message(shared: &Shared, command: &str) -> AddMessage {
         group: PUEUE_DEFAULT_GROUP.to_string(),
         enqueue_at: None,
         dependencies: Vec::new(),
+        priority: None,
         label: None,
         print_task_id: false,
     }
