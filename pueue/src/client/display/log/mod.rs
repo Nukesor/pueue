@@ -57,7 +57,7 @@ pub fn print_logs(
         panic!("Got wrong Subcommand {cli_command:?} in print_log. This shouldn't happen");
     };
 
-    let lines = determine_log_line_amount(*full, &lines);
+    let lines = determine_log_line_amount(*full, lines);
 
     // Return the server response in json representation.
     if *json {
