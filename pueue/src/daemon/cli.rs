@@ -3,12 +3,7 @@ use std::path::PathBuf;
 use clap::{ArgAction, Parser, ValueHint};
 
 #[derive(Parser, Debug)]
-#[command(
-    name = "Pueue daemon",
-    about = "Start the Pueue daemon",
-    author,
-    version
-)]
+#[command(name = "pueued", about = "Start the Pueue daemon", author, version)]
 pub struct CliArguments {
     /// Verbose mode (-v, -vv, -vvv)
     #[arg(short, long, action = ArgAction::Count)]

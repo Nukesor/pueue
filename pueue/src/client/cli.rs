@@ -277,6 +277,10 @@ pub enum SubCommand {
     /// Use this to add or remove groups.
     /// By default, this will simply display all known groups.
     Group {
+        /// Print the list of groups as json.
+        #[arg(short, long)]
+        json: bool,
+
         #[command(subcommand)]
         cmd: Option<GroupCommand>,
     },
@@ -456,7 +460,7 @@ pub enum Shell {
 
 #[derive(Parser, Debug)]
 #[command(
-    name = "Pueue client",
+    name = "pueue",
     about = "Interact with the Pueue daemon",
     author,
     version

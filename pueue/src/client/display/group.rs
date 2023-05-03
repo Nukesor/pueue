@@ -5,11 +5,26 @@ use pueue_lib::{
     state::{Group, GroupStatus},
 };
 
+use crate::client::cli::SubCommand;
+
 use super::OutputStyle;
 
 /// Print some info about the daemon's current groups.
 /// This is used when calling `pueue group`.
-pub fn format_groups(message: GroupResponseMessage, style: &OutputStyle) -> String {
+pub fn format_groups(
+    message: GroupResponseMessage,
+    cli_command: &SubCommand,
+    style: &OutputStyle,
+) -> String {
+    // Get commandline options to check whether we should return the groups as json.
+    let SubCommand::Group { json, .. } = cli_command else {
+        panic!("Got wrong Subcommand {cli_command:?} in format_groups. This shouldn't happen.")
+    };
+
+    if *json {
+        return serde_json::to_string(&message.groups).unwrap();
+    }
+
     let mut text = String::new();
     let mut group_iter = message.groups.iter().peekable();
     while let Some((name, group)) = group_iter.next() {
