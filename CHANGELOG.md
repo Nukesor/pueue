@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Fix broken bash autocompletion. Temporarily changes the name in the help texts to `pueue` and `pueued` [#426](https://github.com/Nukesor/pueue/issues/426)
 
+### Change
+
+- Reword, extend and format most subcommand help texts.
+
 ## [3.1.2] - 2023-02-26
 
 ## Fixed

@@ -12,8 +12,16 @@ use super::commands::WaitTargetStatus;
 
 #[derive(Parser, Debug)]
 pub enum SubCommand {
-    /// Enqueue a task for execution.
-    #[command(trailing_var_arg = true)]
+    #[command(
+        about = "Enqueue a task for execution.\n\n\
+            There're many different options when scheduling a task.\n\
+            Check the individual option help texts for more information.\n\n\
+            Furthermore, please remember that scheduled commands are executed via your system shell.\n\
+            This means that the command needs proper shell escaping.\n\
+            The safest way to preserve shell escaping is to surround your command with quotes, for example:\n\
+            pueue add 'ls $HOME && echo \"Some string\"'",
+        trailing_var_arg = true
+    )]
     Add {
         /// The command to be added.
         #[arg(required = true, num_args(1..), value_hint = ValueHint::CommandWithArguments)]
@@ -118,10 +126,12 @@ pub enum SubCommand {
         delay_until: Option<DateTime<Local>>,
     },
 
-    #[command(about = "Resume operation of specific tasks or groups of tasks.\n\n\
+    #[command(
+        about = "Resume operation of specific tasks or groups of tasks.\n\n\
             By default, this resumes the default group and all its tasks.\n\
-            Can also be used force-start specific tasks.")]
-    #[command(verbatim_doc_comment)]
+            Can also be used force-start specific tasks.",
+        verbatim_doc_comment
+    )]
     Start {
         /// Start these specific tasks. Paused tasks will resumed.
         /// Queued or Stashed tasks will be force-started.
@@ -142,10 +152,12 @@ pub enum SubCommand {
         children: bool,
     },
 
-    #[command(about = "Restart failed or successful task(s).\n\n\
+    #[command(
+        about = "Restart failed or successful task(s).\n\n\
             By default, identical tasks will be created and enqueued, but it's possible to restart in-place.\n\
-            You can also edit a few properties, such as the path and the command, before restarting.")]
-    #[command(alias("re"))]
+            You can also edit a few properties, such as the path and the command, before restarting.",
+        alias("re")
+    )]
     Restart {
         /// Restart these specific tasks.
         task_ids: Vec<usize>,
