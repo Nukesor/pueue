@@ -301,7 +301,7 @@ where:
   - column_selection := `columns=[column]([column],)*`
   - column := `id | status | command | label | path | enqueue_at | dependencies | start | end`
   - filter := `[filter_column] [filter_op] [filter_value]`
-    (note: not all columns support all operators)
+    (note: not all columns support all operators, see \"Filter columns\" below.)
   - filter_column := `start | end | enqueue_at | status | label`
   - filter_op := `= | != | < | > | %=`
     (`%=` means 'contains', as in the test value is a substring of the column value)
@@ -311,9 +311,18 @@ where:
   - limit_type := `first | last`
   - limit_count := a positive integer
 
+Filter columns:
+  - `start`, `end`, `enqueue_at` contain a datetime
+    which support the operators `=`, `!=`, `<`, `>`
+    against test values that are:
+      - date like `YYYY-MM-DD`
+      - time like `HH:mm:ss` or `HH:mm`
+      - datetime like `YYYY-MM-DDHH:mm:ss`
+        (note there is currently no separator between the date and the time)
+
 Examples:
+  - `status=running`
   - `columns=id,status,command status=running start > 2023-05-2112:03:17 order_by command first 5`
-    (note that a datetime has no separator between the end of the date and the start of the time)
 
 The formal syntax is defined here:
 https://github.com/Nukesor/pueue/blob/main/pueue/src/client/query/syntax.pest
