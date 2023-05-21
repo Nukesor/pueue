@@ -289,6 +289,37 @@ pub enum SubCommand {
     Status {
         /// Users can specify a custom query to filter for specific values, order by a column
         /// or limit the amount of tasks listed.
+        /// Use `--help` for the full syntax definition.
+        #[arg(long_help=
+"Users can specify a custom query to filter for specific values, order by a column
+or limit the amount of tasks listed.
+
+Syntax:
+   [column_selection]? [filter]* [order_by]? [limit]?
+
+where:
+  - column_selection := `columns=[column]([column],)*`
+  - column := `id | status | command | label | path | enqueue_at | dependencies | start | end`
+  - filter := `[filter_column] [filter_op] [filter_value]`
+    (note: not all columns support all operators)
+  - filter_column := `start | end | enqueue_at | status | label`
+  - filter_op := `= | != | < | > | %=`
+    (`%=` means 'contains', as in the test value is a substring of the column value)
+  - order_by := `order_by [column] [order_direction]`
+  - order_direction := `asc | desc`
+  - limit := `[limit_type]? [limit_count]`
+  - limit_type := `first | last`
+  - limit_count := a positive integer
+
+Examples:
+  - `columns=id,status,command status=running start > 2023-05-2112:03:17 order_by command first 5`
+    (note that a datetime has no separator between the end of the date and the start of the time)
+
+The formal syntax is defined here:
+https://github.com/Nukesor/pueue/blob/main/pueue/src/client/query/syntax.pest
+
+More documention is on the query syntax PR:
+https://github.com/Nukesor/pueue/issues/350#issue-1359083118")]
         query: Vec<String>,
 
         /// Print the current state as json to stdout.
