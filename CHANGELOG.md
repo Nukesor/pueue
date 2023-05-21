@@ -14,6 +14,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Add the `-j/--json` flag to `pueue group` to get a machine readable list of all current groups. [#430](https://github.com/Nukesor/pueue/issues/430)
 - Add `pueued.plist` template to run pueue with launchd on MacOS. [#429](https://github.com/Nukesor/pueue/issues/429)
+- Add query syntax documentation to `pueue status`
+[#438](https://github.com/Nukesor/pueue/issues/429)
 
 ## [3.1.2] - 2023-02-26
 
