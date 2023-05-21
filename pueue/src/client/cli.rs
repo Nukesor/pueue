@@ -290,8 +290,8 @@ pub enum SubCommand {
         /// Users can specify a custom query to filter for specific values, order by a column
         /// or limit the amount of tasks listed.
         /// Use `--help` for the full syntax definition.
-        #[arg(long_help=
-"Users can specify a custom query to filter for specific values, order by a column
+        #[arg(
+            long_help = "Users can specify a custom query to filter for specific values, order by a column
 or limit the amount of tasks listed.
 
 Syntax:
@@ -319,7 +319,8 @@ The formal syntax is defined here:
 https://github.com/Nukesor/pueue/blob/main/pueue/src/client/query/syntax.pest
 
 More documention is on the query syntax PR:
-https://github.com/Nukesor/pueue/issues/350#issue-1359083118")]
+https://github.com/Nukesor/pueue/issues/350#issue-1359083118"
+        )]
         query: Vec<String>,
 
         /// Print the current state as json to stdout.
