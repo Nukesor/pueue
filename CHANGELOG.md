@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [3.2.0] - unreleased
 
+### Added
+
+- Add the `-j/--json` flag to `pueue group` to get a machine readable list of all current groups. [#430](https://github.com/Nukesor/pueue/issues/430)
+- Add `pueued.plist` template to run pueue with launchd on MacOS. [#429](https://github.com/Nukesor/pueue/issues/429)
+
 ### Fix
 
 - Fix broken bash autocompletion. Temporarily changes the name in the help texts to `pueue` and `pueued` [#426](https://github.com/Nukesor/pueue/issues/426)
@@ -30,12 +35,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
-- Allow to wait for specific task stati when using `pueue wait` [#400](https://github.com/Nukesor/pueue/issues/400).
+- Allow to wait for specific task state when using `pueue wait` [#400](https://github.com/Nukesor/pueue/issues/400).
 
 ### Fixed
 
 - Point to a new patched fork of `darwin-libproc`, as the original has been deleted.
-    This fixes the development builts for pueue on Apple platforms.
+    This fixes the development builds for pueue on Apple platforms.
 
 ## [3.0.1] - 2022-12-31
 

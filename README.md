@@ -48,8 +48,8 @@ The queue will be continuously processed, even if you no longer have any active 
     * Logs are persisted onto the disk and survive a crash.
 - Miscellaneous
     * A callback hook to, for instance, set up desktop notifications.
-    * JSON output for `log` and `status` for external scripting.
-    * A `wait` subcommand to allow external scripts to wait for a group (or everything) to finish.
+    * JSON output for `log` and `status` if you want to display info about tasks in another program.
+    * A `wait` subcommand to wait for specific tasks, a group (or everything) to finish.
 - A lot more. Check the -h options for each subcommand for detailed options.
 - Cross Platform
     * Linux is fully supported and battle-tested.
@@ -59,6 +59,18 @@ The queue will be continuously processed, even if you no longer have any active 
 - [Advantages over Using a Terminal Multiplexer](https://github.com/Nukesor/pueue/wiki/FAQ#advantages-over-using-a-terminal-multiplexer)
 
 
+## What Pueue is **not**
+
+Pueue is **not** designed to be a programmable (scriptable) task scheduler/executor.
+
+The focus of `pueue` lies on human interaction, i.e. it's supposed to be used by a real person on some kind of OS.
+See [the Design Goals section](#design-goals)
+
+Due to this, the feature set of `pueue` and `pueued` as well as their implementation and architecture have been kept simple by design!
+Even though it can be scripted to some degree, it hasn't been built for this and there's no official support!
+
+There's definitely the need for a complex task scheduler/executor with advanced API access and scheduling options, but this is the job for another project, as this is not what pueue has been built for.
+
 ## Installation
 
 There are a few different ways to install Pueue.
@@ -67,8 +79,8 @@ There are a few different ways to install Pueue.
 
 <a href="https://repology.org/project/pueue/versions"><img align="right" src="https://repology.org/badge/vertical-allrepos/pueue.svg" alt="Packaging status"></a>
 
-The preferred way to install Pueue is to use your system's package manager.  
-This will usually deploy service files and completions automatically.  
+The preferred way to install Pueue is to use your system's package manager.
+This will usually deploy service files and completions automatically.
 
 Pueue has been packaged for quite a few distributions, check the table on the right for more information.
 
@@ -172,8 +184,8 @@ SUBCOMMANDS:
     status           Display the current status of all tasks
     switch           Switches the queue position of two commands. Only works on queued and
                      stashed commands
-    wait             Wait until tasks are finished. This can be quite useful for scripting. By
-                     default, this will wait for all tasks in the default group to finish. Note:
+    wait             Wait until tasks are finished. By default, this will wait for all tasks
+                     in the default group to finish. Note:
                      This will also wait for all tasks that aren't somehow 'Done'. Includes:
                      [Paused, Stashed, Locked, Queued, ...]
 ```
@@ -191,8 +203,11 @@ Hence, these features won't be included as they're out of scope:
 - Multi-user task management.
 - Sophisticated task scheduling for optimal load balancing.
 - Tight system integration or integration with external tools.
+- Explicit support for scripting.
+  If you're adamant about scripting it anyway, take a look at the `pueue-lib` library, which provides proper API calls for `pueued`.
+  However, keep in mind that `pueued` is still supposed to be a minimalistic task executor with as little scheduling logic as possible.
 
-There seems to be the need for some solution that satisfies all these points mentioned above, but that isn't Pueue's job.
+There seems to be the need for some project that satisfies all these points mentioned above, but that isn't Pueue's job.
 
 ## Similar Projects
 

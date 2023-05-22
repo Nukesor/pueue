@@ -102,6 +102,7 @@ impl Client {
                 match subcommand {
                     SubCommand::Status { json, .. } => !json,
                     SubCommand::Log { json, .. } => !json,
+                    SubCommand::Group { json, .. } => !json,
                     _ => true,
                 }
             } else {
@@ -323,7 +324,7 @@ impl Client {
                 print_logs(task_logs, &self.subcommand, &self.style, &self.settings)
             }
             Message::GroupResponse(groups) => {
-                let group_text = format_groups(groups, &self.style);
+                let group_text = format_groups(groups, &self.subcommand, &self.style);
                 println!("{group_text}");
             }
             Message::Stream(text) => {
@@ -488,7 +489,7 @@ impl Client {
                 input: input.clone(),
             }
             .into(),
-            SubCommand::Group { cmd } => match cmd {
+            SubCommand::Group { cmd, .. } => match cmd {
                 Some(GroupCommand::Add { name, parallel }) => GroupMessage::Add {
                     name: name.to_owned(),
                     parallel_tasks: parallel.to_owned(),

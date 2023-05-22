@@ -289,6 +289,10 @@ pub enum SubCommand {
     #[command(about = "Use this to add or remove groups.\n\
         By default, this will simply display all known groups.")]
     Group {
+        /// Print the list of groups as json.
+        #[arg(short, long)]
+        json: bool,
+
         #[command(subcommand)]
         cmd: Option<GroupCommand>,
     },
