@@ -13,7 +13,7 @@ use super::commands::WaitTargetStatus;
 #[derive(Parser, Debug)]
 pub enum SubCommand {
     #[command(
-        about = "Enqueue a task for execution.\n\n\
+        about = "Enqueue a task for execution.\n\
             There're many different options when scheduling a task.\n\
             Check the individual option help texts for more information.\n\n\
             Furthermore, please remember that scheduled commands are executed via your system shell.\n\
@@ -127,7 +127,7 @@ pub enum SubCommand {
     },
 
     #[command(
-        about = "Resume operation of specific tasks or groups of tasks.\n\n\
+        about = "Resume operation of specific tasks or groups of tasks.\n\
             By default, this resumes the default group and all its tasks.\n\
             Can also be used force-start specific tasks.",
         verbatim_doc_comment
@@ -153,7 +153,7 @@ pub enum SubCommand {
     },
 
     #[command(
-        about = "Restart failed or successful task(s).\n\n\
+        about = "Restart failed or successful task(s).\n\
             By default, identical tasks will be created and enqueued, but it's possible to restart in-place.\n\
             You can also edit a few properties, such as the path and the command, before restarting.",
         alias("re")
@@ -205,7 +205,7 @@ pub enum SubCommand {
         edit_label: bool,
     },
 
-    #[command(about = "Either pause running tasks or specific groups of tasks.\n\n\
+    #[command(about = "Either pause running tasks or specific groups of tasks.\n\
             By default, pauses the default group and all its tasks.\n\
             A paused queue (group) won't start any new tasks.")]
     Pause {
@@ -230,7 +230,7 @@ pub enum SubCommand {
         children: bool,
     },
 
-    #[command(about = "Kill specific running tasks or whole task groups..\n\n\
+    #[command(about = "Kill specific running tasks or whole task groups..\n\
         Kills all tasks of the default group when no ids or a specific group are provided.")]
     Kill {
         /// Kill these specific tasks.
@@ -265,7 +265,7 @@ pub enum SubCommand {
     },
 
     #[command(
-        about = "Edit the command, path or label of a stashed or queued task.\n\n\
+        about = "Edit the command, path or label of a stashed or queued task.\n\
         By default only the command is edited.\n\
         Multiple properties can be added in one go."
     )]
@@ -315,7 +315,7 @@ pub enum SubCommand {
     },
 
     #[command(
-        about = "Accept a list or map of JSON pueue tasks via stdin and display it just like \"pueue status\".\n\n\
+        about = "Accept a list or map of JSON pueue tasks via stdin and display it just like \"pueue status\".\n\
             A simple example might look like this:\n\
             pueue status --json | jq -c '.tasks' | pueue format-status",
         after_help = "DISCLAIMER:\n\
@@ -328,7 +328,7 @@ pub enum SubCommand {
         group: Option<String>,
     },
 
-    #[command(about = "Display the log output of finished tasks.\n\n\
+    #[command(about = "Display the log output of finished tasks.\n\
             Only the last few lines will be shown by default.\n\
             If you want to follow the output of a task, please use the \"follow\" subcommand.")]
     Log {
@@ -366,7 +366,7 @@ pub enum SubCommand {
         lines: Option<usize>,
     },
 
-    #[command(about = "Wait until tasks are finished.\n\n\
+    #[command(about = "Wait until tasks are finished.\n\
             By default, this will wait for all tasks in the default group to finish.\n\
             Note: This will also wait for all tasks that aren't somehow 'Done'.\n\
             Includes: [Paused, Stashed, Locked, Queued, ...]")]
@@ -416,7 +416,7 @@ pub enum SubCommand {
     /// Remotely shut down the daemon. Should only be used if the daemon isn't started by a service manager.
     Shutdown,
 
-    #[command(about = "Set the amount of allowed parallel tasks\n\n\
+    #[command(about = "Set the amount of allowed parallel tasks\n\
             By default, adjusts the amount of the default group.\n\
             No tasks will be stopped, if this is lowered.\n\
             This limit is only considered when tasks are scheduled.")]
