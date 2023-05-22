@@ -67,7 +67,7 @@ pub enum SubCommand {
         label: Option<String>,
 
         /// Only return the task id instead of a text.
-        /// This is useful when scripting and working with dependencies.
+        /// This is useful when working with dependencies.
         #[arg(short, long)]
         print_task_id: bool,
     },
@@ -362,12 +362,10 @@ pub enum SubCommand {
         lines: Option<usize>,
     },
 
-    #[command(
-        about = "Wait until tasks are finished. This can be quite useful for scripting.\n\n\
+    #[command(about = "Wait until tasks are finished.\n\n\
             By default, this will wait for all tasks in the default group to finish.\n\
             Note: This will also wait for all tasks that aren't somehow 'Done'.\n\
-            Includes: [Paused, Stashed, Locked, Queued, ...]"
-    )]
+            Includes: [Paused, Stashed, Locked, Queued, ...]")]
     Wait {
         /// This allows you to wait for specific tasks to finish.
         task_ids: Vec<usize>,
