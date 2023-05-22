@@ -352,7 +352,7 @@ pub enum SubCommand {
         lines: Option<usize>,
     },
 
-    /// Wait until tasks are finished. This can be quite useful for scripting.
+    /// Wait until tasks are finished.
     /// By default, this will wait for all tasks in the default group to finish.
     /// Note: This will also wait for all tasks that aren't somehow 'Done'.
     /// Includes: [Paused, Stashed, Locked, Queued, ...]
