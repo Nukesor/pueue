@@ -21,8 +21,13 @@ impl TaskHandler {
     /// - There are free slots in the task's group
     /// - The group is running
     /// - has all its dependencies in `Done` state
+    ///
+    /// Order at which tasks are picked (descending relevancy):
+    /// - Task with highest priority first
+    /// - Task with lowest ID first
     pub fn get_next_task_id(&mut self, state: &LockedState) -> Option<usize> {
-        state
+        // Get all tasks that could theoretically be started right now.
+        let mut potential_tasks: Vec<&Task> = state
             .tasks
             .iter()
             .filter(|(_, task)| task.status == TaskStatus::Queued)
@@ -60,14 +65,32 @@ impl TaskHandler {
                 // Make sure there are free slots in the task's group
                 running_tasks < group.parallel_tasks
             })
-            .find(|(_, task)| {
+            .filter(|(_, task)| {
                 // Check whether all dependencies for this task are fulfilled.
                 task.dependencies
                     .iter()
                     .flat_map(|id| state.tasks.get(id))
                     .all(|task| matches!(task.status, TaskStatus::Done(TaskResult::Success)))
             })
-            .map(|(id, _)| *id)
+            .map(|(_, task)| {task})
+            .collect();
+
+        // Order the tasks based on their priortiy and their task id.
+        // Tasks with higher priority go first.
+        // Tasks with the same priorty are ordered by their id in ascending order, meaning that
+        // tasks with smaller id will be processed first.
+        potential_tasks.sort_by(|a, b| {
+            // If they have the same prio, decide the execution order by task_id!
+            if a.priority == b.priority {
+                return a.id.cmp(&b.id);
+            }
+
+            // Otherwise, let the priority decide.
+            b.priority.cmp(&a.priority)
+        });
+
+        // Return the id of the first task (if one has been found).
+        potential_tasks.first().map(|task| task.id)
     }
 
     /// Actually spawn a new sub process
