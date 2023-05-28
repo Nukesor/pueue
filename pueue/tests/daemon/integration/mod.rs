@@ -8,6 +8,7 @@ mod kill;
 mod log;
 mod parallel_tasks;
 mod pause;
+mod priority;
 mod remove;
 mod reset;
 mod restart;
