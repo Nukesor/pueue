@@ -11,6 +11,7 @@ contains = { ^"%=" }
 // Definition of all columns
 column_id = { ^"id" }
 column_status = { ^"status" }
+column_priority = { ^"priority" }
 column_command = { ^"command" }
 column_label = { ^"label" }
 column_path = { ^"path" }
