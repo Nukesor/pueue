@@ -10,6 +10,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Add the `-j/--json` flag to `pueue group` to get a machine readable list of all current groups. [#430](https://github.com/Nukesor/pueue/issues/430)
 - Add `pueued.plist` template to run pueue with launchd on MacOS. [#429](https://github.com/Nukesor/pueue/issues/429)
+- Add the `--priority/-o` flag to `pueue add` [#429](https://github.com/Nukesor/pueue/issues/427).
+  This feature can be used to have easier control in which order tasks are executed.
+  This was previously only possible via `pueue switch`.
 
 ### Fix
 
