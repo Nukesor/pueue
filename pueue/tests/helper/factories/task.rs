@@ -15,6 +15,20 @@ pub async fn add_task(shared: &Shared, command: &str, start_immediately: bool) -
         .context("Failed to to add task.")
 }
 
+/// Adds a task to the test daemon.
+pub async fn add_task_with_priority(
+    shared: &Shared,
+    command: &str,
+    priority: i32,
+) -> Result<Message> {
+    let mut message = create_add_message(shared, command);
+    message.priority = Some(priority);
+
+    send_message(shared, message)
+        .await
+        .context("Failed to to add task.")
+}
+
 /// Adds a task to a specific group of the test daemon.
 pub async fn add_task_to_group(shared: &Shared, command: &str, group: &str) -> Result<Message> {
     let mut message = create_add_message(shared, command);

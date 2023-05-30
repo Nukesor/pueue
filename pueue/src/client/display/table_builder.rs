@@ -25,6 +25,7 @@ pub struct TableBuilder<'a> {
     /// `pueue status`. `true` for any column means that it'll be shown in the table.
     id: bool,
     status: bool,
+    priority: bool,
     enqueue_at: bool,
     dependencies: bool,
     label: bool,
@@ -44,6 +45,7 @@ impl<'a> TableBuilder<'a> {
 
             id: true,
             status: true,
+            priority: false,
             enqueue_at: false,
             dependencies: false,
             label: false,
@@ -77,6 +79,11 @@ impl<'a> TableBuilder<'a> {
     fn determine_special_columns(&mut self, tasks: &[Task]) {
         if self.selected_columns {
             return;
+        }
+
+        // Check whether there are any tasks with a non-default priority
+        if tasks.iter().any(|task| task.priority != 0) {
+            self.priority = true;
         }
 
         // Check whether there are any delayed tasks.
@@ -114,6 +121,7 @@ impl<'a> TableBuilder<'a> {
         // First of all, make all columns invisible.
         self.id = false;
         self.status = false;
+        self.priority = false;
         self.enqueue_at = false;
         self.dependencies = false;
         self.label = false;
@@ -129,6 +137,7 @@ impl<'a> TableBuilder<'a> {
             match rule {
                 Rule::column_id => self.id = true,
                 Rule::column_status => self.status = true,
+                Rule::column_priority => self.priority = true,
                 Rule::column_enqueue_at => self.enqueue_at = true,
                 Rule::column_dependencies => self.dependencies = true,
                 Rule::column_label => self.label = true,
@@ -152,7 +161,9 @@ impl<'a> TableBuilder<'a> {
         if self.status {
             header.push(Cell::new("Status"));
         }
-
+        if self.priority {
+            header.push(Cell::new("Prio"));
+        }
         if self.enqueue_at {
             header.push(Cell::new("Enqueue At"));
         }
@@ -210,6 +221,10 @@ impl<'a> TableBuilder<'a> {
                     _ => (status_string, Color::Yellow),
                 };
                 row.add_cell(self.style.styled_cell(status_text, Some(color), None));
+            }
+
+            if self.priority {
+                row.add_cell(Cell::new(task.priority.to_string()));
             }
 
             if self.enqueue_at {
