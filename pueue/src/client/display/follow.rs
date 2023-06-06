@@ -29,7 +29,7 @@ pub async fn follow_local_task_logs(
     // Ensure that it exists and is started.
     loop {
         let Some(task) = get_task(stream, task_id).await? else {
-            println!("Pueue: The task to follow doesn't exist.");
+            println!("Pueue: The task to be followed doesn't exist.");
             std::process::exit(1);
         };
         // Task started up, we can start to follow.
@@ -73,17 +73,17 @@ pub async fn follow_local_task_logs(
     loop {
         // Check whether the file still exists. Exit if it doesn't.
         if !path.exists() {
-            println!("Log file has gone away. Has the task been removed?");
+            println!("Pueue: Log file has gone away. Has the task been removed?");
             return Ok(());
         }
         // Read the next chunk of text from the last position.
         if let Err(err) = io::copy(&mut handle, &mut stdout) {
-            println!("Error while reading file: {err}");
+            println!("Pueue: Error while reading file: {err}");
             return Ok(());
         };
         // Flush the stdout buffer to actually print the output.
         if let Err(err) = stdout.flush() {
-            println!("Error while flushing stdout: {err}");
+            println!("Pueue: Error while flushing stdout: {err}");
             return Ok(());
         };
 

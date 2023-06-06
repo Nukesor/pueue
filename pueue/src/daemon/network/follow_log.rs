@@ -56,7 +56,7 @@ pub async fn handle_follow(
             let state = state.lock().unwrap();
             let Some(task) = state.tasks.get(&task_id) else {
                 return Ok(create_failure_message(
-                        "Pueue: The followed task does not exist.",
+                        "Pueue: The task to be followed doesn't exist.",
                         ));
             };
             // The task is running or finished, we can start to follow.
@@ -95,14 +95,14 @@ pub async fn handle_follow(
         // Check whether the file still exists. Exit if it doesn't.
         if !path.exists() {
             return Ok(create_success_message(
-                "Log file has gone away. Has the task been removed?",
+                "Pueue: Log file has gone away. Has the task been removed?",
             ));
         }
         // Read the next chunk of text from the last position.
         let mut buffer = Vec::new();
 
         if let Err(err) = handle.read_to_end(&mut buffer) {
-            return Ok(create_failure_message(format!("Error: {err}")));
+            return Ok(create_failure_message(format!("Pueue Error: {err}")));
         };
         let text = String::from_utf8_lossy(&buffer).to_string();
 

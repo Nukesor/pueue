@@ -2,6 +2,7 @@ use anyhow::{Context, Result};
 use rstest::rstest;
 
 use crate::client::helper::*;
+use pueue_lib::network::message::ResetMessage;
 
 pub fn set_read_local_logs(daemon: &mut PueueDaemon, read_local_logs: bool) -> Result<()> {
     // Force the client to read remote logs via config file.
@@ -53,11 +54,86 @@ async fn last_lines(#[case] read_local_logs: bool) -> Result<()> {
     assert_success(add_task(shared, "echo \"1\n2\n3\n4\n5\n6\n7\n8\" && sleep 1", false).await?);
     wait_for_task_condition(shared, 0, |task| task.is_running()).await?;
 
-    // Execute `follow`.
-    // This will result in the client receiving the streamed output until the task finished.
+    // Follow the task, but only print the last 4 lines of the output.
     let output = run_client_command(shared, &["follow", "--lines=4"])?;
 
     assert_snapshot_matches_stdout("follow__last_lines", output.stdout)?;
+
+    Ok(())
+}
+
+/// If a task exists but hasn't started yet, wait for it to start.
+#[rstest]
+#[case(true)]
+#[case(false)]
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn wait_for_task(#[case] read_local_logs: bool) -> Result<()> {
+    let mut daemon = daemon().await?;
+    set_read_local_logs(&mut daemon, read_local_logs)?;
+    let shared = &daemon.settings.shared;
+
+    // Add a normal task that will start in 2 seconds.
+    run_client_command(shared, &["add", "--delay", "2 seconds", "echo test"])?;
+
+    // Wait for the task to start and follow until it finisheds.
+    let output = run_client_command(shared, &["follow", "0"])?;
+
+    assert_snapshot_matches_stdout("follow__default", output.stdout)?;
+
+    Ok(())
+}
+
+/// Fail when following a non-existing task
+#[rstest]
+#[case(true)]
+#[case(false)]
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn fail_on_non_existing(#[case] read_local_logs: bool) -> Result<()> {
+    let mut daemon = daemon().await?;
+    set_read_local_logs(&mut daemon, read_local_logs)?;
+    let shared = &daemon.settings.shared;
+
+    // Execute `follow` on a non-existing task.
+    // The client should exit with exit code `1`.
+    let output = run_client_command(shared, &["follow", "0"])?;
+    assert!(!output.status.success(), "follow got an unexpected exit 0");
+    assert_snapshot_matches_stdout("follow__fail_on_non_existing", output.stdout)?;
+
+    Ok(())
+}
+
+/// Fail and print an error message when following a non-existing task disappears
+#[rstest]
+#[case(true)]
+#[case(false)]
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn fail_on_disappearing(#[case] read_local_logs: bool) -> Result<()> {
+    let mut daemon = daemon().await?;
+    set_read_local_logs(&mut daemon, read_local_logs)?;
+    let shared = &daemon.settings.shared;
+
+    // Add a task echoes something and waits for a while
+    assert_success(add_task(shared, "echo test && sleep 10", false).await?);
+    wait_for_task_condition(shared, 0, |task| task.is_running()).await?;
+
+    // Reset the daemon after 2 seconds. At this point, the client will already be following the
+    // output and should notice that the task went away..
+    // This is a bit hacky, but our client test helper always waits for the command to finish
+    // and I'm feeling too lazy to add a new helper function now.
+    let moved_shared = shared.clone();
+    tokio::task::spawn(async move {
+        sleep_ms(2000).await;
+        // Reset the daemon
+        send_message(&moved_shared, ResetMessage {})
+            .await
+            .expect("Failed to send Start tasks message");
+    });
+
+    // Execute `follow` and remove the task
+    // The client should exit with exit code `1`.
+    let output = run_client_command(shared, &["follow", "0"])?;
+
+    assert_snapshot_matches_stdout("follow__fail_on_disappearing", output.stdout)?;
 
     Ok(())
 }
