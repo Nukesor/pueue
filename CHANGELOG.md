@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Add the `--priority/-o` flag to `pueue add` [#429](https://github.com/Nukesor/pueue/issues/427).
   This feature can be used to have easier control in which order tasks are executed.
   This was previously only possible via `pueue switch`.
+- Add the `success` wait status. With this status, `pueue` will exit with `1` as soon as a single task fails. [#434](https://github.com/Nukesor/pueue/issues/434)
 
 ### Fix
 
