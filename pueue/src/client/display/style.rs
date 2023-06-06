@@ -1,6 +1,6 @@
 use pueue_lib::settings::Settings;
 
-use comfy_table::Cell;
+use comfy_table::{Attribute as ComfyAttribute, Cell, Color as ComfyColor};
 use crossterm::style::{style, Attribute, Color, Stylize};
 
 /// OutputStyle wrapper for actual colors depending on settings
@@ -8,42 +8,51 @@ use crossterm::style::{style, Attribute, Color, Stylize};
 /// - Using dark colors if dark_mode is enabled
 #[derive(Debug, Clone)]
 pub struct OutputStyle {
-    /// whether or not ANSI styling is enabled
+    /// Whether or not ANSI styling is enabled
     pub enabled: bool,
-    /// red color
-    red: Color,
-    /// green color
-    green: Color,
-    /// yellow color
-    yellow: Color,
+    /// Whether dark mode is enabled.
+    pub dark_mode: bool,
 }
 
 impl OutputStyle {
     /// init color-scheme depending on settings
     pub const fn new(settings: &Settings, enabled: bool) -> Self {
-        if settings.client.dark_mode {
-            Self {
-                enabled,
-                green: Color::DarkGreen,
-                red: Color::DarkRed,
-                yellow: Color::DarkYellow,
-            }
-        } else {
-            Self {
-                enabled,
-                green: Color::Green,
-                red: Color::Red,
-                yellow: Color::Yellow,
-            }
+        Self {
+            enabled,
+            dark_mode: settings.client.dark_mode,
         }
     }
 
+    /// Return the desired crossterm color depending on whether we're in dark mode or not.
     fn map_color(&self, color: Color) -> Color {
+        if self.dark_mode {
+            match color {
+                Color::Green => Color::DarkGreen,
+                Color::Red => Color::DarkRed,
+                Color::Yellow => Color::DarkYellow,
+                _ => color,
+            }
+        } else {
+            color
+        }
+    }
+
+    /// Return the desired comfy_table color depending on whether we're in dark mode or not.
+    fn map_comfy_color(&self, color: Color) -> ComfyColor {
+        if self.dark_mode {
+            return match color {
+                Color::Green => ComfyColor::DarkGreen,
+                Color::Red => ComfyColor::DarkRed,
+                Color::Yellow => ComfyColor::DarkYellow,
+                _ => ComfyColor::White,
+            };
+        }
+
         match color {
-            Color::Green => self.green,
-            Color::Red => self.red,
-            Color::Yellow => self.yellow,
-            _ => color,
+            Color::Green => ComfyColor::Green,
+            Color::Red => ComfyColor::Red,
+            Color::Yellow => ComfyColor::Yellow,
+            _ => ComfyColor::White,
         }
     }
 
@@ -80,7 +89,7 @@ impl OutputStyle {
         &self,
         text: T,
         color: Option<Color>,
-        attribute: Option<Attribute>,
+        attribute: Option<ComfyAttribute>,
     ) -> Cell {
         let mut cell = Cell::new(text.to_string());
         // Styling disabled
@@ -89,7 +98,7 @@ impl OutputStyle {
         }
 
         if let Some(color) = color {
-            cell = cell.fg(self.map_color(color));
+            cell = cell.fg(self.map_comfy_color(color));
         }
         if let Some(attribute) = attribute {
             cell = cell.add_attribute(attribute);
