@@ -11,6 +11,9 @@ on:
       - "**/Cargo.toml"
       - "**/Cargo.lock"
   pull_request:
+    branches:
+      - main
+      - development
     paths:
       - ".github/**/*"
       - "**.rs"
