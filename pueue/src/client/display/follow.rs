@@ -10,13 +10,13 @@ use pueue_lib::{
     network::protocol::GenericStream,
 };
 
-use crate::client::commands::get_state;
+use crate::client::commands::get_task;
 
 /// Follow the log ouput of running task.
 ///
 /// If no task is specified, this will check for the following cases:
 ///
-/// - No running task: Print an error that there are no running tasks.
+/// - No running task: Wait until the task starts running.
 /// - Single running task: Follow the output of that task.
 /// - Multiple running tasks: Print out the list of possible tasks to follow.
 pub async fn follow_local_task_logs(
@@ -25,6 +25,20 @@ pub async fn follow_local_task_logs(
     task_id: usize,
     lines: Option<usize>,
 ) -> Result<()> {
+    // It might be that the task is not yet running.
+    // Ensure that it exists and is started.
+    loop {
+        let Some(task) = get_task(stream, task_id).await? else {
+            println!("Pueue: The task to follow doesn't exist.");
+            std::process::exit(1);
+        };
+        // Task started up, we can start to follow.
+        if task.is_running() || task.is_done() {
+            break;
+        }
+        sleep(Duration::from_millis(1000)).await;
+    }
+
     let mut handle = match get_log_file_handle(task_id, pueue_directory) {
         Ok(stdout) => stdout,
         Err(err) => {
@@ -48,13 +62,14 @@ pub async fn follow_local_task_logs(
         }
     }
 
+    // The interval at which the task log is checked and streamed to stdout.
+    let log_check_interval = 250;
+
     // We check in regular intervals whether the task finished.
     // This is something we don't want to do in every loop, as we have to communicate with
     // the daemon. That's why we only do it now and then.
-    let task_check_interval = 2000;
-    let mut last_check = 2000;
-
-    let log_check_interval = 100;
+    let task_check_interval = log_check_interval * 2;
+    let mut last_check = 0;
     loop {
         // Check whether the file still exists. Exit if it doesn't.
         if !path.exists() {
@@ -72,19 +87,17 @@ pub async fn follow_local_task_logs(
             return Ok(());
         };
 
-        // Do a check at the very beginning and every `task_check_interval`, whether the task:
+        // Check every `task_check_interval` whether the task:
         // 1. Still exist
         // 2. Is still running
         //
-        // In case it's not, exit.
+        // In case either is not, exit.
         if (last_check % task_check_interval) == 0 {
-            let state = get_state(stream).await?;
-            let Some(task) = state.tasks.get(&task_id) else {
-                println!("Pueue: The followed task has been removed.",);
-                return Ok(());
+            let Some(task) = get_task(stream, task_id).await? else {
+                println!("Pueue: The followed task has been removed.");
+                std::process::exit(1);
             };
-
-            // The task is done.
+            // Task exited by itself. We can stop follwing.
             if !task.is_running() {
                 return Ok(());
             }

@@ -17,11 +17,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fix
 
-- Fix broken bash autocompletion. Temporarily changes the name in the help texts to `pueue` and `pueued` [#426](https://github.com/Nukesor/pueue/issues/426)
+- Fix broken bash autocompletion. Temporarily changes the name in the help texts to `pueue` and `pueued`. [#426](https://github.com/Nukesor/pueue/issues/426)
+- Reword, extend and format most subcommand help texts.
 
 ### Change
 
-- Reword, extend and format most subcommand help texts.
+- Don't fail on `follow` if a followed task exists but hasn't started yet. [#436](https://github.com/Nukesor/pueue/issues/436)
+- Fail with a `1` exit code, when a followed task disappears or doesn't exist in the first place. [#436](https://github.com/Nukesor/pueue/issues/436)
 
 ## [3.1.2] - 2023-02-26
 
