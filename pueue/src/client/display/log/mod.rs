@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 
-use comfy_table::*;
+use comfy_table::{Attribute as ComfyAttribute, Cell, CellAlignment, Table};
+use crossterm::style::Color;
 
 use pueue_lib::network::message::TaskLogMessage;
 use pueue_lib::settings::Settings;
@@ -129,7 +130,11 @@ fn print_log(
 /// Print some information about a task, which is displayed on top of the task's log output.
 fn print_task_info(task: &Task, style: &OutputStyle) {
     // Print task id and exit code.
-    let task_cell = style.styled_cell(format!("Task {}: ", task.id), None, Some(Attribute::Bold));
+    let task_cell = style.styled_cell(
+        format!("Task {}: ", task.id),
+        None,
+        Some(ComfyAttribute::Bold),
+    );
 
     let (exit_status, color) = match &task.status {
         TaskStatus::Paused => ("paused".into(), Color::White),
@@ -167,16 +172,16 @@ fn print_task_info(task: &Task, style: &OutputStyle) {
 
     // Command and path
     table.add_row(vec![
-        style.styled_cell("Command:", None, Some(Attribute::Bold)),
+        style.styled_cell("Command:", None, Some(ComfyAttribute::Bold)),
         Cell::new(&task.command),
     ]);
     table.add_row(vec![
-        style.styled_cell("Path:", None, Some(Attribute::Bold)),
+        style.styled_cell("Path:", None, Some(ComfyAttribute::Bold)),
         Cell::new(task.path.to_string_lossy()),
     ]);
     if let Some(label) = &task.label {
         table.add_row(vec![
-            style.styled_cell("Label:", None, Some(Attribute::Bold)),
+            style.styled_cell("Label:", None, Some(ComfyAttribute::Bold)),
             Cell::new(label),
         ]);
     }
@@ -184,13 +189,13 @@ fn print_task_info(task: &Task, style: &OutputStyle) {
     // Start and end time
     if let Some(start) = task.start {
         table.add_row(vec![
-            style.styled_cell("Start:", None, Some(Attribute::Bold)),
+            style.styled_cell("Start:", None, Some(ComfyAttribute::Bold)),
             Cell::new(start.to_rfc2822()),
         ]);
     }
     if let Some(end) = task.end {
         table.add_row(vec![
-            style.styled_cell("End:", None, Some(Attribute::Bold)),
+            style.styled_cell("End:", None, Some(ComfyAttribute::Bold)),
             Cell::new(end.to_rfc2822()),
         ]);
     }

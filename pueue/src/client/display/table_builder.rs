@@ -1,6 +1,7 @@
 use chrono::Duration;
 use comfy_table::presets::UTF8_HORIZONTAL_ONLY;
-use comfy_table::*;
+use comfy_table::{Cell, ContentArrangement, Row, Table};
+use crossterm::style::Color;
 
 use pueue_lib::settings::Settings;
 use pueue_lib::task::{Task, TaskResult, TaskStatus};

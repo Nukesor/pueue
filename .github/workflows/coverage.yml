@@ -11,6 +11,9 @@ on:
       - "**/Cargo.toml"
       - "**/Cargo.lock"
   pull_request:
+    branches:
+      - main
+      - development
     paths:
       - ".github/**/*"
       - "**.rs"
@@ -26,12 +29,9 @@ jobs:
       matrix:
         target:
           - x86_64-unknown-linux-gnu
-          - x86_64-apple-darwin
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-          - os: macos-latest
-            target: x86_64-apple-darwin
 
     steps:
       - name: Checkout code

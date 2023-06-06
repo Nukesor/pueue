@@ -1,7 +1,7 @@
 use std::fs::File;
 use std::io::{self, Stdout};
 
-use comfy_table::*;
+use crossterm::style::{Attribute, Color};
 
 use pueue_lib::log::{get_log_file_handle, seek_to_last_lines};
 use pueue_lib::settings::Settings;
