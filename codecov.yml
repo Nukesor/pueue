@@ -1,12 +1,10 @@
 ignore:
+  - "**/*.lock"
+  - "**/*.toml"
+  - "**/*.md"
   - "utils"
-  - "tests"
-  - "ARCHITECTURE.md"
-  - "Cargo.lock"
-  - "Cargo.toml"
-  - "CHANGELOG.md"
+  - "**/tests"
   - "LICENSE"
-  - "README.md"
   - ".github"
   - ".gitignore"
 
