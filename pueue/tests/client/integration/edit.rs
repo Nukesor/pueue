@@ -111,9 +111,9 @@ async fn fail_to_edit_task() -> Result<()> {
     // Run a editor command that crashes.
     let mut envs = HashMap::new();
     envs.insert("EDITOR", "non_existing_test_binary");
-    let command = run_client_command_with_env(shared, &["edit", "0"], envs);
+    let output = run_client_command_with_env(shared, &["edit", "0"], envs)?;
     assert!(
-        command.is_err(),
+        !output.status.success(),
         "The command should fail, as the command isn't valid"
     );
 
