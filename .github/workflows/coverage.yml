@@ -7,6 +7,7 @@ on:
       - development
     paths:
       - ".github/**/*"
+      - ".codecov.yml"
       - "**.rs"
       - "**/Cargo.toml"
       - "**/Cargo.lock"
@@ -16,6 +17,7 @@ on:
       - development
     paths:
       - ".github/**/*"
+      - ".codecov.yml"
       - "**.rs"
       - "**/Cargo.toml"
       - "**/Cargo.lock"
