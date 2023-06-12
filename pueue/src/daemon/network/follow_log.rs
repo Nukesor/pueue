@@ -49,6 +49,24 @@ pub async fn handle_follow(
         }
     };
 
+    // It might be that the task is not yet running.
+    // Ensure that it exists and is started.
+    loop {
+        {
+            let state = state.lock().unwrap();
+            let Some(task) = state.tasks.get(&task_id) else {
+                return Ok(create_failure_message(
+                        "Pueue: The task to be followed doesn't exist.",
+                        ));
+            };
+            // The task is running or finished, we can start to follow.
+            if task.is_running() || task.is_done() {
+                break;
+            }
+        }
+        tokio::time::sleep(Duration::from_millis(1000)).await;
+    }
+
     let mut handle = match get_log_file_handle(task_id, pueue_directory) {
         Err(_) => {
             return Ok(create_failure_message(
@@ -77,14 +95,14 @@ pub async fn handle_follow(
         // Check whether the file still exists. Exit if it doesn't.
         if !path.exists() {
             return Ok(create_success_message(
-                "Log file has gone away. Has the task been removed?",
+                "Pueue: Log file has gone away. Has the task been removed?",
             ));
         }
         // Read the next chunk of text from the last position.
         let mut buffer = Vec::new();
 
         if let Err(err) = handle.read_to_end(&mut buffer) {
-            return Ok(create_failure_message(format!("Error: {err}")));
+            return Ok(create_failure_message(format!("Pueue Error: {err}")));
         };
         let text = String::from_utf8_lossy(&buffer).to_string();
 
@@ -103,9 +121,9 @@ pub async fn handle_follow(
         {
             let state = state.lock().unwrap();
             let Some(task) = state.tasks.get(&task_id) else {
-                return Ok(create_success_message(
-                    "Pueue: The followed task has been removed.",
-                ));
+                return Ok(create_failure_message(
+                        "Pueue: The followed task has been removed.",
+                        ));
             };
 
             // The task is done, just close the stream.
