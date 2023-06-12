@@ -96,6 +96,7 @@ pub struct AddMessage {
     pub group: String,
     pub enqueue_at: Option<DateTime<Local>>,
     pub dependencies: Vec<usize>,
+    pub priority: Option<i32>,
     pub label: Option<String>,
     pub print_task_id: bool,
 }

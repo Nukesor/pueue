@@ -1,4 +1,4 @@
-use comfy_table::{Attribute, Color};
+use crossterm::style::{Attribute, Color};
 
 use pueue_lib::{
     network::message::GroupResponseMessage,

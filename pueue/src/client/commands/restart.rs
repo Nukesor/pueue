@@ -113,6 +113,7 @@ pub async fn restart(
             group: task.group.clone(),
             enqueue_at: None,
             dependencies: Vec::new(),
+            priority: Some(task.priority),
             label: edited_props.label.or_else(|| task.label.clone()),
             print_task_id: false,
         };

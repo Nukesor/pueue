@@ -6,15 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [3.2.0] - unreleased
 
-### Fix
-
-- Fix broken bash autocompletion. Temporarily changes the name in the help texts to `pueue` and `pueued` [#426](https://github.com/Nukesor/pueue/issues/426)
-
 ### Added
 
 - Add the `-j/--json` flag to `pueue group` to get a machine readable list of all current groups. [#430](https://github.com/Nukesor/pueue/issues/430)
 - Add `pueued.plist` template to run pueue with launchd on MacOS. [#429](https://github.com/Nukesor/pueue/issues/429)
 - Add query syntax documentation to `pueue status` [#438](https://github.com/Nukesor/pueue/issues/429)
+- Add the `--priority/-o` flag to `pueue add` [#429](https://github.com/Nukesor/pueue/issues/427).
+  This feature can be used to have easier control in which order tasks are executed.
+  This was previously only possible via `pueue switch`.
+- Add the `success` wait status. With this status, `pueue` will exit with `1` as soon as a single task fails. [#434](https://github.com/Nukesor/pueue/issues/434)
+
+### Fix
+
+- Fix broken bash autocompletion. Temporarily changes the name in the help texts to `pueue` and `pueued`. [#426](https://github.com/Nukesor/pueue/issues/426)
+- Reword, extend and format most subcommand help texts.
+
+### Change
+
+- Don't fail on `follow` if a followed task exists but hasn't started yet. [#436](https://github.com/Nukesor/pueue/issues/436)
+- Fail with a `1` exit code, when a followed task disappears or doesn't exist in the first place. [#436](https://github.com/Nukesor/pueue/issues/436)
 
 ## [3.1.2] - 2023-02-26
 

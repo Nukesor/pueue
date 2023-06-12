@@ -58,6 +58,8 @@ pub struct Task {
     pub envs: HashMap<String, String>,
     pub group: String,
     pub dependencies: Vec<usize>,
+    #[serde(default = "Default::default")]
+    pub priority: i32,
     pub label: Option<String>,
     pub status: TaskStatus,
     /// This field is only used when editing the path/command of a task.
@@ -79,6 +81,7 @@ impl Task {
         group: String,
         starting_status: TaskStatus,
         dependencies: Vec<usize>,
+        priority: i32,
         label: Option<String>,
     ) -> Task {
         Task {
@@ -91,6 +94,7 @@ impl Task {
             envs,
             group,
             dependencies,
+            priority,
             label,
             status: starting_status.clone(),
             prev_status: starting_status,
@@ -111,6 +115,7 @@ impl Task {
             envs: task.envs.clone(),
             group: task.group.clone(),
             dependencies: Vec::new(),
+            priority: 0,
             label: task.label.clone(),
             status: TaskStatus::Queued,
             prev_status: TaskStatus::Queued,

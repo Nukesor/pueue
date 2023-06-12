@@ -1,7 +1,7 @@
 use std::io;
 
 use anyhow::Result;
-use comfy_table::*;
+use crossterm::style::{Attribute, Color};
 use snap::read::FrameDecoder;
 
 use pueue_lib::network::message::TaskLogMessage;

@@ -1,0 +1,4 @@
+Task 0 changed from Stashed to Running
+Task 1 changed from Stashed to Queued
+Task 0 failed with 127
+Task 1 changed from Queued to Running

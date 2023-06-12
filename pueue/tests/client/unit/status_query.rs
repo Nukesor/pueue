@@ -18,6 +18,7 @@ pub fn build_task() -> Task {
         PUEUE_DEFAULT_GROUP.to_owned(),
         TaskStatus::Queued,
         Vec::new(),
+        0,
         None,
     )
 }

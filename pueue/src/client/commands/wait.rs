@@ -15,11 +15,13 @@ use pueue_lib::task::{Task, TaskResult, TaskStatus};
 use crate::client::{commands::get_state, display::OutputStyle};
 
 /// The `wait` subcommand can wait for these specific stati.
-#[derive(Default, Debug, Clone, Display, EnumString)]
+#[derive(Default, Debug, Clone, PartialEq, Display, EnumString)]
 pub enum WaitTargetStatus {
     #[default]
     #[strum(serialize = "done", serialize = "Done")]
     Done,
+    #[strum(serialize = "success", serialize = "Success")]
+    Success,
     #[strum(serialize = "queued", serialize = "Queued")]
     Queued,
     #[strum(serialize = "running", serialize = "Running")]
@@ -108,6 +110,12 @@ pub async fn wait(
                 watched_tasks.remove(&task_id);
                 finished_tasks.insert(task_id);
             }
+
+            // If we're waiting for `Success`ful tasks, check if any of the tasks failed.
+            // If so, exit with a `1`.
+            if target_status == WaitTargetStatus::Success && task.failed() {
+                std::process::exit(1);
+            }
         }
 
         if watched_tasks.is_empty() {
@@ -140,6 +148,7 @@ fn reached_target_status(task: &Task, target_status: &WaitTargetStatus) -> bool 
             task.status == TaskStatus::Running || matches!(task.status, TaskStatus::Done(_))
         }
         WaitTargetStatus::Done => matches!(task.status, TaskStatus::Done(_)),
+        WaitTargetStatus::Success => matches!(task.status, TaskStatus::Done(TaskResult::Success)),
     }
 }
 

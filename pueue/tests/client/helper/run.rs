@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result};
 use assert_cmd::prelude::*;
 use std::process::{Command, Output, Stdio};
 
@@ -88,14 +88,6 @@ pub fn run_client_command_with_env(
         .stderr(Stdio::piped())
         .output()
         .context(format!("Failed to execute pueue with {args:?}"))?;
-
-    if !output.status.success() {
-        bail!(
-            "Command failed to run.\nCommand: {args:?}\n\nstdout:\n{}\n\nstderr:\n{}",
-            String::from_utf8_lossy(&output.stdout),
-            String::from_utf8_lossy(&output.stderr)
-        )
-    }
 
     Ok(output)
 }

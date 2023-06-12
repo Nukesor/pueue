@@ -140,6 +140,7 @@ mod fixtures {
             group.to_string(),
             status,
             Vec::new(),
+            0,
             None,
         )
     }
