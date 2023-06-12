@@ -6,9 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project adheres **somewhat** to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 The concept of SemVer is applied to the daemon/client API, but not the library API itself.
 
-## [0.21.4] - unreleased
+## [0.22.0] - 2023-06-23
 
-## Fixed
+## Added
+
+- Add `priority` field to `Task`
+- Remove `tempdir` dependency
 
 ## [0.21.3] - 2023-02-12
 
