@@ -2,7 +2,7 @@
 # The `pueue_lib` crate lives in the `lib` folder.
 # The following is the shared configuration for both pueue and its lib
 [workspace]
-members = ["pueue_lib", "pueue"]
+members = ["pueue", "pueue_lib"]
 
 [workspace.package]
 authors = ["Arne Beer <contact@arne.beer>"]
@@ -21,9 +21,9 @@ serde_json = "1.0"
 serde_yaml = "0.9"
 serde_derive = "1.0"
 snap = "1.1"
-strum = "0.24"
-strum_macros = "0.24"
-tokio = { version = "1.28", features = ["rt-multi-thread", "time", "io-std"] }
+strum = "0.25"
+strum_macros = "0.25"
+tokio = { version = "1.29", features = ["rt-multi-thread", "time", "io-std"] }
 
 # Dev dependencies
 anyhow = "1"
