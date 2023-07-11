@@ -76,14 +76,14 @@ async fn handle_incoming(
 
     let start = SystemTime::now();
 
-    // Return immediately, if we got a wrong secret from the client.
+    // Return if we got a wrong secret from the client.
     if payload_bytes != secret {
         let received_secret = String::from_utf8(payload_bytes)?;
         warn!("Received invalid secret: {received_secret}");
 
         // Wait for 1 second before closing the socket, when getting a invalid secret.
         // This invalidates any timing attacks.
-        let remaining_sleep_time = Duration::from_millis(1)
+        let remaining_sleep_time = Duration::from_secs(1)
             - SystemTime::now()
                 .duration_since(start)
                 .context("Couldn't calculate duration. Did the system time change?")?;
