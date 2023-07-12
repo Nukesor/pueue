@@ -1,3 +1,4 @@
+use std::fs;
 use std::path::PathBuf;
 
 use anyhow::{bail, Context, Result};
@@ -102,6 +103,15 @@ async fn main() -> Result<()> {
 
     Ok(())
 }
+// Clap **doesn't** support nushell
+// So I have written a completion script for nushell
+fn generate_nushell_completion(output_directory: &PathBuf) -> std::result::Result<PathBuf, std::io::Error>{
+    let path = output_directory.join("pueue.nu");
+    //It should be in pueue directory
+    fs::write(path.clone(), include_bytes!("pueue.nu"))?;
+    Ok(path)
+
+}
 
 /// [clap] is capable of creating auto-generated shell completion files.
 /// This function creates such a file for one of the supported shells and puts it into the
@@ -115,6 +125,7 @@ fn create_shell_completion_file(shell: &Shell, output_directory: &PathBuf) -> Re
         Shell::Fish => generate_to(shells::Fish, &mut app, "pueue", output_directory),
         Shell::PowerShell => generate_to(shells::PowerShell, &mut app, "pueue", output_directory),
         Shell::Zsh => generate_to(shells::Zsh, &mut app, "pueue", output_directory),
+        Shell::Nushell => generate_nushell_completion(output_directory)
     };
     completion_result.context(format!("Failed to generate completions for {shell:?}"))?;
 
