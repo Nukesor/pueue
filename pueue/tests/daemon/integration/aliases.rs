@@ -18,7 +18,7 @@ async fn test_add_with_alias() -> Result<()> {
     create_test_alias_file(daemon.tempdir.path(), aliases)?;
 
     // Add a task whose command should be replaced by an alias
-    assert_success(add_task(shared, "non_existing_cmd test", false).await?);
+    assert_success(add_task(shared, "non_existing_cmd test").await?);
 
     // Wait until the task finished and get state
     wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
@@ -45,7 +45,7 @@ async fn test_restart_with_alias() -> Result<()> {
     let shared = &daemon.settings.shared;
 
     // Add a task whose command that should fail and wait for it to finish.
-    assert_success(add_task(shared, "non_existing_cmd test", false).await?);
+    assert_success(add_task(shared, "non_existing_cmd test").await?);
     let task = wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
 
     // Ensure the command hasn't been mutated and the task failed.

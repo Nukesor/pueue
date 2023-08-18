@@ -12,7 +12,7 @@ use crate::helper::*;
 
 async fn create_edited_task(shared: &Shared) -> Result<EditResponseMessage> {
     // Add a task
-    assert_success(add_task(shared, "ls", false).await?);
+    assert_success(add_task(shared, "ls").await?);
 
     // The task should now be queued
     assert_eq!(get_task_status(shared, 0).await?, TaskStatus::Queued);

@@ -56,7 +56,7 @@ async fn test_kill_tasks_with_pause(
 
     // Add another task that will be normally enqueued.
     for _ in 0..3 {
-        assert_success(add_task(shared, "sleep 60", false).await?);
+        assert_success(add_task(shared, "sleep 60").await?);
     }
 
     // Send the kill message

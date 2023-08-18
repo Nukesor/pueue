@@ -119,7 +119,7 @@ async fn test_stash_queued_task() -> Result<()> {
     wait_for_group_status(shared, "default", GroupStatus::Paused).await?;
 
     // Add a task that's queued for execution.
-    add_task(shared, "sleep 10", false).await?;
+    add_task(shared, "sleep 10").await?;
 
     // Stash the task
     send_message(shared, Message::Stash(vec![0]))

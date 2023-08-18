@@ -17,7 +17,7 @@ async fn test_pause_daemon() -> Result<()> {
     wait_for_group_status(shared, PUEUE_DEFAULT_GROUP, GroupStatus::Paused).await?;
 
     // Add a task and give the taskmanager time to theoretically start the process
-    add_task(shared, "ls", false).await?;
+    add_task(shared, "ls").await?;
     sleep_ms(500).await;
 
     // Make sure it's not started
@@ -33,7 +33,7 @@ async fn test_pause_running_task() -> Result<()> {
     let shared = &daemon.settings.shared;
 
     // Start a long running task and make sure it's started
-    add_task(shared, "sleep 60", false).await?;
+    add_task(shared, "sleep 60").await?;
     wait_for_task_condition(shared, 0, |task| task.is_running()).await?;
 
     // This pauses the daemon
@@ -57,7 +57,7 @@ async fn test_pause_with_wait() -> Result<()> {
     let shared = &daemon.settings.shared;
 
     // Start a long running task and make sure it's started
-    add_task(shared, "sleep 60", false).await?;
+    add_task(shared, "sleep 60").await?;
     wait_for_task_condition(shared, 0, |task| task.is_running()).await?;
 
     // Pauses the default queue while waiting for tasks
