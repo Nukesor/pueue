@@ -32,6 +32,7 @@ thiserror = "1.0"
 tokio-rustls = { version = "0.24", default-features = false }
 
 command-group = { workspace = true }
+handlebars = { workspace = true }
 log = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

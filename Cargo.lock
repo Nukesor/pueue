@@ -1213,6 +1213,7 @@ dependencies = [
  "chrono",
  "command-group",
  "dirs",
+ "handlebars",
  "libproc",
  "log",
  "portpicker",

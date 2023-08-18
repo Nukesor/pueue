@@ -4,7 +4,9 @@
 //! each supported platform.
 //! Depending on the target, the respective platform is read and loaded into this scope.
 
-use crate::network::message::Signal as InternalSignal;
+use std::{collections::HashMap, process::Command};
+
+use crate::{network::message::Signal as InternalSignal, settings::Settings};
 
 // Unix specific process handling
 // Shared between Linux and Apple
@@ -62,4 +64,40 @@ impl From<InternalSignal> for Signal {
             InternalSignal::SigStop => Signal::SIGSTOP,
         }
     }
+}
+
+/// Take a platform specific shell command and insert the actual task command via templating.
+pub fn compile_shell_command(settings: &Settings, command: &str) -> Command {
+    let shell_command = get_shell_command(settings);
+
+    let mut handlebars = handlebars::Handlebars::new();
+    handlebars.set_strict_mode(true);
+    handlebars.register_escape_fn(handlebars::no_escape);
+
+    // Make the command available to the template engine.
+    let mut parameters = HashMap::new();
+    parameters.insert("pueue_command_string", command);
+
+    // We allow users to provide their own shell command.
+    // They should use the `{{ pueue_command_string }}` placeholder.
+    let mut compiled_command = Vec::new();
+    for part in shell_command {
+        let compiled_part = handlebars
+            .render_template(&part, &parameters)
+            .unwrap_or_else(|_| {
+                panic!("Failed to render shell command for template: {part} and parameters: {parameters:?}")
+            });
+
+        compiled_command.push(compiled_part);
+    }
+
+    let executable = compiled_command.remove(0);
+
+    // Chain two `powershell` commands, one that sets the output encoding to utf8 and then the user provided one.
+    let mut command = Command::new(executable);
+    for arg in compiled_command {
+        command.arg(&arg);
+    }
+
+    command
 }

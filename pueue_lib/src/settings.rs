@@ -119,6 +119,15 @@ pub struct Daemon {
     /// The amount of log lines from stdout/stderr that are passed to the callback command.
     #[serde(default = "default_callback_log_lines")]
     pub callback_log_lines: usize,
+    /// The command that should be used for task and callback execution.
+    /// The following are the only officially supported modi for Pueue.
+    ///
+    /// Unix default:
+    /// `vec!["sh", "-c", "{{ pueue_command_string }}"]`.
+    ///
+    /// Windows default:
+    /// `vec!["powershell", "-c", "[Console]::OutputEncoding = [Text.UTF8Encoding]::UTF8; {{ pueue_command_string }}"]`
+    pub shell_command: Option<Vec<String>>,
 }
 
 impl Default for Shared {
@@ -165,6 +174,7 @@ impl Default for Daemon {
             pause_all_on_failure: false,
             callback: None,
             callback_log_lines: default_callback_log_lines(),
+            shell_command: None,
         }
     }
 }

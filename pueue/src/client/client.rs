@@ -199,7 +199,15 @@ impl Client {
                 path,
                 label,
             } => {
-                let message = edit(&mut self.stream, *task_id, *command, *path, *label).await?;
+                let message = edit(
+                    &mut self.stream,
+                    &self.settings,
+                    *task_id,
+                    *command,
+                    *path,
+                    *label,
+                )
+                .await?;
                 self.handle_response(message)?;
                 Ok(true)
             }
@@ -231,6 +239,7 @@ impl Client {
                     (self.settings.client.restart_in_place || *in_place) && !*not_in_place;
                 restart(
                     &mut self.stream,
+                    &self.settings,
                     task_ids.clone(),
                     *all_failed,
                     failed_in_group.clone(),

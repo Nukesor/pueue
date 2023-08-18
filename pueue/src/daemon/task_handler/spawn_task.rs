@@ -135,7 +135,7 @@ impl TaskHandler {
         };
 
         // Build the shell command that should be executed.
-        let mut command = compile_shell_command(&command);
+        let mut command = compile_shell_command(&self.settings, &command);
 
         // Determine the worker's id depending on the current group.
         // Inject that info into the environment.
