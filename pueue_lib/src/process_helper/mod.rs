@@ -28,7 +28,7 @@ mod apple;
 pub use self::apple::process_exists;
 
 // Windows specific process handling
-#[cfg(any(target_os = "windows"))]
+#[cfg(target_os = "windows")]
 mod windows;
 #[cfg(target_os = "windows")]
 pub use self::windows::*;

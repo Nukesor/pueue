@@ -30,7 +30,7 @@ impl TaskHandler {
                     error!("Group \"{name}\" already exists");
                     return;
                 }
-                let mut group = state.create_group(&name);
+                let group = state.create_group(&name);
                 if let Some(parallel_tasks) = parallel_tasks {
                     group.parallel_tasks = parallel_tasks;
                 }
