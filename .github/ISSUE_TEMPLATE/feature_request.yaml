@@ -6,7 +6,10 @@ body:
   - type: markdown
     attributes:
       value: |
-        Please take the time to fill out all relevant the fields below.
+        Please note, that the project is considered **feature-complete.**
+        Hence, no new major features will be added. Only UX/UI improvements and QoL features will be considered.
+
+        If this is the case for your feature, please take the time to fill out all relevant the fields below.
 
   - type: textarea
     id: feature

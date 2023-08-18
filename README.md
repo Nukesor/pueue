@@ -16,6 +16,9 @@ On top of that, there are a lot of convenient features and abstractions.
 Since Pueue is not bound to any terminal, you can control your tasks from any terminal on the same machine.
 The queue will be continuously processed, even if you no longer have any active ssh sessions.
 
+**Pueue is considered feature-complete :tada:.**
+All features that were planned have been added and only minor improvements, bug-fixes and regular maintenance work will get merged.
+
 - [Features](https://github.com/Nukesor/pueue#features)
 - [Installation](https://github.com/Nukesor/pueue#installation)
 - [How to use it](https://github.com/Nukesor/pueue#how-to-use-it)
@@ -200,7 +203,10 @@ Pueue is designed to be a convenient helper tool for a single user.
 It's supposed to work stand-alone and without any external integration.
 The idea is to keep it simple and to prevent feature creep.
 
-Hence, these features won't be included as they're out of scope:
+Also, **Pueue is considered feature-complete :tada:.**
+All features that were planned have been added and only minor improvements, bug-fixes and regular maintenance work will get merged.
+
+For the record, the follwing features weren't included as they're out of scope:
 
 - Distributed task management/execution.
 - Multi-user task management.
@@ -210,20 +216,21 @@ Hence, these features won't be included as they're out of scope:
   If you're adamant about scripting it anyway, take a look at the `pueue-lib` library, which provides proper API calls for `pueued`.
   However, keep in mind that `pueued` is still supposed to be a minimalistic task executor with as little scheduling logic as possible.
 
-There seems to be the need for some project that satisfies all these points mentioned above, but that isn't Pueue's job.
+There seems to be the need for some project that satisfies all these points mentioned above, but that will be the job of another tool.
+I very much encourage forking Pueue and I would love to see forks grow into other cool projects!
 
 ## Similar Projects
 
-**GNU Parallel**
+#### GNU Parallel
 
 A robust and featureful parrallel processor with text-based joblog and n-retries. [GNU Parallel](https://www.gnu.org/software/parallel/parallel_tutorial.html) is able to scale to multi-host parallelization and has complex code to have deep integration across different tools and shells, as well as other advanced features. `Pueue` differentiates itself from GNU Parallel by focusing more on visibility across many different long running commands, and creating a central location for commands to be stored, rather than GNU Parallel's focus on chunking a specific task.
 
-**nq**
+#### nq
 
 A very lightweight job queue systems which require no setup, maintenance, supervision, or any long-running processes. \
 [Link to project](https://github.com/leahneukirchen/nq)
 
-**task-spooler**
+#### task-spooler
 
 _task spooler_ is a Unix batch system where the tasks spooled run one after the other. \
 Links to [ubuntu manpage](http://manpages.ubuntu.com/manpages/xenial/man1/tsp.1.html) and a [fork on Github](https://github.com/xenogenesi/task-spooler).
