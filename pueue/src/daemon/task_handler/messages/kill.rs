@@ -35,13 +35,15 @@ impl TaskHandler {
                 if pause_groups {
                     group.status = GroupStatus::Paused;
                 }
-                info!("Killing tasks of group {group_name}");
 
-                let (matching, _) = state.filter_tasks_of_group(
+                // Determine all running or paused tasks in that group.
+                let filtered_tasks = state.filter_tasks_of_group(
                     |task| matches!(task.status, TaskStatus::Running | TaskStatus::Paused),
                     &group_name,
                 );
-                matching
+
+                info!("Killing tasks of group {group_name}");
+                filtered_tasks.matching_ids
             }
             TaskSelection::All => {
                 // Pause all running tasks

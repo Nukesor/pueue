@@ -62,6 +62,14 @@ impl Default for State {
     }
 }
 
+/// A little helper struct that's returned by the state's task filter functions.
+/// Contains all task ids of tasks that matched and didn't match a given condition.
+#[derive(Debug, Default)]
+pub struct FilteredTasks {
+    pub matching_ids: Vec<usize>,
+    pub non_matching_ids: Vec<usize>,
+}
+
 impl State {
     /// Create a new default state.
     pub fn new() -> State {
@@ -146,11 +154,7 @@ impl State {
     ///
     /// By default, this checks all tasks in the current state. If a list of task_ids is
     /// provided as the third parameter, only those tasks will be checked.
-    pub fn filter_tasks<F>(
-        &self,
-        filter: F,
-        task_ids: Option<Vec<usize>>,
-    ) -> (Vec<usize>, Vec<usize>)
+    pub fn filter_tasks<F>(&self, condition: F, task_ids: Option<Vec<usize>>) -> FilteredTasks
     where
         F: Fn(&Task) -> bool,
     {
@@ -160,17 +164,17 @@ impl State {
             None => self.tasks.keys().cloned().collect(),
         };
 
-        self.filter_task_ids(task_ids, filter)
+        self.filter_task_ids(condition, task_ids)
     }
 
     /// Same as [State::filter_tasks], but only checks for tasks of a specific group.
-    pub fn filter_tasks_of_group<F>(&self, filter: F, group: &str) -> (Vec<usize>, Vec<usize>)
+    pub fn filter_tasks_of_group<F>(&self, condition: F, group: &str) -> FilteredTasks
     where
         F: Fn(&Task) -> bool,
     {
         // Return empty vectors, if there's no such group.
         if !self.groups.contains_key(group) {
-            return (Vec::new(), Vec::new());
+            return FilteredTasks::default();
         }
 
         // Filter all task ids of tasks that match the given group.
@@ -181,38 +185,41 @@ impl State {
             .map(|(id, _)| *id)
             .collect();
 
-        self.filter_task_ids(task_ids, filter)
+        self.filter_task_ids(condition, task_ids)
     }
 
     /// Internal function used to check which of the given tasks match the provided filter.
     ///
     /// Returns a tuple of all (matching_task_ids, non_matching_task_ids).
-    fn filter_task_ids<F>(&self, task_ids: Vec<usize>, filter: F) -> (Vec<usize>, Vec<usize>)
+    fn filter_task_ids<F>(&self, condition: F, task_ids: Vec<usize>) -> FilteredTasks
     where
         F: Fn(&Task) -> bool,
     {
-        let mut matching = Vec::new();
-        let mut mismatching = Vec::new();
+        let mut matching_ids = Vec::new();
+        let mut non_matching_ids = Vec::new();
 
         // Filter all task id's that match the provided statuses.
         for task_id in task_ids.iter() {
             // Check whether the task exists and save all non-existing task ids.
             match self.tasks.get(task_id) {
                 None => {
-                    mismatching.push(*task_id);
+                    non_matching_ids.push(*task_id);
                     continue;
                 }
                 Some(task) => {
                     // Check whether the task status matches the filter.
-                    if filter(task) {
-                        matching.push(*task_id);
+                    if condition(task) {
+                        matching_ids.push(*task_id);
                     } else {
-                        mismatching.push(*task_id);
+                        non_matching_ids.push(*task_id);
                     }
                 }
             };
         }
 
-        (matching, mismatching)
+        FilteredTasks {
+            matching_ids,
+            non_matching_ids,
+        }
     }
 }

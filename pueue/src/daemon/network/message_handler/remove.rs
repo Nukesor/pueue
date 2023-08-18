@@ -14,6 +14,8 @@ use crate::ok_or_return_failure_message;
 /// We have to ensure that those tasks aren't running!
 pub fn remove(task_ids: Vec<usize>, state: &SharedState, settings: &Settings) -> Message {
     let mut state = state.lock().unwrap();
+
+    // Filter all running tasks, since we cannot remove them.
     let filter = |task: &Task| {
         matches!(
             task.status,
@@ -23,18 +25,18 @@ pub fn remove(task_ids: Vec<usize>, state: &SharedState, settings: &Settings) ->
                 | TaskStatus::Locked
         )
     };
-    let (mut not_running, mut running) = state.filter_tasks(filter, Some(task_ids));
+    let mut filtered_tasks = state.filter_tasks(filter, Some(task_ids));
 
     // Don't delete tasks, if there are other tasks that depend on this one.
     // However, we allow to delete those tasks, if they're supposed to be deleted as well.
-    for task_id in not_running.clone() {
-        if !is_task_removable(&state, &task_id, &not_running) {
-            running.push(task_id);
-            not_running.retain(|id| id != &task_id);
+    for task_id in filtered_tasks.matching_ids.clone() {
+        if !is_task_removable(&state, &task_id, &filtered_tasks.matching_ids) {
+            filtered_tasks.non_matching_ids.push(task_id);
+            filtered_tasks.matching_ids.retain(|id| id != &task_id);
         };
     }
 
-    for task_id in &not_running {
+    for task_id in &filtered_tasks.matching_ids {
         state.tasks.remove(task_id);
 
         clean_log_handles(*task_id, &settings.shared.pueue_directory());
@@ -42,7 +44,7 @@ pub fn remove(task_ids: Vec<usize>, state: &SharedState, settings: &Settings) ->
 
     ok_or_return_failure_message!(save_state(&state, settings));
 
-    compile_task_response("Tasks removed from list", not_running, running)
+    compile_task_response("Tasks removed from list", filtered_tasks)
 }
 
 #[cfg(test)]

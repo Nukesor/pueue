@@ -30,11 +30,12 @@ impl TaskHandler {
                 group.status = GroupStatus::Paused;
                 info!("Pausing group {group_name}");
 
-                let (matching, _) = state.filter_tasks_of_group(
+                let filtered_tasks = state.filter_tasks_of_group(
                     |task| matches!(task.status, TaskStatus::Running),
                     &group_name,
                 );
-                matching
+
+                filtered_tasks.matching_ids
             }
             TaskSelection::All => {
                 // Pause all groups, since we're pausing the whole daemon.
