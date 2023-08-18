@@ -5,7 +5,7 @@ use pueue_lib::process_helper::*;
 use pueue_lib::state::GroupStatus;
 use pueue_lib::task::TaskStatus;
 
-use crate::daemon::state_helper::save_state;
+use crate::daemon::state_helper::{save_state, LockedState};
 use crate::daemon::task_handler::{Shutdown, TaskHandler};
 use crate::ok_or_shutdown;
 
@@ -15,10 +15,16 @@ impl TaskHandler {
     /// By default, this kills tasks with Rust's subprocess handling "kill" logic.
     /// However, the user can decide to send unix signals to the processes as well.
     ///
-    /// `pause_groups` If `group` or `all` is given, the groups should be paused under some
-    ///     circumstances. This is mostly to prevent any further task execution during an emergency
+    /// `issued_by_user` This is `true` when a kill is issued by an actual user.
+    ///   It is `false`, if the daemon resets or during shutdown.
+    ///
+    ///   In case `true` is given and  a `group` or `all` are killed the affected groups should
+    ///   be paused under some circumstances. is mostly to prevent any further task execution
+    ///   during an emergency. These circumstances are:
+    ///   - There're further queued or scheduled tasks in a killed group.
+    ///
     /// `signal` Don't kill the task as usual, but rather send a unix process signal.
-    pub fn kill(&mut self, tasks: TaskSelection, pause_groups: bool, signal: Option<Signal>) {
+    pub fn kill(&mut self, tasks: TaskSelection, issued_by_user: bool, signal: Option<Signal>) {
         let cloned_state_mutex = self.state.clone();
         let mut state = cloned_state_mutex.lock().unwrap();
         // Get the keys of all tasks that should be resumed
@@ -26,13 +32,13 @@ impl TaskHandler {
             TaskSelection::TaskIds(task_ids) => task_ids,
             TaskSelection::Group(group_name) => {
                 // Ensure that a given group exists. (Might not happen due to concurrency)
-                let group = match state.groups.get_mut(&group_name) {
-                    Some(group) => group,
-                    None => return,
+                if !state.groups.contains_key(&group_name) {
+                    return;
                 };
 
-                // Pause this specific group.
-                if pause_groups {
+                // Check whether the group should be paused before killing the tasks.
+                if should_pause_group(&state, issued_by_user, &group_name) {
+                    let group = state.groups.get_mut(&group_name).unwrap();
                     group.status = GroupStatus::Paused;
                 }
 
@@ -46,9 +52,12 @@ impl TaskHandler {
                 filtered_tasks.matching_ids
             }
             TaskSelection::All => {
-                // Pause all running tasks
-                if pause_groups {
-                    state.set_status_for_all_groups(GroupStatus::Paused);
+                // Pause all groups, if applicable
+                let group_names: Vec<String> = state.groups.keys().cloned().collect();
+                for group_name in group_names {
+                    if should_pause_group(&state, issued_by_user, &group_name) {
+                        state.set_status_for_all_groups(GroupStatus::Paused);
+                    }
                 }
 
                 info!("Killing all running tasks");
@@ -95,4 +104,18 @@ impl TaskHandler {
             warn!("Tried to kill non-existing child: {task_id}");
         }
     }
+}
+
+/// Determine, whether a group should be paused during a kill command.
+/// It should only be paused if:
+/// - The kill was issued by the user, i.e. it wasn't issued by a system during shutdown/reset.
+/// - The group that's being killed must have queued or stashed-enqueued tasks.
+fn should_pause_group(state: &LockedState, issued_by_user: bool, group: &str) -> bool {
+    if !issued_by_user {
+        return false;
+    }
+
+    // Check if there're tasks that're queued or enqueued.
+    let filtered_tasks = state.filter_tasks_of_group(|task| task.is_queued(), group);
+    !filtered_tasks.matching_ids.is_empty()
 }

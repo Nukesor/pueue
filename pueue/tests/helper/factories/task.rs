@@ -15,6 +15,16 @@ pub async fn add_task(shared: &Shared, command: &str, start_immediately: bool) -
         .context("Failed to to add task.")
 }
 
+/// Adds a task to the test daemon and starts it immediately.
+pub async fn add_and_start_task(shared: &Shared, command: &str) -> Result<Message> {
+    let mut message = create_add_message(shared, command);
+    message.start_immediately = true;
+
+    send_message(shared, message)
+        .await
+        .context("Failed to to add task.")
+}
+
 /// Adds a task to the test daemon.
 pub async fn add_task_with_priority(
     shared: &Shared,
