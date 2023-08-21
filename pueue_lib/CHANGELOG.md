@@ -6,18 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project adheres **somewhat** to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 The concept of SemVer is applied to the daemon/client API, but not the library API itself.
 
-## [0.23.0] - unreleased
+## [0.24.0] - 2023-06-13
+
+### Added
+
+- New setting `daemon.shell_command` to configure how the command shall be executed.
+- New setting `daemon.env_vars` to inject hard coded environment variables into the process.
 
 ### Changed
 
 - Refactor `State::filter_*` functions to return proper type.
 
-## [0.22.0] - 2023-06-13
+## [0.23.0] - 2023-06-13
 
-## Added
+### Added
 
 - Add `priority` field to `Task`
 - Remove `tempdir` dependency
+
+## [0.22.0]
+
+This version was skipped due to a error during release :).
+
 
 ## [0.21.3] - 2023-02-12
 

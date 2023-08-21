@@ -116,6 +116,9 @@ pub struct Daemon {
     pub pause_all_on_failure: bool,
     /// The callback that's called whenever a task finishes.
     pub callback: Option<String>,
+    /// Enironment variables that can be will be injected into all executed processes.
+    #[serde(default = "Default::default")]
+    pub env_vars: HashMap<String, String>,
     /// The amount of log lines from stdout/stderr that are passed to the callback command.
     #[serde(default = "default_callback_log_lines")]
     pub callback_log_lines: usize,
@@ -175,6 +178,7 @@ impl Default for Daemon {
             callback: None,
             callback_log_lines: default_callback_log_lines(),
             shell_command: None,
+            env_vars: HashMap::new(),
         }
     }
 }

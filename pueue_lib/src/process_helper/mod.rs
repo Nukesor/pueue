@@ -99,5 +99,14 @@ pub fn compile_shell_command(settings: &Settings, command: &str) -> Command {
         command.arg(&arg);
     }
 
+    // Inject custom environment variables.
+    if !settings.daemon.env_vars.is_empty() {
+        log::info!(
+            "Inject environment variables: {:?}",
+            &settings.daemon.env_vars
+        );
+        command.envs(&settings.daemon.env_vars);
+    }
+
     command
 }

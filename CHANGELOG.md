@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 
 - Allow configuration of the shell command that executes task commands. [#454](https://github.com/Nukesor/pueue/issues/454)
+- Allow injection of hard coded environment variables via config file. [#454](https://github.com/Nukesor/pueue/issues/454)
 
 ## [3.2.0] - 2023-06-13
 
