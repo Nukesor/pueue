@@ -139,36 +139,24 @@ pub fn daemon_base_setup() -> Result<(Settings, TempDir)> {
         pueue_directory: Some(tempdir_path.to_path_buf()),
         runtime_directory: Some(tempdir_path.to_path_buf()),
         alias_file: Some(tempdir_path.join("pueue_aliases.yml")),
-        #[cfg(not(target_os = "windows"))]
-        use_unix_socket: true,
-        #[cfg(not(target_os = "windows"))]
-        unix_socket_path: None,
-        pid_path: None,
         host: "localhost".to_string(),
         port: "51230".to_string(),
         daemon_cert: Some(tempdir_path.join("certs").join("daemon.cert")),
         daemon_key: Some(tempdir_path.join("certs").join("daemon.key")),
         shared_secret_path: Some(tempdir_path.join("secret")),
+        ..Default::default()
     };
 
     let client = Client {
-        restart_in_place: false,
-        read_local_logs: true,
-        show_confirmation_questions: false,
-        show_expanded_aliases: false,
-        dark_mode: false,
         max_status_lines: Some(15),
-        status_time_format: "%H:%M:%S".into(),
         status_datetime_format: "%Y-%m-%d %H:%M:%S".into(),
+        ..Default::default()
     };
 
     #[allow(deprecated)]
     let daemon = Daemon {
-        pause_group_on_failure: false,
-        pause_all_on_failure: false,
-        callback: None,
         callback_log_lines: 15,
-        groups: None,
+        ..Default::default()
     };
 
     let settings = Settings {

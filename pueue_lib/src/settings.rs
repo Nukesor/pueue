@@ -11,7 +11,7 @@ use crate::error::Error;
 use crate::setting_defaults::*;
 
 /// All settings which are used by both, the client and the daemon
-#[derive(PartialEq, Eq, Clone, Debug, Default, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct Shared {
     /// Don't access this property directly, but rather use the getter with the same name.
     /// It's only public to allow proper integration testing.
@@ -74,7 +74,7 @@ pub struct Shared {
 }
 
 /// All settings which are used by the client
-#[derive(PartialEq, Eq, Clone, Debug, Default, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct Client {
     /// If set to true, all tasks will be restart in place, instead of creating a new task.
     /// False is the default, as you'll lose the logs of the previously failed tasks when
@@ -106,7 +106,7 @@ pub struct Client {
 }
 
 /// All settings which are used by the daemon
-#[derive(PartialEq, Eq, Clone, Debug, Default, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct Daemon {
     /// Whether a group should be paused as soon as a single task fails
     #[serde(default = "Default::default")]
@@ -128,34 +128,58 @@ pub struct Daemon {
     pub groups: Option<HashMap<String, i64>>,
 }
 
-impl Default for Settings {
+impl Default for Shared {
     fn default() -> Self {
-        Settings {
-            client: Client {
-                read_local_logs: true,
-                status_time_format: default_status_time_format(),
-                status_datetime_format: default_status_datetime_format(),
-                ..Default::default()
-            },
-            daemon: Daemon {
-                callback_log_lines: default_callback_log_lines(),
-                ..Default::default()
-            },
-            shared: Shared {
-                #[cfg(not(target_os = "windows"))]
-                use_unix_socket: true,
-                host: default_host(),
-                port: default_port(),
-                ..Default::default()
-            },
-            profiles: HashMap::new(),
+        Shared {
+            pueue_directory: None,
+            runtime_directory: None,
+            alias_file: None,
+
+            #[cfg(not(target_os = "windows"))]
+            unix_socket_path: None,
+            #[cfg(not(target_os = "windows"))]
+            use_unix_socket: true,
+            host: default_host(),
+            port: default_port(),
+
+            pid_path: None,
+            daemon_cert: None,
+            daemon_key: None,
+            shared_secret_path: None,
+        }
+    }
+}
+
+impl Default for Client {
+    fn default() -> Self {
+        Client {
+            restart_in_place: false,
+            read_local_logs: true,
+            show_confirmation_questions: false,
+            show_expanded_aliases: false,
+            dark_mode: false,
+            max_status_lines: None,
+            status_time_format: default_status_time_format(),
+            status_datetime_format: default_status_datetime_format(),
+        }
+    }
+}
+
+impl Default for Daemon {
+    fn default() -> Self {
+        Daemon {
+            pause_group_on_failure: false,
+            pause_all_on_failure: false,
+            callback: None,
+            callback_log_lines: default_callback_log_lines(),
+            groups: None,
         }
     }
 }
 
 /// The parent settings struct. \
 /// This contains all other setting structs.
-#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Default, Debug, Deserialize, Serialize)]
 pub struct Settings {
     #[serde(default = "Default::default")]
     pub client: Client,
