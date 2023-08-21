@@ -119,13 +119,6 @@ pub struct Daemon {
     /// The amount of log lines from stdout/stderr that are passed to the callback command.
     #[serde(default = "default_callback_log_lines")]
     pub callback_log_lines: usize,
-    /// The legacy configuration for groups
-    #[serde(skip_serializing)]
-    #[deprecated(
-        since = "1.1.0",
-        note = "The configuration for groups is now stored in the state."
-    )]
-    pub groups: Option<HashMap<String, i64>>,
 }
 
 impl Default for Shared {
@@ -172,7 +165,6 @@ impl Default for Daemon {
             pause_all_on_failure: false,
             callback: None,
             callback_log_lines: default_callback_log_lines(),
-            groups: None,
         }
     }
 }
