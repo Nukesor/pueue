@@ -41,7 +41,7 @@ async fn full() -> Result<()> {
 //    let shared = &daemon.settings.shared;
 //
 //    // Add a task and wait until it finishes.
-//    assert_success(add_task(shared, "ls", false).await?);
+//    assert_success(add_task(shared, "ls").await?);
 //    wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
 //
 //    let output = run_status_without_path(shared, &["--color", "always"]).await?;
@@ -112,7 +112,7 @@ async fn json() -> Result<()> {
     let shared = &daemon.settings.shared;
 
     // Add a task and wait until it finishes.
-    assert_success(add_task(shared, "ls", false).await?);
+    assert_success(add_task(shared, "ls").await?);
     wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
 
     let output = run_client_command(shared, &["status", "--json"])?;

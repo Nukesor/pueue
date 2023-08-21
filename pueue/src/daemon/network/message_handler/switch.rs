@@ -14,11 +14,11 @@ pub fn switch(message: SwitchMessage, state: &SharedState, settings: &Settings) 
     let mut state = state.lock().unwrap();
 
     let task_ids = vec![message.task_id_1, message.task_id_2];
-    let (_, mismatching) = state.filter_tasks(
+    let filtered_tasks = state.filter_tasks(
         |task| matches!(task.status, TaskStatus::Queued | TaskStatus::Stashed { .. }),
         Some(task_ids.to_vec()),
     );
-    if !mismatching.is_empty() {
+    if !filtered_tasks.non_matching_ids.is_empty() {
         return create_failure_message("Tasks have to be either queued or stashed.");
     }
     if task_ids[0] == task_ids[1] {

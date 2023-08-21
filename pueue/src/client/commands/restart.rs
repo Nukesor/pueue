@@ -2,6 +2,7 @@ use anyhow::{bail, Result};
 
 use pueue_lib::network::message::*;
 use pueue_lib::network::protocol::*;
+use pueue_lib::state::FilteredTasks;
 use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
 use crate::client::commands::edit::edit_task_properties;
@@ -36,18 +37,19 @@ pub async fn restart(
     // Filter to get done tasks
     let done_filter = |task: &Task| task.is_done();
 
-    let (matching, mismatching) = if all_failed || failed_in_group.is_some() {
+    let filtered_tasks = if all_failed || failed_in_group.is_some() {
         // Either all failed tasks or all failed tasks of a specific group need to be restarted.
 
         // First we have to get all finished tasks (Done)
-        let (matching, _) = if let Some(group) = failed_in_group {
+        let filtered_tasks = if let Some(group) = failed_in_group {
             state.filter_tasks_of_group(done_filter, &group)
         } else {
             state.filter_tasks(done_filter, None)
         };
 
         // now pick the failed tasks
-        let failed = matching
+        let failed = filtered_tasks
+            .matching_ids
             .into_iter()
             .filter(|task_id| {
                 let task = state.tasks.get(task_id).unwrap();
@@ -57,7 +59,10 @@ pub async fn restart(
 
         // We return an empty vec for the mismatching tasks, since there shouldn't be any.
         // Any User provided ids are ignored in this mode.
-        (failed, Vec::new())
+        FilteredTasks {
+            matching_ids: failed,
+            ..Default::default()
+        }
     } else if task_ids.is_empty() {
         bail!("Please provide the ids of the tasks you want to restart.");
     } else {
@@ -73,7 +78,7 @@ pub async fn restart(
     };
 
     // Go through all Done commands we found and restart them
-    for task_id in &matching {
+    for task_id in &filtered_tasks.matching_ids {
         let task = state.tasks.get(task_id).unwrap();
         let mut new_task = Task::from_task(task);
         new_task.status = new_status.clone();
@@ -133,11 +138,14 @@ pub async fn restart(
         };
     }
 
-    if !matching.is_empty() {
-        println!("Restarted tasks: {matching:?}");
+    if !filtered_tasks.matching_ids.is_empty() {
+        println!("Restarted tasks: {:?}", filtered_tasks.matching_ids);
     }
-    if !mismatching.is_empty() {
-        println!("Couldn't restart tasks: {mismatching:?}");
+    if !filtered_tasks.non_matching_ids.is_empty() {
+        println!(
+            "Couldn't restart tasks: {:?}",
+            filtered_tasks.non_matching_ids
+        );
     }
 
     Ok(())

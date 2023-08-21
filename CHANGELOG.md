@@ -10,6 +10,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Support parameter parsing for signal names with capslock (`SIGINT`) and short name (`INT`|`int`). [#455](https://github.com/Nukesor/pueue/issues/455).
 
+### Changed
+
+- QoL improvement: Don't pause groups if there're no queued tasks. [#452](https://github.com/Nukesor/pueue/issues/452)
+  Auto-pausing of groups was only done to prevent the unwanted execution of other tasks, but this isn't necessary, if there're no queued tasks.
+
 ## [3.2.0] - 2023-06-13
 
 ### Added

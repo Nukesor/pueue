@@ -13,7 +13,7 @@ async fn test_restart_in_place() -> Result<()> {
     let shared = &daemon.settings.shared;
 
     // Add a single task that instantly finishes.
-    assert_success(add_task(shared, "sleep 0.1", false).await?);
+    assert_success(add_task(shared, "sleep 0.1").await?);
 
     // Wait for task 0 to finish.
     let original_task = wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
@@ -70,7 +70,7 @@ async fn test_cannot_restart_running() -> Result<()> {
     let shared = &daemon.settings.shared;
 
     // Add a single task that instantly finishes.
-    assert_success(add_task(shared, "sleep 60", false).await?);
+    assert_success(add_task(shared, "sleep 60").await?);
 
     // Wait for task 0 to finish.
     wait_for_task_condition(shared, 0, |task| task.is_running()).await?;

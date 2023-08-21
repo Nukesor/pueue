@@ -46,11 +46,12 @@ impl TaskHandler {
                 group.status = GroupStatus::Running;
                 info!("Resuming group {}", &group_name);
 
-                let (matching, _) = state.filter_tasks_of_group(
+                let filtered_tasks = state.filter_tasks_of_group(
                     |task| matches!(task.status, TaskStatus::Paused),
                     &group_name,
                 );
-                matching
+
+                filtered_tasks.matching_ids
             }
             TaskSelection::All => {
                 // Resume all groups and the default queue

@@ -43,10 +43,7 @@ async fn test_enqueued_tasks(
     assert_success(add_stashed_task(shared, "sleep 10", stashed, enqueue_at).await?);
 
     // The task should be added in stashed state.
-    let task = wait_for_task_condition(shared, 0, |task| {
-        matches!(task.status, TaskStatus::Stashed { .. })
-    })
-    .await?;
+    let task = wait_for_task_condition(shared, 0, |task| task.is_stashed()).await?;
 
     assert!(
         task.enqueued_at.is_none(),
@@ -56,7 +53,7 @@ async fn test_enqueued_tasks(
     // Assert the correct point in time has been set, in case `enqueue_at` is specific.
     if enqueue_at.is_some() {
         let status = get_task_status(shared, 0).await?;
-        assert!(matches!(status, TaskStatus::Stashed { .. }));
+        assert!(task.is_stashed());
 
         if let TaskStatus::Stashed { enqueue_at: inner } = status {
             assert_eq!(inner, enqueue_at);
@@ -102,10 +99,7 @@ async fn test_delayed_tasks() -> Result<()> {
     assert_success(response);
 
     // The task should be added in stashed state for about 1 second.
-    wait_for_task_condition(shared, 0, |task| {
-        matches!(task.status, TaskStatus::Stashed { .. })
-    })
-    .await?;
+    wait_for_task_condition(shared, 0, |task| task.is_stashed()).await?;
 
     // Make sure the task is started after being automatically enqueued.
     sleep_ms(800).await;
@@ -125,7 +119,7 @@ async fn test_stash_queued_task() -> Result<()> {
     wait_for_group_status(shared, "default", GroupStatus::Paused).await?;
 
     // Add a task that's queued for execution.
-    add_task(shared, "sleep 10", false).await?;
+    add_task(shared, "sleep 10").await?;
 
     // Stash the task
     send_message(shared, Message::Stash(vec![0]))

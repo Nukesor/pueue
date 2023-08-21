@@ -27,7 +27,7 @@ async fn read(#[case] read_local_logs: bool) -> Result<()> {
         .context("Couldn't write pueue config to temporary directory")?;
 
     // Add a task and wait until it finishes.
-    assert_success(add_task(shared, "echo test", false).await?);
+    assert_success(add_task(shared, "echo test").await?);
     wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
 
     let output = run_client_command(shared, &["log"])?;
@@ -58,7 +58,7 @@ async fn read_truncated(#[case] read_local_logs: bool) -> Result<()> {
         .context("Couldn't write pueue config to temporary directory")?;
 
     // Add a task and wait until it finishes.
-    assert_success(add_task(shared, "echo '1\n2\n3\n4\n5\n6\n7\n8\n9\n10'", false).await?);
+    assert_success(add_task(shared, "echo '1\n2\n3\n4\n5\n6\n7\n8\n9\n10'").await?);
     wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
 
     let output = run_client_command(shared, &["log", "--lines=5"])?;
@@ -94,7 +94,7 @@ async fn colored() -> Result<()> {
     let shared = &daemon.settings.shared;
 
     // Add a task and wait until it finishes.
-    assert_success(add_task(shared, "echo test", false).await?);
+    assert_success(add_task(shared, "echo test").await?);
     wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
 
     let output = run_client_command(shared, &["--color", "always", "log"])?;
@@ -121,7 +121,7 @@ async fn json() -> Result<()> {
     let shared = &daemon.settings.shared;
 
     // Add a task and wait until it finishes.
-    assert_success(add_task(shared, "echo test", false).await?);
+    assert_success(add_task(shared, "echo test").await?);
     wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
 
     let output = run_client_command(shared, &["log", "--json"])?;

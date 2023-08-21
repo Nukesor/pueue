@@ -27,7 +27,7 @@ async fn default(#[case] read_local_logs: bool) -> Result<()> {
     let shared = &daemon.settings.shared;
 
     // Add a task and wait until it started.
-    assert_success(add_task(shared, "sleep 1 && echo test", false).await?);
+    assert_success(add_task(shared, "sleep 1 && echo test").await?);
     wait_for_task_condition(shared, 0, |task| task.is_running()).await?;
 
     // Execute `follow`.
@@ -51,7 +51,7 @@ async fn last_lines(#[case] read_local_logs: bool) -> Result<()> {
     let shared = &daemon.settings.shared;
 
     // Add a task which echos 8 lines of output
-    assert_success(add_task(shared, "echo \"1\n2\n3\n4\n5\n6\n7\n8\" && sleep 1", false).await?);
+    assert_success(add_task(shared, "echo \"1\n2\n3\n4\n5\n6\n7\n8\" && sleep 1").await?);
     wait_for_task_condition(shared, 0, |task| task.is_running()).await?;
 
     // Follow the task, but only print the last 4 lines of the output.
@@ -113,7 +113,7 @@ async fn fail_on_disappearing(#[case] read_local_logs: bool) -> Result<()> {
     let shared = &daemon.settings.shared;
 
     // Add a task echoes something and waits for a while
-    assert_success(add_task(shared, "echo test && sleep 10", false).await?);
+    assert_success(add_task(shared, "echo test && sleep 10").await?);
     wait_for_task_condition(shared, 0, |task| task.is_running()).await?;
 
     // Reset the daemon after 2 seconds. At this point, the client will already be following the

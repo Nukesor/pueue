@@ -12,7 +12,7 @@ async fn restart_and_edit_task_command() -> Result<()> {
     let shared = &daemon.settings.shared;
 
     // Create a task and wait for it to finish.
-    assert_success(add_task(shared, "ls", false).await?);
+    assert_success(add_task(shared, "ls").await?);
     wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
 
     // Set the editor to a command which replaces the temporary file's content.
@@ -39,7 +39,7 @@ async fn restart_and_edit_task_path() -> Result<()> {
     let shared = &daemon.settings.shared;
 
     // Create a task and wait for it to finish.
-    assert_success(add_task(shared, "ls", false).await?);
+    assert_success(add_task(shared, "ls").await?);
     wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
 
     // Set the editor to a command which replaces the temporary file's content.
@@ -65,7 +65,7 @@ async fn restart_and_edit_task_path_and_command() -> Result<()> {
     let shared = &daemon.settings.shared;
 
     // Create a task and wait for it to finish.
-    assert_success(add_task(shared, "ls", false).await.unwrap());
+    assert_success(add_task(shared, "ls").await.unwrap());
     wait_for_task_condition(shared, 0, |task| task.is_done())
         .await
         .unwrap();
@@ -113,7 +113,7 @@ async fn normal_restart_with_edit() -> Result<()> {
     let shared = &daemon.settings.shared;
 
     // Create a task and wait for it to finish.
-    assert_success(add_task(shared, "ls", false).await?);
+    assert_success(add_task(shared, "ls").await?);
     let original_task = wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
     assert!(
         original_task.enqueued_at.is_some(),

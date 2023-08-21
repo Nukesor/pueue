@@ -34,7 +34,7 @@ async fn test_start_tasks(#[case] start_message: StartMessage) -> Result<()> {
 
     // Add multiple tasks only a single one will be started by default
     for _ in 0..3 {
-        assert_success(add_task(shared, "sleep 60", false).await?);
+        assert_success(add_task(shared, "sleep 60").await?);
     }
     // Wait for task 0 to start on its own.
     // We have to do this, otherwise we'll start task 1/2 beforehand, which prevents task 0 to be
