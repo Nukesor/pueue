@@ -63,7 +63,7 @@ winapi = { version = "0.3", features = [
 
 # Unix
 [target.'cfg(unix)'.dependencies]
-libproc = "0.13.0"
+libproc = "0.14.1"
 whoami = "1"
 
 # Linux only
