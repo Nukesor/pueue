@@ -54,7 +54,8 @@ pub fn print_logs(
         task_ids,
         lines,
         full,
-        } = cli_command else {
+    } = cli_command
+    else {
         panic!("Got wrong Subcommand {cli_command:?} in print_log. This shouldn't happen");
     };
 

@@ -70,7 +70,7 @@ pub async fn wait(
             // Add it to the watchlist we we know this task yet.
             let Some(previous_status) = watched_tasks.get(&task.id).cloned() else {
                 if finished_tasks.contains(&task.id) {
-                    continue
+                    continue;
                 }
 
                 // Add new/unknown tasks to our watchlist
@@ -102,7 +102,7 @@ pub async fn wait(
             // Get the correct task. If it no longer exists, remove it from the task list.
             let Some(task) = tasks.iter().find(|task| task.id == task_id) else {
                 watched_tasks.remove(&task_id);
-                    continue;
+                continue;
             };
 
             // Check if the task hit the target status.

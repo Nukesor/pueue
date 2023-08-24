@@ -56,8 +56,8 @@ pub async fn handle_follow(
             let state = state.lock().unwrap();
             let Some(task) = state.tasks.get(&task_id) else {
                 return Ok(create_failure_message(
-                        "Pueue: The task to be followed doesn't exist.",
-                        ));
+                    "Pueue: The task to be followed doesn't exist.",
+                ));
             };
             // The task is running or finished, we can start to follow.
             if task.is_running() || task.is_done() {
@@ -122,8 +122,8 @@ pub async fn handle_follow(
             let state = state.lock().unwrap();
             let Some(task) = state.tasks.get(&task_id) else {
                 return Ok(create_failure_message(
-                        "Pueue: The followed task has been removed.",
-                        ));
+                    "Pueue: The followed task has been removed.",
+                ));
             };
 
             // The task is done, just close the stream.
