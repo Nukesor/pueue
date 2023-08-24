@@ -13,7 +13,7 @@ use crate::ok_or_return_failure_message;
 pub fn switch(message: SwitchMessage, state: &SharedState, settings: &Settings) -> Message {
     let mut state = state.lock().unwrap();
 
-    let task_ids = vec![message.task_id_1, message.task_id_2];
+    let task_ids = [message.task_id_1, message.task_id_2];
     let filtered_tasks = state.filter_tasks(
         |task| matches!(task.status, TaskStatus::Queued | TaskStatus::Stashed { .. }),
         Some(task_ids.to_vec()),
