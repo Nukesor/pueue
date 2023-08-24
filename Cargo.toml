@@ -3,6 +3,7 @@
 # The following is the shared configuration for both pueue and its lib
 [workspace]
 members = ["pueue", "pueue_lib"]
+resolver = "2"
 
 [workspace.package]
 authors = ["Arne Beer <contact@arne.beer>"]
