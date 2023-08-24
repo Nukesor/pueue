@@ -107,7 +107,8 @@ pub fn datetime(section: Pair<'_, Rule>, query_result: &mut QueryResult) -> Resu
             Rule::column_enqueue_at => {
                 let TaskStatus::Stashed {
                     enqueue_at: Some(enqueue_at),
-                } = task.status else {
+                } = task.status
+                else {
                     return false;
                 };
 
