@@ -2,6 +2,7 @@ use anyhow::{bail, Result};
 
 use pueue_lib::network::message::*;
 use pueue_lib::network::protocol::*;
+use pueue_lib::settings::Settings;
 use pueue_lib::state::FilteredTasks;
 use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
@@ -16,6 +17,7 @@ use crate::client::commands::get_state;
 #[allow(clippy::too_many_arguments)]
 pub async fn restart(
     stream: &mut GenericStream,
+    settings: &Settings,
     task_ids: Vec<usize>,
     all_failed: bool,
     failed_in_group: Option<String>,
@@ -85,6 +87,7 @@ pub async fn restart(
 
         // Edit any properties, if requested.
         let edited_props = edit_task_properties(
+            settings,
             &task.command,
             &task.path,
             &task.label,

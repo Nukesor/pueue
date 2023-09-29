@@ -20,7 +20,7 @@ impl TaskHandler {
             }
         };
 
-        let mut command = compile_shell_command(&callback_command);
+        let mut command = compile_shell_command(&self.settings, &callback_command);
 
         // Spawn the callback subprocess and log if it fails.
         let spawn_result = command.spawn();

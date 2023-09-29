@@ -15,6 +15,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - QoL improvement: Don't pause groups if there're no queued tasks. [#452](https://github.com/Nukesor/pueue/issues/452)
   Auto-pausing of groups was only done to prevent the unwanted execution of other tasks, but this isn't necessary, if there're no queued tasks.
 
+### Added
+
+The two following features are very new and marked as "experimental" for the time being.
+They might be reworked in a later release, since working with shells is always tricky and this definitely need more testing.
+
+- Experimental: Allow configuration of the shell command that executes task commands. [#454](https://github.com/Nukesor/pueue/issues/454)
+- Experimental: Allow injection of hard coded environment variables via config file. [#454](https://github.com/Nukesor/pueue/issues/454)
+
 ## [3.2.0] - 2023-06-13
 
 ### Added
