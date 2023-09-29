@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [3.3.0] - unreleased
 
+### Added
+
+- Support the `PUEUE_CONFIG` environment variable in addition to the `--config` option. [#464](https://github.com/Nukesor/pueue/issues/464)
+
 ### Fixed
 
 - Support parameter parsing for signal names with capslock (`SIGINT`) and short name (`INT`|`int`). [#455](https://github.com/Nukesor/pueue/issues/455).

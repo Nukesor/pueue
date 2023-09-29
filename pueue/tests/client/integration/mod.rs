@@ -1,4 +1,5 @@
 mod completions;
+mod configuration;
 mod edit;
 mod follow;
 mod group;

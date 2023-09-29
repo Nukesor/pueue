@@ -10,6 +10,9 @@ use shellexpand::tilde;
 use crate::error::Error;
 use crate::setting_defaults::*;
 
+/// The environment variable that can be set to overwrite pueue's config path.
+pub const PUEUE_CONFIG_PATH_ENV: &str = "PUEUE_CONFIG";
+
 /// All settings which are used by both, the client and the daemon
 #[derive(PartialEq, Eq, Clone, Debug, Default, Deserialize, Serialize)]
 pub struct Shared {
@@ -285,8 +288,13 @@ impl Settings {
     ///
     /// The default local config locations depends on the current target.
     pub fn read(from_file: &Option<PathBuf>) -> Result<(Settings, bool), Error> {
+        // If no explicit path is provided, we look for the PUEUE_CONFIG env variable.
+        let from_file = from_file
+            .clone()
+            .or_else(|| std::env::var(PUEUE_CONFIG_PATH_ENV).map(PathBuf::from).ok());
+
         // Load the config from a very specific file path
-        if let Some(path) = from_file {
+        if let Some(path) = &from_file {
             // Open the file in read-only mode with buffer.
             let file = File::open(path)
                 .map_err(|err| Error::IoPathError(path.clone(), "opening config file", err))?;
@@ -330,6 +338,8 @@ impl Settings {
     pub fn save(&self, path: &Option<PathBuf>) -> Result<(), Error> {
         let config_path = if let Some(path) = path {
             path.clone()
+        } else if let Ok(path) = std::env::var(PUEUE_CONFIG_PATH_ENV) {
+            PathBuf::from(path)
         } else if let Some(path) = dirs::config_dir() {
             let path = path.join("pueue");
             path.join("pueue.yml")
