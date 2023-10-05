@@ -64,7 +64,7 @@ impl TaskHandler {
         // Format and insert start and end times.
         let print_time = |time: Option<DateTime<Local>>| {
             time.map(|time| time.timestamp().to_string())
-                .unwrap_or_else(String::new)
+                .unwrap_or_default()
         };
         parameters.insert("start", print_time(task.start));
         parameters.insert("end", print_time(task.end));
