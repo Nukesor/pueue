@@ -8,7 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fixed
 
-- Support parameter parsing for signal names with capslock (`SIGINT`) and short name (`INT`|`int`). [#455](https://github.com/Nukesor/pueue/issues/455).
+- Support parameter parsing for signal names with capslock (`SIGINT`) and short name (`INT`|`int`). [#455](https://github.com/Nukesor/pueue/issues/455)
+- Better error messages for pid related I/O errors. [#466](https://github.com/Nukesor/pueue/issues/466)
 
 ### Changed
 
