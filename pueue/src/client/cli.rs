@@ -438,6 +438,7 @@ https://github.com/Nukesor/pueue/issues/350#issue-1359083118"
     },
 
     /// Remove all finished tasks from the list.
+    #[command(aliases(["cleanup", "clear"]))]
     Clean {
         /// Only clean tasks that finished successfully.
         #[arg(short, long)]

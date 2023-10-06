@@ -18,6 +18,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+- `clear` and `cleanup` aliases for `clean` subcommand.
+
 The two following features are very new and marked as "experimental" for the time being.
 They might be reworked in a later release, since working with shells is always tricky and this definitely need more testing.
 
