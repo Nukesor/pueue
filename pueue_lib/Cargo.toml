@@ -17,7 +17,7 @@ maintenance = { status = "actively-developed" }
 [dependencies]
 anyhow = "1.0"
 async-trait = "0.1"
-byteorder = "1.4"
+byteorder = "1.5"
 chrono = { version = "0.4", features = ["serde"] }
 dirs = "5.0"
 rand = "0.8"
@@ -64,7 +64,7 @@ winapi = { version = "0.3", features = [
 
 # Unix
 [target.'cfg(unix)'.dependencies]
-libproc = "0.14.1"
+libproc = "0.14.2"
 whoami = "1"
 
 # Linux only

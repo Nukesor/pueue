@@ -22,7 +22,6 @@ chrono-english = "0.1"
 clap = { version = "4.3", features = ["derive", "cargo", "help"] }
 clap_complete = "4.3"
 comfy-table = "7"
-crossterm = { version = "0.26", default-features = false }
 ctrlc = { version = "3", features = ["termination"] }
 pest = "2.7"
 pest_derive = "2.7"
@@ -59,7 +58,15 @@ serde_yaml = { workspace = true }
 env_logger = "0.10"
 test-log = "0.2"
 
+# We don't need any of the default features for crossterm.
+# However, the windows build needs the windows feature enabled.
+[target.'cfg(not(windows))'.dependencies]
+crossterm = { version = "0.27", default-features = false }
+[target.'cfg(windows)'.dependencies]
+crossterm = { version = "0.27", default-features = false, features=["windows"] }
+
 # Test specific dev-dependencies
 [target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]
 whoami = "1"
 procfs = { version = "0.15", default-features = false }
+

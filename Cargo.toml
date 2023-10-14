@@ -24,8 +24,8 @@ serde_derive = "1.0"
 snap = "1.1"
 strum = "0.25"
 strum_macros = "0.25"
-tokio = { version = "1.32", features = ["rt-multi-thread", "time", "io-std"] }
-handlebars = "4.3"
+tokio = { version = "1.33", features = ["rt-multi-thread", "time", "io-std"] }
+handlebars = "4.4"
 
 # Dev dependencies
 anyhow = "1"
