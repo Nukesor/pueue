@@ -105,14 +105,14 @@ pub fn datetime(section: Pair<'_, Rule>, query_result: &mut QueryResult) -> Resu
         // Get the field we should apply the filter to.
         let field = match column {
             Rule::column_enqueue_at => {
-                if let TaskStatus::Stashed {
+                let TaskStatus::Stashed {
                     enqueue_at: Some(enqueue_at),
                 } = task.status
-                {
-                    enqueue_at
-                } else {
+                else {
                     return false;
-                }
+                };
+
+                enqueue_at
             }
             Rule::column_start => {
                 let Some(start) = task.start else {

@@ -17,3 +17,7 @@ ensure_installed *args:
         echo "error: cargo-{{ args }} is not installed"
         exit 1
     fi
+
+lint:
+    cargo fmt
+    cargo clippy --all --tests

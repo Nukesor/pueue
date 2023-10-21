@@ -1,7 +1,7 @@
 use std::sync::MutexGuard;
 
 use pueue_lib::network::message::{create_failure_message, create_success_message, Message};
-use pueue_lib::state::{Group, State};
+use pueue_lib::state::{FilteredTasks, Group, State};
 use pueue_lib::task::Task;
 
 use crate::daemon::state_helper::LockedState;
@@ -36,33 +36,37 @@ where
     F: Fn(&Task) -> bool,
 {
     // Get all matching/mismatching task_ids for all given ids and statuses.
-    let (matching, mismatching) = state.filter_tasks(filter, Some(task_ids));
+    let filtered_tasks = state.filter_tasks(filter, Some(task_ids));
 
-    compile_task_response(message, matching, mismatching)
+    compile_task_response(message, filtered_tasks)
 }
 
 /// Compile a response for instructions with multiple tasks ids
 /// A custom message will be combined with a text about all matching tasks
 /// and possibly tasks for which the instruction cannot be executed.
-pub fn compile_task_response(
-    message: &str,
-    matching: Vec<usize>,
-    mismatching: Vec<usize>,
-) -> Message {
-    let matching: Vec<String> = matching.iter().map(|id| id.to_string()).collect();
-    let mismatching_ids: Vec<String> = mismatching.iter().map(|id| id.to_string()).collect();
-    let matching_ids = matching.join(", ");
+pub fn compile_task_response(message: &str, filtered_tasks: FilteredTasks) -> Message {
+    let matching_ids: Vec<String> = filtered_tasks
+        .matching_ids
+        .iter()
+        .map(|id| id.to_string())
+        .collect();
+    let non_matching_ids: Vec<String> = filtered_tasks
+        .non_matching_ids
+        .iter()
+        .map(|id| id.to_string())
+        .collect();
+    let matching_ids = matching_ids.join(", ");
 
     // We don't have any mismatching ids, return the simple message.
-    if mismatching.is_empty() {
+    if filtered_tasks.non_matching_ids.is_empty() {
         return create_success_message(format!("{message}: {matching_ids}"));
     }
 
     let mismatched_message = "The command failed for tasks";
-    let mismatching_ids = mismatching_ids.join(", ");
+    let mismatching_ids = non_matching_ids.join(", ");
 
     // All given ids are invalid.
-    if matching.is_empty() {
+    if matching_ids.is_empty() {
         return create_failure_message(format!("{mismatched_message}: {mismatching_ids}"));
     }
 

@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use std::{fs::create_dir_all, path::PathBuf};
 
 use anyhow::{bail, Context, Result};
-use log::{error, warn};
+use log::warn;
 use std::sync::mpsc::channel;
 
 use pueue_lib::error::Error;
@@ -50,16 +50,6 @@ pub async fn run(config_path: Option<PathBuf>, profile: Option<String>, test: bo
     // Load any requested profile.
     if let Some(profile) = &profile {
         settings.load_profile(profile)?;
-    }
-
-    #[allow(deprecated)]
-    if settings.daemon.groups.is_some() {
-        error!(
-            "Please delete the 'daemon.groups' section from your config file.
-            Run `pueue -vv` to see where your config is located.\n\
-            It is no longer used and groups can now only be edited via the commandline interface. \n\n\
-            Attention: The first time the daemon is restarted this update, the amount of parallel tasks per group will be reset to 1!!"
-        )
     }
 
     init_directories(&settings.shared.pueue_directory())?;

@@ -10,10 +10,10 @@ async fn test_reset() -> Result<()> {
     let shared = &daemon.settings.shared;
 
     // Start a long running task and make sure it's started
-    add_task(shared, "ls", false).await?;
-    add_task(shared, "failed", false).await?;
-    add_task(shared, "sleep 60", false).await?;
-    add_task(shared, "ls", false).await?;
+    add_task(shared, "ls").await?;
+    add_task(shared, "failed").await?;
+    add_task(shared, "sleep 60").await?;
+    add_task(shared, "ls").await?;
     wait_for_task_condition(shared, 2, |task| task.is_running()).await?;
 
     // Reset the daemon

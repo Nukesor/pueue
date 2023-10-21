@@ -187,16 +187,17 @@ impl_into_message!(PauseMessage, Message::Pause);
 /// This is also needed for usage in clap, since nix's Signal doesn't implement [Display] and
 /// [std::str::FromStr].
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize, Display, EnumString)]
+#[strum(ascii_case_insensitive)]
 pub enum Signal {
-    #[strum(serialize = "SigInt", serialize = "sigint", serialize = "2")]
+    #[strum(serialize = "sigint", serialize = "int", serialize = "2")]
     SigInt,
-    #[strum(serialize = "SigKill", serialize = "sigkill", serialize = "9")]
+    #[strum(serialize = "sigkill", serialize = "kill", serialize = "9")]
     SigKill,
-    #[strum(serialize = "SigTerm", serialize = "sigterm", serialize = "15")]
+    #[strum(serialize = "sigterm", serialize = "term", serialize = "15")]
     SigTerm,
-    #[strum(serialize = "SigCont", serialize = "sigcont", serialize = "18")]
+    #[strum(serialize = "sigcont", serialize = "cont", serialize = "18")]
     SigCont,
-    #[strum(serialize = "SigStop", serialize = "sigstop", serialize = "19")]
+    #[strum(serialize = "sigstop", serialize = "stop", serialize = "19")]
     SigStop,
 }
 

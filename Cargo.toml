@@ -3,6 +3,7 @@
 # The following is the shared configuration for both pueue and its lib
 [workspace]
 members = ["pueue", "pueue_lib"]
+resolver = "2"
 
 [workspace.package]
 authors = ["Arne Beer <contact@arne.beer>"]
@@ -23,7 +24,8 @@ serde_derive = "1.0"
 snap = "1.1"
 strum = "0.25"
 strum_macros = "0.25"
-tokio = { version = "1.29", features = ["rt-multi-thread", "time", "io-std"] }
+tokio = { version = "1.33", features = ["rt-multi-thread", "time", "io-std"] }
+handlebars = "4.4"
 
 # Dev dependencies
 anyhow = "1"

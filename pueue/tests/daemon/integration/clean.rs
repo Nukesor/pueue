@@ -11,7 +11,7 @@ async fn test_normal_clean() -> Result<()> {
 
     // This should result in one failed, one finished, one running and one queued task.
     for command in &["failing", "ls", "sleep 60", "ls"] {
-        assert_success(add_task(shared, command, false).await?);
+        assert_success(add_task(shared, command).await?);
     }
     // Wait for task2 to start. This implies that task[0,1] are done.
     wait_for_task_condition(shared, 2, |task| task.is_running()).await?;
@@ -39,7 +39,7 @@ async fn test_successful_only_clean() -> Result<()> {
 
     // This should result in one failed, one finished, one running and one queued task.
     for command in &["failing", "ls"] {
-        assert_success(add_task(shared, command, false).await?);
+        assert_success(add_task(shared, command).await?);
     }
     // Wait for task2 to start. This implies task[0,1] being finished.
     wait_for_task_condition(shared, 1, |task| task.is_done()).await?;

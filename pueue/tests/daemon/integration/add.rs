@@ -15,7 +15,7 @@ async fn test_normal_add() -> Result<()> {
     let pre_addition_time = Local::now();
 
     // Add a task that instantly finishes
-    assert_success(add_task(shared, "sleep 0.01", false).await?);
+    assert_success(add_task(shared, "sleep 0.01").await?);
 
     // Wait until the task finished and get state
     let task = wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
@@ -77,7 +77,7 @@ async fn test_add_with_immediate_start() -> Result<()> {
     pause_tasks(shared, TaskSelection::All).await?;
 
     // Tell the daemon to add a task that must be immediately started.
-    assert_success(add_task(shared, "sleep 60", true).await?);
+    assert_success(add_and_start_task(shared, "sleep 60").await?);
 
     // Make sure the task is actually being started.
     wait_for_task_condition(shared, 0, |task| task.is_running()).await?;

@@ -62,16 +62,6 @@ async fn main() -> Result<()> {
         settings.load_profile(profile)?;
     }
 
-    #[allow(deprecated)]
-    if settings.daemon.groups.is_some() {
-        println!(
-            "Please delete the 'daemon.groups' section from your config file.
-            Run `pueue -vv` to see where your config is located.\n\
-            It is no longer used and groups can now only be edited via the commandline interface.\n\n\
-            Attention: The first time the daemon is restarted this update, the amount of parallel tasks per group will be reset to 1!!"
-        )
-    }
-
     // Error if no configuration file can be found, as this is an indicator, that the daemon hasn't
     // been started yet.
     if !config_found {

@@ -6,9 +6,16 @@ use pueue_lib::settings::*;
 use crate::helper::*;
 
 /// Adds a task to the test daemon.
-pub async fn add_task(shared: &Shared, command: &str, start_immediately: bool) -> Result<Message> {
+pub async fn add_task(shared: &Shared, command: &str) -> Result<Message> {
+    send_message(shared, create_add_message(shared, command))
+        .await
+        .context("Failed to to add task.")
+}
+
+/// Adds a task to the test daemon and starts it immediately.
+pub async fn add_and_start_task(shared: &Shared, command: &str) -> Result<Message> {
     let mut message = create_add_message(shared, command);
-    message.start_immediately = start_immediately;
+    message.start_immediately = true;
 
     send_message(shared, message)
         .await
@@ -43,7 +50,7 @@ pub async fn add_task_to_group(shared: &Shared, command: &str, group: &str) -> R
 /// variables to `stdout`.
 pub async fn add_env_task(shared: &Shared, command: &str) -> Result<Message> {
     let command = format!("echo WORKER_ID: $PUEUE_WORKER_ID; echo GROUP: $PUEUE_GROUP; {command}");
-    add_task(shared, &command, false).await
+    add_task(shared, &command).await
 }
 
 /// Just like [add_env_task], but the task get's added to specific group.

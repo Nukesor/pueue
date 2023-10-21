@@ -1,5 +1,3 @@
-use std::process::Command;
-
 // We allow anyhow in here, as this is a module that'll be strictly used internally.
 // As soon as it's obvious that this is code is intended to be exposed to library users, we have to
 // go ahead and replace any `anyhow` usage by proper error handling via our own Error type.
@@ -7,11 +5,18 @@ use anyhow::Result;
 use command_group::{GroupChild, Signal, UnixChildExt};
 use log::info;
 
-pub fn compile_shell_command(command_string: &str) -> Command {
-    let mut command = Command::new("sh");
-    command.arg("-c").arg(command_string);
+use crate::settings::Settings;
 
-    command
+pub fn get_shell_command(settings: &Settings) -> Vec<String> {
+    let Some(ref shell_command) = settings.daemon.shell_command else {
+        return vec![
+            "sh".into(),
+            "-c".into(),
+            "{{ pueue_command_string }}".into(),
+        ];
+    };
+
+    shell_command.clone()
 }
 
 /// Send a signal to one of Pueue's child process group handle.
@@ -39,17 +44,18 @@ pub fn kill_child(task_id: usize, child: &mut GroupChild) -> std::io::Result<()>
 
 #[cfg(test)]
 mod tests {
-    use log::warn;
+    use std::process::Command;
     use std::thread::sleep;
     use std::time::Duration;
 
     use anyhow::Result;
     use command_group::CommandGroup;
     use libproc::processes::{pids_by_type, ProcFilter};
+    use log::warn;
     use pretty_assertions::assert_eq;
 
     use super::*;
-    use crate::process_helper::process_exists;
+    use crate::process_helper::{compile_shell_command, process_exists};
 
     /// List all PIDs that are part of the process group
     pub fn get_process_group_pids(pgrp: u32) -> Vec<u32> {
@@ -75,7 +81,8 @@ mod tests {
 
     #[test]
     fn test_spawn_command() {
-        let mut child = compile_shell_command("sleep 0.1")
+        let settings = Settings::default();
+        let mut child = compile_shell_command(&settings, "sleep 0.1")
             .group_spawn()
             .expect("Failed to spawn echo");
 
@@ -87,9 +94,11 @@ mod tests {
     #[test]
     /// Ensure a `sh -c` command will be properly killed without detached processes.
     fn test_shell_command_is_killed() -> Result<()> {
-        let mut child = compile_shell_command("sleep 60 & sleep 60 && echo 'this is a test'")
-            .group_spawn()
-            .expect("Failed to spawn echo");
+        let settings = Settings::default();
+        let mut child =
+            compile_shell_command(&settings, "sleep 60 & sleep 60 && echo 'this is a test'")
+                .group_spawn()
+                .expect("Failed to spawn echo");
         let pid = child.id();
         // Sleep a little to give everything a chance to spawn.
         sleep(Duration::from_millis(500));
@@ -120,9 +129,11 @@ mod tests {
     /// Ensure a `sh -c` command will be properly killed without detached processes when using unix
     /// signals directly.
     fn test_shell_command_is_killed_with_signal() -> Result<()> {
-        let mut child = compile_shell_command("sleep 60 & sleep 60 && echo 'this is a test'")
-            .group_spawn()
-            .expect("Failed to spawn echo");
+        let settings = Settings::default();
+        let mut child =
+            compile_shell_command(&settings, "sleep 60 & sleep 60 && echo 'this is a test'")
+                .group_spawn()
+                .expect("Failed to spawn echo");
         let pid = child.id();
         // Sleep a little to give everything a chance to spawn.
         sleep(Duration::from_millis(500));
@@ -153,9 +164,11 @@ mod tests {
     /// Ensure that a `sh -c` process with a child process that has children of its own
     /// will properly kill all processes and their children's children without detached processes.
     fn test_shell_command_children_are_killed() -> Result<()> {
-        let mut child = compile_shell_command("bash -c 'sleep 60 && sleep 60' && sleep 60")
-            .group_spawn()
-            .expect("Failed to spawn echo");
+        let settings = Settings::default();
+        let mut child =
+            compile_shell_command(&settings, "bash -c 'sleep 60 && sleep 60' && sleep 60")
+                .group_spawn()
+                .expect("Failed to spawn echo");
         let pid = child.id();
         // Sleep a little to give everything a chance to spawn.
         sleep(Duration::from_millis(500));

@@ -59,7 +59,7 @@ async fn test_full_log() -> Result<()> {
 
     // Add a task that lists those files and wait for it to finish.
     let command = format!("ls {tempdir_path:?}");
-    assert_success(add_task(shared, &command, false).await?);
+    assert_success(add_task(shared, &command).await?);
     wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
 
     // Request all log lines
@@ -85,7 +85,7 @@ async fn test_partial_log() -> Result<()> {
 
     // Add a task that lists those files and wait for it to finish.
     let command = format!("ls {tempdir_path:?}");
-    assert_success(add_task(shared, &command, false).await?);
+    assert_success(add_task(shared, &command).await?);
     wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
 
     // Debug output to see what the file actually looks like:
@@ -127,7 +127,7 @@ async fn test_correct_log_order() -> Result<()> {
 
     // Add a task that lists those files and wait for it to finish.
     let command = "echo 'test' && echo 'error' && echo 'test'";
-    assert_success(add_task(shared, command, false).await?);
+    assert_success(add_task(shared, command).await?);
     wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
 
     // Request all log lines

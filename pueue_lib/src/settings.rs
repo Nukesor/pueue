@@ -10,8 +10,11 @@ use shellexpand::tilde;
 use crate::error::Error;
 use crate::setting_defaults::*;
 
+/// The environment variable that can be set to overwrite pueue's config path.
+pub const PUEUE_CONFIG_PATH_ENV: &str = "PUEUE_CONFIG_PATH";
+
 /// All settings which are used by both, the client and the daemon
-#[derive(PartialEq, Eq, Clone, Debug, Default, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct Shared {
     /// Don't access this property directly, but rather use the getter with the same name.
     /// It's only public to allow proper integration testing.
@@ -74,7 +77,7 @@ pub struct Shared {
 }
 
 /// All settings which are used by the client
-#[derive(PartialEq, Eq, Clone, Debug, Default, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct Client {
     /// If set to true, all tasks will be restart in place, instead of creating a new task.
     /// False is the default, as you'll lose the logs of the previously failed tasks when
@@ -106,7 +109,7 @@ pub struct Client {
 }
 
 /// All settings which are used by the daemon
-#[derive(PartialEq, Eq, Clone, Debug, Default, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct Daemon {
     /// Whether a group should be paused as soon as a single task fails
     #[serde(default = "Default::default")]
@@ -116,46 +119,76 @@ pub struct Daemon {
     pub pause_all_on_failure: bool,
     /// The callback that's called whenever a task finishes.
     pub callback: Option<String>,
+    /// Enironment variables that can be will be injected into all executed processes.
+    #[serde(default = "Default::default")]
+    pub env_vars: HashMap<String, String>,
     /// The amount of log lines from stdout/stderr that are passed to the callback command.
     #[serde(default = "default_callback_log_lines")]
     pub callback_log_lines: usize,
-    /// The legacy configuration for groups
-    #[serde(skip_serializing)]
-    #[deprecated(
-        since = "1.1.0",
-        note = "The configuration for groups is now stored in the state."
-    )]
-    pub groups: Option<HashMap<String, i64>>,
+    /// The command that should be used for task and callback execution.
+    /// The following are the only officially supported modi for Pueue.
+    ///
+    /// Unix default:
+    /// `vec!["sh", "-c", "{{ pueue_command_string }}"]`.
+    ///
+    /// Windows default:
+    /// `vec!["powershell", "-c", "[Console]::OutputEncoding = [Text.UTF8Encoding]::UTF8; {{ pueue_command_string }}"]`
+    pub shell_command: Option<Vec<String>>,
 }
 
-impl Default for Settings {
+impl Default for Shared {
     fn default() -> Self {
-        Settings {
-            client: Client {
-                read_local_logs: true,
-                status_time_format: default_status_time_format(),
-                status_datetime_format: default_status_datetime_format(),
-                ..Default::default()
-            },
-            daemon: Daemon {
-                callback_log_lines: default_callback_log_lines(),
-                ..Default::default()
-            },
-            shared: Shared {
-                #[cfg(not(target_os = "windows"))]
-                use_unix_socket: true,
-                host: default_host(),
-                port: default_port(),
-                ..Default::default()
-            },
-            profiles: HashMap::new(),
+        Shared {
+            pueue_directory: None,
+            runtime_directory: None,
+            alias_file: None,
+
+            #[cfg(not(target_os = "windows"))]
+            unix_socket_path: None,
+            #[cfg(not(target_os = "windows"))]
+            use_unix_socket: true,
+            host: default_host(),
+            port: default_port(),
+
+            pid_path: None,
+            daemon_cert: None,
+            daemon_key: None,
+            shared_secret_path: None,
+        }
+    }
+}
+
+impl Default for Client {
+    fn default() -> Self {
+        Client {
+            restart_in_place: false,
+            read_local_logs: true,
+            show_confirmation_questions: false,
+            show_expanded_aliases: false,
+            dark_mode: false,
+            max_status_lines: None,
+            status_time_format: default_status_time_format(),
+            status_datetime_format: default_status_datetime_format(),
+        }
+    }
+}
+
+impl Default for Daemon {
+    fn default() -> Self {
+        Daemon {
+            pause_group_on_failure: false,
+            pause_all_on_failure: false,
+            callback: None,
+            callback_log_lines: default_callback_log_lines(),
+            shell_command: None,
+            env_vars: HashMap::new(),
         }
     }
 }
 
 /// The parent settings struct. \
 /// This contains all other setting structs.
-#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Default, Debug, Deserialize, Serialize)]
 pub struct Settings {
     #[serde(default = "Default::default")]
     pub client: Client,
@@ -285,8 +318,13 @@ impl Settings {
     ///
     /// The default local config locations depends on the current target.
     pub fn read(from_file: &Option<PathBuf>) -> Result<(Settings, bool), Error> {
+        // If no explicit path is provided, we look for the PUEUE_CONFIG_PATH env variable.
+        let from_file = from_file
+            .clone()
+            .or_else(|| std::env::var(PUEUE_CONFIG_PATH_ENV).map(PathBuf::from).ok());
+
         // Load the config from a very specific file path
-        if let Some(path) = from_file {
+        if let Some(path) = &from_file {
             // Open the file in read-only mode with buffer.
             let file = File::open(path)
                 .map_err(|err| Error::IoPathError(path.clone(), "opening config file", err))?;
@@ -330,6 +368,8 @@ impl Settings {
     pub fn save(&self, path: &Option<PathBuf>) -> Result<(), Error> {
         let config_path = if let Some(path) = path {
             path.clone()
+        } else if let Ok(path) = std::env::var(PUEUE_CONFIG_PATH_ENV) {
+            PathBuf::from(path)
         } else if let Some(path) = dirs::config_dir() {
             let path = path.join("pueue");
             path.join("pueue.yml")

@@ -3,6 +3,7 @@ use std::io::{Read, Seek, Write};
 use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Context, Result};
+use pueue_lib::settings::Settings;
 use tempfile::NamedTempFile;
 
 use pueue_lib::network::message::*;
@@ -18,6 +19,7 @@ use pueue_lib::process_helper::compile_shell_command;
 /// Upon exiting the text editor, the line will then be read and sent to the server
 pub async fn edit(
     stream: &mut GenericStream,
+    settings: &Settings,
     task_id: usize,
     edit_command: bool,
     edit_path: bool,
@@ -32,7 +34,7 @@ pub async fn edit(
     // In case we don't receive an EditResponse, something went wrong
     // Return the response to the parent function and let the client handle it
     // by the generic message handler.
-    let Message::EditResponse(init_response ) = init_response else {
+    let Message::EditResponse(init_response) = init_response else {
         return Ok(init_response);
     };
 
@@ -41,6 +43,7 @@ pub async fn edit(
 
     // Edit all requested properties.
     let edit_result = edit_task_properties(
+        settings,
         &init_response.command,
         &init_response.path,
         &init_response.label,
@@ -100,6 +103,7 @@ pub struct EditedProperties {
 ///
 /// The returned values are: `(command, path, label)`
 pub fn edit_task_properties(
+    settings: &Settings,
     original_command: &str,
     original_path: &Path,
     original_label: &Option<String>,
@@ -111,7 +115,7 @@ pub fn edit_task_properties(
 
     // Update the command if requested.
     if edit_command {
-        props.command = Some(edit_line(original_command)?);
+        props.command = Some(edit_line(settings, original_command)?);
     };
 
     // Update the path if requested.
@@ -119,13 +123,13 @@ pub fn edit_task_properties(
         let str_path = original_path
             .to_str()
             .context("Failed to convert task path to string")?;
-        let changed_path = edit_line(str_path)?;
+        let changed_path = edit_line(settings, str_path)?;
         props.path = Some(PathBuf::from(changed_path));
     }
 
     // Update the label if requested.
     if edit_label {
-        let edited_label = edit_line(&original_label.clone().unwrap_or_default())?;
+        let edited_label = edit_line(settings, &original_label.clone().unwrap_or_default())?;
 
         // If the user deletes the label in their editor, an empty string will be returned.
         // This is an indicator that the task should no longer have a label, in which case we
@@ -143,7 +147,7 @@ pub fn edit_task_properties(
 /// This function enables the user to edit a task's details.
 /// Save any string to a temporary file, which is opened in the specified `$EDITOR`.
 /// As soon as the editor is closed, read the file content and return the line.
-fn edit_line(line: &str) -> Result<String> {
+fn edit_line(settings: &Settings, line: &str) -> Result<String> {
     // Create a temporary file with the command so we can edit it with the editor.
     let mut file = NamedTempFile::new().expect("Failed to create a temporary file");
     writeln!(file, "{line}").context("Failed to write to temporary file.")?;
@@ -158,7 +162,7 @@ fn edit_line(line: &str) -> Result<String> {
     // We escape the file path for good measure, but it shouldn't be necessary.
     let path = shell_escape::escape(file.path().to_string_lossy());
     let editor_command = format!("{editor} {path}");
-    let status = compile_shell_command(&editor_command)
+    let status = compile_shell_command(settings, &editor_command)
         .status()
         .context("Editor command did somehow fail. Aborting.")?;
 

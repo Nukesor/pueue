@@ -4,6 +4,32 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.3.0] - unreleased
+
+### Added
+
+- Support the `PUEUE_CONFIG_PATH` environment variable in addition to the `--config` option. [#464](https://github.com/Nukesor/pueue/issues/464)
+
+### Fixed
+
+- Support parameter parsing for signal names with capslock (`SIGINT`) and short name (`INT`|`int`). [#455](https://github.com/Nukesor/pueue/issues/455)
+- Better error messages for pid related I/O errors. [#466](https://github.com/Nukesor/pueue/issues/466)
+
+### Changed
+
+- QoL improvement: Don't pause groups if there're no queued tasks. [#452](https://github.com/Nukesor/pueue/issues/452)
+  Auto-pausing of groups was only done to prevent the unwanted execution of other tasks, but this isn't necessary, if there're no queued tasks.
+
+### Added
+
+- `clear` and `cleanup` aliases for `clean` subcommand.
+
+The two following features are very new and marked as "experimental" for the time being.
+They might be reworked in a later release, since working with shells is always tricky and this definitely need more testing.
+
+- Experimental: Allow configuration of the shell command that executes task commands. [#454](https://github.com/Nukesor/pueue/issues/454)
+- Experimental: Allow injection of hard coded environment variables via config file. [#454](https://github.com/Nukesor/pueue/issues/454)
+
 ## [3.2.0] - 2023-06-13
 
 ### Added

@@ -15,7 +15,7 @@ pub fn edit_request(task_id: usize, state: &SharedState) -> Message {
     let mut state = state.lock().unwrap();
     match state.tasks.get_mut(&task_id) {
         Some(task) => {
-            if !task.is_queued() {
+            if !task.is_queued() && !task.is_stashed() {
                 return create_failure_message("You can only edit a queued/stashed task");
             }
             task.prev_status = task.status.clone();

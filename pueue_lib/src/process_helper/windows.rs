@@ -1,5 +1,3 @@
-use std::process::Command;
-
 // We allow anyhow in here, as this is a module that'll be strictly used internally.
 // As soon as it's obvious that this is code is intended to be exposed to library users, we have to
 // go ahead and replace any `anyhow` usage by proper error handling via our own Error type.
@@ -17,6 +15,8 @@ use winapi::um::tlhelp32::{
 };
 use winapi::um::winnt::THREAD_SUSPEND_RESUME;
 
+use crate::settings::Settings;
+
 /// Shim signal enum for windows.
 pub enum Signal {
     SIGINT,
@@ -26,14 +26,18 @@ pub enum Signal {
     SIGSTOP,
 }
 
-pub fn compile_shell_command(command_string: &str) -> Command {
-    // Chain two `powershell` commands, one that sets the output encoding to utf8 and then the user provided one.
-    let mut command = Command::new("powershell");
-    command.arg("-c").arg(format!(
-        "[Console]::OutputEncoding = [Text.UTF8Encoding]::UTF8; {command_string}"
-    ));
+pub fn get_shell_command(settings: &Settings) -> Vec<String> {
+    let Some(ref shell_command) = settings.daemon.shell_command else {
+        // Chain two `powershell` commands, one that sets the output encoding to utf8 and then the user provided one.
+        return vec![
+            "powershell".into(),
+            "-c".into(),
+            "[Console]::OutputEncoding = [Text.UTF8Encoding]::UTF8; {{ pueue_command_string }}"
+                .into(),
+        ];
+    };
 
-    command
+    shell_command.clone()
 }
 
 /// Send a signal to a windows process.
@@ -251,12 +255,14 @@ pub fn process_exists(pid: u32) -> bool {
 
 #[cfg(test)]
 mod test {
+    use std::process::Command;
     use std::thread::sleep;
     use std::time::Duration;
 
     use command_group::CommandGroup;
 
     use super::*;
+    use crate::process_helper::compile_shell_command;
 
     /// Assert that certain process id no longer exists
     fn process_is_gone(pid: u32) -> bool {
@@ -292,7 +298,8 @@ mod test {
 
     #[test]
     fn test_spawn_command() {
-        let mut child = compile_shell_command("sleep 0.1")
+        let settings = Settings::default();
+        let mut child = compile_shell_command(&settings, "sleep 0.1")
             .group_spawn()
             .expect("Failed to spawn echo");
 
@@ -308,9 +315,11 @@ mod test {
     /// This test is ignored for now, as it is flaky from time to time.
     /// See https://github.com/Nukesor/pueue/issues/315
     fn test_shell_command_is_killed() -> Result<()> {
-        let mut child = compile_shell_command("sleep 60; sleep 60; echo 'this is a test'")
-            .group_spawn()
-            .expect("Failed to spawn echo");
+        let settings = Settings::default();
+        let mut child =
+            compile_shell_command(&settings, "sleep 60; sleep 60; echo 'this is a test'")
+                .group_spawn()
+                .expect("Failed to spawn echo");
         let pid = child.id();
 
         // Get all processes, so we can make sure they no longer exist afterwards.
@@ -338,9 +347,11 @@ mod test {
     /// Ensure that a `powershell -c` process with a child process that has children of it's own
     /// will properly kill all processes and their children's children without detached processes.
     fn test_shell_command_children_are_killed() -> Result<()> {
-        let mut child = compile_shell_command("powershell -c 'sleep 60; sleep 60'; sleep 60")
-            .group_spawn()
-            .expect("Failed to spawn echo");
+        let settings = Settings::default();
+        let mut child =
+            compile_shell_command(&settings, "powershell -c 'sleep 60; sleep 60'; sleep 60")
+                .group_spawn()
+                .expect("Failed to spawn echo");
         let pid = child.id();
         // Get all processes, so we can make sure they no longer exist afterwards.
         let process_ids = assert_process_ids(pid, 2, 5000)?;

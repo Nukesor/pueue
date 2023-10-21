@@ -27,9 +27,10 @@ fn construct_success_clean_message(message: CleanMessage) -> String {
 pub fn clean(message: CleanMessage, state: &SharedState, settings: &Settings) -> Message {
     let mut state = state.lock().unwrap();
 
-    let (matching, _) = state.filter_tasks(|task| matches!(task.status, TaskStatus::Done(_)), None);
+    let filtered_tasks =
+        state.filter_tasks(|task| matches!(task.status, TaskStatus::Done(_)), None);
 
-    for task_id in &matching {
+    for task_id in &filtered_tasks.matching_ids {
         // Ensure the task is removable, i.e. there are no dependant tasks.
         if !is_task_removable(&state, task_id, &[]) {
             continue;

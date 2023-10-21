@@ -42,7 +42,7 @@ async fn test_highest_priority_first() -> Result<()> {
     pause_tasks(shared, TaskSelection::All).await?;
 
     // Add one normal task and one with the lowest possible priority.
-    assert_success(add_task(shared, "sleep 10", false).await?);
+    assert_success(add_task(shared, "sleep 10").await?);
     assert_success(add_task_with_priority(shared, "sleep 10", 1).await?);
     assert_success(add_task_with_priority(shared, "sleep 10", 2).await?);
 
@@ -69,7 +69,7 @@ async fn test_default_priority_over_negative_priority() -> Result<()> {
     // Add one normal task and one with the lowest possible priority.
     assert_success(add_task_with_priority(shared, "sleep 10", -2).await?);
     assert_success(add_task_with_priority(shared, "sleep 10", -1).await?);
-    assert_success(add_task(shared, "sleep 10", false).await?);
+    assert_success(add_task(shared, "sleep 10").await?);
 
     // Resume the daemon.
     start_tasks(shared, TaskSelection::All).await?;

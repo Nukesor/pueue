@@ -145,8 +145,20 @@ impl Task {
         }
     }
 
+    /// Convenience helper on whether a task is stashed
+    pub fn is_stashed(&self) -> bool {
+        matches!(self.status, TaskStatus::Stashed { .. })
+    }
+
+    /// Check whether a task is queued or might soon be enqueued.
     pub fn is_queued(&self) -> bool {
-        matches!(self.status, TaskStatus::Queued | TaskStatus::Stashed { .. })
+        matches!(
+            self.status,
+            TaskStatus::Queued
+                | TaskStatus::Stashed {
+                    enqueue_at: Some(_)
+                }
+        )
     }
 
     /// Small convenience function to set the task's group to the default group.

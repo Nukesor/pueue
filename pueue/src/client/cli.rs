@@ -438,6 +438,7 @@ https://github.com/Nukesor/pueue/issues/350#issue-1359083118"
     },
 
     /// Remove all finished tasks from the list.
+    #[command(aliases(["cleanup", "clear"]))]
     Clean {
         /// Only clean tasks that finished successfully.
         #[arg(short, long)]
@@ -536,8 +537,9 @@ pub struct CliArguments {
     #[arg(long, value_enum, default_value = "auto")]
     pub color: ColorChoice,
 
-    /// Path to a specific pueue config file to use.
-    /// This ignores all other config files.
+    /// If provided, Pueue only uses this config file.
+    /// This path can also be set via the "PUEUE_CONFIG_PATH" environment variable.
+    /// The commandline option overwrites the environment variable!
     #[arg(short, long, value_hint = ValueHint::FilePath)]
     pub config: Option<PathBuf>,
 
