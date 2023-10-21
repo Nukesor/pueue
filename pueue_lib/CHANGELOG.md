@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project adheres **somewhat** to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 The concept of SemVer is applied to the daemon/client API, but not the library API itself.
 
+## [0.26.0] - unreleased
+
+### Added
+
+## [0.25.0] - 2023-10-21
+
+### Added
+
+- `Task::is_stashed()`
+- `Default` impl for `Setting`
+- Support the `PUEUE_CONFIG_PATH` environment variable in addition to the `--config` option. [#464](https://github.com/Nukesor/pueue/issues/464)
+- Experimental: Allow configuration of the shell command that executes task commands. [#454](https://github.com/Nukesor/pueue/issues/454)
+- Experimental: Allow injection of hard coded environment variables via config file. [#454](https://github.com/Nukesor/pueue/issues/454)
+
+### Changed
+
+- The `filter_tasks_*` functions of `State` have been refactored to be more clear and ergonomic to use.
+
 ## [0.24.0] - 2023-06-13
 
 ### Added
