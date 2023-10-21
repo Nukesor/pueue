@@ -113,7 +113,7 @@ async fn fail_on_disappearing(#[case] read_local_logs: bool) -> Result<()> {
     let shared = &daemon.settings.shared;
 
     // Add a task echoes something and waits for a while
-    assert_success(add_task(shared, "echo test && sleep 10").await?);
+    assert_success(add_task(shared, "echo test && sleep 20").await?);
     wait_for_task_condition(shared, 0, |task| task.is_running()).await?;
 
     // Reset the daemon after 2 seconds. At this point, the client will already be following the
