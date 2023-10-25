@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+## [3.4.1] - unreleased
+
+### Fixed
+
+- Daemonization doesn't work if pueued is not in $PATH [#299](https://github.com/Nukesor/pueue/issues/299)
+
 ## [3.3.0] - 2023-10-21
 
 ### Added

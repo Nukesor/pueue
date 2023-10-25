@@ -59,7 +59,19 @@ fn fork_daemon(opt: &CliArguments) -> Result<()> {
         arguments.push("-".to_string() + &"v".repeat(opt.verbose as usize));
     }
 
-    Command::new("pueued").args(&arguments).spawn()?;
+    // Try to get the path to the current binary, since it may not be in the $PATH.
+    // If we cannot detect it (for some unknown reason), fallback to the raw `pueued` binary name.
+    let current_exe = if let Ok(path) = std::env::current_exe() {
+        path.to_string_lossy().clone().to_string()
+    } else {
+        println!("Couldn't detect path of current binary. Falling back to 'pueue' in $PATH");
+        "pueued".to_string()
+    };
+
+    Command::new(current_exe)
+        .args(&arguments)
+        .spawn()
+        .expect("Failed to fork new process.");
 
     println!("Pueued is now running in the background");
     Ok(())
