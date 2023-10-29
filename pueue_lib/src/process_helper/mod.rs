@@ -17,23 +17,12 @@ pub use self::unix::*;
 #[cfg(unix)]
 use command_group::Signal;
 
-// Linux specific process support
-#[cfg(target_os = "linux")]
-mod linux;
-#[cfg(target_os = "linux")]
-pub use self::linux::process_exists;
-
-// Apple specific process support
-#[cfg(target_vendor = "apple")]
-mod apple;
-#[cfg(target_vendor = "apple")]
-pub use self::apple::process_exists;
-
-// Windows specific process handling
-#[cfg(target_os = "windows")]
-mod windows;
-#[cfg(target_os = "windows")]
-pub use self::windows::*;
+// Platform specific process support
+#[cfg_attr(target_os = "linux", path = "linux.rs")]
+#[cfg_attr(target_vendor = "apple", path = "apple.rs")]
+#[cfg_attr(target_os = "windows", path = "windows.rs")]
+mod platform;
+pub use self::platform::*;
 
 /// Pueue directly interacts with processes.
 /// Since these interactions can vary depending on the current platform, this enum is introduced.
