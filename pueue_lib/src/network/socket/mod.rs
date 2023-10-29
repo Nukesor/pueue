@@ -4,16 +4,8 @@
 //! each supported platform.
 //! Depending on the target, the respective platform is read and loaded into this scope.
 
-/// Shared unix stuff
-#[cfg(not(target_os = "windows"))]
-mod unix;
-/// Shared unix stuff for sockets
-#[cfg(not(target_os = "windows"))]
-pub use self::unix::*;
-
-/// Windows specific stuff
-#[cfg(target_os = "windows")]
-mod windows;
-/// Windows specific socket stuff
-#[cfg(target_os = "windows")]
-pub use self::windows::*;
+/// Shared socket logic
+#[cfg_attr(not(target_os = "windows"), path = "unix.rs")]
+#[cfg_attr(target_os = "windows", path = "windows.rs")]
+mod platform;
+pub use self::platform::*;
