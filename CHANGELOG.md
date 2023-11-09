@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+## [3.3.2] - unreleased
+
+### Fixed
+
+- Fixed panic when calling parallel without arguments [#477](https://github.com/Nukesor/pueue/issues/477)
+
 ## [3.3.1] - 2023-10-27
 
 ### Fixed

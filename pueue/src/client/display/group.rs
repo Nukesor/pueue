@@ -17,11 +17,19 @@ pub fn format_groups(
     style: &OutputStyle,
 ) -> String {
     // Get commandline options to check whether we should return the groups as json.
-    let SubCommand::Group { json, .. } = cli_command else {
-        panic!("Got wrong Subcommand {cli_command:?} in format_groups. This shouldn't happen.")
+    let json = match cli_command {
+        SubCommand::Group { json, .. } => *json,
+        // If `parallel` is called without an argument, the group info is shown.
+        SubCommand::Parallel {
+            parallel_tasks: None,
+            group: None,
+        } => false,
+        _ => {
+            panic!("Got wrong Subcommand {cli_command:?} in format_groups. This shouldn't happen.")
+        }
     };
 
-    if *json {
+    if json {
         return serde_json::to_string(&message.groups).unwrap();
     }
 
