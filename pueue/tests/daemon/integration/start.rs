@@ -5,7 +5,7 @@ use rstest::rstest;
 
 use crate::helper::*;
 
-/// Test if explicitely starting tasks and resuming tasks works as intended.
+/// Test if explicitly starting tasks and resuming tasks works as intended.
 ///
 /// We test different ways of resumes tasks.
 /// - Via the --all flag, which resumes everything.

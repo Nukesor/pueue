@@ -131,7 +131,7 @@ pub fn read_last_lines(file: &mut File, amount: usize) -> String {
 /// Seek the cursor of the current file to the beginning of the line that's located `amount` newlines
 /// from the back of the file.
 ///
-/// The `bool` return value indicates whether we seeked to the start of the file (there were less
+/// The `bool` return value indicates whether we sought to the start of the file (there were less
 /// lines than the limit). `true` means that the handle is now at the very start of the file.
 pub fn seek_to_last_lines(file: &mut File, amount: usize) -> Result<bool, Error> {
     let mut reader = RevBufReader::new(file);

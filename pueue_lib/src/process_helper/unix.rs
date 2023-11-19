@@ -178,7 +178,7 @@ mod tests {
         let group_pids = get_process_group_pids(pid);
         assert_eq!(group_pids.len(), 3);
 
-        // Kill the process and make sure its childen will be killed.
+        // Kill the process and make sure its children will be killed.
         assert!(kill_child(0, &mut child).is_ok());
 
         // Sleep a little to give all processes time to shutdown.

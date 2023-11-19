@@ -23,7 +23,7 @@ use remote::*;
 ///
 /// By default, everything is returned for single tasks and only some lines for multiple.
 /// `json` is an exception to this, in json mode we always only return some lines
-/// (unless otherwise explicitely requested).
+/// (unless otherwise explicitly requested).
 ///
 /// `full` always forces the full log output
 /// `lines` force a specific amount of lines
@@ -38,7 +38,7 @@ pub fn determine_log_line_amount(full: bool, lines: &Option<usize>) -> Option<us
     }
 }
 
-/// Print the log ouput of finished tasks.
+/// Print the log output of finished tasks.
 /// Either print the logs of every task
 /// or only print the logs of the specified tasks.
 pub fn print_logs(
@@ -166,7 +166,7 @@ fn print_task_info(task: &Task, style: &OutputStyle) {
     }
     println!("{table}");
 
-    // All other information is alligned and styled by using a separat table.
+    // All other information is aligned and styled by using a separate table.
     let mut table = Table::new();
     table.load_preset(comfy_table::presets::NOTHING);
     table.set_content_arrangement(comfy_table::ContentArrangement::Dynamic);

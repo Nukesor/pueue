@@ -16,7 +16,7 @@ use pueue_lib::settings::*;
 use crate::helper::*;
 
 /// All info about a booted standalone test daemon.
-/// This daemon is executed in the same async environement as the rest of the test.
+/// This daemon is executed in the same async environment as the rest of the test.
 pub struct PueueDaemon {
     pub settings: Settings,
     pub tempdir: TempDir,
@@ -35,7 +35,7 @@ pub async fn daemon() -> Result<PueueDaemon> {
 /// A helper function which takes a Pueue config, a temporary directory and spawns
 /// a daemon into the async tokio runtime.
 pub async fn daemon_with_settings(settings: Settings, tempdir: TempDir) -> Result<PueueDaemon> {
-    // Uncoment the next line to get some daemon logging.
+    // Uncomment the next line to get some daemon logging.
     // Ignore any logger initialization errors, as multiple loggers will be initialized.
     //let _ = simplelog::SimpleLogger::init(log::LevelFilter::Debug, simplelog::Config::default());
 

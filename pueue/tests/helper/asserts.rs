@@ -6,7 +6,7 @@ use pueue_lib::state::State;
 
 use super::send_message;
 
-/// Assert that a message is a successfull message.
+/// Assert that a message is a successful message.
 pub fn assert_success(message: Message) {
     assert!(
         matches!(message, Message::Success(_)),

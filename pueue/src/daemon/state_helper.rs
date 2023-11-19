@@ -211,7 +211,7 @@ fn rotate_state(settings: &Settings) -> Result<()> {
     }
 
     // Remove all files above the threshold.
-    // Old files are removed first (implictly by the BTree order).
+    // Old files are removed first (implicitly by the BTree order).
     let mut number_entries = entries.len();
     let mut iter = entries.iter();
     while number_entries > 10 {

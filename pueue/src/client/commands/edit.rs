@@ -68,7 +68,7 @@ pub async fn edit(
                 Message::Failure(message) | Message::Success(message) => {
                     eprintln!("{message}");
                 }
-                _ => eprintln!("Received unknown resonse: {response:?}"),
+                _ => eprintln!("Received unknown response: {response:?}"),
             };
 
             return Err(error);
