@@ -18,7 +18,7 @@ struct QueryParser;
 
 type FilterFunction = dyn Fn(&Task) -> bool;
 
-/// All appliable information that has been extracted from the query.
+/// All applicable information that has been extracted from the query.
 #[derive(Default)]
 pub struct QueryResult {
     /// The list of selected columns based.

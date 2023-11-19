@@ -36,7 +36,7 @@ pub enum WaitTargetStatus {
 /// - All tasks (`all == true`)
 ///
 /// By default, this will output status changes of tasks to `stdout`.
-/// Pass `quiet == true` to supress any logging.
+/// Pass `quiet == true` to suppress any logging.
 pub async fn wait(
     stream: &mut GenericStream,
     style: &OutputStyle,

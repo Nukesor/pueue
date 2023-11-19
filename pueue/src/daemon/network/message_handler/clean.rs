@@ -8,7 +8,7 @@ use crate::daemon::state_helper::{is_task_removable, save_state};
 use crate::ok_or_return_failure_message;
 
 fn construct_success_clean_message(message: CleanMessage) -> String {
-    let successfull_only_fix = if message.successful_only {
+    let successful_only_fix = if message.successful_only {
         " successfully"
     } else {
         ""
@@ -19,7 +19,7 @@ fn construct_success_clean_message(message: CleanMessage) -> String {
         .map(|name| format!(" from group '{name}'"))
         .unwrap_or_default();
 
-    format!("All{successfull_only_fix} finished tasks have been removed{group_fix}")
+    format!("All{successful_only_fix} finished tasks have been removed{group_fix}")
 }
 
 /// Invoked when calling `pueue clean`.

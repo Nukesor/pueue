@@ -206,7 +206,7 @@ The idea is to keep it simple and to prevent feature creep.
 Also, **Pueue is considered feature-complete :tada:.**
 All features that were planned have been added and only minor improvements, bug-fixes and regular maintenance work will get merged.
 
-For the record, the follwing features weren't included as they're out of scope:
+For the record, the following features weren't included as they're out of scope:
 
 - Distributed task management/execution.
 - Multi-user task management.
@@ -223,7 +223,7 @@ I very much encourage forking Pueue and I would love to see forks grow into othe
 
 #### GNU Parallel
 
-A robust and featureful parrallel processor with text-based joblog and n-retries. [GNU Parallel](https://www.gnu.org/software/parallel/parallel_tutorial.html) is able to scale to multi-host parallelization and has complex code to have deep integration across different tools and shells, as well as other advanced features. `Pueue` differentiates itself from GNU Parallel by focusing more on visibility across many different long running commands, and creating a central location for commands to be stored, rather than GNU Parallel's focus on chunking a specific task.
+A robust and featureful parallel processor with text-based joblog and n-retries. [GNU Parallel](https://www.gnu.org/software/parallel/parallel_tutorial.html) is able to scale to multi-host parallelization and has complex code to have deep integration across different tools and shells, as well as other advanced features. `Pueue` differentiates itself from GNU Parallel by focusing more on visibility across many different long running commands, and creating a central location for commands to be stored, rather than GNU Parallel's focus on chunking a specific task.
 
 #### nq
 
@@ -247,7 +247,7 @@ Depending on the type of your contribution, you should branch of from either the
 
 - Bug fixes or critical library updates should branch of `main` and be merged into `main`.
     New patch level releases will be published for this kind of issues.
-    Any patches in `main` will also regularily be merged into `development`.
+    Any patches in `main` will also regularly be merged into `development`.
 - Everything else, such as new features, refactorings, or breaking changes, should branch of `development` and be merged into `development`.
     Once a new minor or major version has been published, `development` will then be merged into `main`.
 

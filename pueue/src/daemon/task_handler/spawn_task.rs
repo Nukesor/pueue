@@ -77,7 +77,7 @@ impl TaskHandler {
 
         // Order the tasks based on their priortiy and their task id.
         // Tasks with higher priority go first.
-        // Tasks with the same priorty are ordered by their id in ascending order, meaning that
+        // Tasks with the same priority are ordered by their id in ascending order, meaning that
         // tasks with smaller id will be processed first.
         potential_tasks.sort_by(|a, b| {
             // If they have the same prio, decide the execution order by task_id!
@@ -94,7 +94,7 @@ impl TaskHandler {
     }
 
     /// Actually spawn a new sub process
-    /// The output of subprocesses is piped into a seperate file for easier access
+    /// The output of subprocesses is piped into a separate file for easier access
     pub fn start_process(&mut self, task_id: usize, state: &mut LockedState) {
         // Check if the task exists and can actually be spawned. Otherwise do an early return.
         match state.tasks.get(&task_id) {

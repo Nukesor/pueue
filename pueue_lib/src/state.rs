@@ -158,7 +158,7 @@ impl State {
     where
         F: Fn(&Task) -> bool,
     {
-        // Either use all tasks or only the exlicitely specified ones.
+        // Either use all tasks or only the explicitly specified ones.
         let task_ids = match task_ids {
             Some(ids) => ids,
             None => self.tasks.keys().cloned().collect(),

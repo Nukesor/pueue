@@ -44,10 +44,10 @@
 //!
 //! However, some message types are special. The log `follow`, for instance, basically
 //! work like a stream.
-//! I.e. the daemon continously sends new messages with the new log output until
+//! I.e. the daemon continuously sends new messages with the new log output until
 //! the socket is closed by the client.
 
-/// Used by the daemon to initialize the TLS certificats.
+/// Used by the daemon to initialize the TLS certificates.
 pub mod certificate;
 /// This contains the main [Message](message::Message) enum and all its structs used to
 /// communicate with the daemon or client.

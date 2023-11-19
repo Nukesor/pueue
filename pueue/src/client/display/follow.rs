@@ -12,7 +12,7 @@ use pueue_lib::{
 
 use crate::client::commands::get_task;
 
-/// Follow the log ouput of running task.
+/// Follow the log output of running task.
 ///
 /// If no task is specified, this will check for the following cases:
 ///
@@ -97,7 +97,7 @@ pub async fn follow_local_task_logs(
                 println!("Pueue: The followed task has been removed.");
                 std::process::exit(1);
             };
-            // Task exited by itself. We can stop follwing.
+            // Task exited by itself. We can stop following.
             if !task.is_running() {
                 return Ok(());
             }

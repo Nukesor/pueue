@@ -145,7 +145,7 @@ impl Client {
     /// At this point everything is initialized, the connection is up and
     /// we can finally start doing stuff.
     ///
-    /// The command handling is splitted into "simple" and "complex" commands.
+    /// The command handling is split into "simple" and "complex" commands.
     pub async fn start(&mut self) -> Result<()> {
         // Return early, if the command has already been handled.
         if self.handle_complex_command().await? {
