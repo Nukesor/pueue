@@ -103,11 +103,11 @@ async fn fail_on_non_existing(#[case] read_local_logs: bool) -> Result<()> {
 }
 
 /// Fail and print an error message when following a non-existing task disappears
+#[cfg(not(target = "x86_64-apple-darwin"))]
 #[rstest]
 #[case(true)]
 #[case(false)]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-#[cfg_attr(target = "x86_64-apple-darwin", ignore)]
 async fn fail_on_disappearing(#[case] read_local_logs: bool) -> Result<()> {
     let mut daemon = daemon().await?;
     set_read_local_logs(&mut daemon, read_local_logs)?;
