@@ -13,7 +13,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Fixed
 
 - Fixed panic when calling parallel without arguments [#477](https://github.com/Nukesor/pueue/issues/477)
-- Fix typo
+- Fixed wrong default location for `pueue_aliases.yml` [#480](https://github.com/Nukesor/pueue/issues/480)
+- Fix typos
 
 ## [3.3.1] - 2023-10-27
 

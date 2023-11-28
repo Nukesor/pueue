@@ -212,11 +212,15 @@ pub struct NestedSettings {
     pub shared: Shared,
 }
 
+pub fn default_configuration_directory() -> Option<PathBuf> {
+    dirs::config_dir().map(|dir| dir.join("pueue"))
+}
+
 /// Get the default config directory.
 /// If no config can be found, fallback to the current directory.
 pub fn configuration_directories() -> Vec<PathBuf> {
-    if let Some(config_dir) = dirs::config_dir() {
-        vec![config_dir.join("pueue"), PathBuf::from(".")]
+    if let Some(config_dir) = default_configuration_directory() {
+        vec![config_dir, PathBuf::from(".")]
     } else {
         vec![PathBuf::from(".")]
     }
@@ -269,7 +273,7 @@ impl Shared {
     pub fn alias_file(&self) -> PathBuf {
         if let Some(path) = &self.alias_file {
             expand_home(path)
-        } else if let Some(config_dir) = dirs::config_dir() {
+        } else if let Some(config_dir) = default_configuration_directory() {
             config_dir.join("pueue_aliases.yml")
         } else {
             PathBuf::from("pueue_aliases.yml")
