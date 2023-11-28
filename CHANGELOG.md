@@ -8,7 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
-## [3.3.2] - unreleased
+## [3.3.3] - unreleased
+
+### Fixed
+
+## [3.3.2] - 2023-11-28
 
 ### Fixed
 
