@@ -21,7 +21,7 @@ byteorder = "1.5"
 chrono = { version = "0.4", features = ["serde"] }
 dirs = "5.0"
 rand = "0.8"
-rcgen = "0.11"
+rcgen = "0.12"
 rev_buf_reader = "0.3"
 rustls = { version = "0.21", default-features = false }
 rustls-pemfile = "1.0"

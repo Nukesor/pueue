@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fixed
 
+- Bump `ring` from 0.16 to 0.17 to add riscv64 support
+
 ## [3.3.2] - 2023-11-28
 
 ### Fixed
