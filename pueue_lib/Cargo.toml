@@ -23,13 +23,13 @@ dirs = "5.0"
 rand = "0.8"
 rcgen = "0.12"
 rev_buf_reader = "0.3"
-rustls = { version = "0.21", default-features = false }
-rustls-pemfile = "1.0"
+rustls = { version = "0.22" }
+rustls-pemfile = "2"
 serde_cbor = "0.11"
 serde_yaml = "0.9"
 shellexpand = "3.1"
 thiserror = "1.0"
-tokio-rustls = { version = "0.24", default-features = false }
+tokio-rustls = { version = "0.25", default-features = false }
 
 command-group = { workspace = true }
 handlebars = { workspace = true }

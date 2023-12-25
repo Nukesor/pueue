@@ -2,7 +2,7 @@ use std::convert::TryFrom;
 
 use async_trait::async_trait;
 use log::info;
-use rustls::ServerName;
+use rustls::pki_types::ServerName;
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio::net::{TcpListener, TcpStream, UnixListener, UnixStream};
 use tokio_rustls::TlsAcceptor;
