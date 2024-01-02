@@ -62,7 +62,7 @@ pub enum SubCommand {
 
         /// Start this task with a higher priority.
         /// The higher the number, the faster it will be processed.
-        #[arg(short='o', long, num_args(1..))]
+        #[arg(short = 'o', long)]
         priority: Option<i32>,
 
         /// Add some information for yourself.
