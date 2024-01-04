@@ -10,6 +10,12 @@ The concept of SemVer is applied to the daemon/client API, but not the library A
 
 ### Added
 
+## [0.25.1] - 2024-01-04
+
+### Changed
+
+- Bump dependencies. Most notably `ring` from 0.16 to 0.17 to add riscv64 support [#484](https://github.com/Nukesor/pueue/issues/484).
+
 ## [0.25.0] - 2023-10-21
 
 ### Added
