@@ -93,18 +93,12 @@ macro_rules! ok_or_return_failure_message {
 mod fixtures {
     use std::collections::HashMap;
     use std::env::temp_dir;
-    pub use std::sync::mpsc::Sender;
     use std::sync::{Arc, Mutex};
     use tempfile::TempDir;
 
-    pub use pueue_lib::network::message::*;
-    pub use pueue_lib::network::protocol::socket_cleanup;
     pub use pueue_lib::settings::Settings;
     pub use pueue_lib::state::{SharedState, State, PUEUE_DEFAULT_GROUP};
     pub use pueue_lib::task::{Task, TaskResult, TaskStatus};
-
-    pub use super::*;
-    pub use crate::daemon::network::response_helper::*;
 
     pub fn get_settings() -> (Settings, TempDir) {
         let tempdir = TempDir::new().expect("Failed to create test pueue directory");
