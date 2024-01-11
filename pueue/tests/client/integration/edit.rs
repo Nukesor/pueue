@@ -114,7 +114,7 @@ async fn edit_change_priority() -> Result<()> {
     envs.insert("EDITOR", "echo '99' > ");
     run_client_command_with_env(shared, &["edit", "--priority", "0"], envs)?;
 
-    // Make sure that the label has indeed be deleted
+    // Make sure that the priority has indeed been updated.
     let state = get_state(shared).await?;
     let task = state.tasks.get(&0).unwrap();
     assert_eq!(task.priority, 99);
