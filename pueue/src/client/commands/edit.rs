@@ -40,7 +40,7 @@ pub async fn edit(
     };
 
     // Edit the command if explicitly specified or if no flags are provided (the default)
-    let edit_command = edit_command || !edit_path && !edit_label;
+    let edit_command = edit_command || !edit_path && !edit_label && !edit_priority;
 
     // Edit all requested properties.
     let edit_result = edit_task_properties(

@@ -274,7 +274,7 @@ pub enum SubCommand {
     },
 
     #[command(
-        about = "Edit the command, path or label of a stashed or queued task.\n\
+        about = "Edit the command, path, label, or priority of a stashed or queued task.\n\
         By default only the command is edited.\n\
         Multiple properties can be added in one go."
     )]
