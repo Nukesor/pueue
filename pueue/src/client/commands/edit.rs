@@ -151,7 +151,7 @@ pub fn edit_task_properties(
 
     // Update the priority if requested.
     if edit_priority {
-        props.priority = Some(edit_line(settings, &original_priority.to_string())?.parse::<i32>()?);
+        props.priority = Some(edit_line(settings, &original_priority.to_string())?.parse()?);
     };
 
     Ok(props)
