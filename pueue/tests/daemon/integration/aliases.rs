@@ -65,6 +65,7 @@ async fn test_restart_with_alias() -> Result<()> {
             path: None,
             label: None,
             delete_label: false,
+            priority: Some(0),
         }],
         start_immediately: true,
         stashed: false,
