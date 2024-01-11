@@ -70,12 +70,10 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Setup Rust toolchain
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: stable
-          override: true
           components: llvm-tools-preview
-          target: ${{ matrix.target }}
+          targets: ${{ matrix.target }}
 
       - name: Install cargo-nextest
         uses: taiki-e/install-action@v2
@@ -95,21 +93,20 @@ jobs:
             ${{ runner.os }}-cargo-${{ matrix.target }}-
 
       - name: cargo build
-        uses: actions-rs/cargo@v1
+        uses: houseabsolute/actions-rust-cross@v0
         with:
           command: build
-          args: --target=${{ matrix.target }}
-          use-cross: ${{ matrix.cross }}
+          target: ${{ matrix.target }}
 
       - name: cargo test
-        uses: actions-rs/cargo@v1
-        if: ${{ !matrix.cross }}
-        env:
-          NEXTEST_PROFILE: ci # defined in .config/nextest.toml
+        uses: houseabsolute/actions-rust-cross@v0
         with:
           command: nextest
-          args: run --workspace --target=${{ matrix.target }}
-          use-cross: ${{ matrix.cross }}
+          args: "run --workspace"
+          target: ${{ matrix.target }}
+        env:
+          NEXTEST_PROFILE: ci # defined in .config/nextest.toml
+        if: ${{ !matrix.cross }}
 
       # The test result artifacts are used by the test-report.yaml workflow.
       - name: upload test results
