@@ -107,6 +107,7 @@ pub struct EditedProperties {
 /// Fields that have been edited will be returned as their `Some(T)` equivalent.
 ///
 /// The returned values are: `(command, path, label)`
+#[allow(clippy::too_many_arguments)]
 pub fn edit_task_properties(
     settings: &Settings,
     original_command: &str,
@@ -150,8 +151,7 @@ pub fn edit_task_properties(
 
     // Update the priority if requested.
     if edit_priority {
-        props.priority =
-            Some(edit_line(settings, &format!("{}", original_priority))?.parse::<i32>()?);
+        props.priority = Some(edit_line(settings, &original_priority.to_string())?.parse::<i32>()?);
     };
 
     Ok(props)
