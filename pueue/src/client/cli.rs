@@ -209,7 +209,7 @@ pub enum SubCommand {
         #[arg(short = 'l', long)]
         edit_label: bool,
 
-        /// Edit the task's priority.
+        /// Edit the tasks' priorities before restarting.
         #[arg(short = 'o', long)]
         edit_priority: bool,
     },
