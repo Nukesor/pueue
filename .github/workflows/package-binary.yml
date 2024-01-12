@@ -92,7 +92,7 @@ jobs:
         uses: houseabsolute/actions-rust-cross@v0
         with:
           command: build
-          args: --release --locked ${{ matrix.cargo_flags }}
+          args: --release --locked
           target: ${{ matrix.target }}
 
       - name: Compress client

@@ -39,31 +39,24 @@ jobs:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             cross: false
-            strip: true
           - os: ubuntu-latest
             target: aarch64-unknown-linux-musl
             cross: true
-            strip: false
           - os: ubuntu-latest
             target: armv7-unknown-linux-musleabihf
             cross: true
-            strip: false
           - os: ubuntu-latest
             target: arm-unknown-linux-musleabihf
             cross: true
-            strip: false
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             cross: false
-            strip: true
           - os: macos-latest
             target: x86_64-apple-darwin
             cross: false
-            strip: true
           - os: macos-latest
             target: aarch64-apple-darwin
             cross: true
-            strip: true
 
     steps:
       - name: Checkout code
@@ -80,6 +73,12 @@ jobs:
         with:
           tool: nextest
 
+      - name: Install cargo-cross
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cross
+        if: ${{ matrix.cross }}
+
       - uses: actions/cache@v3
         with:
           path: |
@@ -92,23 +91,37 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-${{ matrix.target }}-
 
+      # ----- Non-Cross path
       - name: cargo build
-        uses: houseabsolute/actions-rust-cross@v0
-        with:
-          command: build
-          target: ${{ matrix.target }}
+        run: cargo build --target=${{ matrix.target }}
+        if: ${{ !matrix.cross }}
 
       - name: cargo test
-        uses: houseabsolute/actions-rust-cross@v0
-        with:
-          command: nextest
-          args: "run --workspace"
-          target: ${{ matrix.target }}
+        run: cargo nextest run --workspace --target=${{ matrix.target }}
         env:
           NEXTEST_PROFILE: ci # defined in .config/nextest.toml
         if: ${{ !matrix.cross }}
 
-      # The test result artifacts are used by the test-report.yaml workflow.
+      # ----- Cross path
+      #- name: Install qemu
+      #  run: apt-get install --assume-yes binfmt-support qemu-user-static qemu-user
+      #  if: ${{ matrix.cross }}
+
+      - name: cargo build
+        run: cross build --target=${{ matrix.target }}
+        if: ${{ matrix.cross }}
+
+      # We don't do automated testing for cross builds yet.
+      # - They don't work in the CI. I have yet to figure out why things aren't set up properly.
+      # - The tests run way to slow and all kinds of race conditions are triggered.
+      #   Until we find a way to run time related tests in an ultra slow environment, this needs to be postponed.
+      #- name: cargo test
+      #  run: cross test run --workspace --target=${{ matrix.target }}
+      #  env:
+      #    NEXTEST_PROFILE: ci # defined in .config/nextest.toml
+      #  if: ${{ matrix.cross }}
+
+      # ----- Test result artifacts are used by the test-report.yaml workflow.
       - name: upload test results
         uses: actions/upload-artifact@v3
         if: ${{ !matrix.cross }}
