@@ -191,6 +191,7 @@ impl std::fmt::Debug for Task {
             .field("prev_status", &self.prev_status)
             .field("start", &self.start)
             .field("end", &self.end)
+            .field("priority", &self.priority)
             .finish()
     }
 }
