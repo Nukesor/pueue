@@ -31,6 +31,7 @@ async fn edit_task_default() -> Result<()> {
     // All other properties should be unchanged.
     assert_eq!(task.path, daemon.tempdir.path());
     assert_eq!(task.label, None);
+    assert_eq!(task.priority, 0);
 
     Ok(())
 }
@@ -90,6 +91,33 @@ async fn edit_delete_label() -> Result<()> {
     let state = get_state(shared).await?;
     let task = state.tasks.get(&0).unwrap();
     assert_eq!(task.label, None);
+
+    Ok(())
+}
+
+/// Ensure that updating the priority in the editor results in the modification of the task's priority.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn edit_change_priority() -> Result<()> {
+    let daemon = daemon().await?;
+    let shared = &daemon.settings.shared;
+
+    // Create a stashed message which we'll edit later on.
+    let mut message = create_add_message(shared, "this is a test");
+    message.stashed = true;
+    message.priority = Some(0);
+    send_message(shared, message)
+        .await
+        .context("Failed to to add stashed task.")?;
+
+    // Echo a new priority into the file.
+    let mut envs = HashMap::new();
+    envs.insert("EDITOR", "echo '99' > ");
+    run_client_command_with_env(shared, &["edit", "--priority", "0"], envs)?;
+
+    // Make sure that the priority has indeed been updated.
+    let state = get_state(shared).await?;
+    let task = state.tasks.get(&0).unwrap();
+    assert_eq!(task.priority, 99);
 
     Ok(())
 }

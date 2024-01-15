@@ -208,6 +208,10 @@ pub enum SubCommand {
         /// Edit the tasks' labels before restarting.
         #[arg(short = 'l', long)]
         edit_label: bool,
+
+        /// Edit the tasks' priorities before restarting.
+        #[arg(short = 'o', long)]
+        edit_priority: bool,
     },
 
     #[command(about = "Either pause running tasks or specific groups of tasks.\n\
@@ -270,7 +274,7 @@ pub enum SubCommand {
     },
 
     #[command(
-        about = "Edit the command, path or label of a stashed or queued task.\n\
+        about = "Edit the command, path, label, or priority of a stashed or queued task.\n\
         By default only the command is edited.\n\
         Multiple properties can be added in one go."
     )]
@@ -289,6 +293,10 @@ pub enum SubCommand {
         /// Edit the task's label.
         #[arg(short, long)]
         label: bool,
+
+        /// Edit the task's priority.
+        #[arg(short = 'o', long)]
+        priority: bool,
     },
 
     #[command(about = "Use this to add or remove groups.\n\

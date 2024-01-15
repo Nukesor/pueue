@@ -26,6 +26,7 @@ pub fn edit_request(task_id: usize, state: &SharedState) -> Message {
                 command: task.original_command.clone(),
                 path: task.path.clone(),
                 label: task.label.clone(),
+                priority: task.priority,
             }
             .into()
         }
@@ -61,6 +62,10 @@ pub fn edit(message: EditMessage, state: &SharedState, settings: &Settings) -> M
                 task.label = message.label;
             } else if message.delete_label {
                 task.label = None;
+            }
+            // Update priority if applicable.
+            if let Some(priority) = message.priority {
+                task.priority = priority;
             }
 
             ok_or_return_failure_message!(save_state(&state, settings));

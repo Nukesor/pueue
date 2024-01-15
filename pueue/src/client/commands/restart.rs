@@ -27,6 +27,7 @@ pub async fn restart(
     edit_command: bool,
     edit_path: bool,
     edit_label: bool,
+    edit_priority: bool,
 ) -> Result<()> {
     let new_status = if stashed {
         TaskStatus::Stashed { enqueue_at: None }
@@ -91,9 +92,11 @@ pub async fn restart(
             &task.command,
             &task.path,
             &task.label,
+            task.priority,
             edit_command,
             edit_path,
             edit_label,
+            edit_priority,
         )?;
 
         // Add the tasks to the singular message, if we want to restart the tasks in-place.
@@ -105,6 +108,7 @@ pub async fn restart(
                 path: edited_props.path,
                 label: edited_props.label,
                 delete_label: edited_props.delete_label,
+                priority: edited_props.priority,
             });
 
             continue;
@@ -121,7 +125,7 @@ pub async fn restart(
             group: task.group.clone(),
             enqueue_at: None,
             dependencies: Vec::new(),
-            priority: Some(task.priority),
+            priority: edited_props.priority.or(Some(task.priority)),
             label: edited_props.label.or_else(|| task.label.clone()),
             print_task_id: false,
         };

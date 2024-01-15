@@ -40,6 +40,7 @@ async fn test_edit_flow() -> Result<()> {
     assert_eq!(response.task_id, 0);
     assert_eq!(response.command, "ls");
     assert_eq!(response.path, daemon.tempdir.path());
+    assert_eq!(response.priority, 0);
 
     // Task should be locked, after the request for editing succeeded.
     assert_eq!(get_task_status(shared, 0).await?, TaskStatus::Locked);
@@ -57,6 +58,7 @@ async fn test_edit_flow() -> Result<()> {
             path: Some("/tmp".into()),
             label: Some("test".to_string()),
             delete_label: false,
+            priority: Some(99),
         },
     )
     .await?;
@@ -68,6 +70,7 @@ async fn test_edit_flow() -> Result<()> {
     assert_eq!(task.path, PathBuf::from("/tmp"));
     assert_eq!(task.label, Some("test".to_string()));
     assert_eq!(task.status, TaskStatus::Queued);
+    assert_eq!(task.priority, 99);
 
     Ok(())
 }
