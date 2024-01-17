@@ -23,13 +23,14 @@ pub async fn shutdown_daemon(shared: &Shared) -> Result<Message> {
 /// long.
 pub async fn get_pid(pid_path: &Path) -> Result<i32> {
     // Give the daemon about 1 sec to boot and create the pid file.
-    let tries = 20;
+    let sleep = 50;
+    let tries = TIMEOUT / sleep;
     let mut current_try = 0;
 
     while current_try < tries {
         // The daemon didn't create the pid file yet. Wait for 100ms and try again.
         if !pid_path.exists() {
-            sleep_ms(50).await;
+            sleep_ms(sleep).await;
             current_try += 1;
             continue;
         }
@@ -58,7 +59,8 @@ pub async fn get_pid(pid_path: &Path) -> Result<i32> {
 /// Waits for a daemon to shut down.
 pub async fn wait_for_shutdown(child: &mut Child) -> Result<()> {
     // Give the daemon about 1 sec to shutdown.
-    let tries = 40;
+    let sleep = 50;
+    let tries = TIMEOUT / sleep;
     let mut current_try = 0;
 
     while current_try < tries {
@@ -66,7 +68,7 @@ pub async fn wait_for_shutdown(child: &mut Child) -> Result<()> {
         // an error is returned, the process is gone.
         if let Ok(None) = child.try_wait() {
             // Process is still alive, wait a little longer
-            sleep_ms(50).await;
+            sleep_ms(sleep).await;
             current_try += 1;
             continue;
         }

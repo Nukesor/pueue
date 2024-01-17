@@ -10,6 +10,8 @@ use pueue_lib::settings::Shared;
 use pueue_lib::state::GroupStatus;
 use pueue_lib::task::Task;
 
+use crate::helper::TIMEOUT;
+
 use super::{get_state, sleep_ms};
 
 /// This is a small helper function, which checks in very short intervals, whether a task fulfills
@@ -22,7 +24,8 @@ pub async fn wait_for_task_condition<F>(
 where
     F: Fn(&Task) -> bool,
 {
-    let tries = 20;
+    let sleep = 50;
+    let tries = TIMEOUT / sleep;
     let mut current_try = 0;
     while current_try <= tries {
         let state = get_state(shared).await?;
@@ -36,7 +39,7 @@ where
 
                 // The status didn't change to target. Try again.
                 current_try += 1;
-                sleep_ms(50).await;
+                sleep_ms(sleep).await;
                 continue;
             }
             None => {
@@ -50,13 +53,14 @@ where
 /// This is a small helper function, which checks in very short intervals, whether a task has been
 /// deleted. This is necessary, as task deletion is asynchronous task.
 pub async fn wait_for_task_absence(shared: &Shared, task_id: usize) -> Result<()> {
-    let tries = 20;
+    let sleep = 50;
+    let tries = TIMEOUT / sleep;
     let mut current_try = 0;
     while current_try <= tries {
         let state = get_state(shared).await?;
         if state.tasks.contains_key(&task_id) {
             current_try += 1;
-            sleep_ms(50).await;
+            sleep_ms(sleep).await;
             continue;
         }
 
@@ -69,13 +73,14 @@ pub async fn wait_for_task_absence(shared: &Shared, task_id: usize) -> Result<()
 /// This is a small helper function, which checks in very short intervals, whether a group has been
 /// initialized. This is necessary, as group creation became an asynchronous task.
 pub async fn wait_for_group(shared: &Shared, group: &str) -> Result<()> {
-    let tries = 20;
+    let sleep = 50;
+    let tries = TIMEOUT / sleep;
     let mut current_try = 0;
     while current_try <= tries {
         let state = get_state(shared).await?;
         if !state.groups.contains_key(group) {
             current_try += 1;
-            sleep_ms(50).await;
+            sleep_ms(sleep).await;
             continue;
         }
 
@@ -88,13 +93,14 @@ pub async fn wait_for_group(shared: &Shared, group: &str) -> Result<()> {
 /// This is a small helper function, which checks in very short intervals, whether a group has been
 /// deleted. This is necessary, as group deletion became an asynchronous task.
 pub async fn wait_for_group_absence(shared: &Shared, group: &str) -> Result<()> {
-    let tries = 20;
+    let sleep = 50;
+    let tries = TIMEOUT / sleep;
     let mut current_try = 0;
     while current_try <= tries {
         let state = get_state(shared).await?;
         if state.groups.contains_key(group) {
             current_try += 1;
-            sleep_ms(50).await;
+            sleep_ms(sleep).await;
             continue;
         }
 
@@ -111,7 +117,8 @@ pub async fn wait_for_group_status(
     expected_status: GroupStatus,
 ) -> Result<()> {
     // Give the daemon about 1 second to change group status.
-    let tries = 20;
+    let sleep = 50;
+    let tries = TIMEOUT / sleep;
     let mut current_try = 0;
 
     while current_try < tries {
@@ -124,7 +131,7 @@ pub async fn wait_for_group_status(
 
                 // The status didn't change to the expected status. Try again.
                 current_try += 1;
-                sleep_ms(50).await;
+                sleep_ms(sleep).await;
                 continue;
             }
             None => {
