@@ -9,8 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 
 - Support modification of task priorities via `pueue edit --priority/-o` and `pueue restart --edit-priority/-o` [#449](https://github.com/Nukesor/pueue/issues/449)
-
-## [3.3.4] - unreleased
+- If no output directory is provided in `completions`, the generated file is printed to `stdout` [#489](https://github.com/Nukesor/pueue/issues/489).
 
 ### Fixed
 

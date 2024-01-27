@@ -493,7 +493,7 @@ https://github.com/Nukesor/pueue/issues/350#issue-1359083118"
         shell: Shell,
         /// The output directory to which the file should be written.
         #[arg(value_hint = ValueHint::DirPath)]
-        output_directory: PathBuf,
+        output_directory: Option<PathBuf>,
     },
 }
 
