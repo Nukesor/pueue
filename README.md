@@ -1,6 +1,6 @@
 # Pueue
 
-[![GitHub Actions Workflow](https://github.com/nukesor/pueue/workflows/Test%20build/badge.svg)](https://github.com/Nukesor/pueue/actions)
+[![Test Build](https://github.com/Nukesor/pueue/actions/workflows/test.yml/badge.svg)](https://github.com/Nukesor/pueue/actions/workflows/test.yml)
 [![Crates.io](https://img.shields.io/crates/v/pueue)](https://crates.io/crates/pueue)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Downloads](https://img.shields.io/github/downloads/nukesor/pueue/total.svg)](https://github.com/nukesor/pueue/releases)
