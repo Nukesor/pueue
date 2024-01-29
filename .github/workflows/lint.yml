@@ -56,12 +56,10 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Setup Rust toolchain
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: stable
-          override: true
-          components: rustfmt, clippy
-          target: ${{ matrix.target }}
+          components: llvm-tools-preview
+          targets: ${{ matrix.target }}
 
       - uses: actions/cache@v3
         with:
@@ -77,13 +75,7 @@ jobs:
             ${{ runner.os }}-cargo-${{ matrix.target }}-
 
       - name: cargo fmt
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
+        run : cargo fmt --all -- --check
 
       - name: cargo clippy
-        uses: actions-rs/cargo@v1
-        with:
-          command: clippy
-          args: --tests --workspace -- -D warnings
+        run: cargo clippy --tests --workspace -- -D warnings

@@ -24,6 +24,9 @@ pub use state::*;
 pub use task::*;
 pub use wait::*;
 
+// Global acceptable test timeout
+const TIMEOUT: u64 = 5000;
+
 /// A helper function to sleep for ms time.
 /// Only used to avoid the biolerplate of importing the same stuff all over the place.
 pub async fn sleep_ms(ms: u64) {
