@@ -190,7 +190,7 @@ Commands:
 Options:
   -v, --verbose...         Verbose mode (-v, -vv, -vvv)
       --color <COLOR>      Colorize the output; auto enables color output when connected to a tty [default: auto] [possible values: auto, never, always]
-  -c, --config <CONFIG>    Path to a specific pueue config file to use. This ignores all other config files
+  -c, --config <CONFIG>    If provided, Pueue only uses this config file. This path can also be set via the "PUEUE_CONFIG_PATH" environment variable. The commandline option overwrites the environment variable!
   -p, --profile <PROFILE>  The name of the profile that should be loaded from your config file
   -h, --help               Print help
   -V, --version            Print version
