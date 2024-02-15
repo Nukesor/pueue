@@ -49,6 +49,12 @@ impl TaskHandler {
                     return false;
                 }
 
+                // If parallel tasks are set to `0`, this means an unlimited amount of tasks may
+                // run at any given time.
+                if group.parallel_tasks == 0 {
+                    return true;
+                }
+
                 // Get the currently running tasks by looking at the actually running processes.
                 // They're sorted by group, which makes this quite convenient.
                 let running_tasks = match self.children.0.get(&task.group) {

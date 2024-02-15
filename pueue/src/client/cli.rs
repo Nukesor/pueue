@@ -477,7 +477,7 @@ https://github.com/Nukesor/pueue/issues/350#issue-1359083118"
             This limit is only considered when tasks are scheduled.")]
     Parallel {
         /// The amount of allowed parallel tasks.
-        #[arg(value_parser = min_one)]
+        /// Setting this to 0 means an unlimited amount of parallel tasks.
         parallel_tasks: Option<usize>,
 
         /// Set the amount for a specific group.
@@ -504,7 +504,8 @@ pub enum GroupCommand {
         name: String,
 
         /// Set the amount of parallel tasks this group can have.
-        #[arg(short, long, value_parser = min_one)]
+        /// Setting this to 0 means an unlimited amount of parallel tasks.
+        #[arg(short, long)]
         parallel: Option<usize>,
     },
 
@@ -572,17 +573,4 @@ fn parse_delay_until(src: &str) -> Result<DateTime<Local>, String> {
     Err(String::from(
         "could not parse as seconds or date expression",
     ))
-}
-
-/// Validator function. The input string has to be parsable as int and bigger than 0
-fn min_one(value: &str) -> Result<usize, String> {
-    match value.parse::<usize>() {
-        Ok(value) => {
-            if value < 1 {
-                return Err("You must provide a value that's bigger than 0".into());
-            }
-            Ok(value)
-        }
-        Err(_) => Err("Failed to parse integer".into()),
-    }
 }
