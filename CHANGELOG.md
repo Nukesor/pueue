@@ -16,6 +16,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Include priority in `Task`s' `Debug` output
 
+- Fix reading of configuration files that lacks a `shared` section.
+
 ## [3.3.3] - 2024-01-04
 
 ### Fixed
