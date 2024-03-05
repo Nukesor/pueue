@@ -18,6 +18,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Fix reading of configuration files that lacks a `shared` section.
 
+- Made the daemon exit gracefully (exit code 0) on SIGINT and SIGTEM.
+
 ## [3.3.3] - 2024-01-04
 
 ### Fixed
