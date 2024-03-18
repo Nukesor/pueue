@@ -34,6 +34,9 @@ pub fn print_state(
     if let Some(query) = query {
         let query_result = apply_query(&query.join(" "))?;
         table_builder.set_visibility_by_rules(&query_result.selected_columns);
+        if let Some(group) = &group_only {
+            tasks = query_result.apply_groups(tasks, group);
+        }
         tasks = query_result.apply_filters(tasks);
         tasks = query_result.order_tasks(tasks);
         tasks = query_result.limit_tasks(tasks);

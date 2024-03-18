@@ -44,6 +44,16 @@ impl QueryResult {
         iter.collect()
     }
 
+    pub fn apply_groups(&self, tasks: Vec<Task>, group: &str) -> Vec<Task> {
+        let mut ret_task: Vec<Task> = Vec::new();
+        for task in tasks {
+            if group == task.group {
+                ret_task.push(task); 
+            }
+        }
+        ret_task
+    }
+
     /// Take a list of tasks and apply all filters to it.
     pub fn order_tasks(&self, mut tasks: Vec<Task>) -> Vec<Task> {
         // Only apply ordering if it was requested.
