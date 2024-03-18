@@ -51,56 +51,15 @@ pub fn print_state(
         return Ok(output);
     }
 
-    if let Some(group) = group_only {
-        print_single_group(state, tasks, style, group, table_builder, &mut output);
-        return Ok(output);
-    }
-
-    print_all_groups(state, tasks, style, table_builder, &mut output);
+    print_all(state, tasks, style, table_builder, &mut output);
 
     Ok(output)
-}
-
-/// The user requested only a single group to be displayed.
-///
-/// Print this group or show an error if this group doesn't exist.
-fn print_single_group(
-    state: State,
-    tasks: Vec<Task>,
-    style: &OutputStyle,
-    group_name: String,
-    table_builder: TableBuilder,
-    output: &mut String,
-) {
-    // Sort all tasks by their respective group;
-    let mut sorted_tasks = sort_tasks_by_group(tasks);
-
-    let Some(group) = state.groups.get(&group_name) else {
-        eprintln!("There exists no group \"{group_name}\"");
-        return;
-    };
-
-    // Only a single group is requested. Print that group and return.
-    let tasks = sorted_tasks.entry(group_name.clone()).or_default();
-    let headline = get_group_headline(&group_name, group, style);
-    output.push_str(&headline);
-
-    // Show a message if the requested group doesn't have any tasks.
-    if tasks.is_empty() {
-        output.push_str(&format!(
-            "\nTask list is empty. Add tasks with `pueue add -g {group_name} -- [cmd]`"
-        ));
-        return;
-    }
-
-    let table = table_builder.build(tasks);
-    output.push_str(&format!("\n{table}"));
 }
 
 /// Print all groups. All tasks will be shown in the table of their assigned group.
 ///
 /// This will create multiple tables, one table for each group.
-fn print_all_groups(
+fn print_all(
     state: State,
     tasks: Vec<Task>,
     style: &OutputStyle,
