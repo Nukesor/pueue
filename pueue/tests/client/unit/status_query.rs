@@ -58,6 +58,7 @@ pub fn test_tasks() -> Vec<Task> {
         enqueue_at: Some(Local.with_ymd_and_hms(2022, 1, 10, 11, 0, 0).unwrap()),
     };
     scheduled.id = 3;
+    scheduled.group = "testgroup".to_string();
     tasks.insert(scheduled.id, scheduled);
 
     // Running task
@@ -80,10 +81,10 @@ pub fn test_tasks() -> Vec<Task> {
     tasks
 }
 
-fn test_tasks_with_query(query: &str) -> Result<Vec<Task>> {
+fn test_tasks_with_query(query: &str, group: &Option<String>) -> Result<Vec<Task>> {
     let mut tasks = test_tasks();
 
-    let query_result = apply_query(query)?;
+    let query_result = apply_query(query, group)?;
     tasks = query_result.apply_filters(tasks);
     tasks = query_result.order_tasks(tasks);
     tasks = query_result.limit_tasks(tasks);
@@ -94,7 +95,7 @@ fn test_tasks_with_query(query: &str) -> Result<Vec<Task>> {
 /// Select only specific columns for printing
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn column_selection() -> Result<()> {
-    let result = apply_query("columns=id,status,command")?;
+    let result = apply_query("columns=id,status,command", &None)?;
     assert_eq!(
         result.selected_columns,
         [Rule::column_id, Rule::column_status, Rule::column_command]
@@ -106,7 +107,7 @@ async fn column_selection() -> Result<()> {
 /// Select the first few entries of the list
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn limit_first() -> Result<()> {
-    let tasks = test_tasks_with_query("first 4")?;
+    let tasks = test_tasks_with_query("first 4", &None)?;
 
     assert!(tasks.len() == 4);
     assert_eq!(tasks[0].id, 0);
@@ -118,7 +119,7 @@ async fn limit_first() -> Result<()> {
 /// Select the last few entries of the list
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn limit_last() -> Result<()> {
-    let tasks = test_tasks_with_query("last 4")?;
+    let tasks = test_tasks_with_query("last 4", &None)?;
 
     assert!(tasks.len() == 4);
     assert_eq!(tasks[0].id, 3);
@@ -130,7 +131,7 @@ async fn limit_last() -> Result<()> {
 /// Order the test state by task status.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn order_by_status() -> Result<()> {
-    let tasks = test_tasks_with_query("order_by status")?;
+    let tasks = test_tasks_with_query("order_by status", &None)?;
 
     let expected = vec![
         TaskStatus::Stashed { enqueue_at: None },
@@ -153,10 +154,21 @@ async fn order_by_status() -> Result<()> {
 /// Filter by start date
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn filter_start() -> Result<()> {
-    let tasks = test_tasks_with_query("start>2022-01-10 09:00:00")?;
+    let tasks = test_tasks_with_query("start>2022-01-10 09:00:00", &None)?;
 
     assert!(tasks.len() == 1);
     assert_eq!(tasks[0].id, 0);
+
+    Ok(())
+}
+
+/// Filtering in combination with groups works as expected
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn filter_with_group() -> Result<()> {
+    let tasks = test_tasks_with_query("status=stashed", &Some("testgroup".to_string()))?;
+
+    assert!(tasks.len() == 1);
+    assert_eq!(tasks[0].id, 3);
 
     Ok(())
 }
@@ -167,7 +179,7 @@ async fn filter_start() -> Result<()> {
 #[case("2022-01-10 09:00:00")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn filter_end_with_time(#[case] format: &'static str) -> Result<()> {
-    let tasks = test_tasks_with_query(&format!("end<{format}"))?;
+    let tasks = test_tasks_with_query(&format!("end<{format}"), &None)?;
 
     assert!(tasks.len() == 1);
     assert_eq!(tasks[0].id, 1);
@@ -195,7 +207,7 @@ async fn filter_status(#[case] status: TaskStatus, #[case] match_count: usize) -
         _ => anyhow::bail!("Got unexpected TaskStatus in filter_status"),
     };
 
-    let tasks = test_tasks_with_query(&format!("status={status_filter}"))?;
+    let tasks = test_tasks_with_query(&format!("status={status_filter}"), &None)?;
 
     for task in tasks.iter() {
         let id = task.id;
@@ -228,7 +240,7 @@ async fn filter_label(
     #[case] label_filter: &'static str,
     #[case] match_count: usize,
 ) -> Result<()> {
-    let tasks = test_tasks_with_query(&format!("label{operator}{label_filter}"))?;
+    let tasks = test_tasks_with_query(&format!("label{operator}{label_filter}"), &None)?;
 
     for task in tasks.iter() {
         // Make sure the task either has no label or the label doesn't match the filter.

@@ -21,6 +21,9 @@ type FilterFunction = dyn Fn(&Task) -> bool;
 /// All applicable information that has been extracted from the query.
 #[derive(Default)]
 pub struct QueryResult {
+    /// Filter results for a single group.
+    group: Option<String>,
+
     /// The list of selected columns based.
     pub selected_columns: Vec<Rule>,
 
@@ -30,7 +33,7 @@ pub struct QueryResult {
     /// A list of filter functions that should be applied to the list of tasks.
     order_by: Option<(Rule, Direction)>,
 
-    /// limit
+    /// Limit
     limit: Option<(Limit, usize)>,
 }
 
@@ -38,6 +41,15 @@ impl QueryResult {
     /// Take a list of tasks and apply all filters to it.
     pub fn apply_filters(&self, tasks: Vec<Task>) -> Vec<Task> {
         let mut iter = tasks.into_iter();
+
+        // If requested, only look at tasks of a specific group.
+        if let Some(group) = &self.group {
+            iter = iter
+                .filter(|task| task.group == *group)
+                .collect::<Vec<Task>>()
+                .into_iter();
+        }
+
         for filter in self.filters.iter() {
             iter = iter.filter(filter).collect::<Vec<Task>>().into_iter();
         }
@@ -116,10 +128,13 @@ impl QueryResult {
 /// - TableBuilder: The component responsible for building the table and determining which
 ///         columns should or need to be displayed.
 ///         A `columns [columns]` statement will define the set of visible columns.
-pub fn apply_query(query: &str) -> Result<QueryResult> {
+pub fn apply_query(query: &str, group: &Option<String>) -> Result<QueryResult> {
     let mut parsed = QueryParser::parse(Rule::query, query).context("Failed to parse query")?;
 
-    let mut query_result = QueryResult::default();
+    let mut query_result = QueryResult {
+        group: group.clone(),
+        ..Default::default()
+    };
 
     // Expect there to be exactly one pair for the full query.
     // Return early if we got an empty query.
