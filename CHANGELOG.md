@@ -15,10 +15,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Fixed
 
 - Include priority in `Task`s' `Debug` output
-
 - Fix reading of configuration files that lacks a `shared` section.
-
 - Made the daemon exit gracefully (exit code 0) on SIGINT and SIGTEM.
+- Respect the `-g` flag when using the `status` filter query. [#508](https://github.com/Nukesor/pueue/issues/508)
 
 ## [3.3.3] - 2024-01-04
 
