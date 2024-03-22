@@ -145,7 +145,7 @@ fn setup_signal_panic_handling(settings: &Settings, sender: &TaskSender) -> Resu
     ctrlc::set_handler(move || {
         // Notify the task handler
         sender_clone
-            .send(Shutdown::Emergency)
+            .send(Shutdown::Graceful)
             .expect("Failed to send Message to TaskHandler on Shutdown");
     })?;
 

@@ -8,11 +8,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
-## [3.3.4] - unreleased
+- Support modification of task priorities via `pueue edit --priority/-o` and `pueue restart --edit-priority/-o` [#449](https://github.com/Nukesor/pueue/issues/449).
+- If no output directory is provided in `completions`, the generated file is printed to `stdout` [#489](https://github.com/Nukesor/pueue/issues/489).
+- Allow setting the `parallel_tasks` value of groups to `0`. Setting this value allows unlimited tasks for that group [#500](https://github.com/Nukesor/pueue/issues/500).
 
 ### Fixed
 
 - Include priority in `Task`s' `Debug` output
+- Fix reading of configuration files that lacks a `shared` section.
+- Made the daemon exit gracefully (exit code 0) on SIGINT and SIGTEM.
+- Respect the `-g` flag when using the `status` filter query. [#508](https://github.com/Nukesor/pueue/issues/508)
 
 ## [3.3.3] - 2024-01-04
 

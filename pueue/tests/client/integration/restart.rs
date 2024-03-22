@@ -106,6 +106,36 @@ async fn restart_and_edit_task_path_and_command() -> Result<()> {
     Ok(())
 }
 
+/// Test that restarting a task while editing its priority works as expected.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn restart_and_edit_task_priority() -> Result<()> {
+    let daemon = daemon().await?;
+    let shared = &daemon.settings.shared;
+
+    // Create a task and wait for it to finish.
+    assert_success(add_task(shared, "ls").await?);
+    wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
+
+    // Set the editor to a command which replaces the temporary file's content.
+    let mut envs = HashMap::new();
+    envs.insert("EDITOR", "echo '99' > ");
+
+    // Restart the command, edit its priority and wait for it to start.
+    run_client_command_with_env(
+        shared,
+        &["restart", "--in-place", "--edit-priority", "0"],
+        envs,
+    )?;
+    wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
+
+    // Make sure that the priority has been updated.
+    let state = get_state(shared).await?;
+    let task = state.tasks.get(&0).unwrap();
+    assert_eq!(task.priority, 99);
+
+    Ok(())
+}
+
 /// Test that restarting a task **not** in place works as expected.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn normal_restart_with_edit() -> Result<()> {

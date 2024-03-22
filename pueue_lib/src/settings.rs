@@ -194,6 +194,7 @@ pub struct Settings {
     pub client: Client,
     #[serde(default = "Default::default")]
     pub daemon: Daemon,
+    #[serde(default = "Default::default")]
     pub shared: Shared,
     #[serde(default = "HashMap::new")]
     pub profiles: HashMap<String, NestedSettings>,

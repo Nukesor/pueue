@@ -171,6 +171,8 @@ pub struct TaskToRestart {
     /// Cbor cannot represent Option<Option<T>> yet, which is why we have to utilize a
     /// boolean to indicate that the label should be released, rather than an `Some(None)`.
     pub delete_label: bool,
+    /// Restart the task with an updated priority.
+    pub priority: Option<i32>,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
@@ -223,6 +225,7 @@ pub struct EditResponseMessage {
     pub command: String,
     pub path: PathBuf,
     pub label: Option<String>,
+    pub priority: i32,
 }
 
 impl_into_message!(EditResponseMessage, Message::EditResponse);
@@ -236,6 +239,7 @@ pub struct EditMessage {
     /// Cbor cannot represent Option<Option<T>> yet, which is why we have to utilize a
     /// boolean to indicate that the label should be released, rather than an `Some(None)`.
     pub delete_label: bool,
+    pub priority: Option<i32>,
 }
 
 impl_into_message!(EditMessage, Message::Edit);

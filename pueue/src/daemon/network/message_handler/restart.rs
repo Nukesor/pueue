@@ -96,6 +96,11 @@ fn restart(
         task.label = None
     }
 
+    // Update priority if applicable.
+    if let Some(priority) = to_restart.priority {
+        task.priority = priority;
+    }
+
     // Reset all variables of any previous run.
     task.start = None;
     task.end = None;

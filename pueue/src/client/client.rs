@@ -198,6 +198,7 @@ impl Client {
                 command,
                 path,
                 label,
+                priority,
             } => {
                 let message = edit(
                     &mut self.stream,
@@ -206,6 +207,7 @@ impl Client {
                     *command,
                     *path,
                     *label,
+                    *priority,
                 )
                 .await?;
                 self.handle_response(message)?;
@@ -233,6 +235,7 @@ impl Client {
                 edit,
                 edit_path,
                 edit_label,
+                edit_priority,
             } => {
                 // `not_in_place` superseeds both other configs
                 let in_place =
@@ -249,6 +252,7 @@ impl Client {
                     *edit,
                     *edit_path,
                     *edit_label,
+                    *edit_priority,
                 )
                 .await?;
                 Ok(true)

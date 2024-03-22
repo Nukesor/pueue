@@ -32,7 +32,7 @@ pub fn print_state(
     let mut table_builder = TableBuilder::new(settings, style);
 
     if let Some(query) = query {
-        let query_result = apply_query(&query.join(" "))?;
+        let query_result = apply_query(&query.join(" "), &group_only)?;
         table_builder.set_visibility_by_rules(&query_result.selected_columns);
         tasks = query_result.apply_filters(tasks);
         tasks = query_result.order_tasks(tasks);

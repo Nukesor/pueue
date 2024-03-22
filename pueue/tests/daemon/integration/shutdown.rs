@@ -21,7 +21,7 @@ async fn test_ctrlc() -> Result<()> {
     let result = child.try_wait();
     assert!(matches!(result, Ok(Some(_))));
     let code = result.unwrap().unwrap();
-    assert!(matches!(code.code(), Some(1)));
+    assert!(matches!(code.code(), Some(0)));
 
     Ok(())
 }

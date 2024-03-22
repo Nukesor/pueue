@@ -208,6 +208,10 @@ pub enum SubCommand {
         /// Edit the tasks' labels before restarting.
         #[arg(short = 'l', long)]
         edit_label: bool,
+
+        /// Edit the tasks' priorities before restarting.
+        #[arg(short = 'o', long)]
+        edit_priority: bool,
     },
 
     #[command(about = "Either pause running tasks or specific groups of tasks.\n\
@@ -270,7 +274,7 @@ pub enum SubCommand {
     },
 
     #[command(
-        about = "Edit the command, path or label of a stashed or queued task.\n\
+        about = "Edit the command, path, label, or priority of a stashed or queued task.\n\
         By default only the command is edited.\n\
         Multiple properties can be added in one go."
     )]
@@ -289,6 +293,10 @@ pub enum SubCommand {
         /// Edit the task's label.
         #[arg(short, long)]
         label: bool,
+
+        /// Edit the task's priority.
+        #[arg(short = 'o', long)]
+        priority: bool,
     },
 
     #[command(about = "Use this to add or remove groups.\n\
@@ -469,7 +477,7 @@ https://github.com/Nukesor/pueue/issues/350#issue-1359083118"
             This limit is only considered when tasks are scheduled.")]
     Parallel {
         /// The amount of allowed parallel tasks.
-        #[arg(value_parser = min_one)]
+        /// Setting this to 0 means an unlimited amount of parallel tasks.
         parallel_tasks: Option<usize>,
 
         /// Set the amount for a specific group.
@@ -485,7 +493,7 @@ https://github.com/Nukesor/pueue/issues/350#issue-1359083118"
         shell: Shell,
         /// The output directory to which the file should be written.
         #[arg(value_hint = ValueHint::DirPath)]
-        output_directory: PathBuf,
+        output_directory: Option<PathBuf>,
     },
 }
 
@@ -496,7 +504,8 @@ pub enum GroupCommand {
         name: String,
 
         /// Set the amount of parallel tasks this group can have.
-        #[arg(short, long, value_parser = min_one)]
+        /// Setting this to 0 means an unlimited amount of parallel tasks.
+        #[arg(short, long)]
         parallel: Option<usize>,
     },
 
@@ -564,17 +573,4 @@ fn parse_delay_until(src: &str) -> Result<DateTime<Local>, String> {
     Err(String::from(
         "could not parse as seconds or date expression",
     ))
-}
-
-/// Validator function. The input string has to be parsable as int and bigger than 0
-fn min_one(value: &str) -> Result<usize, String> {
-    match value.parse::<usize>() {
-        Ok(value) => {
-            if value < 1 {
-                return Err("You must provide a value that's bigger than 0".into());
-            }
-            Ok(value)
-        }
-        Err(_) => Err("Failed to parse integer".into()),
-    }
 }

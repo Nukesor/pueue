@@ -24,6 +24,7 @@ pub async fn edit(
     edit_command: bool,
     edit_path: bool,
     edit_label: bool,
+    edit_priority: bool,
 ) -> Result<Message> {
     // Request the data to edit from the server and issue a task-lock while doing so.
     let init_message = Message::EditRequest(task_id);
@@ -39,7 +40,7 @@ pub async fn edit(
     };
 
     // Edit the command if explicitly specified or if no flags are provided (the default)
-    let edit_command = edit_command || !edit_path && !edit_label;
+    let edit_command = edit_command || !edit_path && !edit_label && !edit_priority;
 
     // Edit all requested properties.
     let edit_result = edit_task_properties(
@@ -47,9 +48,11 @@ pub async fn edit(
         &init_response.command,
         &init_response.path,
         &init_response.label,
+        init_response.priority,
         edit_command,
         edit_path,
         edit_label,
+        edit_priority,
     );
 
     // Any error while editing will result in the client aborting the editing process.
@@ -82,6 +85,7 @@ pub async fn edit(
         path: edited_props.path,
         label: edited_props.label,
         delete_label: edited_props.delete_label,
+        priority: edited_props.priority,
     };
     send_message(edit_message, stream).await?;
 
@@ -94,6 +98,7 @@ pub struct EditedProperties {
     pub path: Option<PathBuf>,
     pub label: Option<String>,
     pub delete_label: bool,
+    pub priority: Option<i32>,
 }
 
 /// Takes several task properties and edit them if requested.
@@ -102,14 +107,17 @@ pub struct EditedProperties {
 /// Fields that have been edited will be returned as their `Some(T)` equivalent.
 ///
 /// The returned values are: `(command, path, label)`
+#[allow(clippy::too_many_arguments)]
 pub fn edit_task_properties(
     settings: &Settings,
     original_command: &str,
     original_path: &Path,
     original_label: &Option<String>,
+    original_priority: i32,
     edit_command: bool,
     edit_path: bool,
     edit_label: bool,
+    edit_priority: bool,
 ) -> Result<EditedProperties> {
     let mut props = EditedProperties::default();
 
@@ -140,6 +148,11 @@ pub fn edit_task_properties(
             props.label = Some(edited_label);
         };
     }
+
+    // Update the priority if requested.
+    if edit_priority {
+        props.priority = Some(edit_line(settings, &original_priority.to_string())?.parse()?);
+    };
 
     Ok(props)
 }
