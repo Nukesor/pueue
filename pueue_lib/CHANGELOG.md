@@ -6,9 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project adheres **somewhat** to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 The concept of SemVer is applied to the daemon/client API, but not the library API itself.
 
-## [0.26.0] - unreleased
+## [0.26.0] - 2024-03-22
 
 ### Added
+
+- Added `priority` field on `EditResponseMessage`, `EditMessage` and `TaskToRestart`.
 
 ## [0.25.1] - 2024-01-04
 

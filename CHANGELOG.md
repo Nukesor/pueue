@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.4.0] - unreleased
+## [3.4.0] - 2024-03-22
 
 ### Added
 
@@ -14,9 +14,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fixed
 
-- Include priority in `Task`s' `Debug` output
-- Fix reading of configuration files that lacks a `shared` section.
-- Made the daemon exit gracefully (exit code 0) on SIGINT and SIGTEM.
+- Include priority in `Task`s' `Debug` output [#493](https://github.com/Nukesor/pueue/issues/493)
+- Made the daemon exit gracefully (exit code 0) on SIGINT and SIGTEM. [#504](https://github.com/Nukesor/pueue/issues/504)
+- Fix reading of configuration files that lacks a `shared` section. [#505](https://github.com/Nukesor/pueue/issues/505)
 - Respect the `-g` flag when using the `status` filter query. [#508](https://github.com/Nukesor/pueue/issues/508)
 
 ## [3.3.3] - 2024-01-04
