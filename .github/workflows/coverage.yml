@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - development
     paths:
       - ".github/**/*"
       - ".codecov.yml"
@@ -14,7 +13,6 @@ on:
   pull_request:
     branches:
       - main
-      - development
     paths:
       - ".github/**/*"
       - ".codecov.yml"
