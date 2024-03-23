@@ -1,3 +1,5 @@
+use std::io::Write;
+
 use super::*;
 
 use crate::daemon::state_helper::{pause_on_failure, save_state, LockedState};
@@ -165,7 +167,17 @@ impl TaskHandler {
             Err(err) => {
                 let error = format!("Failed to spawn child {task_id} with err: {err:?}");
                 error!("{}", error);
-                clean_log_handles(task_id, &self.pueue_directory);
+
+                // Write some debug log output to the task's log file.
+                // This should always work, but print a datailed error if it didn't work.
+                if let Ok(mut file) = get_writable_log_file_handle(task_id, &self.pueue_directory) {
+                    let log_output =
+                        format!("Pueue error, failed to spawn task. Check your command.\n{error}");
+                    let write_result = file.write_all(log_output.as_bytes());
+                    if let Err(write_err) = write_result {
+                        error!("Failed to write spawn error to task log: {}", write_err);
+                    }
+                }
 
                 // Update all necessary fields on the task.
                 let group = {

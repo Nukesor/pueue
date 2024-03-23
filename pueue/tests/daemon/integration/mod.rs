@@ -16,6 +16,7 @@ mod restart;
 mod restore;
 /// Tests for shutting down the daemon.
 mod shutdown;
+mod spawn;
 mod start;
 mod stashed;
 /// Test that the worker pool environment variables are properly injected.

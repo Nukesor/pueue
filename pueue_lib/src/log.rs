@@ -9,15 +9,15 @@ use snap::write::FrameEncoder;
 use crate::error::Error;
 
 /// Get the path to the log file of a task.
-pub fn get_log_path(task_id: usize, path: &Path) -> PathBuf {
-    let task_log_dir = path.join("task_logs");
+pub fn get_log_path(task_id: usize, pueue_dir: &Path) -> PathBuf {
+    let task_log_dir = pueue_dir.join("task_logs");
     task_log_dir.join(format!("{task_id}.log"))
 }
 
 /// Create and return the two file handles for the `(stdout, stderr)` log file of a task.
 /// These are two handles to the same file.
-pub fn create_log_file_handles(task_id: usize, path: &Path) -> Result<(File, File), Error> {
-    let log_path = get_log_path(task_id, path);
+pub fn create_log_file_handles(task_id: usize, pueue_dir: &Path) -> Result<(File, File), Error> {
+    let log_path = get_log_path(task_id, pueue_dir);
     let stdout_handle = File::create(&log_path)
         .map_err(|err| Error::IoPathError(log_path, "getting stdout handle", err))?;
     let stderr_handle = stdout_handle
@@ -28,17 +28,28 @@ pub fn create_log_file_handles(task_id: usize, path: &Path) -> Result<(File, Fil
 }
 
 /// Return the file handle for the log file of a task.
-pub fn get_log_file_handle(task_id: usize, path: &Path) -> Result<File, Error> {
-    let path = get_log_path(task_id, path);
+pub fn get_log_file_handle(task_id: usize, pueue_dir: &Path) -> Result<File, Error> {
+    let path = get_log_path(task_id, pueue_dir);
     let handle = File::open(&path)
         .map_err(|err| Error::IoPathError(path, "getting log file handle", err))?;
 
     Ok(handle)
 }
 
+/// Return the file handle for the log file of a task.
+pub fn get_writable_log_file_handle(task_id: usize, pueue_dir: &Path) -> Result<File, Error> {
+    let path = get_log_path(task_id, pueue_dir);
+    let handle = File::options()
+        .write(true)
+        .open(&path)
+        .map_err(|err| Error::IoPathError(path, "getting log file handle", err))?;
+
+    Ok(handle)
+}
+
 /// Remove the the log files of a task.
-pub fn clean_log_handles(task_id: usize, path: &Path) {
-    let path = get_log_path(task_id, path);
+pub fn clean_log_handles(task_id: usize, pueue_dir: &Path) {
+    let path = get_log_path(task_id, pueue_dir);
     if path.exists() {
         if let Err(err) = remove_file(path) {
             error!("Failed to remove stdout file for task {task_id} with error {err:?}");
@@ -54,10 +65,10 @@ pub fn clean_log_handles(task_id: usize, path: &Path) {
 ///     `false` indicate that the log output has been truncated
 pub fn read_and_compress_log_file(
     task_id: usize,
-    path: &Path,
+    pueue_dir: &Path,
     lines: Option<usize>,
 ) -> Result<(Vec<u8>, bool), Error> {
-    let mut file = get_log_file_handle(task_id, path)?;
+    let mut file = get_log_file_handle(task_id, pueue_dir)?;
 
     let mut content = Vec::new();
 
@@ -84,18 +95,18 @@ pub fn read_and_compress_log_file(
 /// the last few lines.
 pub fn read_last_log_file_lines(
     task_id: usize,
-    path: &Path,
+    pueue_dir: &Path,
     lines: usize,
 ) -> Result<String, Error> {
-    let mut file = get_log_file_handle(task_id, path)?;
+    let mut file = get_log_file_handle(task_id, pueue_dir)?;
 
     // Get the last few lines of both files
     Ok(read_last_lines(&mut file, lines))
 }
 
 /// Remove all files in the log directory.
-pub fn reset_task_log_directory(path: &Path) -> Result<(), Error> {
-    let task_log_dir = path.join("task_logs");
+pub fn reset_task_log_directory(pueue_dir: &Path) -> Result<(), Error> {
+    let task_log_dir = pueue_dir.join("task_logs");
 
     let files = read_dir(&task_log_dir)
         .map_err(|err| Error::IoPathError(task_log_dir, "reading task log files", err))?;
