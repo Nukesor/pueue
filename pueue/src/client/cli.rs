@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use chrono::prelude::*;
-use chrono::Duration;
+use chrono::TimeDelta;
 use chrono_english::*;
 use clap::ArgAction;
 use clap::{Parser, ValueEnum, ValueHint};
@@ -562,7 +562,9 @@ pub struct CliArguments {
 
 fn parse_delay_until(src: &str) -> Result<DateTime<Local>, String> {
     if let Ok(seconds) = src.parse::<i64>() {
-        let delay_until = Local::now() + Duration::seconds(seconds);
+        let delay_until = Local::now()
+            + TimeDelta::try_seconds(seconds)
+                .ok_or("Failed to get timedelta from {seconds} seconds")?;
         return Ok(delay_until);
     }
 

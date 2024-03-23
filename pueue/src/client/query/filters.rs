@@ -1,6 +1,6 @@
 #![allow(bindings_with_variant_name)]
 use anyhow::{bail, Context, Result};
-use chrono::{DateTime, Duration, Local, NaiveDate, NaiveDateTime, NaiveTime};
+use chrono::{DateTime, Local, NaiveDate, NaiveDateTime, NaiveTime, TimeDelta};
 use pest::iterators::Pair;
 use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
@@ -156,7 +156,7 @@ pub fn datetime(section: Pair<'_, Rule>, query_result: &mut QueryResult) -> Resu
 
                 // Get the end of the given day.
                 // Use the most inclusive datetime in case of ambiguity
-                let end_of_day = (date + Duration::days(1))
+                let end_of_day = (date + TimeDelta::try_days(1).unwrap())
                     .and_hms_opt(0, 0, 0)
                     .expect("Couldn't determine start of day for given date.")
                     .and_local_timezone(Local);
