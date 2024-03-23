@@ -55,7 +55,7 @@ serde_yaml = { workspace = true }
 # Set log level for tests with RUST_LOG=<level>, use with failed tests or
 # disable test stdout/stderr capture (`cargo test -- --nocapture` / `cargo
 # nextest run --no-capture`)
-env_logger = "0.10"
+env_logger = "0.11"
 test-log = "0.2"
 
 # We don't need any of the default features for crossterm.
