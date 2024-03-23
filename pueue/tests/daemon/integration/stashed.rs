@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use chrono::{DateTime, Duration, Local};
+use chrono::{DateTime, Local, TimeDelta};
 use pueue_lib::state::GroupStatus;
 use rstest::rstest;
 
@@ -30,8 +30,8 @@ pub async fn add_stashed_task(
 /// Furthermore these stashed tasks can then be manually enqueued again.
 #[rstest]
 #[case(true, None)]
-#[case(true, Some(Local::now() + Duration::minutes(2)))]
-#[case(false, Some(Local::now() + Duration::minutes(2)))]
+#[case(true, Some(Local::now() + TimeDelta::try_minutes(2).unwrap()))]
+#[case(false, Some(Local::now() + TimeDelta::try_minutes(2).unwrap()))]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn test_enqueued_tasks(
     #[case] stashed: bool,
@@ -93,7 +93,7 @@ async fn test_delayed_tasks() -> Result<()> {
         shared,
         "sleep 10",
         true,
-        Some(Local::now() + Duration::seconds(1)),
+        Some(Local::now() + TimeDelta::try_seconds(1).unwrap()),
     )
     .await?;
     assert_success(response);
