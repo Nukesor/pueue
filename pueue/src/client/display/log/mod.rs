@@ -145,7 +145,7 @@ fn print_task_info(task: &Task, style: &OutputStyle) {
             TaskResult::Failed(exit_code) => {
                 (format!("failed with exit code {exit_code}"), Color::Red)
             }
-            TaskResult::FailedToSpawn(err) => (format!("failed to spawn: {err}"), Color::Red),
+            TaskResult::FailedToSpawn(_err) => ("Failed to spawn".to_string(), Color::Red),
             TaskResult::Killed => ("killed by system or user".into(), Color::Red),
             TaskResult::Errored => ("some IO error.\n Check daemon log.".into(), Color::Red),
             TaskResult::DependencyFailed => ("dependency failed".into(), Color::Red),
