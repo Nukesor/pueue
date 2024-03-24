@@ -256,7 +256,7 @@ Depending on the type of your contribution, you should branch of from either the
 - Everything else, such as new features, refactorings, or breaking changes, should branch of `development` and be merged into `development`.
     Once a new minor or major version has been published, `development` will then be merged into `main`.
 
-There's also the [Architecture Guide](https://github.com/Nukesor/pueue/blob/main/ARCHITECTURE.md), which is supposed to give you a brief overview and introduction to the project.
+There's also the [Architecture Guide](https://github.com/Nukesor/pueue/blob/main/docs/Architecture.md), which is supposed to give you a brief overview and introduction to the project.
 
 Copyright &copy; 2019 Arne Beer ([@Nukesor](https://github.com/Nukesor))
 
