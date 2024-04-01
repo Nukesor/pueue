@@ -4,12 +4,12 @@ version = "0.26.0"
 description = "The shared library to work with the Pueue client and daemon."
 keywords = ["pueue"]
 readme = "README.md"
-authors.workspace = true
-homepage.workspace = true
-repository.workspace = true
-license.workspace = true
-edition.workspace = true
-rust-version.workspace = true
+authors = { workspace = true }
+homepage = { workspace = true }
+repository = { workspace = true }
+license = { workspace = true }
+edition = { workspace = true }
+rust-version = { workspace = true }
 
 [badges]
 maintenance = { status = "actively-developed" }
@@ -19,7 +19,10 @@ anyhow = "1.0"
 async-trait = "0.1"
 byteorder = "1.5"
 chrono = { version = "0.4", features = ["serde"] }
+command-group = { workspace = true }
 dirs = "5.0"
+handlebars = { workspace = true }
+log = { workspace = true }
 rand = "0.8"
 rcgen = "0.12"
 rev_buf_reader = "0.3"
@@ -30,30 +33,25 @@ rustls = { version = "0.23", features = [
   "tls12",
 ], default-features = false }
 rustls-pemfile = "2"
+serde = { workspace = true }
 serde_cbor = "0.11"
+serde_derive = { workspace = true }
+serde_json = { workspace = true }
 serde_yaml = "0.9"
 shellexpand = "3.1"
-thiserror = "1.0"
-tokio-rustls = { version = "0.26", default-features = false }
-
-command-group = { workspace = true }
-handlebars = { workspace = true }
-log = { workspace = true }
-serde = { workspace = true }
-serde_json = { workspace = true }
-serde_derive = { workspace = true }
 snap = { workspace = true }
 strum = { workspace = true }
 strum_macros = { workspace = true }
+thiserror = "1.0"
 tokio = { workspace = true, features = ["macros", "net", "io-util"] }
+tokio-rustls = { version = "0.26", default-features = false }
 
 [dev-dependencies]
-portpicker = "0.1"
-tempfile = "3"
-
 anyhow = { workspace = true }
 better-panic = { workspace = true }
+portpicker = "0.1"
 pretty_assertions = { workspace = true }
+tempfile = "3"
 tokio = { workspace = true }
 
 # --- Platform specific dependencies ---
