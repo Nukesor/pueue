@@ -4,58 +4,54 @@ version = "3.4.0"
 description = "A cli tool for managing long running shell commands."
 keywords = ["shell", "command", "parallel", "task", "queue"]
 readme = "../README.md"
-authors.workspace = true
-homepage.workspace = true
-repository.workspace = true
-license.workspace = true
-edition.workspace = true
-rust-version.workspace = true
+authors = { workspace = true }
+homepage = { workspace = true }
+repository = { workspace = true }
+license = { workspace = true }
+edition = { workspace = true }
+rust-version = { workspace = true }
 
 [badges]
 maintenance = { status = "actively-developed" }
 
 [dependencies]
-pueue-lib = { version = "0.26.0", path = "../pueue_lib" }
-
 anyhow = "1.0"
+chrono = { workspace = true }
 chrono-english = "0.1"
 clap = { version = "4.3", features = ["derive", "cargo", "help"] }
 clap_complete = "4.3"
 comfy-table = "7"
-ctrlc = { version = "3", features = ["termination"] }
-pest = "2.7"
-pest_derive = "2.7"
-shell-escape = "0.1"
-simplelog = "0.12"
-tempfile = "3"
-
-chrono = { workspace = true }
 command-group = { workspace = true }
+ctrlc = { version = "3", features = ["termination"] }
 handlebars = { workspace = true }
 log = { workspace = true }
+pest = "2.7"
+pest_derive = "2.7"
+pueue-lib = { version = "0.26.0", path = "../pueue_lib" }
 serde = { workspace = true }
-serde_json = { workspace = true }
 serde_derive = { workspace = true }
+serde_json = { workspace = true }
+shell-escape = "0.1"
+simplelog = "0.12"
 snap = { workspace = true }
 strum = { workspace = true }
 strum_macros = { workspace = true }
+tempfile = "3"
 tokio = { workspace = true }
 
 [dev-dependencies]
-assert_cmd = "2"
-rstest = "0.18"
-similar-asserts = "1"
-
 anyhow = { workspace = true }
+assert_cmd = "2"
 better-panic = { workspace = true }
-pretty_assertions = { workspace = true }
-serde_yaml = { workspace = true }
-
 # Make it easy to view log output for select tests.
 # Set log level for tests with RUST_LOG=<level>, use with failed tests or
 # disable test stdout/stderr capture (`cargo test -- --nocapture` / `cargo
 # nextest run --no-capture`)
 env_logger = "0.11"
+pretty_assertions = { workspace = true }
+rstest = "0.18"
+serde_yaml = { workspace = true }
+similar-asserts = "1"
 test-log = "0.2"
 
 # We don't need any of the default features for crossterm.
@@ -63,7 +59,7 @@ test-log = "0.2"
 [target.'cfg(not(windows))'.dependencies]
 crossterm = { version = "0.27", default-features = false }
 [target.'cfg(windows)'.dependencies]
-crossterm = { version = "0.27", default-features = false, features=["windows"] }
+crossterm = { version = "0.27", default-features = false, features = ["windows"] }
 
 # Test specific dev-dependencies
 [target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]

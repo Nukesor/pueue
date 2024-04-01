@@ -10,6 +10,17 @@ nextest:
     just ensure_installed nextest
     cargo nextest run --workspace
 
+lint:
+    just ensure_installed sort
+    cargo fmt --check
+    cargo sort --workspace --check
+    cargo clippy --all --tests
+
+format:
+    just ensure_installed sort
+    cargo fmt
+    cargo sort --workspace
+
 ensure_installed *args:
     #!/bin/bash
     cargo --list | grep -q {{ args }}
@@ -17,7 +28,3 @@ ensure_installed *args:
         echo "error: cargo-{{ args }} is not installed"
         exit 1
     fi
-
-lint:
-    cargo fmt
-    cargo clippy --all --tests
