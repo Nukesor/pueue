@@ -248,13 +248,9 @@ Feature requests and pull requests are very much appreciated and welcome!
 Anyhow, please talk to me a bit about your ideas before you start hacking!
 It's always nice to know what you're working on and I might have a few suggestions or tips :)
 
-Depending on the type of your contribution, you should branch of from either the `main` branch or the `development` branch.
-
-- Bug fixes or critical library updates should branch of `main` and be merged into `main`.
-    New patch level releases will be published for this kind of issues.
-    Any patches in `main` will also regularly be merged into `development`.
-- Everything else, such as new features, refactorings, or breaking changes, should branch of `development` and be merged into `development`.
-    Once a new minor or major version has been published, `development` will then be merged into `main`.
+Depending on the type of your contribution, you should branch of from the `main` branch.
+Pueue is mature enough to no longer need a `development` branch and all changes are collected on there before a new release is pushed.
+Urgent hotfixes might get deployed on a separate branch, but this will be decided on a case-by-case basis.
 
 There's also the [Architecture Guide](https://github.com/Nukesor/pueue/blob/main/docs/Architecture.md), which is supposed to give you a brief overview and introduction to the project.
 
