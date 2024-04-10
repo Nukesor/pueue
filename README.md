@@ -125,7 +125,7 @@ There are also detailed sections for (hopefully) every important feature:
 
 - [Configuration](https://github.com/Nukesor/pueue/wiki/Configuration)
 - [Groups](https://github.com/Nukesor/pueue/wiki/Groups)
-- [Miscellaneous](https://github.com/Nukesor/pueue/wiki/Miscellaneous)
+- [Advanced usage](https://github.com/Nukesor/pueue/wiki/Advanced-usage)
 - [Connect to remote](https://github.com/Nukesor/pueue/wiki/Connect-to-remote)
 
 On top of that, there is a help option (-h) for all commands.
