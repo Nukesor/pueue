@@ -11,6 +11,7 @@ use rstest::rstest;
 #[case("bash")]
 #[case("fish")]
 #[case("power-shell")]
+#[case("nushell")]
 #[test]
 fn autocompletion_generation(#[case] shell: &'static str) -> Result<()> {
     let output = Command::cargo_bin("pueue")?

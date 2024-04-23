@@ -528,6 +528,7 @@ pub enum Shell {
     Fish,
     PowerShell,
     Zsh,
+    Nushell,
 }
 
 #[derive(Parser, Debug)]
