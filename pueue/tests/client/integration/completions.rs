@@ -16,7 +16,7 @@ use rstest::rstest;
 fn autocompletion_generation(#[case] shell: &'static str) -> Result<()> {
     let output = Command::cargo_bin("pueue")?
         .arg("completions")
-        .arg("zsh")
+        .arg(shell)
         .arg("./")
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
