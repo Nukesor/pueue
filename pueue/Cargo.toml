@@ -18,8 +18,9 @@ maintenance = { status = "actively-developed" }
 anyhow = "1.0"
 chrono = { workspace = true }
 chrono-english = "0.1"
-clap = { version = "4.3", features = ["derive", "cargo", "help"] }
-clap_complete = "4.3"
+clap = { version = "4.5.1", features = ["derive", "cargo", "help"] }
+clap_complete = "4.5.1"
+clap_complete_nushell = "4.5.1"
 comfy-table = "7"
 command-group = { workspace = true }
 ctrlc = { version = "3", features = ["termination"] }

@@ -110,21 +110,12 @@ fn create_shell_completion_file(shell: &Shell, output_directory: &Option<PathBuf
                 generate_to(shells::PowerShell, &mut app, "pueue", output_directory)
             }
             Shell::Zsh => generate_to(shells::Zsh, &mut app, "pueue", output_directory),
-        };
-        completion_result.context(format!("Failed to generate completions for {shell:?}"))?;
-
-        return Ok(());
-    }
-
-    if let Some(output_directory) = output_directory {
-        let completion_result = match shell {
-            Shell::Bash => generate_to(shells::Bash, &mut app, "pueue", output_directory),
-            Shell::Elvish => generate_to(shells::Elvish, &mut app, "pueue", output_directory),
-            Shell::Fish => generate_to(shells::Fish, &mut app, "pueue", output_directory),
-            Shell::PowerShell => {
-                generate_to(shells::PowerShell, &mut app, "pueue", output_directory)
-            }
-            Shell::Zsh => generate_to(shells::Zsh, &mut app, "pueue", output_directory),
+            Shell::Nushell => generate_to(
+                clap_complete_nushell::Nushell,
+                &mut app,
+                "pueue",
+                output_directory,
+            ),
         };
         completion_result.context(format!("Failed to generate completions for {shell:?}"))?;
 
@@ -139,6 +130,12 @@ fn create_shell_completion_file(shell: &Shell, output_directory: &Option<PathBuf
         Shell::Fish => generate(shells::Fish, &mut app, "pueue", &mut stdout),
         Shell::PowerShell => generate(shells::PowerShell, &mut app, "pueue", &mut stdout),
         Shell::Zsh => generate(shells::Zsh, &mut app, "pueue", &mut stdout),
+        Shell::Nushell => generate(
+            clap_complete_nushell::Nushell,
+            &mut app,
+            "pueue",
+            &mut stdout,
+        ),
     };
 
     Ok(())
