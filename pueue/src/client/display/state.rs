@@ -122,7 +122,7 @@ fn print_all_groups(
     let sorted_tasks = sort_tasks_by_group(tasks);
 
     // Always print the default queue at the very top, if no specific group is requested.
-    if sorted_tasks.get(PUEUE_DEFAULT_GROUP).is_some() {
+    if sorted_tasks.contains_key(PUEUE_DEFAULT_GROUP) {
         let tasks = sorted_tasks.get(PUEUE_DEFAULT_GROUP).unwrap();
         let headline = get_group_headline(
             PUEUE_DEFAULT_GROUP,
