@@ -33,7 +33,7 @@ fn test_restore_from_old_state() -> Result<()> {
 
     // Make sure the groups are loaded.
     assert!(
-        state.groups.get(PUEUE_DEFAULT_GROUP).is_some(),
+        state.groups.contains_key(PUEUE_DEFAULT_GROUP),
         "Group 'default' should exist."
     );
     assert_eq!(
@@ -41,7 +41,7 @@ fn test_restore_from_old_state() -> Result<()> {
         GroupStatus::Running
     );
     assert!(
-        state.groups.get("test").is_some(),
+        state.groups.contains_key("test"),
         "Group 'test' should exist"
     );
     assert_eq!(
@@ -49,7 +49,7 @@ fn test_restore_from_old_state() -> Result<()> {
         GroupStatus::Paused
     );
 
-    assert!(state.tasks.get(&3).is_some(), "Task 3 should exist");
+    assert!(state.tasks.contains_key(&3), "Task 3 should exist");
     assert_eq!(state.tasks.get(&3).unwrap().command, "ls stash_it");
 
     Ok(())

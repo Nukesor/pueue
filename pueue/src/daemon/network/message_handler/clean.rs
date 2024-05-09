@@ -162,7 +162,7 @@ mod tests {
         // Assert that only the first entry has been deleted (TaskResult::Success)
         let state = state.lock().unwrap();
         assert_eq!(state.tasks.len(), 5);
-        assert!(state.tasks.get(&0).is_none());
+        assert!(!state.tasks.contains_key(&0));
     }
 
     #[test]
@@ -208,6 +208,6 @@ mod tests {
         // Assert that only the first entry has been deleted from the 'other' group (TaskResult::Success)
         let state = state.lock().unwrap();
         assert_eq!(state.tasks.len(), 11);
-        assert!(state.tasks.get(&6).is_none());
+        assert!(!state.tasks.contains_key(&6));
     }
 }

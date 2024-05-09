@@ -1,3 +1,6 @@
+// Clippy generates a false-positive for an empty generated docstring in the query parser code.
+#![allow(clippy::empty_docs)]
+
 use anyhow::{bail, Context, Result};
 use pest::Parser;
 use pest_derive::Parser;
@@ -12,6 +15,8 @@ mod order_by;
 use limit::Limit;
 use order_by::Direction;
 
+/// See the pest docs on how this derive macro works and how to use pest:
+/// https://docs.rs/pest/latest/pest/
 #[derive(Parser)]
 #[grammar = "./src/client/query/syntax.pest"]
 struct QueryParser;
