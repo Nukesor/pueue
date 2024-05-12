@@ -4,13 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## \[Unreleased\]
 
 ### Added
 
 - Nushell autocompletion script [#527](https://github.com/Nukesor/pueue/pull/527)
 
-## [3.4.0] - 2024-03-22
+## \[3.4.0\] - 2024-03-22
 
 ### Added
 
@@ -25,14 +25,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Fix reading of configuration files that lacks a `shared` section. [#505](https://github.com/Nukesor/pueue/issues/505)
 - Respect the `-g` flag when using the `status` filter query. [#508](https://github.com/Nukesor/pueue/issues/508)
 
-## [3.3.3] - 2024-01-04
+## \[3.3.3\] - 2024-01-04
 
 ### Fixed
 
 - Bump `ring` from 0.16 to 0.17 to add riscv64 support [#484](https://github.com/Nukesor/pueue/issues/484).
 - Fix that `add --priority` flag tried to get multiple arguments [#486](https://github.com/Nukesor/pueue/issues/486).
 
-## [3.3.2] - 2023-11-28
+## \[3.3.2\] - 2023-11-28
 
 ### Fixed
 
@@ -40,13 +40,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Fixed wrong default location for `pueue_aliases.yml` [#480](https://github.com/Nukesor/pueue/issues/480)
 - Fix typos
 
-## [3.3.1] - 2023-10-27
+## \[3.3.1\] - 2023-10-27
 
 ### Fixed
 
 - Daemonization doesn't work if pueued is not in $PATH [#299](https://github.com/Nukesor/pueue/issues/299)
 
-## [3.3.0] - 2023-10-21
+## \[3.3.0\] - 2023-10-21
 
 ### Added
 
@@ -72,7 +72,7 @@ They might be reworked in a later release, since working with shells is always t
 - Experimental: Allow configuration of the shell command that executes task commands. [#454](https://github.com/Nukesor/pueue/issues/454)
 - Experimental: Allow injection of hard coded environment variables via config file. [#454](https://github.com/Nukesor/pueue/issues/454)
 
-## [3.2.0] - 2023-06-13
+## \[3.2.0\] - 2023-06-13
 
 ### Added
 
@@ -94,19 +94,19 @@ They might be reworked in a later release, since working with shells is always t
 - Don't fail on `follow` if a followed task exists but hasn't started yet. [#436](https://github.com/Nukesor/pueue/issues/436)
 - Fail with a `1` exit code, when a followed task disappears or doesn't exist in the first place. [#436](https://github.com/Nukesor/pueue/issues/436)
 
-## [3.1.2] - 2023-02-26
+## \[3.1.2\] - 2023-02-26
 
 ## Fixed
 
 - Fixed changes to stdout not being printed after each I/O copy when using `pueue follow`. [#416](https://github.com/Nukesor/pueue/issues/416)
 
-## [3.1.1] - 2023-02-12
+## \[3.1.1\] - 2023-02-12
 
 ## Fixed
 
 - Fixed missing newlines after `status`, `log` and `follow` [#414](https://github.com/Nukesor/pueue/issues/414).
 
-## [3.1.0] - 2023-02-08
+## \[3.1.0\] - 2023-02-08
 
 ### Added
 
@@ -115,15 +115,15 @@ They might be reworked in a later release, since working with shells is always t
 ### Fixed
 
 - Point to a new patched fork of `darwin-libproc`, as the original has been deleted.
-    This fixes the development builds for pueue on Apple platforms.
+  This fixes the development builds for pueue on Apple platforms.
 
-## [3.0.1] - 2022-12-31
+## \[3.0.1\] - 2022-12-31
 
 ### Fixed
 
 - Bump `command-group` to fix broken windows process handling [#402](https://github.com/Nukesor/pueue/issues/402)
 
-## [3.0.0] - 2022-12-12
+## \[3.0.0\] - 2022-12-12
 
 This release was planned to be a much smaller one, but you know how it's like.
 
@@ -137,9 +137,9 @@ The test coverage and development tooling has never been better, the project con
 ### Breaking Changes
 
 - Tasks are now started in a process group, and `pueue kill` will kill all processes in the group [#372](https://github.com/Nukesor/pueue/issues/372).
-    The `--children` cli flag has been deprecated (signals go to the whole group, always).
-    This brings pueue's task handling in line with how interactive shells handle jobs.
-    As a side-effect it prevents detached processes and thereby covers the 90% usecase users usually expect.
+  The `--children` cli flag has been deprecated (signals go to the whole group, always).
+  This brings pueue's task handling in line with how interactive shells handle jobs.
+  As a side-effect it prevents detached processes and thereby covers the 90% usecase users usually expect.
 
 ### Changed
 
@@ -149,12 +149,12 @@ The test coverage and development tooling has never been better, the project con
 ### Added
 
 - *status querying*! `pueue status` now implements the first version of a simple query logic.
-    The filtering/order/limit logic is also applied to the `--json` output.
-    This allows you to:
+  The filtering/order/limit logic is also applied to the `--json` output.
+  This allows you to:
   - `columns=id,status,path` select the exact columns you want to be shown.
   - `[column] [<|>|=|~] [value]` Apply various filters to columns.
-      There's only a fix amount of operations on a small amount of columns available for now.
-      If you need more filtering capabilities, please create an issue or a PR :).
+    There's only a fix amount of operations on a small amount of columns available for now.
+    If you need more filtering capabilities, please create an issue or a PR :).
   - `limit [last|first] 10` limit the results that'll be shown.
   - `order_by [column] [asc|desc]` order by certain columns.
   - For exact info on the syntax check the [syntax file](https://github.com/Nukesor/pueue/blob/main/client/query/syntax.pest).
@@ -163,12 +163,12 @@ The test coverage and development tooling has never been better, the project con
 - Add `Settings.shared.alias_file`, which allows to set the location of the `pueue_aliases.yml` file.
 - Added functionality to edit a task's label [#354](https://github.com/Nukesor/pueue/issues/354).
 - Added the `created_at` and `enqueued_at` metadata fields on `Task` [#356](https://github.com/Nukesor/pueue/issues/356).
-    They'll only be exposed when running `status --json` for now.
+  They'll only be exposed when running `status --json` for now.
 
 ### Fixed
 
 - Interpret the `$EDITOR` command, when editing a task's command/path, as a shell expression instead of an executable ([#336](https://github.com/Nukesor/pueue/issues/336)).
-    This gives users more control over how their editor should be started.
+  This gives users more control over how their editor should be started.
 - Don't show the version warning message between daemon and client, when using any `--json` flag.
 - Fix some test failures in non-standard environments for NixOS test suite ([#346](https://github.com/Nukesor/pueue/issues/346)).
 - The time in pueue's logs will now be in localtime instead of UTC [#385](https://github.com/Nukesor/pueue/issues/385).
@@ -181,13 +181,13 @@ The test coverage and development tooling has never been better, the project con
 - CI tests are now run using cargo nextest, for faster test execution, flaky test handling and better test output.
 - The macos test suite is now the same as that for Linux, including the client and daemon test suites.
 
-## [2.1.0] - 2022-07-21
+## \[2.1.0\] - 2022-07-21
 
 ### Added
 
 - Use the new `--color` command-line switch to control when pueue will use colors in its output. Fixes [#311](https://github.com/Nukesor/pueue/issues/311) by [mjpieters](https://github.com/mjpieters).
-    The default is `auto`, which means it'll enable colors when connected to a TTY.
-    The other options are `never` and `always`.
+  The default is `auto`, which means it'll enable colors when connected to a TTY.
+  The other options are `never` and `always`.
 
 ### Fixed
 
@@ -207,7 +207,7 @@ The test coverage and development tooling has never been better, the project con
 - Set up code-coverage in CI.
 - Tests suite for `pueue` client, pushing the test coverage from ~53% to ~70%.
 
-## [2.0.4] - 2022-06-05
+## \[2.0.4\] - 2022-06-05
 
 ### Fixed
 
@@ -215,27 +215,27 @@ The test coverage and development tooling has never been better, the project con
   when we get a path from `dirs::config_dir()` (was `/home/<user>/.config/pueue.yaml/`, is now again `/home/<user>/.config/pueue/`).
 - Use the correct path to delete the PID file during shutdown.
 
-## [2.0.3] - 2022-06-04
+## \[2.0.3\] - 2022-06-04
 
 ### Fixed
 
 - Use the `dirs` crate for platform specific directory discovery. [#311](https://github.com/Nukesor/pueue/issues/311)
-    The previous trivial implementation was error prone in some edge-cases.
-    For instance, Pueue fell back to the shared directory, if the `$XDG_RUNTIME_DIR` couldn't be found.
-    This resulted in a reocurrence of [#302](https://github.com/Nukesor/pueue/issues/302) in non-XDG environments.
+  The previous trivial implementation was error prone in some edge-cases.
+  For instance, Pueue fell back to the shared directory, if the `$XDG_RUNTIME_DIR` couldn't be found.
+  This resulted in a reocurrence of [#302](https://github.com/Nukesor/pueue/issues/302) in non-XDG environments.
 
-    Furthermore, Pueue used the wrong directories for its configuration and cache on Apple and Windows platforms.
-    This is now fixed.
+  Furthermore, Pueue used the wrong directories for its configuration and cache on Apple and Windows platforms.
+  This is now fixed.
 
-    This change is a bit tricky:
-    * It's a fix on one hand (correct directories for Apple & Windows + fix for [#311](https://github.com/Nukesor/pueue/issues/311)).
-    * It's somewhat of a **breaking change** for Apple & Windows on the other hand?
+  This change is a bit tricky:
 
-    I still decided to make this a patch release, as the next major release is still in the pipeline and needs a lot of work.
-    [#302](https://github.com/Nukesor/pueue/issues/302) will still show up in Apple/Windows environments, as there doesn't seem to be runtime directory equivalent for those platforms.
+  - It's a fix on one hand (correct directories for Apple & Windows + fix for [#311](https://github.com/Nukesor/pueue/issues/311)).
+  - It's somewhat of a **breaking change** for Apple & Windows on the other hand?
 
+  I still decided to make this a patch release, as the next major release is still in the pipeline and needs a lot of work.
+  [#302](https://github.com/Nukesor/pueue/issues/302) will still show up in Apple/Windows environments, as there doesn't seem to be runtime directory equivalent for those platforms.
 
-## [2.0.2] - 2022-03-22
+## \[2.0.2\] - 2022-03-22
 
 ### Added
 
@@ -246,15 +246,15 @@ The test coverage and development tooling has never been better, the project con
 ### Fixed
 
 - Some options weren't properly passed onto the forked daemon instance, when starting `pueued` with the `-d` flag.
-    * the `-vvv` flags
-    * the `--profile` option.
+  - the `-vvv` flags
+  - the `--profile` option.
 - Autocompletion shell scripts. Their generation is now also tested to prevent future regressions.
 - Move the `PID` file into the runtime directory to prevent rare startup issues after crashes + reboot. [#302](https://github.com/Nukesor/pueue/issues/298).
-    This won't cause any problems for running clients/daemons, making this a backward compatible change.
+  This won't cause any problems for running clients/daemons, making this a backward compatible change.
 - The `format-status` option now respects the order in which tasks piped back into pueue, as long as they're passed in list form [#301](https://github.com/Nukesor/pueue/issues/301).
-    Tasks that're passed as a map will still be displayed in increasing order.
+  Tasks that're passed as a map will still be displayed in increasing order.
 
-## [2.0.1] - 2022-03-12
+## \[2.0.1\] - 2022-03-12
 
 ### Added
 
@@ -263,9 +263,9 @@ The test coverage and development tooling has never been better, the project con
 ### Fixed
 
 - Commands no longer inherit environment variables from the daemon process by [drewkett](https://github.com/drewkett) [#297](https://github.com/Nukesor/pueue/pull/297).
-    Previously, the daemon environment variables bled into the subprocesses.
+  Previously, the daemon environment variables bled into the subprocesses.
 
-## [2.0.0] - 2022-02-18
+## \[2.0.0\] - 2022-02-18
 
 This release marks the second stable release of Pueue.
 
@@ -294,16 +294,16 @@ Also a huge thanks to all contributors that helped working on this version!
 - Notify the user if a task is added to a paused group [#265](https://github.com/Nukesor/pueue/issues/265).
 - Notify the user that when killing whole groups, those groups are also paused [#265](https://github.com/Nukesor/pueue/issues/265).
 - Implementation of configuration profiles [#244](https://github.com/Nukesor/pueue/issues/244).
-    This supports multiple profiles in a single `pueue.yml`, which can be loaded via the `--profile/-p $name` flag.
+  This supports multiple profiles in a single `pueue.yml`, which can be loaded via the `--profile/-p $name` flag.
 - Added the `shared.runtime_directory` config variable for any runtime related files, such as sockets.
 - `XDG_CONFIG_HOME` is respected for Pueue's config directory [#243](https://github.com/Nukesor/pueue/issues/243).
 - `XDG_DATA_HOME` is used if the `pueue_directory` config isn't explicitly set [#243](https://github.com/Nukesor/pueue/issues/243).
 - `XDG_RUNTIME_DIR` is used if the new `runtime_directory` config isn't explicitly set [#243](https://github.com/Nukesor/pueue/issues/243).
 - The unix socket is now located in the `runtime_directory` by default [#243](https://github.com/Nukesor/pueue/issues/243).
 - The `format-status` subcommand [#213](https://github.com/Nukesor/pueue/issues/213).
-    This is a preliminary feature, which allows users to use external tools, such as `jq`, to filter Pueue's `state -j` output and pipe them back into `format-status` to display it.
-    This feature will probably be removed once a proper internal filter logic has been added. \
-    The simplest usage looks like this: `pueue status --json | jq -c '.tasks' | pueue format-status`
+  This is a preliminary feature, which allows users to use external tools, such as `jq`, to filter Pueue's `state -j` output and pipe them back into `format-status` to display it.
+  This feature will probably be removed once a proper internal filter logic has been added. \
+  The simplest usage looks like this: `pueue status --json | jq -c '.tasks' | pueue format-status`
 - Show currently active commands when calling `pueue wait`.
 
 ### Changed
@@ -314,37 +314,37 @@ Also a huge thanks to all contributors that helped working on this version!
 - Configuration files will no longer be changed programatically [#241](https://github.com/Nukesor/pueue/issues/241).
 - Default values for all most configuration variables have been added [#241](https://github.com/Nukesor/pueue/issues/241).
 - **Breaking changes:** `stderr` and `stdout` of Pueue's tasks are now combined into a single file.
-    This means a few things.
-    * One doesn't have to filter for stderr any longer.
-    * All logs are now combined in a single chronologically correct log file.
-    * One **can no longer** filter for stderr/stdout specific output.
+  This means a few things.
+  - One doesn't have to filter for stderr any longer.
+  - All logs are now combined in a single chronologically correct log file.
+  - One **can no longer** filter for stderr/stdout specific output.
 - **Breaking changes:** The `group` subcommand now has `group add [-p $count] $name` and `group remove $name` subcommands.
-    The old `group [-a,-p,-r]` flags have been removed.
+  The old `group [-a,-p,-r]` flags have been removed.
 - **Breaking changes:** The configuration for groups can no longer be done via configuration file.
-    This means, that groups can only be edited, created or deleted via the commandline interface.
-    The amount of parallel tasks will also be reset to `1` when upgrading.
+  This means, that groups can only be edited, created or deleted via the commandline interface.
+  The amount of parallel tasks will also be reset to `1` when upgrading.
 
 ### Removed
 
 - No longer read `/etc/pueue/` configuration files.
-    Pueue isn't designed as a system wide service, hence this doesn't make any sense to have system wide configuration files.
+  Pueue isn't designed as a system wide service, hence this doesn't make any sense to have system wide configuration files.
 - If multiple configuration files are found, they're no longer merged together.
-    Instead, only the first file will be used.
+  Instead, only the first file will be used.
 
 ### Fixed
 
 - Recover tasks from `Locked` state if editing fails [#267](https://github.com/Nukesor/pueue/issues/267)
 - `pueue log` now behaves the same for local and remote logs.
-     Remote logs previously showed more lines under some circumstances.
+  Remote logs previously showed more lines under some circumstances.
 - panic due to rogue `.unwrap()` when filtering for a non-existing group in `pueue status`.
 
-## [1.0.6] - 2022-01-05
+## \[1.0.6\] - 2022-01-05
 
 #### Fixed
 
 - The `--after` flag on add no longer accepted multiple parameters. This was due to a change in Clap's API in their bump from beta to full v3 release.
 
-## [1.0.5] - 2022-01-02
+## \[1.0.5\] - 2022-01-02
 
 ### Changed
 
@@ -354,23 +354,23 @@ Also a huge thanks to all contributors that helped working on this version!
 
 - Panic instead of loop endlessly, if `task_log` directory disapears.
 
-## [1.0.4] - 2021-11-12
+## \[1.0.4\] - 2021-11-12
 
 ### Fix
 
 - Hard panic of the daemon, when one tries to switch a task with itself [#262](https://github.com/Nukesor/pueue/issues/262).
 
-## [1.0.3] - 2021-09-15
+## \[1.0.3\] - 2021-09-15
 
 ### Fix
 
 - The `default` group wasn't created, if the `pueue.yml` config file didn't contain it. [#242](https://github.com/Nukesor/pueue/issues/242).
-    This lead to crashes and undefined behavior in the daemon and the client.
-    This bug was introduced in `1.0.0` due to changes to the internal datastructures and several added features.
-    It only popped up now, due to [#236](https://github.com/Nukesor/pueue/issues/236) being fixed, as the config is now being correctly used.
-    This only affects users with quite old pueue configs or custom config files.
+  This lead to crashes and undefined behavior in the daemon and the client.
+  This bug was introduced in `1.0.0` due to changes to the internal datastructures and several added features.
+  It only popped up now, due to [#236](https://github.com/Nukesor/pueue/issues/236) being fixed, as the config is now being correctly used.
+  This only affects users with quite old pueue configs or custom config files.
 
-## [1.0.2] - 2021-09-12
+## \[1.0.2\] - 2021-09-12
 
 ### Feature
 
@@ -382,17 +382,17 @@ I'm still getting used to this, sorry for any inconveniences.
 ### Fix
 
 - Settings weren't always read on daemon restart. [#236](https://github.com/Nukesor/pueue/issues/236).
-    This bug was introduced in `1.0.0` due to large-scale refactorings and insufficient testing.
+  This bug was introduced in `1.0.0` due to large-scale refactorings and insufficient testing.
 
-## [1.0.1] - 2021-08-20
+## \[1.0.1\] - 2021-08-20
 
 ### Fix
 
 - Update to clap `v3.0.0-beta.4`. The upgrade from beta.2 to beta.4 introduced breaking changes, which lead to compiler errors when doing a `cargo install` without a `--locked`.
-    A beta upgrade seems to be handled like a patch version in semantic versioning.
-    This isn't a bug per se, but it leads to confusion when people forget the `--locked` flag during install.
+  A beta upgrade seems to be handled like a patch version in semantic versioning.
+  This isn't a bug per se, but it leads to confusion when people forget the `--locked` flag during install.
 
-## [1.0.0] - 2021-08-19
+## \[1.0.0\] - 2021-08-19
 
 A lot of things happened during this release.
 Even though quite a few new features were added, the main effort went into increasing stability and inter-version compatibility.
@@ -418,23 +418,22 @@ I want this project to move forward.
 - `--failed-in-group [group_name]` for `restart`. That way you can restart all failed tasks of a specific group [#211](https://github.com/Nukesor/pueue/issues/211)
 - Options in config file to configure the time and datetime format in `pueue status` for [#212](https://github.com/Nukesor/pueue/issues/212).
 - Add a worker pool representation for groups to Pueue [#218](https://github.com/Nukesor/pueue/issues/218).
-    The task's group name and the pool's worker id for a given task are then injected into the environment variables of the subprocess.
-    This allows users to map Pueue's internal group and worker logic to external resources:
-    ```
-    ./run_on_gpu_pool --gpu $PUEUE_WORKER_ID --pool $PUEUE_GROUP`
-    ```
+  The task's group name and the pool's worker id for a given task are then injected into the environment variables of the subprocess.
+  This allows users to map Pueue's internal group and worker logic to external resources:
+  ```
+  ./run_on_gpu_pool --gpu $PUEUE_WORKER_ID --pool $PUEUE_GROUP`
+  ```
 - The last lines of `stderr` and `stdout` are now available in the callback command. [#196](https://github.com/Nukesor/pueue/issues/196).
 - Add `callback_log_lines` setting for the daemon, specifying the amount of lines returned to the callback. [#196](https://github.com/Nukesor/pueue/issues/196).
 - Add a PID file to `$pueue_directory/pueue.pid`, which will be used to check whether there's an already running daemon.
 
-
 ### Changed
 
 - Use the next available id instead of constantly increasing id's.
-    This results in ids being reused, on `pueue clean` or `pueue remove` of the last tasks in a queue.
+  This results in ids being reused, on `pueue clean` or `pueue remove` of the last tasks in a queue.
 - Show the date in `pueue status` for the `start` and `end` fields, if the task didn't start today.
 - Backward compatible protocol for stable version changes with `serde_cbor`.
-- Detection of old daemon versions during client-\>daemon handshake.
+- Detection of old daemon versions during client->daemon handshake.
 - Overall better debug messages.
 - Use tokio's async runtime and set a hardcoded limit of 4 worker threads, which is already more than enough.
 - Add a debug message, when using `pueue wait` or `pueue wait -g some_group` and there're no tasks in the group.
@@ -458,7 +457,7 @@ Overall, this resulted in sleaker und much better maintainable code. However, th
 
 - Handle very rare race-condition, where tasks with failed dependencies start anyway.
 - `pueue log --json` now works again. [#186](https://github.com/Nukesor/pueue/issues/186)
-    By default, only a few lines of output will be provided, but this can be configured via the `--full` and `--lines` option.
+  By default, only a few lines of output will be provided, but this can be configured via the `--full` and `--lines` option.
 - Use crossbeam's mpsc channels, resulting in faster execution of user's instructions.
 - Fix issue where the daemon was shutting down so fast, there wasn't enough time to respond the client that it's actually shutting down.
 
@@ -466,7 +465,7 @@ Overall, this resulted in sleaker und much better maintainable code. However, th
 
 - Removed the `enqueue` parameter from callback, as the callback is only run for finished tasks.
 
-## [0.12.2] - 2021-04-20
+## \[0.12.2\] - 2021-04-20
 
 ### Fixed
 
@@ -475,7 +474,7 @@ Overall, this resulted in sleaker und much better maintainable code. However, th
 - Fix empty output for empty groups when requesting specific group with `status -g $name`. [#190](https://github.com/Nukesor/pueue/issues/190)
 - Fix missing output when explicitly requesting default group with `status -g default`. [#190](https://github.com/Nukesor/pueue/issues/190)
 
-## [0.12.1] - 2021-03-12
+## \[0.12.1\] - 2021-03-12
 
 ### Fixed
 
@@ -485,7 +484,7 @@ Overall, this resulted in sleaker und much better maintainable code. However, th
 
 - Show the status of the default group, if there are no tasks in the queue.
 
-## [0.12.0] - 2021-02-10
+## \[0.12.0\] - 2021-02-10
 
 **Info for all packagers:** \
 In case you updated your packaging rules for the new layout in v0.11, those changes need to be reverted. \
@@ -495,67 +494,67 @@ Managing two crates in a single repository in combination with `cargo release` t
 ### Added
 
 - `--all-failed` flag for `restart`.
-     This will restart all tasks that didn't finish with a `Success` status. [#79](https://github.com/Nukesor/pueue/issues/79)
+  This will restart all tasks that didn't finish with a `Success` status. [#79](https://github.com/Nukesor/pueue/issues/79)
 - New config option `client.dark_mode` by [Mephistophiles](https://github.com/Mephistophiles). [#178](https://github.com/Nukesor/pueue/issues/178)
-    Default: `false`. Adds the ability to switch to dark colors instead of regular colors.
+  Default: `false`. Adds the ability to switch to dark colors instead of regular colors.
 
 ### Changed
 
 - Rename/change some flags on the `restart` subcommand.
-    1. Rename `--path` to `--edit-path`. The short flag stays the same (`p`).
-    2. Rename the short flag for `--start-immediately` to `-k`.
+  1. Rename `--path` to `--edit-path`. The short flag stays the same (`p`).
+  1. Rename the short flag for `--start-immediately` to `-k`.
 - Dependency bump to pueue-lib `v0.12.1`
 
 ### Fixed
 
 - `-s` flag overload on the `restart` command.
-    `--start-immediately` and `--stashed` collided.
+  `--start-immediately` and `--stashed` collided.
 - Error on BSD due to inability to get username from system registry. [#173](https://github.com/Nukesor/pueue/issues/173)
 
-## [0.11.2] - 2021-02-01
+## \[0.11.2\] - 2021-02-01
 
 ### Changed
 
 - Readability of the `log` command has been further improved.
 - Dependency bump to pueue-lib `v0.11.2`
 
-## [0.11.1] - 2021-01-19
+## \[0.11.1\] - 2021-01-19
 
 ### Fixed
 
 - Wrong version (`pueue-v0.11.0-alpha.0`) due to an error in the build process with the new project structure. [#169](https://github.com/Nukesor/pueue/issues/169)
 
-## [0.11.0] - 2021-01-18
+## \[0.11.0\] - 2021-01-18
 
 ### Added
 
 - Add the `--lines` flag to the `log` subcommand.
-    This is used to only show the last X lines of each task's stdout and stderr.
+  This is used to only show the last X lines of each task's stdout and stderr.
 - Add the `--full` flag to the `log` subcommand.
-    This is used to show the whole logfile of each task's stdout and stderr.
+  This is used to show the whole logfile of each task's stdout and stderr.
 - Add the `--successful-only` flag to the `clean` subcommand.
-     This let's keep you all important logs of failed tasks, while freeing up some screen space.
+  This let's keep you all important logs of failed tasks, while freeing up some screen space.
 
 ### Changed
 
 - If multiple tasks are selected, `log` now only shows the last few lines for each log.
-    You can use the new `--full` option to get the old behavior.
+  You can use the new `--full` option to get the old behavior.
 
-## [0.10.2] - 2020-12-31
+## \[0.10.2\] - 2020-12-31
 
 ### Fixed
 
 - It was possible to remove tasks with active dependants, i.e. tasks which have a dependency and didn't finish yet.
-    This didn't lead to any crashes, but could lead to unwanted behavior, since the dependant tasks simply started due to the dependency no longer existing.
-    It's however still possible to delete dependencies as long as their dependants are deleted as well.
+  This didn't lead to any crashes, but could lead to unwanted behavior, since the dependant tasks simply started due to the dependency no longer existing.
+  It's however still possible to delete dependencies as long as their dependants are deleted as well.
 
-## [0.10.1] - 2020-12-29
+## \[0.10.1\] - 2020-12-29
 
 ### Fixed
 
 - panic, when using `pueue status` and only having tasks in non-default groups.
 
-## [0.10.0] - 2020-12-29
+## \[0.10.0\] - 2020-12-29
 
 This release adds a lot of breaking changes!
 I tried to clean up, refactor and streamline as much code as possible.
@@ -569,7 +568,7 @@ Please read this changelog carefully.
 - Use TLS encryption for all TCP communication. [#52](https://github.com/Nukesor/pueue/issues/52)
 - Updated Crossterm and thereby bump the required rust version to `1.48`.
 - Extract the shared `secret` into a separate file. [#52](https://github.com/Nukesor/pueue/issues/52)
-    This will allow users to publicly sync their config directory between machines.
+  This will allow users to publicly sync their config directory between machines.
 - Change default secret length from 20 to 512 chars. [#52](https://github.com/Nukesor/pueue/issues/52)
 - Lots of internal code cleanup/refactoring/restructuring.
 - Exit client with non-zero exit code when getting a failure message from the daemon.
@@ -580,7 +579,7 @@ Please read this changelog carefully.
 ### Added
 
 - Add the `shared.host` configuration variable. [#52](https://github.com/Nukesor/pueue/issues/52)
-    This finally allows to accept outside connections, but comes with some security implications.
+  This finally allows to accept outside connections, but comes with some security implications.
 - Create a self-signed ECDSA cert/key for TLS crypto with [rcgen](https://github.com/est31/rcgen). [#52](https://github.com/Nukesor/pueue/issues/52)
 - Error messages have been improved in many places.
 - `daemon.pause_all_on_failure` config, which actually pauses all groups as soon as a task fails.
@@ -600,29 +599,29 @@ Please read this changelog carefully.
 
 - Properly pass `--config` CLI argument to daemonized `pueued` instance.
 - The `--default` flag on the `kill` command has been removed, since this was the default anyway.
-    That makes this command's behavior consistent with the `start` and `pause` command.
+  That makes this command's behavior consistent with the `start` and `pause` command.
 - Allow the old `kill [task_ids...]` behavior.
-    You no longer need the `-t` flag to kill a tasks.
-    This broke in one of the previous refactorings.
+  You no longer need the `-t` flag to kill a tasks.
+  This broke in one of the previous refactorings.
 
 ### Internal
 
 - The default group is now an actual group.
 
-## [0.9.0] - 2020-12-14
+## \[0.9.0\] - 2020-12-14
 
 ### Added
 
 - The `wait` subcommand. This allows you to wait for all tasks in the default queue/ a specific group to finish. [#117](https://github.com/Nukesor/pueue/issues/117)
-    On top of this, you can also specify specific tasks ids.
+  On top of this, you can also specify specific tasks ids.
 - New client configuration `show_expanded_aliases` (default: `false`).
-    Determines whether the original input command or the expanded alias will be shown when calling `status`.
+  Determines whether the original input command or the expanded alias will be shown when calling `status`.
 - New `--in-place` option for `restart`, which resets and reuses the existing task instead of creating a new one. [#147](https://github.com/Nukesor/pueue/issues/147)
 
 ### Changed
 
 - Don't update the status of tasks with failed dependencies on paused queues.
-    This allows to fix dependency chains without having to restart all tasks in combination with the `pause_on_failure` and the new `--in-place` restart option.
+  This allows to fix dependency chains without having to restart all tasks in combination with the `pause_on_failure` and the new `--in-place` restart option.
 
 ### Fixed
 
@@ -636,9 +635,9 @@ Please read this changelog carefully.
 ### Changed
 
 - The original user command will be used when editing a task's command.
-    As a result of this, aliases will be re-applied after editing a command.
+  As a result of this, aliases will be re-applied after editing a command.
 
-## [0.8.2] - 2020-11-20
+## \[0.8.2\] - 2020-11-20
 
 ### Added
 
@@ -649,7 +648,7 @@ Please read this changelog carefully.
 
 - Update to beta branch of Clap v3. Mainly for better auto-completion scripts.
 
-## [0.8.1] - 2020-10-27
+## \[0.8.1\] - 2020-10-27
 
 ### Added
 
@@ -660,7 +659,7 @@ Please read this changelog carefully.
 
 - ZSH completion script fix by [ahkrr](https://github.com/ahkrr).
 
-## [0.8.0] - 2020-10-25
+## \[0.8.0\] - 2020-10-25
 
 This version adds breaking changes:
 
@@ -691,7 +690,7 @@ This version adds breaking changes:
 - The daemon will only persist configuration file on startup, if anything changes. [#116](https://github.com/Nukesor/pueue/issues/116)
 - (Probably fixed) Malformed configuration file. [#116](https://github.com/Nukesor/pueue/issues/116)
 
-## [0.7.2] - 2020-10-05
+## \[0.7.2\] - 2020-10-05
 
 ### Fixed
 
@@ -710,13 +709,13 @@ This version adds breaking changes:
 
 - Update workflow to build arm binaries.
 
-## [0.7.0] - 2020-07-23
+## \[0.7.0\] - 2020-07-23
 
 ### Added
 
 - New `-e` and `-p` flags to edit tasks on restart.
-    `-e` for `command`, `-p` for `path`.
-    Both can be added at the same time.
+  `-e` for `command`, `-p` for `path`.
+  Both can be added at the same time.
 
 ### Changed
 
@@ -725,37 +724,37 @@ This version adds breaking changes:
 ### Fixed
 
 - Improved CLI validation.
-    Several subcommands accepted empty task id vectors, when they shouldn't.
+  Several subcommands accepted empty task id vectors, when they shouldn't.
 
-## [0.6.3] - 2020-07-11
+## \[0.6.3\] - 2020-07-11
 
 ### Changed
 
 - Don't do any code styling, if `stdout` is no tty.
 
-## [0.6.2] - 2020-07-11
+## \[0.6.2\] - 2020-07-11
 
 ### Fixed
 
 - Fix local `stderr` formatting for `log`.
 - Fix missing sleep in local `follow` loop, resulting in single core 100% CPU usage.
 
-## [0.6.1] - 2020-06-14
+## \[0.6.1\] - 2020-06-14
 
 ### Changed
 
 - New default behavior for `follow`.
-    Implemented by [JP-Ellis](https://github.com/JP-Ellis).
+  Implemented by [JP-Ellis](https://github.com/JP-Ellis).
 - Delete everything in Pueue's `task_logs` folder on `reset`.
 
-## [0.6.0] - 2020-06-07
+## \[0.6.0\] - 2020-06-07
 
 ### Added
 
 - `pueue_aliases.yml`, which allows some shell-like aliasing.
 - `-c` flag for `kill` and `reset`.
 
-## [0.5.1] - 2020-05-31
+## \[0.5.1\] - 2020-05-31
 
 ### Added
 
@@ -767,7 +766,7 @@ This version adds breaking changes:
 
 - Fixed formatting bug in `pueue log`. Fixed by [sourcefrog](https://github.com/sourcefrog).
 
-## [0.5.0] - 2020-05-15
+## \[0.5.0\] - 2020-05-15
 
 ### Added
 
@@ -786,19 +785,19 @@ This version adds breaking changes:
 - `follow` (previously `show`) now also reads directly from disk, if `read_local_logs` is set to `true`.
 - The `--all` flag now affects all groups AND the default queue for `kill`, `start` and `pause`.
 
-## [0.4.0] - 2020-05-04
+## \[0.4.0\] - 2020-05-04
 
 ### Added
 
 - Dependencies! This adds the `--after [ids]` option. Implemented by [tinou98](https://github.com/tinou98).
-   Task with this option will only be started, if all specified dependencies successfully finish.
+  Task with this option will only be started, if all specified dependencies successfully finish.
   Tasks with failed dependencies will fail as well.
 - New state `FailedToStart`. Used if the process cannot be started.
 - New state `DependencyFailed`. Used if any dependency of a task fails.
 - New config option `read_local_logs`. Default: `true`
   We assume that the daemon and client run on the same machine by default.
   This removes the need to send logs via socket, since the client can directly read the log files.
-   Set to `false` if you, for instance, use Pueue in combination with SSH port forwarding.
+  Set to `false` if you, for instance, use Pueue in combination with SSH port forwarding.
 
 ### Changed
 
@@ -806,13 +805,13 @@ This version adds breaking changes:
 - Process log output is no longer permanently stored in memory. This significantly reduced RAM usage for large log outputs. Huge thanks for helping with this to [sourcefrog](https://github.com/sourcefrog)!
 - Process log output is compressed in-memory on read from disk. This leads to reduced bandwidth and RAM usage.
 
-## [0.3.1] - 2020-04-10
+## \[0.3.1\] - 2020-04-10
 
 ### Fixed
 
 - Set `start` for processes. (Seems to have broken in 0.2.0)
 
-## [0.3.0] - 2020-04-03
+## \[0.3.0\] - 2020-04-03
 
 ### Added
 
@@ -829,7 +828,7 @@ This version adds breaking changes:
 - Show daemon status if no tasks exist.
 - Better error messages when daemon isn't running.
 
-## [0.2.0] - 2020-03-25
+## \[0.2.0\] - 2020-03-25
 
 ### Added
 
@@ -847,41 +846,41 @@ This version adds breaking changes:
 - Fix `edit` command.
 - Several wrong state restorations after restarting pueue.
 
-## [0.1.6] - 2020-02-05
+## \[0.1.6\] - 2020-02-05
 
 ### Fixed
 
-- [BUG] Fix wrong TCP receiving logic.
+- \[BUG\] Fix wrong TCP receiving logic.
 - Automatically create config directory.
 - Fix and reword cli help texts.
 
-## [0.1.5] - 2020-02-02
+## \[0.1.5\] - 2020-02-02
 
 ### Changed
 
 - Basic Windows support. Huge thanks to [Lej77](https://github.com/Lej77) for implementing this!
 - Integrate completion script build in `build.rs`.
 
-## [0.1.4] - 2020-01-31
+## \[0.1.4\] - 2020-01-31
 
 ### Changed
 
 - Dependency updates
 
-## [0.1.3] - 2020-01-29
+## \[0.1.3\] - 2020-01-29
 
 ### Changed
 
 - Change table design of `pueue status`.
 
-## [0.1.2] - 2020-01-28
+## \[0.1.2\] - 2020-01-28
 
 ### Fixed
 
 - Handle broken UTF8 in `show` with `-f` and `-e` flags.
 - Allow restart of `Killed` processes.
 
-## [0.1.1] - 2020-01-28
+## \[0.1.1\] - 2020-01-28
 
 ### Added
 

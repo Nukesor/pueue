@@ -29,42 +29,41 @@ All features that were planned have been added and only minor improvements, bug-
 ## Features
 
 - Scheduling
-    * Add tasks as you go.
-    * Run multiple tasks at once. You decide how many tasks should run concurrently.
-    * Change the order of the scheduled tasks.
-    * Specify dependencies between tasks.
-    * Schedule tasks to run at a specific time.
+  - Add tasks as you go.
+  - Run multiple tasks at once. You decide how many tasks should run concurrently.
+  - Change the order of the scheduled tasks.
+  - Specify dependencies between tasks.
+  - Schedule tasks to run at a specific time.
 - Process interaction
-    * Easy output inspection.
-    * Send input to running processes.
-    * Pause/resume tasks, when you need some processing power right NOW!
+  - Easy output inspection.
+  - Send input to running processes.
+  - Pause/resume tasks, when you need some processing power right NOW!
 - Task groups (multiple queues)
-    * Each group can have several tasks running in parallel.
-    * Pause/start tasks by a group.
+  - Each group can have several tasks running in parallel.
+  - Pause/start tasks by a group.
 - Background process execution
-    * The `pueued` daemon runs in the background. No need to be logged in.
-    * Commands are executed in their respective working directories.
-    * The current environment variables are copied when adding a task.
-    * Commands are run in a shell which allows the full feature set of shell coding.
+  - The `pueued` daemon runs in the background. No need to be logged in.
+  - Commands are executed in their respective working directories.
+  - The current environment variables are copied when adding a task.
+  - Commands are run in a shell which allows the full feature set of shell coding.
 - Consistency
-    * The queue is always saved to disk and restored on kill/system crash.
-    * Logs are persisted onto the disk and survive a crash.
+  - The queue is always saved to disk and restored on kill/system crash.
+  - Logs are persisted onto the disk and survive a crash.
 - Miscellaneous
-    * A callback hook to, for instance, set up desktop notifications.
-    * JSON output for `log` and `status` if you want to display info about tasks in another program.
-    * A `wait` subcommand to wait for specific tasks, a group (or everything) to finish.
+  - A callback hook to, for instance, set up desktop notifications.
+  - JSON output for `log` and `status` if you want to display info about tasks in another program.
+  - A `wait` subcommand to wait for specific tasks, a group (or everything) to finish.
 - A lot more. Check the -h options for each subcommand for detailed options.
 - Cross Platform
-    * Linux is fully supported and battle-tested.
-    * MacOS is fully supported and on par with Linux.
-    * Windows is fully supported and working fine for quite a while.
+  - Linux is fully supported and battle-tested.
+  - MacOS is fully supported and on par with Linux.
+  - Windows is fully supported and working fine for quite a while.
 - [Why should I use it](https://github.com/Nukesor/pueue/wiki/FAQ#why-should-i-use-it)
 - [Advantages over Using a Terminal Multiplexer](https://github.com/Nukesor/pueue/wiki/FAQ#advantages-over-using-a-terminal-multiplexer)
 
-
 ## What Pueue is **not**
 
-Pueue is **not** designed to be a programmable (scriptable) task scheduler/executor.
+Pueue is **not** designed to be a heavy-duty programmable (scriptable) task scheduler/executor.
 
 The focus of `pueue` lies on human interaction, i.e. it's supposed to be used by a real person on some kind of OS.
 See [the Design Goals section](#design-goals)
@@ -91,7 +90,7 @@ Pueue has been packaged for quite a few distributions, check the table on the ri
 
 Statically linked (if possible) binaries for Linux (incl. ARM), Mac OS and Windows are built on each release. \
 You can download the binaries for the client and the daemon (`pueue` and `pueued`) for each release on the [release page](https://github.com/Nukesor/pueue/releases). \
-Just download both binaries for your system, rename them to `pueue` and `pueued` and place them in your \$PATH/program folder.
+Just download both binaries for your system, rename them to `pueue` and `pueued` and place them in your `$PATH`/program folder.
 
 #### Via Cargo
 
@@ -254,5 +253,4 @@ Urgent hotfixes might get deployed on a separate branch, but this will be decide
 
 There's also the [Architecture Guide](https://github.com/Nukesor/pueue/blob/main/docs/Architecture.md), which is supposed to give you a brief overview and introduction to the project.
 
-Copyright &copy; 2019 Arne Beer ([@Nukesor](https://github.com/Nukesor))
-
+Copyright © 2019 Arne Beer ([@Nukesor](https://github.com/Nukesor))
