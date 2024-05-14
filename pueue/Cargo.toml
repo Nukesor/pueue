@@ -65,5 +65,7 @@ crossterm = { version = "0.27", default-features = false, features = ["windows"]
 # Test specific dev-dependencies
 [target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]
 whoami = "1"
-procfs = { version = "0.16", default-features = false }
 
+# Test specific Linux dev-dependencies
+[target.'cfg(target_os = "linux")'.dependencies]
+procfs = { version = "0.16", default-features = false }
