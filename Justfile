@@ -10,11 +10,12 @@ nextest:
     just ensure_installed nextest
     cargo nextest run --workspace
 
+# If you change anything in here, make sure to also adjust the lint CI job!
 lint:
     just ensure_installed sort
-    cargo fmt --check
+    cargo fmt --all -- --check
     cargo sort --workspace --check
-    cargo clippy --all --tests
+    cargo clippy --tests --workspace -- -D warnings
 
 format:
     just ensure_installed sort
