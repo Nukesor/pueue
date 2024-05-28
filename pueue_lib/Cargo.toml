@@ -18,13 +18,13 @@ maintenance = { status = "actively-developed" }
 anyhow = "1.0"
 async-trait = "0.1"
 byteorder = "1.5"
-chrono = { version = "0.4", features = ["serde"] }
+chrono = { workspace = true }
 command-group = { workspace = true }
 dirs = "5.0"
 handlebars = { workspace = true }
 log = { workspace = true }
 rand = "0.8"
-rcgen = "0.12"
+rcgen = "0.13"
 rev_buf_reader = "0.3"
 rustls = { version = "0.23", features = [
   "ring",
@@ -59,7 +59,7 @@ tokio = { workspace = true }
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3", features = [
   "tlhelp32",
-  "handleapi",
+  "errhandlingapi",
   "processthreadsapi",
   "minwindef",
   "impl-default",

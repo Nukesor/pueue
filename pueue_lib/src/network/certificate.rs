@@ -3,7 +3,7 @@ use std::io::Write;
 use std::path::Path;
 
 use log::info;
-use rcgen::generate_simple_self_signed;
+use rcgen::{generate_simple_self_signed, CertifiedKey};
 
 use crate::error::Error;
 use crate::settings::Shared;
@@ -29,14 +29,15 @@ pub fn create_certificates(shared_settings: &Shared) -> Result<(), Error> {
 
     let subject_alt_names = vec!["pueue.local".to_string(), "localhost".to_string()];
 
-    let cert = generate_simple_self_signed(subject_alt_names).unwrap();
+    let CertifiedKey { cert, key_pair } =
+        generate_simple_self_signed(subject_alt_names).map_err(|_| {
+            Error::CertificateFailure("Failed to generate self-signed daemon certificate.".into())
+        })?;
     // The certificate is now valid for localhost and the domain "hello.world.example"
-    let ca_cert = cert
-        .serialize_pem()
-        .map_err(|_| Error::CertificateFailure("Failed to serialize daemon certificate.".into()))?;
+    let ca_cert = cert.pem();
     write_file(ca_cert, "daemon cert", &daemon_cert_path)?;
 
-    let ca_key = cert.serialize_private_key_pem();
+    let ca_key = key_pair.serialize_pem();
     write_file(ca_key, "daemon key", &daemon_key_path)?;
 
     Ok(())

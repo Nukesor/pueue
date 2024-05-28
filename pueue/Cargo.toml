@@ -50,7 +50,7 @@ better-panic = { workspace = true }
 # nextest run --no-capture`)
 env_logger = "0.11"
 pretty_assertions = { workspace = true }
-rstest = "0.18"
+rstest = "0.19"
 serde_yaml = { workspace = true }
 similar-asserts = "1"
 test-log = "0.2"
