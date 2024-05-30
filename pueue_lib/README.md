@@ -1,23 +1,18 @@
 # Pueue-lib
 
-[![GitHub Actions Workflow](https://github.com/nukesor/pueue/workflows/Test%20build/badge.svg)](https://github.com/Nukesor/pueue/actions)
+[![Test Build](https://github.com/Nukesor/pueue/actions/workflows/test.yml/badge.svg)](https://github.com/Nukesor/pueue/actions/workflows/test.yml)
 [![Crates.io](https://img.shields.io/crates/v/pueue-lib)](https://crates.io/crates/pueue-lib)
 [![docs](https://docs.rs/pueue-lib/badge.svg)](https://docs.rs/pueue-lib/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-
 This is the shared library used by the [Pueue](https://github.com/nukesor/pueue/) client and daemon.
 
-It can also be used by third-party software to, for instance, to communicate with the Pueue daemon.
+It contains common components such as:
 
-## Contributing
+- Everything about the [Task](task::Task), [TaskResult](task::TaskResult) etc.
+- The [State](state::State), which represents the current state of the daemon.
+- Network code. Everything you need to communicate with the daemon.
+- Other helper code and structs.
 
-Feature requests and pull requests are very much appreciated and welcome!
-
-Anyhow, please talk to me a bit about your ideas before you start hacking!
-It's always nice to know what you're working on and I might have a few suggestions or tips :)
-
-There's also the [Architecture Guide](https://github.com/Nukesor/pueue/blob/main/ARCHITECTURE.md), which is supposed to give you a brief overview and introduction to the project.
-
-Copyright &copy; 2019-2022 Arne Beer ([@Nukesor](https://github.com/Nukesor))
-
+Pueue-lib is a stand-alone crate, so it can be used by third-party applications to either
+manipulate or monitor the daemon or to simply write your own front-end for the daemon.

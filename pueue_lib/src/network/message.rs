@@ -168,7 +168,7 @@ pub struct TaskToRestart {
     pub path: Option<PathBuf>,
     /// Restart the task with an updated label.
     pub label: Option<String>,
-    /// Cbor cannot represent Option<Option<T>> yet, which is why we have to utilize a
+    /// Cbor cannot represent `Option<Option<T>>` yet, which is why we have to utilize a
     /// boolean to indicate that the label should be released, rather than an `Some(None)`.
     pub delete_label: bool,
     /// Restart the task with an updated priority.
@@ -236,7 +236,7 @@ pub struct EditMessage {
     pub command: Option<String>,
     pub path: Option<PathBuf>,
     pub label: Option<String>,
-    /// Cbor cannot represent Option<Option<T>> yet, which is why we have to utilize a
+    /// Cbor cannot represent `Option<Option<T>>` yet, which is why we have to utilize a
     /// boolean to indicate that the label should be released, rather than an `Some(None)`.
     pub delete_label: bool,
     pub priority: Option<i32>,

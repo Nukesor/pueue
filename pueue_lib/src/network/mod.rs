@@ -21,7 +21,7 @@
 //! serialization and deserialization for you.
 //!
 //! The payloads itself are defined via the `Message` enum that can be found in the
-//! [message](crate::network::message) module.
+//! crate::network::message module.
 //!
 //! The serialization/deserialization format that's used by `pueue_lib` is `cbor`.
 //!

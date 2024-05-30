@@ -45,7 +45,7 @@ pub enum SubCommand {
         #[arg(short, long, conflicts_with = "immediate")]
         stashed: bool,
 
-        /// Prevents the task from being enqueued until <delay> elapses. See "enqueue" for accepted formats.
+        /// Prevents the task from being enqueued until 'delay' elapses. See "enqueue" for accepted formats.
         #[arg(name = "delay", short, long, conflicts_with = "immediate", value_parser = parse_delay_until)]
         delay_until: Option<DateTime<Local>>,
 
@@ -126,7 +126,7 @@ pub enum SubCommand {
         /// Enqueue these specific tasks.
         task_ids: Vec<usize>,
 
-        /// Delay enqueuing these tasks until <delay> elapses. See DELAY FORMAT below.
+        /// Delay enqueuing these tasks until 'delay' elapses. See DELAY FORMAT below.
         #[arg(name = "delay", short, long, value_parser = parse_delay_until)]
         delay_until: Option<DateTime<Local>>,
     },

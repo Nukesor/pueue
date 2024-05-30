@@ -1,14 +1,4 @@
-//! Pueue-lib is a shared library used by the `pueue` and `pueued` binary.
-//!
-//! It contains common components such as:
-//!
-//! - Everything about the [Task](task::Task), [TaskResult](task::TaskResult) etc.
-//! - The [State](state::State), which represents the current state of the daemon.
-//! - Network code. Everything you need to communicate with the daemon.
-//! - Other helper code and structs.
-//!
-//! Pueue-lib is a stand-alone crate, so it can be used by third-party applications to either
-//! manipulate or monitor the daemon or to simply write your own front-end for the daemon.
+#![doc = include_str!("../README.md")]
 
 /// Shared module for internal logic!
 /// Contains helper for command aliasing.
