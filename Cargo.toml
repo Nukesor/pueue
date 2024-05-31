@@ -16,7 +16,7 @@ rust-version = "1.67"
 [workspace.dependencies]
 # Chrono version is hard pinned to a specific version.
 # See https://github.com/Nukesor/pueue/issues/534
-chrono = { version = "=0.4.35", features = ["serde"] }
+chrono = { version = "0.4", features = ["serde"] }
 command-group = "5"
 log = "0.4"
 serde = "1.0"
