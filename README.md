@@ -229,6 +229,11 @@ If you find yourself in the need for complex setups such as multiple worker pool
 
 A robust and featureful parallel processor with text-based joblog and n-retries. [GNU Parallel](https://www.gnu.org/software/parallel/parallel_tutorial.html) is able to scale to multi-host parallelization and has complex code to have deep integration across different tools and shells, as well as other advanced features. `Pueue` differentiates itself from GNU Parallel by focusing more on visibility across many different long running commands, and creating a central location for commands to be stored, rather than GNU Parallel's focus on chunking a specific task.
 
+#### Pm2
+
+[pm2](https://pm2.keymetrics.io/docs/usage/quick-start/) is a process management tool, whose focus is more on management of recurring and long-living tasks.
+It seems to be quite mature and has a rich interface.
+
 #### nq
 
 A very lightweight job queue systems which require no setup, maintenance, supervision, or any long-running processes. \
