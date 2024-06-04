@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+## \[3.4.1\] - 2024-06-04
+
+### Added
+
 - Nushell autocompletion script [#527](https://github.com/Nukesor/pueue/pull/527)
 - Add FreeBSD process helper to facilitate FreeBSD builds
 
