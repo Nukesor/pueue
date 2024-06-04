@@ -11,6 +11,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Nushell autocompletion script [#527](https://github.com/Nukesor/pueue/pull/527)
 - Add FreeBSD process helper to facilitate FreeBSD builds
 
+### Changed
+
+- Replace `chrono-english` by the `interim` drop-in replacement. [#534](https://github.com/Nukesor/pueue/issues/534)
+
 ## \[3.4.0\] - 2024-03-22
 
 ### Added
@@ -149,7 +153,7 @@ The test coverage and development tooling has never been better, the project con
 
 ### Added
 
-- *status querying*! `pueue status` now implements the first version of a simple query logic.
+- _status querying_! `pueue status` now implements the first version of a simple query logic.
   The filtering/order/limit logic is also applied to the `--json` output.
   This allows you to:
   - `columns=id,status,path` select the exact columns you want to be shown.
