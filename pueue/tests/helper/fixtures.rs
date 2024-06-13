@@ -20,6 +20,7 @@ use crate::helper::*;
 pub struct PueueDaemon {
     pub settings: Settings,
     pub tempdir: TempDir,
+    #[allow(dead_code)]
     pub pid: i32,
 }
 
