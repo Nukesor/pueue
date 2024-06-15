@@ -16,6 +16,7 @@ mod restart;
 mod restore;
 /// Tests for shutting down the daemon.
 mod shutdown;
+mod socket_permissions;
 mod spawn;
 mod start;
 mod stashed;

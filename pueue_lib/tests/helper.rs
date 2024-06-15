@@ -20,6 +20,8 @@ pub fn get_shared_settings(
         use_unix_socket,
         #[cfg(not(target_os = "windows"))]
         unix_socket_path: None,
+        #[cfg(not(target_os = "windows"))]
+        unix_socket_permissions: Some(0o700),
         pid_path: None,
         host: "localhost".to_string(),
         port: pick_unused_port()
