@@ -47,7 +47,7 @@ where
             }
         }
     }
-    bail!("Task {task_id} didn't fulfill condition after about 1 second.")
+    bail!("Task {task_id} didn't fulfill condition after ~1 second.")
 }
 
 /// This is a small helper function, which checks in very short intervals, whether a task has been
@@ -67,7 +67,7 @@ pub async fn wait_for_task_absence(shared: &Shared, task_id: usize) -> Result<()
         return Ok(());
     }
 
-    bail!("Task {task_id} hasn't been removed after about 1 second.")
+    bail!("Task {task_id} hasn't been removed after ~1 second.")
 }
 
 /// This is a small helper function, which checks in very short intervals, whether a group has been
@@ -87,7 +87,7 @@ pub async fn wait_for_group(shared: &Shared, group: &str) -> Result<()> {
         return Ok(());
     }
 
-    bail!("Group {group} didn't show up in about 1 second.")
+    bail!("Group {group} didn't show up in ~1 second.")
 }
 
 /// This is a small helper function, which checks in very short intervals, whether a group has been
@@ -107,7 +107,7 @@ pub async fn wait_for_group_absence(shared: &Shared, group: &str) -> Result<()> 
         return Ok(());
     }
 
-    bail!("Group {group} hasn't been removed after about 1 second.")
+    bail!("Group {group} hasn't been removed after ~1 second.")
 }
 
 /// Waits for a status on a specific group.
@@ -140,5 +140,5 @@ pub async fn wait_for_group_status(
         }
     }
 
-    bail!("Group {group} didn't change to state {expected_status:?} after about 1 second",);
+    bail!("Group {group} didn't change to state {expected_status:?} after ~1 second",);
 }

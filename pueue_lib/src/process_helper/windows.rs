@@ -195,7 +195,7 @@ fn suspend_thread(tid: u32) {
         let thread_handle = OpenThread(THREAD_SUSPEND_RESUME, FALSE, tid);
         if thread_handle != NULL {
             // If SuspendThread fails, the return value is (DWORD) -1
-            if u32::max_value() == SuspendThread(thread_handle) {
+            if u32::MAX == SuspendThread(thread_handle) {
                 let err_code = GetLastError();
                 warn!("Failed to suspend thread {tid} with error code {err_code}");
             }
@@ -216,7 +216,7 @@ fn resume_thread(tid: u32) {
         let thread_handle = OpenThread(THREAD_SUSPEND_RESUME, FALSE, tid);
         if thread_handle != NULL {
             // If ResumeThread fails, the return value is (DWORD) -1
-            if u32::max_value() == ResumeThread(thread_handle) {
+            if u32::MAX == ResumeThread(thread_handle) {
                 let err_code = GetLastError();
                 warn!("Failed to resume thread {tid} with error code {err_code}");
             }
