@@ -1,119 +1,121 @@
 {
-    "settings": {
-        "client": {
-            "restart_in_place": true,
-            "read_local_logs": true,
-            "show_confirmation_questions": false,
-            "show_expanded_aliases": false,
-            "dark_mode": false,
-            "max_status_lines": 10,
-            "status_time_format": "%H:%M:%S",
-            "status_datetime_format": "%Y-%m-%d %H:%M:%S"
-        },
-        "daemon": {
-            "pause_group_on_failure": false,
-            "pause_all_on_failure": false,
-            "callback": "notify-send \"Task {{ id }}\nCommand: {{ command }}\nPath: {{ path }}\nFinished with status '{{ result }}'\nTook: $(bc <<< \"{{end}} - {{start}}\") seconds\"",
-            "callback_log_lines": 10
-        },
-        "shared": {
-            "pueue_directory": null,
-            "runtime_directory": null,
-            "use_unix_socket": true,
-            "unix_socket_path": null,
-            "host": "127.0.0.1",
-            "port": "6924",
-            "daemon_cert": null,
-            "daemon_key": null,
-            "shared_secret_path": null
-        },
-        "profiles": {}
+  "settings": {
+    "client": {
+      "restart_in_place": true,
+      "read_local_logs": true,
+      "show_confirmation_questions": false,
+      "show_expanded_aliases": false,
+      "dark_mode": false,
+      "max_status_lines": 10,
+      "status_time_format": "%H:%M:%S",
+      "status_datetime_format": "%Y-%m-%d %H:%M:%S"
     },
-    "tasks": {
-        "0": {
-            "id": 0,
-            "original_command": "ls",
-            "command": "ls",
-            "path": "/home/nuke/.local/share/pueue",
-            "envs": {},
-            "group": "default",
-            "dependencies": [],
-            "label": null,
-            "status": {
-                "Done": "Success"
-            },
-            "prev_status": "Queued",
-            "start": "2022-05-09T18:41:29.273563806+02:00",
-            "end": "2022-05-09T18:41:29.473998692+02:00"
-        },
-        "1": {
-            "id": 1,
-            "original_command": "ls",
-            "command": "ls",
-            "path": "/home/nuke/.local/share/pueue",
-            "envs": {
-                "PUEUE_WORKER_ID": "0",
-                "PUEUE_GROUP": "test"
-            },
-            "group": "test",
-            "dependencies": [],
-            "label": null,
-            "status": {
-                "Done": "Success"
-            },
-            "prev_status": "Queued",
-            "start": "2022-05-09T18:43:30.683677276+02:00",
-            "end": "2022-05-09T18:43:30.884243263+02:00"
-        },
-        "2": {
-            "id": 2,
-            "original_command": "ls",
-            "command": "ls",
-            "path": "/home/nuke/.local/share/pueue",
-            "envs": {
-                "PUEUE_WORKER_ID": "0",
-                "PUEUE_GROUP": "test"
-            },
-            "group": "test",
-            "dependencies": [],
-            "label": null,
-            "status": "Queued",
-            "prev_status": "Queued",
-            "start": null,
-            "end": null
-        },
-        "3": {
-            "id": 3,
-            "original_command": "ls stash_it",
-            "command": "ls stash_it",
-            "path": "/home/nuke/.local/share/pueue",
-            "envs": {},
-            "group": "default",
-            "dependencies": [],
-            "label": null,
-            "status": {
-                "Stashed": {
-                    "enqueue_at": null
-                }
-            },
-            "prev_status": {
-                "Stashed": {
-                    "enqueue_at": null
-                }
-            },
-            "start": null,
-            "end": null
+    "daemon": {
+      "pause_group_on_failure": false,
+      "pause_all_on_failure": false,
+      "callback": "notify-send \"Task {{ id }}\nCommand: {{ command }}\nPath: {{ path }}\nFinished with status '{{ result }}'\nTook: $(bc <<< \"{{end}} - {{start}}\") seconds\"",
+      "callback_log_lines": 10
+    },
+    "shared": {
+      "pueue_directory": null,
+      "runtime_directory": null,
+      "use_unix_socket": true,
+      "unix_socket_path": null,
+      "host": "127.0.0.1",
+      "port": "6924",
+      "daemon_cert": null,
+      "daemon_key": null,
+      "shared_secret_path": null
+    },
+    "profiles": {},
+    "herp": []
+  },
+  "tasks": {
+    "0": {
+      "id": 0,
+      "original_command": "ls",
+      "command": "ls",
+      "path": "/home/nuke/.local/share/pueue",
+      "envs": {},
+      "group": "default",
+      "dependencies": [],
+      "label": null,
+      "status": {
+        "Done": "Success"
+      },
+      "prev_status": "Queued",
+      "start": "2022-05-09T18:41:29.273563806+02:00",
+      "end": "2022-05-09T18:41:29.473998692+02:00"
+    },
+    "1": {
+      "id": 1,
+      "original_command": "ls",
+      "command": "ls",
+      "path": "/home/nuke/.local/share/pueue",
+      "envs": {
+        "PUEUE_WORKER_ID": "0",
+        "PUEUE_GROUP": "test"
+      },
+      "group": "test",
+      "dependencies": [],
+      "label": null,
+      "status": {
+        "Done": "Success"
+      },
+      "prev_status": "Queued",
+      "start": "2022-05-09T18:43:30.683677276+02:00",
+      "end": "2022-05-09T18:43:30.884243263+02:00"
+    },
+    "2": {
+      "id": 2,
+      "original_command": "ls",
+      "command": "ls",
+      "path": "/home/nuke/.local/share/pueue",
+      "envs": {
+        "PUEUE_WORKER_ID": "0",
+        "PUEUE_GROUP": "test"
+      },
+      "group": "test",
+      "dependencies": [],
+      "label": null,
+      "status": "Queued",
+      "prev_status": "Queued",
+      "start": null,
+      "end": null
+    },
+    "3": {
+      "id": 3,
+      "original_command": "ls stash_it",
+      "command": "ls stash_it",
+      "path": "/home/nuke/.local/share/pueue",
+      "envs": {},
+      "group": "default",
+      "dependencies": [],
+      "label": null,
+      "status": {
+        "Stashed": {
+          "enqueue_at": null
         }
-    },
-    "groups": {
-        "default": {
-            "status": "Running",
-            "parallel_tasks": 1
-        },
-        "test": {
-            "status": "Paused",
-            "parallel_tasks": 2
+      },
+      "prev_status": {
+        "Stashed": {
+          "enqueue_at": null
         }
+      },
+      "start": null,
+      "end": null
+    }
+  },
+  "groups": {
+    "default": {
+      "status": "Running",
+      "parallel_tasks": 1
     },
-    "config_path": null
+    "test": {
+      "status": "Paused",
+      "parallel_tasks": 2
+    }
+  },
+  "config_path": null,
+  "derp": null
 }
