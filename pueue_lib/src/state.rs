@@ -1,7 +1,6 @@
 use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex};
 
-use procfs::process::Stat;
 use serde_derive::{Deserialize, Serialize};
 
 use crate::children::Children;

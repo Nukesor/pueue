@@ -5,7 +5,6 @@ use pueue_lib::{
     state::GroupStatus, task::TaskStatus,
 };
 
-use super::{initiate_shutdown, Shutdown};
 use crate::daemon::process_handler::spawn::spawn_process;
 use crate::daemon::state_helper::{save_state, LockedState};
 use crate::ok_or_shutdown;

@@ -7,7 +7,7 @@ use pueue_lib::state::SharedState;
 
 /// Invoked when calling `pueue log`.
 /// Return tasks and their output to the client.
-pub fn get_log(message: LogRequestMessage, state: &SharedState, settings: &Settings) -> Message {
+pub fn get_log(settings: &Settings, state: &SharedState, message: LogRequestMessage) -> Message {
     let state = { state.lock().unwrap().clone() };
     // Return all logs, if no specific task id is specified.
     let task_ids = if message.task_ids.is_empty() {

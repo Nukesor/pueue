@@ -7,7 +7,7 @@ use crate::daemon::network::response_helper::*;
 
 /// Invoked when calling `pueue enqueue`.
 /// Enqueue specific stashed tasks.
-pub fn enqueue(message: EnqueueMessage, state: &SharedState) -> Message {
+pub fn enqueue(state: &SharedState, message: EnqueueMessage) -> Message {
     let mut state = state.lock().unwrap();
     let filtered_tasks = state.filter_tasks(
         |task| matches!(task.status, TaskStatus::Stashed { .. } | TaskStatus::Locked),

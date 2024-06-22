@@ -13,16 +13,12 @@ use pueue_lib::settings::Settings;
 use pueue_lib::state::SharedState;
 
 use crate::daemon::network::follow_log::handle_follow;
-use crate::daemon::network::message_handler::{handle_message, SENDER_ERR};
-use crate::daemon::task_handler::TaskSender;
+use crate::daemon::network::message_handler::handle_message;
+use crate::daemon::process_handler::initiate_shutdown;
 
 /// Poll the listener and accept new incoming connections.
 /// Create a new future to handle the message and spawn it.
-pub async fn accept_incoming(
-    sender: TaskSender,
-    state: SharedState,
-    settings: Settings,
-) -> Result<()> {
+pub async fn accept_incoming(settings: Settings, state: SharedState) -> Result<()> {
     let listener = get_listener(&settings.shared).await?;
     // Read secret once to prevent multiple disk reads.
     let secret = read_shared_secret(&settings.shared.shared_secret_path())?;
@@ -38,19 +34,11 @@ pub async fn accept_incoming(
         };
 
         // Start a new task for the request
-        let sender_clone = sender.clone();
         let state_clone = state.clone();
         let secret_clone = secret.clone();
         let settings_clone = settings.clone();
         tokio::spawn(async move {
-            let _result = handle_incoming(
-                stream,
-                sender_clone,
-                state_clone,
-                settings_clone,
-                secret_clone,
-            )
-            .await;
+            let _result = handle_incoming(stream, state_clone, settings_clone, secret_clone).await;
         });
     }
 }
@@ -60,7 +48,6 @@ pub async fn accept_incoming(
 /// The response future is added to unix_responses and handled in a separate function.
 async fn handle_incoming(
     mut stream: GenericStream,
-    sender: TaskSender,
     state: SharedState,
     settings: Settings,
     secret: Vec<u8>,
@@ -137,14 +124,14 @@ async fn handle_incoming(
                 let response = create_success_message("Daemon is shutting down");
                 send_message(response, &mut stream).await?;
 
-                // Notify the task handler.
-                sender.send(shutdown_type).expect(SENDER_ERR);
+                let mut state = state.lock().unwrap();
+                initiate_shutdown(&settings, &mut state, shutdown_type);
 
                 return Ok(());
             }
             _ => {
                 // Process a normal message.
-                handle_message(message, &sender, &state, &settings)
+                handle_message(message, &state, &settings)
             }
         };
 

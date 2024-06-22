@@ -5,13 +5,11 @@ use chrono::Local;
 use command_group::CommandGroup;
 use log::{error, info};
 use pueue_lib::log::{create_log_file_handles, get_writable_log_file_handle};
-use pueue_lib::network::message::Shutdown;
 use pueue_lib::process_helper::compile_shell_command;
 use pueue_lib::settings::Settings;
 use pueue_lib::state::GroupStatus;
 use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
-use crate::daemon::process_handler::initiate_shutdown;
 use crate::daemon::state_helper::{pause_on_failure, save_state, LockedState};
 use crate::ok_or_shutdown;
 

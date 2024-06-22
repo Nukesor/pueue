@@ -1,17 +1,22 @@
-use pueue_lib::network::message::*;
-use pueue_lib::state::{SharedState, PUEUE_DEFAULT_GROUP};
+use std::collections::BTreeMap;
 
-use super::TaskSender;
+use pueue_lib::network::message::*;
+use pueue_lib::settings::Settings;
+use pueue_lib::state::{SharedState, PUEUE_DEFAULT_GROUP};
+use pueue_lib::{failure_msg, success_msg};
+
 use crate::daemon::network::message_handler::ok_or_failure_message;
 use crate::daemon::network::response_helper::ensure_group_exists;
-use crate::ok_or_return_failure_message;
+use crate::daemon::process_handler::initiate_shutdown;
+use crate::daemon::state_helper::save_state;
+use crate::ok_or_save_state_failure;
 
 /// Invoked on `pueue groups`.
 /// Manage groups.
 /// - Show groups
 /// - Add group
 /// - Remove group
-pub fn group(message: GroupMessage, sender: &TaskSender, state: &SharedState) -> Message {
+pub fn group(settings: &Settings, state: &SharedState, message: GroupMessage) -> Message {
     let mut state = state.lock().unwrap();
 
     match message {
@@ -27,18 +32,20 @@ pub fn group(message: GroupMessage, sender: &TaskSender, state: &SharedState) ->
             parallel_tasks,
         } => {
             if state.groups.contains_key(&name) {
-                return create_failure_message(format!("Group \"{name}\" already exists"));
+                return success_msg!("Group \"{name}\" already exists");
             }
 
-            // Propagate the message to the TaskHandler, which is responsible for actually
-            // manipulating our internal data
-            let result = sender.send(GroupMessage::Add {
-                name: name.clone(),
-                parallel_tasks,
-            });
-            ok_or_return_failure_message!(result);
+            let group = state.create_group(&name);
+            if let Some(parallel_tasks) = parallel_tasks {
+                group.parallel_tasks = parallel_tasks;
+            }
+            // Create the worker pool.
+            state.children.0.insert(name.clone(), BTreeMap::new());
 
-            create_success_message(format!("Group \"{name}\" is being created"))
+            // Persist the state.
+            ok_or_save_state_failure!(save_state(&state, settings));
+
+            success_msg!("New group \"{name}\" has been created")
         }
         GroupMessage::Remove(group) => {
             if let Err(message) = ensure_group_exists(&mut state, &group) {
@@ -46,22 +53,39 @@ pub fn group(message: GroupMessage, sender: &TaskSender, state: &SharedState) ->
             }
 
             if group == PUEUE_DEFAULT_GROUP {
-                return create_failure_message("You cannot delete the default group".to_string());
+                return failure_msg!("You cannot delete the default group");
             }
 
             // Make sure there are no tasks in that group.
             if state.tasks.iter().any(|(_, task)| task.group == group) {
-                return create_failure_message(
-                    "You cannot remove a group, if there're still tasks in it.".to_string(),
-                );
+                return failure_msg!("You cannot remove a group, if there're still tasks in it.");
             }
 
-            // Propagate the message to the TaskHandler, which is responsible for actually
-            // manipulating our internal data
-            let result = sender.send(GroupMessage::Remove(group.clone()));
-            ok_or_return_failure_message!(result);
+            // Make sure the worker pool exists and is empty.
+            // There shouldn't be any children, if there are no tasks in this group.
+            // Those are critical errors, as they indicate desynchronization inside our
+            // internal datastructures, which is really bad.
+            if let Some(pool) = state.children.0.get(&group) {
+                if !pool.is_empty() {
+                    initiate_shutdown(settings, &mut state, Shutdown::Emergency);
+                    return failure_msg!("Encountered a non-empty worker pool, while removing a group. This is a critical error. Please report this bug.");
+                }
+            } else {
+                initiate_shutdown(settings, &mut state, Shutdown::Emergency);
+                return failure_msg!("Encountered an group without an worker pool, while removing a group. This is a critical error. Please report this bug.");
+            }
 
-            create_success_message(format!("Group \"{group}\" is being removed"))
+            if let Err(error) = state.remove_group(&group) {
+                return failure_msg!("Error while removing group: \"{error}\"");
+            }
+
+            // Actually remove the worker pool.
+            state.children.0.remove(&group);
+
+            // Persist the state.
+            ok_or_save_state_failure!(save_state(&state, settings));
+
+            success_msg!("Group \"{group}\" has been removed")
         }
     }
 }

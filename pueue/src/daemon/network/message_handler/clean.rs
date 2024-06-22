@@ -5,7 +5,7 @@ use pueue_lib::task::{TaskResult, TaskStatus};
 
 use super::*;
 use crate::daemon::state_helper::{is_task_removable, save_state};
-use crate::ok_or_return_failure_message;
+use crate::ok_or_save_state_failure;
 
 fn construct_success_clean_message(message: CleanMessage) -> String {
     let successful_only_fix = if message.successful_only {
@@ -24,7 +24,7 @@ fn construct_success_clean_message(message: CleanMessage) -> String {
 
 /// Invoked when calling `pueue clean`.
 /// Remove all failed or done tasks from the state.
-pub fn clean(message: CleanMessage, state: &SharedState, settings: &Settings) -> Message {
+pub fn clean(settings: &Settings, state: &SharedState, message: CleanMessage) -> Message {
     let mut state = state.lock().unwrap();
 
     let filtered_tasks =
@@ -56,7 +56,7 @@ pub fn clean(message: CleanMessage, state: &SharedState, settings: &Settings) ->
         clean_log_handles(*task_id, &settings.shared.pueue_directory());
     }
 
-    ok_or_return_failure_message!(save_state(&state, settings));
+    ok_or_save_state_failure!(save_state(&state, settings));
 
     create_success_message(construct_success_clean_message(message))
 }
@@ -116,7 +116,7 @@ mod tests {
         let (state, settings, _tempdir) = get_stub_state();
 
         // Only task 1 will be removed, since it's the only TaskStatus with `Done`.
-        let message = clean(get_message(false, None), &state, &settings);
+        let message = clean(&settings, &state, get_message(false, None));
 
         // Return message is correct
         assert!(matches!(message, Message::Success(_)));
@@ -133,7 +133,7 @@ mod tests {
         let (state, settings, _tempdir) = get_clean_test_state(&[PUEUE_DEFAULT_GROUP]);
 
         // All finished tasks should removed when calling default `clean`.
-        let message = clean(get_message(false, None), &state, &settings);
+        let message = clean(&settings, &state, get_message(false, None));
 
         // Return message is correct
         assert!(matches!(message, Message::Success(_)));
@@ -151,7 +151,7 @@ mod tests {
 
         // Only successfully finished tasks should get removed when
         // calling `clean` with the `successful_only` flag.
-        let message = clean(get_message(true, None), &state, &settings);
+        let message = clean(&settings, &state, get_message(true, None));
 
         // Return message is correct
         assert!(matches!(message, Message::Success(_)));
@@ -170,7 +170,7 @@ mod tests {
         let (state, settings, _tempdir) = get_clean_test_state(&[PUEUE_DEFAULT_GROUP, "other"]);
 
         // All finished tasks should removed in selected group (other)
-        let message = clean(get_message(false, Some("other".into())), &state, &settings);
+        let message = clean(&settings, &state, get_message(false, Some("other".into())));
 
         // Return message is correct
         assert!(matches!(message, Message::Success(_)));
@@ -193,7 +193,7 @@ mod tests {
         let (state, settings, _tempdir) = get_clean_test_state(&[PUEUE_DEFAULT_GROUP, "other"]);
 
         // Only successfully finished tasks should removed in the 'other' group
-        let message = clean(get_message(true, Some("other".into())), &state, &settings);
+        let message = clean(&settings, &state, get_message(true, Some("other".into())));
 
         // Return message is correct
         assert!(matches!(message, Message::Success(_)));

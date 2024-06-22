@@ -1,12 +1,11 @@
 use log::{error, info, warn};
 
-use pueue_lib::network::message::{Shutdown, Signal, TaskSelection};
+use pueue_lib::network::message::{Signal, TaskSelection};
 use pueue_lib::process_helper::*;
 use pueue_lib::settings::Settings;
 use pueue_lib::state::GroupStatus;
 use pueue_lib::task::TaskStatus;
 
-use crate::daemon::process_handler::initiate_shutdown;
 use crate::daemon::state_helper::{save_state, LockedState};
 use crate::ok_or_shutdown;
 
@@ -41,7 +40,7 @@ pub fn kill(
             };
 
             // Check whether the group should be paused before killing the tasks.
-            if should_pause_group(&state, issued_by_user, &group_name) {
+            if should_pause_group(state, issued_by_user, &group_name) {
                 let group = state.groups.get_mut(&group_name).unwrap();
                 group.status = GroupStatus::Paused;
             }

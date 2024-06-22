@@ -5,11 +5,7 @@ use pueue_lib::state::Group;
 impl TaskHandler {
     /// Ensure that no `Queued` tasks have any failed dependencies.
     /// Otherwise set their status to `Done` and result to `DependencyFailed`.
-    pub fn check_failed_dependencies(&mut self) {
-        // Clone the state ref, so we don't have two mutable borrows later on.
-        let state_ref = self.state.clone();
-        let mut state = state_ref.lock().unwrap();
-
+    pub fn check_failed_dependencies(&mut self, state: &mut LockedState) {
         // Get id's of all tasks with failed dependencies
         let has_failed_deps: Vec<_> = state
             .tasks

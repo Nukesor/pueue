@@ -5,12 +5,12 @@ use pueue_lib::task::TaskStatus;
 
 use super::*;
 use crate::daemon::state_helper::save_state;
-use crate::ok_or_return_failure_message;
+use crate::ok_or_save_state_failure;
 
 /// Invoked when calling `pueue edit`.
 /// If a user wants to edit a message, we need to send him the current command.
 /// Lock the task to prevent execution, before the user has finished editing the command.
-pub fn edit_request(task_id: usize, state: &SharedState) -> Message {
+pub fn edit_request(state: &SharedState, task_id: usize) -> Message {
     // Check whether the task exists and is queued/stashed. Abort if that's not the case.
     let mut state = state.lock().unwrap();
     match state.tasks.get_mut(&task_id) {
@@ -36,7 +36,7 @@ pub fn edit_request(task_id: usize, state: &SharedState) -> Message {
 
 /// Invoked after closing the editor on `pueue edit`.
 /// Now we actually update the message with the updated command from the client.
-pub fn edit(message: EditMessage, state: &SharedState, settings: &Settings) -> Message {
+pub fn edit(settings: &Settings, state: &SharedState, message: EditMessage) -> Message {
     // Check whether the task exists and is locked. Abort if that's not the case.
     let mut state = state.lock().unwrap();
     match state.tasks.get_mut(&message.task_id) {
@@ -68,7 +68,7 @@ pub fn edit(message: EditMessage, state: &SharedState, settings: &Settings) -> M
                 task.priority = priority;
             }
 
-            ok_or_return_failure_message!(save_state(&state, settings));
+            ok_or_save_state_failure!(save_state(&state, settings));
 
             create_success_message("Command has been updated")
         }
@@ -77,7 +77,7 @@ pub fn edit(message: EditMessage, state: &SharedState, settings: &Settings) -> M
 }
 
 /// Invoked if a client fails to edit a task and asks the daemon to restore the task's status.
-pub fn edit_restore(task_id: usize, state: &SharedState) -> Message {
+pub fn edit_restore(state: &SharedState, task_id: usize) -> Message {
     // Check whether the task exists and is queued/stashed. Abort if that's not the case.
     let mut state = state.lock().unwrap();
     match state.tasks.get_mut(&task_id) {

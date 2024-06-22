@@ -4,7 +4,6 @@ use pueue_lib::network::message::*;
 use pueue_lib::settings::Settings;
 use pueue_lib::state::SharedState;
 
-use super::TaskSender;
 use crate::daemon::network::response_helper::*;
 
 mod add;
@@ -17,50 +16,36 @@ mod log;
 mod parallel;
 mod pause;
 mod remove;
+mod reset;
 mod restart;
 mod send;
 mod start;
 mod stash;
 mod switch;
 
-pub static SENDER_ERR: &str = "Failed to send message to task handler thread";
-
-pub fn handle_message(
-    message: Message,
-    sender: &TaskSender,
-    state: &SharedState,
-    settings: &Settings,
-) -> Message {
+pub fn handle_message(message: Message, state: &SharedState, settings: &Settings) -> Message {
     match message {
-        Message::Add(message) => add::add_task(message, sender, state, settings),
-        Message::Clean(message) => clean::clean(message, state, settings),
-        Message::Edit(message) => edit::edit(message, state, settings),
-        Message::EditRequest(task_id) => edit::edit_request(task_id, state),
-        Message::EditRestore(task_id) => edit::edit_restore(task_id, state),
-        Message::Enqueue(message) => enqueue::enqueue(message, state),
-        Message::Group(message) => group::group(message, sender, state),
-        Message::Kill(message) => kill::kill(message, sender, state),
-        Message::Log(message) => log::get_log(message, state, settings),
+        Message::Add(message) => add::add_task(settings, state, message),
+        Message::Clean(message) => clean::clean(settings, state, message),
+        Message::Edit(message) => edit::edit(settings, state, message),
+        Message::EditRequest(task_id) => edit::edit_request(state, task_id),
+        Message::EditRestore(task_id) => edit::edit_restore(state, task_id),
+        Message::Enqueue(message) => enqueue::enqueue(state, message),
+        Message::Group(message) => group::group(settings, state, message),
+        Message::Kill(message) => kill::kill(settings, state, message),
+        Message::Log(message) => log::get_log(settings, state, message),
         Message::Parallel(message) => parallel::set_parallel_tasks(message, state),
-        Message::Pause(message) => pause::pause(message, sender, state),
-        Message::Remove(task_ids) => remove::remove(task_ids, state, settings),
-        Message::Reset(message) => reset(message, sender),
-        Message::Restart(message) => restart::restart_multiple(message, sender, state, settings),
-        Message::Send(message) => send::send(message, sender, state),
-        Message::Start(message) => start::start(message, sender, state),
-        Message::Stash(task_ids) => stash::stash(task_ids, state),
-        Message::Switch(message) => switch::switch(message, state, settings),
+        Message::Pause(message) => pause::pause(settings, state, message),
+        Message::Remove(task_ids) => remove::remove(settings, state, task_ids),
+        Message::Reset(_) => reset::reset(settings, state),
+        Message::Restart(message) => restart::restart_multiple(settings, state, message),
+        Message::Send(message) => send::send(state, message),
+        Message::Start(message) => start::start(settings, state, message),
+        Message::Stash(task_ids) => stash::stash(state, task_ids),
+        Message::Switch(message) => switch::switch(settings, state, message),
         Message::Status => get_status(state),
         _ => create_failure_message("Not yet implemented"),
     }
-}
-
-/// Invoked when calling `pueue reset`.
-/// Forward the reset request to the task handler.
-/// The handler then kills all children and clears the task queue.
-fn reset(message: ResetMessage, sender: &TaskSender) -> Message {
-    sender.send(message).expect(SENDER_ERR);
-    create_success_message("Everything is being reset right now.")
 }
 
 /// Invoked when calling `pueue status`.
@@ -80,7 +65,7 @@ fn ok_or_failure_message<T, E: Display>(result: Result<T, E>) -> Result<T, Messa
 }
 
 #[macro_export]
-macro_rules! ok_or_return_failure_message {
+macro_rules! ok_or_save_state_failure {
     ($expression:expr) => {
         match ok_or_failure_message($expression) {
             Ok(task_id) => task_id,

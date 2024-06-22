@@ -1,12 +1,11 @@
 use log::{error, info};
 
-use pueue_lib::network::message::{Shutdown, TaskSelection};
+use pueue_lib::network::message::TaskSelection;
 use pueue_lib::process_helper::ProcessAction;
 use pueue_lib::settings::Settings;
 use pueue_lib::state::GroupStatus;
 use pueue_lib::task::TaskStatus;
 
-use crate::daemon::process_handler::initiate_shutdown;
 use crate::daemon::state_helper::{save_state, LockedState};
 use crate::ok_or_shutdown;
 
