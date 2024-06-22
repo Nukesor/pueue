@@ -42,7 +42,7 @@ impl TaskHandler {
                 state.set_status_for_all_groups(GroupStatus::Paused);
 
                 info!("Pausing everything");
-                self.children.all_task_ids()
+                state.children.all_task_ids()
             }
         };
 

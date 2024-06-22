@@ -61,15 +61,15 @@ impl TaskHandler {
                 }
 
                 info!("Killing all running tasks");
-                self.children.all_task_ids()
+                state.children.all_task_ids()
             }
         };
 
         for task_id in task_ids {
             if let Some(signal) = signal.clone() {
-                self.send_internal_signal(task_id, signal);
+                self.send_internal_signal(&mut state, task_id, signal);
             } else {
-                self.kill_task(task_id);
+                self.kill_task(&mut state, task_id);
             }
         }
 
@@ -79,8 +79,13 @@ impl TaskHandler {
     /// Send a signal to a specific child process.
     /// This is a wrapper around [send_signal_to_child], which does a little bit of
     /// additional error handling.
-    pub fn send_internal_signal(&mut self, task_id: usize, signal: Signal) {
-        let child = match self.children.get_child_mut(task_id) {
+    pub fn send_internal_signal(
+        &mut self,
+        state: &mut LockedState,
+        task_id: usize,
+        signal: Signal,
+    ) {
+        let child = match state.children.get_child_mut(task_id) {
             Some(child) => child,
             None => {
                 warn!("Tried to kill non-existing child: {task_id}");
@@ -95,8 +100,8 @@ impl TaskHandler {
 
     /// Kill a specific task and handle it accordingly.
     /// Triggered on `reset` and `kill`.
-    pub fn kill_task(&mut self, task_id: usize) {
-        if let Some(child) = self.children.get_child_mut(task_id) {
+    pub fn kill_task(&mut self, state: &mut LockedState, task_id: usize) {
+        if let Some(child) = state.children.get_child_mut(task_id) {
             kill_child(task_id, child).unwrap_or_else(|err| {
                 warn!("Failed to send kill to task {task_id} child process {child:?} with error {err:?}");
             })

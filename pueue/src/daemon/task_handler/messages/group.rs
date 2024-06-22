@@ -37,7 +37,7 @@ impl TaskHandler {
                 info!("New group \"{name}\" has been created");
 
                 // Create the worker pool.
-                self.children.0.insert(name, BTreeMap::new());
+                state.children.0.insert(name, BTreeMap::new());
 
                 // Persist the state.
                 ok_or_shutdown!(self, save_state(&state, &self.settings));
@@ -63,7 +63,7 @@ impl TaskHandler {
                 // There shouldn't be any children, if there are no tasks in this group.
                 // Those are critical errors, as they indicate desynchronization inside our
                 // internal datastructures, which is really bad.
-                if let Some(pool) = self.children.0.get(&group) {
+                if let Some(pool) = state.children.0.get(&group) {
                     if !pool.is_empty() {
                         error!("Encountered a non-empty worker pool, while removing a group. This is a critical error. Please report this bug.");
                         self.initiate_shutdown(Shutdown::Emergency);
@@ -75,7 +75,7 @@ impl TaskHandler {
                     return;
                 }
                 // Actually remove the worker pool.
-                self.children.0.remove(&group);
+                state.children.0.remove(&group);
 
                 // Persist the state.
                 ok_or_shutdown!(self, save_state(&state, &self.settings));

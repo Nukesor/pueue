@@ -7,7 +7,8 @@ use crate::daemon::task_handler::TaskHandler;
 impl TaskHandler {
     /// Send some input to a child process' stdin.
     pub fn send(&mut self, task_id: usize, input: String) {
-        let child = match self.children.get_child_mut(task_id) {
+        let mut state = self.state.lock().unwrap();
+        let child = match state.children.get_child_mut(task_id) {
             Some(child) => child,
             None => {
                 warn!("Task {task_id} finished before input could be sent");

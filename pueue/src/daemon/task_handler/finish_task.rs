@@ -2,29 +2,29 @@ use anyhow::Context;
 
 use super::*;
 
-use crate::daemon::state_helper::{pause_on_failure, save_state};
+use crate::daemon::state_helper::{pause_on_failure, save_state, LockedState};
 use crate::ok_or_shutdown;
 
 impl TaskHandler {
     /// Check whether there are any finished processes
     /// In case there are, handle them and update the shared state
     pub fn handle_finished_tasks(&mut self) {
-        let finished = self.get_finished();
+        // Clone the state ref, so we don't have two mutable borrows later on.
+        let state_ref = self.state.clone();
+        let mut state = state_ref.lock().unwrap();
+
+        let finished = self.get_finished(&mut state);
 
         // Nothing to do. Early return
         if finished.is_empty() {
             return;
         }
 
-        // Clone the state ref, so we don't have two mutable borrows later on.
-        let state_ref = self.state.clone();
-        let mut state = state_ref.lock().unwrap();
-
         for ((task_id, group, worker_id), error) in finished.iter() {
             // Handle std::io errors on child processes.
             // I have never seen something like this, but it might happen.
             if let Some(error) = error {
-                let (_taks_id, _child) = self
+                let (_taks_id, _child) = state
                     .children
                     .0
                     .get_mut(group)
@@ -47,7 +47,7 @@ impl TaskHandler {
             }
 
             // Handle any tasks that exited with some kind of exit code
-            let (_task_id, mut child) = self
+            let (_task_id, mut child) = state
                 .children
                 .0
                 .get_mut(group)
@@ -93,7 +93,7 @@ impl TaskHandler {
             }
 
             // Already remove the output files, if the daemon is being reset anyway
-            if self.full_reset {
+            if state.full_reset {
                 clean_log_handles(*task_id, &self.pueue_directory);
             }
         }
@@ -103,9 +103,12 @@ impl TaskHandler {
 
     /// Gather all finished tasks and sort them by finished and errored.
     /// Returns a list of finished task ids and whether they errored or not.
-    fn get_finished(&mut self) -> Vec<((usize, String, usize), Option<std::io::Error>)> {
+    fn get_finished(
+        &mut self,
+        state: &mut LockedState,
+    ) -> Vec<((usize, String, usize), Option<std::io::Error>)> {
         let mut finished = Vec::new();
-        for (group, children) in self.children.0.iter_mut() {
+        for (group, children) in state.children.0.iter_mut() {
             for (worker_id, (task_id, child)) in children.iter_mut() {
                 match child.try_wait() {
                     // Handle a child error.

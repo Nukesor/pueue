@@ -6,10 +6,10 @@ use std::sync::mpsc::{Receiver, SendError, Sender};
 
 use anyhow::Result;
 use chrono::prelude::*;
-use command_group::CommandGroup;
 use handlebars::Handlebars;
 use log::{debug, error, info};
 
+use pueue_lib::children::Children;
 use pueue_lib::log::*;
 use pueue_lib::network::message::*;
 use pueue_lib::network::protocol::socket_cleanup;
@@ -22,9 +22,6 @@ use crate::daemon::pid::cleanup_pid_file;
 use crate::daemon::state_helper::{reset_state, save_state};
 
 mod callback;
-/// A helper newtype struct, which implements convenience methods for our child process management
-/// datastructure.
-mod children;
 /// Logic for handling dependencies
 mod dependencies;
 /// Logic for finishing and cleaning up completed tasks.
@@ -34,8 +31,6 @@ mod finish_task;
 mod messages;
 /// Everything regarding actually spawning task processes.
 mod spawn_task;
-
-use self::children::Children;
 
 /// This is a little helper macro, which looks at a critical result and shuts the
 /// TaskHandler down, if an error occurred. This is mostly used if the state cannot
@@ -82,16 +77,8 @@ pub struct TaskHandler {
     /// The receiver for the MPSC channel that's used to push notificatoins from our message
     /// handling to the TaskHandler.
     receiver: Receiver<Message>,
-    /// Pueue's subprocess and worker pool representation. Take a look at [Children] for more info.
-    children: Children,
     /// These are the currently running callbacks. They're usually very short-lived.
     callbacks: Vec<Child>,
-    /// A simple flag which is used to signal that we're currently doing a full reset of the daemon.
-    /// This flag prevents new tasks from being spawned.
-    full_reset: bool,
-    /// Whether we're currently in the process of a graceful shutdown.
-    /// Depending on the shutdown type, we're exiting with different exitcodes.
-    shutdown: Option<Shutdown>,
     /// The settings that are passed at program start.
     settings: Settings,
 
@@ -103,21 +90,19 @@ impl TaskHandler {
     pub fn new(shared_state: SharedState, settings: Settings, receiver: Receiver<Message>) -> Self {
         // Clone the pointer, as we need to regularly access it inside the TaskHandler.
         let state_clone = shared_state.clone();
-        let state = state_clone.lock().unwrap();
+        let mut state = state_clone.lock().unwrap();
 
         // Initialize the subprocess management structure.
         let mut pools = BTreeMap::new();
         for group in state.groups.keys() {
             pools.insert(group.clone(), BTreeMap::new());
         }
+        state.children = Children(pools);
 
         TaskHandler {
             state: shared_state,
             receiver,
-            children: Children(pools),
             callbacks: Vec::new(),
-            full_reset: false,
-            shutdown: None,
             pueue_directory: settings.shared.pueue_directory(),
             settings,
         }
@@ -146,11 +131,15 @@ impl TaskHandler {
             self.enqueue_delayed_tasks();
             self.check_failed_dependencies();
 
-            if self.shutdown.is_some() {
+            let (shutdown, full_reset) = {
+                let state = self.state.lock().unwrap();
+                (state.shutdown.clone(), state.full_reset)
+            };
+            if shutdown.is_some() {
                 // Check if we're in shutdown.
                 // If all tasks are killed, we do some cleanup and exit.
                 self.handle_shutdown();
-            } else if self.full_reset {
+            } else if full_reset {
                 // Wait until all tasks are killed.
                 // Once they are, reset everything and go back to normal
                 self.handle_reset();
@@ -165,7 +154,10 @@ impl TaskHandler {
     /// We don't have to pause any groups, as no new tasks will be spawned during shutdown anyway.
     /// Any groups with queued tasks, will be automatically paused on state-restoration.
     fn initiate_shutdown(&mut self, shutdown: Shutdown) {
-        self.shutdown = Some(shutdown);
+        // TODO: This will probably lead to deadlocks
+        let state_clone = self.state.clone();
+        let mut state = state_clone.lock().unwrap();
+        state.shutdown = Some(shutdown);
 
         self.kill(TaskSelection::All, false, None);
     }
@@ -174,13 +166,13 @@ impl TaskHandler {
     /// If they aren't, we'll wait a little longer.
     /// Once they're, we do some cleanup and exit.
     fn handle_shutdown(&mut self) {
+        // Lock the state. This prevents any further connections/alterations from this point on.
+        let state = self.state.lock().unwrap();
+
         // There are still active tasks. Continue waiting until they're killed and cleaned up.
-        if self.children.has_active_tasks() {
+        if state.children.has_active_tasks() {
             return;
         }
-
-        // Lock the state. This prevents any further connections/alterations from this point on.
-        let _state = self.state.lock().unwrap();
 
         // Remove the unix socket.
         if let Err(error) = socket_cleanup(&self.settings.shared) {
@@ -196,7 +188,7 @@ impl TaskHandler {
 
         // Actually exit the program the way we're supposed to.
         // Depending on the current shutdown type, we exit with different exit codes.
-        if matches!(self.shutdown, Some(Shutdown::Emergency)) {
+        if matches!(state.shutdown, Some(Shutdown::Emergency)) {
             std::process::exit(1);
         }
         std::process::exit(0);
@@ -208,12 +200,13 @@ impl TaskHandler {
     /// This function checks, if all killed children have been handled.
     /// If that's the case, completely reset the state
     fn handle_reset(&mut self) {
+        let mut state = self.state.lock().unwrap();
+
         // Don't do any reset logic, if we aren't in reset mode or if some children are still up.
-        if self.children.has_active_tasks() {
+        if state.children.has_active_tasks() {
             return;
         }
 
-        let mut state = self.state.lock().unwrap();
         if let Err(error) = reset_state(&mut state, &self.settings) {
             error!("Failed to reset state with error: {error:?}");
         };
@@ -221,13 +214,15 @@ impl TaskHandler {
         if let Err(error) = reset_task_log_directory(&self.pueue_directory) {
             panic!("Error while resetting task log directory: {error}");
         };
-        self.full_reset = false;
+        state.full_reset = false;
     }
 
     /// Kill all children by using the `kill` function.
     /// Set the respective group's statuses to `Reset`. This will prevent new tasks from being spawned.
     fn reset(&mut self) {
-        self.full_reset = true;
+        let state_clone = self.state.clone();
+        let mut state = state_clone.lock().unwrap();
+        state.full_reset = true;
         self.kill(TaskSelection::All, false, None);
     }
 
@@ -261,7 +256,9 @@ impl TaskHandler {
     /// This is a small wrapper around the real platform dependant process handling logic
     /// It only ensures, that the process we want to manipulate really does exists.
     fn perform_action(&mut self, id: usize, action: ProcessAction) -> Result<bool> {
-        match self.children.get_child_mut(id) {
+        let state_clone = self.state.clone();
+        let mut state = state_clone.lock().unwrap();
+        match state.children.get_child_mut(id) {
             Some(child) => {
                 debug!("Executing action {action:?} to {id}");
                 send_signal_to_child(child, &action)?;

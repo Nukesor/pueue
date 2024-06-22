@@ -1,5 +1,7 @@
 use std::io::Write;
 
+use command_group::CommandGroup;
+
 use super::*;
 
 use crate::daemon::state_helper::{pause_on_failure, save_state, LockedState};
@@ -59,7 +61,7 @@ impl TaskHandler {
 
                 // Get the currently running tasks by looking at the actually running processes.
                 // They're sorted by group, which makes this quite convenient.
-                let running_tasks = match self.children.0.get(&task.group) {
+                let running_tasks = match state.children.0.get(&task.group) {
                     Some(children) => children.len(),
                     None => {
                         error!(
@@ -147,7 +149,7 @@ impl TaskHandler {
 
         // Determine the worker's id depending on the current group.
         // Inject that info into the environment.
-        let worker_id = self.children.get_next_group_worker(&group);
+        let worker_id = state.children.get_next_group_worker(&group);
         envs.insert("PUEUE_GROUP".into(), group.clone());
         envs.insert("PUEUE_WORKER_ID".into(), worker_id.to_string());
 
@@ -197,7 +199,7 @@ impl TaskHandler {
         };
 
         // Save the process handle in our self.children datastructure.
-        self.children.add_child(&group, worker_id, task_id, child);
+        state.children.add_child(&group, worker_id, task_id, child);
 
         let task = state.tasks.get_mut(&task_id).unwrap();
         task.start = Some(Local::now());

@@ -3,6 +3,9 @@
 /// Shared module for internal logic!
 /// Contains helper for command aliasing.
 pub mod aliasing;
+/// A helper newtype struct, which implements convenience methods for our child process management
+/// datastructure.
+pub mod children;
 /// Pueue lib's own Error implementation.
 pub mod error;
 /// Helper classes to read and write log files of Pueue's tasks.

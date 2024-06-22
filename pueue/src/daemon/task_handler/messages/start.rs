@@ -25,7 +25,7 @@ impl TaskHandler {
                 // capable of force-spawning processes, instead of simply resuming tasks.
                 for task_id in task_ids {
                     // Continue all children that are simply paused
-                    if self.children.has_child(task_id) {
+                    if state.children.has_child(task_id) {
                         self.continue_task(&mut state, task_id);
                     } else {
                         // Start processes for all tasks that haven't been started yet
@@ -58,7 +58,7 @@ impl TaskHandler {
                 info!("Resuming everything");
                 state.set_status_for_all_groups(GroupStatus::Running);
 
-                self.children.all_task_ids()
+                state.children.all_task_ids()
             }
         };
 
@@ -73,7 +73,7 @@ impl TaskHandler {
     /// Send a start signal to a paused task to continue execution.
     fn continue_task(&mut self, state: &mut LockedState, task_id: usize) {
         // Task doesn't exist
-        if !self.children.has_child(task_id) {
+        if !state.children.has_child(task_id) {
             return;
         }
 
