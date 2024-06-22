@@ -39,11 +39,11 @@ mod spawn_task;
 /// immediately.
 #[macro_export]
 macro_rules! ok_or_shutdown {
-    ($task_manager:ident, $result:expr) => {
+    ($settings:expr, $state:expr, $result:expr) => {
         match $result {
             Err(err) => {
                 error!("Initializing graceful shutdown. Encountered error in TaskHandler: {err}");
-                $task_manager.initiate_shutdown(Shutdown::Emergency);
+                initiate_shutdown($settings, $state, Shutdown::Emergency);
                 return;
             }
             Ok(inner) => inner,
@@ -150,18 +150,6 @@ impl TaskHandler {
         }
     }
 
-    /// Initiate shutdown, which includes killing all children and pausing all groups.
-    /// We don't have to pause any groups, as no new tasks will be spawned during shutdown anyway.
-    /// Any groups with queued tasks, will be automatically paused on state-restoration.
-    fn initiate_shutdown(&mut self, shutdown: Shutdown) {
-        // TODO: This will probably lead to deadlocks
-        let state_clone = self.state.clone();
-        let mut state = state_clone.lock().unwrap();
-        state.shutdown = Some(shutdown);
-
-        self.kill(TaskSelection::All, false, None);
-    }
-
     /// Check if all tasks are killed.
     /// If they aren't, we'll wait a little longer.
     /// Once they're, we do some cleanup and exit.
@@ -250,25 +238,6 @@ impl TaskHandler {
         // Save the state if a task has been enqueued
         if changed {
             ok_or_shutdown!(self, save_state(&state, &self.settings));
-        }
-    }
-
-    /// This is a small wrapper around the real platform dependant process handling logic
-    /// It only ensures, that the process we want to manipulate really does exists.
-    fn perform_action(&mut self, id: usize, action: ProcessAction) -> Result<bool> {
-        let state_clone = self.state.clone();
-        let mut state = state_clone.lock().unwrap();
-        match state.children.get_child_mut(id) {
-            Some(child) => {
-                debug!("Executing action {action:?} to {id}");
-                send_signal_to_child(child, &action)?;
-
-                Ok(true)
-            }
-            None => {
-                error!("Tried to execute action {action:?} to non existing task {id}");
-                Ok(false)
-            }
         }
     }
 }
