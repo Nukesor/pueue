@@ -15,99 +15,60 @@ use pueue_lib::task::{TaskResult, TaskStatus};
 
 use crate::daemon::pid::cleanup_pid_file;
 use crate::daemon::state_helper::{reset_state, save_state};
+use crate::ok_or_shutdown;
 
 use super::callbacks::{check_callbacks, spawn_callback};
 use super::process_handler::finish::handle_finished_tasks;
 use super::process_handler::spawn::spawn_new;
 use super::state_helper::LockedState;
 
-/// This is a little helper macro, which looks at a critical result and shuts the
-/// TaskHandler down, if an error occurred. This is mostly used if the state cannot
-/// be written due to IO errors.
-/// Those errors are considered unrecoverable and we should initiate a graceful shutdown
-/// immediately.
-#[macro_export]
-macro_rules! ok_or_shutdown {
-    ($settings:expr, $state:expr, $result:expr) => {
-        match $result {
-            Err(err) => {
-                use log::error;
-                use pueue_lib::network::message::Shutdown;
-                use $crate::daemon::process_handler::initiate_shutdown;
-                error!("Initializing graceful shutdown. Encountered error in TaskHandler: {err}");
-                initiate_shutdown($settings, $state, Shutdown::Emergency);
-                return;
-            }
-            Ok(inner) => inner,
-        }
-    };
-}
-
-pub struct TaskHandler {
-    /// The state that's shared between the TaskHandler and the message handling logic.
-    state: SharedState,
-    /// The settings that are passed at program start.
-    settings: Settings,
-}
-
-impl TaskHandler {
-    pub fn new(shared_state: SharedState, settings: Settings) -> Self {
-        // Clone the pointer, as we need to regularly access it inside the TaskHandler.
-        let state_clone = shared_state.clone();
-        let mut state = state_clone.lock().unwrap();
-
-        // Initialize the subprocess management structure.
+/// Main task handling loop.
+/// In here a few things happen:
+///
+/// - Handle finished tasks, i.e. cleanup processes, update statuses.
+/// - Callback handling logic. This is rather uncritical.
+/// - Enqueue any stashed processes which are ready for being queued.
+/// - Ensure tasks with dependencies have no failed ancestors
+/// - Handle shutdown logic (graceful & not graceful).
+/// - If the client requested a reset: reset the state if all children have been killed and handled.
+/// - Check whether we can spawn new tasks.
+///
+/// We also wait for 300ms to prevent this loop from running hot.
+pub async fn run(state: SharedState, settings: Settings) -> Result<()> {
+    // Initialize the subprocess management structure.
+    {
+        let mut state = state.lock().unwrap();
         let mut pools = BTreeMap::new();
         for group in state.groups.keys() {
             pools.insert(group.clone(), BTreeMap::new());
         }
         state.children = Children(pools);
-
-        TaskHandler {
-            state: shared_state,
-            settings,
-        }
     }
 
-    /// Main loop of the task handler.
-    /// In here a few things happen:
-    ///
-    /// - Handle finished tasks, i.e. cleanup processes, update statuses.
-    /// - Callback handling logic. This is rather uncritical.
-    /// - Enqueue any stashed processes which are ready for being queued.
-    /// - Ensure tasks with dependencies have no failed ancestors
-    /// - Handle shutdown logic (graceful & not graceful).
-    /// - If the client requested a reset: reset the state if all children have been killed and handled.
-    /// - Check whether we can spawn new tasks.
-    ///
-    /// We also wait for 300ms to prevent this loop from running hot.
-    pub async fn run(&mut self) -> Result<()> {
-        loop {
-            {
-                let state_clone = self.state.clone();
-                let mut state = state_clone.lock().unwrap();
+    loop {
+        {
+            let mut state = state.lock().unwrap();
 
-                check_callbacks(&mut state);
-                handle_finished_tasks(&self.settings, &mut state);
-                enqueue_delayed_tasks(&self.settings, &mut state);
-                check_failed_dependencies(&self.settings, &mut state);
+            check_callbacks(&mut state);
+            handle_finished_tasks(&settings, &mut state);
+            enqueue_delayed_tasks(&settings, &mut state);
+            check_failed_dependencies(&settings, &mut state);
 
-                if state.shutdown.is_some() {
-                    // Check if we're in shutdown.
-                    // If all tasks are killed, we do some cleanup and exit.
-                    handle_shutdown(&self.settings, &mut state);
-                } else if state.full_reset {
-                    // Wait until all tasks are killed.
-                    // Once they are, reset everything and go back to normal
-                    handle_reset(&self.settings, &mut state);
-                } else {
-                    // Only start new tasks, if we aren't in the middle of a reset or shutdown.
-                    spawn_new(&self.settings, &mut state);
-                }
+            if state.shutdown.is_some() {
+                // Check if we're in shutdown.
+                // If all tasks are killed, we do some cleanup and exit.
+                handle_shutdown(&settings, &mut state);
+            } else if state.full_reset {
+                // Wait until all tasks are killed.
+                // Once they are, reset everything and go back to normal
+                handle_reset(&settings, &mut state);
+            } else {
+                // Only start new tasks, if we aren't in the middle of a reset or shutdown.
+                spawn_new(&settings, &mut state);
             }
-
-            tokio::time::sleep(Duration::from_millis(300)).await;
         }
+
+        tokio::time::sleep(Duration::from_millis(300)).await;
     }
 }
 
@@ -187,7 +148,7 @@ fn enqueue_delayed_tasks(settings: &Settings, state: &mut LockedState) {
 
 /// Ensure that no `Queued` tasks have any failed dependencies.
 /// Otherwise set their status to `Done` and result to `DependencyFailed`.
-pub fn check_failed_dependencies(settings: &Settings, state: &mut LockedState) {
+fn check_failed_dependencies(settings: &Settings, state: &mut LockedState) {
     // Get id's of all tasks with failed dependencies
     let has_failed_deps: Vec<_> = state
         .tasks

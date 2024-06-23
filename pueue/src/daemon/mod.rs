@@ -17,7 +17,6 @@ use tokio::try_join;
 
 use self::state_helper::{restore_state, save_state};
 use crate::daemon::network::socket::accept_incoming;
-use crate::daemon::task_handler::TaskHandler;
 
 mod callbacks;
 pub mod cli;
@@ -80,8 +79,6 @@ pub async fn run(config_path: Option<PathBuf>, profile: Option<String>, test: bo
     save_state(&state, &settings).context("Failed to save state on startup.")?;
     let state = Arc::new(Mutex::new(state));
 
-    let mut task_handler = TaskHandler::new(state.clone(), settings.clone());
-
     // Don't set ctrlc and panic handlers during testing.
     // This is necessary for multithreaded integration testing, since multiple listener per process
     // aren't allowed. On top of this, ctrlc also somehow breaks test error output.
@@ -91,7 +88,7 @@ pub async fn run(config_path: Option<PathBuf>, profile: Option<String>, test: bo
 
     // Run both the task handler and the message handler in the same tokio task.
     // If any of them fails, return an error immediately.
-    let task_handler = task_handler.run();
+    let task_handler = task_handler::run(state.clone(), settings.clone());
     let message_handler = accept_incoming(settings.clone(), state.clone());
     try_join!(task_handler, message_handler).map(|_| ())
 }

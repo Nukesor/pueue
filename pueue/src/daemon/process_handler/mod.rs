@@ -13,6 +13,28 @@ pub mod pause;
 pub mod spawn;
 pub mod start;
 
+/// This is a little helper macro, which looks at a critical result and shuts the
+/// TaskHandler down, if an error occurred. This is mostly used if the state cannot
+/// be written due to IO errors.
+/// Those errors are considered unrecoverable and we should initiate a graceful shutdown
+/// immediately.
+#[macro_export]
+macro_rules! ok_or_shutdown {
+    ($settings:expr, $state:expr, $result:expr) => {
+        match $result {
+            Err(err) => {
+                use log::error;
+                use pueue_lib::network::message::Shutdown;
+                use $crate::daemon::process_handler::initiate_shutdown;
+                error!("Initializing graceful shutdown. Encountered error in TaskHandler: {err}");
+                initiate_shutdown($settings, $state, Shutdown::Emergency);
+                return;
+            }
+            Ok(inner) => inner,
+        }
+    };
+}
+
 /// Initiate shutdown, which includes killing all children and pausing all groups.
 /// We don't have to pause any groups, as no new tasks will be spawned during shutdown anyway.
 /// Any groups with queued tasks, will be automatically paused on state-restoration.
