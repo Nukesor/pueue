@@ -5,7 +5,6 @@ use std::{fs::create_dir_all, path::PathBuf};
 use anyhow::{bail, Context, Result};
 use log::warn;
 
-use network::message_handler;
 use process_handler::initiate_shutdown;
 use pueue_lib::error::Error;
 use pueue_lib::network::certificate::create_certificates;
