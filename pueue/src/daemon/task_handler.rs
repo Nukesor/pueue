@@ -72,18 +72,15 @@ impl TaskHandler {
     /// Main loop of the task handler.
     /// In here a few things happen:
     ///
-    /// - Receive and handle instructions from the client.
     /// - Handle finished tasks, i.e. cleanup processes, update statuses.
     /// - Callback handling logic. This is rather uncritical.
     /// - Enqueue any stashed processes which are ready for being queued.
     /// - Ensure tasks with dependencies have no failed ancestors
-    /// - Whether whe should perform a shutdown.
+    /// - Handle shutdown logic (graceful & not graceful).
     /// - If the client requested a reset: reset the state if all children have been killed and handled.
     /// - Check whether we can spawn new tasks.
     ///
-    /// This first step waits for 200ms while receiving new messages.
-    /// This prevents this loop from running hot, but also means that we only check if a new task
-    /// can be scheduled or if tasks are finished, every 200ms.
+    /// We also wait for 300ms to prevent this loop from running hot.
     pub async fn run(&mut self) -> Result<()> {
         loop {
             {
@@ -109,8 +106,6 @@ impl TaskHandler {
                 }
             }
 
-            // In normal operation, the task handler thread can sleep a bit longer as it
-            // doesn't do any time critical tasks.
             tokio::time::sleep(Duration::from_millis(300)).await;
         }
     }
