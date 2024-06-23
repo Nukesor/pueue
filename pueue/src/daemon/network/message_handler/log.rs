@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 
+use pueue_lib::failure_msg;
 use pueue_lib::log::read_and_compress_log_file;
 use pueue_lib::network::message::*;
 use pueue_lib::settings::Settings;
@@ -31,9 +32,7 @@ pub fn get_log(settings: &Settings, state: &SharedState, message: LogRequestMess
                     Ok((output, output_complete)) => (Some(output), output_complete),
                     Err(err) => {
                         // Fail early if there's some problem with getting the log output
-                        return create_failure_message(format!(
-                            "Failed reading process output file: {err:?}"
-                        ));
+                        return failure_msg!("Failed reading process output file: {err:?}");
                     }
                 }
             } else {

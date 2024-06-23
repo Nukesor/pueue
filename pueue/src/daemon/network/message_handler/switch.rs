@@ -1,3 +1,4 @@
+use pueue_lib::failure_msg;
 use pueue_lib::network::message::*;
 use pueue_lib::settings::Settings;
 use pueue_lib::state::SharedState;
@@ -19,10 +20,10 @@ pub fn switch(settings: &Settings, state: &SharedState, message: SwitchMessage) 
         Some(task_ids.to_vec()),
     );
     if !filtered_tasks.non_matching_ids.is_empty() {
-        return create_failure_message("Tasks have to be either queued or stashed.");
+        return failure_msg!("Tasks have to be either queued or stashed.");
     }
     if task_ids[0] == task_ids[1] {
-        return create_failure_message("You cannot switch a task with itself.");
+        return failure_msg!("You cannot switch a task with itself.");
     }
 
     // Get the tasks. Expect them to be there, since we found no mismatch

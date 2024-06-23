@@ -1,6 +1,7 @@
 use pueue_lib::network::message::*;
 use pueue_lib::settings::Settings;
 use pueue_lib::state::SharedState;
+use pueue_lib::success_msg;
 use pueue_lib::task::TaskStatus;
 
 use crate::daemon::network::response_helper::*;
@@ -30,9 +31,9 @@ pub fn start(settings: &Settings, state: &SharedState, message: StartMessage) ->
             &state,
         ),
         TaskSelection::Group(group) => {
-            create_success_message(format!("Group \"{group}\" is being resumed."))
+            success_msg!("Group \"{group}\" is being resumed.")
         }
-        TaskSelection::All => create_success_message("All queues are being resumed."),
+        TaskSelection::All => success_msg!("All queues are being resumed."),
     };
 
     if let Message::Success(_) = response {

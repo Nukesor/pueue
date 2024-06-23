@@ -2,6 +2,7 @@ use pueue_lib::aliasing::insert_alias;
 use pueue_lib::network::message::*;
 use pueue_lib::state::SharedState;
 use pueue_lib::task::TaskStatus;
+use pueue_lib::{failure_msg, success_msg};
 
 use super::*;
 use crate::daemon::state_helper::save_state;
@@ -72,7 +73,7 @@ pub fn edit(settings: &Settings, state: &SharedState, message: EditMessage) -> M
 
             create_success_message("Command has been updated")
         }
-        None => create_failure_message(format!("Task to edit has gone away: {}", message.task_id)),
+        None => failure_msg!("Task to edit has gone away: {}", message.task_id),
     }
 }
 
@@ -87,10 +88,10 @@ pub fn edit_restore(state: &SharedState, task_id: usize) -> Message {
             }
             task.status = task.prev_status.clone();
 
-            create_success_message(format!(
+            success_msg!(
                 "The requested task's status has been restored to '{}'",
                 task.status
-            ))
+            )
         }
         None => create_failure_message("No task with this id."),
     }

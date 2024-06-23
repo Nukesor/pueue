@@ -1,5 +1,6 @@
 use std::fmt::Display;
 
+use pueue_lib::failure_msg;
 use pueue_lib::network::message::*;
 use pueue_lib::settings::Settings;
 use pueue_lib::state::SharedState;
@@ -58,9 +59,7 @@ fn get_status(state: &SharedState) -> Message {
 fn ok_or_failure_message<T, E: Display>(result: Result<T, E>) -> Result<T, Message> {
     match result {
         Ok(inner) => Ok(inner),
-        Err(error) => Err(create_failure_message(format!(
-            "Failed to save state. This is a bug: {error}"
-        ))),
+        Err(error) => Err(failure_msg!("Failed to save state. This is a bug: {error}")),
     }
 }
 

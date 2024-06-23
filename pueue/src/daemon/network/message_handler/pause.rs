@@ -1,4 +1,5 @@
 use pueue_lib::state::SharedState;
+use pueue_lib::success_msg;
 use pueue_lib::task::TaskStatus;
 use pueue_lib::{network::message::*, settings::Settings};
 
@@ -25,9 +26,9 @@ pub fn pause(settings: &Settings, state: &SharedState, message: PauseMessage) ->
             &state,
         ),
         TaskSelection::Group(group) => {
-            create_success_message(format!("Group \"{group}\" is being paused."))
+            success_msg!("Group \"{group}\" is being paused.")
         }
-        TaskSelection::All => create_success_message("All queues are being paused."),
+        TaskSelection::All => success_msg!("All queues are being paused."),
     };
 
     // Actually execute the command

@@ -1,5 +1,6 @@
 use chrono::Local;
 use pueue_lib::aliasing::insert_alias;
+use pueue_lib::failure_msg;
 use pueue_lib::network::message::*;
 use pueue_lib::state::{GroupStatus, SharedState};
 use pueue_lib::task::{Task, TaskStatus};
@@ -25,9 +26,7 @@ pub fn add_task(settings: &Settings, state: &SharedState, message: AddMessage) -
         .filter(|id| !state.tasks.contains_key(id))
         .collect();
     if !not_found.is_empty() {
-        return create_failure_message(format!(
-            "Unable to setup dependencies : task(s) {not_found:?} not found",
-        ));
+        return failure_msg!("Unable to setup dependencies : task(s) {not_found:?} not found",);
     }
 
     // Create a new task and add it to the state.

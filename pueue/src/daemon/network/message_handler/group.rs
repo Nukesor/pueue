@@ -32,7 +32,7 @@ pub fn group(settings: &Settings, state: &SharedState, message: GroupMessage) ->
             parallel_tasks,
         } => {
             if state.groups.contains_key(&name) {
-                return success_msg!("Group \"{name}\" already exists");
+                return failure_msg!("Group \"{name}\" already exists");
             }
 
             let group = state.create_group(&name);
