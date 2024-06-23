@@ -389,6 +389,14 @@ https://github.com/Nukesor/pueue/issues/350#issue-1359083118"
         /// View the task output of these specific tasks.
         task_ids: Vec<usize>,
 
+        /// View the outputs of this specific group's tasks.
+        #[arg(short, long)]
+        group: Option<String>,
+
+        /// Show the logs of all groups' tasks.
+        #[arg(short, long)]
+        all: bool,
+
         /// Print the resulting tasks and output as json.
         /// By default only the last lines will be returned unless --full is provided.
         /// Take care, as the json cannot be streamed!

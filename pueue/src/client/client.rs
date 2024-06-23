@@ -517,13 +517,16 @@ impl Client {
             SubCommand::Log {
                 task_ids,
                 lines,
+                group,
                 full,
+                all,
                 ..
             } => {
                 let lines = determine_log_line_amount(*full, lines);
+                let selection = selection_from_params(*all, group, task_ids);
 
                 let message = LogRequestMessage {
-                    task_ids: task_ids.clone(),
+                    tasks: selection,
                     send_logs: !self.settings.client.read_local_logs,
                     lines,
                 };

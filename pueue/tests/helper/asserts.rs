@@ -49,7 +49,7 @@ pub async fn assert_worker_envs(
     let response = send_message(
         shared,
         LogRequestMessage {
-            task_ids: vec![task_id],
+            tasks: TaskSelection::TaskIds(vec![task_id]),
             send_logs: true,
             lines: None,
         },

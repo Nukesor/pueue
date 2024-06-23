@@ -23,7 +23,7 @@ pub fn decompress_log(bytes: Vec<u8>) -> Result<String> {
 /// `lines: None` requests all log lines.
 pub async fn get_task_log(shared: &Shared, task_id: usize, lines: Option<usize>) -> Result<String> {
     let message = LogRequestMessage {
-        task_ids: vec![task_id],
+        tasks: TaskSelection::TaskIds(vec![task_id]),
         send_logs: true,
         lines,
     };
