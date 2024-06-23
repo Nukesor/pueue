@@ -95,7 +95,7 @@ async fn test_partial_log() -> Result<()> {
 
     // Request a partial log for task 0
     let log_message = LogRequestMessage {
-        task_ids: vec![0],
+        tasks: TaskSelection::TaskIds(vec![0]),
         send_logs: true,
         lines: Some(5),
     };
@@ -132,7 +132,7 @@ async fn test_correct_log_order() -> Result<()> {
 
     // Request all log lines
     let log_message = LogRequestMessage {
-        task_ids: vec![0],
+        tasks: TaskSelection::TaskIds(vec![0]),
         send_logs: true,
         lines: None,
     };
@@ -152,6 +152,74 @@ async fn test_correct_log_order() -> Result<()> {
 
     // Make sure it's the same
     assert_eq!(output, "test\nerror\ntest\n");
+
+    Ok(())
+}
+
+/// Make sure that it's possible to get only logs of a specific group
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn logs_of_group() -> Result<()> {
+    let daemon = daemon().await?;
+    let shared = &daemon.settings.shared;
+
+    // Add one task on the default group.
+    let command = "echo 'default group'";
+    assert_success(add_task(shared, command).await?);
+
+    // Add one task on the test group.
+    let command = "echo 'testgroup'";
+    assert_success(add_task_to_group(shared, command, "test_2").await?);
+
+    // Wait for both to finish
+    wait_for_task_condition(shared, 1, |task| task.is_done()).await?;
+
+    // Request the task's logs.
+    let message = LogRequestMessage {
+        tasks: TaskSelection::Group("test_2".to_string()),
+        send_logs: true,
+        lines: None,
+    };
+    let response = send_message(shared, message).await?;
+    let logs = match response {
+        Message::LogResponse(logs) => logs,
+        _ => bail!("Didn't get log response response in get_state"),
+    };
+
+    assert_eq!(logs.len(), 1, "Sould only receive a single log entry.");
+
+    Ok(())
+}
+
+/// Make sure that it's possible to get logs across groups.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn logs_for_all() -> Result<()> {
+    let daemon = daemon().await?;
+    let shared = &daemon.settings.shared;
+
+    // Add one task on the default group.
+    let command = "echo 'default group'";
+    assert_success(add_task(shared, command).await?);
+
+    // Add one task on the test group.
+    let command = "echo 'testgroup'";
+    assert_success(add_task_to_group(shared, command, "test_2").await?);
+
+    // Wait for both to finish
+    wait_for_task_condition(shared, 1, |task| task.is_done()).await?;
+
+    // Request the task's logs.
+    let message = LogRequestMessage {
+        tasks: TaskSelection::All,
+        send_logs: true,
+        lines: None,
+    };
+    let response = send_message(shared, message).await?;
+    let logs = match response {
+        Message::LogResponse(logs) => logs,
+        _ => bail!("Didn't get log response response in get_state"),
+    };
+
+    assert_eq!(logs.len(), 2, "Sould receive all log entries.");
 
     Ok(())
 }

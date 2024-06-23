@@ -24,7 +24,13 @@ So even though this is technically not a breaking change, I'll treat it as one t
 
 - Fixed delay after sending process related commands from client. [#540](https://github.com/Nukesor/pueue/pull/540)
 
-### Added
+### Change
+
+- **Breaking**: Streamlined `pueue log` parameters to behave the same way was `start`, `pause` or `kill`. [#509](https://github.com/Nukesor/pueue/issues/509)
+
+### Add
+
+- Add `--all` and `--group` to `pueue log`. [#509](https://github.com/Nukesor/pueue/issues/509)
 
 ## \[3.4.1\] - 2024-06-04
 

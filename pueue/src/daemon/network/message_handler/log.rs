@@ -10,11 +10,11 @@ use pueue_lib::state::SharedState;
 /// Return tasks and their output to the client.
 pub fn get_log(settings: &Settings, state: &SharedState, message: LogRequestMessage) -> Message {
     let state = { state.lock().unwrap().clone() };
-    // Return all logs, if no specific task id is specified.
-    let task_ids = if message.task_ids.is_empty() {
-        state.tasks.keys().cloned().collect()
-    } else {
-        message.task_ids
+
+    let task_ids = match message.tasks {
+        TaskSelection::All => state.tasks.keys().cloned().collect(),
+        TaskSelection::TaskIds(task_ids) => task_ids,
+        TaskSelection::Group(group) => state.task_ids_in_group(&group),
     };
 
     let mut tasks = BTreeMap::new();

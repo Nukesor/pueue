@@ -3,12 +3,13 @@ use std::collections::BTreeMap;
 use comfy_table::{Attribute as ComfyAttribute, Cell, CellAlignment, Table};
 use crossterm::style::Color;
 
-use pueue_lib::network::message::TaskLogMessage;
+use pueue_lib::network::message::{TaskLogMessage, TaskSelection};
 use pueue_lib::settings::Settings;
 use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
 use super::OutputStyle;
 use crate::client::cli::SubCommand;
+use crate::client::client::selection_from_params;
 
 mod json;
 mod local;
@@ -52,8 +53,10 @@ pub fn print_logs(
     let SubCommand::Log {
         json,
         task_ids,
+        group,
         lines,
         full,
+        all,
     } = cli_command
     else {
         panic!("Got wrong Subcommand {cli_command:?} in print_log. This shouldn't happen");
@@ -67,15 +70,22 @@ pub fn print_logs(
         return;
     }
 
-    // Check some early return conditions
-    if task_ids.is_empty() && task_logs.is_empty() {
-        println!("There are no finished tasks");
-        return;
-    }
-
-    if !task_ids.is_empty() && task_logs.is_empty() {
-        println!("There are no finished tasks for your specified ids");
-        return;
+    let selection = selection_from_params(*all, group, task_ids);
+    if task_logs.is_empty() {
+        match selection {
+            TaskSelection::TaskIds(_) => {
+                println!("There are no finished tasks for your specified ids");
+                return;
+            }
+            TaskSelection::Group(group) => {
+                println!("There are no finished tasks for group '{group}'");
+                return;
+            }
+            TaskSelection::All => {
+                println!("There are no finished tasks");
+                return;
+            }
+        }
     }
 
     // Iterate over each task and print the respective log.
