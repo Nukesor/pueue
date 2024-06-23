@@ -89,7 +89,6 @@ pub fn kill_child(task_id: usize, child: &mut GroupChild) -> std::io::Result<()>
 }
 
 /// Get current task pid, all child pid and all children's children
-/// TODO: see if this can be simplified using QueryInformationJobObject
 /// on the job object created by command_group.
 fn get_cur_task_processes(task_pid: u32) -> Vec<u32> {
     let mut all_pids = Vec::new();

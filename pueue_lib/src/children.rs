@@ -6,6 +6,7 @@ use std::collections::BTreeMap;
 ///
 /// The datastructure represents the following data:
 /// BTreeMap<group_name, BTreeMap<group_worker_id, (task_id, subprocess_handle)>
+#[derive(Debug, Default)]
 pub struct Children(pub BTreeMap<String, BTreeMap<usize, (usize, GroupChild)>>);
 
 impl Children {

@@ -4,26 +4,28 @@ use std::{fs::create_dir_all, path::PathBuf};
 
 use anyhow::{bail, Context, Result};
 use log::warn;
-use std::sync::mpsc::channel;
 
+use process_handler::initiate_shutdown;
 use pueue_lib::error::Error;
 use pueue_lib::network::certificate::create_certificates;
 use pueue_lib::network::message::Shutdown;
 use pueue_lib::network::protocol::socket_cleanup;
 use pueue_lib::network::secret::init_shared_secret;
 use pueue_lib::settings::Settings;
-use pueue_lib::state::State;
+use pueue_lib::state::{SharedState, State};
+use tokio::try_join;
 
 use self::state_helper::{restore_state, save_state};
 use crate::daemon::network::socket::accept_incoming;
-use crate::daemon::task_handler::{TaskHandler, TaskSender};
 
+mod callbacks;
 pub mod cli;
 mod network;
 mod pid;
+mod process_handler;
 /// Contains re-usable helper functions, that operate on the pueue-lib state.
 pub mod state_helper;
-mod task_handler;
+pub mod task_handler;
 
 /// The main entry point for the daemon logic.
 /// It's basically the `main`, but publicly exported as a library.
@@ -77,24 +79,18 @@ pub async fn run(config_path: Option<PathBuf>, profile: Option<String>, test: bo
     save_state(&state, &settings).context("Failed to save state on startup.")?;
     let state = Arc::new(Mutex::new(state));
 
-    let (sender, receiver) = channel();
-    let sender = TaskSender::new(sender);
-    let mut task_handler = TaskHandler::new(state.clone(), settings.clone(), receiver);
-
     // Don't set ctrlc and panic handlers during testing.
     // This is necessary for multithreaded integration testing, since multiple listener per process
     // aren't allowed. On top of this, ctrlc also somehow breaks test error output.
     if !test {
-        setup_signal_panic_handling(&settings, &sender)?;
+        setup_signal_panic_handling(&settings, state.clone())?;
     }
 
-    std::thread::spawn(move || {
-        task_handler.run();
-    });
-
-    accept_incoming(sender, state.clone(), settings.clone()).await?;
-
-    Ok(())
+    // Run both the task handler and the message handler in the same tokio task.
+    // If any of them fails, return an error immediately.
+    let task_handler = task_handler::run(state.clone(), settings.clone());
+    let message_handler = accept_incoming(settings.clone(), state.clone());
+    try_join!(task_handler, message_handler).map(|_| ())
 }
 
 /// Initialize all directories needed for normal operation.
@@ -136,17 +132,16 @@ fn init_directories(pueue_dir: &Path) -> Result<()> {
 /// TaskHandler. This is to prevent dangling processes and other weird edge-cases.
 ///
 /// On panic, we want to cleanup existing unix sockets and the PID file.
-fn setup_signal_panic_handling(settings: &Settings, sender: &TaskSender) -> Result<()> {
-    let sender_clone = sender.clone();
+fn setup_signal_panic_handling(settings: &Settings, state: SharedState) -> Result<()> {
+    let state_clone = state.clone();
+    let settings_clone = settings.clone();
 
     // This section handles Shutdown via SigTerm/SigInt process signals
     // Notify the TaskHandler, so it can shutdown gracefully.
     // The actual program exit will be done via the TaskHandler.
     ctrlc::set_handler(move || {
-        // Notify the task handler
-        sender_clone
-            .send(Shutdown::Graceful)
-            .expect("Failed to send Message to TaskHandler on Shutdown");
+        let mut state = state_clone.lock().unwrap();
+        initiate_shutdown(&settings_clone, &mut state, Shutdown::Graceful);
     })?;
 
     // Try to do some final cleanup, even if we panic.

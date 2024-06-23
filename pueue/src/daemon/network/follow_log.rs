@@ -9,7 +9,12 @@ use pueue_lib::network::message::*;
 use pueue_lib::network::protocol::{send_message, GenericStream};
 use pueue_lib::state::SharedState;
 
-/// Handle the continuous stream of a message.
+/// Handle the continuous stream of a some log output.
+///
+/// It's not actually a stream in the sense of a low-level network stream, but rather a series of
+/// `Message::Stream` messages, that each send a portion of new log output.
+///
+/// It's basically our own chunked stream implementation on top of the protocol we established.
 pub async fn handle_follow(
     pueue_directory: &Path,
     stream: &mut GenericStream,

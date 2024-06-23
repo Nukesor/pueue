@@ -1,12 +1,13 @@
-use pueue_lib::network::message::*;
 use pueue_lib::state::SharedState;
+use pueue_lib::success_msg;
+use pueue_lib::{network::message::*, settings::Settings};
 
-use super::{TaskSender, SENDER_ERR};
 use crate::daemon::network::response_helper::{ensure_group_exists, task_action_response_helper};
+use crate::daemon::process_handler;
 
 /// Invoked when calling `pueue kill`.
 /// Forward the kill message to the task handler, which then kills the process.
-pub fn kill(message: KillMessage, sender: &TaskSender, state: &SharedState) -> Message {
+pub fn kill(settings: &Settings, state: &SharedState, message: KillMessage) -> Message {
     let mut state = state.lock().unwrap();
 
     // If a group is selected, make sure it exists.
@@ -25,11 +26,11 @@ pub fn kill(message: KillMessage, sender: &TaskSender, state: &SharedState) -> M
                 |task| task.is_running(),
                 &state,
             ),
-            TaskSelection::Group(group) => create_success_message(format!(
-                "Sending signal {signal} to all running tasks of group {group}.",
-            )),
+            TaskSelection::Group(group) => {
+                success_msg!("Sending signal {signal} to all running tasks of group {group}.",)
+            }
             TaskSelection::All => {
-                create_success_message(format!("Sending signal {signal} to all running tasks."))
+                success_msg!("Sending signal {signal} to all running tasks.")
             }
         }
     } else {
@@ -40,18 +41,18 @@ pub fn kill(message: KillMessage, sender: &TaskSender, state: &SharedState) -> M
                 |task| task.is_running(),
                 &state,
             ),
-            TaskSelection::Group(group) => create_success_message(format!(
+            TaskSelection::Group(group) => success_msg!(
                 "All tasks of group \"{group}\" are being killed. The group will also be paused!!!"
-            )),
+            ),
             TaskSelection::All => {
-                create_success_message("All tasks are being killed. All groups will be paused!!!")
+                success_msg!("All tasks are being killed. All groups will be paused!!!")
             }
         }
     };
 
+    // Actually execute the command
     if let Message::Success(_) = response {
-        // Forward the message to the task handler, but only if there is something to kill.
-        sender.send(message).expect(SENDER_ERR);
+        process_handler::kill::kill(settings, &mut state, message.tasks, true, message.signal);
     }
 
     response

@@ -4,7 +4,25 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## \[Unreleased\]
+## \[4.0.0\] - unreleased
+
+This release introduces a new major version, as it includes a major internal refactoring.
+
+That refactoring corrects an old architectural design decision to have the subprocess state live in dedicated thread.
+This design forced client commands that directly affected processes, such as `pueue start --immediate`, to be forwarded to that thread via an `mpsc` channel.
+That thread would then check for new `mpsc` messages in a loop and eventually execute that command.
+This design resulted in short delays until those commands would actually take effect, which was problematic during testing or scripting.
+
+The new design fixes this issue and moves all process state into the global shared state (behind a Mutex), which allows Pueue to do process manipulation directly inside of the client message handlers.
+Furthermore, this change makes Pueue better suited to be scripted, as it effectively eliminates the need to call `pueue wait` in certain scenarios. The focus of Pueue, however, lies still on human interaction.
+
+Even though this refactoring significantly simplified the code, it also introduced a few mean and subtle bugs. Large parts of the internal state handling have been changed after all. Hopefully most have been caught by Pueue's extensive test suite, but there's still a chance that I overlooked something.
+
+So even though this is technically not a breaking change, I'll treat it as one to make you aware of possible issues that may arise.
+
+### Fixed
+
+- Fixed delay after sending process related commands from client. [#540](https://github.com/Nukesor/pueue/pull/540)
 
 ### Added
 

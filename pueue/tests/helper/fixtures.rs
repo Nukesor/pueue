@@ -12,6 +12,7 @@ use tokio::io::{self, AsyncWriteExt};
 
 use pueue::daemon::run;
 use pueue_lib::settings::*;
+use tokio::task::JoinHandle;
 
 use crate::helper::*;
 
@@ -22,6 +23,18 @@ pub struct PueueDaemon {
     pub tempdir: TempDir,
     #[allow(dead_code)]
     pub pid: i32,
+    // The async join handle of the daemon function.
+    // Can be used to abort the daemon manually.
+    pub join_handle: JoinHandle<Result<()>>,
+}
+
+/// Implement a custom drop for the Daemon test struct
+impl Drop for PueueDaemon {
+    fn drop(&mut self) {
+        // The daemon runs in background tokio task.
+        // Use this handle to make sure that it gets always killed.
+        self.join_handle.abort_handle();
+    }
 }
 
 /// A helper function which creates some test config, sets up a temporary directory and spawns
@@ -38,12 +51,13 @@ pub async fn daemon() -> Result<PueueDaemon> {
 pub async fn daemon_with_settings(settings: Settings, tempdir: TempDir) -> Result<PueueDaemon> {
     // Uncomment the next line to get some daemon logging.
     // Ignore any logger initialization errors, as multiple loggers will be initialized.
-    //let _ = simplelog::SimpleLogger::init(log::LevelFilter::Debug, simplelog::Config::default());
+    // let _ =
+    //     simplelog::SimpleLogger::init(simplelog::LevelFilter::Debug, simplelog::Config::default());
 
     let pueue_dir = tempdir.path();
     let path = pueue_dir.to_path_buf();
     // Start/spin off the daemon and get its PID
-    tokio::spawn(run_and_handle_error(path, true));
+    let join_handle = tokio::spawn(run_and_handle_error(path, true));
     let pid = get_pid(&settings.shared.pid_path()).await?;
 
     let sleep = 50;
@@ -60,6 +74,7 @@ pub async fn daemon_with_settings(settings: Settings, tempdir: TempDir) -> Resul
                 settings,
                 tempdir,
                 pid,
+                join_handle,
             });
         }
 

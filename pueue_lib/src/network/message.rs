@@ -21,6 +21,22 @@ macro_rules! impl_into_message {
     };
 }
 
+/// Macro to simplify creating success_messages
+#[macro_export]
+macro_rules! success_msg {
+    ($($arg:tt)*) => {{
+        create_success_message(format!($($arg)*))
+    }}
+}
+
+/// Macro to simplify creating failure_messages
+#[macro_export]
+macro_rules! failure_msg {
+    ($($arg:tt)*) => {{
+        create_failure_message(format!($($arg)*))
+    }}
+}
+
 /// This is the main message enum. \
 /// Everything that's send between the daemon and a client can be represented by this enum.
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]

@@ -1,13 +1,14 @@
-use pueue_lib::network::message::*;
 use pueue_lib::state::SharedState;
+use pueue_lib::success_msg;
 use pueue_lib::task::TaskStatus;
+use pueue_lib::{network::message::*, settings::Settings};
 
-use super::{TaskSender, SENDER_ERR};
 use crate::daemon::network::response_helper::*;
+use crate::daemon::process_handler;
 
 /// Invoked when calling `pueue pause`.
 /// Forward the pause message to the task handler, which then pauses groups/tasks/everything.
-pub fn pause(message: PauseMessage, sender: &TaskSender, state: &SharedState) -> Message {
+pub fn pause(settings: &Settings, state: &SharedState, message: PauseMessage) -> Message {
     let mut state = state.lock().unwrap();
     // If a group is selected, make sure it exists.
     if let TaskSelection::Group(group) = &message.tasks {
@@ -25,14 +26,14 @@ pub fn pause(message: PauseMessage, sender: &TaskSender, state: &SharedState) ->
             &state,
         ),
         TaskSelection::Group(group) => {
-            create_success_message(format!("Group \"{group}\" is being paused."))
+            success_msg!("Group \"{group}\" is being paused.")
         }
-        TaskSelection::All => create_success_message("All queues are being paused."),
+        TaskSelection::All => success_msg!("All queues are being paused."),
     };
 
+    // Actually execute the command
     if let Message::Success(_) = response {
-        // Forward the message to the task handler, but only if there is something to pause.
-        sender.send(message).expect(SENDER_ERR);
+        process_handler::pause::pause(settings, &mut state, message.tasks, message.wait);
     }
 
     response

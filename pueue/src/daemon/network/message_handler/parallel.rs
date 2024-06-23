@@ -1,5 +1,6 @@
 use pueue_lib::network::message::*;
 use pueue_lib::state::SharedState;
+use pueue_lib::success_msg;
 
 use crate::daemon::network::response_helper::*;
 
@@ -13,8 +14,8 @@ pub fn set_parallel_tasks(message: ParallelMessage, state: &SharedState) -> Mess
 
     group.parallel_tasks = message.parallel_tasks;
 
-    create_success_message(format!(
+    success_msg!(
         "Parallel tasks setting for group \"{}\" adjusted",
         &message.group
-    ))
+    )
 }

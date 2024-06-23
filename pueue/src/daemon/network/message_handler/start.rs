@@ -1,13 +1,15 @@
 use pueue_lib::network::message::*;
+use pueue_lib::settings::Settings;
 use pueue_lib::state::SharedState;
+use pueue_lib::success_msg;
 use pueue_lib::task::TaskStatus;
 
-use super::{TaskSender, SENDER_ERR};
 use crate::daemon::network::response_helper::*;
+use crate::daemon::process_handler;
 
 /// Invoked when calling `pueue start`.
 /// Forward the start message to the task handler, which then starts the process(es).
-pub fn start(message: StartMessage, sender: &TaskSender, state: &SharedState) -> Message {
+pub fn start(settings: &Settings, state: &SharedState, message: StartMessage) -> Message {
     let mut state = state.lock().unwrap();
     // If a group is selected, make sure it exists.
     if let TaskSelection::Group(group) = &message.tasks {
@@ -29,14 +31,13 @@ pub fn start(message: StartMessage, sender: &TaskSender, state: &SharedState) ->
             &state,
         ),
         TaskSelection::Group(group) => {
-            create_success_message(format!("Group \"{group}\" is being resumed."))
+            success_msg!("Group \"{group}\" is being resumed.")
         }
-        TaskSelection::All => create_success_message("All queues are being resumed."),
+        TaskSelection::All => success_msg!("All queues are being resumed."),
     };
 
     if let Message::Success(_) = response {
-        // Forward the message to the task handler, but only if something can be started
-        sender.send(message).expect(SENDER_ERR);
+        process_handler::start::start(settings, &mut state, message.tasks);
     }
 
     // Return a response depending on the selected tasks.

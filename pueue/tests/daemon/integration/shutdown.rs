@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 
 use crate::helper::*;
 
@@ -19,7 +19,10 @@ async fn test_ctrlc() -> Result<()> {
     sleep_ms(500).await;
 
     let result = child.try_wait();
-    assert!(matches!(result, Ok(Some(_))));
+    if !matches!(result, Ok(Some(_))) {
+        println!("Got error when sending SIGTERM to daemon. {result:?}");
+        bail!("Daemon process crashed after sending SIGTERM.");
+    }
     let code = result.unwrap().unwrap();
     assert!(matches!(code.code(), Some(0)));
 
