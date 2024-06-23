@@ -10,6 +10,7 @@ use pueue_lib::settings::Settings;
 use pueue_lib::state::GroupStatus;
 use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
+use crate::daemon::callbacks::spawn_callback;
 use crate::daemon::state_helper::{pause_on_failure, save_state, LockedState};
 use crate::ok_or_shutdown;
 
@@ -186,18 +187,18 @@ pub fn spawn_process(settings: &Settings, state: &mut LockedState, task_id: usiz
             }
 
             // Update all necessary fields on the task.
-            let group = {
+            let task = {
                 let task = state.tasks.get_mut(&task_id).unwrap();
                 task.status = TaskStatus::Done(TaskResult::FailedToSpawn(error));
                 task.start = Some(Local::now());
                 task.end = Some(Local::now());
-                // TODO:
-                //spawn_callback(task);
-
-                task.group.clone()
+                task.clone()
             };
 
-            pause_on_failure(state, settings, &group);
+            // Spawn any callback if necessary
+            spawn_callback(settings, state, &task);
+
+            pause_on_failure(state, settings, &task.group);
             ok_or_shutdown!(settings, state, save_state(state, settings));
             return;
         }

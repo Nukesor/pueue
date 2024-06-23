@@ -18,6 +18,7 @@ use self::state_helper::{restore_state, save_state};
 use crate::daemon::network::socket::accept_incoming;
 use crate::daemon::task_handler::TaskHandler;
 
+mod callbacks;
 pub mod cli;
 mod network;
 mod pid;

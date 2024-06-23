@@ -1,4 +1,5 @@
 use std::collections::BTreeMap;
+use std::process::Child;
 use std::sync::{Arc, Mutex};
 
 use serde_derive::{Deserialize, Serialize};
@@ -71,6 +72,9 @@ pub struct State {
     /// This is runtime state and won't be serialised to disk.
     #[serde(default, skip)]
     pub children: Children,
+    /// These are the currently running callbacks. They're usually very short-lived.
+    #[serde(default, skip)]
+    pub callbacks: Vec<Child>,
 }
 
 // Implement a custom Clone, as the child processes don't implement Clone.

@@ -9,7 +9,6 @@ pub fn process_exists(pid: u32) -> bool {
 pub mod tests {
     /// Get all processes in a process group
     pub fn get_process_group_pids(pgrp: i32) -> Vec<i32> {
-        /// TODO
         return {};
     }
 }

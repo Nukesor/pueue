@@ -6,6 +6,7 @@ use pueue_lib::task::{TaskResult, TaskStatus};
 
 use super::*;
 
+use crate::daemon::callbacks::spawn_callback;
 use crate::daemon::state_helper::{pause_on_failure, save_state, LockedState};
 use crate::ok_or_shutdown;
 
@@ -32,18 +33,19 @@ pub fn handle_finished_tasks(settings: &Settings, state: &mut LockedState) {
                 .remove(worker_id)
                 .expect("Errored child went missing while handling finished task.");
 
-            let group = {
+            // Update the tasks's state and return a clone for callbacks and notifications.
+            let task = {
                 let task = state.tasks.get_mut(task_id).unwrap();
                 task.status = TaskStatus::Done(TaskResult::Errored);
                 task.end = Some(Local::now());
-                // TODO:
-                //spawn_callback(task);
 
-                task.group.clone()
+                task.clone()
             };
+
+            spawn_callback(settings, state, &task);
             error!("Child {} failed with io::Error: {:?}", task_id, error);
 
-            pause_on_failure(state, settings, &group);
+            pause_on_failure(state, settings, &task.group);
             continue;
         }
 
@@ -75,8 +77,8 @@ pub fn handle_finished_tasks(settings: &Settings, state: &mut LockedState) {
             None => TaskResult::Killed,
         };
 
-        // Update all properties on the task and get the group for later
-        let group = {
+        // Update the tasks's state and return a clone for callbacks and notifications.
+        let task = {
             let task = state
                 .tasks
                 .get_mut(task_id)
@@ -84,14 +86,13 @@ pub fn handle_finished_tasks(settings: &Settings, state: &mut LockedState) {
 
             task.status = TaskStatus::Done(result.clone());
             task.end = Some(Local::now());
-            // TODO:
-            //spawn_callback(task);
 
-            task.group.clone()
+            task.clone()
         };
+        spawn_callback(settings, state, &task);
 
         if let TaskResult::Failed(_) = result {
-            pause_on_failure(state, settings, &group);
+            pause_on_failure(state, settings, &task.group);
         }
 
         // Already remove the output files, if the daemon is being reset anyway

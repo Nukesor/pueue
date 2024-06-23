@@ -1,31 +1,25 @@
-use std::collections::{BTreeMap, HashMap};
-use std::path::PathBuf;
-use std::process::Child;
+use std::collections::BTreeMap;
+use std::thread;
+use std::time::Duration;
 
-use anyhow::Result;
 use chrono::prelude::*;
-use handlebars::Handlebars;
-use log::{debug, error, info};
+use log::{error, info};
 
 use pueue_lib::children::Children;
 use pueue_lib::log::*;
 use pueue_lib::network::message::*;
 use pueue_lib::network::protocol::socket_cleanup;
-use pueue_lib::process_helper::*;
 use pueue_lib::settings::Settings;
-use pueue_lib::state::{GroupStatus, SharedState};
-use pueue_lib::task::{Task, TaskResult, TaskStatus};
+use pueue_lib::state::{Group, GroupStatus, SharedState};
+use pueue_lib::task::{TaskResult, TaskStatus};
 
 use crate::daemon::pid::cleanup_pid_file;
 use crate::daemon::state_helper::{reset_state, save_state};
 
+use super::callbacks::{check_callbacks, spawn_callback};
 use super::process_handler::finish::handle_finished_tasks;
 use super::process_handler::spawn::spawn_new;
 use super::state_helper::LockedState;
-
-mod callback;
-/// Logic for handling dependencies
-mod dependencies;
 
 /// This is a little helper macro, which looks at a critical result and shuts the
 /// TaskHandler down, if an error occurred. This is mostly used if the state cannot
@@ -37,6 +31,7 @@ macro_rules! ok_or_shutdown {
     ($settings:expr, $state:expr, $result:expr) => {
         match $result {
             Err(err) => {
+                use log::error;
                 use pueue_lib::network::message::Shutdown;
                 use $crate::daemon::process_handler::initiate_shutdown;
                 error!("Initializing graceful shutdown. Encountered error in TaskHandler: {err}");
@@ -51,13 +46,8 @@ macro_rules! ok_or_shutdown {
 pub struct TaskHandler {
     /// The state that's shared between the TaskHandler and the message handling logic.
     state: SharedState,
-    /// These are the currently running callbacks. They're usually very short-lived.
-    callbacks: Vec<Child>,
     /// The settings that are passed at program start.
     settings: Settings,
-
-    // Some static settings that are extracted from `settings` for convenience purposes.
-    pueue_directory: PathBuf,
 }
 
 impl TaskHandler {
@@ -75,8 +65,6 @@ impl TaskHandler {
 
         TaskHandler {
             state: shared_state,
-            callbacks: Vec::new(),
-            pueue_directory: settings.shared.pueue_directory(),
             settings,
         }
     }
@@ -102,9 +90,10 @@ impl TaskHandler {
                 let state_clone = self.state.clone();
                 let mut state = state_clone.lock().unwrap();
 
+                check_callbacks(&mut state);
                 handle_finished_tasks(&self.settings, &mut state);
                 enqueue_delayed_tasks(&self.settings, &mut state);
-                self.check_failed_dependencies(&mut state);
+                check_failed_dependencies(&self.settings, &mut state);
 
                 if state.shutdown.is_some() {
                     // Check if we're in shutdown.
@@ -119,8 +108,9 @@ impl TaskHandler {
                     spawn_new(&self.settings, &mut state);
                 }
             }
-
-            self.check_callbacks();
+            // The task handler thread can sleep a bit longer, as it doesn't do any
+            // time critical tasks.
+            thread::sleep(Duration::from_secs(1));
         }
     }
 }
@@ -196,5 +186,61 @@ fn enqueue_delayed_tasks(settings: &Settings, state: &mut LockedState) {
     // Save the state if a task has been enqueued
     if changed {
         ok_or_shutdown!(settings, state, save_state(state, settings));
+    }
+}
+
+/// Ensure that no `Queued` tasks have any failed dependencies.
+/// Otherwise set their status to `Done` and result to `DependencyFailed`.
+pub fn check_failed_dependencies(settings: &Settings, state: &mut LockedState) {
+    // Get id's of all tasks with failed dependencies
+    let has_failed_deps: Vec<_> = state
+        .tasks
+        .iter()
+        .filter(|(_, task)| task.status == TaskStatus::Queued && !task.dependencies.is_empty())
+        .filter_map(|(id, task)| {
+            // At this point we got all queued tasks with dependencies.
+            // Go through all dependencies and ensure they didn't fail.
+            let failed = task
+                .dependencies
+                .iter()
+                .flat_map(|id| state.tasks.get(id))
+                .filter(|task| task.failed())
+                .map(|task| task.id)
+                .next();
+
+            failed.map(|f| (*id, f))
+        })
+        .collect();
+
+    // Update the state of all tasks with failed dependencies.
+    for (id, _) in has_failed_deps {
+        // Get the task's group, since we have to check if it's paused.
+        let group = if let Some(task) = state.tasks.get(&id) {
+            task.group.clone()
+        } else {
+            continue;
+        };
+
+        // Only update the status, if the group isn't paused.
+        // This allows users to fix and restart dependencies in-place without
+        // breaking the dependency chain.
+        if let Some(&Group {
+            status: GroupStatus::Paused,
+            ..
+        }) = state.groups.get(&group)
+        {
+            continue;
+        }
+
+        // Update the task and return a clone to build the callback.
+        let task = {
+            let task = state.tasks.get_mut(&id).unwrap();
+            task.status = TaskStatus::Done(TaskResult::DependencyFailed);
+            task.start = Some(Local::now());
+            task.end = Some(Local::now());
+            task.clone()
+        };
+
+        spawn_callback(settings, state, &task);
     }
 }
