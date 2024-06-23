@@ -2,8 +2,7 @@ use anyhow::Result;
 use log::{debug, error};
 
 use pueue_lib::network::message::{Shutdown, TaskSelection};
-use pueue_lib::process_helper::ProcessAction;
-use pueue_lib::process_helper::*;
+use pueue_lib::process_helper::{send_signal_to_child, ProcessAction};
 use pueue_lib::settings::Settings;
 
 use super::state_helper::LockedState;
@@ -20,7 +19,7 @@ pub mod start;
 pub fn initiate_shutdown(settings: &Settings, state: &mut LockedState, shutdown: Shutdown) {
     state.shutdown = Some(shutdown);
 
-    kill::kill(settings, state, TaskSelection::All, false, None);
+    self::kill::kill(settings, state, TaskSelection::All, false, None);
 }
 
 /// This is a small wrapper around the real platform dependant process handling logic

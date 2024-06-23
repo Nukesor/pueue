@@ -108,9 +108,10 @@ impl TaskHandler {
                     spawn_new(&self.settings, &mut state);
                 }
             }
-            // The task handler thread can sleep a bit longer, as it doesn't do any
-            // time critical tasks.
-            thread::sleep(Duration::from_secs(1));
+
+            // In normal operation, the task handler thread can sleep a bit longer as it
+            // doesn't do any time critical tasks.
+            thread::sleep(Duration::from_millis(300));
         }
     }
 }

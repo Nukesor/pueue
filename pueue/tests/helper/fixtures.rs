@@ -38,7 +38,8 @@ pub async fn daemon() -> Result<PueueDaemon> {
 pub async fn daemon_with_settings(settings: Settings, tempdir: TempDir) -> Result<PueueDaemon> {
     // Uncomment the next line to get some daemon logging.
     // Ignore any logger initialization errors, as multiple loggers will be initialized.
-    //let _ = simplelog::SimpleLogger::init(log::LevelFilter::Debug, simplelog::Config::default());
+    // let _ =
+    //     simplelog::SimpleLogger::init(simplelog::LevelFilter::Debug, simplelog::Config::default());
 
     let pueue_dir = tempdir.path();
     let path = pueue_dir.to_path_buf();
