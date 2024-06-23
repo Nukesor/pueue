@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
-use std::thread;
 use std::time::Duration;
 
+use anyhow::Result;
 use chrono::prelude::*;
 use log::{error, info};
 
@@ -84,7 +84,7 @@ impl TaskHandler {
     /// This first step waits for 200ms while receiving new messages.
     /// This prevents this loop from running hot, but also means that we only check if a new task
     /// can be scheduled or if tasks are finished, every 200ms.
-    pub fn run(&mut self) {
+    pub async fn run(&mut self) -> Result<()> {
         loop {
             {
                 let state_clone = self.state.clone();
@@ -111,7 +111,7 @@ impl TaskHandler {
 
             // In normal operation, the task handler thread can sleep a bit longer as it
             // doesn't do any time critical tasks.
-            thread::sleep(Duration::from_millis(300));
+            tokio::time::sleep(Duration::from_millis(300)).await;
         }
     }
 }

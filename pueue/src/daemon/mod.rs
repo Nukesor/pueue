@@ -5,6 +5,7 @@ use std::{fs::create_dir_all, path::PathBuf};
 use anyhow::{bail, Context, Result};
 use log::warn;
 
+use network::message_handler;
 use process_handler::initiate_shutdown;
 use pueue_lib::error::Error;
 use pueue_lib::network::certificate::create_certificates;
@@ -13,6 +14,7 @@ use pueue_lib::network::protocol::socket_cleanup;
 use pueue_lib::network::secret::init_shared_secret;
 use pueue_lib::settings::Settings;
 use pueue_lib::state::{SharedState, State};
+use tokio::try_join;
 
 use self::state_helper::{restore_state, save_state};
 use crate::daemon::network::socket::accept_incoming;
@@ -88,13 +90,11 @@ pub async fn run(config_path: Option<PathBuf>, profile: Option<String>, test: bo
         setup_signal_panic_handling(&settings, state.clone())?;
     }
 
-    std::thread::spawn(move || {
-        task_handler.run();
-    });
-
-    accept_incoming(settings.clone(), state.clone()).await?;
-
-    Ok(())
+    // Run both the task handler and the message handler in the same tokio task.
+    // If any of them fails, return an error immediately.
+    let task_handler = task_handler.run();
+    let message_handler = accept_incoming(settings.clone(), state.clone());
+    try_join!(task_handler, message_handler).map(|_| ())
 }
 
 /// Initialize all directories needed for normal operation.
