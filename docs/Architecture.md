@@ -30,20 +30,16 @@ This includes:
 The daemon is composed of two main components.
 
 1. Request handling in `pueue/src/daemon/network/`.
-    This is the code responsible for communicating with clients.
-    In `pueue/src/daemon/network/message_handler/` you can find neatly separated handlers for all of Pueue's subcommands.
+   This is the code responsible for communicating with clients.
+   In `pueue/src/daemon/network/message_handler/` you can find neatly separated handlers for all of Pueue's subcommands.
 2. The TaskHandler in `pueue/src/daemon/task_handler/`.
-    It's responsible for everything regarding process interaction.
+   It's responsible for everything regarding process interaction.
 
-All information that's not sub-process specific, is stored in the `State` (`pueue-lib/state.rs`) struct. \
+All information, including process specific information, is stored in the `State` (`pueue-lib/state.rs`) struct. \
 Both components share a reference to the State, a `Arc<Mutex<State>>`.
 That way we can guarantee a single source of truth and a consistent state.
 
-It's also important to know, that there's a `mpsc` channel. \
-This channel is used to send on-demand messages from the network request handler to the the TaskHandler.
-This includes stuff like "Start/Pause/Kill" sub-processes or "Reset everything".
-
-### Request handling
+### Message Handlers
 
 The `pueue/src/daemon/network/socket.rs` module contains the logic for accepting client connections and receiving payloads.
 The request accept and handle logic is a single async-await loop run by the main thread.
@@ -51,18 +47,13 @@ The request accept and handle logic is a single async-await loop run by the main
 The payload is then deserialized to `Message` (`pueue-lib/message.rs`) and handled by its respective function.
 All functions used for handling these messages can be found in `pueue/src/daemon/network/message_handler`.
 
-Many messages can be instantly handled by simply modifying or reading the state. \ 
-However, sometimes the TaskHandler has to be notified, if something involves modifying actual system processes (start/pause/kill tasks).
-That's when the `mpsc` channel to the TaskHandler comes into play.
-
 ### TaskHandler
 
 The TaskHandler is responsible for actually starting and managing system processes. \
-It's further important to note, that it runs in its own thread.
+It shares the async main thread with the message handlers in a `try_join!` call.
 
 The TaskHandler runs a never ending loop, which checks a few times each second, if
 
-- there are new instructions in the `mpsc` channel.
 - a new task can be started.
 - tasks finished and can be finalized.
 - delayed tasks can be enqueued (`-d` flag on `pueue add`)
@@ -74,12 +65,9 @@ The TaskHandler is by far the most complex piece of code in this project, but th
 
 Whenever you're writing some core-logic in Pueue, please make sure to understand how mutexes work.
 
-Try to be conservative with your `state.lock()` calls, since this also blocks the request handler!
-Only use the state, if you absolutely have to.
+As a general rule of thumb, the state should only ever be locked in message handler functions and at the top of the TaskHandler's main loop.
 
-At the same time, you should also lock early enough to prevent inconsistent states.
-Operations should generally be atomic. \
-Anyhow, working with mutexes is usually straight-forward, but can sometimes be a little bit tricky.
+This rule allows us to be very conservative with state locking to prevent deadlocks.
 
 ## Code Style
 
