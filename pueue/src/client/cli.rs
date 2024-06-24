@@ -151,10 +151,6 @@ pub enum SubCommand {
         /// All groups will be set to running and paused tasks will be resumed.
         #[arg(short, long)]
         all: bool,
-
-        /// Deprecated: this switch no longer has any effect.
-        #[arg(short, long)]
-        children: bool,
     },
 
     #[command(
@@ -233,10 +229,6 @@ pub enum SubCommand {
         /// Only pause the specified group and let already running tasks finish by themselves.
         #[arg(short, long)]
         wait: bool,
-
-        /// Deprecated: this switch no longer has any effect.
-        #[arg(short, long)]
-        children: bool,
     },
 
     #[command(about = "Kill specific running tasks or whole task groups..\n\
@@ -252,10 +244,6 @@ pub enum SubCommand {
         /// Kill all running tasks across ALL groups. This also pauses all groups.
         #[arg(short, long)]
         all: bool,
-
-        /// Deprecated: this switch no longer has any effect.
-        #[arg(short, long)]
-        children: bool,
 
         /// Send a UNIX signal instead of simply killing the process.
         /// DISCLAIMER: This bypasses Pueue's process handling logic!
@@ -467,10 +455,6 @@ https://github.com/Nukesor/pueue/issues/350#issue-1359083118"
 
     /// Kill all tasks, clean up afterwards and reset EVERYTHING!
     Reset {
-        /// Deprecated: this switch no longer has any effect.
-        #[arg(short, long)]
-        children: bool,
-
         /// Don't ask for any confirmation.
         #[arg(short, long)]
         force: bool,

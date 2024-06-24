@@ -25,6 +25,7 @@ Even though this refactoring significantly simplified the code, it also introduc
 ### Change
 
 - **Breaking**: Streamlined `pueue log` parameters to behave the same way was `start`, `pause` or `kill`. [#509](https://github.com/Nukesor/pueue/issues/509)
+- **Breaking**: Remove the `--children` commandline flags, that have been deprecated and no longer serve any function since `v3.0.0`.
 
 ### Add
 
