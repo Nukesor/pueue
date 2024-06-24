@@ -38,7 +38,7 @@ pub fn handle_message(message: Message, state: &SharedState, settings: &Settings
         Message::Parallel(message) => parallel::set_parallel_tasks(message, state),
         Message::Pause(message) => pause::pause(settings, state, message),
         Message::Remove(task_ids) => remove::remove(settings, state, task_ids),
-        Message::Reset(_) => reset::reset(settings, state),
+        Message::Reset(message) => reset::reset(settings, state, message),
         Message::Restart(message) => restart::restart_multiple(settings, state, message),
         Message::Send(message) => send::send(state, message),
         Message::Start(message) => start::start(settings, state, message),

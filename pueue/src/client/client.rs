@@ -545,12 +545,18 @@ impl Client {
                 group: group.clone(),
             }
             .into(),
-            SubCommand::Reset { force, .. } => {
+            SubCommand::Reset { force, groups, .. } => {
                 if self.settings.client.show_confirmation_questions && !force {
                     self.handle_user_confirmation("reset", &Vec::new())?;
                 }
 
-                ResetMessage {}.into()
+                let target = if groups.is_empty() {
+                    ResetTarget::All
+                } else {
+                    ResetTarget::Groups(groups.clone())
+                };
+
+                ResetMessage { target }.into()
             }
             SubCommand::Shutdown => Shutdown::Graceful.into(),
             SubCommand::Parallel {
