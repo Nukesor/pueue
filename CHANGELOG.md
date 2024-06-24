@@ -30,6 +30,8 @@ Even though this refactoring significantly simplified the code, it also introduc
 ### Add
 
 - Add `--all` and `--group` to `pueue log`. [#509](https://github.com/Nukesor/pueue/issues/509)
+- Add `pueue reset [group_names]` to allow resetting individual groups. [#482](https://github.com/Nukesor/pueue/issues/482)
+  This also refactors the way resets are done internally, resulting in a cleaner code architecture.
 
 ## \[3.4.1\] - 2024-06-04
 

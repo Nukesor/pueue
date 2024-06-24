@@ -2,6 +2,7 @@ use anyhow::Context;
 use chrono::Local;
 use log::info;
 use pueue_lib::log::clean_log_handles;
+use pueue_lib::state::GroupStatus;
 use pueue_lib::task::{TaskResult, TaskStatus};
 
 use super::*;
@@ -95,8 +96,13 @@ pub fn handle_finished_tasks(settings: &Settings, state: &mut LockedState) {
             pause_on_failure(state, settings, &task.group);
         }
 
-        // Already remove the output files, if the daemon is being reset anyway
-        if state.full_reset {
+        // Already remove the output files, if this group is being reset.
+        if state
+            .groups
+            .get(&task.group)
+            .map(|group| group.status == GroupStatus::Reset)
+            .unwrap_or(true)
+        {
             clean_log_handles(*task_id, &settings.shared.pueue_directory());
         }
     }

@@ -455,6 +455,10 @@ https://github.com/Nukesor/pueue/issues/350#issue-1359083118"
 
     /// Kill all tasks, clean up afterwards and reset EVERYTHING!
     Reset {
+        /// If groups are specified, only those specific groups will be reset.
+        #[arg(short, long)]
+        groups: Vec<String>,
+
         /// Don't ask for any confirmation.
         #[arg(short, long)]
         force: bool,

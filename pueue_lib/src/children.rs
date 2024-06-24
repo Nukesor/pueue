@@ -15,6 +15,16 @@ impl Children {
         self.0.iter().any(|(_, pool)| !pool.is_empty())
     }
 
+    /// Returns whether there are any active tasks for the given group.
+    ///
+    /// Returns `false` if the group cannot be found.
+    pub fn has_group_active_tasks(&self, group: &str) -> bool {
+        self.0
+            .get(group)
+            .map(|pool| !pool.is_empty())
+            .unwrap_or(false)
+    }
+
     /// A convenience function to check whether there's child with a given task_id.
     /// We have to do a nested linear search, as these datastructure aren't indexed via task_ids.
     pub fn has_child(&self, task_id: usize) -> bool {

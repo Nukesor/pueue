@@ -19,6 +19,9 @@ pub type SharedState = Arc<Mutex<State>>;
 pub enum GroupStatus {
     Running,
     Paused,
+    // This state is set, if this group is being reset.
+    // This means that all tasks are being killed and removed.
+    Reset,
 }
 
 /// The representation of a group.
@@ -62,11 +65,7 @@ pub struct State {
     /// This is runtime state and won't be serialised to disk.
     #[serde(default, skip)]
     pub shutdown: Option<Shutdown>,
-    /// A simple flag which is used to signal that we're currently doing a full reset of the daemon.
-    /// This flag prevents new tasks from being spawned.
-    /// This is runtime state and won't be serialised to disk.
-    #[serde(default, skip)]
-    pub full_reset: bool,
+
     /// Pueue's subprocess and worker pool representation.
     /// Take a look at [Children] for more info.
     /// This is runtime state and won't be serialised to disk.
@@ -84,7 +83,6 @@ impl Clone for State {
             tasks: self.tasks.clone(),
             groups: self.groups.clone(),
             shutdown: self.shutdown.clone(),
-            full_reset: self.full_reset,
             ..Default::default()
         }
     }
@@ -94,10 +92,7 @@ impl Clone for State {
 impl Eq for State {}
 impl PartialEq for State {
     fn eq(&self, other: &Self) -> bool {
-        self.tasks == other.tasks
-            && self.groups == other.groups
-            && self.shutdown == other.shutdown
-            && self.full_reset == other.full_reset
+        self.tasks == other.tasks && self.groups == other.groups && self.shutdown == other.shutdown
     }
 }
 

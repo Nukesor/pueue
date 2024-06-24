@@ -1,4 +1,4 @@
-use std::fs::{read_dir, remove_file, File};
+use std::fs::{remove_file, File};
 use std::io::{self, prelude::*, Read, SeekFrom};
 use std::path::{Path, PathBuf};
 
@@ -102,22 +102,6 @@ pub fn read_last_log_file_lines(
 
     // Get the last few lines of both files
     Ok(read_last_lines(&mut file, lines))
-}
-
-/// Remove all files in the log directory.
-pub fn reset_task_log_directory(pueue_dir: &Path) -> Result<(), Error> {
-    let task_log_dir = pueue_dir.join("task_logs");
-
-    let files = read_dir(&task_log_dir)
-        .map_err(|err| Error::IoPathError(task_log_dir, "reading task log files", err))?;
-
-    for file in files.flatten() {
-        if let Err(err) = remove_file(file.path()) {
-            error!("Failed to delete log file: {err}");
-        }
-    }
-
-    Ok(())
 }
 
 /// Read the last `amount` lines of a file to a string.

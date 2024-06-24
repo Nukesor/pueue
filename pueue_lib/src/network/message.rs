@@ -280,7 +280,17 @@ pub struct GroupResponseMessage {
 impl_into_message!(GroupResponseMessage, Message::GroupResponse);
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
-pub struct ResetMessage {}
+pub enum ResetTarget {
+    // Reset all groups
+    All,
+    // Reset a list of specific groups
+    Groups(Vec<String>),
+}
+
+#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
+pub struct ResetMessage {
+    pub target: ResetTarget,
+}
 
 impl_into_message!(ResetMessage, Message::Reset);
 

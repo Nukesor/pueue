@@ -57,6 +57,7 @@ pub fn get_group_headline(name: &str, group: &Group, style: &OutputStyle) -> Str
     let status = match group.status {
         GroupStatus::Running => style.style_text("running", Some(Color::Green), None),
         GroupStatus::Paused => style.style_text("paused", Some(Color::Yellow), None),
+        GroupStatus::Reset => style.style_text("resetting", Some(Color::Red), None),
     };
 
     format!("{} ({} parallel): {}", name, group.parallel_tasks, status)

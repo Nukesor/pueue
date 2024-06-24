@@ -6,7 +6,6 @@ use chrono::prelude::*;
 use log::{error, info};
 
 use pueue_lib::children::Children;
-use pueue_lib::log::*;
 use pueue_lib::network::message::*;
 use pueue_lib::network::protocol::socket_cleanup;
 use pueue_lib::settings::Settings;
@@ -14,7 +13,7 @@ use pueue_lib::state::{Group, GroupStatus, SharedState};
 use pueue_lib::task::{TaskResult, TaskStatus};
 
 use crate::daemon::pid::cleanup_pid_file;
-use crate::daemon::state_helper::{reset_state, save_state};
+use crate::daemon::state_helper::save_state;
 use crate::ok_or_shutdown;
 
 use super::callbacks::{check_callbacks, spawn_callback};
@@ -46,26 +45,24 @@ pub async fn run(state: SharedState, settings: Settings) -> Result<()> {
     }
 
     loop {
-        {
+        'mutex_block: {
             let mut state = state.lock().unwrap();
 
             check_callbacks(&mut state);
             handle_finished_tasks(&settings, &mut state);
+
+            // Check if we're in shutdown.
+            // If all tasks are killed, we do some cleanup and exit.
+            if state.shutdown.is_some() {
+                handle_shutdown(&settings, &mut state);
+                break 'mutex_block;
+            }
+
+            // If we aren't in shutdown mode, do the usual stuff
+            handle_group_resets(&settings, &mut state);
             enqueue_delayed_tasks(&settings, &mut state);
             check_failed_dependencies(&settings, &mut state);
-
-            if state.shutdown.is_some() {
-                // Check if we're in shutdown.
-                // If all tasks are killed, we do some cleanup and exit.
-                handle_shutdown(&settings, &mut state);
-            } else if state.full_reset {
-                // Wait until all tasks are killed.
-                // Once they are, reset everything and go back to normal
-                handle_reset(&settings, &mut state);
-            } else {
-                // Only start new tasks, if we aren't in the middle of a reset or shutdown.
-                spawn_new(&settings, &mut state);
-            }
+            spawn_new(&settings, &mut state);
         }
 
         tokio::time::sleep(Duration::from_millis(300)).await;
@@ -106,20 +103,28 @@ fn handle_shutdown(settings: &Settings, state: &mut LockedState) {
 /// and no new tasks will be spawned.
 /// This function checks, if all killed children have been handled.
 /// If that's the case, completely reset the state
-fn handle_reset(settings: &Settings, state: &mut LockedState) {
-    // Don't do any reset logic, if we aren't in reset mode or if some children are still up.
-    if state.children.has_active_tasks() {
-        return;
+fn handle_group_resets(_settings: &Settings, state: &mut LockedState) {
+    let groups_to_reset: Vec<String> = state
+        .groups
+        .iter()
+        .filter(|(_name, group)| group.status == GroupStatus::Reset)
+        .map(|(name, _)| name.to_string())
+        .collect();
+
+    for name in groups_to_reset.iter() {
+        // Don't do any reset logic, if there're still some children are still up.
+        if state.children.has_group_active_tasks(name) {
+            continue;
+        }
+
+        // Remove all tasks that belong to the group to reset
+        state.tasks.retain(|_id, task| &task.group != name);
+
+        // Restart the group, now that it's devoid of tasks.
+        if let Some(group) = state.groups.get_mut(name) {
+            group.status = GroupStatus::Running;
+        }
     }
-
-    if let Err(error) = reset_state(state, settings) {
-        error!("Failed to reset state with error: {error:?}");
-    };
-
-    if let Err(error) = reset_task_log_directory(&settings.shared.pueue_directory()) {
-        panic!("Error while resetting task log directory: {error}");
-    };
-    state.full_reset = false;
 }
 
 /// As time passes, some delayed tasks may need to be enqueued.
