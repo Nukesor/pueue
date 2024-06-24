@@ -6,17 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## \[4.0.0\] - unreleased
 
-That refactoring corrects an old architectural design decision to have the subprocess state live in dedicated thread.
-In this design, client commands that directly affected subprocesses, such as `pueue start --immediate`, were forwarded to that thread via an `mpsc` channel.
-That thread would then check for new `mpsc` messages in a loop and eventually execute that command.
+This release contains a refactoring, which corrects an old architectural design decision.
 
-Now, this process resulted in short delays until those commands would actually take effect, which was problematic during testing or scripting.
+Up until recently, Pueue had the subprocesses' (tasks') state live in dedicated thread, while messages from the client were handled in the main thread.
+Client commands that directly affected subprocesses, such as `pueue start --immediate`, were forwarded to that special thread via an `mpsc` channel.
+That thread would then check for those messages in a loop and eventually execute the command.
+
+This process resulted in short delays until such commands would actually take effect, which became a problem during testing or scripting.
 Tasks would, for instance, start a few hundred milliseconds after the client got the `Ok` from the daemon that the task is about to start.
+Commands like `pueue add --immediate install_something && pueue send 0 'y\n'` would often fail as the task hasn't started yet.
 
-The new design fixes this issue and moves all subprocess state into the global shared state (behind a Mutex), which allows Pueue to do subprocess manipulation directly inside of the client message handlers.
-Furthermore, this change makes Pueue better suited to be scripted, as it effectively eliminates the need to call `pueue wait` in certain scenarios. The focus of Pueue, however, lies still on human interaction.
+The new design fixes this issue and moves all subprocess state into the global shared state (behind a Mutex).
+This allows Pueue to do subprocess state manipulation directly inside of the client message handlers, effectively removing any delays.
 
-Even though this refactoring significantly simplified the code, it also introduced a few mean and subtle bugs. Large parts of the internal state handling have been refactored after all. Hopefully most have been caught by Pueue's extensive test suite, but there's still a chance that I overlooked something.
+As a result, Pueue is now easier to script. The focus of Pueue, however, lies still on human interaction.
+
+**But** even though this refactoring significantly simplified the code, it introduced a few mean and subtle bugs.
+Large parts of the internal state handling have been refactored after all.
+However, I think that most have been caught by Pueue's extensive test suite, though there's still a chance that I overlooked something.
 
 ### Fixed
 
@@ -30,7 +37,7 @@ Even though this refactoring significantly simplified the code, it also introduc
 ### Add
 
 - Add `--all` and `--group` to `pueue log`. [#509](https://github.com/Nukesor/pueue/issues/509)
-- Add `pueue reset [group_names]` to allow resetting individual groups. [#482](https://github.com/Nukesor/pueue/issues/482)
+- Add `pueue reset --groups [group_names]` to allow resetting individual groups. [#482](https://github.com/Nukesor/pueue/issues/482) \
   This also refactors the way resets are done internally, resulting in a cleaner code architecture.
 
 ## \[3.4.1\] - 2024-06-04
