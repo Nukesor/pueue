@@ -79,7 +79,7 @@ There are a few different ways to install Pueue.
 
 #### Package Manager
 
-<a href="https://repology.org/project/pueue/versions"><img align="right" src="https://repology.org/badge/vertical-allrepos/pueue.svg" alt="Packaging status"></a>
+<a href="https://repology.org/project/pueue/versions"><img align="right" src="https://repology.org/badge/vertical-allrepos/pueue.svg?exclude_unsupported=1" alt="Packaging status"></a>
 
 The preferred way to install Pueue is to use your system's package manager.
 This will usually deploy service files and completions automatically.
