@@ -6,28 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## \[4.0.0\] - unreleased
 
-This release contains a refactoring, which corrects an old architectural design decision.
+Up until recently, Pueue had the subprocesses' (tasks') state live in a dedicated thread.
+Client commands that directly affected subprocesses, such as `pueue start --immediate`, were forwarded to that special thread via an `mpsc` channel to be further processed.
 
-Up until recently, Pueue had the subprocesses' (tasks') state live in dedicated thread, while messages from the client were handled in the main thread.
-Client commands that directly affected subprocesses, such as `pueue start --immediate`, were forwarded to that special thread via an `mpsc` channel.
-That thread would then check for those messages in a loop and eventually execute the command.
+This approach resulted in short delays until such commands would actually be processed.
+For instance, tasks would start a few hundred milliseconds after the client got the `Ok` from the daemon that the task is about to start.
+Commands like `pueue add --immediate install_something && pueue send 0 'y\n'` would often fail as the task didn't start yet.
 
-This process resulted in short delays until such commands would actually take effect, which became a problem during testing or scripting.
-Tasks would, for instance, start a few hundred milliseconds after the client got the `Ok` from the daemon that the task is about to start.
-Commands like `pueue add --immediate install_something && pueue send 0 'y\n'` would often fail as the task hasn't started yet.
-
-The new design fixes this issue and moves all subprocess state into the global shared state (behind a Mutex).
-This allows Pueue to do subprocess state manipulation directly inside of the client message handlers, effectively removing any delays.
-
-As a result, Pueue is now easier to script. The focus of Pueue, however, lies still on human interaction.
-
-**But** even though this refactoring significantly simplified the code, it introduced a few mean and subtle bugs.
-Large parts of the internal state handling have been refactored after all.
-However, I think that most have been caught by Pueue's extensive test suite, though there's still a chance that I overlooked something.
+The new state design fixes this issue, which allows Pueue to do subprocess state manipulation directly inside of the client message handlers, effectively removing any delays.
 
 ### Fixed
 
-- Fixed delay after sending process related commands from client. [#540](https://github.com/Nukesor/pueue/pull/540)
+- Fixed delay after sending process related commands from client. [#548](https://github.com/Nukesor/pueue/pull/548)
 
 ### Change
 
