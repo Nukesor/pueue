@@ -1,10 +1,12 @@
 use std::convert::TryFrom;
+use std::fs::{set_permissions, Permissions};
+use std::os::unix::fs::PermissionsExt;
 
 use async_trait::async_trait;
 use log::info;
 use rustls::pki_types::ServerName;
 use tokio::io::{AsyncRead, AsyncWrite};
-use tokio::net::{TcpListener, TcpStream, UnixListener, UnixStream};
+use tokio::net::{TcpListener, TcpStream, UnixListener, UnixSocket, UnixStream};
 use tokio_rustls::TlsAcceptor;
 
 use crate::error::Error;
@@ -142,8 +144,29 @@ pub async fn get_listener(settings: &Shared) -> Result<GenericListener, Error> {
             })?;
         }
 
-        let unix_listener = UnixListener::bind(&socket_path)
-            .map_err(|err| Error::IoPathError(socket_path, "creating unix socket", err))?;
+        // The various nix platforms handle socket permissions in different
+        // ways, but generally prevent the socket's permissions from being
+        // changed once it is being listened on.
+        let socket = UnixSocket::new_stream()
+            .map_err(|err| Error::IoError("creating unix socket".to_string(), err))?;
+        socket.bind(&socket_path).map_err(|err| {
+            Error::IoPathError(socket_path.clone(), "binding unix socket to path", err)
+        })?;
+
+        if let Some(mode) = settings.unix_socket_permissions {
+            set_permissions(&socket_path, Permissions::from_mode(mode)).map_err(|err| {
+                Error::IoPathError(
+                    socket_path.clone(),
+                    "setting permissions on unix socket",
+                    err,
+                )
+            })?;
+        }
+
+        let unix_listener = socket.listen(1024).map_err(|err| {
+            Error::IoPathError(socket_path.clone(), "listening on unix socket", err)
+        })?;
+
         return Ok(Box::new(unix_listener));
     }
 

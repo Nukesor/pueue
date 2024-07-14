@@ -46,6 +46,12 @@ pub struct Shared {
     /// The path to the unix socket.
     #[cfg(not(target_os = "windows"))]
     pub unix_socket_path: Option<PathBuf>,
+    /// Unix socket permissions. Typically specified as an octal number and
+    /// defaults to `0o700` which grants only the current user access to the
+    /// socket. For a client to connect to the daemon, the client must have
+    /// read/write permissions.
+    #[cfg(not(target_os = "windows"))]
+    pub unix_socket_permissions: Option<u32>,
 
     /// The TCP hostname/ip address.
     #[serde(default = "default_host")]
@@ -147,6 +153,8 @@ impl Default for Shared {
             unix_socket_path: None,
             #[cfg(not(target_os = "windows"))]
             use_unix_socket: true,
+            #[cfg(not(target_os = "windows"))]
+            unix_socket_permissions: Some(0o700),
             host: default_host(),
             port: default_port(),
 
