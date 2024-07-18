@@ -21,7 +21,7 @@ pub enum TaskStatus {
     /// Task finished. The actual result of the task is handled by the [TaskResult] enum.
     Done(TaskResult),
     /// Used while the command of a task is edited (to prevent starting the task)
-    Locked,
+    Locked { previous_status: Box<TaskStatus> },
 }
 
 /// This enum represents the exit status of an actually spawned program.
@@ -62,12 +62,6 @@ pub struct Task {
     pub priority: i32,
     pub label: Option<String>,
     pub status: TaskStatus,
-    /// This field is only used when editing the path/command of a task.
-    /// It's necessary, since we enter the `Locked` state during editing.
-    /// However, we have to go back to the previous state after we finished editing.
-    ///
-    /// TODO: Refactor this into a `TaskStatus::Locked{previous_status: TaskStatus}`.
-    pub prev_status: TaskStatus,
     pub start: Option<DateTime<Local>>,
     pub end: Option<DateTime<Local>>,
 }
@@ -97,7 +91,6 @@ impl Task {
             priority,
             label,
             status: starting_status.clone(),
-            prev_status: starting_status,
             start: None,
             end: None,
         }
@@ -118,7 +111,6 @@ impl Task {
             priority: 0,
             label: task.label.clone(),
             status: TaskStatus::Queued,
-            prev_status: TaskStatus::Queued,
             start: None,
             end: None,
         }
@@ -188,7 +180,6 @@ impl std::fmt::Debug for Task {
             .field("dependencies", &self.dependencies)
             .field("label", &self.label)
             .field("status", &self.status)
-            .field("prev_status", &self.prev_status)
             .field("start", &self.start)
             .field("end", &self.end)
             .field("priority", &self.priority)

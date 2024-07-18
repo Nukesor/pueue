@@ -247,7 +247,7 @@ fn log_status_change(previous_status: TaskStatus, task: &Task, style: &OutputSty
 fn get_color_for_status(task_status: &TaskStatus) -> Color {
     match task_status {
         TaskStatus::Running | TaskStatus::Done(_) => Color::Green,
-        TaskStatus::Paused | TaskStatus::Locked => Color::White,
+        TaskStatus::Paused | TaskStatus::Locked { .. } => Color::White,
         _ => Color::White,
     }
 }

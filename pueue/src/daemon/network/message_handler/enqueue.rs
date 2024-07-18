@@ -10,7 +10,12 @@ use crate::daemon::network::response_helper::*;
 pub fn enqueue(state: &SharedState, message: EnqueueMessage) -> Message {
     let mut state = state.lock().unwrap();
     let filtered_tasks = state.filter_tasks(
-        |task| matches!(task.status, TaskStatus::Stashed { .. } | TaskStatus::Locked),
+        |task| {
+            matches!(
+                task.status,
+                TaskStatus::Stashed { .. } | TaskStatus::Locked { .. }
+            )
+        },
         Some(message.task_ids),
     );
 

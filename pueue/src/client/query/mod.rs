@@ -77,7 +77,7 @@ impl QueryResult {
                 fn rank_status(task: &Task) -> u8 {
                     match &task.status {
                         TaskStatus::Stashed { .. } => 0,
-                        TaskStatus::Locked => 1,
+                        TaskStatus::Locked { .. } => 1,
                         TaskStatus::Queued => 2,
                         TaskStatus::Paused => 3,
                         TaskStatus::Running => 4,

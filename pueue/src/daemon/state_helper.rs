@@ -161,7 +161,7 @@ pub fn restore_state(pueue_directory: &Path) -> Result<Option<State>> {
         }
 
         // Handle crash during editing of the task command.
-        if task.status == TaskStatus::Locked {
+        if matches!(task.status, TaskStatus::Locked { .. }) {
             task.status = TaskStatus::Stashed { enqueue_at: None };
         }
 

@@ -22,7 +22,7 @@ pub fn remove(settings: &Settings, state: &SharedState, task_ids: Vec<usize>) ->
             TaskStatus::Queued
                 | TaskStatus::Stashed { .. }
                 | TaskStatus::Done(_)
-                | TaskStatus::Locked
+                | TaskStatus::Locked { .. }
         )
     };
     let mut filtered_tasks = state.filter_tasks(filter, Some(task_ids));

@@ -43,11 +43,17 @@ async fn test_edit_flow() -> Result<()> {
     assert_eq!(response.priority, 0);
 
     // Task should be locked, after the request for editing succeeded.
-    assert_eq!(get_task_status(shared, 0).await?, TaskStatus::Locked);
+    assert!(
+        matches!(get_task_status(shared, 0).await?, TaskStatus::Locked { .. }),
+        "Expected the task to be locked after first request."
+    );
 
     // You cannot start a locked task. It should still be locked afterwards.
     start_tasks(shared, TaskSelection::TaskIds(vec![0])).await?;
-    assert_eq!(get_task_status(shared, 0).await?, TaskStatus::Locked);
+    assert!(
+        matches!(get_task_status(shared, 0).await?, TaskStatus::Locked { .. },),
+        "Expected the task to still be locked."
+    );
 
     // Send the final message of the protocol and actually change the task.
     let response = send_message(
