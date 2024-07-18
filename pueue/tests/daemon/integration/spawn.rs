@@ -31,7 +31,10 @@ async fn test_fail_to_spawn_task() -> Result<()> {
     let task = wait_for_task_condition(shared, 0, |task| task.failed()).await?;
     assert!(matches!(
         task.status,
-        TaskStatus::Done(TaskResult::FailedToSpawn(_))
+        TaskStatus::Done {
+            result: TaskResult::FailedToSpawn(_),
+            ..
+        }
     ));
 
     // Get the log output and ensure that there's the expected error log from the daemon.

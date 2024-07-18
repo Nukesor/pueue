@@ -30,8 +30,9 @@ pub fn enqueue(state: &SharedState, message: EnqueueMessage) -> Message {
                 enqueue_at: message.enqueue_at,
             };
         } else {
-            task.status = TaskStatus::Queued;
-            task.enqueued_at = Some(Local::now());
+            task.status = TaskStatus::Queued {
+                enqueued_at: Local::now(),
+            };
         }
     }
 

@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 
-use anyhow::{bail, Result};
+use anyhow::Result;
+use assert_matches::assert_matches;
+
 use pueue_lib::task::{TaskResult, TaskStatus};
 
 use crate::client::helper::*;
@@ -27,7 +29,11 @@ async fn restart_and_edit_task_command() -> Result<()> {
     let state = get_state(shared).await?;
     let task = state.tasks.get(&0).unwrap();
     assert_eq!(task.command, "sleep 60");
-    assert_eq!(task.status, TaskStatus::Running);
+    assert_matches!(
+        task.status,
+        TaskStatus::Running { .. },
+        "Task should be running"
+    );
 
     Ok(())
 }
@@ -98,10 +104,14 @@ async fn restart_and_edit_task_path_and_command() -> Result<()> {
     assert_eq!(task.label, Some("replaced string".to_owned()));
 
     // Also the task should have been restarted and failed.
-    if let TaskStatus::Done(TaskResult::FailedToSpawn(_)) = task.status {
-    } else {
-        bail!("The task should have failed");
-    };
+    assert_matches!(
+        task.status,
+        TaskStatus::Done {
+            result: TaskResult::FailedToSpawn(_),
+            ..
+        },
+        "The task should have failed"
+    );
 
     Ok(())
 }
@@ -145,10 +155,6 @@ async fn normal_restart_with_edit() -> Result<()> {
     // Create a task and wait for it to finish.
     assert_success(add_task(shared, "ls").await?);
     let original_task = wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
-    assert!(
-        original_task.enqueued_at.is_some(),
-        "Task is done and should have enqueue_at set."
-    );
 
     // Set the editor to a command which replaces the temporary file's content.
     let mut envs = HashMap::new();
@@ -162,17 +168,16 @@ async fn normal_restart_with_edit() -> Result<()> {
     let state = get_state(shared).await?;
     let task = state.tasks.get(&1).unwrap();
     assert_eq!(task.command, "sleep 60");
-    assert_eq!(task.status, TaskStatus::Running);
+    assert_matches!(
+        task.status,
+        TaskStatus::Running { .. },
+        "Task should be running"
+    );
 
     // Since we created a copy, the new task should be created after the first one.
     assert!(
         original_task.created_at < task.created_at,
         "New task should have a newer created_at."
-    );
-    // The created_at time should also be newer.
-    assert!(
-        original_task.enqueued_at.unwrap() < task.enqueued_at.unwrap(),
-        "The second run should be enqueued before the first run."
     );
 
     Ok(())

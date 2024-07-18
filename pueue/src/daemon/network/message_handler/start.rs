@@ -25,7 +25,9 @@ pub fn start(settings: &Settings, state: &SharedState, message: StartMessage) ->
             |task| {
                 matches!(
                     task.status,
-                    TaskStatus::Paused | TaskStatus::Queued | TaskStatus::Stashed { .. }
+                    TaskStatus::Paused { .. }
+                        | TaskStatus::Queued { .. }
+                        | TaskStatus::Stashed { .. }
                 )
             },
             &state,

@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use anyhow::{bail, Result};
+use assert_matches::assert_matches;
 use test_log::test;
 
 use pueue_lib::network::message::*;
@@ -15,7 +16,11 @@ async fn create_edited_task(shared: &Shared) -> Result<EditResponseMessage> {
     assert_success(add_task(shared, "ls").await?);
 
     // The task should now be queued
-    assert_eq!(get_task_status(shared, 0).await?, TaskStatus::Queued);
+    assert_matches!(
+        get_task_status(shared, 0).await?,
+        TaskStatus::Queued { .. },
+        "Task should be queued"
+    );
 
     // Send a request to edit that task
     let response = send_message(shared, Message::EditRequest(0)).await?;
@@ -43,15 +48,17 @@ async fn test_edit_flow() -> Result<()> {
     assert_eq!(response.priority, 0);
 
     // Task should be locked, after the request for editing succeeded.
-    assert!(
-        matches!(get_task_status(shared, 0).await?, TaskStatus::Locked { .. }),
+    assert_matches!(
+        get_task_status(shared, 0).await?,
+        TaskStatus::Locked { .. },
         "Expected the task to be locked after first request."
     );
 
     // You cannot start a locked task. It should still be locked afterwards.
     start_tasks(shared, TaskSelection::TaskIds(vec![0])).await?;
-    assert!(
-        matches!(get_task_status(shared, 0).await?, TaskStatus::Locked { .. },),
+    assert_matches!(
+        get_task_status(shared, 0).await?,
+        TaskStatus::Locked { .. },
         "Expected the task to still be locked."
     );
 
@@ -75,7 +82,11 @@ async fn test_edit_flow() -> Result<()> {
     assert_eq!(task.command, "ls -ahl");
     assert_eq!(task.path, PathBuf::from("/tmp"));
     assert_eq!(task.label, Some("test".to_string()));
-    assert_eq!(task.status, TaskStatus::Queued);
+    assert_matches!(
+        task.status,
+        TaskStatus::Queued { .. },
+        "Task should be queued"
+    );
     assert_eq!(task.priority, 99);
 
     Ok(())

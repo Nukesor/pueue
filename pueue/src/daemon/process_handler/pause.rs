@@ -30,7 +30,7 @@ pub fn pause(settings: &Settings, state: &mut LockedState, selection: TaskSelect
             info!("Pausing group {group_name}");
 
             let filtered_tasks = state.filter_tasks_of_group(
-                |task| matches!(task.status, TaskStatus::Running),
+                |task| matches!(task.status, TaskStatus::Running { .. }),
                 &group_name,
             );
 
@@ -48,22 +48,26 @@ pub fn pause(settings: &Settings, state: &mut LockedState, selection: TaskSelect
     // Pause all tasks that were found.
     if !wait {
         for id in keys {
-            pause_task(state, id);
+            // Get the enqueued_at/start times from the current state.
+            let (enqueued_at, start) = match state.tasks.get(&id).unwrap().status {
+                TaskStatus::Running { enqueued_at, start }
+                | TaskStatus::Paused { enqueued_at, start } => (enqueued_at, start),
+                _ => continue,
+            };
+
+            let success = match perform_action(state, id, ProcessAction::Pause) {
+                Err(err) => {
+                    error!("Failed pausing task {id}: {err:?}");
+                    false
+                }
+                Ok(success) => success,
+            };
+
+            if success {
+                state.change_status(id, TaskStatus::Paused { enqueued_at, start });
+            }
         }
     }
 
     ok_or_shutdown!(settings, state, save_state(state, settings));
-}
-
-/// Pause a specific task.
-/// Send a signal to the process to actually pause the OS process.
-fn pause_task(state: &mut LockedState, id: usize) {
-    match perform_action(state, id, ProcessAction::Pause) {
-        Err(err) => error!("Failed pausing task {id}: {err:?}"),
-        Ok(success) => {
-            if success {
-                state.change_status(id, TaskStatus::Paused);
-            }
-        }
-    }
 }

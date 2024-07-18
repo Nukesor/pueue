@@ -139,8 +139,9 @@ fn enqueue_delayed_tasks(settings: &Settings, state: &mut LockedState) {
             if time <= Local::now() {
                 info!("Enqueuing delayed task : {}", task.id);
 
-                task.status = TaskStatus::Queued;
-                task.enqueued_at = Some(Local::now());
+                task.status = TaskStatus::Queued {
+                    enqueued_at: Local::now(),
+                };
                 changed = true;
             }
         }
@@ -158,7 +159,9 @@ fn check_failed_dependencies(settings: &Settings, state: &mut LockedState) {
     let has_failed_deps: Vec<_> = state
         .tasks
         .iter()
-        .filter(|(_, task)| task.status == TaskStatus::Queued && !task.dependencies.is_empty())
+        .filter(|(_, task)| {
+            matches!(task.status, TaskStatus::Queued { .. }) && !task.dependencies.is_empty()
+        })
         .filter_map(|(id, task)| {
             // At this point we got all queued tasks with dependencies.
             // Go through all dependencies and ensure they didn't fail.
@@ -197,9 +200,17 @@ fn check_failed_dependencies(settings: &Settings, state: &mut LockedState) {
         // Update the task and return a clone to build the callback.
         let task = {
             let task = state.tasks.get_mut(&id).unwrap();
-            task.status = TaskStatus::Done(TaskResult::DependencyFailed);
-            task.start = Some(Local::now());
-            task.end = Some(Local::now());
+            // We know that this must be true, but we have to check anyway.
+            let TaskStatus::Queued { enqueued_at } = task.status else {
+                continue;
+            };
+
+            task.status = TaskStatus::Done {
+                enqueued_at,
+                start: Local::now(),
+                end: Local::now(),
+                result: TaskResult::DependencyFailed,
+            };
             task.clone()
         };
 

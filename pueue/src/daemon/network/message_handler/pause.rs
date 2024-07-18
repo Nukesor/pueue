@@ -22,7 +22,7 @@ pub fn pause(settings: &Settings, state: &SharedState, message: PauseMessage) ->
         TaskSelection::TaskIds(task_ids) => task_action_response_helper(
             "Tasks are being paused",
             task_ids.clone(),
-            |task| matches!(task.status, TaskStatus::Running),
+            |task| matches!(task.status, TaskStatus::Running { .. }),
             &state,
         ),
         TaskSelection::Group(group) => {

@@ -10,18 +10,29 @@ use crate::state::PUEUE_DEFAULT_GROUP;
 /// They basically represent the internal task life-cycle.
 #[derive(PartialEq, Eq, Clone, Debug, Display, Serialize, Deserialize)]
 pub enum TaskStatus {
-    /// The task is queued and waiting for a free slot
-    Queued,
-    /// The task has been manually stashed. It won't be executed until it's manually enqueued
-    Stashed { enqueue_at: Option<DateTime<Local>> },
-    /// The task is started and running
-    Running,
-    /// A previously running task has been paused
-    Paused,
-    /// Task finished. The actual result of the task is handled by the [TaskResult] enum.
-    Done(TaskResult),
     /// Used while the command of a task is edited (to prevent starting the task)
     Locked { previous_status: Box<TaskStatus> },
+    /// The task has been manually stashed. It won't be executed until it's manually enqueued
+    Stashed { enqueue_at: Option<DateTime<Local>> },
+    /// The task is queued and waiting for a free slot
+    Queued { enqueued_at: DateTime<Local> },
+    /// The task is started and running
+    Running {
+        enqueued_at: DateTime<Local>,
+        start: DateTime<Local>,
+    },
+    /// A previously running task has been paused
+    Paused {
+        enqueued_at: DateTime<Local>,
+        start: DateTime<Local>,
+    },
+    /// Task finished. The actual result of the task is handled by the [TaskResult] enum.
+    Done {
+        enqueued_at: DateTime<Local>,
+        start: DateTime<Local>,
+        end: DateTime<Local>,
+        result: TaskResult,
+    },
 }
 
 /// This enum represents the exit status of an actually spawned program.
@@ -75,7 +86,6 @@ impl Task {
         Task {
             id: 0,
             created_at: Local::now(),
-            enqueued_at: None,
             original_command: original_command.clone(),
             command: original_command,
             path,
@@ -85,8 +95,6 @@ impl Task {
             priority,
             label,
             status: starting_status.clone(),
-            start: None,
-            end: None,
         }
     }
 
@@ -95,7 +103,6 @@ impl Task {
         Task {
             id: 0,
             created_at: Local::now(),
-            enqueued_at: None,
             original_command: task.original_command.clone(),
             command: task.command.clone(),
             path: task.path.clone(),
@@ -104,20 +111,32 @@ impl Task {
             dependencies: Vec::new(),
             priority: 0,
             label: task.label.clone(),
-            status: TaskStatus::Queued,
-            start: None,
-            end: None,
+            status: TaskStatus::Queued {
+                enqueued_at: Local::now(),
+            },
+        }
+    }
+
+    pub fn start_and_end(&self) -> (Option<DateTime<Local>>, Option<DateTime<Local>>) {
+        match self.status {
+            TaskStatus::Running { start, .. } => (Some(start), None),
+            TaskStatus::Paused { start, .. } => (Some(start), None),
+            TaskStatus::Done { start, end, .. } => (Some(start), Some(end)),
+            _ => (None, None),
         }
     }
 
     /// Whether the task is having a running process managed by the TaskHandler
     pub fn is_running(&self) -> bool {
-        matches!(self.status, TaskStatus::Running | TaskStatus::Paused)
+        matches!(
+            self.status,
+            TaskStatus::Running { .. } | TaskStatus::Paused { .. }
+        )
     }
 
     /// Whether the task's process finished.
     pub fn is_done(&self) -> bool {
-        matches!(self.status, TaskStatus::Done(_))
+        matches!(self.status, TaskStatus::Done { .. })
     }
 
     /// Check if the task errored. \
@@ -126,7 +145,7 @@ impl Task {
     /// 2. Didn't finish yet.
     pub fn failed(&self) -> bool {
         match &self.status {
-            TaskStatus::Done(result) => !matches!(result, TaskResult::Success),
+            TaskStatus::Done { result, .. } => !matches!(result, TaskResult::Success),
             _ => false,
         }
     }
@@ -140,7 +159,7 @@ impl Task {
     pub fn is_queued(&self) -> bool {
         matches!(
             self.status,
-            TaskStatus::Queued
+            TaskStatus::Queued { .. }
                 | TaskStatus::Stashed {
                     enqueue_at: Some(_)
                 }
@@ -174,8 +193,6 @@ impl std::fmt::Debug for Task {
             .field("dependencies", &self.dependencies)
             .field("label", &self.label)
             .field("status", &self.status)
-            .field("start", &self.start)
-            .field("end", &self.end)
             .field("priority", &self.priority)
             .finish()
     }

@@ -1,4 +1,6 @@
 use anyhow::{Context, Result};
+use assert_matches::assert_matches;
+
 use pueue_lib::network::message::*;
 use pueue_lib::state::GroupStatus;
 use pueue_lib::task::*;
@@ -21,7 +23,11 @@ async fn test_pause_daemon() -> Result<()> {
     sleep_ms(500).await;
 
     // Make sure it's not started
-    assert_eq!(get_task_status(shared, 0).await?, TaskStatus::Queued);
+    assert_matches!(
+        get_task_status(shared, 0).await?,
+        TaskStatus::Queued { .. },
+        "Task should not be started yet."
+    );
 
     Ok(())
 }
@@ -40,7 +46,10 @@ async fn test_pause_running_task() -> Result<()> {
     pause_tasks(shared, TaskSelection::All).await?;
 
     // Make sure the task as well as the default group get paused
-    wait_for_task_condition(shared, 0, |task| matches!(task.status, TaskStatus::Paused)).await?;
+    wait_for_task_condition(shared, 0, |task| {
+        matches!(task.status, TaskStatus::Paused { .. })
+    })
+    .await?;
     let state = get_state(shared).await?;
     assert_eq!(
         state.groups.get(PUEUE_DEFAULT_GROUP).unwrap().status,
@@ -72,7 +81,11 @@ async fn test_pause_with_wait() -> Result<()> {
     // Make sure the default group gets paused, but the task is still running
     wait_for_group_status(shared, PUEUE_DEFAULT_GROUP, GroupStatus::Paused).await?;
     let state = get_state(shared).await?;
-    assert_eq!(state.tasks.get(&0).unwrap().status, TaskStatus::Running);
+    assert_matches!(
+        state.tasks.get(&0).unwrap().status,
+        TaskStatus::Running { .. },
+        "Task should continue running after group is paused."
+    );
 
     Ok(())
 }

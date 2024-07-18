@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use anyhow::Result;
+use assert_matches::assert_matches;
 
 use pueue_lib::network::message::*;
 use pueue_lib::task::*;
@@ -26,7 +27,16 @@ async fn test_add_with_alias() -> Result<()> {
     let task = get_task(shared, 0).await?;
 
     // The task finished successfully and its command has replaced the alias.
-    assert_eq!(task.status, TaskStatus::Done(TaskResult::Success));
+    assert!(
+        matches!(
+            task.status,
+            TaskStatus::Done {
+                result: TaskResult::Success,
+                ..
+            },
+        ),
+        "Task should have finished successfully"
+    );
     assert_eq!(task.command, "echo test");
     assert_eq!(task.original_command, "non_existing_cmd test");
 
@@ -50,7 +60,14 @@ async fn test_restart_with_alias() -> Result<()> {
 
     // Ensure the command hasn't been mutated and the task failed.
     assert_eq!(task.command, "non_existing_cmd test");
-    assert_eq!(task.status, TaskStatus::Done(TaskResult::Failed(127)));
+    assert_matches!(
+        task.status,
+        TaskStatus::Done {
+            result: TaskResult::Failed(127),
+            ..
+        },
+        "Task should have failed to start"
+    );
 
     // Create the alias file which will replace the new command with "echo".
     let mut aliases = HashMap::new();
@@ -76,7 +93,14 @@ async fn test_restart_with_alias() -> Result<()> {
     // The task finished successfully and its command has replaced the alias.
     assert_eq!(task.original_command, "replaced_cmd test");
     assert_eq!(task.command, "echo test");
-    assert_eq!(task.status, TaskStatus::Done(TaskResult::Success));
+    assert_matches!(
+        task.status,
+        TaskStatus::Done {
+            result: TaskResult::Success,
+            ..
+        },
+        "Task should have finished successfully"
+    );
 
     // Make sure we see an actual "test" in the output.
     // This ensures that we really called "echo".

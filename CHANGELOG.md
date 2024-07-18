@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## \[4.0.0\] - unreleased
 
+This release aims to improve Pueue and to rectify some old design decisions.
+
+### Multi-threaded architecture
+
 Up until recently, Pueue had the subprocesses' (tasks') state live in a dedicated thread.
 Client commands that directly affected subprocesses, such as `pueue start --immediate`, were forwarded to that special thread via an `mpsc` channel to be further processed.
 
@@ -21,7 +25,11 @@ The new state design fixes this issue, which allows Pueue to do subprocess state
 
 ### Change
 
-- **Breaking**: Streamlined `pueue log` parameters to behave the same way was `start`, `pause` or `kill`. [#509](https://github.com/Nukesor/pueue/issues/509)
+- **Breaking**: Refactor internal task state. Some task variables have been moved into the `TaskStatus` enum, which now enforces various invariants during compile time via the type system.
+  Due to this, several subtle time related inconsistencies (task start/stop/enqueue times) have been fixed. \
+  **Important: This completely breaks backwards compatibility, including previous state.**
+  **Important: The Pueue daemon needs to be restarted and the state will be wiped clean.**
+- **Breaking**: Streamlined `pueue log` parameters to behave the same way as `start`, `pause` or `kill`. [#509](https://github.com/Nukesor/pueue/issues/509)
 - **Breaking**: Remove the `--children` commandline flags, that have been deprecated and no longer serve any function since `v3.0.0`.
 
 ### Add

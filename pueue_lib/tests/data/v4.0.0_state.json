@@ -1,0 +1,125 @@
+{
+  "tasks": {
+    "0": {
+      "id": 0,
+      "created_at": "2024-07-18T14:55:02.656354132+02:00",
+      "original_command": "ls",
+      "command": "ls",
+      "path": "/home/nuke",
+      "envs": {},
+      "group": "default",
+      "dependencies": [],
+      "priority": 0,
+      "label": null,
+      "status": {
+        "Done": {
+          "enqueued_at": "2024-07-18T14:55:02.656334442+02:00",
+          "start": "2024-07-18T14:55:02.890447203+02:00",
+          "end": "2024-07-18T14:55:03.191922436+02:00",
+          "result": "Success"
+        }
+      }
+    },
+    "1": {
+      "id": 1,
+      "created_at": "2024-07-18T14:55:09.965451882+02:00",
+      "original_command": "ls",
+      "command": "ls",
+      "path": "/home/nuke",
+      "envs": {},
+      "group": "default",
+      "dependencies": [],
+      "priority": 0,
+      "label": null,
+      "status": {
+        "Done": {
+          "enqueued_at": "2024-07-18T14:55:09.965430002+02:00",
+          "start": "2024-07-18T14:55:10.116492792+02:00",
+          "end": "2024-07-18T14:55:10.418112074+02:00",
+          "result": {
+            "Failed": 2
+          }
+        }
+      }
+    },
+    "2": {
+      "id": 2,
+      "created_at": "2024-07-18T14:55:16.045036378+02:00",
+      "original_command": "ls",
+      "command": "ls",
+      "path": "/home/nuke",
+      "envs": {},
+      "group": "default",
+      "dependencies": [],
+      "priority": 0,
+      "label": null,
+      "status": {
+        "Stashed": {
+          "enqueue_at": null
+        }
+      }
+    },
+    "3": {
+      "id": 3,
+      "created_at": "2024-07-18T14:55:23.253045880+02:00",
+      "original_command": "sleep 9000000",
+      "command": "sleep 9000000",
+      "path": "/home/nuke",
+      "envs": {},
+      "group": "default",
+      "dependencies": [],
+      "priority": 0,
+      "label": null,
+      "status": {
+        "Running": {
+          "enqueued_at": "2024-07-18T14:55:23.253039780+02:00",
+          "start": "2024-07-18T14:55:23.365190551+02:00"
+        }
+      }
+    },
+    "4": {
+      "id": 4,
+      "created_at": "2024-07-18T14:55:52.901140728+02:00",
+      "original_command": "pueue sleep 60",
+      "command": "pueue sleep 60",
+      "path": "/home/nuke",
+      "envs": {},
+      "group": "default",
+      "dependencies": [],
+      "priority": 0,
+      "label": null,
+      "status": {
+        "Queued": {
+          "enqueued_at": "2024-07-18T14:55:52.901136338+02:00"
+        }
+      }
+    },
+    "5": {
+      "id": 5,
+      "created_at": "2024-07-18T14:56:15.733118787+02:00",
+      "original_command": "days ls",
+      "command": "days ls",
+      "path": "/home/nuke",
+      "envs": {},
+      "group": "default",
+      "dependencies": [],
+      "priority": 0,
+      "label": null,
+      "status": {
+        "Queued": {
+          "enqueued_at": "2024-07-18T14:56:35.928788860+02:00"
+        }
+      }
+    }
+  },
+  "groups": {
+    "default": {
+      "status": "Running",
+      "parallel_tasks": 1
+    },
+    "test": {
+      "status": "Running",
+      "parallel_tasks": 1
+    }
+  }
+}

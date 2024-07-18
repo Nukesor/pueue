@@ -26,7 +26,7 @@ pub fn is_task_removable(state: &LockedState, task_id: &usize, to_delete: &[usiz
         .tasks
         .iter()
         .filter(|(_, task)| {
-            task.dependencies.contains(task_id) && !matches!(task.status, TaskStatus::Done(_))
+            task.dependencies.contains(task_id) && !matches!(task.status, TaskStatus::Done { .. })
         })
         .map(|(_, task)| task.id)
         .collect();
@@ -150,14 +150,21 @@ pub fn restore_state(pueue_directory: &Path) -> Result<Option<State>> {
     // While restoring the tasks, check for any invalid/broken stati.
     for (_, task) in state.tasks.iter_mut() {
         // Handle ungraceful shutdowns while executing tasks.
-        if task.status == TaskStatus::Running || task.status == TaskStatus::Paused {
+        if let TaskStatus::Running { start, enqueued_at }
+        | TaskStatus::Paused { start, enqueued_at } = task.status
+        {
             info!(
                 "Setting task {} with previous status {:?} to new status {:?}",
                 task.id,
                 task.status,
                 TaskResult::Killed
             );
-            task.status = TaskStatus::Done(TaskResult::Killed);
+            task.status = TaskStatus::Done {
+                start,
+                end: Local::now(),
+                enqueued_at,
+                result: TaskResult::Killed,
+            };
         }
 
         // Handle crash during editing of the task command.
@@ -183,7 +190,7 @@ pub fn restore_state(pueue_directory: &Path) -> Result<Option<State>> {
 
         // If there are any queued tasks, pause the group.
         // This should prevent any unwanted execution of tasks due to a system crash.
-        if task.status == TaskStatus::Queued {
+        if let TaskStatus::Queued { .. } = task.status {
             info!(
                 "Pausing group {} to prevent unwanted execution of previous tasks",
                 &task.group

@@ -1,4 +1,5 @@
 use anyhow::{bail, Result};
+use assert_matches::assert_matches;
 
 use pueue_lib::network::message::*;
 use pueue_lib::settings::Shared;
@@ -8,16 +9,18 @@ use super::send_message;
 
 /// Assert that a message is a successful message.
 pub fn assert_success(message: Message) {
-    assert!(
-        matches!(message, Message::Success(_)),
+    assert_matches!(
+        message,
+        Message::Success(_),
         "Expected to get SuccessMessage, got {message:?}",
     );
 }
 
 /// Assert that a message is a failure message.
 pub fn assert_failure(message: Message) {
-    assert!(
-        matches!(message, Message::Failure(_)),
+    assert_matches!(
+        message,
+        Message::Failure(_),
         "Expected to get FailureMessage, got {message:?}",
     );
 }

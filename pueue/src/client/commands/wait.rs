@@ -140,15 +140,27 @@ pub async fn wait(
 fn reached_target_status(task: &Task, target_status: &WaitTargetStatus) -> bool {
     match target_status {
         WaitTargetStatus::Queued => {
-            task.status == TaskStatus::Queued
-                || task.status == TaskStatus::Running
-                || matches!(task.status, TaskStatus::Done(_))
+            matches!(
+                task.status,
+                TaskStatus::Queued { .. } | TaskStatus::Running { .. } | TaskStatus::Done { .. }
+            )
         }
         WaitTargetStatus::Running => {
-            task.status == TaskStatus::Running || matches!(task.status, TaskStatus::Done(_))
+            matches!(
+                task.status,
+                TaskStatus::Running { .. } | TaskStatus::Done { .. }
+            )
         }
-        WaitTargetStatus::Done => matches!(task.status, TaskStatus::Done(_)),
-        WaitTargetStatus::Success => matches!(task.status, TaskStatus::Done(TaskResult::Success)),
+        WaitTargetStatus::Done => matches!(task.status, TaskStatus::Done { .. }),
+        WaitTargetStatus::Success => {
+            matches!(
+                task.status,
+                TaskStatus::Done {
+                    result: TaskResult::Success,
+                    ..
+                }
+            )
+        }
     }
 }
 
@@ -201,7 +213,7 @@ fn log_status_change(previous_status: TaskStatus, task: &Task, style: &OutputSty
     // Check if the task has finished.
     // In case it has, show the task's result in human-readable form.
     // Color some parts of the output depending on the task's outcome.
-    if let TaskStatus::Done(result) = &task.status {
+    if let TaskStatus::Done { result, .. } = &task.status {
         let text = match result {
             TaskResult::Success => {
                 let status = style.style_text("0", Some(Color::Green), None);
@@ -246,8 +258,15 @@ fn log_status_change(previous_status: TaskStatus, task: &Task, style: &OutputSty
 
 fn get_color_for_status(task_status: &TaskStatus) -> Color {
     match task_status {
-        TaskStatus::Running | TaskStatus::Done(_) => Color::Green,
-        TaskStatus::Paused | TaskStatus::Locked { .. } => Color::White,
+        TaskStatus::Paused { .. } | TaskStatus::Locked { .. } => Color::White,
+        TaskStatus::Running { .. } => Color::Green,
+        TaskStatus::Done { result, .. } => {
+            if matches!(result, TaskResult::Success) {
+                Color::Green
+            } else {
+                Color::Red
+            }
+        }
         _ => Color::White,
     }
 }

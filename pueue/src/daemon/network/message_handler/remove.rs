@@ -19,9 +19,9 @@ pub fn remove(settings: &Settings, state: &SharedState, task_ids: Vec<usize>) ->
     let filter = |task: &Task| {
         matches!(
             task.status,
-            TaskStatus::Queued
+            TaskStatus::Queued { .. }
                 | TaskStatus::Stashed { .. }
-                | TaskStatus::Done(_)
+                | TaskStatus::Done { .. }
                 | TaskStatus::Locked { .. }
         )
     };
@@ -82,12 +82,12 @@ mod tests {
         {
             let mut state = state.lock().unwrap();
             // Add a task with a dependency to a finished task
-            let mut task = get_stub_task("5", TaskStatus::Queued);
+            let mut task = get_stub_task("5", StubStatus::Queued);
             task.dependencies = vec![1];
             state.add_task(task);
 
             // Add a task depending on the previous task -> Linked dependencies
-            let mut task = get_stub_task("6", TaskStatus::Queued);
+            let mut task = get_stub_task("6", StubStatus::Queued);
             task.dependencies = vec![5];
             state.add_task(task);
         }
