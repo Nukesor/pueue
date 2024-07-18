@@ -48,22 +48,16 @@ pub enum TaskResult {
 #[derive(PartialEq, Eq, Clone, Deserialize, Serialize)]
 pub struct Task {
     pub id: usize,
-    #[serde(default = "Local::now")]
     pub created_at: DateTime<Local>,
-    #[serde(default = "Default::default")]
-    pub enqueued_at: Option<DateTime<Local>>,
     pub original_command: String,
     pub command: String,
     pub path: PathBuf,
     pub envs: HashMap<String, String>,
     pub group: String,
     pub dependencies: Vec<usize>,
-    #[serde(default = "Default::default")]
     pub priority: i32,
     pub label: Option<String>,
     pub status: TaskStatus,
-    pub start: Option<DateTime<Local>>,
-    pub end: Option<DateTime<Local>>,
 }
 
 impl Task {

@@ -296,10 +296,8 @@ impl_into_message!(ResetMessage, Message::Reset);
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct CleanMessage {
-    #[serde(default = "bool::default")]
     pub successful_only: bool,
 
-    #[serde(default = "Option::default")]
     pub group: Option<String>,
 }
 
@@ -342,7 +340,6 @@ impl_into_message!(LogRequestMessage, Message::Log);
 #[derive(PartialEq, Eq, Clone, Deserialize, Serialize)]
 pub struct TaskLogMessage {
     pub task: Task,
-    #[serde(default = "bool::default")]
     /// Indicates whether the log output has been truncated or not.
     pub output_complete: bool,
     pub output: Option<Vec<u8>>,
