@@ -24,11 +24,16 @@ pub fn handle_finished_tasks(settings: &Settings, state: &mut LockedState) {
 
     for ((task_id, group, worker_id), error) in finished.iter() {
         let (enqueued_at, start) = {
+            let task = state.tasks.get(task_id).unwrap();
             // Get the enqueued_at/start times from the current state.
-            match state.tasks.get(task_id).unwrap().status {
+            match task.status {
                 TaskStatus::Running { enqueued_at, start }
                 | TaskStatus::Paused { enqueued_at, start } => (enqueued_at, start),
-                _ => continue,
+                _ => {
+                    error!("Discovered a finished task in unexpected state! Please report this.");
+                    error!("Task {task_id}: {task:#?}");
+                    (Local::now(), Local::now())
+                }
             }
         };
 
@@ -43,7 +48,7 @@ pub fn handle_finished_tasks(settings: &Settings, state: &mut LockedState) {
                 .remove(worker_id)
                 .expect("Errored child went missing while handling finished task.");
 
-            // Update the tasks's state and return a clone for callbacks and notifications.
+            // Update the tasks's state and return a clone for callback handling.
             let task = {
                 let task = state.tasks.get_mut(task_id).unwrap();
 
@@ -92,7 +97,7 @@ pub fn handle_finished_tasks(settings: &Settings, state: &mut LockedState) {
             None => TaskResult::Killed,
         };
 
-        // Update the tasks's state and return a clone for callbacks and notifications.
+        // Update the tasks's state and return a clone for callback handling.
         let task = {
             let task = state
                 .tasks
