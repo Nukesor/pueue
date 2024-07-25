@@ -47,7 +47,12 @@ pub fn kill(
 
             // Determine all running or paused tasks in that group.
             let filtered_tasks = state.filter_tasks_of_group(
-                |task| matches!(task.status, TaskStatus::Running | TaskStatus::Paused),
+                |task| {
+                    matches!(
+                        task.status,
+                        TaskStatus::Running { .. } | TaskStatus::Paused { .. }
+                    )
+                },
                 &group_name,
             );
 

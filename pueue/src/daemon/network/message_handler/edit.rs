@@ -19,8 +19,9 @@ pub fn edit_request(state: &SharedState, task_id: usize) -> Message {
             if !task.is_queued() && !task.is_stashed() {
                 return create_failure_message("You can only edit a queued/stashed task");
             }
-            task.prev_status = task.status.clone();
-            task.status = TaskStatus::Locked;
+            task.status = TaskStatus::Locked {
+                previous_status: Box::new(task.status.clone()),
+            };
 
             EditResponseMessage {
                 task_id: task.id,
@@ -42,12 +43,12 @@ pub fn edit(settings: &Settings, state: &SharedState, message: EditMessage) -> M
     let mut state = state.lock().unwrap();
     match state.tasks.get_mut(&message.task_id) {
         Some(task) => {
-            if !(task.status == TaskStatus::Locked) {
+            let TaskStatus::Locked { previous_status } = &task.status else {
                 return create_failure_message("Task is no longer locked.");
-            }
+            };
 
             // Restore the task to its previous state.
-            task.status = task.prev_status.clone();
+            task.status = *previous_status.clone();
 
             // Update command if applicable.
             if let Some(command) = message.command {
@@ -83,10 +84,12 @@ pub fn edit_restore(state: &SharedState, task_id: usize) -> Message {
     let mut state = state.lock().unwrap();
     match state.tasks.get_mut(&task_id) {
         Some(task) => {
-            if task.status != TaskStatus::Locked {
+            let TaskStatus::Locked { previous_status } = &task.status else {
                 return create_failure_message("The requested task isn't locked");
-            }
-            task.status = task.prev_status.clone();
+            };
+
+            // Restore the task to its previous state.
+            task.status = *previous_status.clone();
 
             success_msg!(
                 "The requested task's status has been restored to '{}'",

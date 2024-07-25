@@ -28,7 +28,7 @@ pub fn clean(settings: &Settings, state: &SharedState, message: CleanMessage) ->
     let mut state = state.lock().unwrap();
 
     let filtered_tasks =
-        state.filter_tasks(|task| matches!(task.status, TaskStatus::Done(_)), None);
+        state.filter_tasks(|task| matches!(task.status, TaskStatus::Done { .. }), None);
 
     for task_id in &filtered_tasks.matching_ids {
         // Ensure the task is removable, i.e. there are no dependant tasks.
@@ -40,7 +40,13 @@ pub fn clean(settings: &Settings, state: &SharedState, message: CleanMessage) ->
             if let Some(task) = state.tasks.get(task_id) {
                 // Check if we should ignore this task, if only successful tasks should be removed.
                 if message.successful_only
-                    && !matches!(task.status, TaskStatus::Done(TaskResult::Success))
+                    && !matches!(
+                        task.status,
+                        TaskStatus::Done {
+                            result: TaskResult::Success,
+                            ..
+                        }
+                    )
                 {
                     continue;
                 }
@@ -82,7 +88,7 @@ mod tests {
 
     impl TaskAddable for State {
         fn add_stub_task(&mut self, id: &str, group: &str, task_result: TaskResult) {
-            let task = get_stub_task_in_group(id, group, TaskStatus::Done(task_result));
+            let task = get_stub_task_in_group(id, group, StubStatus::Done(task_result));
             self.add_task(task);
         }
     }

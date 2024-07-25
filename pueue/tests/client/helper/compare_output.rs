@@ -31,7 +31,9 @@ pub async fn get_task_context(settings: &Settings) -> Result<HashMap<String, Str
     for (id, task) in state.tasks {
         let task_name = format!("task_{id}");
 
-        if let Some(start) = task.start {
+        let (start, end) = task.start_and_end();
+
+        if let Some(start) = start {
             // Use datetime format for datetimes that aren't today.
             let format = if start.date_naive() == Local::now().date_naive() {
                 &settings.client.status_time_format
@@ -43,7 +45,7 @@ pub async fn get_task_context(settings: &Settings) -> Result<HashMap<String, Str
             context.insert(format!("{task_name}_start"), formatted);
             context.insert(format!("{task_name}_start_long"), start.to_rfc2822());
         }
-        if let Some(end) = task.end {
+        if let Some(end) = end {
             // Use datetime format for datetimes that aren't today.
             let format = if end.date_naive() == Local::now().date_naive() {
                 &settings.client.status_time_format

@@ -35,20 +35,19 @@ pub fn add_task(settings: &Settings, state: &SharedState, message: AddMessage) -
         message.path,
         message.envs,
         message.group,
-        TaskStatus::Locked,
+        TaskStatus::Queued {
+            enqueued_at: Local::now(),
+        },
         message.dependencies,
         message.priority.unwrap_or(0),
         message.label,
     );
 
-    // Set the starting status.
+    // Handle if the command is to be stashed and/or automatically enqueued later.
     if message.stashed || message.enqueue_at.is_some() {
         task.status = TaskStatus::Stashed {
             enqueue_at: message.enqueue_at,
         };
-    } else {
-        task.status = TaskStatus::Queued;
-        task.enqueued_at = Some(Local::now());
     }
 
     // Check if there're any aliases that should be applied.

@@ -1,5 +1,6 @@
 use anyhow::{bail, Result};
 
+use chrono::Local;
 use pueue_lib::network::message::*;
 use pueue_lib::network::protocol::*;
 use pueue_lib::settings::Settings;
@@ -32,7 +33,9 @@ pub async fn restart(
     let new_status = if stashed {
         TaskStatus::Stashed { enqueue_at: None }
     } else {
-        TaskStatus::Queued
+        TaskStatus::Queued {
+            enqueued_at: Local::now(),
+        }
     };
 
     let state = get_state(stream).await?;
@@ -50,13 +53,19 @@ pub async fn restart(
             state.filter_tasks(done_filter, None)
         };
 
-        // now pick the failed tasks
+        // Now pick the failed tasks
         let failed = filtered_tasks
             .matching_ids
             .into_iter()
             .filter(|task_id| {
                 let task = state.tasks.get(task_id).unwrap();
-                !matches!(task.status, TaskStatus::Done(TaskResult::Success))
+                !matches!(
+                    task.status,
+                    TaskStatus::Done {
+                        result: TaskResult::Success,
+                        ..
+                    }
+                )
             })
             .collect();
 

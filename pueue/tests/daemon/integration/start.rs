@@ -52,8 +52,10 @@ async fn test_start_tasks(#[case] start_message: StartMessage) -> Result<()> {
     // Pause the whole daemon and wait until all tasks are paused
     pause_tasks(shared, TaskSelection::All).await?;
     for id in 0..3 {
-        wait_for_task_condition(shared, id, |task| matches!(task.status, TaskStatus::Paused))
-            .await?;
+        wait_for_task_condition(shared, id, |task| {
+            matches!(task.status, TaskStatus::Paused { .. })
+        })
+        .await?;
     }
 
     // Send the kill message

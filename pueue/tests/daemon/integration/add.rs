@@ -1,6 +1,7 @@
 use anyhow::Result;
-
+use assert_matches::assert_matches;
 use chrono::Local;
+
 use pueue_lib::network::message::TaskSelection;
 use pueue_lib::task::*;
 
@@ -27,16 +28,14 @@ async fn test_normal_add() -> Result<()> {
         task.created_at > pre_addition_time && task.created_at < post_addition_time,
         "Make sure the created_at time is set correctly"
     );
-    assert!(
-        task.enqueued_at.unwrap() > pre_addition_time
-            && task.enqueued_at.unwrap() < post_addition_time,
-        "Make sure the enqueue_at time is set correctly"
-    );
 
-    // The task finished successfully
-    assert_eq!(
+    assert_matches!(
         get_task_status(shared, 0).await?,
-        TaskStatus::Done(TaskResult::Success)
+        TaskStatus::Done {
+            result: TaskResult::Success,
+            ..
+        },
+        "Task should finish successfully",
     );
 
     Ok(())
@@ -54,15 +53,10 @@ async fn test_stashed_add() -> Result<()> {
     assert_success(send_message(shared, message).await?);
 
     // Make sure the task is actually stashed.
-    let task = wait_for_task_condition(shared, 0, |task| {
+    wait_for_task_condition(shared, 0, |task| {
         matches!(task.status, TaskStatus::Stashed { .. })
     })
     .await?;
-
-    assert!(
-        task.enqueued_at.is_none(),
-        "An unqueued task shouldn't have enqueue_at set."
-    );
 
     Ok(())
 }

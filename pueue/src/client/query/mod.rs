@@ -77,11 +77,11 @@ impl QueryResult {
                 fn rank_status(task: &Task) -> u8 {
                     match &task.status {
                         TaskStatus::Stashed { .. } => 0,
-                        TaskStatus::Locked => 1,
-                        TaskStatus::Queued => 2,
-                        TaskStatus::Paused => 3,
-                        TaskStatus::Running => 4,
-                        TaskStatus::Done(result) => match result {
+                        TaskStatus::Locked { .. } => 1,
+                        TaskStatus::Queued { .. } => 2,
+                        TaskStatus::Paused { .. } => 3,
+                        TaskStatus::Running { .. } => 4,
+                        TaskStatus::Done { result, .. } => match result {
                             TaskResult::Success => 6,
                             _ => 5,
                         },
@@ -93,8 +93,16 @@ impl QueryResult {
             Rule::column_label => task1.label.cmp(&task2.label),
             Rule::column_command => task1.command.cmp(&task2.command),
             Rule::column_path => task1.path.cmp(&task2.path),
-            Rule::column_start => task1.start.cmp(&task2.start),
-            Rule::column_end => task1.end.cmp(&task2.end),
+            Rule::column_start => {
+                let (start1, _) = task1.start_and_end();
+                let (start2, _) = task2.start_and_end();
+                start1.cmp(&start2)
+            }
+            Rule::column_end => {
+                let (_, end1) = task1.start_and_end();
+                let (_, end2) = task2.start_and_end();
+                end1.cmp(&end2)
+            }
             _ => std::cmp::Ordering::Less,
         });
 

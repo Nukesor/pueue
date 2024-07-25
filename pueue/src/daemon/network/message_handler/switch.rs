@@ -16,7 +16,12 @@ pub fn switch(settings: &Settings, state: &SharedState, message: SwitchMessage) 
 
     let task_ids = [message.task_id_1, message.task_id_2];
     let filtered_tasks = state.filter_tasks(
-        |task| matches!(task.status, TaskStatus::Queued | TaskStatus::Stashed { .. }),
+        |task| {
+            matches!(
+                task.status,
+                TaskStatus::Queued { .. } | TaskStatus::Stashed { .. }
+            )
+        },
         Some(task_ids.to_vec()),
     );
     if !filtered_tasks.non_matching_ids.is_empty() {
@@ -80,27 +85,27 @@ mod tests {
 
         {
             let mut state = state.lock().unwrap();
-            let task = get_stub_task("0", TaskStatus::Queued);
+            let task = get_stub_task("0", StubStatus::Queued);
             state.add_task(task);
 
-            let task = get_stub_task("1", TaskStatus::Stashed { enqueue_at: None });
+            let task = get_stub_task("1", StubStatus::Stashed { enqueue_at: None });
             state.add_task(task);
 
-            let task = get_stub_task("2", TaskStatus::Queued);
+            let task = get_stub_task("2", StubStatus::Queued);
             state.add_task(task);
 
-            let task = get_stub_task("3", TaskStatus::Stashed { enqueue_at: None });
+            let task = get_stub_task("3", StubStatus::Stashed { enqueue_at: None });
             state.add_task(task);
 
-            let mut task = get_stub_task("4", TaskStatus::Queued);
+            let mut task = get_stub_task("4", StubStatus::Queued);
             task.dependencies = vec![0, 3];
             state.add_task(task);
 
-            let mut task = get_stub_task("5", TaskStatus::Stashed { enqueue_at: None });
+            let mut task = get_stub_task("5", StubStatus::Stashed { enqueue_at: None });
             task.dependencies = vec![1];
             state.add_task(task);
 
-            let mut task = get_stub_task("6", TaskStatus::Queued);
+            let mut task = get_stub_task("6", StubStatus::Queued);
             task.dependencies = vec![2, 3];
             state.add_task(task);
         }

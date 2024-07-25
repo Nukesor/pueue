@@ -64,7 +64,7 @@ pub fn build_callback_command(
     parameters.insert("group", task.group.clone());
 
     // Result takes the TaskResult Enum strings, unless it didn't finish yet.
-    if let TaskStatus::Done(result) = &task.status {
+    if let TaskStatus::Done { result, .. } = &task.status {
         parameters.insert("result", result.to_string());
     } else {
         parameters.insert("result", "None".into());
@@ -75,8 +75,9 @@ pub fn build_callback_command(
         time.map(|time| time.timestamp().to_string())
             .unwrap_or_default()
     };
-    parameters.insert("start", print_time(task.start));
-    parameters.insert("end", print_time(task.end));
+    let (start, end) = task.start_and_end();
+    parameters.insert("start", print_time(start));
+    parameters.insert("end", print_time(end));
 
     // Read the last lines of the process' output and make it available.
     if let Ok(output) = read_last_log_file_lines(
@@ -95,7 +96,7 @@ pub fn build_callback_command(
     parameters.insert("output_path", out_path.display().to_string());
 
     // Get the exit code
-    if let TaskStatus::Done(result) = &task.status {
+    if let TaskStatus::Done { result, .. } = &task.status {
         match result {
             TaskResult::Success => parameters.insert("exit_code", "0".into()),
             TaskResult::Failed(code) => parameters.insert("exit_code", code.to_string()),

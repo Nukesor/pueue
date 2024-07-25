@@ -65,7 +65,13 @@ async fn test_kill_tasks_with_pause(
     // Make sure all tasks get killed
     for id in 0..3 {
         wait_for_task_condition(shared, id, |task| {
-            matches!(task.status, TaskStatus::Done(TaskResult::Killed))
+            matches!(
+                task.status,
+                TaskStatus::Done {
+                    result: TaskResult::Killed,
+                    ..
+                }
+            )
         })
         .await?;
     }
@@ -132,7 +138,13 @@ async fn test_kill_tasks_without_pause(#[case] kill_message: KillMessage) -> Res
     // Make sure all tasks get killed
     for id in 0..3 {
         wait_for_task_condition(shared, id, |task| {
-            matches!(task.status, TaskStatus::Done(TaskResult::Killed))
+            matches!(
+                task.status,
+                TaskStatus::Done {
+                    result: TaskResult::Killed,
+                    ..
+                }
+            )
         })
         .await?;
     }

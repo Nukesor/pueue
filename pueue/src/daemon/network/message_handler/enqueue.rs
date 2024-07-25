@@ -10,7 +10,12 @@ use crate::daemon::network::response_helper::*;
 pub fn enqueue(state: &SharedState, message: EnqueueMessage) -> Message {
     let mut state = state.lock().unwrap();
     let filtered_tasks = state.filter_tasks(
-        |task| matches!(task.status, TaskStatus::Stashed { .. } | TaskStatus::Locked),
+        |task| {
+            matches!(
+                task.status,
+                TaskStatus::Stashed { .. } | TaskStatus::Locked { .. }
+            )
+        },
         Some(message.task_ids),
     );
 
@@ -25,8 +30,9 @@ pub fn enqueue(state: &SharedState, message: EnqueueMessage) -> Message {
                 enqueue_at: message.enqueue_at,
             };
         } else {
-            task.status = TaskStatus::Queued;
-            task.enqueued_at = Some(Local::now());
+            task.status = TaskStatus::Queued {
+                enqueued_at: Local::now(),
+            };
         }
     }
 

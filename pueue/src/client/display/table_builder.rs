@@ -208,9 +208,11 @@ impl<'a> TableBuilder<'a> {
                 // Determine the human readable task status representation and the respective color.
                 let status_string = task.status.to_string();
                 let (status_text, color) = match &task.status {
-                    TaskStatus::Running => (status_string, Color::Green),
-                    TaskStatus::Paused | TaskStatus::Locked => (status_string, Color::White),
-                    TaskStatus::Done(result) => match result {
+                    TaskStatus::Running { .. } => (status_string, Color::Green),
+                    TaskStatus::Paused { .. } | TaskStatus::Locked { .. } => {
+                        (status_string, Color::White)
+                    }
+                    TaskStatus::Done { result, .. } => match result {
                         TaskResult::Success => (TaskResult::Success.to_string(), Color::Green),
                         TaskResult::DependencyFailed => {
                             ("Dependency failed".to_string(), Color::Red)

@@ -1,6 +1,7 @@
 use std::{collections::HashMap, path::PathBuf};
 
 use anyhow::Result;
+use assert_matches::assert_matches;
 use chrono::{Local, TimeZone};
 use pretty_assertions::assert_eq;
 use rstest::rstest;
@@ -16,7 +17,9 @@ pub fn build_task() -> Task {
         PathBuf::from("/tmp"),
         HashMap::new(),
         PUEUE_DEFAULT_GROUP.to_owned(),
-        TaskStatus::Queued,
+        TaskStatus::Queued {
+            enqueued_at: Local.with_ymd_and_hms(2022, 1, 10, 10, 0, 0).unwrap(),
+        },
         Vec::new(),
         0,
         None,
@@ -30,18 +33,24 @@ pub fn test_tasks() -> Vec<Task> {
     // Failed task
     let mut failed = build_task();
     failed.id = 0;
-    failed.status = TaskStatus::Done(TaskResult::Failed(255));
-    failed.start = Some(Local.with_ymd_and_hms(2022, 1, 10, 10, 0, 0).unwrap());
-    failed.end = Some(Local.with_ymd_and_hms(2022, 1, 10, 10, 5, 0).unwrap());
+    failed.status = TaskStatus::Done {
+        result: TaskResult::Failed(255),
+        enqueued_at: Local.with_ymd_and_hms(2022, 1, 10, 10, 0, 0).unwrap(),
+        start: Local.with_ymd_and_hms(2022, 1, 10, 10, 5, 0).unwrap(),
+        end: Local.with_ymd_and_hms(2022, 1, 10, 10, 10, 0).unwrap(),
+    };
     failed.label = Some("label-10-0".to_string());
     tasks.insert(failed.id, failed);
 
     // Successful task
     let mut successful = build_task();
     successful.id = 1;
-    successful.status = TaskStatus::Done(TaskResult::Success);
-    successful.start = Some(Local.with_ymd_and_hms(2022, 1, 8, 10, 0, 0).unwrap());
-    successful.end = Some(Local.with_ymd_and_hms(2022, 1, 8, 10, 5, 0).unwrap());
+    successful.status = TaskStatus::Done {
+        result: TaskResult::Success,
+        enqueued_at: Local.with_ymd_and_hms(2022, 1, 8, 10, 0, 0).unwrap(),
+        start: Local.with_ymd_and_hms(2022, 1, 8, 10, 5, 0).unwrap(),
+        end: Local.with_ymd_and_hms(2022, 1, 8, 10, 10, 0).unwrap(),
+    };
     successful.label = Some("label-10-1".to_string());
     tasks.insert(successful.id, successful);
 
@@ -63,9 +72,11 @@ pub fn test_tasks() -> Vec<Task> {
 
     // Running task
     let mut running = build_task();
-    running.status = TaskStatus::Running;
+    running.status = TaskStatus::Running {
+        enqueued_at: Local.with_ymd_and_hms(2022, 1, 10, 10, 0, 0).unwrap(),
+        start: Local.with_ymd_and_hms(2022, 1, 2, 12, 0, 0).unwrap(),
+    };
     running.id = 4;
-    running.start = Some(Local.with_ymd_and_hms(2022, 1, 2, 12, 0, 0).unwrap());
     tasks.insert(running.id, running);
 
     // Add two queued tasks
@@ -128,29 +139,6 @@ async fn limit_last() -> Result<()> {
     Ok(())
 }
 
-/// Order the test state by task status.
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn order_by_status() -> Result<()> {
-    let tasks = test_tasks_with_query("order_by status", &None)?;
-
-    let expected = vec![
-        TaskStatus::Stashed { enqueue_at: None },
-        TaskStatus::Stashed {
-            enqueue_at: Some(Local.with_ymd_and_hms(2022, 1, 10, 11, 0, 0).unwrap()),
-        },
-        TaskStatus::Queued,
-        TaskStatus::Queued,
-        TaskStatus::Running,
-        TaskStatus::Done(TaskResult::Failed(255)),
-        TaskStatus::Done(TaskResult::Success),
-    ];
-
-    let actual: Vec<TaskStatus> = tasks.iter().map(|task| task.status.clone()).collect();
-    assert_eq!(actual, expected);
-
-    Ok(())
-}
-
 /// Filter by start date
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn filter_start() -> Result<()> {
@@ -189,39 +177,106 @@ async fn filter_end_with_time(#[case] format: &'static str) -> Result<()> {
 
 /// Filter tasks by status
 #[rstest]
-#[case(TaskStatus::Queued, 2)]
-#[case(TaskStatus::Running, 1)]
-#[case(TaskStatus::Paused, 0)]
-#[case(TaskStatus::Done(TaskResult::Success), 1)]
-#[case(TaskStatus::Done(TaskResult::Failed(255)), 1)]
+#[case("queued", 2)]
+#[case("running", 1)]
+#[case("paused", 0)]
+#[case("success", 1)]
+#[case("failed", 1)]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn filter_status(#[case] status: TaskStatus, #[case] match_count: usize) -> Result<()> {
+async fn filter_status(#[case] status_filter: &str, #[case] match_count: usize) -> Result<()> {
     // Get the correct query keyword for the given status.
-    let status_filter = match status {
-        TaskStatus::Queued => "queued",
-        TaskStatus::Stashed { .. } => "stashed",
-        TaskStatus::Running => "running",
-        TaskStatus::Paused => "paused",
-        TaskStatus::Done(TaskResult::Success) => "success",
-        TaskStatus::Done(TaskResult::Failed(_)) => "failed",
-        _ => anyhow::bail!("Got unexpected TaskStatus in filter_status"),
-    };
 
     let tasks = test_tasks_with_query(&format!("status={status_filter}"), &None)?;
 
     for task in tasks.iter() {
-        let id = task.id;
-        assert_eq!(
-            task.status, status,
-            "Expected a different task status on task {id} based on filter {status:?}"
-        );
+        match status_filter {
+            "queued" => {
+                assert_matches!(
+                    task.status,
+                    TaskStatus::Queued { .. },
+                    "Only Queued tasks are allowed"
+                );
+            }
+            "stashed" => assert_matches!(
+                task.status,
+                TaskStatus::Stashed { .. },
+                "Only Stashed tasks are allowed"
+            ),
+            "running" => assert_matches!(
+                task.status,
+                TaskStatus::Running { .. },
+                "Only Running tasks are allowed"
+            ),
+            "paused" => assert_matches!(
+                task.status,
+                TaskStatus::Paused { .. },
+                "Only Paused tasks are allowed"
+            ),
+            "success" => assert_matches!(
+                task.status,
+                TaskStatus::Done {
+                    result: TaskResult::Success,
+                    ..
+                },
+                "Only Succesful tasks are allowed"
+            ),
+            "failed" => assert_matches!(
+                task.status,
+                TaskStatus::Done {
+                    result: TaskResult::Failed(_),
+                    ..
+                },
+                "Only Failed tasks are allowed"
+            ),
+            _ => anyhow::bail!("Got unexpected TaskStatus in filter_status"),
+        };
     }
 
     assert_eq!(
         tasks.len(),
         match_count,
-        "Got a different amount of tasks than expected for the status filter {status:?}."
+        "Got a different amount of tasks than expected for the status filter {status_filter:?}."
     );
+
+    Ok(())
+}
+
+/// Order the test state by task status.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn order_by_status() -> Result<()> {
+    let tasks = test_tasks_with_query("order_by status", &None)?;
+
+    let expected = vec![
+        TaskStatus::Stashed { enqueue_at: None },
+        TaskStatus::Stashed {
+            enqueue_at: Some(Local.with_ymd_and_hms(2022, 1, 10, 11, 0, 0).unwrap()),
+        },
+        TaskStatus::Queued {
+            enqueued_at: Local.with_ymd_and_hms(2022, 1, 10, 10, 0, 0).unwrap(),
+        },
+        TaskStatus::Queued {
+            enqueued_at: Local.with_ymd_and_hms(2022, 1, 10, 10, 0, 0).unwrap(),
+        },
+        TaskStatus::Running {
+            enqueued_at: Local.with_ymd_and_hms(2022, 1, 10, 10, 0, 0).unwrap(),
+            start: Local.with_ymd_and_hms(2022, 1, 2, 12, 0, 0).unwrap(),
+        },
+        TaskStatus::Done {
+            enqueued_at: Local.with_ymd_and_hms(2022, 1, 10, 10, 0, 0).unwrap(),
+            start: Local.with_ymd_and_hms(2022, 1, 10, 10, 5, 0).unwrap(),
+            end: Local.with_ymd_and_hms(2022, 1, 10, 10, 10, 0).unwrap(),
+            result: TaskResult::Failed(255),
+        },
+        TaskStatus::Done {
+            enqueued_at: Local.with_ymd_and_hms(2022, 1, 8, 10, 0, 0).unwrap(),
+            start: Local.with_ymd_and_hms(2022, 1, 8, 10, 5, 0).unwrap(),
+            end: Local.with_ymd_and_hms(2022, 1, 8, 10, 10, 0).unwrap(),
+            result: TaskResult::Success,
+        },
+    ];
+
+    let actual: Vec<TaskStatus> = tasks.iter().map(|task| task.status.clone()).collect();
+    assert_eq!(actual, expected);
 
     Ok(())
 }

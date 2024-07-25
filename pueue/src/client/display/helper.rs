@@ -45,9 +45,10 @@ pub fn sort_tasks_by_group(tasks: Vec<Task>) -> BTreeMap<String, Vec<Task>> {
 /// If the task doesn't have a start and/or end yet, an empty string will be returned
 /// for the respective field.
 pub fn formatted_start_end(task: &Task, settings: &Settings) -> (String, String) {
-    // Get the start time.
+    let (start, end) = task.start_and_end();
+
     // If the task didn't start yet, just return two empty strings.
-    let start = match task.start {
+    let start = match start {
         Some(start) => start,
         None => return ("".into(), "".into()),
     };
@@ -65,8 +66,8 @@ pub fn formatted_start_end(task: &Task, settings: &Settings) -> (String, String)
             .to_string()
     };
 
-    // Get finish time, if already set. Otherwise only return the formatted start.
-    let end = match task.end {
+    // If the task didn't finish yet, only return the formatted start.
+    let end = match end {
         Some(end) => end,
         None => return (formatted_start, "".into()),
     };

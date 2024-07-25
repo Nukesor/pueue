@@ -45,11 +45,6 @@ async fn test_enqueued_tasks(
     // The task should be added in stashed state.
     let task = wait_for_task_condition(shared, 0, |task| task.is_stashed()).await?;
 
-    assert!(
-        task.enqueued_at.is_none(),
-        "Enqueued tasks shouldn't have an enqeued_at date set."
-    );
-
     // Assert the correct point in time has been set, in case `enqueue_at` is specific.
     if enqueue_at.is_some() {
         let status = get_task_status(shared, 0).await?;
@@ -59,8 +54,6 @@ async fn test_enqueued_tasks(
             assert_eq!(inner, enqueue_at);
         }
     }
-
-    let pre_enqueue_time = Local::now();
 
     // Manually enqueue the task
     let enqueue_message = EnqueueMessage {
@@ -72,12 +65,7 @@ async fn test_enqueued_tasks(
         .context("Failed to to add task message")?;
 
     // Make sure the task is started after being enqueued
-    let task = wait_for_task_condition(shared, 0, |task| task.is_running()).await?;
-
-    assert!(
-        task.enqueued_at.unwrap() > pre_enqueue_time,
-        "Enqueued tasks should have an enqeued_at time set."
-    );
+    wait_for_task_condition(shared, 0, |task| task.is_running()).await?;
 
     Ok(())
 }
@@ -128,10 +116,6 @@ async fn test_stash_queued_task() -> Result<()> {
 
     let task = get_task(shared, 0).await?;
     assert_eq!(task.status, TaskStatus::Stashed { enqueue_at: None });
-    assert!(
-        task.enqueued_at.is_none(),
-        "Enqueued tasks shouldn't have an enqeued_at date set."
-    );
 
     Ok(())
 }

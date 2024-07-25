@@ -10,14 +10,18 @@ use crate::daemon::network::response_helper::*;
 pub fn stash(state: &SharedState, task_ids: Vec<usize>) -> Message {
     let mut state = state.lock().unwrap();
     let filtered_tasks = state.filter_tasks(
-        |task| matches!(task.status, TaskStatus::Queued | TaskStatus::Locked),
+        |task| {
+            matches!(
+                task.status,
+                TaskStatus::Queued { .. } | TaskStatus::Locked { .. }
+            )
+        },
         Some(task_ids),
     );
 
     for task_id in &filtered_tasks.matching_ids {
         if let Some(ref mut task) = state.tasks.get_mut(task_id) {
             task.status = TaskStatus::Stashed { enqueue_at: None };
-            task.enqueued_at = None;
         }
     }
 

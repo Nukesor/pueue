@@ -1,5 +1,5 @@
 use anyhow::Result;
-use pretty_assertions::assert_eq;
+use assert_matches::assert_matches;
 
 use pueue_lib::{network::message::ParallelMessage, task::*};
 
@@ -31,7 +31,11 @@ async fn test_parallel_tasks() -> Result<()> {
     let state = get_state(shared).await?;
     for task_id in 3..5 {
         let task = state.tasks.get(&task_id).unwrap();
-        assert_eq!(task.status, TaskStatus::Queued);
+        assert_matches!(
+            task.status,
+            TaskStatus::Queued { .. },
+            "Task {task_id} should be queued"
+        );
     }
 
     // ---- Second group ----
@@ -52,7 +56,11 @@ async fn test_parallel_tasks() -> Result<()> {
     let state = get_state(shared).await?;
     for task_id in 7..10 {
         let task = state.tasks.get(&task_id).unwrap();
-        assert_eq!(task.status, TaskStatus::Queued);
+        assert_matches!(
+            task.status,
+            TaskStatus::Queued { .. },
+            "Task {task_id} should be queued in second check"
+        );
     }
     Ok(())
 }

@@ -97,7 +97,7 @@ pub fn print_logs(
         if let Some((_, task_log)) = task_iter.peek() {
             if matches!(
                 &task_log.task.status,
-                TaskStatus::Done(_) | TaskStatus::Running | TaskStatus::Paused,
+                TaskStatus::Done { .. } | TaskStatus::Running { .. } | TaskStatus::Paused { .. }
             ) {
                 println!();
             }
@@ -122,7 +122,7 @@ fn print_log(
     // We only show logs of finished or running tasks.
     if !matches!(
         task.status,
-        TaskStatus::Done(_) | TaskStatus::Running | TaskStatus::Paused
+        TaskStatus::Done { .. } | TaskStatus::Running { .. } | TaskStatus::Paused { .. }
     ) {
         return;
     }
@@ -148,9 +148,9 @@ fn print_task_info(task: &Task, style: &OutputStyle) {
     );
 
     let (exit_status, color) = match &task.status {
-        TaskStatus::Paused => ("paused".into(), Color::White),
-        TaskStatus::Running => ("running".into(), Color::Yellow),
-        TaskStatus::Done(result) => match result {
+        TaskStatus::Paused { .. } => ("paused".into(), Color::White),
+        TaskStatus::Running { .. } => ("running".into(), Color::Yellow),
+        TaskStatus::Done { result, .. } => match result {
             TaskResult::Success => ("completed successfully".into(), Color::Green),
             TaskResult::Failed(exit_code) => {
                 (format!("failed with exit code {exit_code}"), Color::Red)
@@ -197,14 +197,16 @@ fn print_task_info(task: &Task, style: &OutputStyle) {
         ]);
     }
 
+    let (start, end) = task.start_and_end();
+
     // Start and end time
-    if let Some(start) = task.start {
+    if let Some(start) = start {
         table.add_row(vec![
             style.styled_cell("Start:", None, Some(ComfyAttribute::Bold)),
             Cell::new(start.to_rfc2822()),
         ]);
     }
-    if let Some(end) = task.end {
+    if let Some(end) = end {
         table.add_row(vec![
             style.styled_cell("End:", None, Some(ComfyAttribute::Bold)),
             Cell::new(end.to_rfc2822()),

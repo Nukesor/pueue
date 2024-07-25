@@ -43,6 +43,7 @@ tokio = { workspace = true }
 [dev-dependencies]
 anyhow = { workspace = true }
 assert_cmd = "2"
+assert_matches = "1"
 better-panic = { workspace = true }
 # Make it easy to view log output for select tests.
 # Set log level for tests with RUST_LOG=<level>, use with failed tests or

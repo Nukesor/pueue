@@ -23,6 +23,20 @@ pub fn handle_finished_tasks(settings: &Settings, state: &mut LockedState) {
     }
 
     for ((task_id, group, worker_id), error) in finished.iter() {
+        let (enqueued_at, start) = {
+            let task = state.tasks.get(task_id).unwrap();
+            // Get the enqueued_at/start times from the current state.
+            match task.status {
+                TaskStatus::Running { enqueued_at, start }
+                | TaskStatus::Paused { enqueued_at, start } => (enqueued_at, start),
+                _ => {
+                    error!("Discovered a finished task in unexpected state! Please report this.");
+                    error!("Task {task_id}: {task:#?}");
+                    (Local::now(), Local::now())
+                }
+            }
+        };
+
         // Handle std::io errors on child processes.
         // I have never seen something like this, but it might happen.
         if let Some(error) = error {
@@ -34,11 +48,16 @@ pub fn handle_finished_tasks(settings: &Settings, state: &mut LockedState) {
                 .remove(worker_id)
                 .expect("Errored child went missing while handling finished task.");
 
-            // Update the tasks's state and return a clone for callbacks and notifications.
+            // Update the tasks's state and return a clone for callback handling.
             let task = {
                 let task = state.tasks.get_mut(task_id).unwrap();
-                task.status = TaskStatus::Done(TaskResult::Errored);
-                task.end = Some(Local::now());
+
+                task.status = TaskStatus::Done {
+                    enqueued_at,
+                    start,
+                    end: Local::now(),
+                    result: TaskResult::Errored,
+                };
 
                 task.clone()
             };
@@ -78,15 +97,19 @@ pub fn handle_finished_tasks(settings: &Settings, state: &mut LockedState) {
             None => TaskResult::Killed,
         };
 
-        // Update the tasks's state and return a clone for callbacks and notifications.
+        // Update the tasks's state and return a clone for callback handling.
         let task = {
             let task = state
                 .tasks
                 .get_mut(task_id)
                 .expect("Task was removed before child process has finished!");
 
-            task.status = TaskStatus::Done(result.clone());
-            task.end = Some(Local::now());
+            task.status = TaskStatus::Done {
+                enqueued_at,
+                start,
+                end: Local::now(),
+                result: result.clone(),
+            };
 
             task.clone()
         };

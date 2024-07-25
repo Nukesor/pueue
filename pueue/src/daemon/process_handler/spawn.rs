@@ -3,7 +3,7 @@ use std::process::Stdio;
 
 use chrono::Local;
 use command_group::CommandGroup;
-use log::{error, info};
+use log::{error, info, warn};
 use pueue_lib::log::{create_log_file_handles, get_writable_log_file_handle};
 use pueue_lib::process_helper::compile_shell_command;
 use pueue_lib::settings::Settings;
@@ -38,7 +38,7 @@ pub fn get_next_task_id(state: &LockedState) -> Option<usize> {
     let mut potential_tasks: Vec<&Task> = state
             .tasks
             .iter()
-            .filter(|(_, task)| task.status == TaskStatus::Queued)
+            .filter(|(_, task)| matches!(task.status, TaskStatus::Queued {..}))
             .filter(|(_, task)| {
                 // Make sure the task is assigned to an existing group.
                 let group = match state.groups.get(&task.group) {
@@ -84,7 +84,7 @@ pub fn get_next_task_id(state: &LockedState) -> Option<usize> {
                 task.dependencies
                     .iter()
                     .flat_map(|id| state.tasks.get(id))
-                    .all(|task| matches!(task.status, TaskStatus::Done(TaskResult::Success)))
+                    .all(|task| matches!(task.status, TaskStatus::Done{result: TaskResult::Success, ..}))
             })
             .map(|(_, task)| {task})
             .collect();
@@ -111,20 +111,22 @@ pub fn get_next_task_id(state: &LockedState) -> Option<usize> {
 /// The output of subprocesses is piped into a separate file for easier access
 pub fn spawn_process(settings: &Settings, state: &mut LockedState, task_id: usize) {
     // Check if the task exists and can actually be spawned. Otherwise do an early return.
-    match state.tasks.get(&task_id) {
-        Some(task) => {
-            if !matches!(
-                &task.status,
-                TaskStatus::Stashed { .. } | TaskStatus::Queued | TaskStatus::Paused
-            ) {
-                info!("Tried to start task with status: {}", task.status);
-                return;
-            }
-        }
-        None => {
-            info!("Tried to start non-existing task: {task_id}");
+    let Some(task) = state.tasks.get(&task_id) else {
+        warn!("Tried to start non-existing task: {task_id}");
+        return;
+    };
+
+    // Get the task's enqueue time and make sure we don't have invalid states for spawning.
+    let enqueued_at = match &task.status {
+        TaskStatus::Stashed { .. }
+        | TaskStatus::Paused { .. }
+        | TaskStatus::Running { .. }
+        | TaskStatus::Done { .. } => {
+            warn!("Tried to start task with status: {}", task.status);
             return;
         }
+        TaskStatus::Queued { enqueued_at } => *enqueued_at,
+        TaskStatus::Locked { .. } => Local::now(),
     };
 
     let pueue_directory = settings.shared.pueue_directory();
@@ -189,9 +191,12 @@ pub fn spawn_process(settings: &Settings, state: &mut LockedState, task_id: usiz
             // Update all necessary fields on the task.
             let task = {
                 let task = state.tasks.get_mut(&task_id).unwrap();
-                task.status = TaskStatus::Done(TaskResult::FailedToSpawn(error));
-                task.start = Some(Local::now());
-                task.end = Some(Local::now());
+                task.status = TaskStatus::Done {
+                    enqueued_at,
+                    start: Local::now(),
+                    end: Local::now(),
+                    result: TaskResult::FailedToSpawn(error),
+                };
                 task.clone()
             };
 
@@ -208,8 +213,10 @@ pub fn spawn_process(settings: &Settings, state: &mut LockedState, task_id: usiz
     state.children.add_child(&group, worker_id, task_id, child);
 
     let task = state.tasks.get_mut(&task_id).unwrap();
-    task.start = Some(Local::now());
-    task.status = TaskStatus::Running;
+    task.status = TaskStatus::Running {
+        enqueued_at,
+        start: Local::now(),
+    };
     // Overwrite the task's environment variables with the new ones, containing the
     // PUEUE_WORKER_ID and PUEUE_GROUP variables.
     task.envs = envs;

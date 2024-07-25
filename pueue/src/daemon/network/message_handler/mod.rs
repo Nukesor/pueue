@@ -75,6 +75,7 @@ macro_rules! ok_or_save_state_failure {
 
 #[cfg(test)]
 mod fixtures {
+    use chrono::{DateTime, Duration, Local};
     use std::collections::HashMap;
     use std::env::temp_dir;
     use std::sync::{Arc, Mutex};
@@ -83,6 +84,15 @@ mod fixtures {
     pub use pueue_lib::settings::Settings;
     pub use pueue_lib::state::{SharedState, State, PUEUE_DEFAULT_GROUP};
     pub use pueue_lib::task::{Task, TaskResult, TaskStatus};
+
+    // A simple helper struct to keep the boilerplate for TaskStatus creation down.
+    pub enum StubStatus {
+        Queued,
+        Running,
+        Paused,
+        Stashed { enqueue_at: Option<DateTime<Local>> },
+        Done(TaskResult),
+    }
 
     pub fn get_settings() -> (Settings, TempDir) {
         let tempdir = TempDir::new().expect("Failed to create test pueue directory");
@@ -110,7 +120,25 @@ mod fixtures {
     }
 
     /// Create a new task with stub data in the given group
-    pub fn get_stub_task_in_group(id: &str, group: &str, status: TaskStatus) -> Task {
+    pub fn get_stub_task_in_group(id: &str, group: &str, status: StubStatus) -> Task {
+        // Build a proper Task status based on the simplified requested stub status.
+        let enqueued_at = Local::now() - Duration::minutes(5);
+        let start = Local::now() - Duration::minutes(4);
+        let end = Local::now() - Duration::minutes(1);
+
+        let status = match status {
+            StubStatus::Stashed { enqueue_at } => TaskStatus::Stashed { enqueue_at },
+            StubStatus::Queued => TaskStatus::Queued { enqueued_at },
+            StubStatus::Running => TaskStatus::Running { enqueued_at, start },
+            StubStatus::Paused => TaskStatus::Paused { enqueued_at, start },
+            StubStatus::Done(result) => TaskStatus::Done {
+                enqueued_at,
+                start,
+                end,
+                result,
+            },
+        };
+
         Task::new(
             id.to_string(),
             temp_dir(),
@@ -124,7 +152,7 @@ mod fixtures {
     }
 
     /// Create a new task with stub data
-    pub fn get_stub_task(id: &str, status: TaskStatus) -> Task {
+    pub fn get_stub_task(id: &str, status: StubStatus) -> Task {
         get_stub_task_in_group(id, PUEUE_DEFAULT_GROUP, status)
     }
 
@@ -133,23 +161,23 @@ mod fixtures {
         {
             // Queued task
             let mut state = state.lock().unwrap();
-            let task = get_stub_task("0", TaskStatus::Queued);
+            let task = get_stub_task("0", StubStatus::Queued);
             state.add_task(task);
 
             // Finished task
-            let task = get_stub_task("1", TaskStatus::Done(TaskResult::Success));
+            let task = get_stub_task("1", StubStatus::Done(TaskResult::Success));
             state.add_task(task);
 
             // Stashed task
-            let task = get_stub_task("2", TaskStatus::Stashed { enqueue_at: None });
+            let task = get_stub_task("2", StubStatus::Stashed { enqueue_at: None });
             state.add_task(task);
 
             // Running task
-            let task = get_stub_task("3", TaskStatus::Running);
+            let task = get_stub_task("3", StubStatus::Running);
             state.add_task(task);
 
             // Paused task
-            let task = get_stub_task("4", TaskStatus::Paused);
+            let task = get_stub_task("4", StubStatus::Paused);
             state.add_task(task);
         }
 
