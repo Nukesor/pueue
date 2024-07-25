@@ -6,30 +6,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## \[4.0.0\] - unreleased
 
-This release aims to improve Pueue and to rectify some old design decisions.
+This release aims to further improve Pueue and to rectify some old design decisions.
 
-### Multi-threaded architecture
+### Removing internal channel communication
 
-Up until recently, Pueue had the subprocesses' (tasks') state live in a dedicated thread.
-Client commands that directly affected subprocesses, such as `pueue start --immediate`, were forwarded to that special thread via an `mpsc` channel to be further processed.
+Until recently, Pueue managed subprocess (task) states in a dedicated thread.
+Client commands affecting subprocesses, such as `pueue start --immediate`, were relayed to this special thread via an `mpsc` channel for processing.
 
-This approach resulted in short delays until such commands would actually be processed.
-For instance, tasks would start a few hundred milliseconds after the client got the `Ok` from the daemon that the task is about to start.
-Commands like `pueue add --immediate install_something && pueue send 0 'y\n'` would often fail as the task didn't start yet.
+This setup caused short delays before the instructions were executed.
+For instance, tasks would begin a few hundred milliseconds after the client received an `Ok` from the daemon, despite using the `--immediate` flag.
+This behavior was unintuitive and often led to commands like `pueue add --immediate install_something && pueue send 0 'y\n'` failing, as the task had not started by the time `pueue send` was called.
 
-The new state design fixes this issue, which allows Pueue to do subprocess state manipulation directly inside of the client message handlers, effectively removing any delays.
+The new state design resolves this issue by allowing Pueue to manipulate subprocess states directly within the client message handlers, eliminating any delays.
 
-TLDR: Commands that start/stop/kill/pause tasks only return when the task is actually started/stopped/killed/paused.
+TLDR: Commands that start/stop/kill/pause tasks now only return when the task is actually started/stopped/killed/paused.
 
 ### Runtime invariants
 
-Previously, various state related runtime invariants were enforced by convention. For example, a task that is queued should not have a `start` or `enqueued_at` time set.
-However, this approach is highly error-prone as it's really hard to always think of everything that needs to be set or cleaned up on every possible state transition.
+Previously, various task-state related invariants were enforced during runtime. For example, a `Queued` task should not have a `start` or `enqueued_at` time set.
+This approach, however, is highly error-prone, as it is difficult to account for every state transition and ensure everything is set or cleaned up correctly.
 
-Luckily, this is an issue that can be fixed in a (rather) elegant way in Rust, using struct enums. That way, those invariants are enforced via the type system during the compile time.
-The code is a bit more verbose (~25%), but it prevents a whole category of bugs and while doing this refactoring I actually found at least 2 cases where I forgot to clear a variable.
+Fortunately, this issue can be addressed in a more elegant way in Rust using struct enums. This method enforces invariants via the type system at compile time.
+Although the affected code become slightly more verbose (about 25% larger), it eliminated an entire class of bugs.
+During this refactoring, I discovered at least two instances where I had forgotten to clear a variable.
 
-TLDR: The new task state handling is a bit more verbose, but a lot cleaner and type safe.
+However, since the new structure differs significantly from the old one, it breaks backward compatibility with some commands (such as `status` and `log`) and the serialized state.
+Upon updating Pueue, the previous state will be wiped, resulting in a clean slate.
+
+TLDR: The new task state representation is more verbose but significantly cleaner and fixes some bugs. It breaks compatibility with old states, so ensure there are no important tasks in your queue before updating. You'll also need to recreate groups.
 
 ### Fixed
 
