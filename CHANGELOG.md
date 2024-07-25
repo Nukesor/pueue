@@ -19,6 +19,18 @@ Commands like `pueue add --immediate install_something && pueue send 0 'y\n'` wo
 
 The new state design fixes this issue, which allows Pueue to do subprocess state manipulation directly inside of the client message handlers, effectively removing any delays.
 
+TLDR: Commands that start/stop/kill/pause tasks only return when the task is actually started/stopped/killed/paused.
+
+### Runtime invariants
+
+Previously, various state related runtime invariants were enforced by convention. For example, a task that is queued should not have a `start` or `enqueued_at` time set.
+However, this approach is highly error-prone as it's really hard to always think of everything that needs to be set or cleaned up on every possible state transition.
+
+Luckily, this is an issue that can be fixed in a (rather) elegant way in Rust, using struct enums. That way, those invariants are enforced via the type system during the compile time.
+The code is a bit more verbose (~25%), but it prevents a whole category of bugs and while doing this refactoring I actually found at least 2 cases where I forgot to clear a variable.
+
+TLDR: The new task state handling is a bit more verbose, but a lot cleaner and type safe.
+
 ### Fixed
 
 - Fixed delay after sending process related commands from client. [#548](https://github.com/Nukesor/pueue/pull/548)
@@ -26,7 +38,7 @@ The new state design fixes this issue, which allows Pueue to do subprocess state
 ### Change
 
 - **Breaking**: Refactor internal task state. Some task variables have been moved into the `TaskStatus` enum, which now enforces various invariants during compile time via the type system.
-  Due to this, several subtle time related inconsistencies (task start/stop/enqueue times) have been fixed. \
+  Due to this, several subtle time related inconsistencies (task start/stop/enqueue times) have been fixed. [#556](https://github.com/Nukesor/pueue/pull/556) \
   **Important: This completely breaks backwards compatibility, including previous state.**
   **Important: The Pueue daemon needs to be restarted and the state will be wiped clean.**
 - **Breaking**: Streamlined `pueue log` parameters to behave the same way as `start`, `pause` or `kill`. [#509](https://github.com/Nukesor/pueue/issues/509)
