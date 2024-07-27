@@ -10,10 +10,13 @@ use pueue::client::query::{apply_query, Rule};
 use pueue_lib::state::PUEUE_DEFAULT_GROUP;
 use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
+const TEST_COMMAND_0: &str = "sleep 60";
+const TEST_COMMAND_1: &str = "echo Hello Pueue";
+
 /// A small helper function to reduce a bit of boilerplate.
 pub fn build_task() -> Task {
     Task::new(
-        "sleep 60".to_owned(),
+        TEST_COMMAND_0.to_owned(),
         PathBuf::from("/tmp"),
         HashMap::new(),
         PUEUE_DEFAULT_GROUP.to_owned(),
@@ -79,9 +82,10 @@ pub fn test_tasks() -> Vec<Task> {
     running.id = 4;
     tasks.insert(running.id, running);
 
-    // Add two queued tasks
+    // Add two queued tasks with different command
     let mut queued = build_task();
     queued.id = 5;
+    queued.command = TEST_COMMAND_1.to_string();
     tasks.insert(queued.id, queued.clone());
 
     // Task 6 depends on task 5
@@ -281,7 +285,7 @@ async fn order_by_status() -> Result<()> {
     Ok(())
 }
 
-/// Filter tasks by label with the "contains" `%=` filter.
+/// Filter tasks by label with the "eq" `=` "ne" `!=` and "contains" `%=`filter.
 #[rstest]
 #[case("%=", "label", 3)]
 #[case("%=", "label-10", 3)]
@@ -334,15 +338,17 @@ async fn filter_label(
     Ok(())
 }
 
-/// Filter tasks by command with the "contains" `%=` filter.
+/// Filter tasks by command with the "eq" `=` "ne" `!=` and "contains" `%=`filter.
 #[rstest]
-#[case("%=", "sleep", 7)]
-#[case("%=", "60", 7)]
+#[case("=", TEST_COMMAND_0, 5)]
+#[case("%=", &TEST_COMMAND_0[..4], 5)]
+#[case("!=", TEST_COMMAND_0, 2)]
+#[case("=", TEST_COMMAND_1, 2)]
+#[case("!=", TEST_COMMAND_1, 5)]
+#[case("%=", &TEST_COMMAND_1[..4], 2)]
+#[case("!=", "nonexist", 7)]
 #[case("%=", "nonexist", 0)]
-#[case("=", "sleep 60", 7)]
-#[case("!=", "sleep 60", 0)]
-#[case("!=", "nonexist command", 7)]
-#[tokio::test(flavor = "multi_thread", worker_threads = 1)]
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn filter_command(
     #[case] operator: &'static str,
     #[case] command_filter: &'static str,
