@@ -333,3 +333,54 @@ async fn filter_label(
 
     Ok(())
 }
+
+/// Filter tasks by command with the "contains" `%=` filter.
+#[rstest]
+#[case("%=", "sleep", 7)]
+#[case("%=", "60", 7)]
+#[case("%=", "nonexist", 0)]
+#[case("=", "sleep 60", 7)]
+#[case("!=", "sleep 60", 0)]
+#[case("!=", "nonexist command", 7)]
+#[tokio::test(flavor = "multi_thread", worker_threads = 1)]
+async fn filter_command(
+    #[case] operator: &'static str,
+    #[case] command_filter: &'static str,
+    #[case] match_count: usize,
+) -> Result<()> {
+    let tasks = test_tasks_with_query(&format!("command{operator}{command_filter}"), &None)?;
+
+    for task in tasks.iter() {
+        // Make sure the task either has no command or the command doesn't match the filter.
+        if operator == "!=" {
+            let command = &task.command;
+            assert_ne!(
+                command, command_filter,
+                "Command '{command}' matched exact filter '{command_filter}'"
+            );
+        }
+
+        let command = task.command.as_str();
+        if operator == "%=" {
+            // Make sure the command contained our filter.
+            assert!(
+                command.contains(command_filter),
+                "Command '{command}' didn't contain filter '{command_filter}'"
+            );
+        } else if operator == "=" {
+            // Make sure the command exactly matches the filter.
+            assert_eq!(
+                command, command_filter,
+                "Command '{command}' didn't match exact filter '{command_filter}'"
+            );
+        }
+    }
+
+    assert_eq!(
+        tasks.len(),
+        match_count,
+        "Got a different amount of tasks than expected for the command filter: {command_filter}."
+    );
+
+    Ok(())
+}

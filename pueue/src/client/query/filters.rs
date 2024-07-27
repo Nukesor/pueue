@@ -255,6 +255,37 @@ pub fn label(section: Pair<'_, Rule>, query_result: &mut QueryResult) -> Result<
     Ok(())
 }
 
+/// Parse a filter for the command field.
+///
+/// This filter syntax is exactly the same as the [label] filter.
+/// Only the keyword changed from `label` to `command`.
+pub fn command(section: Pair<'_, Rule>, query_result: &mut QueryResult) -> Result<()> {
+    let mut filter = section.into_inner();
+    // The first word should be the `command` keyword.
+    let _command = filter.next().unwrap();
+
+    // Get the operator that should be applied in this filter.
+    // Can be either of [Rule::eq | Rule::neq].
+    let operator = filter.next().unwrap().as_rule();
+
+    // Get the name of the command we should filter for.
+    let operand = filter.next().unwrap().as_str().to_string();
+
+    // Build the command filter function.
+    let filter_function = Box::new(move |task: &Task| -> bool {
+        let command = task.command.as_str();
+        match operator {
+            Rule::eq => command == &operand,
+            Rule::neq => command != &operand,
+            Rule::contains => command.contains(&operand),
+            _ => false,
+        }
+    });
+    query_result.filters.push(filter_function);
+
+    Ok(())
+}
+
 /// Parse a filter for the status field.
 ///
 /// This filter syntax looks like this:
