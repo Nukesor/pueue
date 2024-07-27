@@ -275,8 +275,8 @@ pub fn command(section: Pair<'_, Rule>, query_result: &mut QueryResult) -> Resul
     let filter_function = Box::new(move |task: &Task| -> bool {
         let command = task.command.as_str();
         match operator {
-            Rule::eq => command == &operand,
-            Rule::neq => command != &operand,
+            Rule::eq => command == operand,
+            Rule::neq => command != operand,
             Rule::contains => command.contains(&operand),
             _ => false,
         }
