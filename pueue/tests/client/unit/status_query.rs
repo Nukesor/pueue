@@ -281,6 +281,46 @@ async fn order_by_status() -> Result<()> {
     Ok(())
 }
 
+/// Order the tasks by enqueue(d) date.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn order_by_enqueue_at() -> Result<()> {
+    let tasks = test_tasks_with_query("order_by enqueue_at asc", &None)?;
+
+    let expected = vec![
+        TaskStatus::Done {
+            enqueued_at: Local.with_ymd_and_hms(2022, 1, 8, 10, 0, 0).unwrap(),
+            start: Local.with_ymd_and_hms(2022, 1, 8, 10, 5, 0).unwrap(),
+            end: Local.with_ymd_and_hms(2022, 1, 8, 10, 10, 0).unwrap(),
+            result: TaskResult::Success,
+        },
+        TaskStatus::Done {
+            enqueued_at: Local.with_ymd_and_hms(2022, 1, 10, 10, 0, 0).unwrap(),
+            start: Local.with_ymd_and_hms(2022, 1, 10, 10, 5, 0).unwrap(),
+            end: Local.with_ymd_and_hms(2022, 1, 10, 10, 10, 0).unwrap(),
+            result: TaskResult::Failed(255),
+        },
+        TaskStatus::Running {
+            enqueued_at: Local.with_ymd_and_hms(2022, 1, 10, 10, 0, 0).unwrap(),
+            start: Local.with_ymd_and_hms(2022, 1, 2, 12, 0, 0).unwrap(),
+        },
+        TaskStatus::Queued {
+            enqueued_at: Local.with_ymd_and_hms(2022, 1, 10, 10, 0, 0).unwrap(),
+        },
+        TaskStatus::Queued {
+            enqueued_at: Local.with_ymd_and_hms(2022, 1, 10, 10, 0, 0).unwrap(),
+        },
+        TaskStatus::Stashed {
+            enqueue_at: Some(Local.with_ymd_and_hms(2022, 1, 10, 11, 0, 0).unwrap()),
+        },
+        TaskStatus::Stashed { enqueue_at: None },
+    ];
+
+    let actual: Vec<TaskStatus> = tasks.iter().map(|task| task.status.clone()).collect();
+    assert_eq!(actual, expected);
+
+    Ok(())
+}
+
 /// Filter tasks by label with the "contains" `%=` filter.
 #[rstest]
 #[case("%=", "label", 3)]
