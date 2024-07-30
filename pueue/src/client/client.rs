@@ -468,9 +468,14 @@ impl Client {
             SubCommand::Enqueue {
                 task_ids,
                 delay_until,
-            } => EnqueueMessage {
-                task_ids: task_ids.clone(),
-                enqueue_at: *delay_until,
+                group,
+                all,
+            } => {
+                let selection = selection_from_params(*all, group, task_ids);
+                EnqueueMessage {
+                    tasks: selection,
+                    enqueue_at: *delay_until,
+                }
             }
             .into(),
             SubCommand::Start {

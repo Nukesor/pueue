@@ -151,7 +151,7 @@ impl_into_message!(SwitchMessage, Message::Switch);
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct EnqueueMessage {
-    pub task_ids: Vec<usize>,
+    pub tasks: TaskSelection,
     pub enqueue_at: Option<DateTime<Local>>,
 }
 

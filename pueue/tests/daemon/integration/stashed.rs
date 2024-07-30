@@ -57,7 +57,7 @@ async fn test_enqueued_tasks(
 
     // Manually enqueue the task
     let enqueue_message = EnqueueMessage {
-        task_ids: vec![0],
+        tasks: TaskSelection::TaskIds(vec![0]),
         enqueue_at: None,
     };
     send_message(shared, enqueue_message)

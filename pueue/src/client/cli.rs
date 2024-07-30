@@ -100,6 +100,8 @@ pub enum SubCommand {
         task_ids: Vec<usize>,
     },
     /// Enqueue stashed tasks. They'll be handled normally afterwards.
+    ///
+    /// Enqueues all stashed task in the default group if no arguments are given.
     #[command(after_help = "DELAY FORMAT:
 
     The --delay argument must be either a number of seconds or a \"date expression\" similar to GNU \
@@ -125,6 +127,14 @@ pub enum SubCommand {
     Enqueue {
         /// Enqueue these specific tasks.
         task_ids: Vec<usize>,
+
+        /// Enqueue all stashed tasks in a group
+        #[arg(short, long, conflicts_with = "all")]
+        group: Option<String>,
+
+        /// Enqueue all stashed tasks across all groups.
+        #[arg(short, long)]
+        all: bool,
 
         /// Delay enqueuing these tasks until 'delay' elapses. See DELAY FORMAT below.
         #[arg(name = "delay", short, long, value_parser = parse_delay_until)]
