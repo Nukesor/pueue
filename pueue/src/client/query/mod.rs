@@ -2,6 +2,7 @@
 #![allow(clippy::empty_docs)]
 
 use anyhow::{bail, Context, Result};
+use chrono::prelude::*;
 use pest::Parser;
 use pest_derive::Parser;
 
@@ -93,6 +94,24 @@ impl QueryResult {
             Rule::column_label => task1.label.cmp(&task2.label),
             Rule::column_command => task1.command.cmp(&task2.command),
             Rule::column_path => task1.path.cmp(&task2.path),
+            Rule::column_enqueue_at => {
+                fn enqueue_date(task: &Task) -> DateTime<Local> {
+                    match &task.status {
+                        TaskStatus::Queued { enqueued_at, .. }
+                        | TaskStatus::Running { enqueued_at, .. }
+                        | TaskStatus::Paused { enqueued_at, .. }
+                        | TaskStatus::Done { enqueued_at, .. }
+                        | TaskStatus::Stashed {
+                            enqueue_at: Some(enqueued_at),
+                            ..
+                        } => *enqueued_at,
+                        // considered far in the future when no explicit date:
+                        _ => DateTime::<Utc>::MAX_UTC.into(),
+                    }
+                }
+
+                enqueue_date(task1).cmp(&enqueue_date(task2))
+            }
             Rule::column_start => {
                 let (start1, _) = task1.start_and_end();
                 let (start2, _) = task2.start_and_end();

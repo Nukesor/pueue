@@ -55,6 +55,7 @@ TLDR: The new task state representation is more verbose but significantly cleane
   This also refactors the way resets are done internally, resulting in a cleaner code architecture.
 - Ability to set the Unix socket permissions through the new `unix_socket_permissions` configuration option. [#544](https://github.com/Nukesor/pueue/pull/544)
 - Add `command` filter to `pueue status`. [#524](https://github.com/Nukesor/pueue/issues/524) [#560](https://github.com/Nukesor/pueue/pull/560)
+- Allow `pueue status` to order tasks by `enqueue_at`. [#554](https://github.com/Nukesor/pueue/issues/554)
 
 ## \[3.4.1\] - 2024-06-04
 
