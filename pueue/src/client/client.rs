@@ -456,7 +456,19 @@ impl Client {
                 }
                 Message::Remove(task_ids.clone())
             }
-            SubCommand::Stash { task_ids } => Message::Stash(task_ids.clone()),
+            SubCommand::Stash {
+                task_ids,
+                group,
+                all,
+                delay_until,
+            } => {
+                let selection = selection_from_params(*all, group, task_ids);
+                StashMessage {
+                    tasks: selection,
+                    enqueue_at: *delay_until,
+                }
+                .into()
+            }
             SubCommand::Switch {
                 task_id_1,
                 task_id_2,
@@ -467,9 +479,9 @@ impl Client {
             .into(),
             SubCommand::Enqueue {
                 task_ids,
-                delay_until,
                 group,
                 all,
+                delay_until,
             } => {
                 let selection = selection_from_params(*all, group, task_ids);
                 EnqueueMessage {

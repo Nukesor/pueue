@@ -1,16 +1,17 @@
 use chrono::Local;
-use pueue_lib::network::message::*;
-use pueue_lib::settings::Settings;
-use pueue_lib::state::SharedState;
-use pueue_lib::success_msg;
-use pueue_lib::task::TaskStatus;
+use pueue_lib::{
+    network::message::*, settings::Settings, state::SharedState, success_msg, task::TaskStatus,
+};
 
 use crate::daemon::network::response_helper::*;
+
+use super::format_datetime;
 
 /// Invoked when calling `pueue enqueue`.
 /// Enqueue specific stashed tasks.
 pub fn enqueue(settings: &Settings, state: &SharedState, message: EnqueueMessage) -> Message {
     let mut state = state.lock().unwrap();
+    // Get the affected task ids, based on the task selection.
     let selected_task_ids = match message.tasks {
         TaskSelection::TaskIds(ref task_ids) => state
             .tasks
@@ -74,17 +75,11 @@ pub fn enqueue(settings: &Settings, state: &SharedState, message: EnqueueMessage
 
     // Construct a response depending on the selected tasks.
     if let Some(enqueue_at) = &message.enqueue_at {
-        // If the enqueue at time is today, only show the time. Otherwise, include the date.
-        let format_string = if enqueue_at.date_naive() == Local::now().date_naive() {
-            &settings.client.status_time_format
-        } else {
-            &settings.client.status_datetime_format
-        };
-        let enqueue_at_string = enqueue_at.format(format_string).to_string();
+        let enqueue_at = format_datetime(settings, enqueue_at);
 
         match &message.tasks {
             TaskSelection::TaskIds(task_ids) => task_action_response_helper(
-                &format!("Stashed tasks will be enqueued at {enqueue_at_string}"),
+                &format!("Stashed tasks will be enqueued at {enqueue_at}"),
                 task_ids.clone(),
                 |task| {
                     matches!(
@@ -95,10 +90,10 @@ pub fn enqueue(settings: &Settings, state: &SharedState, message: EnqueueMessage
                 &state,
             ),
             TaskSelection::Group(group) => {
-                success_msg!("Enqueue stashed tasks of group {group} at {enqueue_at_string}.",)
+                success_msg!("Enqueue stashed tasks of group {group} at {enqueue_at}.",)
             }
             TaskSelection::All => {
-                success_msg!("Enqueue all stashed tasks at {enqueue_at_string}.",)
+                success_msg!("Enqueue all stashed tasks at {enqueue_at}.",)
             }
         }
     } else {

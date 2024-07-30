@@ -96,8 +96,19 @@ pub enum SubCommand {
     /// You have to enqueue them or start them by hand.
     Stash {
         /// Stash these specific tasks.
-        #[arg(required = true)]
         task_ids: Vec<usize>,
+
+        /// Stash all queued tasks in a group
+        #[arg(short, long, conflicts_with = "all")]
+        group: Option<String>,
+
+        /// Stash all queued tasks across all groups.
+        #[arg(short, long)]
+        all: bool,
+
+        /// Delay enqueuing these tasks until 'delay' elapses. See DELAY FORMAT below.
+        #[arg(name = "delay", short, long, value_parser = parse_delay_until)]
+        delay_until: Option<DateTime<Local>>,
     },
     /// Enqueue stashed tasks. They'll be handled normally afterwards.
     ///

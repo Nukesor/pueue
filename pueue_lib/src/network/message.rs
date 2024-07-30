@@ -44,7 +44,7 @@ pub enum Message {
     Add(AddMessage),
     Remove(Vec<usize>),
     Switch(SwitchMessage),
-    Stash(Vec<usize>),
+    Stash(StashMessage),
     Enqueue(EnqueueMessage),
 
     Start(StartMessage),
@@ -148,6 +148,14 @@ pub struct SwitchMessage {
 }
 
 impl_into_message!(SwitchMessage, Message::Switch);
+
+#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
+pub struct StashMessage {
+    pub tasks: TaskSelection,
+    pub enqueue_at: Option<DateTime<Local>>,
+}
+
+impl_into_message!(StashMessage, Message::Stash);
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct EnqueueMessage {

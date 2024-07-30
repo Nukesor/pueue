@@ -83,13 +83,8 @@ pub fn add_task(settings: &Settings, state: &SharedState, message: AddMessage) -
     let mut response = if message.print_task_id {
         task_id.to_string()
     } else if let Some(enqueue_at) = message.enqueue_at {
-        let format_string = if enqueue_at.date_naive() == Local::now().date_naive() {
-            &settings.client.status_time_format
-        } else {
-            &settings.client.status_datetime_format
-        };
-        let enqueue_at_string = enqueue_at.format(format_string).to_string();
-        format!("New task added (id {task_id}). It will be enqueued at {enqueue_at_string}")
+        let enqueue_at = format_datetime(settings, &enqueue_at);
+        format!("New task added (id {task_id}). It will be enqueued at {enqueue_at}")
     } else {
         format!("New task added (id {task_id}).")
     };

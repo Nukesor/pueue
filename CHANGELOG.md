@@ -52,6 +52,7 @@ TLDR: The new task state representation is more verbose but significantly cleane
 
 - Add `--all` and `--group` to `pueue log`. [#509](https://github.com/Nukesor/pueue/issues/509)
 - Add `--all` and `--group` to `pueue enqueue`. [#558](https://github.com/Nukesor/pueue/issues/558)
+- Add `--all` and `--group` to `pueue stash`. [#558](https://github.com/Nukesor/pueue/issues/558)
 - Add `pueue reset --groups [group_names]` to allow resetting individual groups. [#482](https://github.com/Nukesor/pueue/issues/482) \
   This also refactors the way resets are done internally, resulting in a cleaner code architecture.
 - Ability to set the Unix socket permissions through the new `unix_socket_permissions` configuration option. [#544](https://github.com/Nukesor/pueue/pull/544)
