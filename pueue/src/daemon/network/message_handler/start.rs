@@ -20,7 +20,7 @@ pub fn start(settings: &Settings, state: &SharedState, message: StartMessage) ->
 
     let response = match &message.tasks {
         TaskSelection::TaskIds(task_ids) => task_action_response_helper(
-            "Tasks are being started",
+            "Tasks have been started/resumed",
             task_ids.clone(),
             |task| {
                 matches!(
@@ -35,7 +35,7 @@ pub fn start(settings: &Settings, state: &SharedState, message: StartMessage) ->
         TaskSelection::Group(group) => {
             success_msg!("Group \"{group}\" is being resumed.")
         }
-        TaskSelection::All => success_msg!("All queues are being resumed."),
+        TaskSelection::All => success_msg!("All groups are being resumed."),
     };
 
     if let Message::Success(_) = response {

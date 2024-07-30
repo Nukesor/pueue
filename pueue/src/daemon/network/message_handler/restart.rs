@@ -26,7 +26,7 @@ pub fn restart_multiple(
     // We have to compile the response beforehand.
     // Otherwise we no longer know which tasks, were actually capable of being being restarted.
     let response = task_action_response_helper(
-        "Tasks restarted",
+        "Tasks has restarted",
         task_ids.clone(),
         |task| task.is_done(),
         &state,
