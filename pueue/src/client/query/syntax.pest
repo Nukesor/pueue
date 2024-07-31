@@ -46,6 +46,10 @@ status_filter = { column_status ~ (eq | neq) ~ (status_queued | status_stashed |
 label = { ANY* }
 label_filter = { column_label ~ ( eq | neq | contains ) ~ label }
 
+// Command filter
+command = { ANY* }
+command_filter = { column_command ~ ( eq | neq | contains ) ~ command }
+
 // Time related filters
 datetime = { ASCII_DIGIT{4} ~ "-" ~ ASCII_DIGIT{2} ~ "-" ~ ASCII_DIGIT{2}  ~ ASCII_DIGIT{2} ~ ":" ~ ASCII_DIGIT{2} ~ (":" ~ ASCII_DIGIT{2})? }
 date = { ASCII_DIGIT{4} ~ "-" ~ ASCII_DIGIT{2} ~ "-" ~ ASCII_DIGIT{2} }
@@ -67,4 +71,4 @@ limit_count = { ASCII_DIGIT* }
 limit_condition = { (first | last) ~ limit_count }
 
 // ----- The final query syntax -----
-query = { SOI ~ column_selection? ~ ( datetime_filter | status_filter | label_filter )*?  ~ order_by_condition? ~ limit_condition? ~ EOI }
+query = { SOI ~ column_selection? ~ ( datetime_filter | status_filter | label_filter | command_filter )*?  ~ order_by_condition? ~ limit_condition? ~ EOI }

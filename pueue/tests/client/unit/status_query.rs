@@ -10,10 +10,13 @@ use pueue::client::query::{apply_query, Rule};
 use pueue_lib::state::PUEUE_DEFAULT_GROUP;
 use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
+const TEST_COMMAND_SLEEP: &str = "sleep 60";
+const TEST_COMMAND_HELLO: &str = "echo Hello Pueue";
+
 /// A small helper function to reduce a bit of boilerplate.
 pub fn build_task() -> Task {
     Task::new(
-        "sleep 60".to_owned(),
+        TEST_COMMAND_SLEEP.to_owned(),
         PathBuf::from("/tmp"),
         HashMap::new(),
         PUEUE_DEFAULT_GROUP.to_owned(),
@@ -79,9 +82,10 @@ pub fn test_tasks() -> Vec<Task> {
     running.id = 4;
     tasks.insert(running.id, running);
 
-    // Add two queued tasks
+    // Add two queued tasks with different command
     let mut queued = build_task();
     queued.id = 5;
+    queued.command = TEST_COMMAND_HELLO.to_string();
     tasks.insert(queued.id, queued.clone());
 
     // Task 6 depends on task 5
@@ -321,7 +325,7 @@ async fn order_by_enqueue_at() -> Result<()> {
     Ok(())
 }
 
-/// Filter tasks by label with the "contains" `%=` filter.
+/// Filter tasks by label with the "eq" `=` "ne" `!=` and "contains" `%=`filter.
 #[rstest]
 #[case("%=", "label", 3)]
 #[case("%=", "label-10", 3)]
@@ -369,6 +373,56 @@ async fn filter_label(
         tasks.len(),
         match_count,
         "Got a different amount of tasks than expected for the label filter: {label_filter}."
+    );
+
+    Ok(())
+}
+
+/// Filter tasks by command with the "eq" `=` "ne" `!=` and "contains" `%=`filter.
+#[rstest]
+#[case("=", TEST_COMMAND_SLEEP, 5)]
+#[case("!=", TEST_COMMAND_SLEEP, 2)]
+#[case("%=", &TEST_COMMAND_SLEEP[..4], 5)]
+#[case("=", TEST_COMMAND_HELLO, 2)]
+#[case("!=", TEST_COMMAND_HELLO, 5)]
+#[case("%=", &TEST_COMMAND_HELLO[..4], 2)]
+#[case("!=", "nonexist", 7)]
+#[case("%=", "nonexist", 0)]
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn filter_command(
+    #[case] operator: &'static str,
+    #[case] command_filter: &'static str,
+    #[case] match_count: usize,
+) -> Result<()> {
+    let tasks = test_tasks_with_query(&format!("command{operator}{command_filter}"), &None)?;
+
+    for task in tasks.iter() {
+        let command = task.command.as_str();
+        if operator == "!=" {
+            // Make sure the task's command doesn't match the filter.
+            assert_ne!(
+                command, command_filter,
+                "Command '{command}' matched exact filter '{command_filter}'"
+            );
+        } else if operator == "%=" {
+            // Make sure the command contained our filter.
+            assert!(
+                command.contains(command_filter),
+                "Command '{command}' didn't contain filter '{command_filter}'"
+            );
+        } else if operator == "=" {
+            // Make sure the command exactly matches the filter.
+            assert_eq!(
+                command, command_filter,
+                "Command '{command}' didn't match exact filter '{command_filter}'"
+            );
+        }
+    }
+
+    assert_eq!(
+        tasks.len(),
+        match_count,
+        "Got a different amount of tasks than expected for the command filter: {command_filter}."
     );
 
     Ok(())
