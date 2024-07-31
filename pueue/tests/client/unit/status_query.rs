@@ -10,13 +10,13 @@ use pueue::client::query::{apply_query, Rule};
 use pueue_lib::state::PUEUE_DEFAULT_GROUP;
 use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
-const TEST_COMMAND_0: &str = "sleep 60";
-const TEST_COMMAND_1: &str = "echo Hello Pueue";
+const TEST_COMMAND_SLEEP: &str = "sleep 60";
+const TEST_COMMAND_HELLO: &str = "echo Hello Pueue";
 
 /// A small helper function to reduce a bit of boilerplate.
 pub fn build_task() -> Task {
     Task::new(
-        TEST_COMMAND_0.to_owned(),
+        TEST_COMMAND_SLEEP.to_owned(),
         PathBuf::from("/tmp"),
         HashMap::new(),
         PUEUE_DEFAULT_GROUP.to_owned(),
@@ -85,7 +85,7 @@ pub fn test_tasks() -> Vec<Task> {
     // Add two queued tasks with different command
     let mut queued = build_task();
     queued.id = 5;
-    queued.command = TEST_COMMAND_1.to_string();
+    queued.command = TEST_COMMAND_HELLO.to_string();
     tasks.insert(queued.id, queued.clone());
 
     // Task 6 depends on task 5
@@ -380,12 +380,12 @@ async fn filter_label(
 
 /// Filter tasks by command with the "eq" `=` "ne" `!=` and "contains" `%=`filter.
 #[rstest]
-#[case("=", TEST_COMMAND_0, 5)]
-#[case("%=", &TEST_COMMAND_0[..4], 5)]
-#[case("!=", TEST_COMMAND_0, 2)]
-#[case("=", TEST_COMMAND_1, 2)]
-#[case("!=", TEST_COMMAND_1, 5)]
-#[case("%=", &TEST_COMMAND_1[..4], 2)]
+#[case("=", TEST_COMMAND_SLEEP, 5)]
+#[case("!=", TEST_COMMAND_SLEEP, 2)]
+#[case("%=", &TEST_COMMAND_SLEEP[..4], 5)]
+#[case("=", TEST_COMMAND_HELLO, 2)]
+#[case("!=", TEST_COMMAND_HELLO, 5)]
+#[case("%=", &TEST_COMMAND_HELLO[..4], 2)]
 #[case("!=", "nonexist", 7)]
 #[case("%=", "nonexist", 0)]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
@@ -397,17 +397,14 @@ async fn filter_command(
     let tasks = test_tasks_with_query(&format!("command{operator}{command_filter}"), &None)?;
 
     for task in tasks.iter() {
-        // Make sure the task either has no command or the command doesn't match the filter.
+        let command = task.command.as_str();
         if operator == "!=" {
-            let command = &task.command;
+            // Make sure the task's command doesn't match the filter.
             assert_ne!(
                 command, command_filter,
                 "Command '{command}' matched exact filter '{command_filter}'"
             );
-        }
-
-        let command = task.command.as_str();
-        if operator == "%=" {
+        } else if operator == "%=" {
             // Make sure the command contained our filter.
             assert!(
                 command.contains(command_filter),
