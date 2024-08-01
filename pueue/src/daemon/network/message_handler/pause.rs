@@ -20,7 +20,7 @@ pub fn pause(settings: &Settings, state: &SharedState, message: PauseMessage) ->
     // Construct a response depending on the selected tasks.
     let response = match &message.tasks {
         TaskSelection::TaskIds(task_ids) => task_action_response_helper(
-            "Tasks are being paused",
+            "Tasks have been paused",
             task_ids.clone(),
             |task| matches!(task.status, TaskStatus::Running { .. }),
             &state,
@@ -28,7 +28,7 @@ pub fn pause(settings: &Settings, state: &SharedState, message: PauseMessage) ->
         TaskSelection::Group(group) => {
             success_msg!("Group \"{group}\" is being paused.")
         }
-        TaskSelection::All => success_msg!("All queues are being paused."),
+        TaskSelection::All => success_msg!("All groups are being paused."),
     };
 
     // Actually execute the command

@@ -57,7 +57,7 @@ async fn test_enqueued_tasks(
 
     // Manually enqueue the task
     let enqueue_message = EnqueueMessage {
-        task_ids: vec![0],
+        tasks: TaskSelection::TaskIds(vec![0]),
         enqueue_at: None,
     };
     send_message(shared, enqueue_message)
@@ -110,9 +110,15 @@ async fn test_stash_queued_task() -> Result<()> {
     add_task(shared, "sleep 10").await?;
 
     // Stash the task
-    send_message(shared, Message::Stash(vec![0]))
-        .await
-        .context("Failed to send STash message")?;
+    send_message(
+        shared,
+        StashMessage {
+            tasks: TaskSelection::TaskIds(vec![0]),
+            enqueue_at: None,
+        },
+    )
+    .await
+    .context("Failed to send STash message")?;
 
     let task = get_task(shared, 0).await?;
     assert_eq!(task.status, TaskStatus::Stashed { enqueue_at: None });
