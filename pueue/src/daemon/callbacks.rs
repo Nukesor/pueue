@@ -55,6 +55,7 @@ pub fn build_callback_command(
     // Init Handlebars. We set to strict, as we want to show an error on missing variables.
     let mut handlebars = Handlebars::new();
     handlebars.set_strict_mode(true);
+    handlebars.register_escape_fn(handlebars::no_escape);
 
     // Add templating variables.
     let mut parameters = HashMap::new();

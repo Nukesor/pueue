@@ -35,10 +35,6 @@ Upon updating Pueue, the previous state will be wiped, resulting in a clean slat
 
 TLDR: The new task state representation is more verbose but significantly cleaner and fixes some bugs. It breaks compatibility with old states, so ensure there are no important tasks in your queue before updating. You'll also need to recreate groups.
 
-### Fixed
-
-- Fixed delay after sending process related commands from client. [#548](https://github.com/Nukesor/pueue/pull/548)
-
 ### Change
 
 - **Breaking**: Refactor internal task state. Some task variables have been moved into the `TaskStatus` enum, which now enforces various invariants during compile time via the type system.
@@ -58,6 +54,11 @@ TLDR: The new task state representation is more verbose but significantly cleane
 - Ability to set the Unix socket permissions through the new `unix_socket_permissions` configuration option. [#544](https://github.com/Nukesor/pueue/pull/544)
 - Add `command` filter to `pueue status`. [#524](https://github.com/Nukesor/pueue/issues/524) [#560](https://github.com/Nukesor/pueue/pull/560)
 - Allow `pueue status` to order tasks by `enqueue_at`. [#554](https://github.com/Nukesor/pueue/issues/554)
+
+### Fixed
+
+- Fixed delay after sending process related commands from client. [#548](https://github.com/Nukesor/pueue/pull/548)
+- Callback templating arguments were html escaped by accident. [#564](https://github.com/Nukesor/pueue/pull/564)
 
 ## \[3.4.1\] - 2024-06-04
 
