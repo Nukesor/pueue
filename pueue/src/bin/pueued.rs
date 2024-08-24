@@ -3,7 +3,7 @@ use std::process::Command;
 use anyhow::Result;
 use clap::Parser;
 use log::warn;
-use simplelog::{Config, ConfigBuilder, LevelFilter, SimpleLogger};
+use simplelog::{Config, ConfigBuilder, LevelFilter, SimpleLogger, TermLogger, TerminalMode};
 
 use pueue::daemon::cli::CliArguments;
 use pueue::daemon::run;
@@ -35,7 +35,17 @@ async fn main() -> Result<()> {
         Ok(builder) => builder.build(),
     };
 
-    SimpleLogger::init(level, logger_config).unwrap();
+    // Init a terminal logger. If this fails for some reason, try fallback to a SimpleLogger
+    if TermLogger::init(
+        level,
+        logger_config.clone(),
+        TerminalMode::Stderr,
+        simplelog::ColorChoice::Auto,
+    )
+    .is_err()
+    {
+        SimpleLogger::init(level, logger_config).unwrap();
+    }
 
     run(opt.config, opt.profile, false).await
 }

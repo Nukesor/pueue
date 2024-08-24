@@ -4,7 +4,7 @@ use anyhow::{bail, Context, Result};
 use clap::{CommandFactory, Parser};
 use clap_complete::{generate, generate_to, shells};
 use log::warn;
-use simplelog::{Config, ConfigBuilder, LevelFilter, SimpleLogger};
+use simplelog::{Config, ConfigBuilder, LevelFilter, SimpleLogger, TermLogger, TerminalMode};
 
 use pueue_lib::settings::Settings;
 
@@ -51,7 +51,17 @@ async fn main() -> Result<()> {
         Ok(builder) => builder.build(),
     };
 
-    SimpleLogger::init(level, logger_config).unwrap();
+    // Init a terminal logger. If this fails for some reason, try fallback to a SimpleLogger
+    if TermLogger::init(
+        level,
+        logger_config.clone(),
+        TerminalMode::Stderr,
+        simplelog::ColorChoice::Auto,
+    )
+    .is_err()
+    {
+        SimpleLogger::init(level, logger_config).unwrap();
+    }
 
     // Try to read settings from the configuration file.
     let (mut settings, config_found) =

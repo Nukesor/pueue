@@ -43,6 +43,7 @@ TLDR: The new task state representation is more verbose but significantly cleane
   **Important: The Pueue daemon needs to be restarted and the state will be wiped clean.**
 - **Breaking**: Streamlined `pueue log` parameters to behave the same way as `start`, `pause` or `kill`. [#509](https://github.com/Nukesor/pueue/issues/509)
 - **Breaking**: Remove the `--children` commandline flags, that have been deprecated and no longer serve any function since `v3.0.0`.
+- **Breaking**: Send log output to `stderr` instead of `stdout` [#562](https://github.com/Nukesor/pueue/issues/562).
 
 ### Add
 
@@ -59,6 +60,7 @@ TLDR: The new task state representation is more verbose but significantly cleane
 
 - Fixed delay after sending process related commands from client. [#548](https://github.com/Nukesor/pueue/pull/548)
 - Callback templating arguments were html escaped by accident. [#564](https://github.com/Nukesor/pueue/pull/564)
+- Print incompatible version warning info as a log message instead of plain stdout input, which broke json outputs [#562](https://github.com/Nukesor/pueue/issues/562).
 
 ## \[3.4.1\] - 2024-06-04
 

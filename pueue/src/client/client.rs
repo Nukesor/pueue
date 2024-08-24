@@ -110,7 +110,7 @@ impl Client {
             };
 
             if show_warning {
-                println!(
+                error!(
                     "Different daemon version detected '{version}'. Consider restarting the daemon."
                 );
             }
