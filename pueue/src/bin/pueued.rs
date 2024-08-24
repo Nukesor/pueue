@@ -19,10 +19,10 @@ async fn main() -> Result<()> {
 
     // Set the verbosity level of the logger.
     let level = match opt.verbose {
-        0 => LevelFilter::Error,
-        1 => LevelFilter::Warn,
-        2 => LevelFilter::Info,
-        _ => LevelFilter::Debug,
+        0 => LevelFilter::Warn,
+        1 => LevelFilter::Info,
+        2 => LevelFilter::Debug,
+        _ => LevelFilter::Trace,
     };
 
     // Try to initialize the logger with the timezone set to the Local time of the machine.
