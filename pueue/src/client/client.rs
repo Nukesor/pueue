@@ -5,7 +5,7 @@ use std::{borrow::Cow, collections::HashMap};
 use anyhow::{bail, Context, Result};
 use clap::crate_version;
 use crossterm::tty::IsTty;
-use log::error;
+use log::{error, warn};
 
 use pueue_lib::network::message::*;
 use pueue_lib::network::protocol::*;
@@ -110,7 +110,7 @@ impl Client {
             };
 
             if show_warning {
-                println!(
+                warn!(
                     "Different daemon version detected '{version}'. Consider restarting the daemon."
                 );
             }
