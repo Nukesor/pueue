@@ -8,7 +8,7 @@ use std::{
         atomic::{AtomicBool, Ordering},
         Arc, Mutex,
     },
-    thread,
+    thread::{self, Thread},
     time::Duration,
 };
 
@@ -21,8 +21,8 @@ use windows::{
         Foundation::{CloseHandle, HANDLE, LUID},
         Security::{
             AdjustTokenPrivileges, DuplicateTokenEx, LookupPrivilegeValueW, SecurityIdentification,
-            TokenPrimary, SECURITY_ATTRIBUTES, SE_PRIVILEGE_ENABLED, SE_PRIVILEGE_REMOVED,
-            SE_TCB_NAME, TOKEN_ACCESS_MASK, TOKEN_ADJUST_PRIVILEGES, TOKEN_PRIVILEGES,
+            TokenPrimary, SE_PRIVILEGE_ENABLED, SE_PRIVILEGE_REMOVED, SE_TCB_NAME,
+            TOKEN_ACCESS_MASK, TOKEN_ADJUST_PRIVILEGES, TOKEN_PRIVILEGES,
         },
         System::{
             Environment::{CreateEnvironmentBlock, DestroyEnvironmentBlock},
@@ -135,7 +135,6 @@ fn service_main(_: Vec<OsString>) {
 
 fn run_service() -> Result<()> {
     let spawner = Arc::new(Spawner::new());
-
     let shutdown = Arc::new(AtomicBool::default());
 
     let event_handler = {
@@ -198,7 +197,7 @@ fn run_service() -> Result<()> {
         Ok(())
     };
 
-    set_status(ServiceState::StartPending, ServiceControlAccept::STOP)?;
+    set_status(ServiceState::StartPending, ServiceControlAccept::empty())?;
 
     // make sure we have privileges
     if let Err(e) = set_privilege(SE_TCB_NAME, true) {
@@ -206,9 +205,10 @@ fn run_service() -> Result<()> {
         bail!("failed to set privileges: {e}");
     }
 
+    // if it fails here, we probably launched before user logged in?
+    // for that reason we only log, but do not bail and stop the service
     if let Err(e) = spawner.start(None) {
-        //set_status(ServiceState::Stopped, ServiceControlAccept::empty())?;
-        bail!("failed to spawn: {e}");
+        error!("failed to spawn: {e}");
     }
 
     set_status(
@@ -219,9 +219,6 @@ fn run_service() -> Result<()> {
     while !shutdown.load(Ordering::Relaxed) {
         spawner.wait();
     }
-
-    // ensure we kill the daemon after
-    spawner.stop();
 
     set_status(ServiceState::Stopped, ServiceControlAccept::empty())?;
 
@@ -256,11 +253,7 @@ fn set_privilege(name: PCWSTR, state: bool) -> Result<()> {
         SE_PRIVILEGE_REMOVED
     };
 
-    if state {
-        tp.Privileges[0].Attributes = attributes;
-    } else {
-        tp.Privileges[0].Attributes = attributes;
-    }
+    tp.Privileges[0].Attributes = attributes;
 
     unsafe {
         AdjustTokenPrivileges(token.0, false, Some(&tp), 0, None, None)?;
@@ -284,23 +277,18 @@ fn run_as<T>(session_id: u32, cb: impl FnOnce(OwnedHandle) -> Result<T>) -> Resu
         WTSQueryUserToken(session_id, &mut query_token.0)?;
     }
 
-    let sa = SECURITY_ATTRIBUTES {
-        bInheritHandle: true.into(),
-        ..Default::default()
-    };
-
     let mut token = OwnedHandle::default();
 
     unsafe {
         DuplicateTokenEx(
             query_token.0,
             TOKEN_ACCESS_MASK(MAXIMUM_ALLOWED),
-            Some(&sa),
+            None,
             SecurityIdentification,
             TokenPrimary,
             &mut token.0,
         )?;
-    };
+    }
 
     let t = cb(token)?;
 
@@ -347,7 +335,10 @@ impl Child {
 
     fn kill(&mut self) -> Result<()> {
         if self.0.is_valid() {
-            unsafe { TerminateProcess(self.0 .0, 0)? };
+            unsafe {
+                TerminateProcess(self.0 .0, 0)?;
+            }
+
             self.0 = OwnedHandle::default();
         }
 
@@ -389,6 +380,7 @@ impl Drop for EnvBlock {
 struct Spawner {
     running: Arc<AtomicBool>,
     child: Arc<Mutex<Child>>,
+    main: Arc<Thread>,
 }
 
 impl Spawner {
@@ -396,6 +388,7 @@ impl Spawner {
         Self {
             running: Arc::default(),
             child: Arc::default(),
+            main: Arc::new(thread::current()),
         }
     }
 
@@ -411,7 +404,7 @@ impl Spawner {
     }
 
     fn wait(&self) {
-        let mut handle = { self.child.lock().unwrap().0 .0 };
+        let mut handle = self.child.lock().unwrap().0 .0;
 
         if handle.is_invalid() {
             while !self.running.load(Ordering::Relaxed) {
@@ -433,7 +426,7 @@ impl Spawner {
 
         let running = self.running.clone();
         let child = self.child.clone();
-        let curr_thread = thread::current();
+        let main_thread = self.main.clone();
         _ = thread::spawn(move || {
             let res = run_as(session, move |token| {
                 let mut arguments = Vec::new();
@@ -489,7 +482,7 @@ impl Spawner {
                     let mut lock = child.lock().unwrap();
                     *lock = Child(process_info.hProcess.into());
                     running.store(true, Ordering::Relaxed);
-                    curr_thread.unpark();
+                    main_thread.unpark();
                 }
 
                 unsafe {
