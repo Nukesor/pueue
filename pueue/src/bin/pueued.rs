@@ -5,8 +5,9 @@ use clap::Parser;
 use log::warn;
 use simplelog::{Config, ConfigBuilder, LevelFilter, SimpleLogger, TermLogger, TerminalMode};
 
-use pueue::daemon::cli::CliArguments;
-use pueue::daemon::run;
+#[cfg(target_os = "windows")]
+use pueue::daemon::service;
+use pueue::daemon::{cli::CliArguments, run};
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 4)]
 async fn main() -> Result<()> {
@@ -45,6 +46,27 @@ async fn main() -> Result<()> {
     .is_err()
     {
         SimpleLogger::init(level, logger_config).unwrap();
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        if opt.service {
+            // start service
+            service::start_service(opt.config.clone(), opt.profile.clone())?;
+            return Ok(());
+        }
+
+        if opt.install {
+            service::install_service(opt.config.clone(), opt.profile.clone())?;
+            println!("Successfully installed `pueued` Windows service");
+            return Ok(());
+        }
+
+        if opt.uninstall {
+            service::uninstall_service()?;
+            println!("Successfully uninstalled `pueued` Windows service");
+            return Ok(());
+        }
     }
 
     run(opt.config, opt.profile, false).await

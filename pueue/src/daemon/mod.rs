@@ -23,6 +23,8 @@ pub mod cli;
 mod network;
 mod pid;
 mod process_handler;
+#[cfg(target_os = "windows")]
+pub mod service;
 /// Contains re-usable helper functions, that operate on the pueue-lib state.
 pub mod state_helper;
 pub mod task_handler;
