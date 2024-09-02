@@ -41,7 +41,7 @@ use windows_service::{
     service::{
         ServiceAccess, ServiceControl, ServiceControlAccept, ServiceErrorControl, ServiceExitCode,
         ServiceInfo, ServiceStartType, ServiceState, ServiceStatus, ServiceType,
-        SessionChangeReason,
+        SessionChangeParam, SessionChangeReason, SessionNotification,
     },
     service_control_handler::{self, ServiceControlHandlerResult},
     service_dispatcher,
@@ -150,22 +150,26 @@ fn run_service() -> Result<()> {
                     ServiceControlHandlerResult::NoError
                 }
 
-                ServiceControl::SessionChange(param) => {
-                    match param.reason {
-                        SessionChangeReason::SessionLogon => {
-                            if !spawner.running() {
-                                if let Err(e) = spawner.start(Some(param.notification.session_id)) {
-                                    error!("failed to spawn: {e}");
-                                }
-                            }
+                // Logon
+                ServiceControl::SessionChange(SessionChangeParam {
+                    reason: SessionChangeReason::SessionLogon,
+                    notification: SessionNotification { session_id, .. },
+                }) => {
+                    if !spawner.running() {
+                        if let Err(e) = spawner.start(Some(session_id)) {
+                            error!("failed to spawn: {e}");
                         }
-
-                        SessionChangeReason::SessionLogoff => {
-                            spawner.stop();
-                        }
-
-                        _ => (),
                     }
+
+                    ServiceControlHandlerResult::NoError
+                }
+
+                // Logoff
+                ServiceControl::SessionChange(SessionChangeParam {
+                    reason: SessionChangeReason::SessionLogoff,
+                    ..
+                }) => {
+                    spawner.stop();
 
                     ServiceControlHandlerResult::NoError
                 }
@@ -412,7 +416,7 @@ impl Spawner {
         let mut handle = self.child.lock().unwrap().0 .0;
 
         if handle.is_invalid() {
-            while !self.running.load(Ordering::Relaxed) {
+            while !self.running() {
                 thread::park();
             }
 
