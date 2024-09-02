@@ -152,9 +152,7 @@ fn run_service() -> Result<()> {
 
                 ServiceControl::SessionChange(param) => {
                     match param.reason {
-                        SessionChangeReason::SessionLogon
-                        | SessionChangeReason::RemoteConnect
-                        | SessionChangeReason::SessionUnlock => {
+                        SessionChangeReason::SessionLogon => {
                             if !spawner.running() {
                                 if let Err(e) = spawner.start(Some(param.notification.session_id)) {
                                     error!("failed to spawn: {e}");
