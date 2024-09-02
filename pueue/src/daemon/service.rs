@@ -218,7 +218,7 @@ fn run_service() -> Result<()> {
         ServiceControlAccept::STOP | ServiceControlAccept::SESSION_CHANGE,
     )?;
 
-    while !shutdown.load(Ordering::Relaxed) {
+    while !shutdown.load(Ordering::Relaxed) && !spawner.dirty() {
         spawner.wait();
     }
 
@@ -383,6 +383,9 @@ struct Spawner {
     running: Arc<AtomicBool>,
     child: Arc<Mutex<Child>>,
     main: Arc<Thread>,
+    // whether the process has exited without our request
+    dirty: Arc<AtomicBool>,
+    request_stop: Arc<AtomicBool>,
 }
 
 impl Spawner {
@@ -391,6 +394,8 @@ impl Spawner {
             running: Arc::default(),
             child: Arc::default(),
             main: Arc::new(thread::current()),
+            dirty: Arc::default(),
+            request_stop: Arc::default(),
         }
     }
 
@@ -403,12 +408,20 @@ impl Spawner {
     // otherwise it will not be observable
     fn stop(&self) {
         let mut child = self.child.lock().unwrap();
-        if child.kill().is_ok() {
-            self.running.store(false, Ordering::Relaxed);
-            // even if thread got stuck in park(), this ensures it will test the
-            // `while` condition at least once more. as long as `while` conditions have
-            // been changed _before_ the call to stop(), it will exit the wait()
-            self.main.unpark();
+        self.request_stop.store(true, Ordering::Relaxed);
+        match child.kill() {
+            Ok(_) => {
+                self.running.store(false, Ordering::Relaxed);
+                // even if thread got stuck in park(), this ensures it will test the
+                // `while` condition at least once more. as long as `while` conditions have
+                // been changed _before_ the call to stop(), it will exit the wait()
+                self.main.unpark();
+            }
+
+            Err(e) => {
+                self.request_stop.store(false, Ordering::Relaxed);
+                error!("failed to stop(): {e}");
+            }
         }
     }
 
@@ -428,6 +441,11 @@ impl Spawner {
         }
     }
 
+    /// did the spawned process quit without our request?
+    fn dirty(&self) -> bool {
+        self.dirty.load(Ordering::Relaxed)
+    }
+
     fn start(&self, session: Option<u32>) -> Result<()> {
         let Some(session) = session.or_else(|| get_current_session()) else {
             bail!("get_current_session failed");
@@ -436,6 +454,8 @@ impl Spawner {
         let running = self.running.clone();
         let child = self.child.clone();
         let main_thread = self.main.clone();
+        let dirty = self.dirty.clone();
+        let request_stop = self.request_stop.clone();
         _ = thread::spawn(move || {
             let res = run_as(session, move |token| {
                 let mut arguments = Vec::new();
@@ -502,6 +522,11 @@ impl Spawner {
                     let mut lock = child.lock().unwrap();
                     _ = lock.kill();
                     running.store(false, Ordering::Relaxed);
+                }
+
+                // check if process exited on its own without our request
+                if !request_stop.swap(false, Ordering::Relaxed) {
+                    dirty.store(true, Ordering::Relaxed);
                 }
 
                 Ok(())
