@@ -297,6 +297,7 @@ fn run_as<T>(session_id: u32, cb: impl FnOnce(OwnedHandle) -> Result<T>) -> Resu
     Ok(t)
 }
 
+#[derive(Default)]
 struct OwnedHandle(HANDLE);
 
 unsafe impl Send for OwnedHandle {}
@@ -305,12 +306,6 @@ unsafe impl Sync for OwnedHandle {}
 impl OwnedHandle {
     fn is_valid(&self) -> bool {
         !self.0.is_invalid()
-    }
-}
-
-impl Default for OwnedHandle {
-    fn default() -> Self {
-        Self(HANDLE::default())
     }
 }
 
@@ -447,7 +442,7 @@ impl Spawner {
     }
 
     fn start(&self, session: Option<u32>) -> Result<()> {
-        let Some(session) = session.or_else(|| get_current_session()) else {
+        let Some(session) = session.or_else(get_current_session) else {
             bail!("get_current_session failed");
         };
 
