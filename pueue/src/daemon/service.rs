@@ -81,11 +81,11 @@ pub fn install_service(config_path: Option<PathBuf>, profile: Option<String>) ->
     let mut args = vec!["--service".into()];
     if let Some(config_path) = config_path {
         args.push("--config".into());
-        args.push(config_path.into_os_string());
+        args.push(format!(r#""{}""#, config_path.to_string_lossy()).into());
     }
     if let Some(profile) = profile {
         args.push("--profile".into());
-        args.push(profile.into());
+        args.push(format!(r#""{profile}""#).into());
     }
 
     let service_info = ServiceInfo {
@@ -414,7 +414,6 @@ impl Spawner {
             }
 
             Err(e) => {
-                self.request_stop.store(false, Ordering::Relaxed);
                 error!("failed to stop(): {e}");
             }
         }
