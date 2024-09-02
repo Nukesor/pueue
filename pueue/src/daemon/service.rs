@@ -480,7 +480,7 @@ impl Spawner {
                     .chain(iter::once(0))
                     .collect::<Vec<_>>();
 
-                command.reserve(1024 - command.len());
+                command.reserve(1024 - (command.len() / 2));
 
                 let env_block = EnvBlock::new(token.0)?;
 
