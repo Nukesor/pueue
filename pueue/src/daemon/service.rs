@@ -144,8 +144,8 @@ fn run_service() -> Result<()> {
         move |control_event| -> ServiceControlHandlerResult {
             match control_event {
                 ServiceControl::Stop => {
-                    spawner.stop();
                     shutdown.store(true, Ordering::Relaxed);
+                    spawner.stop();
 
                     ServiceControlHandlerResult::NoError
                 }
@@ -396,10 +396,17 @@ impl Spawner {
         self.running.load(Ordering::Relaxed)
     }
 
+    // note: if you need any `while` loop to exit by checking condition,
+    // make _sure_ you put this stop() _after_ you change the `while` condition to false
+    // otherwise it will not be observable
     fn stop(&self) {
         let mut child = self.child.lock().unwrap();
         if child.kill().is_ok() {
             self.running.store(false, Ordering::Relaxed);
+            // even if thread got stuck in park(), this ensures it will test the
+            // `while` condition at least once more. as long as `while` conditions have
+            // been changed _before_ the call to stop(), it will exit the wait()
+            self.main.unpark();
         }
     }
 
