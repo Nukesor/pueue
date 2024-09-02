@@ -56,6 +56,7 @@ TLDR: The new task state representation is more verbose but significantly cleane
 - Ability to set the Unix socket permissions through the new `unix_socket_permissions` configuration option. [#544](https://github.com/Nukesor/pueue/pull/544)
 - Add `command` filter to `pueue status`. [#524](https://github.com/Nukesor/pueue/issues/524) [#560](https://github.com/Nukesor/pueue/pull/560)
 - Allow `pueue status` to order tasks by `enqueue_at`. [#554](https://github.com/Nukesor/pueue/issues/554)
+- Added Windows service on Windows to allow a true daemon experience. [#344](https://github.com/Nukesor/pueue/issues/344) [#567](https://github.com/Nukesor/pueue/pull/567)
 
 ### Fixed
 
