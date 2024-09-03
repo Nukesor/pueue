@@ -211,6 +211,7 @@ fn service_event_loop() -> Result<()> {
                         debug!("event login: spawning");
                         if let Err(e) = spawner.start(Some(session)) {
                             error!("failed to spawn: {e}");
+                            return ServiceControlHandlerResult::Other(1);
                         }
                     }
 
