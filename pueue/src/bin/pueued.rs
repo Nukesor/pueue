@@ -5,8 +5,6 @@ use clap::Parser;
 use log::warn;
 use simplelog::{Config, ConfigBuilder, LevelFilter, SimpleLogger, TermLogger, TerminalMode};
 
-#[cfg(target_os = "windows")]
-use pueue::daemon::service;
 use pueue::daemon::{cli::CliArguments, run};
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 4)]
@@ -15,6 +13,16 @@ async fn main() -> Result<()> {
     let opt = CliArguments::parse();
 
     if opt.daemonize {
+        // Ordinarily this would be handled in clap, but they don't support conflicting args
+        // with subcommands
+        #[cfg(target_os = "windows")]
+        if opt.service.is_some() {
+            use clap::CommandFactory;
+            let mut cmd = CliArguments::command();
+            cmd.print_help()?;
+            return Ok(());
+        }
+
         return fork_daemon(&opt);
     }
 
@@ -50,22 +58,39 @@ async fn main() -> Result<()> {
 
     #[cfg(target_os = "windows")]
     {
-        if opt.service {
-            // start service
-            service::start_service(opt.config.clone(), opt.profile.clone())?;
-            return Ok(());
-        }
+        use pueue::daemon::cli::{ServiceSubcommand, ServiceSubcommandEntry};
+        use pueue::daemon::service;
 
-        if opt.install {
-            service::install_service(opt.config.clone(), opt.profile.clone())?;
-            println!("Successfully installed `pueued` Windows service");
-            return Ok(());
-        }
+        if let Some(ServiceSubcommandEntry::Service(service)) = opt.service {
+            match service {
+                ServiceSubcommand::Run => {
+                    // start service
+                    service::run_service(opt.config.clone(), opt.profile.clone())?;
+                    return Ok(());
+                }
 
-        if opt.uninstall {
-            service::uninstall_service()?;
-            println!("Successfully uninstalled `pueued` Windows service");
-            return Ok(());
+                ServiceSubcommand::Install => {
+                    service::install_service(opt.config.clone(), opt.profile.clone())?;
+                    println!("Successfully installed `pueued` Windows service");
+                    return Ok(());
+                }
+
+                ServiceSubcommand::Uninstall => {
+                    service::uninstall_service()?;
+                    println!("Successfully uninstalled `pueued` Windows service");
+                    return Ok(());
+                }
+
+                ServiceSubcommand::Start => {
+                    service::start_service()?;
+                    return Ok(());
+                }
+
+                ServiceSubcommand::Stop => {
+                    service::stop_service()?;
+                    return Ok(());
+                }
+            }
         }
     }
 

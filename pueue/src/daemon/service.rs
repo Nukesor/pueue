@@ -61,7 +61,7 @@ static CONFIG: OnceCell<Config> = OnceCell::new();
 
 define_windows_service!(ffi_service_main, service_main);
 
-pub fn start_service(config_path: Option<PathBuf>, profile: Option<String>) -> Result<()> {
+pub fn run_service(config_path: Option<PathBuf>, profile: Option<String>) -> Result<()> {
     CONFIG
         .set(Config {
             config_path,
@@ -79,15 +79,18 @@ pub fn install_service(config_path: Option<PathBuf>, profile: Option<String>) ->
 
     let service_binary_path = std::env::current_exe()?;
 
-    let mut args = vec!["--service".into()];
+    let mut args = vec![];
     if let Some(config_path) = config_path {
-        args.push("--config".into());
-        args.push(format!(r#""{}""#, config_path.to_string_lossy()).into());
+        args.extend([
+            "--config".into(),
+            format!(r#""{}""#, config_path.to_string_lossy()).into(),
+        ]);
     }
     if let Some(profile) = profile {
-        args.push("--profile".into());
-        args.push(format!(r#""{profile}""#).into());
+        args.extend(["--profile".into(), format!(r#""{profile}""#).into()]);
     }
+
+    args.extend(["service".into(), "run".into()]);
 
     let service_info = ServiceInfo {
         name: SERVICE_NAME.into(),
@@ -128,13 +131,55 @@ pub fn uninstall_service() -> Result<()> {
     Ok(())
 }
 
+pub fn start_service() -> Result<()> {
+    let manager_access = ServiceManagerAccess::CONNECT;
+    let service_manager = ServiceManager::local_computer(None::<&str>, manager_access)?;
+
+    let service_access = ServiceAccess::QUERY_STATUS | ServiceAccess::START;
+    let service = service_manager.open_service(SERVICE_NAME, service_access)?;
+
+    match service.query_status()?.current_state {
+        ServiceState::Stopped => {
+            service.start::<String>(&[])?;
+            println!("Successfully started service");
+        }
+        ServiceState::StartPending => println!("Service is already starting"),
+        ServiceState::Running => println!("Service is already running"),
+
+        _ => (),
+    }
+
+    Ok(())
+}
+
+pub fn stop_service() -> Result<()> {
+    let manager_access = ServiceManagerAccess::CONNECT;
+    let service_manager = ServiceManager::local_computer(None::<&str>, manager_access)?;
+
+    let service_access = ServiceAccess::QUERY_STATUS | ServiceAccess::STOP;
+    let service = service_manager.open_service(SERVICE_NAME, service_access)?;
+
+    match service.query_status()?.current_state {
+        ServiceState::Stopped => println!("Successfully is already stopped"),
+        ServiceState::StartPending => println!("Service cannot stop because it is starting (please wait until it fully started to stop it)"),
+        ServiceState::Running => {
+            service.stop()?;
+            println!("Successfully stopped service");
+        }
+
+        _ => (),
+    }
+
+    Ok(())
+}
+
 fn service_main(_: Vec<OsString>) {
-    if let Err(e) = run_service() {
+    if let Err(e) = service_event_loop() {
         error!("Failed to start service: {e}");
     }
 }
 
-fn run_service() -> Result<()> {
+fn service_event_loop() -> Result<()> {
     let spawner = Arc::new(Spawner::new());
     let shutdown = Arc::new(AtomicBool::default());
 
