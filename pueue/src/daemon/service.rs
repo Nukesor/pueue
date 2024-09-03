@@ -13,7 +13,7 @@ use std::{
 };
 
 use anyhow::{anyhow, bail, Result};
-use log::error;
+use log::{debug, error};
 use once_cell::sync::OnceCell;
 use windows::{
     core::{PCWSTR, PWSTR},
@@ -29,9 +29,10 @@ use windows::{
             RemoteDesktop::{WTSGetActiveConsoleSessionId, WTSQueryUserToken},
             SystemServices::MAXIMUM_ALLOWED,
             Threading::{
-                CreateProcessAsUserW, OpenProcess, OpenProcessToken, TerminateProcess,
-                WaitForSingleObject, CREATE_NO_WINDOW, CREATE_UNICODE_ENVIRONMENT, INFINITE,
-                PROCESS_INFORMATION, PROCESS_QUERY_INFORMATION, STARTUPINFOW,
+                CreateProcessAsUserW, GetExitCodeProcess, OpenProcess, OpenProcessToken,
+                TerminateProcess, WaitForSingleObject, CREATE_NO_WINDOW,
+                CREATE_UNICODE_ENVIRONMENT, INFINITE, PROCESS_INFORMATION,
+                PROCESS_QUERY_INFORMATION, STARTUPINFOW,
             },
         },
     },
@@ -144,6 +145,7 @@ fn run_service() -> Result<()> {
         move |control_event| -> ServiceControlHandlerResult {
             match control_event {
                 ServiceControl::Stop => {
+                    debug!("event stop");
                     shutdown.store(true, Ordering::Relaxed);
                     spawner.stop();
 
@@ -153,10 +155,16 @@ fn run_service() -> Result<()> {
                 // Logon
                 ServiceControl::SessionChange(SessionChangeParam {
                     reason: SessionChangeReason::SessionLogon,
-                    notification: SessionNotification { session_id, .. },
+                    notification:
+                        SessionNotification {
+                            session_id: session,
+                            ..
+                        },
                 }) => {
+                    debug!("event login");
                     if !spawner.running() {
-                        if let Err(e) = spawner.start(Some(session_id)) {
+                        debug!("event login: spawning");
+                        if let Err(e) = spawner.start(Some(session)) {
                             error!("failed to spawn: {e}");
                         }
                     }
@@ -169,10 +177,13 @@ fn run_service() -> Result<()> {
                     reason: SessionChangeReason::SessionLogoff,
                     ..
                 }) => {
+                    debug!("event logoff");
                     spawner.stop();
 
                     ServiceControlHandlerResult::NoError
                 }
+
+                ServiceControl::SessionChange(_) => ServiceControlHandlerResult::NoError,
 
                 // All services must accept Interrogate even if it's a no-op.
                 ServiceControl::Interrogate => ServiceControlHandlerResult::NoError,
@@ -219,8 +230,11 @@ fn run_service() -> Result<()> {
     )?;
 
     while !shutdown.load(Ordering::Relaxed) && !spawner.dirty() {
+        debug!("spawner wait()");
         spawner.wait();
     }
+
+    debug!("shutting down service");
 
     set_status(ServiceState::Stopped, ServiceControlAccept::empty())?;
 
@@ -341,6 +355,10 @@ impl Child {
 
         Ok(())
     }
+
+    fn reset(&mut self) {
+        self.0 = OwnedHandle::default();
+    }
 }
 
 impl Default for Child {
@@ -403,9 +421,11 @@ impl Spawner {
     // otherwise it will not be observable
     fn stop(&self) {
         let mut child = self.child.lock().unwrap();
+
         self.request_stop.store(true, Ordering::Relaxed);
         match child.kill() {
             Ok(_) => {
+                debug!("stop() kill");
                 self.running.store(false, Ordering::Relaxed);
                 // even if thread got stuck in park(), this ensures it will test the
                 // `while` condition at least once more. as long as `while` conditions have
@@ -414,6 +434,7 @@ impl Spawner {
             }
 
             Err(e) => {
+                self.running.store(false, Ordering::Relaxed);
                 error!("failed to stop(): {e}");
             }
         }
@@ -423,12 +444,18 @@ impl Spawner {
         let mut handle = self.child.lock().unwrap().0 .0;
 
         if handle.is_invalid() {
+            debug!("wait() invalid handle");
             while !self.running() {
+                debug!("wait() parking");
                 thread::park();
             }
 
+            debug!("wait() unparking");
+
             handle = self.child.lock().unwrap().0 .0;
         }
+
+        debug!("wait() waitingforsingleobject");
 
         unsafe {
             WaitForSingleObject(handle, INFINITE);
@@ -451,6 +478,8 @@ impl Spawner {
         let dirty = self.dirty.clone();
         let request_stop = self.request_stop.clone();
         _ = thread::spawn(move || {
+            request_stop.store(false, Ordering::Relaxed);
+
             let res = run_as(session, move |token| {
                 let mut arguments = Vec::new();
 
@@ -512,16 +541,27 @@ impl Spawner {
                     WaitForSingleObject(process_info.hProcess, INFINITE);
                 }
 
-                {
-                    let mut lock = child.lock().unwrap();
-                    _ = lock.kill();
-                    running.store(false, Ordering::Relaxed);
-                }
+                running.store(false, Ordering::Relaxed);
 
                 // check if process exited on its own without our request
                 if !request_stop.swap(false, Ordering::Relaxed) {
-                    dirty.store(true, Ordering::Relaxed);
+                    let mut code = 0u32;
+                    unsafe {
+                        GetExitCodeProcess(process_info.hProcess, &mut code)?;
+                    }
+
+                    debug!("spawner code {code}");
+
+                    // only stop in the case of an abnormal shutdown
+                    const LOGOFF: u32 = 0x40010004;
+                    if code != 0 && code != LOGOFF {
+                        debug!("service storing dirty true");
+                        dirty.store(true, Ordering::Relaxed);
+                        main_thread.unpark();
+                    }
                 }
+
+                child.lock().unwrap().reset();
 
                 Ok(())
             });
