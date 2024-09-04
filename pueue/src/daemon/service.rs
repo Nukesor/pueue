@@ -568,7 +568,6 @@ impl Spawner {
                     let mut lock = child.lock().unwrap();
                     *lock = Child(process_info.hProcess.into());
                     running.store(true, Ordering::Relaxed);
-                    _ = parker.send(());
                 }
 
                 unsafe {
