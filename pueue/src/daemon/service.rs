@@ -6,9 +6,10 @@ use std::{
     process, ptr,
     sync::{
         atomic::{AtomicBool, Ordering},
+        mpsc::{channel, Receiver, Sender},
         Arc, Mutex,
     },
-    thread::{self, Thread},
+    thread,
     time::Duration,
 };
 
@@ -441,20 +442,25 @@ impl Drop for EnvBlock {
 struct Spawner {
     running: Arc<AtomicBool>,
     child: Arc<Mutex<Child>>,
-    main: Arc<Thread>,
     // whether the process has exited without our request
     dirty: Arc<AtomicBool>,
     request_stop: Arc<AtomicBool>,
+    park_tx: Arc<Sender<()>>,
+    // we don't need mutation, but we do need Sync
+    park_rx: Mutex<Receiver<()>>,
 }
 
 impl Spawner {
     fn new() -> Self {
+        let (park_tx, park_rx) = channel();
+
         Self {
             running: Arc::default(),
             child: Arc::default(),
-            main: Arc::new(thread::current()),
             dirty: Arc::default(),
             request_stop: Arc::default(),
+            park_tx: Arc::new(park_tx),
+            park_rx: Mutex::new(park_rx),
         }
     }
 
@@ -476,7 +482,7 @@ impl Spawner {
                 // even if thread got stuck in park(), this ensures it will test the
                 // `while` condition at least once more. as long as `while` conditions have
                 // been changed _before_ the call to stop(), it will exit the wait()
-                self.main.unpark();
+                _ = self.park_tx.send(());
             }
 
             Err(e) => {
@@ -487,25 +493,7 @@ impl Spawner {
     }
 
     fn wait(&self) {
-        let mut handle = self.child.lock().unwrap().0 .0;
-
-        if handle.is_invalid() {
-            debug!("wait() invalid handle");
-            while !self.running() {
-                debug!("wait() parking");
-                thread::park();
-            }
-
-            debug!("wait() unparking");
-
-            handle = self.child.lock().unwrap().0 .0;
-        }
-
-        debug!("wait() waitingforsingleobject");
-
-        unsafe {
-            WaitForSingleObject(handle, INFINITE);
-        }
+        _ = self.park_rx.lock().unwrap().recv();
     }
 
     /// did the spawned process quit without our request?
@@ -520,7 +508,7 @@ impl Spawner {
 
         let running = self.running.clone();
         let child = self.child.clone();
-        let main_thread = self.main.clone();
+        let parker = self.park_tx.clone();
         let dirty = self.dirty.clone();
         let request_stop = self.request_stop.clone();
         _ = thread::spawn(move || {
@@ -580,7 +568,7 @@ impl Spawner {
                     let mut lock = child.lock().unwrap();
                     *lock = Child(process_info.hProcess.into());
                     running.store(true, Ordering::Relaxed);
-                    main_thread.unpark();
+                    _ = parker.send(());
                 }
 
                 unsafe {
@@ -603,7 +591,7 @@ impl Spawner {
                     if code != 0 && code != LOGOFF {
                         debug!("service storing dirty true");
                         dirty.store(true, Ordering::Relaxed);
-                        main_thread.unpark();
+                        _ = parker.send(());
                     }
                 }
 
