@@ -445,7 +445,7 @@ struct Spawner {
     // whether the process has exited without our request
     dirty: Arc<AtomicBool>,
     request_stop: Arc<AtomicBool>,
-    park_tx: Arc<Sender<()>>,
+    park_tx: Sender<()>,
     // we don't need mutation, but we do need Sync
     park_rx: Mutex<Receiver<()>>,
 }
@@ -459,7 +459,7 @@ impl Spawner {
             child: Arc::default(),
             dirty: Arc::default(),
             request_stop: Arc::default(),
-            park_tx: Arc::new(park_tx),
+            park_tx,
             park_rx: Mutex::new(park_rx),
         }
     }
