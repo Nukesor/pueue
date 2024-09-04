@@ -131,7 +131,10 @@ fn fork_daemon(opt: &CliArguments) -> Result<()> {
     {
         use std::os::windows::process::CommandExt;
         const CREATE_NO_WINDOW: u32 = 0x08000000;
-
+        // create_no_window causes all children to not show a visible console window
+        // but it also apparently has the effect of DETACH_PROCESS in that it's no longer tied to
+        // the parent process
+        // https://learn.microsoft.com/en-us/windows/win32/procthread/process-creation-flags#flags
         command.creation_flags(CREATE_NO_WINDOW);
     }
 

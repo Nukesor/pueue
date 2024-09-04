@@ -121,6 +121,7 @@ pub fn uninstall_service() -> Result<()> {
 
     // The service will be marked for deletion as long as this function call succeeds.
     // However, it will not be deleted from the database until it is stopped and all open handles to it are closed.
+    // If the service manager window is open, it will need to be closed before the service gets deleted.
     service.delete()?;
 
     // Our handle to it is not closed yet. So we can still query it.
@@ -182,6 +183,7 @@ fn service_main(_: Vec<OsString>) {
 
 fn service_event_loop() -> Result<()> {
     let spawner = Arc::new(Spawner::new());
+    // a shutdown of the service was requested
     let shutdown = Arc::new(AtomicBool::default());
 
     let event_handler = {
@@ -190,8 +192,11 @@ fn service_event_loop() -> Result<()> {
 
         move |control_event| -> ServiceControlHandlerResult {
             match control_event {
+                // Stop
                 ServiceControl::Stop => {
                     debug!("event stop");
+                    // important, set the while loop's exit condition before calling stop(), otherwise
+                    // the condition will not be observed.
                     shutdown.store(true, Ordering::Relaxed);
                     spawner.stop();
 
@@ -230,6 +235,7 @@ fn service_event_loop() -> Result<()> {
                     ServiceControlHandlerResult::NoError
                 }
 
+                // Other session change events we don't care about
                 ServiceControl::SessionChange(_) => ServiceControlHandlerResult::NoError,
 
                 // All services must accept Interrogate even if it's a no-op.
@@ -259,7 +265,7 @@ fn service_event_loop() -> Result<()> {
 
     set_status(ServiceState::StartPending, ServiceControlAccept::empty())?;
 
-    // make sure we have privileges
+    // make sure we have privileges - this should always succeed
     if let Err(e) = set_privilege(SE_TCB_NAME, true) {
         set_status(ServiceState::Stopped, ServiceControlAccept::empty())?;
         bail!("failed to set privileges: {e}");
@@ -267,6 +273,7 @@ fn service_event_loop() -> Result<()> {
 
     // if it fails here, we probably launched before user logged in?
     // for that reason we only log, but do not bail and stop the service
+    // the event handler will start it when the user logs in
     if let Err(e) = spawner.start(None) {
         error!("failed to spawn: {e}");
     }
@@ -276,6 +283,8 @@ fn service_event_loop() -> Result<()> {
         ServiceControlAccept::STOP | ServiceControlAccept::SESSION_CHANGE,
     )?;
 
+    // while there's no shutdown request, and the spawner didn't exit unexpectedly,
+    // keep the service running
     while !shutdown.load(Ordering::Relaxed) && !spawner.dirty() {
         debug!("spawner wait()");
         spawner.wait();
@@ -288,6 +297,8 @@ fn service_event_loop() -> Result<()> {
     Ok(())
 }
 
+/// set the specified process privilege to state
+/// https://learn.microsoft.com/en-us/windows/win32/secauthz/privilege-constants
 fn set_privilege(name: PCWSTR, state: bool) -> Result<()> {
     let handle: OwnedHandle =
         unsafe { OpenProcess(PROCESS_QUERY_INFORMATION, false, process::id())?.into() };
@@ -325,6 +336,7 @@ fn set_privilege(name: PCWSTR, state: bool) -> Result<()> {
     Ok(())
 }
 
+/// get the current user session, only needed when we don't initially have a session id to go by
 fn get_current_session() -> Option<u32> {
     let session = unsafe { WTSGetActiveConsoleSessionId() };
 
@@ -334,6 +346,7 @@ fn get_current_session() -> Option<u32> {
     }
 }
 
+/// run closure and supply the currently logged in user's token
 fn run_as<T>(session_id: u32, cb: impl FnOnce(OwnedHandle) -> Result<T>) -> Result<T> {
     let mut query_token: OwnedHandle = OwnedHandle::default();
     unsafe {
@@ -358,6 +371,7 @@ fn run_as<T>(session_id: u32, cb: impl FnOnce(OwnedHandle) -> Result<T>) -> Resu
     Ok(t)
 }
 
+/// newtype over handle which closes the HANDLE on drop
 #[derive(Default)]
 struct OwnedHandle(HANDLE);
 
@@ -384,6 +398,7 @@ impl Drop for OwnedHandle {
     }
 }
 
+/// a child process. tries to kill the process when dropped
 struct Child(OwnedHandle);
 
 impl Child {
@@ -420,9 +435,12 @@ impl Drop for Child {
     }
 }
 
+/// a users environment block
+/// https://learn.microsoft.com/en-us/windows/win32/api/userenv/nf-userenv-createenvironmentblock
 struct EnvBlock(*mut c_void);
 
 impl EnvBlock {
+    /// get the environment block belonging to the supplied users token
     fn new(token: HANDLE) -> Result<Self> {
         let mut env = ptr::null_mut();
         unsafe {
@@ -439,38 +457,44 @@ impl Drop for EnvBlock {
     }
 }
 
+/// manages the child daemon, by spawning / stopping it, or reporting abnormal exit, and allowing wait()
 struct Spawner {
+    // whether a child daemon is running
     running: Arc<AtomicBool>,
+    // holds the actual process of the running child daemon
     child: Arc<Mutex<Child>>,
     // whether the process has exited without our request
     dirty: Arc<AtomicBool>,
+    // used to differentiate between requested stop() and if process is dirty ^
     request_stop: Arc<AtomicBool>,
-    park_tx: Sender<()>,
+    // used for wait()ing until the child is done
+    wait_tx: Sender<()>,
     // we don't need mutation, but we do need Sync
-    park_rx: Mutex<Receiver<()>>,
+    wait_rx: Mutex<Receiver<()>>,
 }
 
 impl Spawner {
     fn new() -> Self {
-        let (park_tx, park_rx) = channel();
+        let (wait_tx, wait_rx) = channel();
 
         Self {
             running: Arc::default(),
             child: Arc::default(),
             dirty: Arc::default(),
             request_stop: Arc::default(),
-            park_tx,
-            park_rx: Mutex::new(park_rx),
+            wait_tx,
+            wait_rx: Mutex::new(wait_rx),
         }
     }
 
+    /// is the child daemon running?
     fn running(&self) -> bool {
         self.running.load(Ordering::Relaxed)
     }
 
-    // note: if you need any `while` loop to exit by checking condition,
-    // make _sure_ you put this stop() _after_ you change the `while` condition to false
-    // otherwise it will not be observable
+    /// note: if you need any `while` loop to exit by checking condition,
+    /// make _sure_ you put this stop() _after_ you change the `while` condition to false
+    /// otherwise it will not be observable
     fn stop(&self) {
         let mut child = self.child.lock().unwrap();
 
@@ -479,10 +503,10 @@ impl Spawner {
             Ok(_) => {
                 debug!("stop() kill");
                 self.running.store(false, Ordering::Relaxed);
-                // even if thread got stuck in park(), this ensures it will test the
-                // `while` condition at least once more. as long as `while` conditions have
-                // been changed _before_ the call to stop(), it will exit the wait()
-                _ = self.park_tx.send(());
+                // signal the wait() to exit so a `while` condition is checked at least once more.
+                // as long as `while` conditions have been changed _before_ the call to stop(),
+                // the changed condition will be observed
+                _ = self.wait_tx.send(());
             }
 
             Err(e) => {
@@ -492,8 +516,9 @@ impl Spawner {
         }
     }
 
+    /// wait for child process to exit
     fn wait(&self) {
-        _ = self.park_rx.lock().unwrap().recv();
+        _ = self.wait_rx.lock().unwrap().recv();
     }
 
     /// did the spawned process quit without our request?
@@ -501,6 +526,7 @@ impl Spawner {
         self.dirty.load(Ordering::Relaxed)
     }
 
+    /// try to spawn a child daemon
     fn start(&self, session: Option<u32>) -> Result<()> {
         let Some(session) = session.or_else(get_current_session) else {
             bail!("get_current_session failed");
@@ -508,7 +534,7 @@ impl Spawner {
 
         let running = self.running.clone();
         let child = self.child.clone();
-        let parker = self.park_tx.clone();
+        let waiter = self.wait_tx.clone();
         let dirty = self.dirty.clone();
         let request_stop = self.request_stop.clone();
         _ = thread::spawn(move || {
@@ -534,8 +560,7 @@ impl Spawner {
 
                 let arguments = arguments.join(" ");
 
-                // Try to get the path to the current binary, since it may not be in the $PATH.
-                // If we cannot detect it (for some unknown reason), fallback to the raw `pueued` binary name.
+                // Try to get the path to the current binary
                 let current_exe = env::current_exe()?.to_string_lossy().to_string();
 
                 let mut command = format!(r#""{current_exe}" {arguments}"#)
@@ -543,6 +568,8 @@ impl Spawner {
                     .chain(iter::once(0))
                     .collect::<Vec<_>>();
 
+                // lpcommandline may modify the the cmd vec. max valid size is 1024, so
+                // I think it best to ensure 1024 bytes of capacity total exist just in case
                 command.reserve(1024 - (command.len() / 2));
 
                 let env_block = EnvBlock::new(token.0)?;
@@ -556,6 +583,8 @@ impl Spawner {
                         None,
                         None,
                         false,
+                        // unicode is required if we pass env block
+                        // create_no_window causes all child processes to not show a visible console window
                         CREATE_UNICODE_ENVIRONMENT | CREATE_NO_WINDOW,
                         Some(env_block.0),
                         None,
@@ -570,13 +599,14 @@ impl Spawner {
                     running.store(true, Ordering::Relaxed);
                 }
 
+                // wait until the process exits
                 unsafe {
                     WaitForSingleObject(process_info.hProcess, INFINITE);
                 }
 
                 running.store(false, Ordering::Relaxed);
 
-                // check if process exited on its own without our request
+                // check if process exited on its own without our explicit request
                 if !request_stop.swap(false, Ordering::Relaxed) {
                     let mut code = 0u32;
                     unsafe {
@@ -585,12 +615,13 @@ impl Spawner {
 
                     debug!("spawner code {code}");
 
-                    // only stop in the case of an abnormal shutdown
+                    // windows gives this exit code on the process in event of forced process shutdown
+                    // this happens on logoff, so we treat this code as normal
                     const LOGOFF: u32 = 0x40010004;
                     if code != 0 && code != LOGOFF {
                         debug!("service storing dirty true");
                         dirty.store(true, Ordering::Relaxed);
-                        _ = parker.send(());
+                        _ = waiter.send(());
                     }
                 }
 
