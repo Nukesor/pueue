@@ -26,7 +26,6 @@ ctrlc = { version = "3", features = ["termination"] }
 handlebars = { workspace = true }
 interim = { version = "0.1.2", features = ["chrono"] }
 log = { workspace = true }
-once_cell = "1.19.0"
 pest = "2.7"
 pest_derive = "2.7"
 pueue-lib = { version = "0.26.1", path = "../pueue_lib" }

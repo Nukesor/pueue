@@ -45,6 +45,7 @@ TLDR: The new task state representation is more verbose but significantly cleane
 - **Breaking**: Remove the `--children` commandline flags, that have been deprecated and no longer serve any function since `v3.0.0`.
 - Send log output to `stderr` instead of `stdout` [#562](https://github.com/Nukesor/pueue/issues/562).
 - Change default log level from error to warning [#562](https://github.com/Nukesor/pueue/issues/562).
+- Bumped MSRV to 1.70.
 
 ### Add
 

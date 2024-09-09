@@ -7,7 +7,7 @@ use std::{
     sync::{
         atomic::{AtomicBool, Ordering},
         mpsc::{channel, Receiver, Sender},
-        Arc, Mutex,
+        Arc, Mutex, OnceLock,
     },
     thread,
     time::Duration,
@@ -15,7 +15,6 @@ use std::{
 
 use anyhow::{anyhow, bail, Result};
 use log::{debug, error};
-use once_cell::sync::OnceCell;
 use windows::{
     core::{PCWSTR, PWSTR},
     Win32::{
@@ -58,7 +57,7 @@ struct Config {
 
 const SERVICE_NAME: &str = "pueued";
 const SERVICE_TYPE: ServiceType = ServiceType::OWN_PROCESS;
-static CONFIG: OnceCell<Config> = OnceCell::new();
+static CONFIG: OnceLock<Config> = OnceLock::new();
 
 define_windows_service!(ffi_service_main, service_main);
 

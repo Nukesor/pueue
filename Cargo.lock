@@ -1288,7 +1288,6 @@ dependencies = [
  "handlebars",
  "interim",
  "log",
- "once_cell",
  "pest",
  "pest_derive",
  "pretty_assertions",

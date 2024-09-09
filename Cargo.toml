@@ -11,7 +11,7 @@ homepage = "https://github.com/nukesor/pueue"
 repository = "https://github.com/nukesor/pueue"
 license = "MIT"
 edition = "2021"
-rust-version = "1.67"
+rust-version = "1.70"
 
 [workspace.dependencies]
 # Chrono version is hard pinned to a specific version.
