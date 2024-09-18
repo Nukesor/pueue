@@ -400,9 +400,7 @@ fn run_as<T>(session_id: u32, cb: impl FnOnce(OwnedHandle) -> Result<T>) -> Resu
         )?;
     }
 
-    let t = cb(token)?;
-
-    Ok(t)
+    cb(token)
 }
 
 /// Newtype over handle which closes the HANDLE on drop.
