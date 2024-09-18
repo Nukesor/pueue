@@ -1,3 +1,33 @@
+//! How Windows services (and this file) work
+//!
+//! - This service runs as SYSTEM, and survives logoff and logon.
+//! - This service launches the daemon as current user on login, and kills it on logoff
+//!   (actually it's a noop; Windows itself kills it - see below).
+//! - All user processes are auto killed by Windows on user logoff. This is not a feature
+//!   of this service, it's just how Windows does things.
+//! - You must install the service. After installed, the service entry maintains a cmdline
+//!   string with args to the pueued binary. Therefore, the binary must _not_ move while the
+//!   service is installed, otherwise it will not be able to function properly. It is best
+//!   not to rely on PATH for this, as it is finicky and a hassle for user setup. Absolute paths
+//!   are the way to go, and it is standard practice.
+//! - To move the pueued binary: Uninstall the service, move the binary, and reinstall the service.
+//! - When the service is installed, you can use pueued to start, stop, or uninstall the service.
+//!   You can also use the official service manager to start, stop, and restart the service.
+//! - Services are automatically started/stopped by the system according to the setting the user
+//!   sets in the windows service manager. By default we install it as autostart, but the user
+//!   can set this to manual or even disabled.
+//! - If you have the official service manager window open and you tell pueued to uninstall the
+//!   service, it will not disappear from the list until you close all service manager windows.
+//!   This is Windows specific behavior, and not a bug. (In Windows parlance, the service is pending
+//!   deletion, and all HANDLES to the service need to be closed).
+//! - We do not support long running processes past when a user logs off; this would be
+//!   a massive security risk to allow anyone to run processes as SYSTEM. This account bypasses
+//!   even administrator in power! It is not something small to give permission to.
+//! - Additionally, taking the above into account, as SYSTEM is its own account, the user config
+//!   would not apply to this account. You'd have to set up special configs for the SYSTEM account,
+//!   and I'm not even sure where the SYSTEM account's appdata is stored to begin with.
+//!   (not to mention, it would be a pain for the user to setup anyways)
+
 use std::{
     env,
     ffi::{c_void, OsString},
@@ -14,7 +44,7 @@ use std::{
 };
 
 use anyhow::{anyhow, bail, Result};
-use log::{debug, error};
+use log::{debug, error, info};
 use windows::{
     core::{PCWSTR, PWSTR},
     Win32::{
@@ -161,7 +191,7 @@ pub fn stop_service() -> Result<()> {
     let service = service_manager.open_service(SERVICE_NAME, service_access)?;
 
     match service.query_status()?.current_state {
-        ServiceState::Stopped => println!("Successfully is already stopped"),
+        ServiceState::Stopped => println!("Service is already stopped"),
         ServiceState::StartPending => println!("Service cannot stop because it is starting (please wait until it fully started to stop it)"),
         ServiceState::Running => {
             service.stop()?;
@@ -194,7 +224,7 @@ fn service_event_loop() -> Result<()> {
                 // Stop
                 ServiceControl::Stop => {
                     debug!("event stop");
-                    // important, set the while loop's exit condition before calling stop(), otherwise
+                    // Important! Set the while loop's exit condition before calling stop(), otherwise
                     // the condition will not be observed.
                     shutdown.store(true, Ordering::Relaxed);
                     spawner.stop();
@@ -234,7 +264,7 @@ fn service_event_loop() -> Result<()> {
                     ServiceControlHandlerResult::NoError
                 }
 
-                // Other session change events we don't care about
+                // Other session change events we don't care about.
                 ServiceControl::SessionChange(_) => ServiceControlHandlerResult::NoError,
 
                 // All services must accept Interrogate even if it's a no-op.
@@ -270,9 +300,9 @@ fn service_event_loop() -> Result<()> {
         bail!("failed to set privileges: {e}");
     }
 
-    // if it fails here, we probably launched before user logged in?
-    // for that reason we only log, but do not bail and stop the service
-    // the event handler will start it when the user logs in
+    // If it fails here, we probably launched before user logged in?
+    // For that reason we only log, but do not bail and stop the service.
+    // The event handler will start it when the user logs in.
     if let Err(e) = spawner.start(None) {
         error!("failed to spawn: {e}");
     }
@@ -282,14 +312,14 @@ fn service_event_loop() -> Result<()> {
         ServiceControlAccept::STOP | ServiceControlAccept::SESSION_CHANGE,
     )?;
 
-    // while there's no shutdown request, and the spawner didn't exit unexpectedly,
-    // keep the service running
+    // While there's no shutdown request, and the spawner didn't exit unexpectedly,
+    // keep the service running.
     while !shutdown.load(Ordering::Relaxed) && !spawner.dirty() {
         debug!("spawner wait()");
         spawner.wait();
     }
 
-    debug!("shutting down service");
+    info!("shutting down service");
 
     set_status(ServiceState::Stopped, ServiceControlAccept::empty())?;
 
@@ -335,7 +365,7 @@ fn set_privilege(name: PCWSTR, state: bool) -> Result<()> {
     Ok(())
 }
 
-/// get the current user session, only needed when we don't initially have a session id to go by
+/// Get the current user session. Only needed when we don't initially have a session id to go by.
 fn get_current_session() -> Option<u32> {
     let session = unsafe { WTSGetActiveConsoleSessionId() };
 
@@ -345,7 +375,7 @@ fn get_current_session() -> Option<u32> {
     }
 }
 
-/// run closure and supply the currently logged in user's token
+/// Run closure and supply the currently logged in user's token.
 fn run_as<T>(session_id: u32, cb: impl FnOnce(OwnedHandle) -> Result<T>) -> Result<T> {
     let mut query_token: OwnedHandle = OwnedHandle::default();
     unsafe {
@@ -370,7 +400,7 @@ fn run_as<T>(session_id: u32, cb: impl FnOnce(OwnedHandle) -> Result<T>) -> Resu
     Ok(t)
 }
 
-/// newtype over handle which closes the HANDLE on drop
+/// Newtype over handle which closes the HANDLE on drop.
 #[derive(Default)]
 struct OwnedHandle(HANDLE);
 
@@ -397,7 +427,7 @@ impl Drop for OwnedHandle {
     }
 }
 
-/// a child process. tries to kill the process when dropped
+/// A child process. Tries to kill the process when dropped.
 struct Child(OwnedHandle);
 
 impl Child {
@@ -434,7 +464,7 @@ impl Drop for Child {
     }
 }
 
-/// a users environment block
+/// A users' environment block.
 /// https://learn.microsoft.com/en-us/windows/win32/api/userenv/nf-userenv-createenvironmentblock
 struct EnvBlock(*mut c_void);
 
@@ -456,19 +486,19 @@ impl Drop for EnvBlock {
     }
 }
 
-/// manages the child daemon, by spawning / stopping it, or reporting abnormal exit, and allowing wait()
+/// Manages the child daemon, by spawning / stopping it, or reporting abnormal exit, and allowing wait().
 struct Spawner {
-    // whether a child daemon is running
+    // Whether a child daemon is running.
     running: Arc<AtomicBool>,
-    // holds the actual process of the running child daemon
+    // Holds the actual process of the running child daemon.
     child: Arc<Mutex<Child>>,
-    // whether the process has exited without our request
+    // Whether the process has exited without our request.
     dirty: Arc<AtomicBool>,
-    // used to differentiate between requested stop() and if process is dirty ^
+    // Used to differentiate between requested stop() and if process is dirty (see above).
     request_stop: Arc<AtomicBool>,
-    // used for wait()ing until the child is done
+    // Used for wait()ing until the child is done.
     wait_tx: Sender<()>,
-    // we don't need mutation, but we do need Sync
+    // We don't need mutation, but we do need Sync.
     wait_rx: Mutex<Receiver<()>>,
 }
 
@@ -486,14 +516,14 @@ impl Spawner {
         }
     }
 
-    /// is the child daemon running?
+    /// Is the child daemon running?
     fn running(&self) -> bool {
         self.running.load(Ordering::Relaxed)
     }
 
-    /// note: if you need any `while` loop to exit by checking condition,
+    /// Note: if you need any `while` loop to exit by checking condition,
     /// make _sure_ you put this stop() _after_ you change the `while` condition to false
-    /// otherwise it will not be observable
+    /// otherwise it will not be observable.
     fn stop(&self) {
         let mut child = self.child.lock().unwrap();
 
@@ -502,9 +532,9 @@ impl Spawner {
             Ok(_) => {
                 debug!("stop() kill");
                 self.running.store(false, Ordering::Relaxed);
-                // signal the wait() to exit so a `while` condition is checked at least once more.
-                // as long as `while` conditions have been changed _before_ the call to stop(),
-                // the changed condition will be observed
+                // Signal the wait() to exit so a `while` condition is checked at least once more.
+                // As long as `while` conditions have been changed _before_ the call to stop(),
+                // the changed condition will be observed.
                 _ = self.wait_tx.send(());
             }
 
@@ -515,17 +545,17 @@ impl Spawner {
         }
     }
 
-    /// wait for child process to exit
+    /// Wait for child process to exit.
     fn wait(&self) {
         _ = self.wait_rx.lock().unwrap().recv();
     }
 
-    /// did the spawned process quit without our request?
+    /// Did the spawned process quit without our request?
     fn dirty(&self) -> bool {
         self.dirty.load(Ordering::Relaxed)
     }
 
-    /// try to spawn a child daemon
+    /// Try to spawn a child daemon.
     fn start(&self, session: Option<u32>) -> Result<()> {
         let Some(session) = session.or_else(get_current_session) else {
             bail!("get_current_session failed");
@@ -598,7 +628,7 @@ impl Spawner {
                     running.store(true, Ordering::Relaxed);
                 }
 
-                // wait until the process exits
+                // Wait until the process exits.
                 unsafe {
                     WaitForSingleObject(process_info.hProcess, INFINITE);
                 }
@@ -614,8 +644,8 @@ impl Spawner {
 
                     debug!("spawner code {code}");
 
-                    // windows gives this exit code on the process in event of forced process shutdown
-                    // this happens on logoff, so we treat this code as normal
+                    // Windows gives this exit code on the process in event of forced process shutdown.
+                    // This happens on logoff, so we treat this code as normal.
                     const LOGOFF: u32 = 0x40010004;
                     if code != 0 && code != LOGOFF {
                         debug!("service storing dirty true");

@@ -13,13 +13,12 @@ async fn main() -> Result<()> {
     let opt = CliArguments::parse();
 
     if opt.daemonize {
-        // Ordinarily this would be handled in clap, but they don't support conflicting args
-        // with subcommands
+        // Ordinarily this would be handled in clap, but they don't support conflicting specific args
+        // with subcommands. We can't turn this off globally because -c and -p are valid args when using
+        // subcommand to install the service
         #[cfg(target_os = "windows")]
         if opt.service.is_some() {
-            use clap::CommandFactory;
-            let mut cmd = CliArguments::command();
-            cmd.print_help()?;
+            println!("daemonize flag cannot be used with service subcommand");
             return Ok(());
         }
 
