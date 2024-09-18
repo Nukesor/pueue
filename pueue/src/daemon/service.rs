@@ -48,9 +48,9 @@ use std::{
 use anyhow::{anyhow, bail, Result};
 use log::{debug, error, info};
 use windows::{
-    core::{PCWSTR, PWSTR},
+    core::{Free, PCWSTR, PWSTR},
     Win32::{
-        Foundation::{CloseHandle, HANDLE, LUID},
+        Foundation::{HANDLE, LUID},
         Security::{
             AdjustTokenPrivileges, DuplicateTokenEx, LookupPrivilegeValueW, SecurityIdentification,
             TokenPrimary, SE_PRIVILEGE_ENABLED, SE_PRIVILEGE_REMOVED, SE_TCB_NAME,
@@ -424,8 +424,8 @@ impl From<HANDLE> for OwnedHandle {
 
 impl Drop for OwnedHandle {
     fn drop(&mut self) {
-        if !self.0.is_invalid() {
-            _ = unsafe { CloseHandle(self.0) };
+        unsafe {
+            self.0.free();
         }
     }
 }
@@ -605,17 +605,6 @@ impl Spawner {
                     .chain(iter::once(0))
                     .collect::<Vec<_>>();
 
-                // CreateProcessAsUserW's lpcommandline arg may modify the the cmd vec, so we need to account for this.
-                // Does "modify" mean we need extra room in the string? Seems to according to the (below) docs, but how much?
-                //
-                // As per original docs (below), this potentially adds 1 extra character to the source. Do we need more than this?
-                //   The system adds a null character to the command line string to separate the file name from the arguments.
-                //   This divides the original string into two strings for internal processing.
-                //
-                // https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createprocessasuserw
-                // https://devblogs.microsoft.com/oldnewthing/20090601-00/?p=18083
-                arguments.reserve(10);
-
                 let env_block = EnvBlock::new(token.0)?;
 
                 let mut process_info = PROCESS_INFORMATION::default();
@@ -659,10 +648,9 @@ impl Spawner {
 
                     debug!("spawner code {code}");
 
-                    // Windows gives this exit code on the process in event of forced process shutdown.
+                    // Windows gives exit code 0x40010004 when it did a forced process shutdown.
                     // This happens on logoff, so we treat this code as normal.
-                    const LOGOFF: u32 = 0x40010004;
-                    if code != 0 && code != LOGOFF {
+                    if code != 0x40010004 {
                         debug!("service storing dirty true");
                         dirty.store(true, Ordering::Relaxed);
                         _ = waiter.send(());
