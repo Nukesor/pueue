@@ -1,4 +1,4 @@
-//! How Windows services (and this file) work
+//! How Windows services (and this service) work
 //!
 //! - This service runs as SYSTEM, and survives logoff and logon.
 //! - This service launches the daemon as current user on login, and kills it on logoff
@@ -27,6 +27,8 @@
 //!   would not apply to this account. You'd have to set up special configs for the SYSTEM account,
 //!   and I'm not even sure where the SYSTEM account's appdata is stored to begin with.
 //!   (not to mention, it would be a pain for the user to setup anyways)
+//! - Is the service failing to start up? It's probably a problem with the daemon. Run `pueued`
+//!   to see the actual error.
 
 use std::{
     env,
