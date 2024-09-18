@@ -258,6 +258,9 @@ fn service_event_loop() -> Result<()> {
                     reason: SessionChangeReason::SessionLogoff,
                     ..
                 }) => {
+                    // Windows services kill all user processes on logoff.
+                    // So this stopping is basically a noop, but I favor explicitness.
+                    // See module-level docs for more details.
                     debug!("event logoff");
                     spawner.stop();
 
@@ -294,7 +297,7 @@ fn service_event_loop() -> Result<()> {
 
     set_status(ServiceState::StartPending, ServiceControlAccept::empty())?;
 
-    // make sure we have privileges - this should always succeed
+    // Make sure we have privileges - this should always succeed
     if let Err(e) = set_privilege(SE_TCB_NAME, true) {
         set_status(ServiceState::Stopped, ServiceControlAccept::empty())?;
         bail!("failed to set privileges: {e}");
@@ -326,7 +329,7 @@ fn service_event_loop() -> Result<()> {
     Ok(())
 }
 
-/// set the specified process privilege to state
+/// Set the specified process privilege to state.
 /// https://learn.microsoft.com/en-us/windows/win32/secauthz/privilege-constants
 fn set_privilege(name: PCWSTR, state: bool) -> Result<()> {
     let handle: OwnedHandle =
@@ -597,8 +600,8 @@ impl Spawner {
                     .chain(iter::once(0))
                     .collect::<Vec<_>>();
 
-                // lpcommandline may modify the the cmd vec. max valid size is 1024, so
-                // I think it best to ensure 1024 bytes of capacity total exist just in case
+                // lpcommandline may modify the the cmd vec. Max valid size is 1024, so
+                // I think it best to ensure 1024 bytes of capacity total exist just in case.
                 command.reserve(1024 - (command.len() / 2));
 
                 let env_block = EnvBlock::new(token.0)?;
@@ -635,7 +638,7 @@ impl Spawner {
 
                 running.store(false, Ordering::Relaxed);
 
-                // check if process exited on its own without our explicit request
+                // Check if process exited on its own without our explicit request.
                 if !request_stop.swap(false, Ordering::Relaxed) {
                     let mut code = 0u32;
                     unsafe {
