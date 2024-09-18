@@ -49,7 +49,8 @@ pub enum ServiceSubcommand {
     /// Install as a Windows service.
     /// Once installed, you must not move the binary, otherwise the Windows
     /// service will not be able to find it. If you wish to move the binary,
-    /// first uninstall the service, then install the service again.
+    /// first uninstall the service, move the binary, then install the service
+    /// again.
     Install,
     /// Uninstall the service.
     Uninstall,
