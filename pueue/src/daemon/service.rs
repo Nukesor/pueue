@@ -593,16 +593,28 @@ impl Spawner {
                 let arguments = arguments.join(" ");
 
                 // Try to get the path to the current binary
-                let current_exe = env::current_exe()?.to_string_lossy().to_string();
-
-                let mut command = format!(r#""{current_exe}" {arguments}"#)
+                let mut current_exe = env::current_exe()?
+                    .to_string_lossy()
+                    .to_string()
                     .encode_utf16()
                     .chain(iter::once(0))
                     .collect::<Vec<_>>();
 
-                // lpcommandline may modify the the cmd vec. Max valid size is 1024, so
-                // I think it best to ensure 1024 bytes of capacity total exist just in case.
-                command.reserve(1024 - (command.len() / 2));
+                let mut arguments = arguments
+                    .encode_utf16()
+                    .chain(iter::once(0))
+                    .collect::<Vec<_>>();
+
+                // CreateProcessAsUserW's lpcommandline arg may modify the the cmd vec, so we need to account for this.
+                // Does "modify" mean we need extra room in the string? Seems to according to the (below) docs, but how much?
+                //
+                // As per original docs (below), this potentially adds 1 extra character to the source. Do we need more than this?
+                //   The system adds a null character to the command line string to separate the file name from the arguments.
+                //   This divides the original string into two strings for internal processing.
+                //
+                // https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createprocessasuserw
+                // https://devblogs.microsoft.com/oldnewthing/20090601-00/?p=18083
+                arguments.reserve(10);
 
                 let env_block = EnvBlock::new(token.0)?;
 
@@ -610,13 +622,13 @@ impl Spawner {
                 unsafe {
                     CreateProcessAsUserW(
                         token.0,
-                        None,
-                        PWSTR(command.as_mut_ptr()),
+                        PWSTR(current_exe.as_mut_ptr()),
+                        PWSTR(arguments.as_mut_ptr()),
                         None,
                         None,
                         false,
-                        // unicode is required if we pass env block
-                        // create_no_window causes all child processes to not show a visible console window
+                        // CREATE_UNICODE_ENVIRONMENT is required if we pass env block.
+                        // CREATE_NO_WINDOW causes all child processes to not show a visible console window.
                         CREATE_UNICODE_ENVIRONMENT | CREATE_NO_WINDOW,
                         Some(env_block.0),
                         None,
