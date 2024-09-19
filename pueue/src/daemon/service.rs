@@ -278,7 +278,7 @@ fn event_loop() -> Result<()> {
                     debug!("event login");
                     if !spawner.running() {
                         debug!("event login: spawning");
-                        if let Err(e) = spawner.start(Some(session)) {
+                        if let Err(e) = spawner.start(session) {
                             error!("failed to spawn: {e}");
                             return ServiceControlHandlerResult::Other(1);
                         }
@@ -339,11 +339,16 @@ fn event_loop() -> Result<()> {
     // This attempt is required in order to properly start pueued if the user starts/restarts
     // the service manually, since no events would have been triggered from that.
     //
-    // If it fails here, we probably launched before user logged in.
-    // For these reasons, we only log an error, but do not bail and stop the service.
+    // If we can get the current user session on startup, then try to start the spawner.
+    //
+    // If we can't get the current session, that's OK. It just means there was no user logged in when
+    // the service started.
+    //
     // The event handler will start it when the user logs in.
-    if let Err(e) = spawner.start(None) {
-        error!("failed to spawn: {e}");
+    if let Some(session) = get_current_session() {
+        if let Err(e) = spawner.start(session) {
+            error!("failed to spawn: {e}");
+        }
     }
 
     set_status(
@@ -603,11 +608,7 @@ impl Spawner {
     }
 
     /// Try to spawn a child daemon.
-    fn start(&self, session: Option<u32>) -> Result<()> {
-        let Some(session) = session.or_else(get_current_session) else {
-            bail!("get_current_session failed");
-        };
-
+    fn start(&self, session: u32) -> Result<()> {
         let running = self.running.clone();
         let child = self.child.clone();
         let waiter = self.wait_tx.clone();
