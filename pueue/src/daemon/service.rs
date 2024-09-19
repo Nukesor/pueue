@@ -1,34 +1,34 @@
 //! How Windows services (and this service) work
 //!
-//! - This service runs as SYSTEM, and survives logoff and logon.
-//! - This service launches the daemon as current user on login, and kills it on logoff
-//!   (actually it's a noop; Windows itself kills it - see below).
-//! - All user processes are auto killed by Windows on user logoff. This is not a feature
-//!   of this service, it's just how Windows does things.
+//! This service runs as SYSTEM, and survives logoff and logon. On startup/login, it launches
+//! pueued as the current user. On logoff Windows kills all user processes (including the daemon).
+//!
+//! - All install/uninstallations of the service requires you are running as admin.
 //! - You must install the service. After installed, the service entry maintains a cmdline
 //!   string with args to the pueued binary. Therefore, the binary must _not_ move while the
 //!   service is installed, otherwise it will not be able to function properly. It is best
 //!   not to rely on PATH for this, as it is finicky and a hassle for user setup. Absolute paths
 //!   are the way to go, and it is standard practice.
 //! - To move the pueued binary: Uninstall the service, move the binary, and reinstall the service.
-//! - When the service is installed, you can use pueued to start, stop, or uninstall the service.
+//! - When the service is installed, you can use pueued cli to start, stop, or uninstall the service.
 //!   You can also use the official service manager to start, stop, and restart the service.
 //! - Services are automatically started/stopped by the system according to the setting the user
 //!   sets in the windows service manager. By default we install it as autostart, but the user
 //!   can set this to manual or even disabled.
 //! - If you have the official service manager window open and you tell pueued to uninstall the
 //!   service, it will not disappear from the list until you close all service manager windows.
-//!   This is Windows specific behavior, and not a bug. (In Windows parlance, the service is pending
+//!   This is not a bug. It's Windows specific behavior. (In Windows parlance, the service is pending
 //!   deletion, and all HANDLES to the service need to be closed).
-//! - We do not support long running processes past when a user logs off; this would be
-//!   a massive security risk to allow anyone to run processes as SYSTEM. This account bypasses
-//!   even administrator in power! It is not something small to give permission to.
+//! - We do not support long running daemon past when a user logs off; this would be
+//!   a massive security risk to allow anyone to launch tasks as SYSTEM. This account bypasses
+//!   even administrator in power!
 //! - Additionally, taking the above into account, as SYSTEM is its own account, the user config
-//!   would not apply to this account. You'd have to set up special configs for the SYSTEM account,
-//!   and I'm not even sure where the SYSTEM account's appdata is stored to begin with.
-//!   (not to mention, it would be a pain for the user to setup anyways)
-//! - Is the service failing to start up? It's probably a problem with the daemon. Run `pueued`
-//!   to see the actual error.
+//!   does not apply to this account. Unless there's an exception for config locations with this case,
+//!   you'd have to set up separate configs for the SYSTEM account in
+//!   `C:\Windows\system32\config\systemprofile\AppData`. (And even if there's an exception, what if
+//!   there's multiple users? Which user's config would be used?) This is very unintuitive.
+//! - Is the service failing to start up? It's probably a problem with the daemon itself. Re-run `pueued`
+//!   by itself to see the actual startup error.
 
 use std::{
     env,
