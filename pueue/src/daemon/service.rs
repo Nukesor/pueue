@@ -664,7 +664,10 @@ impl Spawner {
                         None,
                         false,
                         // CREATE_UNICODE_ENVIRONMENT is required if we pass env block.
+                        // https://learn.microsoft.com/en-us/windows/win32/api/userenv/nf-userenv-createenvironmentblock#remarks
+                        //
                         // CREATE_NO_WINDOW causes all child processes to not show a visible console window.
+                        // https://stackoverflow.com/a/71364777/9423933
                         CREATE_UNICODE_ENVIRONMENT | CREATE_NO_WINDOW,
                         Some(env_block.0),
                         None,
