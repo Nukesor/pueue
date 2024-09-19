@@ -446,6 +446,8 @@ fn run_as<T>(session_id: u32, cb: impl FnOnce(HANDLE) -> Result<T>) -> Result<T>
         )?;
     }
 
+    drop(query_token);
+
     cb(token.0)
 }
 
@@ -670,6 +672,10 @@ impl Spawner {
                         &mut process_info,
                     )?;
                 }
+
+                // It is safe to drop this after calling CreateProcessAsUser.
+                // https://learn.microsoft.com/en-us/windows/win32/api/userenv/nf-userenv-createenvironmentblock#remarks
+                drop(env_block);
 
                 // Store the child process.
                 {
