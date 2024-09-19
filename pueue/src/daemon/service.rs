@@ -87,24 +87,34 @@ struct Config {
     profile: Option<String>,
 }
 
+// The name of the installed service.
 const SERVICE_NAME: &str = "pueued";
+// The type of service. This one runs in its own dedicated process.
 const SERVICE_TYPE: ServiceType = ServiceType::OWN_PROCESS;
+// This static lets us communicate Config over ffi callbacks.
 static CONFIG: OnceLock<Config> = OnceLock::new();
 
+// For how this works, please see docs @
+// https://docs.rs/windows-service/0.7.0/windows_service/#basics
 define_windows_service!(ffi_service_main, service_main);
 
-pub fn run_service(config_path: Option<PathBuf>, profile: Option<String>) -> Result<()> {
-    CONFIG
-        .set(Config {
-            config_path,
-            profile,
-        })
-        .map_err(|_| anyhow!("static CONFIG set failed"))?;
-
-    service_dispatcher::start(SERVICE_NAME, ffi_service_main)?;
-    Ok(())
+/// The main service callback after `ffi_service_main`.
+fn service_main(_: Vec<OsString>) {
+    if let Err(e) = event_loop() {
+        error!("Failed to start service: {e}");
+    }
 }
 
+/// Installs the service.
+///
+/// This must be run as admin.
+///
+/// This passes the config and profile flags passed at the time of install to the service, e.g.
+/// `pueued --config my-path --profile my_profile service install`
+/// becomes ->
+/// `C:\path\pueued.exe --config "my-path" --profile "my_profile" service run`
+///
+/// This is set to run as SYSTEM user, and survives login/logoffs.
 pub fn install_service(config_path: Option<PathBuf>, profile: Option<String>) -> Result<()> {
     let manager_access = ServiceManagerAccess::CONNECT | ServiceManagerAccess::CREATE_SERVICE;
     let service_manager = ServiceManager::local_computer(None::<&str>, manager_access)?;
@@ -143,6 +153,9 @@ pub fn install_service(config_path: Option<PathBuf>, profile: Option<String>) ->
     Ok(())
 }
 
+/// Uninstall the service.
+///
+/// This must be run as admin.
 pub fn uninstall_service() -> Result<()> {
     let manager_access = ServiceManagerAccess::CONNECT;
     let service_manager = ServiceManager::local_computer(None::<&str>, manager_access)?;
@@ -164,6 +177,9 @@ pub fn uninstall_service() -> Result<()> {
     Ok(())
 }
 
+/// Start the service.
+///
+/// This can also be done from the windows service manager.
 pub fn start_service() -> Result<()> {
     let manager_access = ServiceManagerAccess::CONNECT;
     let service_manager = ServiceManager::local_computer(None::<&str>, manager_access)?;
@@ -185,6 +201,9 @@ pub fn start_service() -> Result<()> {
     Ok(())
 }
 
+/// Stop the service.
+///
+/// This can also be done from the windows service manager.
 pub fn stop_service() -> Result<()> {
     let manager_access = ServiceManagerAccess::CONNECT;
     let service_manager = ServiceManager::local_computer(None::<&str>, manager_access)?;
@@ -206,17 +225,30 @@ pub fn stop_service() -> Result<()> {
     Ok(())
 }
 
-fn service_main(_: Vec<OsString>) {
-    if let Err(e) = service_event_loop() {
-        error!("Failed to start service: {e}");
-    }
+/// Begins running the pueued service.
+///
+/// This calls `ffi_service_main` -> `service_main` -> `event_loop`
+pub fn run_service(config_path: Option<PathBuf>, profile: Option<String>) -> Result<()> {
+    CONFIG
+        .set(Config {
+            config_path,
+            profile,
+        })
+        .map_err(|_| anyhow!("static CONFIG set failed"))?;
+
+    service_dispatcher::start(SERVICE_NAME, ffi_service_main)?;
+    Ok(())
 }
 
-fn service_event_loop() -> Result<()> {
+/// This is the main event loop for the service.
+///
+/// This gets called from `run_service` -> `ffi_service_main` -> `service_main` -> `event_loop`
+fn event_loop() -> Result<()> {
     let spawner = Arc::new(Spawner::new());
-    // a shutdown of the service was requested
+    // Whether a shutdown of the service was requested.
     let shutdown = Arc::new(AtomicBool::default());
 
+    // The main event handler for the service.
     let event_handler = {
         let spawner = spawner.clone();
         let shutdown = shutdown.clone();
@@ -260,11 +292,9 @@ fn service_event_loop() -> Result<()> {
                     reason: SessionChangeReason::SessionLogoff,
                     ..
                 }) => {
-                    // Windows services kill all user processes on logoff.
-                    // So this stopping is basically a noop, but I favor explicitness.
-                    // See module-level docs for more details.
+                    // Windows kills all user processes on logoff.
+                    // So we don't actually need to stop any running spawner.
                     debug!("event logoff");
-                    spawner.stop();
 
                     ServiceControlHandlerResult::NoError
                 }
@@ -275,6 +305,7 @@ fn service_event_loop() -> Result<()> {
                 // All services must accept Interrogate even if it's a no-op.
                 ServiceControl::Interrogate => ServiceControlHandlerResult::NoError,
 
+                // Nothing else is implemented.
                 _ => ServiceControlHandlerResult::NotImplemented,
             }
         }
@@ -305,8 +336,11 @@ fn service_event_loop() -> Result<()> {
         bail!("failed to set privileges: {e}");
     }
 
-    // If it fails here, we probably launched before user logged in?
-    // For that reason we only log, but do not bail and stop the service.
+    // This attempt is required in order to properly start pueued if the user starts/restarts
+    // the service manually, since no events would have been triggered from that.
+    //
+    // If it fails here, we probably launched before user logged in.
+    // For these reasons, we only log an error, but do not bail and stop the service.
     // The event handler will start it when the user logs in.
     if let Err(e) = spawner.start(None) {
         error!("failed to spawn: {e}");
@@ -375,14 +409,21 @@ fn get_current_session() -> Option<u32> {
     let session = unsafe { WTSGetActiveConsoleSessionId() };
 
     match session {
+        // No session attached.
+        // https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-wtsgetactiveconsolesessionid#return-value
         0xFFFFFFFF => None,
+        // Found a session!
         session => Some(session),
     }
 }
 
 /// Run closure and supply the currently logged in user's token.
-fn run_as<T>(session_id: u32, cb: impl FnOnce(OwnedHandle) -> Result<T>) -> Result<T> {
+fn run_as<T>(session_id: u32, cb: impl FnOnce(HANDLE) -> Result<T>) -> Result<T> {
     let mut query_token: OwnedHandle = OwnedHandle::default();
+    // Obtain the user's primary access token. Requires we are SYSTEM and have SE_TCB_NAME.
+    //
+    // Make sure to not leak this token anywhere, as it must remain secure.
+    // https://learn.microsoft.com/en-us/windows/win32/api/wtsapi32/nf-wtsapi32-wtsqueryusertoken
     unsafe {
         WTSQueryUserToken(session_id, &mut query_token.0)?;
     }
@@ -400,7 +441,7 @@ fn run_as<T>(session_id: u32, cb: impl FnOnce(OwnedHandle) -> Result<T>) -> Resu
         )?;
     }
 
-    cb(token)
+    cb(token.0)
 }
 
 /// Newtype over handle which closes the HANDLE on drop.
@@ -524,12 +565,15 @@ impl Spawner {
         self.running.load(Ordering::Relaxed)
     }
 
-    /// Note: if you need any `while` loop to exit by checking condition,
+    /// Stop the spawned daemon.
+    ///
+    /// Note: if you need any `while` loop to exit by checking a condition,
     /// make _sure_ you put this stop() _after_ you change the `while` condition to false
-    /// otherwise it will not be observable.
+    /// otherwise any condition change will not be observed.
     fn stop(&self) {
         let mut child = self.child.lock().unwrap();
 
+        // Request a normal stop. This is not an abnormal process exit.
         self.request_stop.store(true, Ordering::Relaxed);
         match child.kill() {
             Ok(_) => {
@@ -605,12 +649,12 @@ impl Spawner {
                     .chain(iter::once(0))
                     .collect::<Vec<_>>();
 
-                let env_block = EnvBlock::new(token.0)?;
+                let env_block = EnvBlock::new(token)?;
 
                 let mut process_info = PROCESS_INFORMATION::default();
                 unsafe {
                     CreateProcessAsUserW(
-                        token.0,
+                        token,
                         PWSTR(current_exe.as_mut_ptr()),
                         PWSTR(arguments.as_mut_ptr()),
                         None,
@@ -626,11 +670,13 @@ impl Spawner {
                     )?;
                 }
 
+                // Store the child process.
                 {
                     let mut lock = child.lock().unwrap();
                     *lock = Child(process_info.hProcess.into());
-                    running.store(true, Ordering::Relaxed);
                 }
+
+                running.store(true, Ordering::Relaxed);
 
                 // Wait until the process exits.
                 unsafe {
@@ -639,7 +685,7 @@ impl Spawner {
 
                 running.store(false, Ordering::Relaxed);
 
-                // Check if process exited on its own without our explicit request.
+                // Check if process exited on its own without our explicit request (`stop()` was not called).
                 if !request_stop.swap(false, Ordering::Relaxed) {
                     let mut code = 0u32;
                     unsafe {
@@ -649,7 +695,7 @@ impl Spawner {
                     debug!("spawner code {code}");
 
                     // Windows gives exit code 0x40010004 when it did a forced process shutdown.
-                    // This happens on logoff, so we treat this code as normal.
+                    // This happens on logoff, so we ignore this code as it's not dirty.
                     if code != 0x40010004 {
                         debug!("service storing dirty true");
                         dirty.store(true, Ordering::Relaxed);
