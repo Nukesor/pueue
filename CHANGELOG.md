@@ -49,6 +49,7 @@ TLDR: The new task state representation is more verbose but significantly cleane
 
 ### Add
 
+- Add support for NetBSD.
 - Add `--all` and `--group` to `pueue log`. [#509](https://github.com/Nukesor/pueue/issues/509)
 - Add `--all` and `--group` to `pueue enqueue`. [#558](https://github.com/Nukesor/pueue/issues/558)
 - Add `--all` and `--group` to `pueue stash`. [#558](https://github.com/Nukesor/pueue/issues/558)
