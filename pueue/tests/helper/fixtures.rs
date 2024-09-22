@@ -33,7 +33,7 @@ impl Drop for PueueDaemon {
     fn drop(&mut self) {
         // The daemon runs in background tokio task.
         // Use this handle to make sure that it gets always killed.
-        self.join_handle.abort_handle();
+        let _ = self.join_handle.abort_handle();
     }
 }
 
