@@ -25,6 +25,8 @@ mod start;
 mod stash;
 mod switch;
 
+pub use log::follow_log;
+
 pub fn handle_message(message: Message, state: &SharedState, settings: &Settings) -> Message {
     match message {
         Message::Add(message) => add::add_task(settings, state, message),

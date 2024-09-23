@@ -54,7 +54,7 @@ pub fn add_task(settings: &Settings, state: &SharedState, message: AddMessage) -
     // If one is found, we expand the command, otherwise we just take the original command.
     // Anyhow, we save this separately and keep the original command in a separate field.
     //
-    // This allows us to have a debug experience and the user can opt to either show the
+    // This gives us better debugging capabilities and the user can opt to either show the
     // original command or the expanded command in their `status` view.
     task.command = insert_alias(settings, task.original_command.clone());
 

@@ -13,7 +13,7 @@ use pueue_lib::{
 use super::state_helper::LockedState;
 
 /// Users can specify a callback that's fired whenever a task finishes.
-/// Execute the callback by spawning a new subprocess.
+/// The callback is performed by spawning a new subprocess.
 pub fn spawn_callback(settings: &Settings, state: &mut LockedState, task: &Task) {
     // Return early, if there's no callback specified
     let Some(template_string) = &settings.daemon.callback else {
@@ -110,8 +110,8 @@ pub fn build_callback_command(
     handlebars.render_template(template_string, &parameters)
 }
 
-/// Look at all running callbacks and log any errors.
-/// If everything went smoothly, simply remove them from the list.
+/// Look at all running callbacks and check if they're still running.
+/// Handle finished callbacks and log their outcome.
 pub fn check_callbacks(state: &mut LockedState) {
     let mut finished = Vec::new();
     for (id, child) in state.callbacks.iter_mut().enumerate() {

@@ -12,12 +12,14 @@ use pueue_lib::network::secret::read_shared_secret;
 use pueue_lib::settings::Settings;
 use pueue_lib::state::SharedState;
 
-use crate::daemon::network::follow_log::handle_follow;
 use crate::daemon::network::message_handler::handle_message;
 use crate::daemon::process_handler::initiate_shutdown;
 
-/// Poll the listener and accept new incoming connections.
-/// Create a new future to handle the message and spawn it.
+use super::message_handler::follow_log;
+
+/// Listen for new connections on the socket.
+/// On a new connection, the connected stream will be handled in a separate tokio task.
+/// See [handle_incoming] for the actual connection handler function.
 pub async fn accept_incoming(settings: Settings, state: SharedState) -> Result<()> {
     let listener = get_listener(&settings.shared).await?;
     // Read secret once to prevent multiple disk reads.
@@ -43,9 +45,19 @@ pub async fn accept_incoming(settings: Settings, state: SharedState) -> Result<(
     }
 }
 
-/// Continuously poll the existing incoming futures.
-/// In case we received an instruction, handle it and create a response future.
-/// The response future is added to unix_responses and handled in a separate function.
+/// Handle a new connection from a client.
+///
+/// Pueue has a very simple protocol that needs to be followed.
+/// 1. Client sends secret for authentication
+/// 2. If secret is valid, the daemon sends its own version to the client.
+/// 3. The Client sends the instruction message.
+/// 4. The Daemon reads the instruction and acts upon it.
+/// 5. The Daemon sends a response
+///
+/// There're two edge-cases where this pattern is not valid:
+/// 1. Shutdown. In that case the message is sent first and the daemon shuts down afterwards.
+/// 2. Streaming of logs. The Daemon will continuously send messages with log chunks until
+///    the watched task finished or the client disconnects.
 async fn handle_incoming(
     mut stream: GenericStream,
     state: SharedState,
@@ -78,13 +90,10 @@ async fn handle_incoming(
         bail!("Received invalid secret");
     }
 
-    // Send a short `ok` byte to the client, so it knows that the secret has been accepted.
-    // This is also the current version of the daemon, so the client can inform the user if the
-    // daemon needs a restart in case a version difference exists.
+    // Send confirmation to the client, that the secret was valid.
+    // This is also the current version of the daemon, so the client can inform user if the
+    // daemon needs a restart in case of a version mismatch.
     send_bytes(crate_version!().as_bytes(), &mut stream).await?;
-
-    // Get the directory for convenience purposes.
-    let pueue_directory = settings.shared.pueue_directory();
 
     loop {
         // Receive the actual instruction from the client
@@ -111,13 +120,13 @@ async fn handle_incoming(
             // The client requested the output of a task.
             // Since this involves streaming content, we have to do some special handling.
             Message::StreamRequest(message) => {
-                handle_follow(&pueue_directory, &mut stream, &state, message).await?
+                let pueue_directory = settings.shared.pueue_directory();
+                follow_log(&pueue_directory, &mut stream, &state, message).await?
             }
-            // Initialize the shutdown procedure.
-            // The message is forwarded to the TaskHandler, which is responsible for
-            // gracefully shutting down.
+            // To initiated a shutdown, a flag in Pueue's state is set that informs the TaskHandler
+            // to perform a graceful shutdown.
             //
-            // This is an edge-case as we have respond to the client first.
+            // However, this is an edge-case as we have respond to the client first.
             // Otherwise it might happen, that the daemon shuts down too fast and we aren't
             // capable of actually sending the message back to the client.
             Message::DaemonShutdown(shutdown_type) => {
