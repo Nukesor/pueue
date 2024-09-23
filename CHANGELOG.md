@@ -45,6 +45,7 @@ TLDR: The new task state representation is more verbose but significantly cleane
 - **Breaking**: Remove the `--children` commandline flags, that have been deprecated and no longer serve any function since `v3.0.0`.
 - Send log output to `stderr` instead of `stdout` [#562](https://github.com/Nukesor/pueue/issues/562).
 - Change default log level from error to warning [#562](https://github.com/Nukesor/pueue/issues/562).
+- Bumped MSRV to 1.70.
 
 ### Add
 
@@ -57,12 +58,14 @@ TLDR: The new task state representation is more verbose but significantly cleane
 - Ability to set the Unix socket permissions through the new `unix_socket_permissions` configuration option. [#544](https://github.com/Nukesor/pueue/pull/544)
 - Add `command` filter to `pueue status`. [#524](https://github.com/Nukesor/pueue/issues/524) [#560](https://github.com/Nukesor/pueue/pull/560)
 - Allow `pueue status` to order tasks by `enqueue_at`. [#554](https://github.com/Nukesor/pueue/issues/554)
+- Added Windows service on Windows to allow a true daemon experience. [#344](https://github.com/Nukesor/pueue/issues/344) [#567](https://github.com/Nukesor/pueue/pull/567)
 
 ### Fixed
 
 - Fixed delay after sending process related commands from client. [#548](https://github.com/Nukesor/pueue/pull/548)
 - Callback templating arguments were html escaped by accident. [#564](https://github.com/Nukesor/pueue/pull/564)
 - Print incompatible version warning info as a log message instead of plain stdout input, which broke json outputs [#562](https://github.com/Nukesor/pueue/issues/562).
+- Fixed `-d` daemon mode on Windows. [#344](https://github.com/Nukesor/pueue/issues/344)
 
 ## \[3.4.1\] - 2024-06-04
 

@@ -1,5 +1,7 @@
 use std::path::PathBuf;
 
+#[cfg(target_os = "windows")]
+use clap::Subcommand;
 use clap::{ArgAction, Parser, ValueHint};
 
 #[derive(Parser, Debug)]
@@ -24,4 +26,36 @@ pub struct CliArguments {
     /// The name of the profile that should be loaded from your config file.
     #[arg(short, long)]
     pub profile: Option<String>,
+
+    #[cfg(target_os = "windows")]
+    #[command(subcommand)]
+    pub service: Option<ServiceSubcommandEntry>,
+}
+
+#[cfg(target_os = "windows")]
+#[derive(Copy, Clone, Debug, Subcommand)]
+pub enum ServiceSubcommandEntry {
+    /// Manage the Windows Service.
+    #[command(subcommand)]
+    Service(ServiceSubcommand),
+}
+
+#[cfg(target_os = "windows")]
+#[derive(Copy, Clone, Debug, Subcommand)]
+pub enum ServiceSubcommand {
+    /// Run the Windows service. This command is internal and should never
+    /// be used.
+    Run,
+    /// Install as a Windows service.
+    /// Once installed, you must not move the binary, otherwise the Windows
+    /// service will not be able to find it. If you wish to move the binary,
+    /// first uninstall the service, move the binary, then install the service
+    /// again.
+    Install,
+    /// Uninstall the service.
+    Uninstall,
+    /// Start the service.
+    Start,
+    /// Stop the service.
+    Stop,
 }
