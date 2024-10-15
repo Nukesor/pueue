@@ -1,6 +1,10 @@
 use chrono::Local;
 use pueue_lib::{
-    network::message::*, settings::Settings, state::SharedState, success_msg, task::TaskStatus,
+    network::message::*,
+    settings::Settings,
+    state::SharedState,
+    success_msg,
+    task::{Task, TaskStatus},
 };
 
 use crate::daemon::network::response_helper::*;
@@ -73,6 +77,19 @@ pub fn enqueue(settings: &Settings, state: &SharedState, message: EnqueueMessage
         }
     }
 
+    let matching_function = if message.enqueue_at.is_some() {
+        |task: &Task| {
+            matches!(
+                task.status,
+                TaskStatus::Stashed {
+                    enqueue_at: Some(_),
+                }
+            )
+        }
+    } else {
+        |task: &Task| matches!(task.status, TaskStatus::Queued { .. })
+    };
+
     // Construct a response depending on the selected tasks.
     if let Some(enqueue_at) = &message.enqueue_at {
         let enqueue_at = format_datetime(settings, enqueue_at);
@@ -81,12 +98,7 @@ pub fn enqueue(settings: &Settings, state: &SharedState, message: EnqueueMessage
             TaskSelection::TaskIds(task_ids) => task_action_response_helper(
                 &format!("Stashed tasks will be enqueued at {enqueue_at}"),
                 task_ids.clone(),
-                |task| {
-                    matches!(
-                        task.status,
-                        TaskStatus::Stashed { .. } | TaskStatus::Locked { .. }
-                    )
-                },
+                matching_function,
                 &state,
             ),
             TaskSelection::Group(group) => {
@@ -101,12 +113,7 @@ pub fn enqueue(settings: &Settings, state: &SharedState, message: EnqueueMessage
             TaskSelection::TaskIds(task_ids) => task_action_response_helper(
                 "Stashed tasks have been enqueued",
                 task_ids.clone(),
-                |task| {
-                    matches!(
-                        task.status,
-                        TaskStatus::Stashed { .. } | TaskStatus::Locked { .. }
-                    )
-                },
+                matching_function,
                 &state,
             ),
             TaskSelection::Group(group) => {
