@@ -35,7 +35,6 @@ rustls = { version = "0.23", features = [
 rustls-pemfile = "2"
 serde = { workspace = true }
 serde_cbor = "0.11"
-serde_derive = { workspace = true }
 serde_json = { workspace = true }
 serde_yaml = "0.9"
 shellexpand = "3.1"

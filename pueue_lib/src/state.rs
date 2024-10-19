@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 use std::process::Child;
 use std::sync::{Arc, Mutex};
 
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 use crate::children::Children;
 use crate::error::Error;

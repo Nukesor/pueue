@@ -30,7 +30,6 @@ pest = "2.7"
 pest_derive = "2.7"
 pueue-lib = { version = "0.26.1", path = "../pueue_lib" }
 serde = { workspace = true }
-serde_derive = { workspace = true }
 serde_json = { workspace = true }
 shell-escape = "0.1"
 simplelog = "0.12"

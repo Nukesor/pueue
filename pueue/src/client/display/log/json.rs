@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, HashMap};
 use std::io::Read;
 
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use snap::read::FrameDecoder;
 
 use pueue_lib::log::{get_log_file_handle, read_last_lines};

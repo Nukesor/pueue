@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, HashMap};
 use anyhow::{Context, Result};
 use pueue_lib::task::Task;
 use rstest::rstest;
-use serde_derive::Deserialize;
+use serde::Deserialize;
 
 use crate::client::helper::*;
 

@@ -4,7 +4,7 @@ use std::io::{prelude::*, BufReader};
 use std::path::{Path, PathBuf};
 
 use log::info;
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use shellexpand::tilde;
 
 use crate::error::Error;
