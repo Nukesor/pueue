@@ -102,7 +102,7 @@ pub enum TaskSelection {
     All,
 }
 
-#[derive(PartialEq, Eq, Clone, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Default, Deserialize, Serialize)]
 pub struct AddMessage {
     pub command: String,
     pub path: PathBuf,
@@ -183,7 +183,7 @@ pub struct RestartMessage {
 
 impl_into_message!(RestartMessage, Message::Restart);
 
-#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Debug, Default, Deserialize, Serialize)]
 pub struct TaskToRestart {
     pub task_id: usize,
     /// Restart the task with an updated command.
@@ -254,7 +254,7 @@ pub struct EditResponseMessage {
 
 impl_into_message!(EditResponseMessage, Message::EditResponse);
 
-#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Clone, Debug, Default, Deserialize, Serialize)]
 pub struct EditMessage {
     pub task_id: usize,
     pub command: Option<String>,
