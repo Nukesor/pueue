@@ -35,7 +35,7 @@ use std::{
     ffi::{c_void, OsString},
     iter,
     path::PathBuf,
-    process, ptr,
+    ptr,
     sync::{
         atomic::{AtomicBool, Ordering},
         mpsc::{channel, Receiver, Sender},
@@ -61,10 +61,9 @@ use windows::{
             RemoteDesktop::{WTSGetActiveConsoleSessionId, WTSQueryUserToken},
             SystemServices::MAXIMUM_ALLOWED,
             Threading::{
-                CreateProcessAsUserW, GetExitCodeProcess, OpenProcess, OpenProcessToken,
+                CreateProcessAsUserW, GetCurrentProcess, GetExitCodeProcess, OpenProcessToken,
                 TerminateProcess, WaitForSingleObject, CREATE_NO_WINDOW,
-                CREATE_UNICODE_ENVIRONMENT, INFINITE, PROCESS_INFORMATION,
-                PROCESS_QUERY_INFORMATION, STARTUPINFOW,
+                CREATE_UNICODE_ENVIRONMENT, INFINITE, PROCESS_INFORMATION, STARTUPINFOW,
             },
         },
     },
@@ -373,12 +372,11 @@ fn event_loop() -> Result<()> {
 /// Set the specified process privilege to state.
 /// https://learn.microsoft.com/en-us/windows/win32/secauthz/privilege-constants
 fn set_privilege(name: PCWSTR, state: bool) -> Result<()> {
-    let handle: OwnedHandle =
-        unsafe { OpenProcess(PROCESS_QUERY_INFORMATION, false, process::id())?.into() };
+    let process: OwnedHandle = unsafe { GetCurrentProcess().into() };
 
     let mut token: OwnedHandle = OwnedHandle::default();
     unsafe {
-        OpenProcessToken(handle.0, TOKEN_ADJUST_PRIVILEGES, &mut token.0)?;
+        OpenProcessToken(process.0, TOKEN_ADJUST_PRIVILEGES, &mut token.0)?;
     }
 
     let mut luid = LUID::default();
