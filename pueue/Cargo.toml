@@ -4,54 +4,54 @@ version = "3.4.1"
 description = "A cli tool for managing long running shell commands."
 keywords = ["shell", "command", "parallel", "task", "queue"]
 readme = "../README.md"
-authors = { workspace = true }
-homepage = { workspace = true }
-repository = { workspace = true }
-license = { workspace = true }
-edition = { workspace = true }
-rust-version = { workspace = true }
+authors.workspace = true
+homepage.workspace = true
+repository.workspace = true
+license.workspace = true
+edition.workspace = true
+rust-version.workspace = true
 
 [badges]
 maintenance = { status = "actively-developed" }
 
 [dependencies]
 anyhow = "1.0"
-chrono = { workspace = true }
+chrono.workspace = true
 clap = { version = "4.5.1", features = ["derive", "cargo", "help"] }
 clap_complete = "4.5.1"
 clap_complete_nushell = "4.5.1"
 comfy-table = "7"
-command-group = { workspace = true }
+command-group.workspace = true
 ctrlc = { version = "3", features = ["termination"] }
-handlebars = { workspace = true }
+handlebars.workspace = true
 interim = { version = "0.1.2", features = ["chrono"] }
-log = { workspace = true }
+log.workspace = true
 pest = "2.7"
 pest_derive = "2.7"
 pueue-lib = { version = "0.26.1", path = "../pueue_lib" }
-serde = { workspace = true }
-serde_json = { workspace = true }
+serde.workspace = true
+serde_json.workspace = true
 shell-escape = "0.1"
 simplelog = "0.12"
-snap = { workspace = true }
-strum = { workspace = true }
-strum_macros = { workspace = true }
+snap.workspace = true
+strum.workspace = true
+strum_macros.workspace = true
 tempfile = "3"
-tokio = { workspace = true }
+tokio.workspace = true
 
 [dev-dependencies]
-anyhow = { workspace = true }
+anyhow.workspace = true
 assert_cmd = "2"
 assert_matches = "1"
-better-panic = { workspace = true }
+better-panic.workspace = true
 # Make it easy to view log output for select tests.
 # Set log level for tests with RUST_LOG=<level>, use with failed tests or
 # disable test stdout/stderr capture (`cargo test -- --nocapture` / `cargo
 # nextest run --no-capture`)
 env_logger = "0.11"
-pretty_assertions = { workspace = true }
+pretty_assertions.workspace = true
 rstest = "0.19"
-serde_yaml = { workspace = true }
+serde_yaml.workspace = true
 similar-asserts = "1"
 test-log = "0.2"
 
