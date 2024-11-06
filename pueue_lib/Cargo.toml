@@ -40,7 +40,6 @@ serde_yaml = "0.9"
 shellexpand = "3.1"
 snap.workspace = true
 strum.workspace = true
-strum_macros.workspace = true
 thiserror = "1.0"
 tokio = { workspace = true, features = ["macros", "net", "io-util"] }
 tokio-rustls = { version = "0.26", default-features = false }

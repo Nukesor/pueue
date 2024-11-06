@@ -6,7 +6,7 @@ use chrono::Local;
 use crossterm::style::{Attribute, Color};
 use pueue_lib::network::message::TaskSelection;
 use pueue_lib::state::State;
-use strum_macros::{Display, EnumString};
+use strum::{Display, EnumString};
 use tokio::time::sleep;
 
 use pueue_lib::network::protocol::GenericStream;

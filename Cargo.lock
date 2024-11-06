@@ -1277,7 +1277,6 @@ dependencies = [
  "simplelog",
  "snap",
  "strum",
- "strum_macros",
  "tempfile",
  "test-log",
  "tokio",
@@ -1315,7 +1314,6 @@ dependencies = [
  "shellexpand",
  "snap",
  "strum",
- "strum_macros",
  "tempfile",
  "thiserror",
  "tokio",
@@ -1774,6 +1772,9 @@ name = "strum"
 version = "0.26.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8fec0f0aef304996cf250b31b5a10dee7980c85da9d759361292b8bca5a18f06"
+dependencies = [
+ "strum_macros",
+]
 
 [[package]]
 name = "strum_macros"

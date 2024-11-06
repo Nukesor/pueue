@@ -35,7 +35,6 @@ shell-escape = "0.1"
 simplelog = "0.12"
 snap.workspace = true
 strum.workspace = true
-strum_macros.workspace = true
 tempfile = "3"
 tokio.workspace = true
 
