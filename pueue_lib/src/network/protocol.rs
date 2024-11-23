@@ -56,6 +56,8 @@ pub async fn send_bytes(payload: &[u8], stream: &mut GenericStream) -> Result<()
             .map_err(|err| Error::IoError("sending payload chunk".to_string(), err))?;
     }
 
+    stream.flush().await?;
+
     Ok(())
 }
 
