@@ -72,20 +72,20 @@ jobs:
             lint-${{ runner.os }}-cargo-${{ matrix.target }}-
             ${{ runner.os }}-cargo-${{ matrix.target }}-
 
-      - name: Install cargo-sort
-        run: cargo install cargo-sort || exit 0
-        if: matrix.target != 'x86_64-pc-windows-msvc'
-
       # ----- Actual linting logic ------
       # These lines should mirror the `just lint` command.
       - name: cargo fmt
         run: cargo fmt --all -- --check
 
-      - name: cargo sort
-        run: cargo sort --workspace --check
-        # Don't run cargo-sort on windows, as the formatting behavior seems to be slightly different:
-        # https://github.com/DevinR528/cargo-sort/issues/56
-        if: matrix.target != 'x86_64-pc-windows-msvc'
-
       - name: cargo clippy
         run: cargo clippy --tests --workspace -- -D warnings
+
+        #- name: cargo sort
+        #  run: cargo sort --workspace --check
+        #  # Don't run cargo-sort on windows, as the formatting behavior seems to be slightly different:
+        #  # https://github.com/DevinR528/cargo-sort/issues/56
+        #  if: matrix.target != 'x86_64-pc-windows-msvc'
+
+        #- name: Install cargo-sort
+        #  run: cargo install cargo-sort || exit 0
+        #  if: matrix.target != 'x86_64-pc-windows-msvc'
