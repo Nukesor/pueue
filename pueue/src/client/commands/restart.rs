@@ -7,8 +7,9 @@ use pueue_lib::settings::Settings;
 use pueue_lib::state::FilteredTasks;
 use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
-use crate::client::commands::edit::edit_task_properties;
 use crate::client::commands::get_state;
+
+use super::edit::edit_tasks;
 
 /// When restarting tasks, the remote state is queried and a [AddMessage]
 /// is create from the existing task in the state.
@@ -25,10 +26,7 @@ pub async fn restart(
     start_immediately: bool,
     stashed: bool,
     in_place: bool,
-    edit_command: bool,
-    edit_path: bool,
-    edit_label: bool,
-    edit_priority: bool,
+    edit: bool,
 ) -> Result<()> {
     let new_status = if stashed {
         TaskStatus::Stashed { enqueue_at: None }
@@ -89,35 +87,40 @@ pub async fn restart(
         start_immediately,
     };
 
-    // Go through all Done commands we found and restart them
-    for task_id in &filtered_tasks.matching_ids {
-        let task = state.tasks.get(task_id).unwrap();
-        let mut new_task = Task::from_task(task);
-        new_task.status = new_status.clone();
+    // Get all tasks that should be restarted.
+    let mut tasks: Vec<Task> = filtered_tasks
+        .matching_ids
+        .iter()
+        .map(|task_id| Task::from_task(state.tasks.get(task_id).unwrap()))
+        .collect();
 
-        // Edit any properties, if requested.
-        let edited_props = edit_task_properties(
-            settings,
-            &task.command,
-            &task.path,
-            &task.label,
-            task.priority,
-            edit_command,
-            edit_path,
-            edit_label,
-            edit_priority,
-        )?;
+    // If the tasks should be edited, edit them in one go.
+    if edit {
+        let mut editable_tasks: Vec<EditableTask> = tasks.iter().map(EditableTask::from).collect();
+        edit_tasks(settings, &mut editable_tasks)?;
+
+        // Now merge the edited properties back into the tasks.
+        // We simply zip the task and editable task vectors, as we know that they have the same
+        // order.
+        tasks
+            .iter_mut()
+            .zip(editable_tasks.into_iter())
+            .for_each(|(task, edited)| edited.into_task(task));
+    }
+
+    // Go through all restartable commands we found and process them.
+    for mut task in tasks {
+        task.status = new_status.clone();
 
         // Add the tasks to the singular message, if we want to restart the tasks in-place.
         // And continue with the next task. The message will then be sent after the for loop.
         if in_place {
             restart_message.tasks.push(TaskToRestart {
-                task_id: *task_id,
-                command: edited_props.command,
-                path: edited_props.path,
-                label: edited_props.label,
-                delete_label: edited_props.delete_label,
-                priority: edited_props.priority,
+                task_id: task.id,
+                command: task.command,
+                path: task.path,
+                label: task.label,
+                priority: task.priority,
             });
 
             continue;
@@ -126,16 +129,16 @@ pub async fn restart(
         // In case we don't do in-place restarts, we have to add a new task.
         // Create a AddMessage to send the task to the daemon from the updated info and the old task.
         let add_task_message = AddMessage {
-            command: edited_props.command.unwrap_or_else(|| task.command.clone()),
-            path: edited_props.path.unwrap_or_else(|| task.path.clone()),
+            command: task.command,
+            path: task.path,
             envs: task.envs.clone(),
             start_immediately,
             stashed,
             group: task.group.clone(),
             enqueue_at: None,
             dependencies: Vec::new(),
-            priority: edited_props.priority.or(Some(task.priority)),
-            label: edited_props.label.or_else(|| task.label.clone()),
+            priority: Some(task.priority),
+            label: task.label,
             print_task_id: false,
         };
 

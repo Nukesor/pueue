@@ -132,6 +132,8 @@ pub fn check_callbacks(state: &mut LockedState) {
 
     finished.reverse();
     for id in finished.iter() {
+        // Explicitly allow this lint since we did a try_wait above and know that it finished.
+        #[allow(clippy::zombie_processes)]
         state.callbacks.remove(*id);
     }
 }

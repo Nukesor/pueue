@@ -57,14 +57,14 @@ pub enum Message {
 
     /// The first part of the three-step protocol to edit a task.
     /// This one requests an edit from the daemon.
-    EditRequest(usize),
+    EditRequest(Vec<usize>),
+    /// The daemon locked the tasks and responds with the tasks' details.
+    EditResponse(Vec<EditableTask>),
     /// This is send by the client if something went wrong during the editing process.
     /// The daemon will go ahead and restore the task's old state.
-    EditRestore(usize),
-    /// The daemon locked the task and responds with the task's details.
-    EditResponse(EditResponseMessage),
+    EditRestore(Vec<usize>),
     /// The client sends the edited details to the daemon.
-    Edit(EditMessage),
+    Edit(Vec<EditableTask>),
 
     Group(GroupMessage),
     GroupResponse(GroupResponseMessage),
@@ -187,16 +187,13 @@ impl_into_message!(RestartMessage, Message::Restart);
 pub struct TaskToRestart {
     pub task_id: usize,
     /// Restart the task with an updated command.
-    pub command: Option<String>,
+    pub command: String,
     /// Restart the task with an updated path.
-    pub path: Option<PathBuf>,
+    pub path: PathBuf,
     /// Restart the task with an updated label.
     pub label: Option<String>,
-    /// Cbor cannot represent `Option<Option<T>>` yet, which is why we have to utilize a
-    /// boolean to indicate that the label should be released, rather than an `Some(None)`.
-    pub delete_label: bool,
     /// Restart the task with an updated priority.
-    pub priority: Option<i32>,
+    pub priority: i32,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
@@ -244,29 +241,37 @@ pub struct SendMessage {
 impl_into_message!(SendMessage, Message::Send);
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
-pub struct EditResponseMessage {
-    pub task_id: usize,
+pub struct EditableTask {
+    pub id: usize,
     pub command: String,
     pub path: PathBuf,
     pub label: Option<String>,
     pub priority: i32,
 }
 
-impl_into_message!(EditResponseMessage, Message::EditResponse);
-
-#[derive(PartialEq, Eq, Clone, Debug, Default, Deserialize, Serialize)]
-pub struct EditMessage {
-    pub task_id: usize,
-    pub command: Option<String>,
-    pub path: Option<PathBuf>,
-    pub label: Option<String>,
-    /// Cbor cannot represent `Option<Option<T>>` yet, which is why we have to utilize a
-    /// boolean to indicate that the label should be released, rather than an `Some(None)`.
-    pub delete_label: bool,
-    pub priority: Option<i32>,
+impl From<&Task> for EditableTask {
+    /// Create an editable tasks from any [Task]]
+    fn from(value: &Task) -> Self {
+        EditableTask {
+            id: value.id,
+            command: value.command.clone(),
+            path: value.path.clone(),
+            label: value.label.clone(),
+            priority: value.priority,
+        }
+    }
 }
 
-impl_into_message!(EditMessage, Message::Edit);
+impl EditableTask {
+    /// Merge a [EditableTask] back into a [Task].
+    pub fn into_task(self, task: &mut Task) {
+        task.id = self.id;
+        task.command = self.command;
+        task.path = self.path;
+        task.label = self.label;
+        task.priority = self.priority;
+    }
+}
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub enum GroupMessage {

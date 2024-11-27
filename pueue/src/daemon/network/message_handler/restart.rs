@@ -33,7 +33,7 @@ pub fn restart_multiple(
     );
 
     // Restart a tasks in-place
-    for task in message.tasks.iter() {
+    for task in message.tasks {
         restart(&mut state, task, message.stashed, settings);
     }
 
@@ -52,7 +52,7 @@ pub fn restart_multiple(
 /// new task, which is completely handled on the client-side.
 fn restart(
     state: &mut MutexGuard<State>,
-    to_restart: &TaskToRestart,
+    to_restart: TaskToRestart,
     stashed: bool,
     settings: &Settings,
 ) {
@@ -75,26 +75,10 @@ fn restart(
         };
     };
 
-    // Update command if applicable.
-    if let Some(new_command) = to_restart.command.clone() {
-        task.original_command = new_command.clone();
-        task.command = insert_alias(settings, new_command);
-    }
-
-    // Update path if applicable.
-    if let Some(path) = to_restart.path.clone() {
-        task.path = path;
-    }
-
-    // Update path if applicable.
-    if to_restart.label.is_some() {
-        task.label = to_restart.label.clone();
-    } else if to_restart.delete_label {
-        task.label = None
-    }
-
-    // Update priority if applicable.
-    if let Some(priority) = to_restart.priority {
-        task.priority = priority;
-    }
+    // Update task properties in case they've been edited.
+    task.original_command = to_restart.command.clone();
+    task.command = insert_alias(settings, to_restart.command);
+    task.path = to_restart.path;
+    task.label = to_restart.label.clone();
+    task.priority = to_restart.priority;
 }

@@ -31,9 +31,9 @@ pub fn handle_message(message: Message, state: &SharedState, settings: &Settings
     match message {
         Message::Add(message) => add::add_task(settings, state, message),
         Message::Clean(message) => clean::clean(settings, state, message),
-        Message::Edit(message) => edit::edit(settings, state, message),
-        Message::EditRequest(task_id) => edit::edit_request(state, task_id),
-        Message::EditRestore(task_id) => edit::edit_restore(state, task_id),
+        Message::Edit(editable_tasks) => edit::edit(settings, state, editable_tasks),
+        Message::EditRequest(task_ids) => edit::edit_request(state, task_ids),
+        Message::EditRestore(task_ids) => edit::edit_restore(state, task_ids),
         Message::Enqueue(message) => enqueue::enqueue(settings, state, message),
         Message::Group(message) => group::group(settings, state, message),
         Message::Kill(message) => kill::kill(settings, state, message),
