@@ -49,7 +49,7 @@ better-panic.workspace = true
 # nextest run --no-capture`)
 env_logger = "0.11"
 pretty_assertions.workspace = true
-rstest = "0.19"
+rstest = "0.23"
 serde_yaml.workspace = true
 similar-asserts = "1"
 test-log = "0.2"
@@ -57,9 +57,9 @@ test-log = "0.2"
 # We don't need any of the default features for crossterm.
 # However, the windows build needs the windows feature enabled.
 [target.'cfg(not(windows))'.dependencies]
-crossterm = { version = "0.27", default-features = false }
+crossterm = { version = "0.28", default-features = false }
 [target.'cfg(windows)'.dependencies]
-crossterm = { version = "0.27", default-features = false, features = [
+crossterm = { version = "0.28", default-features = false, features = [
   "windows",
 ] }
 windows-service = "0.7.0"
@@ -77,4 +77,4 @@ whoami = "1"
 
 # Test specific Linux dev-dependencies
 [target.'cfg(target_os = "linux")'.dependencies]
-procfs = { version = "0.16", default-features = false }
+procfs = { version = "0.17", default-features = false }
