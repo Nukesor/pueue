@@ -40,7 +40,7 @@ serde_yaml = "0.9"
 shellexpand = "3.1"
 snap.workspace = true
 strum.workspace = true
-thiserror = "1.0"
+thiserror = "2"
 tokio = { workspace = true, features = ["macros", "net", "io-util"] }
 tokio-rustls = { version = "0.26", default-features = false }
 
@@ -72,4 +72,4 @@ libproc = "0.14.6"
 
 # Linux only
 [target.'cfg(target_os = "linux")'.dependencies]
-procfs = { version = "0.16", default-features = false }
+procfs = { version = "0.17", default-features = false }
