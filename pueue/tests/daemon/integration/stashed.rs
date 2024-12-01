@@ -4,43 +4,22 @@ use pueue_lib::state::GroupStatus;
 use rstest::rstest;
 
 use pueue_lib::network::message::*;
-use pueue_lib::settings::Shared;
 use pueue_lib::task::*;
 
 use crate::helper::*;
-
-/// Helper to pause the whole daemon
-pub async fn add_stashed_task(
-    shared: &Shared,
-    command: &str,
-    stashed: bool,
-    enqueue_at: Option<DateTime<Local>>,
-) -> Result<Message> {
-    let mut message = create_add_message(shared, command);
-    message.stashed = stashed;
-    message.enqueue_at = enqueue_at;
-
-    send_message(shared, message)
-        .await
-        .context("Failed to to add task message")
-}
 
 /// Tasks can be stashed and scheduled for being enqueued at a specific point in time.
 ///
 /// Furthermore these stashed tasks can then be manually enqueued again.
 #[rstest]
-#[case(true, None)]
-#[case(true, Some(Local::now() + TimeDelta::try_minutes(2).unwrap()))]
-#[case(false, Some(Local::now() + TimeDelta::try_minutes(2).unwrap()))]
+#[case(None)]
+#[case(Some(Local::now() + TimeDelta::try_minutes(2).unwrap()))]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn test_enqueued_tasks(
-    #[case] stashed: bool,
-    #[case] enqueue_at: Option<DateTime<Local>>,
-) -> Result<()> {
+async fn test_enqueued_tasks(#[case] enqueue_at: Option<DateTime<Local>>) -> Result<()> {
     let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 
-    assert_success(add_stashed_task(shared, "sleep 10", stashed, enqueue_at).await?);
+    assert_success(create_stashed_task(shared, "sleep 10", enqueue_at).await?);
 
     // The task should be added in stashed state.
     let task = wait_for_task_condition(shared, 0, |task| task.is_stashed()).await?;
@@ -77,10 +56,9 @@ async fn test_delayed_tasks() -> Result<()> {
     let shared = &daemon.settings.shared;
 
     // The task will be stashed and automatically enqueued after about 1 second.
-    let response = add_stashed_task(
+    let response = create_stashed_task(
         shared,
         "sleep 10",
-        true,
         Some(Local::now() + TimeDelta::try_seconds(1).unwrap()),
     )
     .await?;
