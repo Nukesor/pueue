@@ -10,7 +10,7 @@ use pueue_lib::network::message::Signal;
 
 use super::commands::WaitTargetStatus;
 
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, Clone)]
 pub enum SubCommand {
     #[command(
         about = "Enqueue a task for execution.\n\
@@ -278,6 +278,12 @@ pub enum SubCommand {
         task_ids: Vec<usize>,
     },
 
+    #[command(about = "Use this to add or remove environment variables from tasks.")]
+    Env {
+        #[command(subcommand)]
+        cmd: EnvCommand,
+    },
+
     #[command(about = "Use this to add or remove groups.\n\
         By default, this will simply display all known groups.")]
     Group {
@@ -492,7 +498,31 @@ https://github.com/Nukesor/pueue/issues/350#issue-1359083118"
     },
 }
 
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, Clone)]
+pub enum EnvCommand {
+    /// Set a variable for a specific task's environment.
+    Set {
+        /// The id of the task for which the variable should be set.
+        task_id: usize,
+
+        /// The name of the environment variable to set.
+        key: String,
+
+        /// The value of the environment variable to set.
+        value: String,
+    },
+
+    /// Remove a specific variable from a task's environment.
+    Unset {
+        /// The id of the task for which the variable should be set.
+        task_id: usize,
+
+        /// The name of the environment variable to set.
+        key: String,
+    },
+}
+
+#[derive(Parser, Debug, Clone)]
 pub enum GroupCommand {
     /// Add a group by name.
     Add {

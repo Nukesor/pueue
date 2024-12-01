@@ -66,6 +66,8 @@ pub enum Message {
     /// The client sends the edited details to the daemon.
     Edit(Vec<EditableTask>),
 
+    Env(EnvMessage),
+
     Group(GroupMessage),
     GroupResponse(GroupResponseMessage),
 
@@ -272,6 +274,21 @@ impl EditableTask {
         task.priority = self.priority;
     }
 }
+
+#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
+pub enum EnvMessage {
+    Set {
+        task_id: usize,
+        key: String,
+        value: String,
+    },
+    Unset {
+        task_id: usize,
+        key: String,
+    },
+}
+
+impl_into_message!(EnvMessage, Message::Env);
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub enum GroupMessage {
