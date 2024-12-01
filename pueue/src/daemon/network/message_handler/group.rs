@@ -1,15 +1,21 @@
 use std::collections::BTreeMap;
 
-use pueue_lib::network::message::*;
-use pueue_lib::settings::Settings;
-use pueue_lib::state::{SharedState, PUEUE_DEFAULT_GROUP};
-use pueue_lib::{failure_msg, success_msg};
+use pueue_lib::{
+    failure_msg,
+    network::message::*,
+    settings::Settings,
+    state::{SharedState, PUEUE_DEFAULT_GROUP},
+    success_msg,
+};
 
 use crate::daemon::network::message_handler::ok_or_failure_message;
-use crate::daemon::network::response_helper::ensure_group_exists;
-use crate::daemon::process_handler::initiate_shutdown;
-use crate::daemon::state_helper::save_state;
-use crate::ok_or_save_state_failure;
+use crate::{
+    daemon::{
+        network::response_helper::ensure_group_exists, process_handler::initiate_shutdown,
+        state_helper::save_state,
+    },
+    ok_or_save_state_failure,
+};
 
 /// Invoked on `pueue groups`.
 /// Manage groups.

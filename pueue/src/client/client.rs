@@ -17,6 +17,8 @@ use crate::client::cli::{CliArguments, ColorChoice, GroupCommand, SubCommand};
 use crate::client::commands::*;
 use crate::client::display::*;
 
+use super::cli::EnvCommand;
+
 /// This struct contains the base logic for the client.
 /// The client is responsible for connecting to the daemon, sending instructions
 /// and interpreting their responses.
@@ -383,7 +385,7 @@ impl Client {
     /// This function is pretty large, but it consists mostly of simple conversions
     /// of [SubCommand] variant to a [Message] variant.
     fn get_message_from_opt(&self) -> Result<Message> {
-        Ok(match &self.subcommand {
+        Ok(match self.subcommand.clone() {
             SubCommand::Add {
                 command,
                 working_directory,
@@ -406,7 +408,7 @@ impl Client {
                 let mut command = command.clone();
                 // The user can request to escape any special shell characters in all parameter strings before
                 // we concatenated them to a single string.
-                if *escape {
+                if escape {
                     command = command
                         .iter()
                         .map(|parameter| shell_escape::escape(Cow::from(parameter)).into_owned())
@@ -418,20 +420,20 @@ impl Client {
                     path,
                     // Catch the current environment for later injection into the task's process.
                     envs: HashMap::from_iter(vars()),
-                    start_immediately: *start_immediately,
-                    stashed: *stashed,
-                    group: group_or_default(group),
-                    enqueue_at: *delay_until,
-                    dependencies: dependencies.to_vec(),
-                    priority: priority.to_owned(),
-                    label: label.clone(),
-                    print_task_id: *print_task_id,
+                    start_immediately,
+                    stashed,
+                    group: group_or_default(&group),
+                    enqueue_at: delay_until,
+                    dependencies,
+                    priority,
+                    label,
+                    print_task_id,
                 }
                 .into()
             }
             SubCommand::Remove { task_ids } => {
                 if self.settings.client.show_confirmation_questions {
-                    self.handle_user_confirmation("remove", task_ids)?;
+                    self.handle_user_confirmation("remove", &task_ids)?;
                 }
                 Message::Remove(task_ids.clone())
             }
@@ -441,10 +443,10 @@ impl Client {
                 all,
                 delay_until,
             } => {
-                let selection = selection_from_params(*all, group, task_ids);
+                let selection = selection_from_params(all, &group, &task_ids);
                 StashMessage {
                     tasks: selection,
-                    enqueue_at: *delay_until,
+                    enqueue_at: delay_until,
                 }
                 .into()
             }
@@ -452,8 +454,8 @@ impl Client {
                 task_id_1,
                 task_id_2,
             } => SwitchMessage {
-                task_id_1: *task_id_1,
-                task_id_2: *task_id_2,
+                task_id_1,
+                task_id_2,
             }
             .into(),
             SubCommand::Enqueue {
@@ -462,10 +464,10 @@ impl Client {
                 all,
                 delay_until,
             } => {
-                let selection = selection_from_params(*all, group, task_ids);
+                let selection = selection_from_params(all, &group, &task_ids);
                 EnqueueMessage {
                     tasks: selection,
-                    enqueue_at: *delay_until,
+                    enqueue_at: delay_until,
                 }
             }
             .into(),
@@ -475,7 +477,7 @@ impl Client {
                 all,
                 ..
             } => StartMessage {
-                tasks: selection_from_params(*all, group, task_ids),
+                tasks: selection_from_params(all, &group, &task_ids),
             }
             .into(),
             SubCommand::Pause {
@@ -485,8 +487,8 @@ impl Client {
                 all,
                 ..
             } => PauseMessage {
-                tasks: selection_from_params(*all, group, task_ids),
-                wait: *wait,
+                tasks: selection_from_params(all, &group, &task_ids),
+                wait,
             }
             .into(),
             SubCommand::Kill {
@@ -497,19 +499,32 @@ impl Client {
                 ..
             } => {
                 if self.settings.client.show_confirmation_questions {
-                    self.handle_user_confirmation("kill", task_ids)?;
+                    self.handle_user_confirmation("kill", &task_ids)?;
                 }
                 KillMessage {
-                    tasks: selection_from_params(*all, group, task_ids),
-                    signal: signal.clone(),
+                    tasks: selection_from_params(all, &group, &task_ids),
+                    signal,
                 }
                 .into()
             }
             SubCommand::Send { task_id, input } => SendMessage {
-                task_id: *task_id,
+                task_id,
                 input: input.clone(),
             }
             .into(),
+            SubCommand::Env { cmd } => Message::from(match cmd {
+                EnvCommand::Set {
+                    task_id,
+                    key,
+                    value,
+                } => EnvMessage::Set {
+                    task_id,
+                    key,
+                    value,
+                },
+                EnvCommand::Unset { task_id, key } => EnvMessage::Unset { task_id, key },
+            }),
+
             SubCommand::Group { cmd, .. } => match cmd {
                 Some(GroupCommand::Add { name, parallel }) => GroupMessage::Add {
                     name: name.to_owned(),
@@ -528,8 +543,8 @@ impl Client {
                 all,
                 ..
             } => {
-                let lines = determine_log_line_amount(*full, lines);
-                let selection = selection_from_params(*all, group, task_ids);
+                let lines = determine_log_line_amount(full, &lines);
+                let selection = selection_from_params(all, &group, &task_ids);
 
                 let message = LogRequestMessage {
                     tasks: selection,
@@ -538,17 +553,13 @@ impl Client {
                 };
                 Message::Log(message)
             }
-            SubCommand::Follow { task_id, lines } => StreamRequestMessage {
-                task_id: *task_id,
-                lines: *lines,
-            }
-            .into(),
+            SubCommand::Follow { task_id, lines } => StreamRequestMessage { task_id, lines }.into(),
             SubCommand::Clean {
                 successful_only,
                 group,
             } => CleanMessage {
-                successful_only: *successful_only,
-                group: group.clone(),
+                successful_only,
+                group,
             }
             .into(),
             SubCommand::Reset { force, groups, .. } => {
@@ -570,9 +581,9 @@ impl Client {
                 group,
             } => match parallel_tasks {
                 Some(parallel_tasks) => {
-                    let group = group_or_default(group);
+                    let group = group_or_default(&group);
                     ParallelMessage {
-                        parallel_tasks: *parallel_tasks,
+                        parallel_tasks,
                         group,
                     }
                     .into()
