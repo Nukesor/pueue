@@ -28,7 +28,7 @@ interim = { version = "0.1.2", features = ["chrono"] }
 log.workspace = true
 pest = "2.7"
 pest_derive = "2.7"
-pueue-lib = { version = "0.26.1", path = "../pueue_lib" }
+pueue-lib = { version = "0.27.0", path = "../pueue_lib" }
 serde.workspace = true
 serde_json.workspace = true
 shell-escape = "0.1"

@@ -1,6 +1,6 @@
 [package]
 name = "pueue-lib"
-version = "0.26.1"
+version = "0.27.0"
 description = "The shared library to work with the Pueue client and daemon."
 keywords = ["pueue"]
 readme = "README.md"
