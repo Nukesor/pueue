@@ -3,6 +3,7 @@ use std::env::vars;
 
 use anyhow::{anyhow, Context, Result};
 
+use chrono::{DateTime, Local};
 use pueue_lib::network::message::*;
 use pueue_lib::settings::*;
 use pueue_lib::task::{Task, TaskStatus};
@@ -25,6 +26,21 @@ pub fn create_add_message(shared: &Shared, command: &str) -> AddMessage {
         label: None,
         print_task_id: false,
     }
+}
+
+/// Helper to create a stashed task
+pub async fn create_stashed_task(
+    shared: &Shared,
+    command: &str,
+    enqueue_at: Option<DateTime<Local>>,
+) -> Result<Message> {
+    let mut message = create_add_message(shared, command);
+    message.stashed = true;
+    message.enqueue_at = enqueue_at;
+
+    send_message(shared, message)
+        .await
+        .context("Failed to to add task message")
 }
 
 /// Helper to either continue the daemon or start specific tasks

@@ -1,5 +1,6 @@
 mod add;
 mod aliases;
+mod callback;
 mod clean;
 mod edit;
 mod environment_variables;

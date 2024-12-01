@@ -97,6 +97,8 @@ pub fn handle_finished_tasks(settings: &Settings, state: &mut LockedState) {
             None => TaskResult::Killed,
         };
 
+        info!("Task {task_id} finished with result: {result:?}");
+
         // Update the tasks's state and return a clone for callback handling.
         let task = {
             let task = state
@@ -147,7 +149,6 @@ fn get_finished(state: &mut LockedState) -> Vec<((usize, String, usize), Option<
                 // Child process did not exit yet
                 Ok(None) => continue,
                 Ok(_exit_status) => {
-                    info!("Task {task_id} just finished");
                     finished.push(((*task_id, group.clone(), *worker_id), None));
                 }
             }
