@@ -11,7 +11,7 @@ use pueue_lib::task::*;
 
 use crate::helper::*;
 
-async fn create_edited_task(shared: &Shared) -> Result<EditResponseMessage> {
+async fn create_edited_task(shared: &Shared) -> Result<Vec<EditableTask>> {
     // Add a task
     assert_success(add_task(shared, "ls").await?);
 
@@ -23,7 +23,7 @@ async fn create_edited_task(shared: &Shared) -> Result<EditResponseMessage> {
     );
 
     // Send a request to edit that task
-    let response = send_message(shared, Message::EditRequest(0)).await?;
+    let response = send_message(shared, Message::EditRequest(vec![0])).await?;
     if let Message::EditResponse(payload) = response {
         Ok(payload)
     } else {
@@ -41,11 +41,12 @@ async fn test_edit_flow() -> Result<()> {
     pause_tasks(shared, TaskSelection::All).await?;
     wait_for_group_status(shared, PUEUE_DEFAULT_GROUP, GroupStatus::Paused).await?;
 
-    let response = create_edited_task(shared).await?;
-    assert_eq!(response.task_id, 0);
-    assert_eq!(response.command, "ls");
-    assert_eq!(response.path, daemon.tempdir.path());
-    assert_eq!(response.priority, 0);
+    let mut response = create_edited_task(shared).await?;
+    let mut editable_task = response.remove(0);
+    assert_eq!(editable_task.id, 0);
+    assert_eq!(editable_task.command, "ls");
+    assert_eq!(editable_task.path, daemon.tempdir.path());
+    assert_eq!(editable_task.priority, 0);
 
     // Task should be locked, after the request for editing succeeded.
     assert_matches!(
@@ -62,19 +63,13 @@ async fn test_edit_flow() -> Result<()> {
         "Expected the task to still be locked."
     );
 
+    editable_task.command = "ls -ahl".to_string();
+    editable_task.path = PathBuf::from("/tmp");
+    editable_task.label = Some("test".to_string());
+    editable_task.priority = 99;
+
     // Send the final message of the protocol and actually change the task.
-    let response = send_message(
-        shared,
-        EditMessage {
-            task_id: 0,
-            command: Some("ls -ahl".into()),
-            path: Some("/tmp".into()),
-            label: Some("test".to_string()),
-            delete_label: false,
-            priority: Some(99),
-        },
-    )
-    .await?;
+    let response = send_message(shared, Message::Edit(vec![editable_task])).await?;
     assert_success(response);
 
     // Make sure the task has been changed and enqueued.

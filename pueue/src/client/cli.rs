@@ -214,21 +214,9 @@ pub enum SubCommand {
         #[arg(long)]
         not_in_place: bool,
 
-        /// Edit the tasks' commands before restarting.
+        /// Edit the task before restarting.
         #[arg(short, long)]
         edit: bool,
-
-        /// Edit the tasks' paths before restarting.
-        #[arg(short = 'p', long)]
-        edit_path: bool,
-
-        /// Edit the tasks' labels before restarting.
-        #[arg(short = 'l', long)]
-        edit_label: bool,
-
-        /// Edit the tasks' priorities before restarting.
-        #[arg(short = 'o', long)]
-        edit_priority: bool,
     },
 
     #[command(about = "Either pause running tasks or specific groups of tasks.\n\
@@ -282,30 +270,12 @@ pub enum SubCommand {
         input: String,
     },
 
-    #[command(
-        about = "Edit the command, path, label, or priority of a stashed or queued task.\n\
-        By default only the command is edited.\n\
-        Multiple properties can be added in one go."
-    )]
+    #[command(about = "Adjust editable properties of a task.\n\
+        A temporary folder folder will be opened by your $EDITOR, which contains \n\
+        a file for each editable property.")]
     Edit {
-        /// The task's id.
-        task_id: usize,
-
-        /// Edit the task's command.
-        #[arg(short, long)]
-        command: bool,
-
-        /// Edit the task's path.
-        #[arg(short, long)]
-        path: bool,
-
-        /// Edit the task's label.
-        #[arg(short, long)]
-        label: bool,
-
-        /// Edit the task's priority.
-        #[arg(short = 'o', long)]
-        priority: bool,
+        /// The ids of all tasks that should be edited.
+        task_ids: Vec<usize>,
     },
 
     #[command(about = "Use this to add or remove groups.\n\

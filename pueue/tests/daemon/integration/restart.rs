@@ -22,11 +22,10 @@ async fn test_restart_in_place() -> Result<()> {
     let restart_message = RestartMessage {
         tasks: vec![TaskToRestart {
             task_id: 0,
-            command: Some("sleep 60".to_string()),
-            path: Some(PathBuf::from("/tmp")),
-            label: Some("test".to_owned()),
-            delete_label: false,
-            priority: Some(0),
+            command: "sleep 60".to_string(),
+            path: PathBuf::from("/tmp"),
+            label: Some("test".to_string()),
+            priority: 0,
         }],
         start_immediately: false,
         stashed: false,
@@ -65,17 +64,16 @@ async fn test_cannot_restart_running() -> Result<()> {
     assert_success(add_task(shared, "sleep 60").await?);
 
     // Wait for task 0 to finish.
-    wait_for_task_condition(shared, 0, |task| task.is_running()).await?;
+    let task = wait_for_task_condition(shared, 0, |task| task.is_running()).await?;
 
     // Restart task 0 with an extended sleep command.
     let restart_message = RestartMessage {
         tasks: vec![TaskToRestart {
             task_id: 0,
-            command: None,
-            path: None,
-            label: None,
-            delete_label: false,
-            priority: Some(0),
+            command: task.command,
+            path: task.path,
+            label: task.label,
+            priority: task.priority,
         }],
         start_immediately: false,
         stashed: false,

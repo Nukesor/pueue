@@ -1,10 +1,12 @@
 use std::env;
-use std::io::{Read, Seek, Write};
+use std::fs::{create_dir, read_to_string, File};
+use std::io::Write;
 use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Context, Result};
+use pueue_lib::error::Error;
 use pueue_lib::settings::Settings;
-use tempfile::NamedTempFile;
+use tempfile::tempdir;
 
 use pueue_lib::network::message::*;
 use pueue_lib::network::protocol::*;
@@ -20,152 +22,75 @@ use pueue_lib::process_helper::compile_shell_command;
 pub async fn edit(
     stream: &mut GenericStream,
     settings: &Settings,
-    task_id: usize,
-    edit_command: bool,
-    edit_path: bool,
-    edit_label: bool,
-    edit_priority: bool,
+    task_ids: &[usize],
 ) -> Result<Message> {
     // Request the data to edit from the server and issue a task-lock while doing so.
-    let init_message = Message::EditRequest(task_id);
+    let init_message = Message::EditRequest(task_ids.to_vec());
     send_message(init_message, stream).await?;
 
     let init_response = receive_message(stream).await?;
 
-    // In case we don't receive an EditResponse, something went wrong
+    // In case we don't receive an EditResponse, something went wrong.
     // Return the response to the parent function and let the client handle it
     // by the generic message handler.
-    let Message::EditResponse(init_response) = init_response else {
+    let Message::EditResponse(mut editable_tasks) = init_response else {
         return Ok(init_response);
     };
 
-    // Edit the command if explicitly specified or if no flags are provided (the default)
-    let edit_command = edit_command || !edit_path && !edit_label && !edit_priority;
-
-    // Edit all requested properties.
-    let edit_result = edit_task_properties(
-        settings,
-        &init_response.command,
-        &init_response.path,
-        &init_response.label,
-        init_response.priority,
-        edit_command,
-        edit_path,
-        edit_label,
-        edit_priority,
-    );
+    let edit_result = edit_tasks(settings, &mut editable_tasks);
 
     // Any error while editing will result in the client aborting the editing process.
     // However, as the daemon moves tasks that're edited into the `Locked` state, we cannot simply
     // exit the client. We rather have to notify the daemon that the editing process was interrupted.
-    // In the following, we notify the daemon of any errors, so it can restore the task to its previous state.
-    let edited_props = match edit_result {
-        Ok(inner) => inner,
-        Err(error) => {
-            eprintln!("Encountered an error while editing. Trying to restore the task's status.");
-            // Notify the daemon that something went wrong.
-            let edit_message = Message::EditRestore(task_id);
-            send_message(edit_message, stream).await?;
-            let response = receive_message(stream).await?;
-            match response {
-                Message::Failure(message) | Message::Success(message) => {
-                    eprintln!("{message}");
-                }
-                _ => eprintln!("Received unknown response: {response:?}"),
-            };
+    // In the following, we notify the daemon of any errors, so it can restore the tasks to
+    // their previous state.
+    if let Err(error) = edit_result {
+        eprintln!("Encountered an error while editing. Trying to restore the task's status.");
+        // Notify the daemon that something went wrong.
+        let task_ids = editable_tasks.iter().map(|task| task.id).collect();
+        let edit_message = Message::EditRestore(task_ids);
+        send_message(edit_message, stream).await?;
 
-            return Err(error);
-        }
-    };
+        let response = receive_message(stream).await?;
+        match response {
+            Message::Failure(message) | Message::Success(message) => {
+                eprintln!("{message}");
+            }
+            _ => eprintln!("Received unknown response: {response:?}"),
+        };
+
+        return Err(error);
+    }
 
     // Create a new message with the edited properties.
-    let edit_message = EditMessage {
-        task_id,
-        command: edited_props.command,
-        path: edited_props.path,
-        label: edited_props.label,
-        delete_label: edited_props.delete_label,
-        priority: edited_props.priority,
-    };
-    send_message(edit_message, stream).await?;
+    send_message(Message::Edit(editable_tasks), stream).await?;
 
     Ok(receive_message(stream).await?)
 }
 
-#[derive(Default)]
-pub struct EditedProperties {
-    pub command: Option<String>,
-    pub path: Option<PathBuf>,
-    pub label: Option<String>,
-    pub delete_label: bool,
-    pub priority: Option<i32>,
-}
+pub fn edit_tasks(settings: &Settings, editable_tasks: &mut [EditableTask]) -> Result<()> {
+    // Create the temporary directory that'll be used for all edits.
+    let temp_dir = tempdir().context("Failed to create temporary directory for edtiting.")?;
+    let temp_dir_path = temp_dir.path();
 
-/// Takes several task properties and edit them if requested.
-/// The `edit_*` booleans are used to determine which fields should be edited.
-///
-/// Fields that have been edited will be returned as their `Some(T)` equivalent.
-///
-/// The returned values are: `(command, path, label)`
-#[allow(clippy::too_many_arguments)]
-pub fn edit_task_properties(
-    settings: &Settings,
-    original_command: &str,
-    original_path: &Path,
-    original_label: &Option<String>,
-    original_priority: i32,
-    edit_command: bool,
-    edit_path: bool,
-    edit_label: bool,
-    edit_priority: bool,
-) -> Result<EditedProperties> {
-    let mut props = EditedProperties::default();
-
-    // Update the command if requested.
-    if edit_command {
-        props.command = Some(edit_line(settings, original_command)?);
-    };
-
-    // Update the path if requested.
-    if edit_path {
-        let str_path = original_path
-            .to_str()
-            .context("Failed to convert task path to string")?;
-        let changed_path = edit_line(settings, str_path)?;
-        props.path = Some(PathBuf::from(changed_path));
+    for task in editable_tasks.iter() {
+        task.create_temp_dir(temp_dir_path)?
     }
 
-    // Update the label if requested.
-    if edit_label {
-        let edited_label = edit_line(settings, &original_label.clone().unwrap_or_default())?;
+    run_editor(settings, temp_dir_path)?;
 
-        // If the user deletes the label in their editor, an empty string will be returned.
-        // This is an indicator that the task should no longer have a label, in which case we
-        // set the `delete_label` flag.
-        if edited_label.is_empty() {
-            props.delete_label = true;
-        } else {
-            props.label = Some(edited_label);
-        };
+    // Read the data back from disk into the struct.
+    for task in editable_tasks.iter_mut() {
+        task.read_temp_dir(temp_dir_path)?
     }
 
-    // Update the priority if requested.
-    if edit_priority {
-        props.priority = Some(edit_line(settings, &original_priority.to_string())?.parse()?);
-    };
-
-    Ok(props)
+    Ok(())
 }
 
-/// This function enables the user to edit a task's details.
-/// Save any string to a temporary file, which is opened in the specified `$EDITOR`.
-/// As soon as the editor is closed, read the file content and return the line.
-fn edit_line(settings: &Settings, line: &str) -> Result<String> {
-    // Create a temporary file with the command so we can edit it with the editor.
-    let mut file = NamedTempFile::new().expect("Failed to create a temporary file");
-    writeln!(file, "{line}").context("Failed to write to temporary file.")?;
-
-    // Get the editor that should be used from the environment.
+/// Open the folder that contains all files for editing in the user's `$EDITOR`.
+/// Returns as soon as the editor is closed again.
+/// Get the editor that should be used from the environment.
+pub fn run_editor(settings: &Settings, temp_dir: &Path) -> Result<()> {
     let editor = match env::var("EDITOR") {
         Err(_) => bail!("The '$EDITOR' environment variable couldn't be read. Aborting."),
         Ok(editor) => editor,
@@ -173,9 +98,14 @@ fn edit_line(settings: &Settings, line: &str) -> Result<String> {
 
     // Compile the command to start the editor on the temporary file.
     // We escape the file path for good measure, but it shouldn't be necessary.
-    let path = shell_escape::escape(file.path().to_string_lossy());
+    let path = shell_escape::escape(temp_dir.to_string_lossy());
     let editor_command = format!("{editor} {path}");
-    let status = compile_shell_command(settings, &editor_command)
+    let mut modified_settings = settings.clone();
+    modified_settings.daemon.env_vars.insert(
+        "PUEUE_EDIT_PATH".to_string(),
+        temp_dir.to_string_lossy().to_string(),
+    );
+    let status = compile_shell_command(&modified_settings, &editor_command)
         .status()
         .context("Editor command did somehow fail. Aborting.")?;
 
@@ -183,19 +113,117 @@ fn edit_line(settings: &Settings, line: &str) -> Result<String> {
         bail!("The editor exited with a non-zero code. Aborting.");
     }
 
-    // Read the file.
-    let mut file = file.into_file();
-    file.rewind()
-        .context("Couldn't seek to start of file. Aborting.")?;
+    Ok(())
+}
 
-    let mut line = String::new();
-    file.read_to_string(&mut line)
-        .context("Failed to read Command after editing")?;
+/// Implements convenience functions to serialize and deserialize editable tasks to and from disk
+/// so users can edit the task via their editor.
+trait Editable {
+    fn create_temp_dir(&self, temp_dir: &Path) -> Result<()>;
+    fn read_temp_dir(&mut self, temp_dir: &Path) -> Result<()>;
+}
 
-    // Remove any trailing newlines from the command.
-    while line.ends_with('\n') || line.ends_with('\r') {
-        line.pop();
+impl Editable for EditableTask {
+    /// Create a folder for this task that contains one file for each editable property.
+    fn create_temp_dir(&self, temp_dir: &Path) -> Result<()> {
+        let task_dir = temp_dir.join(self.id.to_string());
+        create_dir(&task_dir)
+            .map_err(|err| Error::IoPathError(task_dir.clone(), "creating task dir", err))?;
+
+        // Create command file
+        let cmd_path = task_dir.join("command");
+        let mut output = File::create(&cmd_path)
+            .map_err(|err| Error::IoPathError(cmd_path.clone(), "creating command file", err))?;
+        write!(output, "{}", self.command)
+            .map_err(|err| Error::IoPathError(cmd_path.clone(), "writing command file", err))?;
+
+        // Create cwd file
+        let cwd_path = task_dir.join("path");
+        let mut output = File::create(&cwd_path).map_err(|err| {
+            Error::IoPathError(cwd_path.clone(), "creating temporary path file", err)
+        })?;
+        write!(output, "{}", self.path.to_string_lossy())
+            .map_err(|err| Error::IoPathError(cwd_path.clone(), "writing path file", err))?;
+
+        // Create label  file. If there's no label, create an empty file.
+        let label_path = task_dir.join("label");
+        let mut output = File::create(&label_path).map_err(|err| {
+            Error::IoPathError(label_path.clone(), "creating temporary label file", err)
+        })?;
+        if let Some(label) = &self.label {
+            write!(output, "{}", label)
+                .map_err(|err| Error::IoPathError(label_path.clone(), "writing label file", err))?;
+        }
+
+        // Create priority file. If there's no priority, create an empty file.
+        let priority_path = task_dir.join("priority");
+        let mut output = File::create(&priority_path).map_err(|err| {
+            Error::IoPathError(priority_path.clone(), "creating priority file", err)
+        })?;
+        write!(output, "{}", self.priority).map_err(|err| {
+            Error::IoPathError(priority_path.clone(), "writing priority file", err)
+        })?;
+
+        Ok(())
     }
 
-    Ok(line.trim().to_string())
+    /// Read the edited files of this task's temporary folder back into this struct.
+    ///
+    /// The user has finished editing at this point in time.
+    fn read_temp_dir(&mut self, temp_dir: &Path) -> Result<()> {
+        let task_dir = temp_dir.join(self.id.to_string());
+
+        // Create command file
+        let cmd_path = task_dir.join("command");
+        let command = read_to_string(&cmd_path)
+            .map_err(|err| Error::IoPathError(cmd_path.clone(), "reading command file", err))?;
+        // Make sure the command isn't empty.
+        if command.trim().is_empty() {
+            bail!("Found empty command after edit for task {}", self.id);
+        }
+        self.command = command.trim().to_string();
+
+        // Create cwd file
+        let cwd_path = task_dir.join("path");
+        let cwd = read_to_string(&cwd_path)
+            .map_err(|err| Error::IoPathError(cwd_path.clone(), "reading path file", err))?;
+        let cwd = cwd.trim();
+        // Make sure the path isn't empty
+        if cwd.trim().is_empty() {
+            bail!("Found empty path after edit for task {}", self.id);
+        }
+        let path = PathBuf::from(&cwd);
+        // Make sure the path actually exists
+        if !self.path.exists() {
+            bail!(
+                "Found non-existing path '{:?}' after edit for task {}",
+                self.path,
+                self.id
+            );
+        }
+        self.path = path;
+
+        // Create label file. If file is empty, set the label to `None`
+        let label_path = task_dir.join("label");
+        let label = read_to_string(&label_path)
+            .map_err(|err| Error::IoPathError(label_path.clone(), "reading label file", err))?;
+        self.label = if label.trim().is_empty() {
+            None
+        } else {
+            Some(label.trim().to_string())
+        };
+
+        // Create priority file. If file is empty, set the priority to `None`
+        let priority_path = task_dir.join("priority");
+        let priority = read_to_string(&priority_path).map_err(|err| {
+            Error::IoPathError(priority_path.clone(), "reading priority file", err)
+        })?;
+        // Parse the user input into a usize.
+        self.priority = priority.trim().parse().context(format!(
+            "Failed to parse priority string '{}' into an integer for task {}",
+            priority, self.id
+        ))?;
+
+        Ok(())
+    }
 }

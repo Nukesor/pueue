@@ -78,11 +78,10 @@ async fn test_restart_with_alias() -> Result<()> {
     let message = RestartMessage {
         tasks: vec![TaskToRestart {
             task_id: 0,
-            command: Some("replaced_cmd test".to_string()),
-            path: None,
-            label: None,
-            delete_label: false,
-            priority: Some(0),
+            command: "replaced_cmd test".to_string(),
+            path: task.path,
+            label: task.label,
+            priority: task.priority,
         }],
         start_immediately: true,
         stashed: false,

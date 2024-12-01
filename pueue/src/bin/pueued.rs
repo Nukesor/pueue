@@ -138,6 +138,7 @@ fn fork_daemon(opt: &CliArguments) -> Result<()> {
         command.creation_flags(CREATE_NO_WINDOW);
     }
 
+    #[allow(clippy::zombie_processes)]
     command
         .args(&arguments)
         .spawn()

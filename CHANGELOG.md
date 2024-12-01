@@ -21,6 +21,27 @@ The new state design resolves this issue by allowing Pueue to manipulate subproc
 
 TLDR: Commands that start/stop/kill/pause tasks now only return when the task is actually started/stopped/killed/paused.
 
+### New editing
+
+Task editing was a bit tedious until recently.
+One could only edit a single task at a time and you had to specify which properties you wanted to add.
+Each property was then opened in a new `$EDITOR` session, which meant that users had to open and close editors up to four times to edit a single task.
+
+After a lot of consideration, a new way of editing tasks has been designed that allows simple and convenient editing of multiple tasks at once.
+For this, a temporary directory is created for every task to edit and a new file for every property, resulting in the following structure:
+
+```
+   📁 0/
+   │ * command
+   │ * label
+   │ * path
+   └ * priority
+```
+
+You can then just navigate the resulting file structure and edit the properties you want in the editor of your choice.
+
+I'm aware that this might not be for everyone, so feedback is very much encouraged over [here](https://github.com/Nukesor/pueue/issues/553).
+
 ### Runtime invariants
 
 Previously, various task-state related invariants were enforced during runtime. For example, a `Queued` task should not have a `start` or `enqueued_at` time set.
@@ -46,6 +67,7 @@ TLDR: The new task state representation is more verbose but significantly cleane
 - Send log output to `stderr` instead of `stdout` [#562](https://github.com/Nukesor/pueue/issues/562).
 - Change default log level from error to warning [#562](https://github.com/Nukesor/pueue/issues/562).
 - Bumped MSRV to 1.70.
+- **Breaking**: Redesigned task editing process [#553](https://github.com/Nukesor/pueue/issues/553).
 
 ### Add
 

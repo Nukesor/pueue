@@ -203,23 +203,8 @@ impl Client {
                 Ok(false)
             }
 
-            SubCommand::Edit {
-                task_id,
-                command,
-                path,
-                label,
-                priority,
-            } => {
-                let message = edit(
-                    &mut self.stream,
-                    &self.settings,
-                    *task_id,
-                    *command,
-                    *path,
-                    *label,
-                    *priority,
-                )
-                .await?;
+            SubCommand::Edit { task_ids } => {
+                let message = edit(&mut self.stream, &self.settings, task_ids).await?;
                 self.handle_response(message)?;
                 Ok(true)
             }
@@ -243,9 +228,6 @@ impl Client {
                 in_place,
                 not_in_place,
                 edit,
-                edit_path,
-                edit_label,
-                edit_priority,
             } => {
                 // `not_in_place` superseeds both other configs
                 let in_place =
@@ -260,9 +242,6 @@ impl Client {
                     *stashed,
                     in_place,
                     *edit,
-                    *edit_path,
-                    *edit_label,
-                    *edit_priority,
                 )
                 .await?;
                 Ok(true)
