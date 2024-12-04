@@ -2,7 +2,7 @@ use anyhow::Result;
 
 use crate::client::helper::*;
 
-/// Set an environment variable an make sure it's there afterwards.
+/// Set an environment variable and make sure it's there afterwards.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn set_environment() -> Result<()> {
     let daemon = daemon().await?;
@@ -29,7 +29,7 @@ async fn set_environment() -> Result<()> {
     Ok(())
 }
 
-/// Set an environment variable an make sure it's there afterwards.
+/// Set an environment variable, immediately unset it and make sure it's not there afterwards.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn unset_environment() -> Result<()> {
     let daemon = daemon().await?;
