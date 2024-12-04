@@ -10,6 +10,10 @@ This release aims to further improve Pueue and to rectify some old design decisi
 
 ### Removing internal channel communication
 
+TLDR: Commands that start/stop/kill/pause tasks now only return when the task is actually started/stopped/killed/paused.
+
+---
+
 Until recently, Pueue managed subprocess (task) states in a dedicated thread.
 Client commands affecting subprocesses, such as `pueue start --immediate`, were relayed to this special thread via an `mpsc` channel for processing.
 
@@ -18,8 +22,6 @@ For instance, tasks would begin a few hundred milliseconds after the client rece
 This behavior was unintuitive and often led to commands like `pueue add --immediate install_something && pueue send 0 'y\n'` failing, as the task had not started by the time `pueue send` was called.
 
 The new state design resolves this issue by allowing Pueue to manipulate subprocess states directly within the client message handlers, eliminating any delays.
-
-TLDR: Commands that start/stop/kill/pause tasks now only return when the task is actually started/stopped/killed/paused.
 
 ### New editing
 
@@ -44,17 +46,20 @@ I'm aware that this might not be for everyone, so feedback is very much encourag
 
 ### Runtime invariants
 
-Previously, various task-state related invariants were enforced during runtime. For example, a `Queued` task should not have a `start` or `enqueued_at` time set.
-This approach, however, is highly error-prone, as it is difficult to account for every state transition and ensure everything is set or cleaned up correctly.
+TLDR: A new task state representation has been introduced, that's significantly cleaner and fixes some bugs.
+However, it breaks compatibility with old states, so ensure there are no important tasks in your queue before updating. You'll also need to recreate groups.
+
+---
+
+Previously, various task-state related invariants were manually enforced during runtime. For example, a `Queued` task should not have a `start` or `enqueued_at` time set.
+Turns out, doing this manually is highly error-prone, as it is difficult to account for every state transition and ensure everything is set or cleaned up correctly.
 
 Fortunately, this issue can be addressed in a more elegant way in Rust using struct enums. This method enforces invariants via the type system at compile time.
-Although the affected code become slightly more verbose (about 25% larger), it eliminated an entire class of bugs.
-During this refactoring, I discovered at least two instances where I had forgotten to clear a variable.
+Although the affected code became slightly more verbose (about 25% larger), it eliminated an entire class of bugs.
+During this refactoring, I discovered at least two instances where I had forgotten to clear a variable, leading to inconsistent state.
 
-However, since the new structure differs significantly from the old one, it breaks backward compatibility with some commands (such as `status` and `log`) and the serialized state.
-Upon updating Pueue, the previous state will be wiped, resulting in a clean slate.
-
-TLDR: The new task state representation is more verbose but significantly cleaner and fixes some bugs. It breaks compatibility with old states, so ensure there are no important tasks in your queue before updating. You'll also need to recreate groups.
+Since the new structure differs significantly from the old one, it completely breaks backward compatibility.
+Upon updating Pueue and restarting the daemon, the previous state will be wiped, resulting in a **clean slate**.
 
 ### Change
 
