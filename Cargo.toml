@@ -1,5 +1,3 @@
-# The project is a top-level crate *as well* as a workspace.
-# The `pueue_lib` crate lives in the `lib` folder.
 # The following is the shared configuration for both pueue and its lib
 [workspace]
 members = ["pueue", "pueue_lib"]
