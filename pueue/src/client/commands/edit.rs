@@ -173,7 +173,7 @@ impl Editable for EditableTask {
     fn read_temp_dir(&mut self, temp_dir: &Path) -> Result<()> {
         let task_dir = temp_dir.join(self.id.to_string());
 
-        // Create command file
+        // Read command file
         let cmd_path = task_dir.join("command");
         let command = read_to_string(&cmd_path)
             .map_err(|err| Error::IoPathError(cmd_path.clone(), "reading command file", err))?;
@@ -183,7 +183,7 @@ impl Editable for EditableTask {
         }
         self.command = command.trim().to_string();
 
-        // Create cwd file
+        // Read cwd file
         let cwd_path = task_dir.join("path");
         let cwd = read_to_string(&cwd_path)
             .map_err(|err| Error::IoPathError(cwd_path.clone(), "reading path file", err))?;
@@ -203,7 +203,7 @@ impl Editable for EditableTask {
         }
         self.path = path;
 
-        // Create label file. If file is empty, set the label to `None`
+        // Read label file. If file is empty, set the label to `None`
         let label_path = task_dir.join("label");
         let label = read_to_string(&label_path)
             .map_err(|err| Error::IoPathError(label_path.clone(), "reading label file", err))?;
@@ -213,7 +213,7 @@ impl Editable for EditableTask {
             Some(label.trim().to_string())
         };
 
-        // Create priority file. If file is empty, set the priority to `None`
+        // Read priority file. If file is empty, set the priority to `None`
         let priority_path = task_dir.join("priority");
         let priority = read_to_string(&priority_path).map_err(|err| {
             Error::IoPathError(priority_path.clone(), "reading priority file", err)
