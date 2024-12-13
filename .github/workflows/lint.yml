@@ -80,12 +80,12 @@ jobs:
       - name: cargo clippy
         run: cargo clippy --tests --workspace -- -D warnings
 
-        #- name: cargo sort
-        #  run: cargo sort --workspace --check
-        #  # Don't run cargo-sort on windows, as the formatting behavior seems to be slightly different:
-        #  # https://github.com/DevinR528/cargo-sort/issues/56
-        #  if: matrix.target != 'x86_64-pc-windows-msvc'
+      # Only run taplo on linux to save some time.
+      # Also, taplo is broken on windows for some reason.
+      - name: Install taplo-cli
+        run: cargo install taplo-cli || exit 0
+        if: matrix.target == 'x86_64-unknown-linux-gnu'
 
-        #- name: Install cargo-sort
-        #  run: cargo install cargo-sort || exit 0
-        #  if: matrix.target != 'x86_64-pc-windows-msvc'
+      - name: cargo sort
+        run: ~/.cargo/bin/taplo format --check
+        if: matrix.target == 'x86_64-unknown-linux-gnu'

@@ -43,5 +43,5 @@ path = "junit.xml"
 # - lower retry count as a compromise between speed and resilience
 # - no fail-fast to at least keep coverage percentages accurate.
 [profile.coverage]
-retries = 1
 fail-fast = false
+retries = 1

@@ -1,36 +1,28 @@
 [target.x86_64-unknown-linux-musl]
 image = "ghcr.io/cross-rs/x86_64-unknown-linux-musl:main"
-pre-build = [
-    """
+pre-build = ["""
     dpkg --add-architecture amd64 && \
     apt-get update && \
     apt-get install --assume-yes lld clang
-    """
-]
+    """]
 
 [target.aarch64-unknown-linux-musl]
 image = "ghcr.io/cross-rs/aarch64-unknown-linux-musl:main"
-pre-build = [
-    """
+pre-build = ["""
     apt-get update && \
     apt-get install --assume-yes lld clang
-    """
-]
+    """]
 
 [target.armv7-unknown-linux-musleabihf]
 image = "ghcr.io/cross-rs/armv7-unknown-linux-musleabihf:main"
-pre-build = [
-    """
+pre-build = ["""
     apt-get update && \
     apt-get install --assume-yes lld clang
-    """
-]
+    """]
 
 [target.arm-unknown-linux-musleabihf]
 image = "ghcr.io/cross-rs/arm-unknown-linux-musleabihf:main"
-pre-build = [
-    """
+pre-build = ["""
     apt-get update && \
     apt-get install --assume-yes lld clang
-    """
-]
+    """]
