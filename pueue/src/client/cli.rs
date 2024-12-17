@@ -240,7 +240,7 @@ pub enum SubCommand {
         wait: bool,
     },
 
-    #[command(about = "Kill specific running tasks or whole task groups..\n\
+    #[command(about = "Kill specific running tasks or whole task groups.\n\
         Kills all tasks of the default group when no ids or a specific group are provided.")]
     Kill {
         /// Kill these specific tasks.
