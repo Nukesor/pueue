@@ -68,7 +68,7 @@ winapi = { version = "0.3", features = [
 whoami = "1"
 
 [target.'cfg(any(target_os = "linux", target_os = "macos"))'.dependencies]
-libproc = "0.14.6"
+libproc = "0.14.8"
 
 # Linux only
 [target.'cfg(target_os = "linux")'.dependencies]

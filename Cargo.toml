@@ -26,7 +26,7 @@ serde_json = "1.0"
 serde_yaml = "0.9"
 snap = "1.1"
 strum = { version = "0.26", features = ["derive"] }
-tokio = { version = "1.36", features = ["io-std", "rt-multi-thread", "time"] }
+tokio = { version = "1.42", features = ["io-std", "rt-multi-thread", "time"] }
 
 [profile.release]
 codegen-units = 1
