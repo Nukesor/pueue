@@ -41,6 +41,10 @@ pub async fn restart(
     // Filter to get done tasks
     let done_filter = |task: &Task| task.is_done();
 
+    // If all failed tasks or all failed tasks from a specific group are requested,
+    // determine the ids of those failed tasks.
+    //
+    // Otherwise, use the provided ids and check which of them were "Done" (successful or failed tasks).
     let filtered_tasks = if all_failed || failed_in_group.is_some() {
         // Either all failed tasks or all failed tasks of a specific group need to be restarted.
 
@@ -91,7 +95,7 @@ pub async fn restart(
     let mut tasks: Vec<Task> = filtered_tasks
         .matching_ids
         .iter()
-        .map(|task_id| Task::from_task(state.tasks.get(task_id).unwrap()))
+        .map(|task_id| state.tasks.get(task_id).unwrap().clone())
         .collect();
 
     // If the tasks should be edited, edit them in one go.

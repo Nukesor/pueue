@@ -267,7 +267,6 @@ impl From<&Task> for EditableTask {
 impl EditableTask {
     /// Merge a [EditableTask] back into a [Task].
     pub fn into_task(self, task: &mut Task) {
-        task.id = self.id;
         task.command = self.command;
         task.path = self.path;
         task.label = self.label;
