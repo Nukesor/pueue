@@ -1,15 +1,15 @@
 [package]
-authors.workspace = true
+name = "pueue"
+version = "4.0.0-rc.1"
 description = "A cli tool for managing long running shell commands."
+readme = "../README.md"
+keywords = ["command", "parallel", "queue", "shell", "task"]
+authors.workspace = true
 edition.workspace = true
 homepage.workspace = true
-keywords = ["command", "parallel", "queue", "shell", "task"]
 license.workspace = true
-name = "pueue"
-readme = "../README.md"
 repository.workspace = true
 rust-version.workspace = true
-version = "4.0.0-rc.1"
 
 [badges]
 maintenance = { status = "actively-developed" }
@@ -60,14 +60,14 @@ test-log = "0.2"
 crossterm = { version = "0.28", default-features = false }
 [target.'cfg(windows)'.dependencies]
 crossterm = { version = "0.28", default-features = false, features = [
-  "windows",
+    "windows",
 ] }
 windows = { version = "0.58.0", features = [
-  "Win32_Security",
-  "Win32_System_Environment",
-  "Win32_System_RemoteDesktop",
-  "Win32_System_SystemServices",
-  "Win32_System_Threading",
+    "Win32_Security",
+    "Win32_System_Environment",
+    "Win32_System_RemoteDesktop",
+    "Win32_System_SystemServices",
+    "Win32_System_Threading",
 ] }
 windows-service = "0.7.0"
 

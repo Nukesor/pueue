@@ -1,15 +1,15 @@
 [package]
-authors.workspace = true
+name = "pueue-lib"
+version = "0.27.0"
 description = "The shared library to work with the Pueue client and daemon."
+readme = "README.md"
+keywords = ["pueue"]
+authors.workspace = true
 edition.workspace = true
 homepage.workspace = true
-keywords = ["pueue"]
 license.workspace = true
-name = "pueue-lib"
-readme = "README.md"
 repository.workspace = true
 rust-version.workspace = true
-version = "0.27.0"
 
 [badges]
 maintenance = { status = "actively-developed" }
@@ -27,10 +27,10 @@ rand = "0.8"
 rcgen = "0.13"
 rev_buf_reader = "0.3"
 rustls = { version = "0.23", features = [
-  "logging",
-  "ring",
-  "std",
-  "tls12",
+    "logging",
+    "ring",
+    "std",
+    "tls12",
 ], default-features = false }
 rustls-pemfile = "2"
 serde.workspace = true
@@ -56,11 +56,11 @@ tokio.workspace = true
 # Windows
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3", features = [
-  "errhandlingapi",
-  "impl-default",
-  "minwindef",
-  "processthreadsapi",
-  "tlhelp32",
+    "errhandlingapi",
+    "impl-default",
+    "minwindef",
+    "processthreadsapi",
+    "tlhelp32",
 ] }
 
 # Unix
