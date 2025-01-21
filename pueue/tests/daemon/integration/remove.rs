@@ -1,5 +1,5 @@
 use anyhow::Result;
-use pueue_lib::network::message::*;
+use pueue_lib::{network::message::*, task::Task};
 
 use crate::helper::*;
 
@@ -22,11 +22,11 @@ async fn test_normal_remove() -> Result<()> {
         assert_success(add_task(shared, command).await?);
     }
     // Wait for task2 to start. This implies task[0,1] being finished.
-    wait_for_task_condition(shared, 2, |task| task.is_running()).await?;
+    wait_for_task_condition(shared, 2, Task::is_running).await?;
 
     // Explicitly start task3, wait for it to start and directly pause it.
     start_tasks(shared, TaskSelection::TaskIds(vec![3])).await?;
-    wait_for_task_condition(shared, 3, |task| task.is_running()).await?;
+    wait_for_task_condition(shared, 3, Task::is_running).await?;
 
     pause_tasks(shared, TaskSelection::TaskIds(vec![3])).await?;
 

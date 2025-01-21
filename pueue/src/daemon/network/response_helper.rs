@@ -32,7 +32,7 @@ pub fn ensure_group_exists<'state>(
 /// task_action_response_helper(
 ///     "Tasks are being killed",
 ///     task_ids.clone(),
-///     |task| task.is_running(),
+///     Task::is_running,
 ///     &state,
 /// ),
 /// ```

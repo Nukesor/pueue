@@ -134,6 +134,11 @@ impl Task {
         )
     }
 
+    /// Whether the task is a running, but paused process managed by the TaskHandler.
+    pub fn is_paused(&self) -> bool {
+        matches!(self.status, TaskStatus::Paused { .. })
+    }
+
     /// Whether the task's process finished.
     pub fn is_done(&self) -> bool {
         matches!(self.status, TaskStatus::Done { .. })

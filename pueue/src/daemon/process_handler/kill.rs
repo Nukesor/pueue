@@ -1,10 +1,12 @@
 use log::{error, info, warn};
 
-use pueue_lib::network::message::{Signal, TaskSelection};
-use pueue_lib::process_helper::*;
-use pueue_lib::settings::Settings;
-use pueue_lib::state::GroupStatus;
-use pueue_lib::task::TaskStatus;
+use pueue_lib::{
+    network::message::{Signal, TaskSelection},
+    process_helper::*,
+    settings::Settings,
+    state::GroupStatus,
+    task::{Task, TaskStatus},
+};
 
 use crate::daemon::state_helper::{save_state, LockedState};
 use crate::ok_or_shutdown;
@@ -124,7 +126,7 @@ fn should_pause_group(state: &LockedState, issued_by_user: bool, group: &str) ->
         return false;
     }
 
-    // Check if there're tasks that're queued or enqueued.
-    let filtered_tasks = state.filter_tasks_of_group(|task| task.is_queued(), group);
+    // Check if there're tasks that're queued or scheduled to be enqueued.
+    let filtered_tasks = state.filter_tasks_of_group(Task::is_queued, group);
     !filtered_tasks.matching_ids.is_empty()
 }

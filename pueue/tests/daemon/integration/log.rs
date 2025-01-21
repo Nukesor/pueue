@@ -3,8 +3,9 @@ use std::fs::File;
 use std::path::Path;
 
 use anyhow::{bail, Context, Result};
-use pueue_lib::network::message::*;
 use tempfile::TempDir;
+
+use pueue_lib::{network::message::*, task::Task};
 
 use crate::helper::*;
 
@@ -60,7 +61,7 @@ async fn test_full_log() -> Result<()> {
     // Add a task that lists those files and wait for it to finish.
     let command = format!("ls {tempdir_path:?}");
     assert_success(add_task(shared, &command).await?);
-    wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
+    wait_for_task_condition(shared, 0, Task::is_done).await?;
 
     // Request all log lines
     let output = get_task_log(shared, 0, None).await?;
@@ -86,7 +87,7 @@ async fn test_partial_log() -> Result<()> {
     // Add a task that lists those files and wait for it to finish.
     let command = format!("ls {tempdir_path:?}");
     assert_success(add_task(shared, &command).await?);
-    wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
+    wait_for_task_condition(shared, 0, Task::is_done).await?;
 
     // Debug output to see what the file actually looks like:
     let real_log_path = shared.pueue_directory().join("task_logs").join("0.log");
@@ -128,7 +129,7 @@ async fn test_correct_log_order() -> Result<()> {
     // Add a task that lists those files and wait for it to finish.
     let command = "echo 'test' && echo 'error' && echo 'test'";
     assert_success(add_task(shared, command).await?);
-    wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
+    wait_for_task_condition(shared, 0, Task::is_done).await?;
 
     // Request all log lines
     let log_message = LogRequestMessage {
@@ -171,7 +172,7 @@ async fn logs_of_group() -> Result<()> {
     assert_success(add_task_to_group(shared, command, "test_2").await?);
 
     // Wait for both to finish
-    wait_for_task_condition(shared, 1, |task| task.is_done()).await?;
+    wait_for_task_condition(shared, 1, Task::is_done).await?;
 
     // Request the task's logs.
     let message = LogRequestMessage {
@@ -205,7 +206,7 @@ async fn logs_for_all() -> Result<()> {
     assert_success(add_task_to_group(shared, command, "test_2").await?);
 
     // Wait for both to finish
-    wait_for_task_condition(shared, 1, |task| task.is_done()).await?;
+    wait_for_task_condition(shared, 1, Task::is_done).await?;
 
     // Request the task's logs.
     let message = LogRequestMessage {

@@ -1,9 +1,11 @@
-use pueue_lib::state::SharedState;
-use pueue_lib::success_msg;
-use pueue_lib::{network::message::*, settings::Settings};
+use pueue_lib::{
+    network::message::*, settings::Settings, state::SharedState, success_msg, task::Task,
+};
 
-use crate::daemon::network::response_helper::{ensure_group_exists, task_action_response_helper};
-use crate::daemon::process_handler;
+use crate::daemon::{
+    network::response_helper::{ensure_group_exists, task_action_response_helper},
+    process_handler,
+};
 
 /// Invoked when calling `pueue kill`.
 /// Forward the kill message to the task handler, which then kills the process.
@@ -23,7 +25,7 @@ pub fn kill(settings: &Settings, state: &SharedState, message: KillMessage) -> M
             TaskSelection::TaskIds(task_ids) => task_action_response_helper(
                 "Tasks are being killed",
                 task_ids.clone(),
-                |task| task.is_running(),
+                Task::is_running,
                 &state,
             ),
             TaskSelection::Group(group) => {
@@ -38,7 +40,7 @@ pub fn kill(settings: &Settings, state: &SharedState, message: KillMessage) -> M
             TaskSelection::TaskIds(task_ids) => task_action_response_helper(
                 "Tasks are being killed",
                 task_ids.clone(),
-                |task| task.is_running(),
+                Task::is_running,
                 &state,
             ),
             TaskSelection::Group(group) => success_msg!(

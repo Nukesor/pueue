@@ -1,6 +1,6 @@
-use anyhow::Context;
-use anyhow::Result;
-use pueue_lib::state::State;
+use anyhow::{Context, Result};
+
+use pueue_lib::{state::State, task::Task};
 
 use crate::client::helper::*;
 
@@ -42,7 +42,7 @@ async fn full() -> Result<()> {
 //
 //    // Add a task and wait until it finishes.
 //    assert_success(add_task(shared, "ls").await?);
-//    wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
+//    wait_for_task_condition(shared, 0, Task::is_done).await?;
 //
 //    let output = run_status_without_path(shared, &["--color", "always"]).await?;
 //
@@ -67,7 +67,7 @@ async fn single_group() -> Result<()> {
     run_client_command(shared, &["add", "--stashed", "ls"])?;
 
     // Make sure the first task finished.
-    wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
+    wait_for_task_condition(shared, 0, Task::is_done).await?;
 
     let output = run_status_without_path(shared, &["--group", "testgroup"]).await?;
 
@@ -94,7 +94,7 @@ async fn multiple_groups() -> Result<()> {
     run_client_command(shared, &["add", "--group", "testgroup2", "ls"])?;
 
     // Make sure the second task finished.
-    wait_for_task_condition(shared, 1, |task| task.is_done()).await?;
+    wait_for_task_condition(shared, 1, Task::is_done).await?;
 
     let output = run_status_without_path(shared, &[]).await?;
 
@@ -113,7 +113,7 @@ async fn json() -> Result<()> {
 
     // Add a task and wait until it finishes.
     assert_success(add_task(shared, "ls").await?);
-    wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
+    wait_for_task_condition(shared, 0, Task::is_done).await?;
 
     let output = run_client_command(shared, &["status", "--json"])?;
 

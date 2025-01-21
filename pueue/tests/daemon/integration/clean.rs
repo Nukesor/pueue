@@ -1,5 +1,5 @@
 use anyhow::Result;
-use pueue_lib::network::message::*;
+use pueue_lib::{network::message::*, task::Task};
 
 use crate::helper::*;
 
@@ -14,7 +14,7 @@ async fn test_normal_clean() -> Result<()> {
         assert_success(add_task(shared, command).await?);
     }
     // Wait for task2 to start. This implies that task[0,1] are done.
-    wait_for_task_condition(shared, 2, |task| task.is_running()).await?;
+    wait_for_task_condition(shared, 2, Task::is_running).await?;
 
     // Send the clean message
     let clean_message = CleanMessage {
@@ -42,7 +42,7 @@ async fn test_successful_only_clean() -> Result<()> {
         assert_success(add_task(shared, command).await?);
     }
     // Wait for task2 to start. This implies task[0,1] being finished.
-    wait_for_task_condition(shared, 1, |task| task.is_done()).await?;
+    wait_for_task_condition(shared, 1, Task::is_done).await?;
 
     // Send the clean message
     let clean_message = CleanMessage {
@@ -75,7 +75,7 @@ async fn test_clean_in_selected_group() -> Result<()> {
     }
 
     // Wait for task6 to start. This implies task[4,5] in the 'other' group being finished.
-    wait_for_task_condition(shared, 6, |task| task.is_running()).await?;
+    wait_for_task_condition(shared, 6, Task::is_running).await?;
 
     // Send the clean message
     let clean_message = CleanMessage {
@@ -113,7 +113,7 @@ async fn test_clean_successful_only_in_selected_group() -> Result<()> {
     }
 
     // Wait for task6 to start. This implies task[4,5] in the 'other' group being finished.
-    wait_for_task_condition(shared, 6, |task| task.is_running()).await?;
+    wait_for_task_condition(shared, 6, Task::is_running).await?;
 
     // Send the clean message
     let clean_message = CleanMessage {

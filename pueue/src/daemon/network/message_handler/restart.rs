@@ -1,11 +1,13 @@
 use chrono::Local;
-use pueue_lib::settings::Settings;
 use std::sync::MutexGuard;
 
-use pueue_lib::aliasing::insert_alias;
-use pueue_lib::network::message::*;
-use pueue_lib::state::{SharedState, State};
-use pueue_lib::task::TaskStatus;
+use pueue_lib::{
+    aliasing::insert_alias,
+    network::message::*,
+    settings::Settings,
+    state::{SharedState, State},
+    task::{Task, TaskStatus},
+};
 
 use crate::daemon::process_handler;
 
@@ -28,7 +30,7 @@ pub fn restart_multiple(
     let response = task_action_response_helper(
         "Tasks has restarted",
         task_ids.clone(),
-        |task| task.is_done(),
+        Task::is_done,
         &state,
     );
 

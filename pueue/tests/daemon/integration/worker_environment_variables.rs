@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use pueue_lib::{network::message::TaskSelection, state::PUEUE_DEFAULT_GROUP};
+use pueue_lib::{network::message::TaskSelection, state::PUEUE_DEFAULT_GROUP, task::Task};
 
 use crate::helper::*;
 
@@ -19,7 +19,7 @@ async fn test_single_worker() -> Result<()> {
     sleep_ms(1000).await;
 
     // Wait for the last task to finish.
-    wait_for_task_condition(shared, 2, |task| task.is_done()).await?;
+    wait_for_task_condition(shared, 2, Task::is_done).await?;
 
     // All tasks should have the worker id 0, as the tasks are processed sequentially.
     let state = get_state(shared).await?;
@@ -55,7 +55,7 @@ async fn test_multiple_worker() -> Result<()> {
 
     // Start and wait for the tasks
     start_tasks(shared, TaskSelection::Group("test_3".to_string())).await?;
-    wait_for_task_condition(shared, 2, |task| task.is_done()).await?;
+    wait_for_task_condition(shared, 2, Task::is_done).await?;
 
     // The first three tasks should have the same worker id's as the task ids.
     // They ran in parallel and each should have their own worker id assigned.
@@ -71,7 +71,7 @@ async fn test_multiple_worker() -> Result<()> {
         assert_success(add_env_task_to_group(shared, "sleep 0.1", "test_3").await?);
     }
     start_tasks(shared, TaskSelection::Group("test_3".to_string())).await?;
-    wait_for_task_condition(shared, 4, |task| task.is_done()).await?;
+    wait_for_task_condition(shared, 4, Task::is_done).await?;
 
     let state = get_state(shared).await?;
     // Task3 gets worker0
@@ -93,7 +93,7 @@ async fn test_worker_for_new_pool() -> Result<()> {
 
     // Add a tasks that finishes instantly.
     assert_success(add_env_task_to_group(shared, "sleep 0.1", "testgroup").await?);
-    wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
+    wait_for_task_condition(shared, 0, Task::is_done).await?;
 
     // The task should have the correct worker id + group.
     let state = get_state(shared).await?;

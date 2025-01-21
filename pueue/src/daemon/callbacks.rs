@@ -68,7 +68,7 @@ pub fn build_callback_command(
     // This includes how many stashed and queued tasks are left in the group.
     parameters.insert("group", task.group.clone());
     let queued_tasks = state
-        .filter_tasks_of_group(|task| task.is_queued(), &task.group)
+        .filter_tasks_of_group(Task::is_queued, &task.group)
         .matching_ids
         .len();
     parameters.insert("queued_count", queued_tasks.to_string());

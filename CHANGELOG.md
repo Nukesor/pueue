@@ -10,7 +10,8 @@ This release aims to further improve Pueue and to rectify some old design decisi
 
 ### Removing internal channel communication
 
-TLDR: Commands that start/stop/kill/pause tasks now only return when the task is actually started/stopped/killed/paused.
+TLDR: Commands that start/stop/pause tasks now only return when the task is actually started/stopped/paused.
+`kill`ing commands still takes a short while, as the process needs to be cleaned up properly.
 
 ---
 

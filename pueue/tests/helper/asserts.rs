@@ -1,11 +1,12 @@
 use anyhow::{bail, Result};
 use assert_matches::assert_matches;
 
-use pueue_lib::network::message::*;
 use pueue_lib::settings::Shared;
 use pueue_lib::state::State;
+use pueue_lib::task::Task;
+use pueue_lib::{network::message::*, state::GroupStatus};
 
-use super::send_message;
+use super::{get_state, send_message};
 
 /// Assert that a message is a successful message.
 pub fn assert_success(message: Message) {
@@ -23,6 +24,57 @@ pub fn assert_failure(message: Message) {
         Message::Failure(_),
         "Expected to get FailureMessage, got {message:?}",
     );
+}
+
+/// A small helper script which pulls the newest state and asserts that a certain condition on a
+/// specific task is given.
+pub async fn assert_task_condition<F>(
+    shared: &Shared,
+    task_id: usize,
+    condition: F,
+    message: &str,
+) -> Result<Task>
+where
+    F: Fn(&Task) -> bool,
+{
+    let state = get_state(shared).await?;
+    match state.tasks.get(&task_id) {
+        Some(task) => {
+            if !condition(task) {
+                bail!("Condition check for task {task_id} failed: {message}");
+            }
+            Ok(task.clone())
+        }
+        None => {
+            bail!("Couldn't find task {task_id} while checking for condition: {message}")
+        }
+    }
+}
+
+/// Make sure a specific group has the expected status.
+pub async fn assert_group_status(
+    shared: &Shared,
+    group_name: &str,
+    expected_status: GroupStatus,
+    message: &str,
+) -> Result<()> {
+    let state = get_state(shared).await?;
+    match state.groups.get(group_name) {
+        Some(group) => {
+            if group.status != expected_status {
+                bail!(
+                    "Group {group_name} doesn't have expected status {expected_status:?}. Found {:?}: {message}",
+                    group.status
+                );
+            }
+            Ok(())
+        }
+        None => {
+            bail!(
+                "Couldn't find group {group_name} while asserting status {expected_status:?}: {message}"
+            )
+        }
+    }
 }
 
 /// Make sure the expected environment variables are set.

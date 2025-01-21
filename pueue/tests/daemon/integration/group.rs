@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use pueue_lib::network::message::*;
+use pueue_lib::{network::message::*, task::Task};
 
 use crate::helper::*;
 
@@ -65,7 +65,7 @@ async fn test_cannot_delete_group_with_tasks() -> Result<()> {
 
     // Add a task
     assert_success(add_task_to_group(shared, "ls", "testgroup").await?);
-    wait_for_task_condition(&daemon.settings.shared, 0, |task| task.is_done()).await?;
+    wait_for_task_condition(&daemon.settings.shared, 0, Task::is_done).await?;
 
     // We shouldn't be capable of removing that group
     let message = GroupMessage::Remove("testgroup".to_string());

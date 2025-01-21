@@ -1,9 +1,10 @@
 use std::collections::{BTreeMap, HashMap};
 
 use anyhow::{Context, Result};
-use pueue_lib::task::Task;
 use rstest::rstest;
 use serde::Deserialize;
+
+use pueue_lib::task::Task;
 
 use crate::client::helper::*;
 
@@ -28,7 +29,7 @@ async fn read(#[case] read_local_logs: bool) -> Result<()> {
 
     // Add a task and wait until it finishes.
     assert_success(add_task(shared, "echo test").await?);
-    wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
+    wait_for_task_condition(shared, 0, Task::is_done).await?;
 
     let output = run_client_command(shared, &["log"])?;
 
@@ -59,7 +60,7 @@ async fn read_truncated(#[case] read_local_logs: bool) -> Result<()> {
 
     // Add a task and wait until it finishes.
     assert_success(add_task(shared, "echo '1\n2\n3\n4\n5\n6\n7\n8\n9\n10'").await?);
-    wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
+    wait_for_task_condition(shared, 0, Task::is_done).await?;
 
     let output = run_client_command(shared, &["log", "--lines=5"])?;
 
@@ -77,7 +78,7 @@ async fn task_with_label() -> Result<()> {
 
     // Add a task and wait until it finishes.
     run_client_command(shared, &["add", "--label", "test_label", "echo test"])?;
-    wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
+    wait_for_task_condition(shared, 0, Task::is_done).await?;
 
     let output = run_client_command(shared, &["log"])?;
 
@@ -95,7 +96,7 @@ async fn colored() -> Result<()> {
 
     // Add a task and wait until it finishes.
     assert_success(add_task(shared, "echo test").await?);
-    wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
+    wait_for_task_condition(shared, 0, Task::is_done).await?;
 
     let output = run_client_command(shared, &["--color", "always", "log"])?;
 
@@ -122,7 +123,7 @@ async fn json() -> Result<()> {
 
     // Add a task and wait until it finishes.
     assert_success(add_task(shared, "echo test").await?);
-    wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
+    wait_for_task_condition(shared, 0, Task::is_done).await?;
 
     let output = run_client_command(shared, &["log", "--json"])?;
 

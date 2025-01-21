@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use anyhow::Result;
 use assert_matches::assert_matches;
 
-use pueue_lib::task::{TaskResult, TaskStatus};
+use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
 use crate::client::helper::*;
 
@@ -15,7 +15,7 @@ async fn restart_and_edit_task_command() -> Result<()> {
 
     // Create a task and wait for it to finish.
     assert_success(add_task(shared, "ls").await?);
-    wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
+    wait_for_task_condition(shared, 0, Task::is_done).await?;
 
     // Set the editor to a command which replaces the temporary file's content.
     let mut envs = HashMap::new();
@@ -26,7 +26,7 @@ async fn restart_and_edit_task_command() -> Result<()> {
 
     // Restart the command, edit its command and wait for it to start.
     run_client_command_with_env(shared, &["restart", "--in-place", "--edit", "0"], envs)?;
-    wait_for_task_condition(shared, 0, |task| task.is_running()).await?;
+    wait_for_task_condition(shared, 0, Task::is_running).await?;
 
     // Make sure that both the command has been updated.
     let state = get_state(shared).await?;
@@ -49,7 +49,7 @@ async fn restart_and_edit_task_path() -> Result<()> {
 
     // Create a task and wait for it to finish.
     assert_success(add_task(shared, "ls").await?);
-    wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
+    wait_for_task_condition(shared, 0, Task::is_done).await?;
 
     // Set the editor to a command which replaces the temporary file's content.
     let mut envs = HashMap::new();
@@ -57,7 +57,7 @@ async fn restart_and_edit_task_path() -> Result<()> {
 
     // Restart the command, edit its command and wait for it to start.
     run_client_command_with_env(shared, &["restart", "--in-place", "--edit", "0"], envs)?;
-    wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
+    wait_for_task_condition(shared, 0, Task::is_done).await?;
 
     // Make sure that both the path has been updated.
     let state = get_state(shared).await?;
@@ -75,7 +75,7 @@ async fn restart_and_edit_task_path_and_command() -> Result<()> {
 
     // Create a task and wait for it to finish.
     assert_success(add_task(shared, "ls").await.unwrap());
-    wait_for_task_condition(shared, 0, |task| task.is_done())
+    wait_for_task_condition(shared, 0, Task::is_done)
         .await
         .unwrap();
 
@@ -92,7 +92,7 @@ echo '5' > ${PUEUE_EDIT_PATH}/0/priority || ",
     // Restart the command, edit its command and path and wait for it to start.
     // The task will fail afterwards, but it should still be edited.
     run_client_command_with_env(shared, &["restart", "--in-place", "--edit", "0"], envs)?;
-    wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
+    wait_for_task_condition(shared, 0, Task::is_done).await?;
 
     // Make sure that both the path has been updated.
     let state = get_state(shared).await?;
@@ -123,7 +123,7 @@ async fn restart_and_edit_task_priority() -> Result<()> {
 
     // Create a task and wait for it to finish.
     assert_success(add_task(shared, "ls").await?);
-    wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
+    wait_for_task_condition(shared, 0, Task::is_done).await?;
 
     // Set the editor to a command which replaces the temporary file's content.
     let mut envs = HashMap::new();
@@ -131,7 +131,7 @@ async fn restart_and_edit_task_priority() -> Result<()> {
 
     // Restart the command, edit its priority and wait for it to start.
     run_client_command_with_env(shared, &["restart", "--in-place", "--edit", "0"], envs)?;
-    wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
+    wait_for_task_condition(shared, 0, Task::is_done).await?;
 
     // Make sure that the priority has been updated.
     let state = get_state(shared).await?;
@@ -149,7 +149,7 @@ async fn normal_restart_with_edit() -> Result<()> {
 
     // Create a task and wait for it to finish.
     assert_success(add_task(shared, "ls").await?);
-    let original_task = wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
+    let original_task = wait_for_task_condition(shared, 0, Task::is_done).await?;
 
     // Set the editor to a command which replaces the temporary file's content.
     let mut envs = HashMap::new();
@@ -160,7 +160,7 @@ async fn normal_restart_with_edit() -> Result<()> {
 
     // Restart the command, edit its command and wait for it to start.
     run_client_command_with_env(shared, &["restart", "--edit", "0"], envs)?;
-    wait_for_task_condition(shared, 1, |task| task.is_running()).await?;
+    wait_for_task_condition(shared, 1, Task::is_running).await?;
 
     // Make sure that both the command has been updated.
     let state = get_state(shared).await?;

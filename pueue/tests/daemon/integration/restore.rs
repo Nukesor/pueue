@@ -1,5 +1,4 @@
 use anyhow::Result;
-use pretty_assertions::assert_eq;
 
 use pueue_lib::network::message::TaskSelection;
 use pueue_lib::state::GroupStatus;
@@ -21,12 +20,13 @@ async fn test_start_running() -> Result<()> {
     // Boot it up again
     let mut child = standalone_daemon(&settings.shared).await?;
 
-    // Assert that the group is still running.
-    let state = get_state(shared).await?;
-    assert_eq!(
-        state.groups.get(PUEUE_DEFAULT_GROUP).unwrap().status,
-        GroupStatus::Running
-    );
+    assert_group_status(
+        shared,
+        PUEUE_DEFAULT_GROUP,
+        GroupStatus::Running,
+        "Default group should still be running.",
+    )
+    .await?;
 
     child.kill()?;
     Ok(())
@@ -50,12 +50,13 @@ async fn test_start_paused() -> Result<()> {
     // Boot it up again
     let mut child = standalone_daemon(&settings.shared).await?;
 
-    // Assert that the group is still paused.
-    let state = get_state(shared).await?;
-    assert_eq!(
-        state.groups.get(PUEUE_DEFAULT_GROUP).unwrap().status,
-        GroupStatus::Paused
-    );
+    assert_group_status(
+        shared,
+        PUEUE_DEFAULT_GROUP,
+        GroupStatus::Paused,
+        "Default group should still be paused.",
+    )
+    .await?;
 
     child.kill()?;
     Ok(())

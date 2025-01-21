@@ -49,9 +49,15 @@ async fn test_kill_tasks_with_pause(
     for _ in 0..3 {
         assert_success(add_and_start_task(shared, "sleep 60").await?);
     }
-    // Wait until all tasks are running
+    // Wait until all tasks are running, they should be start `immediately`.
     for id in 0..3 {
-        wait_for_task_condition(shared, id, |task| task.is_running()).await?;
+        assert_task_condition(
+            shared,
+            id,
+            Task::is_running,
+            "Tasks should start immediately.",
+        )
+        .await?;
     }
 
     // Add another task that will be normally enqueued.
@@ -124,9 +130,15 @@ async fn test_kill_tasks_without_pause(#[case] kill_message: KillMessage) -> Res
     for _ in 0..3 {
         assert_success(add_and_start_task(shared, "sleep 60").await?);
     }
-    // Wait until all tasks are running
+    // Wait until all tasks are running, they should be start `immediately`.
     for id in 0..3 {
-        wait_for_task_condition(shared, id, |task| task.is_running()).await?;
+        assert_task_condition(
+            shared,
+            id,
+            Task::is_running,
+            "Tasks should start immediately",
+        )
+        .await?;
     }
 
     // Add a dummy group that also shouldn't be paused.

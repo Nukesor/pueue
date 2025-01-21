@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use anyhow::Result;
-use pueue_lib::network::message::*;
+use pueue_lib::{network::message::*, task::Task};
 
 use crate::helper::*;
 
@@ -16,7 +16,7 @@ async fn test_restart_in_place() -> Result<()> {
     assert_success(add_task(shared, "sleep 0.1").await?);
 
     // Wait for task 0 to finish.
-    let original_task = wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
+    let original_task = wait_for_task_condition(shared, 0, Task::is_done).await?;
 
     // Restart task 0 with an extended sleep command with a different path.
     let restart_message = RestartMessage {
@@ -36,7 +36,7 @@ async fn test_restart_in_place() -> Result<()> {
     assert_eq!(state.tasks.len(), 1, "No new task should be created");
 
     // Task 0 should soon be started again
-    let task = wait_for_task_condition(shared, 0, |task| task.is_running()).await?;
+    let task = wait_for_task_condition(shared, 0, Task::is_running).await?;
 
     // The created_at time should be the same, as we updated in place
     assert_eq!(
@@ -64,7 +64,7 @@ async fn test_cannot_restart_running() -> Result<()> {
     assert_success(add_task(shared, "sleep 60").await?);
 
     // Wait for task 0 to finish.
-    let task = wait_for_task_condition(shared, 0, |task| task.is_running()).await?;
+    let task = wait_for_task_condition(shared, 0, Task::is_running).await?;
 
     // Restart task 0 with an extended sleep command.
     let restart_message = RestartMessage {

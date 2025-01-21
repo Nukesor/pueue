@@ -3,8 +3,7 @@ use std::collections::HashMap;
 use anyhow::Result;
 use assert_matches::assert_matches;
 
-use pueue_lib::network::message::*;
-use pueue_lib::task::*;
+use pueue_lib::{network::message::*, task::*};
 
 use crate::helper::*;
 
@@ -22,7 +21,7 @@ async fn test_add_with_alias() -> Result<()> {
     assert_success(add_task(shared, "non_existing_cmd test").await?);
 
     // Wait until the task finished and get state
-    wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
+    wait_for_task_condition(shared, 0, Task::is_done).await?;
 
     let task = get_task(shared, 0).await?;
 
@@ -56,7 +55,7 @@ async fn test_restart_with_alias() -> Result<()> {
 
     // Add a task whose command that should fail and wait for it to finish.
     assert_success(add_task(shared, "non_existing_cmd test").await?);
-    let task = wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
+    let task = wait_for_task_condition(shared, 0, Task::is_done).await?;
 
     // Ensure the command hasn't been mutated and the task failed.
     assert_eq!(task.command, "non_existing_cmd test");
@@ -87,7 +86,7 @@ async fn test_restart_with_alias() -> Result<()> {
         stashed: false,
     };
     send_message(shared, message).await?;
-    let task = wait_for_task_condition(shared, 0, |task| task.is_done()).await?;
+    let task = wait_for_task_condition(shared, 0, Task::is_done).await?;
 
     // The task finished successfully and its command has replaced the alias.
     assert_eq!(task.original_command, "replaced_cmd test");

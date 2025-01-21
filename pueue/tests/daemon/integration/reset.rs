@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use pueue_lib::{network::message::*, state::GroupStatus};
+use pueue_lib::{network::message::*, state::GroupStatus, task::Task};
 
 use crate::helper::*;
 
@@ -14,7 +14,7 @@ async fn test_reset() -> Result<()> {
     add_task(shared, "failed").await?;
     add_task_to_group(shared, "sleep 60", "test_2").await?;
     add_task(shared, "ls").await?;
-    wait_for_task_condition(shared, 2, |task| task.is_running()).await?;
+    wait_for_task_condition(shared, 2, Task::is_running).await?;
 
     // Reset all groups of the daemon
     send_message(
@@ -60,7 +60,7 @@ async fn test_reset_single_group() -> Result<()> {
     add_task(shared, "failed").await?;
     add_task_to_group(shared, "sleep 60", "test_2").await?;
     add_task_to_group(shared, "sleep 60", "test_3").await?;
-    wait_for_task_condition(shared, 2, |task| task.is_running()).await?;
+    wait_for_task_condition(shared, 2, Task::is_running).await?;
 
     // Reset only the test_2 of the daemon.
     send_message(
@@ -102,7 +102,7 @@ async fn test_reset_multiple_groups() -> Result<()> {
     add_task(shared, "failed").await?;
     add_task_to_group(shared, "sleep 60", "test_2").await?;
     add_task_to_group(shared, "sleep 60", "test_3").await?;
-    wait_for_task_condition(shared, 2, |task| task.is_running()).await?;
+    wait_for_task_condition(shared, 2, Task::is_running).await?;
 
     // Reset only the test_2 of the daemon.
     send_message(
