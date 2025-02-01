@@ -2,6 +2,7 @@ mod add;
 mod aliases;
 mod callback;
 mod clean;
+mod dependencies;
 mod edit;
 mod environment_variables;
 mod group;
