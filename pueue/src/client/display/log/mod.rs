@@ -70,7 +70,7 @@ pub fn print_logs(
         return;
     }
 
-    let selection = selection_from_params(*all, group, task_ids);
+    let selection = selection_from_params(*all, group.clone(), task_ids.clone());
     if task_logs.is_empty() {
         match selection {
             TaskSelection::TaskIds(_) => {
