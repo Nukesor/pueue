@@ -36,8 +36,26 @@ pub async fn add_task_with_priority(
         .context("Failed to to add task.")
 }
 
+/// Adds a task with a dependency to the test daemon.
+pub async fn add_task_with_dependencies(
+    shared: &Shared,
+    command: &str,
+    dependencies: Vec<usize>,
+) -> Result<Message> {
+    let mut message = create_add_message(shared, command);
+    message.dependencies = dependencies;
+
+    send_message(shared, message)
+        .await
+        .context("Failed to to add task.")
+}
+
 /// Adds a task to a specific group of the test daemon.
-pub async fn add_task_to_group(shared: &Shared, command: &str, group: &str) -> Result<Message> {
+pub async fn add_task_to_group<C: ToString, G: ToString>(
+    shared: &Shared,
+    command: C,
+    group: G,
+) -> Result<Message> {
     let mut message = create_add_message(shared, command);
     message.group = group.to_string();
 

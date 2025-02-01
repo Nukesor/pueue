@@ -1,8 +1,6 @@
-use std::collections::BTreeMap;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::sync::MutexGuard;
-use std::time::SystemTime;
 
 use anyhow::{Context, Result};
 use chrono::prelude::*;
@@ -63,52 +61,19 @@ pub fn pause_on_failure(state: &mut LockedState, settings: &Settings, group: &st
     }
 }
 
-/// Do a full reset of the state.
-/// This doesn't reset any processes!
-pub fn reset_state(state: &mut LockedState, settings: &Settings) -> Result<()> {
-    backup_state(state, settings)?;
-    state.tasks = BTreeMap::new();
-    state.set_status_for_all_groups(GroupStatus::Running);
-
-    save_state(state, settings)
-}
-
-/// Convenience wrapper around save_to_file.
-pub fn save_state(state: &State, settings: &Settings) -> Result<()> {
-    save_state_to_file(state, settings, false)
-}
-
-/// Save the current current state in a file with a timestamp.
-/// At the same time remove old state logs from the log directory.
-/// This function is called, when large changes to the state are applied, e.g. clean/reset.
-pub fn backup_state(state: &LockedState, settings: &Settings) -> Result<()> {
-    save_state_to_file(state, settings, true)?;
-    rotate_state(settings).context("Failed to rotate old log files")?;
-    Ok(())
-}
-
 /// Save the current state to disk. \
 /// We do this to restore in case of a crash. \
 /// If log == true, the file will be saved with a time stamp.
 ///
 /// In comparison to the daemon -> client communication, the state is saved
 /// as JSON for readability and debugging purposes.
-fn save_state_to_file(state: &State, settings: &Settings, log: bool) -> Result<()> {
+pub fn save_state(state: &State, settings: &Settings) -> Result<()> {
     let serialized = serde_json::to_string(&state).context("Failed to serialize state:");
 
     let serialized = serialized.unwrap();
     let path = settings.shared.pueue_directory();
-    let (temp, real) = if log {
-        let path = path.join("log");
-        let now: DateTime<Utc> = Utc::now();
-        let time = now.format("%Y-%m-%d_%H-%M-%S");
-        (
-            path.join(format!("{time}_state.json.partial")),
-            path.join(format!("{time}_state.json")),
-        )
-    } else {
-        (path.join("state.json.partial"), path.join("state.json"))
-    };
+    let temp = path.join("state.json.partial");
+    let real = path.join("state.json");
 
     // Write to temporary log file first, to prevent loss due to crashes.
     fs::write(&temp, serialized).context("Failed to write temp file while saving state.")?;
@@ -116,11 +81,7 @@ fn save_state_to_file(state: &State, settings: &Settings, log: bool) -> Result<(
     // Overwrite the original with the temp file, if everything went fine.
     fs::rename(&temp, &real).context("Failed to overwrite old state while saving state")?;
 
-    if log {
-        debug!("State backup created at: {real:?}");
-    } else {
-        debug!("State saved at: {real:?}");
-    }
+    debug!("State saved at: {real:?}");
 
     Ok(())
 }
@@ -177,7 +138,7 @@ pub fn restore_state(pueue_directory: &Path) -> Result<Option<State>> {
         let group = match state.groups.get_mut(&task.group) {
             Some(group) => group,
             None => {
-                task.set_default_group();
+                task.group = PUEUE_DEFAULT_GROUP.into();
                 state
                     .groups
                     .entry(PUEUE_DEFAULT_GROUP.into())
@@ -200,33 +161,4 @@ pub fn restore_state(pueue_directory: &Path) -> Result<Option<State>> {
     }
 
     Ok(Some(state))
-}
-
-/// Remove old logs that aren't needed any longer.
-fn rotate_state(settings: &Settings) -> Result<()> {
-    let path = settings.shared.pueue_directory().join("log");
-
-    // Get all log files in the directory with their respective system time.
-    let mut entries: BTreeMap<SystemTime, PathBuf> = BTreeMap::new();
-    let mut directory_list = fs::read_dir(path)?;
-    while let Some(Ok(entry)) = directory_list.next() {
-        let path = entry.path();
-
-        let metadata = entry.metadata()?;
-        let time = metadata.modified()?;
-        entries.insert(time, path);
-    }
-
-    // Remove all files above the threshold.
-    // Old files are removed first (implicitly by the BTree order).
-    let mut number_entries = entries.len();
-    let mut iter = entries.iter();
-    while number_entries > 10 {
-        if let Some((_, path)) = iter.next() {
-            fs::remove_file(path)?;
-            number_entries -= 1;
-        }
-    }
-
-    Ok(())
 }

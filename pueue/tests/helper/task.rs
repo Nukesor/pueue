@@ -12,9 +12,9 @@ use crate::helper::*;
 
 /// Create a bare AddMessage for testing.
 /// This is just here to minimize boilerplate code.
-pub fn create_add_message(shared: &Shared, command: &str) -> AddMessage {
+pub fn create_add_message<C: ToString>(shared: &Shared, command: C) -> AddMessage {
     AddMessage {
-        command: command.into(),
+        command: command.to_string(),
         path: shared.pueue_directory(),
         envs: HashMap::from_iter(vars()),
         start_immediately: false,

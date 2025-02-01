@@ -42,7 +42,6 @@ impl Drop for PueueDaemon {
 /// This is done in 90% of our tests, thereby this convenience helper.
 pub async fn daemon() -> Result<PueueDaemon> {
     let (settings, tempdir) = daemon_base_setup()?;
-
     daemon_with_settings(settings, tempdir).await
 }
 
