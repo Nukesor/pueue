@@ -10,10 +10,9 @@ use super::{get_state, send_message};
 
 /// Assert that a message is a successful message.
 pub fn assert_success(message: Message) {
-    assert_matches!(
-        message,
-        Message::Success(_),
-        "Expected to get SuccessMessage, got {message:?}",
+    assert!(
+        message.response_success(),
+        "Expected to get successful message, got {message:?}",
     );
 }
 

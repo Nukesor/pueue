@@ -1,5 +1,6 @@
 use chrono::Local;
 use pueue_lib::{
+    format::format_datetime,
     network::message::*,
     settings::Settings,
     state::SharedState,
@@ -8,8 +9,6 @@ use pueue_lib::{
 };
 
 use crate::daemon::network::response_helper::*;
-
-use super::format_datetime;
 
 /// Invoked when calling `pueue enqueue`.
 /// Enqueue specific stashed tasks.

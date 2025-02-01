@@ -1,10 +1,9 @@
 use pueue_lib::{
-    network::message::*, settings::Settings, state::SharedState, success_msg, task::TaskStatus,
+    format::format_datetime, network::message::*, settings::Settings, state::SharedState,
+    success_msg, task::TaskStatus,
 };
 
 use crate::daemon::network::response_helper::*;
-
-use super::format_datetime;
 
 /// Invoked when calling `pueue stash`.
 /// Stash specific queued tasks.

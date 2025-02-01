@@ -79,20 +79,10 @@ pub fn add_task(settings: &Settings, state: &SharedState, message: AddMessage) -
         process_handler::start::start(settings, &mut state, TaskSelection::TaskIds(vec![task_id]));
     }
 
-    // Create the customized response for the client.
-    let mut response = if message.print_task_id {
-        task_id.to_string()
-    } else if let Some(enqueue_at) = message.enqueue_at {
-        let enqueue_at = format_datetime(settings, &enqueue_at);
-        format!("New task added (id {task_id}). It will be enqueued at {enqueue_at}")
-    } else {
-        format!("New task added (id {task_id}).")
-    };
-
-    // Notify the user if the task's group is paused
-    if !message.print_task_id && group_is_paused {
-        response.push_str("\nThe group of this task is currently paused!")
+    AddedTaskMessage {
+        task_id,
+        enqueue_at: message.enqueue_at,
+        group_is_paused,
     }
-
-    create_success_message(response)
+    .into()
 }
