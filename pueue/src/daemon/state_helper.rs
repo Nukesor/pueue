@@ -177,7 +177,7 @@ pub fn restore_state(pueue_directory: &Path) -> Result<Option<State>> {
         let group = match state.groups.get_mut(&task.group) {
             Some(group) => group,
             None => {
-                task.set_default_group();
+                task.group = PUEUE_DEFAULT_GROUP.into();
                 state
                     .groups
                     .entry(PUEUE_DEFAULT_GROUP.into())

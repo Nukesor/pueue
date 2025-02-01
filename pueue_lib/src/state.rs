@@ -157,13 +157,6 @@ impl State {
 
         self.groups.remove(group);
 
-        // Reset all tasks with removed group to the default.
-        for (_, task) in self.tasks.iter_mut() {
-            if task.group.eq(group) {
-                task.set_default_group();
-            }
-        }
-
         Ok(())
     }
 

@@ -4,8 +4,6 @@ use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 use strum::Display;
 
-use crate::state::PUEUE_DEFAULT_GROUP;
-
 /// This enum represents the status of the internal task handling of Pueue.
 /// They basically represent the internal task life-cycle.
 #[derive(PartialEq, Eq, Clone, Debug, Display, Serialize, Deserialize)]
@@ -98,25 +96,6 @@ impl Task {
         }
     }
 
-    /// A convenience function used to duplicate a task.
-    pub fn from_task(task: &Task) -> Task {
-        Task {
-            id: 0,
-            created_at: Local::now(),
-            original_command: task.original_command.clone(),
-            command: task.command.clone(),
-            path: task.path.clone(),
-            envs: task.envs.clone(),
-            group: task.group.clone(),
-            dependencies: Vec::new(),
-            priority: 0,
-            label: task.label.clone(),
-            status: TaskStatus::Queued {
-                enqueued_at: Local::now(),
-            },
-        }
-    }
-
     pub fn start_and_end(&self) -> (Option<DateTime<Local>>, Option<DateTime<Local>>) {
         match self.status {
             TaskStatus::Running { start, .. } => (Some(start), None),
@@ -169,15 +148,6 @@ impl Task {
                     enqueue_at: Some(_)
                 }
         )
-    }
-
-    /// Small convenience function to set the task's group to the default group.
-    pub fn set_default_group(&mut self) {
-        self.group = String::from(PUEUE_DEFAULT_GROUP);
-    }
-
-    pub fn is_in_default_group(&self) -> bool {
-        self.group.eq(PUEUE_DEFAULT_GROUP)
     }
 }
 
