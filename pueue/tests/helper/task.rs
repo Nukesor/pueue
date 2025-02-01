@@ -24,7 +24,6 @@ pub fn create_add_message<C: ToString>(shared: &Shared, command: C) -> AddMessag
         dependencies: Vec::new(),
         priority: None,
         label: None,
-        print_task_id: false,
     }
 }
 

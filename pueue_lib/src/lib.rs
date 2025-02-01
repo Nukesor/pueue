@@ -8,6 +8,8 @@ pub mod aliasing;
 pub mod children;
 /// Pueue lib's own Error implementation.
 pub mod error;
+/// Formatting methods for several data types.
+pub mod format;
 /// Helper classes to read and write log files of Pueue's tasks.
 pub mod log;
 pub mod network;
