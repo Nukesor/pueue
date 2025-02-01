@@ -74,6 +74,7 @@ Upon updating Pueue and restarting the daemon, the previous state will be wiped,
 - Change default log level from error to warning [#562](https://github.com/Nukesor/pueue/issues/562).
 - Bumped MSRV to 1.70.
 - **Breaking**: Redesigned task editing process [#553](https://github.com/Nukesor/pueue/issues/553).
+  Pueue now allows editing all properties a task in one editor session. There're two modes to do so: `toml` and `files`.
 
 ### Add
 

@@ -82,6 +82,16 @@ pub struct Shared {
     pub shared_secret_path: Option<PathBuf>,
 }
 
+/// The mode in which the client should edit tasks.
+#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize, Default)]
+pub enum EditMode {
+    /// Edit by having one large file with all tasks to be edited inside at the same time
+    #[default]
+    Toml,
+    /// Edit by creating a folder for each task to be edited, where each property is a single file.
+    Files,
+}
+
 /// All settings which are used by the client
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct Client {
@@ -97,6 +107,9 @@ pub struct Client {
     /// Whether the client should show a confirmation question on potential dangerous actions.
     #[serde(default = "Default::default")]
     pub show_confirmation_questions: bool,
+    /// Whether the client should show a confirmation question on potential dangerous actions.
+    #[serde(default = "Default::default")]
+    pub edit_mode: EditMode,
     /// Whether aliases specified in `pueue_aliases.yml` should be expanded in the `pueue status`
     /// or shown in their short form.
     #[serde(default = "Default::default")]
@@ -173,6 +186,7 @@ impl Default for Client {
             read_local_logs: true,
             show_confirmation_questions: false,
             show_expanded_aliases: false,
+            edit_mode: Default::default(),
             dark_mode: false,
             max_status_lines: None,
             status_time_format: default_status_time_format(),
