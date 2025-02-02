@@ -23,10 +23,10 @@ use pueue_lib::process_helper::compile_shell_command;
 pub async fn edit(
     stream: &mut GenericStream,
     settings: &Settings,
-    task_ids: &[usize],
+    task_ids: Vec<usize>,
 ) -> Result<Message> {
     // Request the data to edit from the server and issue a task-lock while doing so.
-    let init_message = Message::EditRequest(task_ids.to_vec());
+    let init_message = Message::EditRequest(task_ids);
     send_message(init_message, stream).await?;
 
     let init_response = receive_message(stream).await?;

@@ -42,6 +42,7 @@ macro_rules! failure_msg {
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub enum Message {
     Add(AddMessage),
+    AddedTask(AddedTaskMessage),
     Remove(Vec<usize>),
     Switch(SwitchMessage),
     Stash(StashMessage),
@@ -94,6 +95,12 @@ pub enum Message {
     Parallel(ParallelMessage),
 }
 
+impl Message {
+    pub fn response_success(&self) -> bool {
+        matches!(&self, Message::AddedTask(_) | Message::Success(_))
+    }
+}
+
 /// This enum is used to express a selection of tasks.
 /// As commands can be executed on various sets of tasks, we need some kind of datastructure to
 /// explicitly and unambiguously specify the selection.
@@ -116,7 +123,6 @@ pub struct AddMessage {
     pub dependencies: Vec<usize>,
     pub priority: Option<i32>,
     pub label: Option<String>,
-    pub print_task_id: bool,
 }
 
 /// We use a custom `Debug` implementation for [AddMessage], as the `envs` field just has
@@ -136,12 +142,19 @@ impl std::fmt::Debug for AddMessage {
             .field("enqueue_at", &self.enqueue_at)
             .field("dependencies", &self.dependencies)
             .field("label", &self.label)
-            .field("print_task_id", &self.print_task_id)
             .finish()
     }
 }
 
 impl_into_message!(AddMessage, Message::Add);
+
+#[derive(PartialEq, Eq, Clone, Debug, Default, Deserialize, Serialize)]
+pub struct AddedTaskMessage {
+    pub task_id: usize,
+    pub enqueue_at: Option<DateTime<Local>>,
+    pub group_is_paused: bool,
+}
+impl_into_message!(AddedTaskMessage, Message::AddedTask);
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct SwitchMessage {

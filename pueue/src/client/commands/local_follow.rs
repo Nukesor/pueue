@@ -17,11 +17,11 @@ use crate::client::display::follow_local_task_logs;
 pub async fn local_follow(
     stream: &mut GenericStream,
     pueue_directory: &Path,
-    task_id: &Option<usize>,
+    task_id: Option<usize>,
     lines: Option<usize>,
 ) -> Result<()> {
     let task_id = match task_id {
-        Some(task_id) => *task_id,
+        Some(task_id) => task_id,
         None => {
             // The user didn't provide a task id.
             // Check whether we can find a single running task to follow.

@@ -15,7 +15,7 @@ lint:
     just ensure-command cargo-nextest
     cargo fmt --all -- --check
     taplo format --check
-    cargo clippy --tests --workspace -- -D warnings
+    cargo clippy --tests --workspace --all -- -D warnings
 
 format:
     just ensure-command taplo

@@ -40,6 +40,15 @@ pub enum SubCommand {
         #[arg(name = "immediate", short, long, conflicts_with = "stashed")]
         start_immediately: bool,
 
+        /// Immediately follow a task, if it's started with --immediate.
+        #[arg(
+            name = "follow",
+            long,
+            requires = "immediate",
+            conflicts_with = "print_task_id"
+        )]
+        follow: bool,
+
         /// Create the task in Stashed state.
         ///
         /// Useful to avoid immediate execution if the queue is empty.
