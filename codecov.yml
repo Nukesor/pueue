@@ -12,5 +12,7 @@ coverage:
   status:
     project:
       default:
-        target: auto
+        # We aim for ~80% as that's reasonable without testing **all**
+        # error cases, even those that're unrealistic or hard edge-cases.
+        target: 80
         threshold: 2%
