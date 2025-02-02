@@ -75,6 +75,7 @@ Upon updating Pueue and restarting the daemon, the previous state will be wiped,
 - Bumped MSRV to 1.70.
 - **Breaking**: Redesigned task editing process [#553](https://github.com/Nukesor/pueue/issues/553).
   Pueue now allows editing all properties a task in one editor session. There're two modes to do so: `toml` and `files`.
+- Revisited, fixed and cleaned up CLI help texts.
 
 ### Add
 

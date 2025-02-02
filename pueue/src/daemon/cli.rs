@@ -12,13 +12,15 @@ pub struct CliArguments {
     pub verbose: u8,
 
     /// If this flag is set, the daemon will start and fork itself into the background.
-    /// Closing the terminal won't kill the daemon any longer.
+    ///
+    /// Beware: Closing the terminal won't kill the daemon any longer.
     /// This should be avoided and rather be properly done using a service manager.
     #[arg(short, long)]
     pub daemonize: bool,
 
     /// If provided, Pueue only uses this config file.
-    /// This path can also be set via the "PUEUE_CONFIG_PATH" environment variable.
+    ///
+    /// This path can also be set via the $PUEUE_CONFIG_PATH environment variable.
     /// The commandline option overwrites the environment variable!
     #[arg(short, long, value_hint = ValueHint::FilePath)]
     pub config: Option<PathBuf>,
@@ -47,6 +49,7 @@ pub enum ServiceSubcommand {
     /// be used.
     Run,
     /// Install as a Windows service.
+    ///
     /// Once installed, you must not move the binary, otherwise the Windows
     /// service will not be able to find it. If you wish to move the binary,
     /// first uninstall the service, move the binary, then install the service

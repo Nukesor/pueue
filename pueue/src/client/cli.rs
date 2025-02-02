@@ -12,16 +12,16 @@ use super::commands::WaitTargetStatus;
 
 #[derive(Parser, Debug, Clone)]
 pub enum SubCommand {
-    #[command(
-        about = "Enqueue a task for execution.\n\
-            There're many different options when scheduling a task.\n\
-            Check the individual option help texts for more information.\n\n\
-            Furthermore, please remember that scheduled commands are executed via your system shell.\n\
-            This means that the command needs proper shell escaping.\n\
-            The safest way to preserve shell escaping is to surround your command with quotes, for example:\n\
-            pueue add 'ls $HOME && echo \"Some string\"'",
-        trailing_var_arg = true
-    )]
+    /// Enqueue a task for execution.
+    ///
+    /// There're many different options when scheduling a task.
+    /// Check the individual option help texts for more information.
+    /// Furthermore, please remember that scheduled commands are executed via your system shell.
+    /// This means that the command needs proper shell escaping.
+    /// The safest way to preserve shell escaping is to surround your command with quotes, for example:
+    ///
+    /// pueue add 'ls $HOME && echo \"Some string\"'
+    #[command(trailing_var_arg = true)]
     Add {
         /// The command to be added.
         #[arg(required = true, num_args(1..), value_hint = ValueHint::CommandWithArguments)]
@@ -33,7 +33,7 @@ pub enum SubCommand {
 
         /// Escape any special shell characters (" ", "&", "!", etc.).
         /// Beware: This implicitly disables nearly all shell specific syntax ("&&", "&>").
-        #[arg(short, long)]
+        #[arg(verbatim_doc_comment, short, long)]
         escape: bool,
 
         /// Immediately start the task.
@@ -41,6 +41,7 @@ pub enum SubCommand {
         start_immediately: bool,
 
         /// Create the task in Stashed state.
+        ///
         /// Useful to avoid immediate execution if the queue is empty.
         #[arg(short, long, conflicts_with = "immediate")]
         stashed: bool,
@@ -49,30 +50,38 @@ pub enum SubCommand {
         #[arg(name = "delay", short, long, conflicts_with = "immediate", value_parser = parse_delay_until)]
         delay_until: Option<DateTime<Local>>,
 
-        /// Assign the task to a group. Groups kind of act as separate queues.
-        /// I.e. all groups run in parallel and you can specify the amount of parallel tasks for each group.
+        /// Assign the task to a group.
+        ///
+        /// Groups kind of act as separate queues.
+        /// All groups run in parallel and you can specify the amount of parallel tasks for each group.
         /// If no group is specified, the default group will be used.
+        ///
+        /// Create groups via the `pueue groups` subcommand
         #[arg(short, long)]
         group: Option<String>,
 
         /// Start the task once all specified tasks have successfully finished.
+        ///
         /// As soon as one of the dependencies fails, this task will fail as well.
         #[arg(name = "after", short, long, num_args(1..))]
         dependencies: Vec<usize>,
 
         /// Start this task with a higher priority.
+        ///
         /// The higher the number, the faster it will be processed.
         #[arg(short = 'o', long)]
         priority: Option<i32>,
 
         /// Add some information for yourself.
+        ///
         /// This string will be shown in the "status" table.
         /// There's no additional logic connected to it.
         #[arg(short, long)]
         label: Option<String>,
 
         /// Only return the task id instead of a text.
-        /// This is useful when working with dependencies.
+        ///
+        /// This is useful when working with dependencies in scripts.
         #[arg(short, long)]
         print_task_id: bool,
     },
@@ -85,6 +94,7 @@ pub enum SubCommand {
         task_ids: Vec<usize>,
     },
     /// Switches the queue position of two commands.
+    ///
     /// Only works on queued and stashed commands.
     Switch {
         /// The first task id.
@@ -92,8 +102,10 @@ pub enum SubCommand {
         /// The second task id.
         task_id_2: usize,
     },
-    /// Stashed tasks won't be automatically started.
-    /// You have to enqueue them or start them by hand.
+    /// Stash a task. Stashed tasks won't be automatically started.
+    ///
+    /// The enqueue an item, use the `pueue enqueue` subcommand.
+    /// Stashed entries can also be explicitely started via `pueue start $task_id`.
     Stash {
         /// Stash these specific tasks.
         task_ids: Vec<usize>,
@@ -152,45 +164,46 @@ pub enum SubCommand {
         delay_until: Option<DateTime<Local>>,
     },
 
-    #[command(
-        about = "Resume operation of specific tasks or groups of tasks.\n\
-            By default, this resumes the default group and all its tasks.\n\
-            Can also be used force-start specific tasks.",
-        verbatim_doc_comment
-    )]
+    /// Resume operation of specific tasks or groups of tasks.
+    ///
+    /// Without any parameters this resumes the default group and all its tasks.
+    /// Can also be used force-start specific tasks, which **ignores** any group parallelism limits
+    /// or dependencies a task my have!
     Start {
-        /// Start these specific tasks. Paused tasks will resumed.
-        /// Queued or Stashed tasks will be force-started.
+        /// Start these specific tasks. Paused tasks will resumed. Queued/Stashed tasks will be
+        /// force-started.
         task_ids: Vec<usize>,
 
         /// Resume a specific group and all paused tasks in it.
+        ///
         /// The group will be set to running and its paused tasks will be resumed.
         #[arg(short, long, conflicts_with = "all")]
         group: Option<String>,
 
         /// Resume all groups!
+        ///
         /// All groups will be set to running and paused tasks will be resumed.
         #[arg(short, long)]
         all: bool,
     },
 
-    #[command(
-        about = "Restart failed or successful task(s).\n\
-            By default, identical tasks will be created and enqueued, but it's possible to restart in-place.\n\
-            You can also edit a few properties, such as the path and the command, before restarting.",
-        alias("re")
-    )]
+    /// Restart failed or successful task(s).
+    ///
+    /// By default, identical tasks will be created and enqueued, but it's possible to restart in-place.
+    /// You can also edit a few properties, such as the path and the command, before restarting.
+    #[command(alias("re"))]
     Restart {
         /// Restart these specific tasks.
         task_ids: Vec<usize>,
 
         /// Restart all failed tasks across all groups.
-        /// Nice to use in combination with `-i/--in-place`.
+        ///
+        /// This is nice for usage in combination with `-i/--in-place` (or the respective config
+        /// option).
         #[arg(short, long)]
         all_failed: bool,
 
         /// Like `--all-failed`, but only restart tasks failed tasks of a specific group.
-        /// The group will be set to running and its paused tasks will be resumed.
         #[arg(short = 'g', long, conflicts_with = "all_failed")]
         failed_in_group: Option<String>,
 
@@ -206,11 +219,13 @@ pub enum SubCommand {
 
         /// Restart the task by reusing the already existing tasks.
         /// This will overwrite any previous logs of the restarted tasks.
+        ///
+        /// This can also be enabled by default via the `restart_in_place` config option.
         #[arg(short, long)]
         in_place: bool,
 
         /// Restart the task by creating a new identical tasks.
-        /// Only applies, if you have the restart_in_place configuration set to true.
+        /// Only necessary if you have the `restart_in_place` configuration set to true.
         #[arg(long)]
         not_in_place: bool,
 
@@ -219,12 +234,12 @@ pub enum SubCommand {
         edit: bool,
     },
 
-    #[command(about = "Either pause running tasks or specific groups of tasks.\n\
-            By default, pauses the default group and all its tasks.\n\
-            A paused queue (group) won't start any new tasks.")]
+    /// Either pause running tasks or specific groups of tasks.
+    ///
+    /// By default, pauses the default group and all its tasks.
+    /// A paused queue (group) won't start any new tasks.
     Pause {
         /// Pause these specific tasks.
-        /// Does not affect the default group, groups or any other tasks.
         task_ids: Vec<usize>,
 
         /// Pause a specific group.
@@ -235,13 +250,14 @@ pub enum SubCommand {
         #[arg(short, long)]
         all: bool,
 
-        /// Only pause the specified group and let already running tasks finish by themselves.
+        /// Pause the specified group[s], but let already running tasks finish by themselves.
         #[arg(short, long)]
         wait: bool,
     },
 
-    #[command(about = "Kill specific running tasks or whole task groups.\n\
-        Kills all tasks of the default group when no ids or a specific group are provided.")]
+    /// Kill specific running tasks or whole task groups.
+    ///
+    /// Kills all tasks of the default group when no ids or a specific group are provided.
     Kill {
         /// Kill these specific tasks.
         task_ids: Vec<usize>,
@@ -270,22 +286,24 @@ pub enum SubCommand {
         input: String,
     },
 
-    #[command(about = "Adjust editable properties of a task.\n\
-        A temporary folder folder will be opened by your $EDITOR, which contains \n\
-        a file for each editable property.")]
+    /// Adjust editable properties of a task.
+    ///
+    /// Only stashed or queued tasks can be edited.
+    /// A temporary folder folder/file will be opened by your $EDITOR to edit the tasks.
     Edit {
         /// The ids of all tasks that should be edited.
         task_ids: Vec<usize>,
     },
 
-    #[command(about = "Use this to add or remove environment variables from tasks.")]
+    /// Use this to add or remove environment variables from tasks.
     Env {
         #[command(subcommand)]
         cmd: EnvCommand,
     },
 
-    #[command(about = "Use this to add or remove groups.\n\
-        By default, this will simply display all known groups.")]
+    /// Use this to add or remove groups.
+    ///
+    /// By default, this will simply display all known groups.
     Group {
         /// Print the list of groups as json.
         #[arg(short, long)]
@@ -361,23 +379,24 @@ https://github.com/Nukesor/pueue/issues/350#issue-1359083118"
         group: Option<String>,
     },
 
-    #[command(
-        about = "Accept a list or map of JSON pueue tasks via stdin and display it just like \"pueue status\".\n\
-            A simple example might look like this:\n\
-            pueue status --json | jq -c '.tasks' | pueue format-status",
-        after_help = "DISCLAIMER:\n\
+    /// Accept a list or map of JSON pueue tasks via stdin and display it just like \"pueue status\".
+    ///
+    /// A simple example might look like this:
+    ///
+    /// pueue status --json | jq -c '.tasks' | pueue format-status",
+    #[command(after_help = "DISCLAIMER:\n\
         This command is a temporary workaround until a proper filtering language for \"status\" has
-        been implemented. It might be removed in the future."
-    )]
+        been implemented. It might be removed in the future.")]
     FormatStatus {
         #[arg(short, long)]
         /// Only show tasks of a specific group
         group: Option<String>,
     },
 
-    #[command(about = "Display the log output of finished tasks.\n\
-            Only the last few lines will be shown by default.\n\
-            If you want to follow the output of a task, please use the \"follow\" subcommand.")]
+    /// Display the log output of finished tasks.
+    ///
+    /// Only the last few lines will be shown by default.
+    /// If you want to follow the output of a task, please use the \"follow\" subcommand.
     Log {
         /// View the task output of these specific tasks.
         task_ids: Vec<usize>,
@@ -391,6 +410,7 @@ https://github.com/Nukesor/pueue/issues/350#issue-1359083118"
         all: bool,
 
         /// Print the resulting tasks and output as json.
+        ///
         /// By default only the last lines will be returned unless --full is provided.
         /// Take care, as the json cannot be streamed!
         /// If your logs are really huge, using --full can use all of your machine's RAM.
@@ -398,6 +418,7 @@ https://github.com/Nukesor/pueue/issues/350#issue-1359083118"
         json: bool,
 
         /// Only print the last X lines of each task's output.
+        ///
         /// This is done by default if you're looking at multiple tasks.
         #[arg(short, long, conflicts_with = "full")]
         lines: Option<usize>,
@@ -412,6 +433,7 @@ https://github.com/Nukesor/pueue/issues/350#issue-1359083118"
     #[command(alias("fo"))]
     Follow {
         /// The id of the task you want to watch.
+        ///
         /// If no or multiple tasks are running, you have to specify the id.
         /// If only a single task is running, you can omit the id.
         task_id: Option<usize>,
@@ -421,10 +443,12 @@ https://github.com/Nukesor/pueue/issues/350#issue-1359083118"
         lines: Option<usize>,
     },
 
-    #[command(about = "Wait until tasks are finished.\n\
-            By default, this will wait for all tasks in the default group to finish.\n\
-            Note: This will also wait for all tasks that aren't somehow 'Done'.\n\
-            Includes: [Paused, Stashed, Locked, Queued, ...]")]
+    /// Wait until tasks are finished.
+    ///
+    /// By default, this will wait for all tasks in the default group to finish.
+    ///
+    /// Note: This will also wait for all tasks that aren't somehow 'Done'.
+    /// Includes: [Paused, Stashed, Locked, Queued, ...]
     Wait {
         /// This allows you to wait for specific tasks to finish.
         task_ids: Vec<usize>,
@@ -472,12 +496,15 @@ https://github.com/Nukesor/pueue/issues/350#issue-1359083118"
     /// Remotely shut down the daemon. Should only be used if the daemon isn't started by a service manager.
     Shutdown,
 
-    #[command(about = "Set the amount of allowed parallel tasks\n\
-            By default, adjusts the amount of the default group.\n\
-            No tasks will be stopped, if this is lowered.\n\
-            This limit is only considered when tasks are scheduled.")]
+    /// Set the amount of allowed parallel tasks
+    ///
+    /// By default, adjusts the amount of the default group.
+    ///
+    /// No tasks will be stopped, if this is lowered.
+    /// This limit is only considered when tasks are scheduled.
     Parallel {
         /// The amount of allowed parallel tasks.
+        ///
         /// Setting this to 0 means an unlimited amount of parallel tasks.
         parallel_tasks: Option<usize>,
 
@@ -487,6 +514,7 @@ https://github.com/Nukesor/pueue/issues/350#issue-1359083118"
     },
 
     /// Generates shell completion files.
+    ///
     /// This can be ignored during normal operations.
     Completions {
         /// The target shell.
@@ -529,6 +557,7 @@ pub enum GroupCommand {
         name: String,
 
         /// Set the amount of parallel tasks this group can have.
+        ///
         /// Setting this to 0 means an unlimited amount of parallel tasks.
         #[arg(short, long)]
         parallel: Option<usize>,
@@ -559,7 +588,10 @@ pub enum Shell {
 #[derive(Parser, Debug)]
 #[command(
     name = "pueue",
-    about = "Interact with the Pueue daemon",
+    about = concat!(
+        "Interact with the Pueue daemon\n\n",
+        "Use the `--help` long form to get detailed help output on each subcommand!"
+    ),
     author,
     version
 )]
@@ -573,6 +605,7 @@ pub struct CliArguments {
     pub color: ColorChoice,
 
     /// If provided, Pueue only uses this config file.
+    ///
     /// This path can also be set via the "PUEUE_CONFIG_PATH" environment variable.
     /// The commandline option overwrites the environment variable!
     #[arg(short, long, value_hint = ValueHint::FilePath)]
