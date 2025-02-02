@@ -167,6 +167,7 @@ pub fn daemon_base_setup() -> Result<(Settings, TempDir)> {
     let client = Client {
         max_status_lines: Some(15),
         status_datetime_format: "%Y-%m-%d %H:%M:%S".into(),
+        edit_mode: EditMode::Files,
         ..Default::default()
     };
 

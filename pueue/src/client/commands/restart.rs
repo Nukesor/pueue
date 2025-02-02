@@ -101,7 +101,7 @@ pub async fn restart(
     // If the tasks should be edited, edit them in one go.
     if edit {
         let mut editable_tasks: Vec<EditableTask> = tasks.iter().map(EditableTask::from).collect();
-        edit_tasks(settings, &mut editable_tasks)?;
+        editable_tasks = edit_tasks(settings, editable_tasks)?;
 
         // Now merge the edited properties back into the tasks.
         // We simply zip the task and editable task vectors, as we know that they have the same

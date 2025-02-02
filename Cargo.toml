@@ -12,8 +12,6 @@ repository = "https://github.com/nukesor/pueue"
 rust-version = "1.70"
 
 [workspace.dependencies]
-# Chrono version is hard pinned to a specific version.
-# See https://github.com/Nukesor/pueue/issues/534
 anyhow = "1"
 better-panic = "0.3"
 chrono = { version = "0.4", features = ["serde"] }

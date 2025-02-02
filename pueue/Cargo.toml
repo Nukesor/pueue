@@ -37,6 +37,7 @@ snap.workspace = true
 strum.workspace = true
 tempfile = "3"
 tokio.workspace = true
+toml = "0.8"
 
 [dev-dependencies]
 anyhow.workspace = true
