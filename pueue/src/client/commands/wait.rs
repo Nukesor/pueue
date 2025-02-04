@@ -42,7 +42,7 @@ pub async fn wait(
     style: &OutputStyle,
     selection: TaskSelection,
     quiet: bool,
-    target_status: &Option<WaitTargetStatus>,
+    target_status: Option<WaitTargetStatus>,
 ) -> Result<()> {
     let mut first_run = true;
     // Create a list of tracked tasks.

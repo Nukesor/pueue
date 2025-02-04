@@ -92,6 +92,7 @@ Upon updating Pueue and restarting the daemon, the previous state will be wiped,
 - Added Windows service on Windows to allow a true daemon experience. [#344](https://github.com/Nukesor/pueue/issues/344) [#567](https://github.com/Nukesor/pueue/pull/567)
 - Add `queued_count` and `stashed_count` to callback template variables. This allows users to fire callbacks when whole groups are finished. [#578](https://github.com/Nukesor/pueue/issues/578)
 - Add new subcommand to set or unset environment variables for tasks. [#503](https://github.com/Nukesor/pueue/issues/503)
+- Add `add --follow` flag that may be called in combination with `--immediate` [#592](https://github.com/Nukesor/pueue/issues/592)
 
 ### Fixed
 

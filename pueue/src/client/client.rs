@@ -7,6 +7,7 @@ use clap::crate_version;
 use crossterm::tty::IsTty;
 use log::{error, warn};
 
+use pueue_lib::format::format_datetime;
 use pueue_lib::network::message::*;
 use pueue_lib::network::protocol::*;
 use pueue_lib::network::secret::read_shared_secret;
@@ -48,15 +49,15 @@ pub fn group_or_default(group: &Option<String>) -> String {
 /// If no parameters are given, it returns to the default group.
 pub fn selection_from_params(
     all: bool,
-    group: &Option<String>,
-    task_ids: &[usize],
+    group: Option<String>,
+    task_ids: Vec<usize>,
 ) -> TaskSelection {
     if all {
         TaskSelection::All
     } else if let Some(group) = group {
-        TaskSelection::Group(group.clone())
+        TaskSelection::Group(group)
     } else if !task_ids.is_empty() {
-        TaskSelection::TaskIds(task_ids.to_owned())
+        TaskSelection::TaskIds(task_ids)
     } else {
         TaskSelection::Group(PUEUE_DEFAULT_GROUP.into())
     }
@@ -150,12 +151,12 @@ impl Client {
     /// The command handling is split into "simple" and "complex" commands.
     pub async fn start(&mut self) -> Result<()> {
         // Return early, if the command has already been handled.
-        if self.handle_complex_command().await? {
+        if self.handle_complex_command(self.subcommand.clone()).await? {
             return Ok(());
         }
 
         // The handling of "generic" commands is encapsulated in this function.
-        self.handle_simple_command().await?;
+        self.handle_simple_command(self.subcommand.clone()).await?;
 
         Ok(())
     }
@@ -172,9 +173,120 @@ impl Client {
     /// This indicates that the client can now shut down.
     /// If `Ok(false)` is returned, the client will continue and handle the Subcommand in the
     /// [Client::handle_simple_command] function.
-    async fn handle_complex_command(&mut self) -> Result<bool> {
+    async fn handle_complex_command(&mut self, subcommand: SubCommand) -> Result<bool> {
         // This match handles all "complex" commands.
-        match &self.subcommand {
+        match subcommand {
+            SubCommand::Add {
+                mut command,
+                working_directory,
+                escape,
+                start_immediately,
+                stashed,
+                group,
+                delay_until,
+                dependencies,
+                priority,
+                label,
+                print_task_id,
+                follow,
+            } => {
+                // Either take the user-specified path or default to the current working directory.
+                let path = working_directory
+                    .as_ref()
+                    .map(|path| Ok(path.clone()))
+                    .unwrap_or_else(current_dir)?;
+
+                // The user can request to escape any special shell characters in all parameter strings before
+                // we concatenated them to a single string.
+                if escape {
+                    command = command
+                        .iter()
+                        .map(|parameter| shell_escape::escape(Cow::from(parameter)).into_owned())
+                        .collect();
+                }
+
+                // Add the message to the daemon.
+                let message = Message::Add(AddMessage {
+                    command: command.join(" "),
+                    path,
+                    // Catch the current environment for later injection into the task's process.
+                    envs: HashMap::from_iter(vars()),
+                    start_immediately,
+                    stashed,
+                    group: group_or_default(&group),
+                    enqueue_at: delay_until,
+                    dependencies,
+                    priority,
+                    label,
+                });
+                send_message(message, &mut self.stream).await?;
+
+                // Get the response from the daemon.
+                let response = receive_message(&mut self.stream).await?;
+
+                // Make sure the task has been added, otherwise handle the response and return.
+                let Message::AddedTask(AddedTaskMessage {
+                    task_id,
+                    enqueue_at,
+                    group_is_paused,
+                }) = response
+                else {
+                    self.handle_response(response)?;
+                    return Ok(true);
+                };
+
+                let mut output = if print_task_id {
+                    // Only print the task id if that was requested.
+                    format!("{task_id}")
+                } else if let Some(enqueue_at) = enqueue_at {
+                    let enqueue_at = format_datetime(&self.settings, &enqueue_at);
+                    format!("New task added (id {task_id}). It will be enqueued at {enqueue_at}")
+                } else {
+                    format!("New task added (id {task_id}).")
+                };
+
+                // Also notify the user if the task's group is paused
+                if !print_task_id && group_is_paused && !follow {
+                    output.push_str("\nThe group of this task is currently paused!");
+                }
+
+                // If we were to follow the task immediately, print the task info to `stderr` so
+                // that the actual log output may be piped into another command.
+                if follow {
+                    eprintln!("{output}");
+                } else {
+                    println!("{output}");
+                }
+
+                if follow {
+                    // If we're supposed to read the log files from the local system, we don't have to
+                    // do any communication with the daemon.
+                    // Thereby we handle this in a separate function.
+                    if self.settings.client.read_local_logs {
+                        local_follow(
+                            &mut self.stream,
+                            &self.settings.shared.pueue_directory(),
+                            Some(task_id),
+                            None,
+                        )
+                        .await?;
+                        return Ok(true);
+                    } else {
+                        // In case we need to follow the daemon, go ahead and overwrite
+                        // `self.subcommand` with a `Follow` subcommand.
+                        // Afterwards, return an `Ok(false)`, which signals the client that it
+                        // should continue processing `self.subcommand`.
+                        // This is pretty hacky. TODO: Refactor the whole client at some point.
+                        self.subcommand = SubCommand::Follow {
+                            task_id: Some(task_id),
+                            lines: None,
+                        };
+                        return Ok(false);
+                    }
+                }
+
+                Ok(true)
+            }
             SubCommand::Reset { force, groups } => {
                 // Get the current state and check if there're any running tasks.
                 // If there are, ask the user if they really want to reset the state.
@@ -184,7 +296,7 @@ impl Client {
                 let groups: Vec<String> = if groups.is_empty() {
                     state.groups.keys().cloned().collect()
                 } else {
-                    groups.clone()
+                    groups
                 };
 
                 // Check if there're any running tasks for that group
@@ -217,8 +329,8 @@ impl Client {
                 quiet,
                 status,
             } => {
-                let selection = selection_from_params(*all, group, task_ids);
-                wait(&mut self.stream, &self.style, selection, *quiet, status).await?;
+                let selection = selection_from_params(all, group, task_ids);
+                wait(&mut self.stream, &self.style, selection, quiet, status).await?;
                 Ok(true)
             }
             SubCommand::Restart {
@@ -232,18 +344,17 @@ impl Client {
                 edit,
             } => {
                 // `not_in_place` superseeds both other configs
-                let in_place =
-                    (self.settings.client.restart_in_place || *in_place) && !*not_in_place;
+                let in_place = (self.settings.client.restart_in_place || in_place) && !not_in_place;
                 restart(
                     &mut self.stream,
                     &self.settings,
-                    task_ids.clone(),
-                    *all_failed,
-                    failed_in_group.clone(),
-                    *start_immediately,
-                    *stashed,
+                    task_ids,
+                    all_failed,
+                    failed_in_group,
+                    start_immediately,
+                    stashed,
                     in_place,
-                    *edit,
+                    edit,
                 )
                 .await?;
                 Ok(true)
@@ -257,7 +368,7 @@ impl Client {
                         &mut self.stream,
                         &self.settings.shared.pueue_directory(),
                         task_id,
-                        *lines,
+                        lines,
                     )
                     .await?;
                     return Ok(true);
@@ -285,10 +396,10 @@ impl Client {
     ///
     /// The only exception is streaming of log output.
     /// In that case, we send one request and contine receiving until the stream shuts down.
-    async fn handle_simple_command(&mut self) -> Result<()> {
+    async fn handle_simple_command(&mut self, subcommand: SubCommand) -> Result<()> {
         // Create the message that should be sent to the daemon
         // depending on the given commandline options.
-        let message = self.get_message_from_opt()?;
+        let message = self.get_message_from_cmd(subcommand)?;
 
         // Create the message payload and send it to the daemon.
         send_message(message, &mut self.stream).await?;
@@ -384,58 +495,13 @@ impl Client {
     ///
     /// This function is pretty large, but it consists mostly of simple conversions
     /// of [SubCommand] variant to a [Message] variant.
-    fn get_message_from_opt(&self) -> Result<Message> {
-        Ok(match self.subcommand.clone() {
-            SubCommand::Add {
-                command,
-                working_directory,
-                escape,
-                start_immediately,
-                stashed,
-                group,
-                delay_until,
-                dependencies,
-                priority,
-                label,
-                print_task_id,
-            } => {
-                // Either take the user-specified path or default to the current working directory.
-                let path = working_directory
-                    .as_ref()
-                    .map(|path| Ok(path.clone()))
-                    .unwrap_or_else(current_dir)?;
-
-                let mut command = command.clone();
-                // The user can request to escape any special shell characters in all parameter strings before
-                // we concatenated them to a single string.
-                if escape {
-                    command = command
-                        .iter()
-                        .map(|parameter| shell_escape::escape(Cow::from(parameter)).into_owned())
-                        .collect();
-                }
-
-                AddMessage {
-                    command: command.join(" "),
-                    path,
-                    // Catch the current environment for later injection into the task's process.
-                    envs: HashMap::from_iter(vars()),
-                    start_immediately,
-                    stashed,
-                    group: group_or_default(&group),
-                    enqueue_at: delay_until,
-                    dependencies,
-                    priority,
-                    label,
-                    print_task_id,
-                }
-                .into()
-            }
+    fn get_message_from_cmd(&self, subcommand: SubCommand) -> Result<Message> {
+        Ok(match subcommand {
             SubCommand::Remove { task_ids } => {
                 if self.settings.client.show_confirmation_questions {
                     self.handle_user_confirmation("remove", &task_ids)?;
                 }
-                Message::Remove(task_ids.clone())
+                Message::Remove(task_ids)
             }
             SubCommand::Stash {
                 task_ids,
@@ -443,7 +509,7 @@ impl Client {
                 all,
                 delay_until,
             } => {
-                let selection = selection_from_params(all, &group, &task_ids);
+                let selection = selection_from_params(all, group, task_ids);
                 StashMessage {
                     tasks: selection,
                     enqueue_at: delay_until,
@@ -464,7 +530,7 @@ impl Client {
                 all,
                 delay_until,
             } => {
-                let selection = selection_from_params(all, &group, &task_ids);
+                let selection = selection_from_params(all, group, task_ids);
                 EnqueueMessage {
                     tasks: selection,
                     enqueue_at: delay_until,
@@ -477,7 +543,7 @@ impl Client {
                 all,
                 ..
             } => StartMessage {
-                tasks: selection_from_params(all, &group, &task_ids),
+                tasks: selection_from_params(all, group, task_ids),
             }
             .into(),
             SubCommand::Pause {
@@ -487,7 +553,7 @@ impl Client {
                 all,
                 ..
             } => PauseMessage {
-                tasks: selection_from_params(all, &group, &task_ids),
+                tasks: selection_from_params(all, group, task_ids),
                 wait,
             }
             .into(),
@@ -502,16 +568,12 @@ impl Client {
                     self.handle_user_confirmation("kill", &task_ids)?;
                 }
                 KillMessage {
-                    tasks: selection_from_params(all, &group, &task_ids),
+                    tasks: selection_from_params(all, group, task_ids),
                     signal,
                 }
                 .into()
             }
-            SubCommand::Send { task_id, input } => SendMessage {
-                task_id,
-                input: input.clone(),
-            }
-            .into(),
+            SubCommand::Send { task_id, input } => SendMessage { task_id, input }.into(),
             SubCommand::Env { cmd } => Message::from(match cmd {
                 EnvCommand::Set {
                     task_id,
@@ -544,7 +606,7 @@ impl Client {
                 ..
             } => {
                 let lines = determine_log_line_amount(full, &lines);
-                let selection = selection_from_params(all, &group, &task_ids);
+                let selection = selection_from_params(all, group, task_ids);
 
                 let message = LogRequestMessage {
                     tasks: selection,
@@ -590,6 +652,7 @@ impl Client {
                 }
                 None => GroupMessage::List.into(),
             },
+            SubCommand::Add { .. } => bail!("Add has to be handled earlier"),
             SubCommand::FormatStatus { .. } => bail!("FormatStatus has to be handled earlier"),
             SubCommand::Completions { .. } => bail!("Completions have to be handled earlier"),
             SubCommand::Restart { .. } => bail!("Restarts have to be handled earlier"),

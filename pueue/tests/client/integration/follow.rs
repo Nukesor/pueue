@@ -40,6 +40,26 @@ async fn default(#[case] read_local_logs: bool) -> Result<()> {
     Ok(())
 }
 
+/// Test that a task is immediately followed when added with `--immediate --follow`.
+#[rstest]
+#[case(true)]
+#[case(false)]
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn follow_on_immediate_add(#[case] read_local_logs: bool) -> Result<()> {
+    let mut daemon = daemon().await?;
+    set_read_local_logs(&mut daemon, read_local_logs)?;
+    let shared = &daemon.settings.shared;
+
+    let output = run_client_command(
+        shared,
+        &["add", "--immediate", "--follow", "sleep 1 && echo test"],
+    )?;
+
+    assert_snapshot_matches_stdout("follow__default", output.stdout)?;
+
+    Ok(())
+}
+
 /// Test that the remote `follow` command works, if one specifies to only show the last few lines
 /// of recent output.
 #[rstest]

@@ -143,7 +143,6 @@ pub async fn restart(
             dependencies: Vec::new(),
             priority: Some(task.priority),
             label: task.label,
-            print_task_id: false,
         };
 
         // Send the cloned task to the daemon and abort on any failure messages.
