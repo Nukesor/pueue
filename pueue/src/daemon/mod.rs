@@ -155,14 +155,14 @@ fn setup_signal_panic_handling(settings: &Settings, state: SharedState) -> Resul
 
         // Cleanup the pid file
         if let Err(error) = pid::cleanup_pid_file(&settings_clone.shared.pid_path()) {
-            println!("Failed to cleanup pid after panic.");
-            println!("{error}");
+            eprintln!("Failed to cleanup pid after panic.");
+            eprintln!("{error}");
         }
 
         // Remove the unix socket.
         if let Err(error) = socket_cleanup(&settings_clone.shared) {
-            println!("Failed to cleanup socket after panic.");
-            println!("{error}");
+            eprintln!("Failed to cleanup socket after panic.");
+            eprintln!("{error}");
         }
 
         std::process::exit(1);

@@ -140,7 +140,7 @@ pub async fn follow_log(
     // The loop following this section will then only copy those last lines to stdout.
     if let Some(lines) = message.lines {
         if let Err(err) = seek_to_last_lines(&mut handle, lines) {
-            println!("Error seeking to last lines from log: {err}");
+            eprintln!("Error seeking to last lines from log: {err}");
         }
     }
 

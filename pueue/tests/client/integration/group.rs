@@ -19,7 +19,7 @@ async fn default() -> Result<()> {
     // Get the group status output
     let output = run_client_command(shared, &["group"])?;
 
-    assert_snapshot_matches_stdout("group__default", output.stdout)?;
+    assert_snapshot_matches_output("group__default", output.stdout)?;
 
     Ok(())
 }
@@ -48,7 +48,7 @@ async fn colored() -> Result<()> {
     // Get the group status output
     let output = run_client_command(shared, &["--color", "always", "group"])?;
 
-    assert_snapshot_matches_stdout("group__colored", output.stdout)?;
+    assert_snapshot_matches_output("group__colored", output.stdout)?;
 
     Ok(())
 }

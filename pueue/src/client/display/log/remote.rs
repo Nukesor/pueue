@@ -26,7 +26,7 @@ pub fn print_remote_log(task_log: &TaskLogMessage, style: &OutputStyle, lines: O
             println!("\n{header}{line_info}");
 
             if let Err(err) = decompress_and_print_remote_log(bytes) {
-                println!("Error while parsing stdout: {err}");
+                eprintln!("Error while parsing stdout: {err}");
             }
         }
     }

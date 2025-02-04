@@ -19,7 +19,7 @@ pub fn print_local_log(
     let mut file = match get_log_file_handle(task_id, &settings.shared.pueue_directory()) {
         Ok(file) => file,
         Err(err) => {
-            println!("Failed to get log file handle: {err}");
+            eprintln!("Failed to get log file handle: {err}");
             return;
         }
     };
@@ -47,7 +47,7 @@ fn print_local_file(stdout: &mut Stdout, file: &mut File, lines: &Option<usize>,
                 match seek_to_last_lines(file, *lines) {
                     Ok(complete) => output_complete = complete,
                     Err(err) => {
-                        println!("Failed reading local log file: {err}");
+                        eprintln!("Failed reading local log file: {err}");
                         return;
                     }
                 }
@@ -61,11 +61,11 @@ fn print_local_file(stdout: &mut Stdout, file: &mut File, lines: &Option<usize>,
             }
 
             // Print a newline between the task information and the first output.
-            println!("\n{header}{line_info}");
+            eprintln!("\n{header}{line_info}");
 
             // Print everything
             if let Err(err) = io::copy(file, stdout) {
-                println!("Failed reading local log file: {err}");
+                eprintln!("Failed reading local log file: {err}");
             };
         }
     }
