@@ -29,7 +29,7 @@ pub async fn follow_local_task_logs(
     // Ensure that it exists and is started.
     loop {
         let Some(task) = get_task(stream, task_id).await? else {
-            println!("Pueue: The task to be followed doesn't exist.");
+            eprintln!("Pueue: The task to be followed doesn't exist.");
             std::process::exit(1);
         };
         // Task started up, we can start to follow.
@@ -42,7 +42,7 @@ pub async fn follow_local_task_logs(
     let mut handle = match get_log_file_handle(task_id, pueue_directory) {
         Ok(stdout) => stdout,
         Err(err) => {
-            println!("Failed to get log file handles: {err}");
+            eprintln!("Failed to get log file handles: {err}");
             return Ok(());
         }
     };
@@ -58,7 +58,7 @@ pub async fn follow_local_task_logs(
     // The loop following this section will then only copy those last lines to stdout.
     if let Some(lines) = lines {
         if let Err(err) = seek_to_last_lines(&mut handle, lines) {
-            println!("Error seeking to last lines from log: {err}");
+            eprintln!("Error seeking to last lines from log: {err}");
         }
     }
 
@@ -73,17 +73,17 @@ pub async fn follow_local_task_logs(
     loop {
         // Check whether the file still exists. Exit if it doesn't.
         if !path.exists() {
-            println!("Pueue: Log file has gone away. Has the task been removed?");
+            eprintln!("Pueue: Log file has gone away. Has the task been removed?");
             return Ok(());
         }
         // Read the next chunk of text from the last position.
         if let Err(err) = io::copy(&mut handle, &mut stdout) {
-            println!("Pueue: Error while reading file: {err}");
+            eprintln!("Pueue: Error while reading file: {err}");
             return Ok(());
         };
         // Flush the stdout buffer to actually print the output.
         if let Err(err) = stdout.flush() {
-            println!("Pueue: Error while flushing stdout: {err}");
+            eprintln!("Pueue: Error while flushing stdout: {err}");
             return Ok(());
         };
 
@@ -94,7 +94,7 @@ pub async fn follow_local_task_logs(
         // In case either is not, exit.
         if (last_check % task_check_interval) == 0 {
             let Some(task) = get_task(stream, task_id).await? else {
-                println!("Pueue: The followed task has been removed.");
+                eprintln!("Pueue: The followed task has been removed.");
                 std::process::exit(1);
             };
             // Task exited by itself. We can stop following.

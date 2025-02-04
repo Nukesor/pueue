@@ -191,8 +191,8 @@ pub fn start_service() -> Result<()> {
             service.start::<String>(&[])?;
             println!("Successfully started service");
         }
-        ServiceState::StartPending => println!("Service is already starting"),
-        ServiceState::Running => println!("Service is already running"),
+        ServiceState::StartPending => eprintln!("Service is already starting"),
+        ServiceState::Running => eprintln!("Service is already running"),
 
         _ => (),
     }
@@ -211,8 +211,8 @@ pub fn stop_service() -> Result<()> {
     let service = service_manager.open_service(SERVICE_NAME, service_access)?;
 
     match service.query_status()?.current_state {
-        ServiceState::Stopped => println!("Service is already stopped"),
-        ServiceState::StartPending => println!("Service cannot stop because it is starting (please wait until it fully started to stop it)"),
+        ServiceState::Stopped => eprintln!("Service is already stopped"),
+        ServiceState::StartPending => eprintln!("Service cannot stop because it is starting (please wait until it fully started to stop it)"),
         ServiceState::Running => {
             service.stop()?;
             println!("Successfully stopped service");

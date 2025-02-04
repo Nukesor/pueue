@@ -165,7 +165,7 @@ pub async fn restart(
         println!("Restarted tasks: {:?}", filtered_tasks.matching_ids);
     }
     if !filtered_tasks.non_matching_ids.is_empty() {
-        println!(
+        eprintln!(
             "Couldn't restart tasks: {:?}",
             filtered_tasks.non_matching_ids
         );

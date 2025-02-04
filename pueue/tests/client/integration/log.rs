@@ -34,7 +34,7 @@ async fn read(#[case] read_local_logs: bool) -> Result<()> {
     let output = run_client_command(shared, &["log"])?;
 
     let context = get_task_context(&daemon.settings).await?;
-    assert_template_matches("log__default", output.stdout, context)?;
+    assert_template_matches("log__default", output, context)?;
 
     Ok(())
 }
@@ -65,7 +65,7 @@ async fn read_truncated(#[case] read_local_logs: bool) -> Result<()> {
     let output = run_client_command(shared, &["log", "--lines=5"])?;
 
     let context = get_task_context(&daemon.settings).await?;
-    assert_template_matches("log__last_lines", output.stdout, context)?;
+    assert_template_matches("log__last_lines", output, context)?;
 
     Ok(())
 }
@@ -83,7 +83,7 @@ async fn task_with_label() -> Result<()> {
     let output = run_client_command(shared, &["log"])?;
 
     let context = get_task_context(&daemon.settings).await?;
-    assert_template_matches("log__with_label", output.stdout, context)?;
+    assert_template_matches("log__with_label", output, context)?;
 
     Ok(())
 }
@@ -101,7 +101,7 @@ async fn colored() -> Result<()> {
     let output = run_client_command(shared, &["--color", "always", "log"])?;
 
     let context = get_task_context(&daemon.settings).await?;
-    assert_template_matches("log__colored", output.stdout, context)?;
+    assert_template_matches("log__colored", output, context)?;
 
     Ok(())
 }

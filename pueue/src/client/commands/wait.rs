@@ -58,7 +58,7 @@ pub async fn wait(
         let tasks = get_tasks(&state, &selection);
 
         if tasks.is_empty() {
-            println!("No tasks found for selection {selection:?}");
+            eprintln!("No tasks found for selection {selection:?}");
             return Ok(());
         }
 

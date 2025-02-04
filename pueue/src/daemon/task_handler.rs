@@ -80,14 +80,14 @@ fn handle_shutdown(settings: &Settings, state: &mut LockedState) {
 
     // Remove the unix socket.
     if let Err(error) = socket_cleanup(&settings.shared) {
-        println!("Failed to cleanup socket during shutdown.");
-        println!("{error}");
+        eprintln!("Failed to cleanup socket during shutdown.");
+        eprintln!("{error}");
     }
 
     // Cleanup the pid file
     if let Err(error) = cleanup_pid_file(&settings.shared.pid_path()) {
-        println!("Failed to cleanup pid during shutdown.");
-        println!("{error}");
+        eprintln!("Failed to cleanup pid during shutdown.");
+        eprintln!("{error}");
     }
 
     // Actually exit the program the way we're supposed to.

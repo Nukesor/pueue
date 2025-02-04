@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::process::Output;
 
 use anyhow::{bail, Context, Result};
 use chrono::Local;
@@ -84,16 +85,19 @@ pub async fn get_task_context(settings: &Settings) -> Result<HashMap<String, Str
 /// and compares it with a given process's `stdout`.
 pub fn assert_template_matches(
     name: &str,
-    stdout: Vec<u8>,
+    output: Output,
     context: HashMap<String, String>,
 ) -> Result<()> {
+    let mut combined_output = output.stderr.clone();
+    combined_output.append(&mut output.stdout.clone());
+
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("tests")
         .join("client")
         .join("_templates")
         .join(name);
 
-    let actual = String::from_utf8(stdout).context("Got invalid utf8 as stdout!")?;
+    let actual = String::from_utf8(combined_output).context("Got invalid utf8 as output!")?;
 
     let Ok(mut expected) = read_to_string(&path) else {
         println!("Actual output:\n{actual}");
@@ -119,7 +123,7 @@ pub fn assert_template_matches(
 }
 
 /// Convenience wrapper to compare process stdout with snapshots.
-pub fn assert_snapshot_matches_stdout(name: &str, stdout: Vec<u8>) -> Result<()> {
+pub fn assert_snapshot_matches_output(name: &str, stdout: Vec<u8>) -> Result<()> {
     let actual = String::from_utf8(stdout).context("Got invalid utf8 as stdout!")?;
     assert_snapshot_matches(name, actual)
 }

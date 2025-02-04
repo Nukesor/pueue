@@ -35,7 +35,7 @@ async fn default(#[case] read_local_logs: bool) -> Result<()> {
     // This will result in the client receiving the streamed output until the task finished.
     let output = run_client_command(shared, &["follow"])?;
 
-    assert_snapshot_matches_stdout("follow__default", output.stdout)?;
+    assert_snapshot_matches_output("follow__default", output.stdout)?;
 
     Ok(())
 }
@@ -58,7 +58,7 @@ async fn last_lines(#[case] read_local_logs: bool) -> Result<()> {
     // Follow the task, but only print the last 4 lines of the output.
     let output = run_client_command(shared, &["follow", "--lines=4"])?;
 
-    assert_snapshot_matches_stdout("follow__last_lines", output.stdout)?;
+    assert_snapshot_matches_output("follow__last_lines", output.stdout)?;
 
     Ok(())
 }
@@ -79,7 +79,7 @@ async fn wait_for_task(#[case] read_local_logs: bool) -> Result<()> {
     // Wait for the task to start and follow until it finisheds.
     let output = run_client_command(shared, &["follow", "0"])?;
 
-    assert_snapshot_matches_stdout("follow__default", output.stdout)?;
+    assert_snapshot_matches_output("follow__default", output.stdout)?;
 
     Ok(())
 }
@@ -98,7 +98,7 @@ async fn fail_on_non_existing(#[case] read_local_logs: bool) -> Result<()> {
     // The client should exit with exit code `1`.
     let output = run_client_command(shared, &["follow", "0"])?;
     assert!(!output.status.success(), "follow got an unexpected exit 0");
-    assert_snapshot_matches_stdout("follow__fail_on_non_existing", output.stdout)?;
+    assert_snapshot_matches_output("follow__fail_on_non_existing", output.stderr)?;
 
     Ok(())
 }

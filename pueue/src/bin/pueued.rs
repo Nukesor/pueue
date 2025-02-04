@@ -18,7 +18,7 @@ async fn main() -> Result<()> {
         // subcommand to install the service
         #[cfg(target_os = "windows")]
         if opt.service.is_some() {
-            println!("daemonize flag cannot be used with service subcommand");
+            eprintln!("daemonize flag cannot be used with service subcommand");
             return Ok(());
         }
 
@@ -120,7 +120,7 @@ fn fork_daemon(opt: &CliArguments) -> Result<()> {
     let current_exe = if let Ok(path) = std::env::current_exe() {
         path.to_string_lossy().clone().to_string()
     } else {
-        println!("Couldn't detect path of current binary. Falling back to 'pueue' in $PATH");
+        eprintln!("Couldn't detect path of current binary. Falling back to 'pueue' in $PATH");
         "pueued".to_string()
     };
 

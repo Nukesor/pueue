@@ -352,7 +352,7 @@ impl Client {
             .map(|t| format!("task{t}"))
             .collect::<Vec<String>>()
             .join(", ");
-        println!("You are trying to {action}: {task_ids}",);
+        eprintln!("You are trying to {action}: {task_ids}",);
 
         let mut input = String::new();
 
@@ -364,7 +364,7 @@ impl Client {
 
             match input.chars().next().unwrap() {
                 'N' | 'n' => {
-                    println!("Aborted!");
+                    eprintln!("Aborted!");
                     std::process::exit(1);
                 }
                 '\n' | 'Y' | 'y' => {

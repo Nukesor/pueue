@@ -74,15 +74,15 @@ pub fn print_logs(
     if task_logs.is_empty() {
         match selection {
             TaskSelection::TaskIds(_) => {
-                println!("There are no finished tasks for your specified ids");
+                eprintln!("There are no finished tasks for your specified ids");
                 return;
             }
             TaskSelection::Group(group) => {
-                println!("There are no finished tasks for group '{group}'");
+                eprintln!("There are no finished tasks for group '{group}'");
                 return;
             }
             TaskSelection::All => {
-                println!("There are no finished tasks");
+                eprintln!("There are no finished tasks");
                 return;
             }
         }
@@ -174,7 +174,7 @@ fn print_task_info(task: &Task, style: &OutputStyle) {
     if style.enabled {
         table.enforce_styling();
     }
-    println!("{table}");
+    eprintln!("{table}");
 
     // All other information is aligned and styled by using a separate table.
     let mut table = Table::new();
@@ -218,5 +218,5 @@ fn print_task_info(task: &Task, style: &OutputStyle) {
     first_column.set_cell_alignment(CellAlignment::Right);
     first_column.set_padding((0, 0));
 
-    println!("{table}");
+    eprintln!("{table}");
 }
