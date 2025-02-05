@@ -55,7 +55,7 @@ async fn follow_on_immediate_add(#[case] read_local_logs: bool) -> Result<()> {
         &["add", "--immediate", "--follow", "sleep 1 && echo test"],
     )?;
 
-    assert_snapshot_matches_stdout("follow__default", output.stdout)?;
+    assert_snapshot_matches_output("follow__default", output.stdout)?;
 
     Ok(())
 }
