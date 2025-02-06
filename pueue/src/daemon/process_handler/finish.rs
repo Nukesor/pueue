@@ -1,6 +1,5 @@
 use crate::prelude::*;
 
-use anyhow::Context;
 use chrono::Local;
 use pueue_lib::log::clean_log_handles;
 use pueue_lib::state::GroupStatus;

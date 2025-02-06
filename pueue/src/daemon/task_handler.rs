@@ -3,7 +3,6 @@ use crate::prelude::*;
 use std::collections::BTreeMap;
 use std::time::Duration;
 
-use anyhow::Result;
 use chrono::prelude::*;
 
 use pueue_lib::children::Children;

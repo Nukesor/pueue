@@ -2,7 +2,6 @@ use crate::prelude::*;
 
 use std::time::{Duration, SystemTime};
 
-use anyhow::{bail, Context, Result};
 use clap::crate_version;
 use tokio::time::sleep;
 

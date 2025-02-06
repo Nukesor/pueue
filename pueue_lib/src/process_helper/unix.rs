@@ -3,7 +3,7 @@ use crate::prelude::*;
 // We allow anyhow in here, as this is a module that'll be strictly used internally.
 // As soon as it's obvious that this is code is intended to be exposed to library users, we have to
 // go ahead and replace any `anyhow` usage by proper error handling via our own Error type.
-use anyhow::Result;
+use color_eyre::Result;
 use command_group::{GroupChild, Signal, UnixChildExt};
 
 use crate::settings::Settings;
@@ -51,7 +51,7 @@ mod tests {
     use std::thread::sleep;
     use std::time::Duration;
 
-    use anyhow::Result;
+    use color_eyre::Result;
     use command_group::CommandGroup;
     use libproc::processes::{pids_by_type, ProcFilter};
     use pretty_assertions::assert_eq;

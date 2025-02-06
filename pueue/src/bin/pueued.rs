@@ -1,7 +1,7 @@
 use std::process::Command;
 
-use anyhow::Result;
 use clap::Parser;
+use color_eyre::Result;
 use simplelog::{Config, ConfigBuilder, LevelFilter, SimpleLogger, TermLogger, TerminalMode};
 use tracing::*;
 

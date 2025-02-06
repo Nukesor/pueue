@@ -5,7 +5,14 @@
 
 pub(crate) mod prelude {
     #[allow(unused_imports)]
-    pub use tracing::{debug, error, info, trace, warn};
+    pub(crate) use tracing::{debug, error, info, trace, warn};
+
+    pub(crate) use crate::errors::*;
+}
+
+pub(crate) mod errors {
+    pub use color_eyre::eyre::{WrapErr, bail};
+    pub use color_eyre::Result;
 }
 
 pub mod client;

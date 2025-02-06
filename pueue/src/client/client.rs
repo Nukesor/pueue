@@ -4,7 +4,6 @@ use std::env::{current_dir, vars};
 use std::io::{self, stdout, Write};
 use std::{borrow::Cow, collections::HashMap};
 
-use anyhow::{bail, Context, Result};
 use clap::crate_version;
 use crossterm::tty::IsTty;
 

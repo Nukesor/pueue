@@ -4,8 +4,6 @@ use std::path::Path;
 use std::sync::{Arc, Mutex};
 use std::{fs::create_dir_all, path::PathBuf};
 
-use anyhow::{bail, Context, Result};
-
 use process_handler::initiate_shutdown;
 use pueue_lib::error::Error;
 use pueue_lib::network::certificate::create_certificates;

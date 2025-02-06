@@ -4,7 +4,6 @@ use std::fs;
 use std::path::Path;
 use std::sync::MutexGuard;
 
-use anyhow::{Context, Result};
 use chrono::prelude::*;
 
 use pueue_lib::settings::Settings;

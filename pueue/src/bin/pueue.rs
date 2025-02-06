@@ -1,8 +1,9 @@
 use std::path::PathBuf;
 
-use anyhow::{bail, Context, Result};
 use clap::{CommandFactory, Parser};
 use clap_complete::{generate, generate_to, shells};
+use color_eyre::eyre::{bail, WrapErr};
+use color_eyre::Result;
 use simplelog::{Config, ConfigBuilder, LevelFilter, SimpleLogger, TermLogger, TerminalMode};
 use tracing::*;
 

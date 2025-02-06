@@ -1,5 +1,6 @@
 //! This module contains helper functions, which are used by both, the client and daemon tests.
-use anyhow::Result;
+use crate::prelude::*;
+
 use tokio::io::{self, AsyncWriteExt};
 use tracing::level_filters::LevelFilter;
 
