@@ -45,7 +45,7 @@ pub mod tracing {
 
         type GenericLayer<S> = Box<dyn Layer<S> + Send + Sync>;
         let fmt_layer: GenericLayer<_> = match pretty {
-            false => Box::new(tracing_subscriber::fmt::layer().with_timer(timer)),
+            false => Box::new(tracing_subscriber::fmt::layer().with_timer(timer).with_writer(std::io::stderr)),
             true => Box::new(
                 tracing_subscriber::fmt::layer()
                     .pretty()
@@ -55,7 +55,8 @@ pub mod tracing {
                     .with_thread_names(true)
                     .with_level(true)
                     .with_ansi(true)
-                    .with_span_events(tracing_subscriber::fmt::format::FmtSpan::ACTIVE),
+                    .with_span_events(tracing_subscriber::fmt::format::FmtSpan::ACTIVE)
+                    .with_writer(std::io::stderr),
             ),
         };
         let filter_layer = EnvFilter::builder()
