@@ -45,7 +45,11 @@ pub mod tracing {
 
         type GenericLayer<S> = Box<dyn Layer<S> + Send + Sync>;
         let fmt_layer: GenericLayer<_> = match pretty {
-            false => Box::new(tracing_subscriber::fmt::layer().with_timer(timer).with_writer(std::io::stderr)),
+            false => Box::new(
+                tracing_subscriber::fmt::layer()
+                    .with_timer(timer)
+                    .with_writer(std::io::stderr),
+            ),
             true => Box::new(
                 tracing_subscriber::fmt::layer()
                     .pretty()
