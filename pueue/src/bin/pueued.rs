@@ -2,8 +2,8 @@ use std::process::Command;
 
 use anyhow::Result;
 use clap::Parser;
-use log::warn;
 use simplelog::{Config, ConfigBuilder, LevelFilter, SimpleLogger, TermLogger, TerminalMode};
+use tracing::*;
 
 use pueue::daemon::{cli::CliArguments, run};
 

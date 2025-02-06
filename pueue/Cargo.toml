@@ -30,7 +30,6 @@ command-group.workspace = true
 ctrlc = { version = "3", features = ["termination"] }
 handlebars.workspace = true
 interim = { version = "0.1.2", features = ["chrono"] }
-log.workspace = true
 pest = "2.7"
 pest_derive = "2.7"
 pueue-lib = { version = "0.27.0", path = "../pueue_lib" }
@@ -43,22 +42,24 @@ strum.workspace = true
 tempfile = "3"
 tokio.workspace = true
 toml = "0.8"
+tracing.workspace = true
 
 [dev-dependencies]
 anyhow.workspace = true
 assert_cmd = "2"
 assert_matches = "1"
 better-panic.workspace = true
-# Make it easy to view log output for select tests.
-# Set log level for tests with RUST_LOG=<level>, use with failed tests or
-# disable test stdout/stderr capture (`cargo test -- --nocapture` / `cargo
-# nextest run --no-capture`)
-env_logger = "0.10"
 pretty_assertions.workspace = true
 rstest = "0.24"
 serde_yaml.workspace = true
 similar-asserts = "1"
 test-log = "0.2"
+
+# Make it easy to view log output for select tests.
+# Set log level for tests with RUST_LOG=<level>, use with failed tests or
+# disable test stdout/stderr capture (`cargo test -- --nocapture` / `cargo
+# nextest run --no-capture`)
+tracing-subscriber = { version = "*", features = ["env-filter", "fmt"] }
 
 # We don't need any of the default features for crossterm.
 # However, the windows build needs the windows feature enabled.
