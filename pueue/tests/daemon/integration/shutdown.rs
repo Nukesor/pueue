@@ -1,6 +1,5 @@
 use crate::prelude::*;
 
-
 use crate::helper::*;
 
 /// Spin up the daemon and send a SIGTERM shortly afterwards.

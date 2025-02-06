@@ -1,6 +1,5 @@
 use crate::prelude::*;
 
-
 use pueue_lib::network::message::TaskSelection;
 use pueue_lib::state::GroupStatus;
 

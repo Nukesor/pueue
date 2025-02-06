@@ -22,7 +22,6 @@ pub mod tracing {
         fmt::time::OffsetTime, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Layer,
     };
 
-    // idea: use local time zone?
     pub fn install_tracing(verbosity: u8) -> Result<()> {
         let mut pretty = false;
         let level = match verbosity {
@@ -36,13 +35,15 @@ pub mod tracing {
             }
         };
 
-        type GenericLayer<S> = Box<dyn Layer<S> + Send + Sync>;
-        let offset = time::UtcOffset::current_local_offset().expect("should get local offset!");
+        // todo: only log error and continue instead of panicing?
+        let offset =
+            time::UtcOffset::current_local_offset().wrap_err("should get local offset!")?;
         let timer = OffsetTime::new(
             offset,
             time::macros::format_description!("[hour]:[minute]:[second]"),
         );
 
+        type GenericLayer<S> = Box<dyn Layer<S> + Send + Sync>;
         let fmt_layer: GenericLayer<_> = match pretty {
             false => Box::new(tracing_subscriber::fmt::layer().with_timer(timer)),
             true => Box::new(

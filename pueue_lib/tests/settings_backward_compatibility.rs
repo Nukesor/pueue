@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use color_eyre::{Result, eyre::WrapErr};
+use color_eyre::{eyre::WrapErr, Result};
 
 use pueue_lib::settings::Settings;
 
