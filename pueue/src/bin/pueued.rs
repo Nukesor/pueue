@@ -7,10 +7,12 @@ use pueue::daemon::{cli::CliArguments, run};
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 4)]
 async fn main() -> Result<()> {
-    color_eyre::install()?;
-
     // Parse commandline options.
     let opt = CliArguments::parse();
+
+    // Set the verbosity level of the logger.
+    pueue::tracing::install_tracing(opt.verbose)?;
+    color_eyre::install()?;
 
     if opt.daemonize {
         // Ordinarily this would be handled in clap, but they don't support conflicting specific args
@@ -24,9 +26,6 @@ async fn main() -> Result<()> {
 
         return fork_daemon(&opt);
     }
-
-    // Set the verbosity level of the logger.
-    pueue::tracing::install_tracing(opt.verbose)?;
 
     #[cfg(target_os = "windows")]
     {

@@ -34,6 +34,17 @@ pub struct Client {
     stream: GenericStream,
 }
 
+impl std::fmt::Debug for Client {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Client")
+            .field("subcommand", &self.subcommand)
+            .field("settings", &self.settings)
+            .field("style", &self.style)
+            .field("stream", &"GenericStream<not_debuggable>")
+            .finish()
+    }
+}
+
 /// This is a small helper which either returns a given group or the default group.
 pub fn group_or_default(group: &Option<String>) -> String {
     group
@@ -150,6 +161,8 @@ impl Client {
     ///
     /// The command handling is split into "simple" and "complex" commands.
     pub async fn start(&mut self) -> Result<()> {
+        trace!(message = "Starting client", client = ?self);
+
         // Return early, if the command has already been handled.
         if self.handle_complex_command(self.subcommand.clone()).await? {
             return Ok(());
@@ -191,6 +204,8 @@ impl Client {
                 follow,
             } => {
                 // Either take the user-specified path or default to the current working directory.
+                // This will give errors if connecting over TCP/TLS to a remote host that doesn't
+                // have the same directory structure as the client
                 let path = working_directory
                     .as_ref()
                     .map(|path| Ok(path.clone()))

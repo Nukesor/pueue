@@ -20,10 +20,12 @@ use pueue::client::client::Client;
 /// Once all this is done, we init the [Client] struct and start the main loop via [Client::start].
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
-    color_eyre::install()?;
-
     // Parse commandline options.
     let opt = CliArguments::parse();
+
+    // Init the logger and set the verbosity level depending on the `-v` flags.
+    pueue::tracing::install_tracing(opt.verbose)?;
+    color_eyre::install()?;
 
     // In case the user requested the generation of shell completion file, create it and exit.
     if let Some(SubCommand::Completions {
@@ -33,9 +35,6 @@ async fn main() -> Result<()> {
     {
         return create_shell_completion_file(shell, output_directory);
     }
-
-    // Init the logger and set the verbosity level depending on the `-v` flags.
-    pueue::tracing::install_tracing(opt.verbose)?;
 
     // Try to read settings from the configuration file.
     let (mut settings, config_found) =
