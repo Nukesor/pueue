@@ -5,18 +5,21 @@ It explains the project structure, so you can get a rough overview of the overal
 
 Feel free to expand this document!
 
-- [Overall Structure](https://github.com/Nukesor/pueue/blob/main/ARCHITECTURE.md#overall-structure)
-- [Daemon](https://github.com/Nukesor/pueue/blob/main/ARCHITECTURE.md#daemon)
-- [Request Handler](https://github.com/Nukesor/pueue/blob/main/ARCHITECTURE.md#request-handler)
-- [TaskHandler](https://github.com/Nukesor/pueue/blob/main/ARCHITECTURE.md#taskhandler)
-- [Shared State](https://github.com/Nukesor/pueue/blob/main/ARCHITECTURE.md#shared-state)
-- [Code Style](https://github.com/Nukesor/pueue/blob/main/ARCHITECTURE.md#code-style)
+- [Overall Structure](#overall-structure)
+- [Daemon](#Daemon)
+  - [Main loops](#main-loops)
+    - [Task handler main loop](#task-handler-main-loop)
+    - [Message handler main loop](#message-handler-main-loop)
+  - [Message Handlers](#message-handlers)
+  - [Process Handlers](#process-handlers)
+- [Shared State](#shared-state)
+- [Code Style](#code-style)
 
 ## Overall Structure
 
 This project is divided into two modules, the client (`pueue`) and the daemon (`pueued`). \
-_Pueue_ also depends on [pueue-lib](https://github.com/nukesor/pueue-lib).
-_Pueue-lib_ contains everything that is shared between the daemon and the client.
+Both depends on [pueue-lib](https://github.com/nukesor/pueue-lib).
+_pueue-lib_ contains everything that is shared between the daemon and the client.
 
 This includes:
 
@@ -27,67 +30,91 @@ This includes:
 
 ## Daemon
 
-The daemon is composed of two main components.
+The daemon is composed of two main components and a bunch of helper functions.
 
-1. Request handling in `pueue/src/daemon/network/`.
+1. Request handling in [`daemon::network`].
    This is the code responsible for communicating with clients.
-   In `pueue/src/daemon/network/message_handler/` you can find neatly separated handlers for all of Pueue's subcommands.
-2. The TaskHandler in `pueue/src/daemon/task_handler/`.
-   It's responsible for everything regarding process interaction.
+   In [`daemon::network::message_handler`] you can find neatly separated handlers for all of Pueue's subcommands.
+2. Process handling is located in [`daemon::process_handler`].
+   Each file contains functions to handle a specific type of process related operation.
 
-All information, including process specific information, is stored in the `State` (`pueue-lib/state.rs`) struct. \
-Both components share a reference to the State, a `Arc<Mutex<State>>`.
-That way we can guarantee a single source of truth and a consistent state.
+All information, including process specific information, is stored in the [`State`] struct. \
+Both components share a reference to the State, via a [`SharedState`] handle, which is effectively a `Arc<Mutex<State>>`.
+That way we can guarantee a single source of truth and a consistent state at all times.
+
+### Main loops
+
+The daemon has two main loops. One for handling client requests and one for handling task's processes.
+Both run in parallel in the same multi-threaded tokio async runtime via a `try_join!` call.
+
+#### Task handler main loop
+
+The task handling main loop is located in [`daemon::task_handlers::run`]
+It takes care of the actual "daemon" and scheduling logic.
+
+- Scheduling/starting of new tasks when a new slot is available
+- Handling finished tasks and cleaning up processes.
+- Enqueueing delayed tasks that reached their `enqueue_at` date.
+- Callback process handling.
+- Task dependency checks (mark tasks as failed if their dependencies failed).
+- Reset logic
+- Shutdown logic
+
+### Message handler main loop
+
+The message handler main loop is the `accept_incoming` function located in [`daemon::network::socket`].
+
+To give a rough overview of what happens in here:
+
+- Listen on the daemon's socket for incoming Unix/TCP connections
+- Accept new connection
+- For each new connection, spawn a new tokio task that calls the `handle_incoming` function.
+- Performs authorization (secret & certificate)
+- If successful, send confirmation, which is also the daemon's version.
+- Receive the incoming message and deserialize it
+- Handle the message via the [`handle_message`] function.
+- Return the response
 
 ### Message Handlers
 
-The `pueue/src/daemon/network/socket.rs` module contains the logic for accepting client connections and receiving payloads.
-The request accept and handle logic is a single async-await loop run by the main thread.
+All functions used for handling client messages can be found in [`daemon::network::message_handler`].
 
-The payload is then deserialized to `Message` (`pueue-lib/message.rs`) and handled by its respective function.
-All functions used for handling these messages can be found in `pueue/src/daemon/network/message_handler`.
+Message handling functions have a [`SharedState`] handle and may call [`daemon::process_handler`] functions
+directly to immediately execute tasks such as starting, stopping or killing processes.
 
-### TaskHandler
+### Process Handlers
 
-The TaskHandler is responsible for actually starting and managing system processes. \
-It shares the async main thread with the message handlers in a `try_join!` call.
+The [`daemon::process_handler`] functions are used to actually start and manage system processes. \
 
-The TaskHandler runs a never ending loop, which checks a few times each second, if
-
-- a new task can be started.
-- tasks finished and can be finalized.
-- delayed tasks can be enqueued (`-d` flag on `pueue add`)
-- A few other things. Check the `TaskHandler::run` function in `pueue/src/daemon/task_handler/mod.rs`.
-
-The TaskHandler is by far the most complex piece of code in this project, but there is also a lot of documentation.
+These functions are by far the most complex piece of code in this project, but there is also a lot of documentation for each individual function, so go and check them out :).
 
 ## Shared State
 
 Whenever you're writing some core-logic in Pueue, please make sure to understand how mutexes work.
 
-As a general rule of thumb, the state should only ever be locked in message handler functions and at the top of the TaskHandler's main loop.
-
+As a general rule of thumb, the [`SharedState`] should only ever be locked in message handler functions and at the start of any process handling functionality.
+Always make sure that you lock the state for a given "unit of work".
 This rule allows us to be very conservative with state locking to prevent deadlocks.
 
 ## Code Style
 
-This is a result of `tokei ./pueue ./pueue_lib` on commit `84a2d47` at the 2022-12-27.
+This is a result of `tokei ./pueue ./pueue_lib` on commit `1db4116` at the 2025-02-08.
 
 ```
 ===============================================================================
  Language            Files        Lines         Code     Comments       Blanks
 ===============================================================================
- JSON                    2          238          238            0            0
- Markdown                2          310            0          192          118
- Pest                    1           69           43           12           14
- TOML                    2          140          112           12           16
+ JSON                    2          250          250            0            0
+ Markdown                3          404            0          252          152
+ Pest                    1           74           46           13           15
+ TOML                    2          161          136           12           13
  YAML                    1           27           27            0            0
 -------------------------------------------------------------------------------
- Rust                  137        12983         9645         1179         2159
- |- Markdown           127         1571            0         1450          121
- (Total)                          14554         9645         2629         2280
+ Rust                  150        16067        11971         1492         2604
+ |- Markdown           137         1840            0         1660          180
+ (Total)                          17907        11971         3152         2784
 ===============================================================================
- Total                 145        13767        10065         1395         2307
+ Total                 159        16983        12430         1769         2784
 ===============================================================================
 ```
 
@@ -101,7 +128,17 @@ PR's are automatically checked for these two and won't be accepted unless everyt
 
 1. All functions must have a doc block.
 2. All non-trivial structs must have a doc block.
-3. Rather too many inline comments than too few.
+3. Write rather too many inline comments than too few.
 4. Non-trivial code should be well documented!
 
 In general, please add a lot of comments. It makes maintenance, collaboration and reviews MUCH easier.
+
+[`Message`]: `https://docs.rs/pueue-lib/latest/pueue_lib/network/message/enum.Message.html`
+[`SharedState`]: https://docs.rs/pueue-lib/latest/pueue_lib/state/type.SharedState.html
+[`State`]: https://docs.rs/pueue-lib/latest/pueue_lib/state/struct.State.html
+[`daemon::network::message_handler`]: https://github.com/Nukesor/pueue/blob/main/pueue/src/daemon/network/message_handler
+[`daemon::network::socket`]: https://github.com/Nukesor/pueue/blob/main/pueue/src/daemon/network/socket.rs
+[`daemon::network`]: https://github.com/Nukesor/pueue/blob/main/pueue/src/daemon/network
+[`daemon::process_handler`]: https://github.com/Nukesor/pueue/tree/main/pueue/src/daemon/process_handler
+[`daemon::task_handlers::run`]: https://github.com/Nukesor/pueue/blob/main/pueue/src/daemon/task_handler.rs
+[`handle_message`]: https://github.com/Nukesor/pueue/blob/main/pueue/src/daemon/network/message_handler/mod.rs
