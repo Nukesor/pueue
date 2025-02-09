@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::internal_prelude::*;
 
 use std::fs::{remove_file, File};
 use std::io::{self, prelude::*, Read, SeekFrom};

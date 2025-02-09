@@ -1,5 +1,5 @@
 #![allow(bindings_with_variant_name)]
-use crate::prelude::*;
+use crate::internal_prelude::*;
 
 use pest::iterators::Pair;
 

@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::internal_prelude::*;
 
 // We allow anyhow in here, as this is a module that'll be strictly used internally.
 // As soon as it's obvious that this is code is intended to be exposed to library users, we have to
@@ -45,7 +45,7 @@ pub fn kill_child(task_id: usize, child: &mut GroupChild) -> std::io::Result<()>
 
 #[cfg(test)]
 mod tests {
-    use crate::prelude::*;
+    use crate::internal_prelude::*;
 
     use std::process::Command;
     use std::thread::sleep;

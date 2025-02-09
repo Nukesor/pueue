@@ -5,7 +5,7 @@
 //! daemon, open some files on the filesystem, edit files and so on.
 //! All commands that cannot be simply handled by handling requests or using `pueue_lib`.
 
-use crate::prelude::*;
+use crate::internal_prelude::*;
 
 use pueue_lib::network::protocol::*;
 use pueue_lib::state::State;

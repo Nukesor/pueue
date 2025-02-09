@@ -1,6 +1,6 @@
 #![doc = include_str!("../README.md")]
 
-pub(crate) mod prelude {
+pub(crate) mod internal_prelude {
     #[allow(unused_imports)]
     pub use tracing::{debug, error, info, trace, warn};
 }

@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::internal_prelude::*;
 
 use pueue_lib::network::message::{Shutdown, TaskSelection};
 use pueue_lib::process_helper::{send_signal_to_child, ProcessAction};
