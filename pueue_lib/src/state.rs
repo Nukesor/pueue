@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::children::Children;
 use crate::error::Error;
-use crate::network::message::Shutdown;
+use crate::network::message::request::Shutdown;
 use crate::task::{Task, TaskStatus};
 
 pub const PUEUE_DEFAULT_GROUP: &str = "default";
