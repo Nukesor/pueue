@@ -24,9 +24,7 @@ macro_rules! ok_or_shutdown {
             Err(err) => {
                 use pueue_lib::network::message::Shutdown;
                 use $crate::daemon::process_handler::initiate_shutdown;
-                error!(
-                    "Initializing graceful shutdown. Encountered error in TaskHandler: {err}"
-                );
+                error!("Initializing graceful shutdown. Encountered error in TaskHandler: {err}");
                 initiate_shutdown($settings, $state, Shutdown::Emergency);
                 return;
             }
