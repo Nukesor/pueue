@@ -2,7 +2,6 @@
 use crate::prelude::*;
 
 use tokio::io::{self, AsyncWriteExt};
-use tracing::level_filters::LevelFilter;
 
 pub use pueue_lib::state::PUEUE_DEFAULT_GROUP;
 
@@ -34,14 +33,8 @@ const TIMEOUT: u64 = 5000;
 /// Use this function to enable log output for in-runtime daemon output.
 #[allow(dead_code)]
 pub fn enable_logger() {
-    let level = LevelFilter::DEBUG;
-
-    // idea: use local timezone?
-    // Init a terminal logger
-    tracing_subscriber::fmt()
-        .with_max_level(level)
-        .with_writer(std::io::stderr)
-        .init();
+    pueue::tracing::install_tracing(3)
+        .expect("Couldn't init tracing for test, have you initialised tracing twice?");
 }
 
 /// A helper function to sleep for ms time.

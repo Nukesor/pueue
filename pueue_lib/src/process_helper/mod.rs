@@ -86,8 +86,9 @@ pub fn compile_shell_command(settings: &Settings, command: &str) -> Command {
     let executable = compiled_command.remove(0);
     let metadata = std::fs::metadata(&executable);
     if !std::path::PathBuf::from(&executable).is_file() {
-        warn!(
+        trace!(
             message = "Couldn't sanity check that the executale is a real file",
+            help = "This is expected if the executable is a shell builtin, an alias or in $PATH",
             ?executable,
             ?metadata
         );
@@ -100,11 +101,6 @@ pub fn compile_shell_command(settings: &Settings, command: &str) -> Command {
     }
 
     // Chain two `powershell` commands, one that sets the output encoding to utf8 and then the user provided one.
-    debug!(
-        message = "Building command in preperation to spawn",
-        ?executable,
-        ?compiled_command
-    );
     let mut command = Command::new(executable);
     for arg in compiled_command {
         command.arg(&arg);
@@ -118,6 +114,8 @@ pub fn compile_shell_command(settings: &Settings, command: &str) -> Command {
         );
         command.envs(&settings.daemon.env_vars);
     }
+
+    debug!(message = "Prepared command before spawn", ?command);
 
     command
 }

@@ -3,7 +3,6 @@ use crate::prelude::*;
 use std::path::PathBuf;
 
 use assert_matches::assert_matches;
-use tracing_test::traced_test;
 
 use pueue_lib::network::message::*;
 use pueue_lib::settings::Shared;
@@ -34,7 +33,7 @@ async fn create_edited_task(shared: &Shared) -> Result<Vec<EditableTask>> {
 
 /// Test if adding a normal task works as intended.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-#[traced_test]
+#[tracing_test::traced_test]
 async fn test_edit_flow() -> Result<()> {
     let daemon = daemon().await?;
     let shared = &daemon.settings.shared;

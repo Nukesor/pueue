@@ -187,7 +187,7 @@ pub fn spawn_process(settings: &Settings, state: &mut LockedState, task_id: usiz
         Err(err) => {
             let error_msg = format!("Failed to spawn child {task_id} with err: {:?}", err);
             error!(?err, "Failed to spawn child {task_id}");
-            trace!(?command, message = "Command that failed");
+            trace!(?command, "Command that failed");
 
             // Write some debug log output to the task's log file.
             // This should always work, but print a datailed error if it didn't work.

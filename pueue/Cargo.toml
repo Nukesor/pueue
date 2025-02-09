@@ -39,16 +39,15 @@ shell-escape = "0.1"
 snap.workspace = true
 strum.workspace = true
 tempfile = "3"
-time = { version = "0.3.37", features = ["macros"] }
 tokio.workspace = true
 toml = "0.8"
 tracing.workspace = true
 tracing-error = "0.2.1"
 tracing-subscriber = { version = "0.3.19", features = [
+    "chrono",
     "env-filter",
     "fmt",
     "local-time",
-    "time",
 ] }
 
 [dev-dependencies]
@@ -66,7 +65,12 @@ tracing-test = "0.2.5"
 # Set log level for tests with RUST_LOG=<level>, use with failed tests or
 # disable test stdout/stderr capture (`cargo test -- --nocapture` / `cargo
 # nextest run --no-capture`)
-tracing-subscriber = { version = "*", features = ["env-filter", "fmt"] }
+tracing-subscriber = { version = "*", features = [
+    "chrono",
+    "env-filter",
+    "fmt",
+    "local-time",
+] }
 
 # We don't need any of the default features for crossterm.
 # However, the windows build needs the windows feature enabled.
