@@ -21,7 +21,7 @@ pub fn restart_multiple(
     settings: &Settings,
     state: &SharedState,
     message: RestartMessage,
-) -> Message {
+) -> Response {
     let task_ids: Vec<usize> = message.tasks.iter().map(|task| task.task_id).collect();
     let mut state = state.lock().unwrap();
 

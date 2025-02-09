@@ -31,7 +31,7 @@ async fn test_restart_in_place() -> Result<()> {
         start_immediately: false,
         stashed: false,
     };
-    assert_success(send_message(shared, restart_message).await?);
+    assert_success(send_request(shared, restart_message).await?);
 
     let state = get_state(shared).await?;
     assert_eq!(state.tasks.len(), 1, "No new task should be created");
@@ -77,7 +77,7 @@ async fn test_cannot_restart_running() -> Result<()> {
         start_immediately: false,
         stashed: false,
     };
-    assert_failure(send_message(shared, restart_message).await?);
+    assert_failure(send_request(shared, restart_message).await?);
 
     Ok(())
 }

@@ -9,7 +9,7 @@ use crate::{
 /// Manage environment variables for tasks.
 /// - Set environment variables
 /// - Unset environment variables
-pub fn env(settings: &Settings, state: &SharedState, message: EnvMessage) -> Message {
+pub fn env(settings: &Settings, state: &SharedState, message: EnvMessage) -> Response {
     let mut state = state.lock().unwrap();
 
     let message = match message {
@@ -19,29 +19,29 @@ pub fn env(settings: &Settings, state: &SharedState, message: EnvMessage) -> Mes
             value,
         } => {
             let Some(task) = state.tasks.get_mut(&task_id) else {
-                return create_failure_message(format!("No task with id {task_id}"));
+                return create_failure_response(format!("No task with id {task_id}"));
             };
 
             if !(task.is_queued() || task.is_stashed()) {
-                return create_failure_message("You can only edit stashed or queued tasks");
+                return create_failure_response("You can only edit stashed or queued tasks");
             }
 
             task.envs.insert(key, value);
 
-            create_success_message("Environment variable set.")
+            create_success_response("Environment variable set.")
         }
         EnvMessage::Unset { task_id, key } => {
             let Some(task) = state.tasks.get_mut(&task_id) else {
-                return create_failure_message(format!("No task with id {task_id}"));
+                return create_failure_response(format!("No task with id {task_id}"));
             };
 
             if !(task.is_queued() || task.is_stashed()) {
-                return create_failure_message("You can only edit stashed or queued tasks");
+                return create_failure_response("You can only edit stashed or queued tasks");
             }
 
             match task.envs.remove(&key) {
-                Some(_) => create_success_message("Environment variable unset."),
-                None => create_failure_message(format!(
+                Some(_) => create_success_response("Environment variable unset."),
+                None => create_failure_response(format!(
                     "No environment variable with key '{key}' found."
                 )),
             }
@@ -49,7 +49,7 @@ pub fn env(settings: &Settings, state: &SharedState, message: EnvMessage) -> Mes
     };
 
     // Save the state if there were any changes.
-    if let Message::Success(_) = message {
+    if let Response::Success(_) = message {
         ok_or_save_state_failure!(save_state(&state, settings));
     }
 

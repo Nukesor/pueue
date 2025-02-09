@@ -32,7 +32,7 @@ async fn test_normal_remove() -> Result<()> {
     pause_tasks(shared, TaskSelection::TaskIds(vec![3])).await?;
 
     // Stash task 5
-    send_message(
+    send_request(
         shared,
         StashMessage {
             tasks: TaskSelection::TaskIds(vec![5]),
@@ -41,8 +41,8 @@ async fn test_normal_remove() -> Result<()> {
     )
     .await?;
 
-    let remove_message = Message::Remove(vec![0, 1, 2, 3, 4, 5]);
-    send_message(shared, remove_message).await?;
+    let remove_message = Request::Remove(vec![0, 1, 2, 3, 4, 5]);
+    send_request(shared, remove_message).await?;
 
     // Ensure that every task that isn't currently running can be removed
     let state = get_state(shared).await?;

@@ -50,7 +50,7 @@ async fn test_stashed_add() -> Result<()> {
     // Tell the daemon to add a task in stashed state.
     let mut message = create_add_message(shared, "sleep 60");
     message.stashed = true;
-    assert_success(send_message(shared, message).await?);
+    assert_success(send_request(shared, message).await?);
 
     // Make sure the task is actually stashed.
     assert_task_condition(shared, 0, Task::is_stashed, "The task should be stashed.").await?;

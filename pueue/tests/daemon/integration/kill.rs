@@ -67,7 +67,7 @@ async fn test_kill_tasks_with_pause(
     }
 
     // Send the kill message
-    send_message(shared, kill_message).await?;
+    send_request(shared, kill_message).await?;
 
     // Make sure all tasks get killed
     for id in 0..3 {
@@ -146,7 +146,7 @@ async fn test_kill_tasks_without_pause(#[case] kill_message: KillMessage) -> Res
     add_group_with_slots(shared, "testgroup", 1).await?;
 
     // Send the kill message
-    send_message(shared, kill_message).await?;
+    send_request(shared, kill_message).await?;
 
     // Make sure all tasks get killed
     for id in 0..3 {

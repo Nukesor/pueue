@@ -8,7 +8,7 @@ use crate::daemon::network::response_helper::*;
 /// Invoked when calling `pueue stash`.
 /// Stash specific queued tasks.
 /// They won't be executed until they're enqueued or explicitly started.
-pub fn stash(settings: &Settings, state: &SharedState, message: StashMessage) -> Message {
+pub fn stash(settings: &Settings, state: &SharedState, message: StashMessage) -> Response {
     let mut state = state.lock().unwrap();
     // Get the affected task ids, based on the task selection.
     let selected_task_ids = match message.tasks {

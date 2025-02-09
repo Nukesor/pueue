@@ -7,7 +7,7 @@ use crate::daemon::process_handler;
 /// Invoked when calling `pueue reset`.
 /// Kill all children by using the `kill` function.
 /// Set the full_reset flag, which will prevent new tasks from being spawned.
-pub fn reset(settings: &Settings, state: &SharedState, message: ResetMessage) -> Message {
+pub fn reset(settings: &Settings, state: &SharedState, message: ResetMessage) -> Response {
     let mut state = state.lock().unwrap();
 
     match message.target {
@@ -42,5 +42,5 @@ pub fn reset(settings: &Settings, state: &SharedState, message: ResetMessage) ->
             }
         }
     }
-    create_success_message("Everything is being reset right now.")
+    create_success_response("Everything is being reset right now.")
 }

@@ -52,7 +52,7 @@ async fn test_failing_dependency() -> Result<()> {
 
     // Now we kill the first task.
     // This should result in the second task failing.
-    send_message(
+    send_request(
         shared,
         KillMessage {
             tasks: TaskSelection::TaskIds(vec![0]),

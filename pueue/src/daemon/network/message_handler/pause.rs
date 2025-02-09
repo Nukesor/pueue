@@ -8,12 +8,12 @@ use crate::daemon::process_handler;
 
 /// Invoked when calling `pueue pause`.
 /// Forward the pause message to the task handler, which then pauses groups/tasks/everything.
-pub fn pause(settings: &Settings, state: &SharedState, message: PauseMessage) -> Message {
+pub fn pause(settings: &Settings, state: &SharedState, message: PauseMessage) -> Response {
     let mut state = state.lock().unwrap();
     // If a group is selected, make sure it exists.
     if let TaskSelection::Group(group) = &message.tasks {
-        if let Err(message) = ensure_group_exists(&mut state, group) {
-            return message;
+        if let Err(response) = ensure_group_exists(&mut state, group) {
+            return response;
         }
     }
 
@@ -32,7 +32,7 @@ pub fn pause(settings: &Settings, state: &SharedState, message: PauseMessage) ->
     };
 
     // Actually execute the command
-    if let Message::Success(_) = response {
+    if let Response::Success(_) = response {
         process_handler::pause::pause(settings, &mut state, message.tasks, message.wait);
     }
 

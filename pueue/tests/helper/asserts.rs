@@ -7,21 +7,21 @@ use pueue_lib::state::State;
 use pueue_lib::task::Task;
 use pueue_lib::{network::message::*, state::GroupStatus};
 
-use super::{get_state, send_message};
+use super::{get_state, send_request};
 
 /// Assert that a message is a successful message.
-pub fn assert_success(message: Message) {
+pub fn assert_success(response: Response) {
     assert!(
-        message.response_success(),
-        "Expected to get successful message, got {message:?}",
+        response.success(),
+        "Expected to get successful message, got {response:?}",
     );
 }
 
 /// Assert that a message is a failure message.
-pub fn assert_failure(message: Message) {
+pub fn assert_failure(message: Response) {
     assert_matches!(
         message,
-        Message::Failure(_),
+        Response::Failure(_),
         "Expected to get FailureMessage, got {message:?}",
     );
 }
@@ -101,7 +101,7 @@ pub async fn assert_worker_envs(
     );
 
     // Get the log output for the task.
-    let response = send_message(
+    let response = send_request(
         shared,
         LogRequestMessage {
             tasks: TaskSelection::TaskIds(vec![task_id]),
@@ -111,7 +111,7 @@ pub async fn assert_worker_envs(
     )
     .await?;
 
-    let Message::LogResponse(message) = response else {
+    let Response::Log(message) = response else {
         bail!("Expected LogResponse got {response:?}")
     };
 

@@ -11,7 +11,7 @@ use crate::ok_or_save_state_failure;
 /// Invoked when calling `pueue switch`.
 /// Switch the position of two tasks in the upcoming queue.
 /// We have to ensure that those tasks are either `Queued` or `Stashed`
-pub fn switch(settings: &Settings, state: &SharedState, message: SwitchMessage) -> Message {
+pub fn switch(settings: &Settings, state: &SharedState, message: SwitchMessage) -> Response {
     let mut state = state.lock().unwrap();
 
     let task_ids = [message.task_id_1, message.task_id_2];
@@ -62,7 +62,7 @@ pub fn switch(settings: &Settings, state: &SharedState, message: SwitchMessage) 
     }
 
     ok_or_save_state_failure!(save_state(&state, settings));
-    create_success_message("Tasks have been switched")
+    create_success_response("Tasks have been switched")
 }
 
 #[cfg(test)]
@@ -118,11 +118,11 @@ mod tests {
     fn switch_normal() {
         let (state, settings, _tempdir) = get_test_state();
 
-        let message = switch(&settings, &state, get_message(1, 2));
+        let response = switch(&settings, &state, get_message(1, 2));
 
-        // Return message is correct
-        assert!(matches!(message, Message::Success(_)));
-        if let Message::Success(text) = message {
+        // Response is correct
+        assert!(matches!(response, Response::Success(_)));
+        if let Response::Success(text) = response {
             assert_eq!(text, "Tasks have been switched");
         };
 
@@ -136,11 +136,11 @@ mod tests {
     fn switch_task_with_itself() {
         let (state, settings, _tempdir) = get_test_state();
 
-        let message = switch(&settings, &state, get_message(1, 1));
+        let response = switch(&settings, &state, get_message(1, 1));
 
-        // Return message is correct
-        assert!(matches!(message, Message::Failure(_)));
-        if let Message::Failure(text) = message {
+        // Response is correct
+        assert!(matches!(response, Response::Failure(_)));
+        if let Response::Failure(text) = response {
             assert_eq!(text, "You cannot switch a task with itself.");
         };
     }
@@ -188,11 +188,11 @@ mod tests {
         ];
 
         for ids in combinations {
-            let message = switch(&settings, &state, get_message(ids.0, ids.1));
+            let response = switch(&settings, &state, get_message(ids.0, ids.1));
 
-            // Assert, that we get a Failure message with the correct text.
-            assert!(matches!(message, Message::Failure(_)));
-            if let Message::Failure(text) = message {
+            // Assert, that we get a failure with the correct text.
+            assert!(matches!(response, Response::Failure(_)));
+            if let Response::Failure(text) = response {
                 assert_eq!(text, "Tasks have to be either queued or stashed.");
             };
         }

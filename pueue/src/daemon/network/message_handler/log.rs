@@ -9,13 +9,13 @@ use pueue_lib::failure_msg;
 use pueue_lib::log::read_and_compress_log_file;
 use pueue_lib::log::*;
 use pueue_lib::network::message::*;
-use pueue_lib::network::protocol::{send_message, GenericStream};
+use pueue_lib::network::protocol::{send_response, GenericStream};
 use pueue_lib::settings::Settings;
 use pueue_lib::state::SharedState;
 
 /// Invoked when calling `pueue log`.
 /// Return tasks and their output to the client.
-pub fn get_log(settings: &Settings, state: &SharedState, message: LogRequestMessage) -> Message {
+pub fn get_log(settings: &Settings, state: &SharedState, message: LogRequestMessage) -> Response {
     let state = { state.lock().unwrap().clone() };
 
     let task_ids = match message.tasks {
@@ -54,7 +54,7 @@ pub fn get_log(settings: &Settings, state: &SharedState, message: LogRequestMess
             tasks.insert(*task_id, task_log);
         }
     }
-    Message::LogResponse(tasks)
+    Response::Log(tasks)
 }
 
 /// Handle the continuous stream of a some log output.
@@ -68,7 +68,7 @@ pub async fn follow_log(
     stream: &mut GenericStream,
     state: &SharedState,
     message: StreamRequestMessage,
-) -> Result<Message> {
+) -> Result<Response> {
     // The user can specify the id of the task they want to follow
     // If the id isn't specified and there's only a single running task, this task will be used.
     // However, if there are multiple running tasks, the user will have to specify an id.
@@ -86,7 +86,7 @@ pub async fn follow_log(
         // Return a message on "no" or multiple running tasks.
         match running_ids.len() {
             0 => {
-                return Ok(create_failure_message("There are no running tasks."));
+                return Ok(create_failure_response("There are no running tasks."));
             }
             1 => running_ids[0],
             _ => {
@@ -95,7 +95,7 @@ pub async fn follow_log(
                     .map(|id| id.to_string())
                     .collect::<Vec<_>>()
                     .join(", ");
-                return Ok(create_failure_message(format!(
+                return Ok(create_failure_response(format!(
                     "Multiple tasks are running, please select one of the following: {running_ids}"
                 )));
             }
@@ -108,7 +108,7 @@ pub async fn follow_log(
         {
             let state = state.lock().unwrap();
             let Some(task) = state.tasks.get(&task_id) else {
-                return Ok(create_failure_message(
+                return Ok(create_failure_response(
                     "Pueue: The task to be followed doesn't exist.",
                 ));
             };
@@ -122,7 +122,7 @@ pub async fn follow_log(
 
     let mut handle = match get_log_file_handle(task_id, pueue_directory) {
         Err(_) => {
-            return Ok(create_failure_message(
+            return Ok(create_failure_response(
                 "Couldn't find output files for task. Maybe it finished? Try `log`",
             ))
         }
@@ -147,7 +147,7 @@ pub async fn follow_log(
     loop {
         // Check whether the file still exists. Exit if it doesn't.
         if !path.exists() {
-            return Ok(create_success_message(
+            return Ok(create_success_response(
                 "Pueue: Log file has gone away. Has the task been removed?",
             ));
         }
@@ -155,15 +155,15 @@ pub async fn follow_log(
         let mut buffer = Vec::new();
 
         if let Err(err) = handle.read_to_end(&mut buffer) {
-            return Ok(create_failure_message(format!("Pueue Error: {err}")));
+            return Ok(create_failure_response(format!("Pueue Error: {err}")));
         };
         let text = String::from_utf8_lossy(&buffer).to_string();
 
         // Only send a message, if there's actual new content.
         if !text.is_empty() {
             // Send the next chunk.
-            let response = Message::Stream(text);
-            send_message(response, stream).await?;
+            let response = Response::Stream(text);
+            send_response(response, stream).await?;
         }
 
         // Check if the task in question does:
@@ -174,14 +174,14 @@ pub async fn follow_log(
         {
             let state = state.lock().unwrap();
             let Some(task) = state.tasks.get(&task_id) else {
-                return Ok(create_failure_message(
+                return Ok(create_failure_response(
                     "Pueue: The followed task has been removed.",
                 ));
             };
 
             // The task is done, just close the stream.
             if !task.is_running() {
-                return Ok(Message::Close);
+                return Ok(Response::Close);
             }
         }
 

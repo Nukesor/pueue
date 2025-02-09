@@ -11,10 +11,10 @@ use pueue_lib::settings::*;
 use super::*;
 
 /// Send the Shutdown message to the test daemon.
-pub async fn shutdown_daemon(shared: &Shared) -> Result<Message> {
+pub async fn shutdown_daemon(shared: &Shared) -> Result<Response> {
     let message = Shutdown::Graceful;
 
-    send_message(shared, message)
+    send_request(shared, message)
         .await
         .context("Failed to send Shutdown message")
 }

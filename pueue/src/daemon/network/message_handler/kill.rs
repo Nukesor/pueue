@@ -9,13 +9,13 @@ use crate::daemon::{
 
 /// Invoked when calling `pueue kill`.
 /// Forward the kill message to the task handler, which then kills the process.
-pub fn kill(settings: &Settings, state: &SharedState, message: KillMessage) -> Message {
+pub fn kill(settings: &Settings, state: &SharedState, message: KillMessage) -> Response {
     let mut state = state.lock().unwrap();
 
     // If a group is selected, make sure it exists.
     if let TaskSelection::Group(group) = &message.tasks {
-        if let Err(message) = ensure_group_exists(&mut state, group) {
-            return message;
+        if let Err(response) = ensure_group_exists(&mut state, group) {
+            return response;
         }
     }
 
@@ -53,7 +53,7 @@ pub fn kill(settings: &Settings, state: &SharedState, message: KillMessage) -> M
     };
 
     // Actually execute the command
-    if let Message::Success(_) = response {
+    if let Response::Success(_) = response {
         process_handler::kill::kill(settings, &mut state, message.tasks, true, message.signal);
     }
 

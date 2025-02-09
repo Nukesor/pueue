@@ -12,7 +12,7 @@ use crate::ok_or_save_state_failure;
 /// Invoked when calling `pueue remove`.
 /// Remove tasks from the queue.
 /// We have to ensure that those tasks aren't running!
-pub fn remove(settings: &Settings, state: &SharedState, task_ids: Vec<usize>) -> Message {
+pub fn remove(settings: &Settings, state: &SharedState, task_ids: Vec<usize>) -> Response {
     let mut state = state.lock().unwrap();
 
     // Filter all running tasks, since we cannot remove them.
@@ -60,11 +60,11 @@ mod tests {
 
         // 3 and 4 aren't allowed to be removed, since they're running.
         // The rest will succeed.
-        let message = remove(&settings, &state, vec![0, 1, 2, 3, 4]);
+        let response = remove(&settings, &state, vec![0, 1, 2, 3, 4]);
 
-        // Return message is correct
-        assert!(matches!(message, Message::Success(_)));
-        if let Message::Success(text) = message {
+        // Response is correct
+        assert!(matches!(response, Response::Success(_)));
+        if let Response::Success(text) = response {
             assert_eq!(
                 text,
                 "Tasks removed from list: 0, 1, 2\nThe command failed for tasks: 3, 4"
@@ -93,11 +93,11 @@ mod tests {
         }
 
         // Make sure we cannot remove a task with dependencies.
-        let message = remove(&settings, &state, vec![1]);
+        let response = remove(&settings, &state, vec![1]);
 
-        // Return message is correct
-        assert!(matches!(message, Message::Failure(_)));
-        if let Message::Failure(text) = message {
+        // Response is correct
+        assert!(matches!(response, Response::Failure(_)));
+        if let Response::Failure(text) = response {
             assert_eq!(text, "The command failed for tasks: 1");
         };
 
@@ -107,11 +107,11 @@ mod tests {
         }
 
         // Make sure we cannot remove a task with recursive dependencies.
-        let message = remove(&settings, &state, vec![1, 5]);
+        let response = remove(&settings, &state, vec![1, 5]);
 
-        // Return message is correct
-        assert!(matches!(message, Message::Failure(_)));
-        if let Message::Failure(text) = message {
+        // Response is correct
+        assert!(matches!(response, Response::Failure(_)));
+        if let Response::Failure(text) = response {
             assert_eq!(text, "The command failed for tasks: 1, 5");
         };
 
@@ -121,11 +121,11 @@ mod tests {
         }
 
         // Make sure we can remove tasks with dependencies if all dependencies are specified.
-        let message = remove(&settings, &state, vec![1, 5, 6]);
+        let response = remove(&settings, &state, vec![1, 5, 6]);
 
-        // Return message is correct
-        assert!(matches!(message, Message::Success(_)));
-        if let Message::Success(text) = message {
+        // Response is correct
+        assert!(matches!(response, Response::Success(_)));
+        if let Response::Success(text) = response {
             assert_eq!(text, "Tasks removed from list: 1, 5, 6");
         };
 

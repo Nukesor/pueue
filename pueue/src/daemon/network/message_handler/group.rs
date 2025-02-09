@@ -22,7 +22,7 @@ use crate::{
 /// - Show groups
 /// - Add group
 /// - Remove group
-pub fn group(settings: &Settings, state: &SharedState, message: GroupMessage) -> Message {
+pub fn group(settings: &Settings, state: &SharedState, message: GroupMessage) -> Response {
     let mut state = state.lock().unwrap();
 
     match message {

@@ -40,7 +40,7 @@ async fn colored() -> Result<()> {
         tasks: TaskSelection::Group(PUEUE_DEFAULT_GROUP.into()),
         wait: true,
     };
-    send_message(shared, message)
+    send_request(shared, message)
         .await
         .context("Failed to send message")?;
 

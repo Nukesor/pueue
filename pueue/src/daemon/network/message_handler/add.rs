@@ -13,10 +13,10 @@ use crate::ok_or_save_state_failure;
 /// Invoked when calling `pueue add`.
 /// Queues a new task to the state.
 /// If the start_immediately flag is set, send a StartMessage to the task handler.
-pub fn add_task(settings: &Settings, state: &SharedState, message: AddMessage) -> Message {
+pub fn add_task(settings: &Settings, state: &SharedState, message: AddMessage) -> Response {
     let mut state = state.lock().unwrap();
-    if let Err(message) = ensure_group_exists(&mut state, &message.group) {
-        return message;
+    if let Err(response) = ensure_group_exists(&mut state, &message.group) {
+        return response;
     }
 
     // Ensure that specified dependencies actually exist.
