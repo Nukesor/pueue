@@ -1,4 +1,4 @@
-use anyhow::Result;
+use crate::internal_prelude::*;
 
 use pueue_lib::settings::Settings;
 use pueue_lib::state::{State, PUEUE_DEFAULT_GROUP};

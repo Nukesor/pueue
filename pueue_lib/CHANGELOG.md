@@ -6,6 +6,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project adheres **somewhat** to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 The concept of SemVer is applied to the daemon/client API, but not the library API itself.
 
+## [0.27.0] - 2024-12-01
+
+### Added
+
+- Introduce re-usable `Children` Process representation.
+
+### Removed
+
+- Remove unused `reset_task_log_directory`
+- Add `EnvMessage` to set/unset environment variables on tasks.
+- `netbsd` support
+
+### Changed
+
+- Rework how `reset` works. `Reset` now works on a per-group basis.
+  Full reset simply means that all groups are to be reset.
+- Move **all** state into the `State` struct.
+  This prevents concurrency issues and fixes many issues.
+  The new runtime-dependant fields aren't serialized.
+- Rework `TaskState` representation enum to include all runtime-dependant fields.
+  As a result, several fields have been removed from `Task.
+- Make `Stash` Message payload a struct.
+- Make `EditRestore`, `EditRequest` Message payload a vector of task ids.
+- Make `Edit` Message payload a vector the new `EditableTask`.
+- Change editing structs so that all values are always set (no more optionals
+- Change `ResetMessage` to use new `ResetTarget` enum.
+
+### Fix
+
+- Unix socket permission handling
+
 ## [0.26.0] - 2024-03-22
 
 ### Added
@@ -54,7 +85,6 @@ The concept of SemVer is applied to the daemon/client API, but not the library A
 
 This version was skipped due to a error during release :).
 
-
 ## [0.21.3] - 2023-02-12
 
 ### Changed
@@ -66,7 +96,7 @@ This version was skipped due to a error during release :).
 ### Fix
 
 - Point to a new patched fork of `darwin-libproc`, as the original has been deleted.
-    This fixes the development builts for pueue on Apple platforms.
+  This fixes the development builts for pueue on Apple platforms.
 
 ## [0.21.0] - 2022-12-12
 
@@ -78,7 +108,7 @@ This version was skipped due to a error during release :).
 - Make `EditMessage::path` and `EditMessage::command` optional.
 - The `children` flag has been removed for the `Start`-,`Pause`-,`Kill`- and `ResetMessage`.
 - No longer support TLS 1.2 certificates, only accept version 1.3.
-    All generated certificates were 1.3 anyway, so there shouldn't be any breakage, except users created their own certs.
+  All generated certificates were 1.3 anyway, so there shouldn't be any breakage, except users created their own certs.
 
 ### Added
 
@@ -94,7 +124,7 @@ This version was skipped due to a error during release :).
 
 - The module structure of the platform specific networking code has been streamlined.
 - The process handling code has been moved from the daemon to `pueue_lib`. See [#336](https://github.com/Nukesor/pueue/issues/336).
-    The reason for this is, that the client will need some of these process handling capabilitites to spawn shell commands when editing tasks.
+  The reason for this is, that the client will need some of these process handling capabilitites to spawn shell commands when editing tasks.
 
 ## [0.20.0] - 2022-07-21
 
@@ -106,15 +136,15 @@ This version was skipped due to a error during release :).
 
 - Breaking change: Backward compatibility logic for the old group structure in the main state.
 - Breaking change:
-    The `State` no longer owns a copy of the current settings.
-    This became possible due to the group configuration no longer being part of the configuration file.
+  The `State` no longer owns a copy of the current settings.
+  This became possible due to the group configuration no longer being part of the configuration file.
 
 ### Fixed
 
 - The networking logic wasn't able to handle rapid successiv messages until now.
-    If two messages were sent in quick succession, the client would receive both messages in one go.
-    The reason for this was simply that the receiving buffer was always of a size of 1400 Bytes, even if the actual payload was much smaller.
-    This wasn't a problem until now as there was no scenario where two messages were send immediately one after another.
+  If two messages were sent in quick succession, the client would receive both messages in one go.
+  The reason for this was simply that the receiving buffer was always of a size of 1400 Bytes, even if the actual payload was much smaller.
+  This wasn't a problem until now as there was no scenario where two messages were send immediately one after another.
 
 ## [0.19.6] - unreleased
 
@@ -187,7 +217,7 @@ This version was skipped due to a error during release :).
 - **Breaking:** The unix socket is now located in the `runtime_directory` by default [#243](https://github.com/Nukesor/pueue/issues/243).
 - **Breaking:** `Shared::pueue_directory` changed from `PathBuf` to `Option<PathBuf>`.
 - **Breaking:** `Settings::read_with_defaults` no longer a boolean as first parameter.
-    Instead, it returns a tuple of `(Settings, bool)` with the boolean indicating whether a config file has been found.
+  Instead, it returns a tuple of `(Settings, bool)` with the boolean indicating whether a config file has been found.
 - **Breaking:** The type of `State.group` changed from `BTreeMap<String, GroupStatus>` to the new `BTreeMap<String, Group>` struct.
 - **Breaking:** The `GroupResponseMessage` now also uses the new `Group` struct.
 
@@ -296,7 +326,7 @@ Several non-backward compatible breaking API changes to prevent impossible state
 - `~` is now respected in configuration paths by [dadav](https://github.com/dadav) for [Pueue #191](https://github.com/Nukesor/pueue/issues/191).
 - New function `read_last_log_file_lines` for [#196](https://github.com/Nukesor/pueue/issues/196).
 - Add `callback_log_lines` setting for Daemon, specifying the amount of lines returned to the callback. [#196](https://github.com/Nukesor/pueue/issues/196).
-- Support for other `apple` platforms by [althiometer](https://github.com/althiometer)
+- Support for other `apple` platforms.
 - Added backward compatibility tests for v0.12.2 state.
 - Added SignalMessage and Signal enum for a list of all supported Unix signals.
 
@@ -309,7 +339,7 @@ Several non-backward compatible breaking API changes to prevent impossible state
 ### Changed
 
 - Clippy adjustment: Transform `&PathBuf` to `&Path` in function parameter types.
-    This should be reverse-compatible, since `&PathBuf` dereferences to `&Path`.
+  This should be reverse-compatible, since `&PathBuf` dereferences to `&Path`.
 
 ## [0.12.1] - 09-02-2021
 
@@ -337,7 +367,7 @@ Moved into a stand-alone repository for better maintainability.
 ### Changed
 
 - Use `127.0.0.1` instead of `localhost` as default host.
-    This prevents any unforseen consequences if somebody deletes the default `localhost` entry from their `/etc/hosts` file.
+  This prevents any unforseen consequences if somebody deletes the default `localhost` entry from their `/etc/hosts` file.
 
 ## [0.11.0] - 18-01-2020
 
