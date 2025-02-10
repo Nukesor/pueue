@@ -1,6 +1,6 @@
 use crate::internal_prelude::*;
 
-// We allow anyhow in here, as this is a module that'll be strictly used internally.
+// We allow color_eyre in here, as this is a module that'll be strictly used internally.
 // As soon as it's obvious that this is code is intended to be exposed to library users, we have to
 // go ahead and replace any `anyhow` usage by proper error handling via our own Error type.
 use color_eyre::Result;
