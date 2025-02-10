@@ -2,11 +2,13 @@ use std::path::PathBuf;
 
 use chrono::prelude::*;
 use chrono::TimeDelta;
+use clap::builder::PossibleValuesParser;
 use clap::ArgAction;
 use clap::{Parser, ValueEnum, ValueHint};
 use interim::*;
 
 use pueue_lib::network::message::Signal;
+use strum::VariantNames;
 
 use super::commands::WaitTargetStatus;
 
@@ -280,9 +282,15 @@ pub enum SubCommand {
         all: bool,
 
         /// Send a UNIX signal instead of simply killing the process.
+        ///
         /// DISCLAIMER: This bypasses Pueue's process handling logic!
         ///     You might enter weird invalid states, use at your own descretion.
-        #[arg(short, long, ignore_case(true))]
+        ///
+        /// This argument also excepts the integer representation as well as the signal
+        /// short name. E.g. `sigint`, `int`, or `2` are the same.
+        #[arg(short, long, ignore_case(true), value_parser = PossibleValuesParser::new(
+            Signal::VARIANTS
+        ))]
         signal: Option<Signal>,
     },
 

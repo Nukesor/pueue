@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
-use strum::{Display, EnumString};
+use strum::{Display, EnumString, VariantNames};
 
 use crate::state::{Group, State};
 use crate::task::Task;
@@ -224,7 +224,9 @@ impl_into_message!(PauseMessage, Message::Pause);
 ///
 /// This is also needed for usage in clap, since nix's Signal doesn't implement [Display] and
 /// [std::str::FromStr].
-#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize, Display, EnumString)]
+#[derive(
+    PartialEq, Eq, Clone, Debug, Deserialize, Serialize, Display, EnumString, VariantNames,
+)]
 #[strum(ascii_case_insensitive)]
 pub enum Signal {
     #[strum(serialize = "sigint", serialize = "int", serialize = "2")]
