@@ -54,7 +54,6 @@ tracing-subscriber = { version = "0.3.19", features = [
 assert_cmd = "2"
 assert_matches = "1"
 better-panic.workspace = true
-color-eyre.workspace = true
 pretty_assertions.workspace = true
 rstest = "0.24"
 serde_yaml.workspace = true
