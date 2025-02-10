@@ -1,9 +1,8 @@
 // We allow color_eyre in here, as this is a module that'll be strictly used internally.
 // As soon as it's obvious that this is code is intended to be exposed to library users, we have to
 // go ahead and replace any `anyhow` usage by proper error handling via our own Error type.
-use color_eyre::{bail, Result};
+use crate::internal_prelude::*;
 use command_group::GroupChild;
-use tracing::{error, info, warn};
 use winapi::shared::minwindef::FALSE;
 use winapi::shared::ntdef::NULL;
 use winapi::um::errhandlingapi::GetLastError;

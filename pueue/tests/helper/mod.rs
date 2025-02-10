@@ -1,5 +1,5 @@
 //! This module contains helper functions, which are used by both, the client and daemon tests.
-use crate::prelude::*;
+use crate::internal_prelude::*;
 
 use tokio::io::{self, AsyncWriteExt};
 

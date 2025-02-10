@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::internal_prelude::*;
 
 use std::fs::read_to_string;
 

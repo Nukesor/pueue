@@ -58,11 +58,6 @@ pretty_assertions.workspace = true
 rstest = "0.24"
 serde_yaml.workspace = true
 similar-asserts = "1"
-# Make it easy to view log output for select tests.
-# Set log level for tests with RUST_LOG=<level>, use with failed tests or
-# disable test stdout/stderr capture (`cargo test -- --nocapture` / `cargo
-# nextest run --no-capture`)
-tracing-test = "0.2.5"
 
 # We don't need any of the default features for crossterm.
 # However, the windows build needs the windows feature enabled.

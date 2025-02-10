@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::internal_prelude::*;
 
 use std::path::PathBuf;
 
@@ -33,7 +33,6 @@ async fn create_edited_task(shared: &Shared) -> Result<Vec<EditableTask>> {
 
 /// Test if adding a normal task works as intended.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-#[tracing_test::traced_test]
 async fn test_edit_flow() -> Result<()> {
     let daemon = daemon().await?;
     let shared = &daemon.settings.shared;

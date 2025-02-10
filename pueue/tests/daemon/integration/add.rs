@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::internal_prelude::*;
 
 use assert_matches::assert_matches;
 use chrono::Local;
