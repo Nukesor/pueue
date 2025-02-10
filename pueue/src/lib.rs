@@ -11,7 +11,8 @@ pub(crate) mod internal_prelude {
 }
 
 pub(crate) mod errors {
-    pub use color_eyre::eyre::{bail, WrapErr};
+    #[allow(unused_imports)]
+    pub use color_eyre::eyre::{bail, eyre, WrapErr};
     pub use color_eyre::Result;
 }
 

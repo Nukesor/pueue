@@ -45,8 +45,7 @@ use std::{
     time::Duration,
 };
 
-use anyhow::{anyhow, bail, Result};
-use log::{debug, error, info};
+use crate::internal_prelude::*;
 use windows::{
     core::{Free, PCWSTR, PWSTR},
     Win32::{
@@ -233,7 +232,7 @@ pub fn run_service(config_path: Option<PathBuf>, profile: Option<String>) -> Res
             config_path,
             profile,
         })
-        .map_err(|_| anyhow!("static CONFIG set failed"))?;
+        .map_err(|_| eyre!("static CONFIG set failed"))?;
 
     service_dispatcher::start(SERVICE_NAME, ffi_service_main)?;
     Ok(())
@@ -622,7 +621,7 @@ impl Spawner {
 
                 let config = CONFIG
                     .get()
-                    .ok_or_else(|| anyhow!("failed to get CONFIG"))?
+                    .ok_or_else(|| eyre!("failed to get CONFIG"))?
                     .clone();
 
                 if let Some(config) = &config.config_path {

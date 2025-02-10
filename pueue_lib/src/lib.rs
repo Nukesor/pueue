@@ -1,7 +1,8 @@
 #![doc = include_str!("../README.md")]
 
 pub(crate) mod internal_prelude {
-    #[allow(unused_imports)]
+    #![allow(unused_imports)]
+    pub use color_eyre::{eyre::bail, Result};
     pub use tracing::{debug, error, info, trace, warn};
 }
 
