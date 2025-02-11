@@ -1,10 +1,9 @@
 use std::path::PathBuf;
 
-use anyhow::{bail, Context, Result};
 use clap::{CommandFactory, Parser};
 use clap_complete::{generate, generate_to, shells};
-use log::warn;
-use simplelog::{Config, ConfigBuilder, LevelFilter, SimpleLogger, TermLogger, TerminalMode};
+use color_eyre::eyre::{bail, WrapErr};
+use color_eyre::Result;
 
 use pueue_lib::settings::Settings;
 
@@ -24,6 +23,10 @@ async fn main() -> Result<()> {
     // Parse commandline options.
     let opt = CliArguments::parse();
 
+    // Init the logger and set the verbosity level depending on the `-v` flags.
+    pueue::tracing::install_tracing(opt.verbose)?;
+    color_eyre::install()?;
+
     // In case the user requested the generation of shell completion file, create it and exit.
     if let Some(SubCommand::Completions {
         shell,
@@ -33,39 +36,9 @@ async fn main() -> Result<()> {
         return create_shell_completion_file(shell, output_directory);
     }
 
-    // Init the logger and set the verbosity level depending on the `-v` flags.
-    let level = match opt.verbose {
-        0 => LevelFilter::Warn,
-        1 => LevelFilter::Info,
-        2 => LevelFilter::Debug,
-        _ => LevelFilter::Trace,
-    };
-
-    // Try to initialize the logger with the timezone set to the Local time of the machine.
-    let mut builder = ConfigBuilder::new();
-    let logger_config = match builder.set_time_offset_to_local() {
-        Err(_) => {
-            warn!("Failed to determine the local time of this machine. Fallback to UTC.");
-            Config::default()
-        }
-        Ok(builder) => builder.build(),
-    };
-
-    // Init a terminal logger. If this fails for some reason, try fallback to a SimpleLogger
-    if TermLogger::init(
-        level,
-        logger_config.clone(),
-        TerminalMode::Stderr,
-        simplelog::ColorChoice::Auto,
-    )
-    .is_err()
-    {
-        SimpleLogger::init(level, logger_config).unwrap();
-    }
-
     // Try to read settings from the configuration file.
     let (mut settings, config_found) =
-        Settings::read(&opt.config).context("Failed to read configuration.")?;
+        Settings::read(&opt.config).wrap_err("Failed to read configuration.")?;
 
     // Load any requested profile.
     if let Some(profile) = &opt.profile {

@@ -1,5 +1,6 @@
 #![allow(bindings_with_variant_name)]
-use anyhow::Result;
+use crate::internal_prelude::*;
+
 use pest::iterators::Pair;
 
 use super::{QueryResult, Rule};

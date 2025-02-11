@@ -3,6 +3,7 @@
 //! The submodules of this module represent the different implementations for
 //! each supported platform.
 //! Depending on the target, the respective platform is read and loaded into this scope.
+use crate::internal_prelude::*;
 
 use std::{collections::HashMap, process::Command};
 
@@ -92,12 +93,14 @@ pub fn compile_shell_command(settings: &Settings, command: &str) -> Command {
 
     // Inject custom environment variables.
     if !settings.daemon.env_vars.is_empty() {
-        log::info!(
+        info!(
             "Inject environment variables: {:?}",
             &settings.daemon.env_vars
         );
         command.envs(&settings.daemon.env_vars);
     }
+
+    debug!(message = "Prepared command before spawn", ?command);
 
     command
 }

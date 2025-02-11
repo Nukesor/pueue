@@ -1,8 +1,8 @@
+use crate::internal_prelude::*;
+
 use std::path::PathBuf;
 
-use anyhow::{bail, Result};
 use assert_matches::assert_matches;
-use test_log::test;
 
 use pueue_lib::network::message::*;
 use pueue_lib::settings::Shared;
@@ -32,7 +32,7 @@ async fn create_edited_task(shared: &Shared) -> Result<Vec<EditableTask>> {
 }
 
 /// Test if adding a normal task works as intended.
-#[test(tokio::test(flavor = "multi_thread", worker_threads = 2))]
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn test_edit_flow() -> Result<()> {
     let daemon = daemon().await?;
     let shared = &daemon.settings.shared;

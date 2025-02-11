@@ -1,5 +1,4 @@
-use anyhow::Result;
-use log::{debug, error};
+use crate::internal_prelude::*;
 
 use pueue_lib::network::message::{Shutdown, TaskSelection};
 use pueue_lib::process_helper::{send_signal_to_child, ProcessAction};
@@ -23,7 +22,6 @@ macro_rules! ok_or_shutdown {
     ($settings:expr, $state:expr, $result:expr) => {
         match $result {
             Err(err) => {
-                use log::error;
                 use pueue_lib::network::message::Shutdown;
                 use $crate::daemon::process_handler::initiate_shutdown;
                 error!("Initializing graceful shutdown. Encountered error in TaskHandler: {err}");

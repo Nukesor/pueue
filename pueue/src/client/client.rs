@@ -1,11 +1,11 @@
+use crate::internal_prelude::*;
+
 use std::env::{current_dir, vars};
 use std::io::{self, stdout, Write};
 use std::{borrow::Cow, collections::HashMap};
 
-use anyhow::{bail, Context, Result};
 use clap::crate_version;
 use crossterm::tty::IsTty;
-use log::{error, warn};
 
 use pueue_lib::format::format_datetime;
 use pueue_lib::network::message::*;
@@ -32,6 +32,17 @@ pub struct Client {
     settings: Settings,
     style: OutputStyle,
     stream: GenericStream,
+}
+
+impl std::fmt::Debug for Client {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Client")
+            .field("subcommand", &self.subcommand)
+            .field("settings", &self.settings)
+            .field("style", &self.style)
+            .field("stream", &"GenericStream<not_debuggable>")
+            .finish()
+    }
 }
 
 /// This is a small helper which either returns a given group or the default group.
@@ -150,6 +161,8 @@ impl Client {
     ///
     /// The command handling is split into "simple" and "complex" commands.
     pub async fn start(&mut self) -> Result<()> {
+        trace!(message = "Starting client", client = ?self);
+
         // Return early, if the command has already been handled.
         if self.handle_complex_command(self.subcommand.clone()).await? {
             return Ok(());
@@ -191,6 +204,8 @@ impl Client {
                 follow,
             } => {
                 // Either take the user-specified path or default to the current working directory.
+                // This will give errors if connecting over TCP/TLS to a remote host that doesn't
+                // have the same directory structure as the client
                 let path = working_directory
                     .as_ref()
                     .map(|path| Ok(path.clone()))

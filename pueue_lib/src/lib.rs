@@ -1,5 +1,11 @@
 #![doc = include_str!("../README.md")]
 
+pub(crate) mod internal_prelude {
+    #![allow(unused_imports)]
+    pub use color_eyre::{eyre::bail, Result};
+    pub use tracing::{debug, error, info, trace, warn};
+}
+
 /// Shared module for internal logic!
 /// Contains helper for command aliasing.
 pub mod aliasing;
