@@ -1,23 +1,19 @@
-use std::{
-    borrow::Cow,
-    collections::HashMap,
-    env::{current_dir, vars},
-    io::{self, stdout, Write},
-};
+use std::io::{self, stdout, Write};
 
 use clap::crate_version;
 use crossterm::tty::IsTty;
 use pueue_lib::{
-    format::format_datetime,
     network::{message::*, protocol::*, secret::read_shared_secret},
     settings::Settings,
     state::PUEUE_DEFAULT_GROUP,
+    Error,
 };
+use serde::Serialize;
 
+use super::commands::{add_task, edit, format_state, get_state, local_follow, restart, wait};
 use crate::{
     client::{
         cli::{CliArguments, ColorChoice, EnvCommand, GroupCommand, SubCommand},
-        commands::*,
         display::*,
     },
     internal_prelude::*,
@@ -31,10 +27,10 @@ use crate::{
 /// communication pattern, such as the `follow` command, which can read local files,
 /// or the `edit` command, which needs to open an editor.
 pub struct Client {
-    subcommand: SubCommand,
-    settings: Settings,
-    style: OutputStyle,
-    stream: GenericStream,
+    pub subcommand: SubCommand,
+    pub settings: Settings,
+    pub style: OutputStyle,
+    pub stream: GenericStream,
 }
 
 impl std::fmt::Debug for Client {
@@ -49,7 +45,7 @@ impl std::fmt::Debug for Client {
 }
 
 /// This is a small helper which either returns a given group or the default group.
-pub fn group_or_default(group: &Option<String>) -> String {
+fn group_or_default(group: &Option<String>) -> String {
     group
         .clone()
         .unwrap_or_else(|| PUEUE_DEFAULT_GROUP.to_string())
@@ -158,6 +154,25 @@ impl Client {
         })
     }
 
+    /// Convenience function to get a mutable handle on the client's stream.
+    pub fn stream(&mut self) -> &mut GenericStream {
+        &mut self.stream
+    }
+
+    /// Convenience wrapper around [`pueue_lib::send_request`] to directly send [`Request`]s.
+    pub async fn send_request<T>(&mut self, message: T) -> Result<(), Error>
+    where
+        T: Into<Request>,
+        T: Serialize + std::fmt::Debug,
+    {
+        send_message::<_, Request>(message, &mut self.stream).await
+    }
+
+    /// Convenience wrapper that wraps `receive_message` for [`Response`]s
+    pub async fn receive_response(&mut self) -> Result<Response, Error> {
+        receive_message::<Response>(&mut self.stream).await
+    }
+
     /// This is the function where the actual communication and logic starts.
     /// At this point everything is initialized, the connection is up and
     /// we can finally start doing stuff.
@@ -193,7 +208,7 @@ impl Client {
         // This match handles all "complex" commands.
         match subcommand {
             SubCommand::Add {
-                mut command,
+                command,
                 working_directory,
                 escape,
                 start_immediately,
@@ -206,109 +221,28 @@ impl Client {
                 print_task_id,
                 follow,
             } => {
-                // Either take the user-specified path or default to the current working directory.
-                // This will give errors if connecting over TCP/TLS to a remote host that doesn't
-                // have the same directory structure as the client
-                let path = working_directory
-                    .as_ref()
-                    .map(|path| Ok(path.clone()))
-                    .unwrap_or_else(current_dir)?;
-
-                // The user can request to escape any special shell characters in all parameter
-                // strings before we concatenated them to a single string.
-                if escape {
-                    command = command
-                        .iter()
-                        .map(|parameter| shell_escape::escape(Cow::from(parameter)).into_owned())
-                        .collect();
-                }
-
-                // Add the message to the daemon.
-                let message = Request::Add(AddMessage {
-                    command: command.join(" "),
-                    path,
-                    // Catch the current environment for later injection into the task's process.
-                    envs: HashMap::from_iter(vars()),
+                add_task(
+                    self,
+                    command,
+                    working_directory,
+                    escape,
                     start_immediately,
                     stashed,
-                    group: group_or_default(&group),
-                    enqueue_at: delay_until,
+                    group,
+                    delay_until,
                     dependencies,
                     priority,
                     label,
-                });
-                send_request(message, &mut self.stream).await?;
-
-                // Get the response from the daemon.
-                let response = receive_response(&mut self.stream).await?;
-
-                // Make sure the task has been added, otherwise handle the response and return.
-                let Response::AddedTask(AddedTaskMessage {
-                    task_id,
-                    enqueue_at,
-                    group_is_paused,
-                }) = response
-                else {
-                    self.handle_response(response)?;
-                    return Ok(true);
-                };
-
-                let mut output = if print_task_id {
-                    // Only print the task id if that was requested.
-                    format!("{task_id}")
-                } else if let Some(enqueue_at) = enqueue_at {
-                    let enqueue_at = format_datetime(&self.settings, &enqueue_at);
-                    format!("New task added (id {task_id}). It will be enqueued at {enqueue_at}")
-                } else {
-                    format!("New task added (id {task_id}).")
-                };
-
-                // Also notify the user if the task's group is paused
-                if !print_task_id && group_is_paused && !follow {
-                    output.push_str("\nThe group of this task is currently paused!");
-                }
-
-                // If we were to follow the task immediately, print the task info to `stderr` so
-                // that the actual log output may be piped into another command.
-                if follow {
-                    eprintln!("{output}");
-                } else {
-                    println!("{output}");
-                }
-
-                if follow {
-                    // If we're supposed to read the log files from the local system, we don't have
-                    // to do any communication with the daemon.
-                    // Thereby we handle this in a separate function.
-                    if self.settings.client.read_local_logs {
-                        local_follow(
-                            &mut self.stream,
-                            &self.settings.shared.pueue_directory(),
-                            Some(task_id),
-                            None,
-                        )
-                        .await?;
-                        return Ok(true);
-                    } else {
-                        // In case we need to follow the daemon, go ahead and overwrite
-                        // `self.subcommand` with a `Follow` subcommand.
-                        // Afterwards, return an `Ok(false)`, which signals the client that it
-                        // should continue processing `self.subcommand`.
-                        // This is pretty hacky. TODO: Refactor the whole client at some point.
-                        self.subcommand = SubCommand::Follow {
-                            task_id: Some(task_id),
-                            lines: None,
-                        };
-                        return Ok(false);
-                    }
-                }
-
-                Ok(true)
+                    print_task_id,
+                    follow,
+                )
+                .await?;
+                Ok(false)
             }
             SubCommand::Reset { force, groups } => {
                 // Get the current state and check if there're any running tasks.
                 // If there are, ask the user if they really want to reset the state.
-                let state = get_state(&mut self.stream).await?;
+                let state = get_state(self).await?;
 
                 // Get the groups that should be reset.
                 let groups: Vec<String> = if groups.is_empty() {
@@ -332,12 +266,11 @@ impl Client {
                 // Now that we got the user's consent, we return `false` and let the
                 // `handle_simple_command` function process the subcommand as usual to send
                 // a `reset` message to the daemon.
-                Ok(false)
+                Ok(true)
             }
 
             SubCommand::Edit { task_ids } => {
-                let message = edit(&mut self.stream, &self.settings, task_ids).await?;
-                self.handle_response(message)?;
+                edit(self, task_ids).await?;
                 Ok(true)
             }
             SubCommand::Wait {
@@ -348,7 +281,7 @@ impl Client {
                 status,
             } => {
                 let selection = selection_from_params(all, group, task_ids);
-                wait(&mut self.stream, &self.style, selection, quiet, status).await?;
+                wait(self, selection, quiet, status).await?;
                 Ok(true)
             }
             SubCommand::Restart {
@@ -361,17 +294,15 @@ impl Client {
                 not_in_place,
                 edit,
             } => {
-                // `not_in_place` superseeds both other configs
-                let in_place = (self.settings.client.restart_in_place || in_place) && !not_in_place;
                 restart(
-                    &mut self.stream,
-                    &self.settings,
+                    self,
                     task_ids,
                     all_failed,
                     failed_in_group,
                     start_immediately,
                     stashed,
                     in_place,
+                    not_in_place,
                     edit,
                 )
                 .await?;
@@ -383,7 +314,7 @@ impl Client {
                 // Thereby we handle this in a separate function.
                 if self.settings.client.read_local_logs {
                     local_follow(
-                        &mut self.stream,
+                        self,
                         &self.settings.shared.pueue_directory(),
                         task_id,
                         lines,
@@ -395,13 +326,7 @@ impl Client {
                 Ok(false)
             }
             SubCommand::FormatStatus { .. } => {
-                format_state(
-                    &mut self.stream,
-                    &self.subcommand,
-                    &self.style,
-                    &self.settings,
-                )
-                .await?;
+                format_state(self).await?;
                 Ok(true)
             }
             _ => Ok(false),

@@ -1,9 +1,7 @@
 use std::path::Path;
 
-use pueue_lib::network::protocol::GenericStream;
-
 use crate::{
-    client::{commands::get_state, display::follow_local_task_logs},
+    client::{client::Client, commands::get_state, display::follow_local_task_logs},
     internal_prelude::*,
 };
 
@@ -15,7 +13,7 @@ use crate::{
 /// single running task. If that's the case, we default to it.
 /// If there are multiple tasks, the user has to specify which task they want to follow.
 pub async fn local_follow(
-    stream: &mut GenericStream,
+    client: &mut Client,
     pueue_directory: &Path,
     task_id: Option<usize>,
     lines: Option<usize>,
@@ -25,7 +23,7 @@ pub async fn local_follow(
         None => {
             // The user didn't provide a task id.
             // Check whether we can find a single running task to follow.
-            let state = get_state(stream).await?;
+            let state = get_state(client).await?;
             let running_ids: Vec<_> = state
                 .tasks
                 .iter()
@@ -51,7 +49,7 @@ pub async fn local_follow(
         }
     };
 
-    follow_local_task_logs(stream, pueue_directory, task_id, lines).await?;
+    follow_local_task_logs(client, pueue_directory, task_id, lines).await?;
 
     Ok(())
 }

@@ -4,13 +4,13 @@ use std::{
     time::Duration,
 };
 
-use pueue_lib::{
-    log::{get_log_file_handle, get_log_path, seek_to_last_lines},
-    network::protocol::GenericStream,
-};
+use pueue_lib::log::{get_log_file_handle, get_log_path, seek_to_last_lines};
 use tokio::time::sleep;
 
-use crate::{client::commands::get_task, internal_prelude::*};
+use crate::{
+    client::{client::Client, commands::get_task},
+    internal_prelude::*,
+};
 
 /// Follow the log output of running task.
 ///
@@ -20,7 +20,7 @@ use crate::{client::commands::get_task, internal_prelude::*};
 /// - Single running task: Follow the output of that task.
 /// - Multiple running tasks: Print out the list of possible tasks to follow.
 pub async fn follow_local_task_logs(
-    stream: &mut GenericStream,
+    client: &mut Client,
     pueue_directory: &Path,
     task_id: usize,
     lines: Option<usize>,
@@ -28,7 +28,7 @@ pub async fn follow_local_task_logs(
     // It might be that the task is not yet running.
     // Ensure that it exists and is started.
     loop {
-        let Some(task) = get_task(stream, task_id).await? else {
+        let Some(task) = get_task(client, task_id).await? else {
             eprintln!("Pueue: The task to be followed doesn't exist.");
             std::process::exit(1);
         };
@@ -93,7 +93,7 @@ pub async fn follow_local_task_logs(
         //
         // In case either is not, exit.
         if (last_check % task_check_interval) == 0 {
-            let Some(task) = get_task(stream, task_id).await? else {
+            let Some(task) = get_task(client, task_id).await? else {
                 eprintln!("Pueue: The followed task has been removed.");
                 std::process::exit(1);
             };

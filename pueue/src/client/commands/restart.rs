@@ -1,13 +1,15 @@
 use chrono::Local;
 use pueue_lib::{
-    network::{message::*, protocol::*},
-    settings::Settings,
+    network::message::*,
     state::FilteredTasks,
     task::{Task, TaskResult, TaskStatus},
 };
 
 use crate::{
-    client::commands::{edit::edit_tasks, get_state},
+    client::{
+        client::Client,
+        commands::{edit::edit_tasks, get_state},
+    },
     internal_prelude::*,
 };
 
@@ -18,16 +20,19 @@ use crate::{
 /// It's also necessary to get all failed tasks, in case the user specified the `--all-failed` flag.
 #[allow(clippy::too_many_arguments)]
 pub async fn restart(
-    stream: &mut GenericStream,
-    settings: &Settings,
+    client: &mut Client,
     task_ids: Vec<usize>,
     all_failed: bool,
     failed_in_group: Option<String>,
     start_immediately: bool,
     stashed: bool,
     in_place: bool,
+    not_in_place: bool,
     edit: bool,
 ) -> Result<()> {
+    // `not_in_place` superseeds both other configs
+    let in_place = (client.settings.client.restart_in_place || in_place) && !not_in_place;
+
     let new_status = if stashed {
         TaskStatus::Stashed { enqueue_at: None }
     } else {
@@ -36,7 +41,7 @@ pub async fn restart(
         }
     };
 
-    let state = get_state(stream).await?;
+    let state = get_state(client).await?;
 
     // Filter to get done tasks
     let done_filter = |task: &Task| task.is_done();
@@ -102,7 +107,7 @@ pub async fn restart(
     // If the tasks should be edited, edit them in one go.
     if edit {
         let mut editable_tasks: Vec<EditableTask> = tasks.iter().map(EditableTask::from).collect();
-        editable_tasks = edit_tasks(settings, editable_tasks)?;
+        editable_tasks = edit_tasks(&client.settings, editable_tasks)?;
 
         // Now merge the edited properties back into the tasks.
         // We simply zip the task and editable task vectors, as we know that they have the same
@@ -148,16 +153,16 @@ pub async fn restart(
         };
 
         // Send the cloned task to the daemon and abort on any failure messages.
-        send_request(add_task_message, stream).await?;
-        if let Response::Failure(message) = receive_response(stream).await? {
+        client.send_request(add_task_message).await?;
+        if let Response::Failure(message) = client.receive_response().await? {
             bail!(message);
         };
     }
 
     // Send the singular in-place restart message to the daemon.
     if in_place {
-        send_request(restart_message, stream).await?;
-        if let Response::Failure(message) = receive_response(stream).await? {
+        client.send_request(restart_message).await?;
+        if let Response::Failure(message) = client.receive_response().await? {
             bail!(message);
         };
     }

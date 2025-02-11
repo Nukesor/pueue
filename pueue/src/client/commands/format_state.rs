@@ -3,26 +3,17 @@ use std::{
     io::{self, prelude::*},
 };
 
-use pueue_lib::{network::protocol::GenericStream, settings::Settings, task::Task};
+use pueue_lib::task::Task;
 
 use crate::{
-    client::{
-        cli::SubCommand,
-        commands::get_state,
-        display::{print_state, OutputStyle},
-    },
+    client::{client::Client, commands::get_state, display::print_state},
     internal_prelude::*,
 };
 
 /// This function tries to read a map or list of JSON serialized [Task]s from `stdin`.
 /// The tasks will then get deserialized and displayed as a normal `status` command.
 /// The current group information is pulled from the daemon in a new `status` call.
-pub async fn format_state(
-    stream: &mut GenericStream,
-    command: &SubCommand,
-    style: &OutputStyle,
-    settings: &Settings,
-) -> Result<()> {
+pub async fn format_state(client: &mut Client) -> Result<()> {
     // Read the raw input to a buffer
     let mut stdin = io::stdin();
     let mut buffer = Vec::new();
@@ -43,11 +34,17 @@ pub async fn format_state(
         serde_json::from_str(&json).context("Failed to deserialize from JSON input.")?
     };
 
-    let state = get_state(stream)
+    let state = get_state(client)
         .await
         .context("Failed to get the current state from daemon")?;
 
-    let output = print_state(state, tasks, command, style, settings)?;
+    let output = print_state(
+        state,
+        tasks,
+        &client.subcommand,
+        &client.style,
+        &client.settings,
+    )?;
     print!("{output}");
 
     Ok(())

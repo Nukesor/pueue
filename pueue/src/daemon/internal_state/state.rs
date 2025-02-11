@@ -10,15 +10,13 @@ use chrono::Local;
 use pueue_lib::{
     error::Error,
     network::message::request::Shutdown,
-    state::FilteredTasks,
+    state::{FilteredTasks, PUEUE_DEFAULT_GROUP},
     task::{Task, TaskStatus},
     Group, GroupStatus, Settings, State, TaskResult,
 };
 use serde::{Deserialize, Serialize};
 
 use crate::{daemon::internal_state::children::Children, internal_prelude::*};
-
-pub const PUEUE_DEFAULT_GROUP: &str = "default";
 
 pub type SharedState = Arc<Mutex<InternalState>>;
 pub type LockedState<'a> = MutexGuard<'a, InternalState>;
