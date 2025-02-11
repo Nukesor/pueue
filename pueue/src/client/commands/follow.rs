@@ -14,7 +14,7 @@ use crate::{
     client::{
         client::Client,
         commands::{get_state, get_task},
-        display::print_error,
+        display_helper::print_error,
     },
     internal_prelude::*,
 };

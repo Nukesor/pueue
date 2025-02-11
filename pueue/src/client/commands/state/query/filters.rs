@@ -3,10 +3,8 @@ use chrono::{DateTime, Local, NaiveDate, NaiveDateTime, NaiveTime, TimeDelta};
 use pest::iterators::Pair;
 use pueue_lib::task::{Task, TaskResult, TaskStatus};
 
-use crate::{
-    client::query::{QueryResult, Rule},
-    internal_prelude::*,
-};
+use super::{QueryResult, Rule};
+use crate::internal_prelude::*;
 
 enum DateOrDateTime {
     DateTime(DateTime<Local>),

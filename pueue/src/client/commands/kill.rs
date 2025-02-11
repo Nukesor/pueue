@@ -1,10 +1,7 @@
 use pueue_lib::network::message::*;
 
-use super::{handle_response, selection_from_params};
-use crate::{
-    client::client::{handle_user_confirmation, Client},
-    internal_prelude::*,
-};
+use super::{handle_response, handle_user_confirmation, selection_from_params};
+use crate::{client::client::Client, internal_prelude::*};
 
 /// Kill some running or paused task.
 ///

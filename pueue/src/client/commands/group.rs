@@ -3,9 +3,7 @@ use pueue_lib::network::message::*;
 use super::handle_response;
 use crate::{
     client::{
-        cli::GroupCommand,
-        client::Client,
-        display::{group::get_group_headline, OutputStyle},
+        cli::GroupCommand, client::Client, display_helper::get_group_headline, style::OutputStyle,
     },
     internal_prelude::*,
 };

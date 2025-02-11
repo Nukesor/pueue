@@ -8,7 +8,8 @@ use color_eyre::{
 };
 use pueue::client::{
     cli::{CliArguments, Shell, SubCommand},
-    client::{handle_command, Client},
+    client::Client,
+    handle_command,
 };
 use pueue_lib::settings::Settings;
 

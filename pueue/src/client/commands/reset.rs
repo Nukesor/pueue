@@ -1,11 +1,8 @@
 use pueue_lib::network::message::*;
 
-use super::handle_response;
+use super::{handle_response, handle_user_confirmation};
 use crate::{
-    client::{
-        client::{handle_user_confirmation, Client},
-        commands::get_state,
-    },
+    client::{client::Client, commands::get_state},
     internal_prelude::*,
 };
 

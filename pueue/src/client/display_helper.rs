@@ -1,7 +1,20 @@
+//! This module contains small helper functions that're useful for printing or displaying structured
+//! information. Most of these functions are shared between multiple commands.
 use crossterm::style::{Attribute, Color};
 use pueue_lib::state::{Group, GroupStatus};
 
-use super::OutputStyle;
+use super::style::OutputStyle;
+
+/// Used to style any generic success message from the daemon.
+pub fn print_success(_style: &OutputStyle, message: &str) {
+    println!("{message}");
+}
+
+/// Used to style any generic failure message from the daemon.
+pub fn print_error(style: &OutputStyle, message: &str) {
+    let styled = style.style_text(message, Some(Color::Red), None);
+    eprintln!("{styled}");
+}
 
 /// Return some nicely formatted info about a given group.
 /// This is also used as a headline that's displayed above group's task tables.

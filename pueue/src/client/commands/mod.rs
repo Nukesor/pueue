@@ -5,6 +5,8 @@
 //! daemon, open some files on the filesystem, edit files and so on.
 //! All commands that cannot be simply handled by handling requests or using `pueue_lib`.
 
+use std::io::{stdin, stdout, Write};
+
 use pueue_lib::{
     network::message::{Request, Response, TaskSelection},
     state::{State, PUEUE_DEFAULT_GROUP},
@@ -35,31 +37,34 @@ mod state;
 mod switch;
 mod wait;
 
-pub use add::add_task;
-pub use clean::clean;
-pub use edit::edit;
-pub use enqueue::enqueue;
-pub use env::env;
-pub use follow::follow;
-pub use group::group;
-pub use kill::kill;
-pub use log::print_logs;
-pub use parallel::parallel;
-pub use pause::pause;
-pub use remove::remove;
-pub use reset::reset;
-pub use restart::restart;
-pub use send::send;
-pub use shutdown::shutdown;
-pub use start::start;
-pub use stash::stash;
-pub use state::{format_state, state};
-pub use switch::switch;
-pub use wait::{wait, WaitTargetStatus};
+use add::add_task;
+use clean::clean;
+use edit::edit;
+use enqueue::enqueue;
+use env::env;
+use follow::follow;
+use group::group;
+use kill::kill;
+use log::print_logs;
+use parallel::parallel;
+use pause::pause;
+use remove::remove;
+use reset::reset;
+use restart::restart;
+use send::send;
+use shutdown::shutdown;
+use start::start;
+use stash::stash;
+use state::{format_state, state};
+use switch::switch;
+use wait::wait;
+pub use wait::WaitTargetStatus;
 
 use super::{
+    cli::SubCommand,
     client::Client,
-    display::{print_error, print_success, OutputStyle},
+    display_helper::{print_error, print_success},
+    style::OutputStyle,
 };
 
 /// This is a small helper which determines a task selection depending on
@@ -137,6 +142,175 @@ fn handle_response(style: &OutputStyle, response: Response) -> Result<()> {
         Response::Close => return Ok(()),
         _ => error!("Received unhandled response message"),
     };
+
+    Ok(())
+}
+
+/// Handle any command.
+///
+/// This is the core entry point of the pueue client.
+/// Based on the subcommand, the respective function in the [`super::commands`] module is
+/// called.
+pub async fn handle_command(client: &mut Client, subcommand: SubCommand) -> Result<()> {
+    trace!(message = "Handling command", subcommand = ?subcommand);
+
+    match subcommand {
+        SubCommand::Add {
+            command,
+            working_directory,
+            escape,
+            start_immediately,
+            stashed,
+            group,
+            delay_until,
+            dependencies,
+            priority,
+            label,
+            print_task_id,
+            follow,
+        } => {
+            add_task(
+                client,
+                command,
+                working_directory,
+                escape,
+                start_immediately,
+                stashed,
+                group,
+                delay_until,
+                dependencies,
+                priority,
+                label,
+                print_task_id,
+                follow,
+            )
+            .await
+        }
+        SubCommand::Clean {
+            successful_only,
+            group,
+        } => clean(client, group, successful_only).await,
+        SubCommand::Edit { task_ids } => edit(client, task_ids).await,
+        SubCommand::Enqueue {
+            task_ids,
+            group,
+            all,
+            delay_until,
+        } => enqueue(client, task_ids, group, all, delay_until).await,
+        SubCommand::Env { cmd } => env(client, cmd).await,
+        SubCommand::Follow { task_id, lines } => follow(client, task_id, lines).await,
+        SubCommand::FormatStatus { group } => format_state(client, group).await,
+        SubCommand::Group { cmd, json } => group(client, cmd, json).await,
+        SubCommand::Kill {
+            task_ids,
+            group,
+            all,
+            signal,
+        } => kill(client, task_ids, group, all, signal).await,
+        SubCommand::Log {
+            task_ids,
+            group,
+            all,
+            json,
+            lines,
+            full,
+        } => print_logs(client, task_ids, group, all, json, lines, full).await,
+        SubCommand::Parallel {
+            parallel_tasks,
+            group,
+        } => parallel(client, parallel_tasks, group).await,
+        SubCommand::Pause {
+            task_ids,
+            group,
+            all,
+            wait,
+        } => pause(client, task_ids, group, all, wait).await,
+        SubCommand::Remove { task_ids } => remove(client, task_ids).await,
+        SubCommand::Reset { force, groups } => reset(client, force, groups).await,
+        SubCommand::Restart {
+            task_ids,
+            all_failed,
+            failed_in_group,
+            start_immediately,
+            stashed,
+            in_place,
+            not_in_place,
+            edit,
+        } => {
+            restart(
+                client,
+                task_ids,
+                all_failed,
+                failed_in_group,
+                start_immediately,
+                stashed,
+                in_place,
+                not_in_place,
+                edit,
+            )
+            .await
+        }
+        SubCommand::Send { task_id, input } => send(client, task_id, input).await,
+        SubCommand::Shutdown => shutdown(client).await,
+        SubCommand::Stash {
+            task_ids,
+            group,
+            all,
+            delay_until,
+        } => stash(client, task_ids, group, all, delay_until).await,
+        SubCommand::Start {
+            task_ids,
+            group,
+            all,
+        } => start(client, task_ids, group, all).await,
+        SubCommand::Status { query, json, group } => state(client, query, json, group).await,
+        SubCommand::Switch {
+            task_id_1,
+            task_id_2,
+        } => switch(client, task_id_1, task_id_2).await,
+        SubCommand::Wait {
+            task_ids,
+            group,
+            all,
+            quiet,
+            status,
+        } => wait(client, task_ids, group, all, quiet, status).await,
+        _ => bail!("unhandled WIP"),
+    }
+}
+
+/// Prints a warning and prompt for a given action and tasks.
+/// Returns `Ok(())` if the action was confirmed.
+pub fn handle_user_confirmation(action: &str, task_ids: &[usize]) -> Result<()> {
+    // printing warning and prompt
+    let task_ids = task_ids
+        .iter()
+        .map(|t| format!("task{t}"))
+        .collect::<Vec<String>>()
+        .join(", ");
+    eprintln!("You are trying to {action}: {task_ids}",);
+
+    let mut input = String::new();
+
+    loop {
+        print!("Do you want to continue [Y/n]: ");
+        stdout().flush()?;
+        input.clear();
+        stdin().read_line(&mut input)?;
+
+        match input.chars().next().unwrap() {
+            'N' | 'n' => {
+                eprintln!("Aborted!");
+                std::process::exit(1);
+            }
+            '\n' | 'Y' | 'y' => {
+                break;
+            }
+            _ => {
+                continue;
+            }
+        }
+    }
 
     Ok(())
 }

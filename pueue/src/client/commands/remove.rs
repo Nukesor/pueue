@@ -1,10 +1,7 @@
 use pueue_lib::network::message::*;
 
-use super::handle_response;
-use crate::{
-    client::client::{handle_user_confirmation, Client},
-    internal_prelude::*,
-};
+use super::{handle_response, handle_user_confirmation};
+use crate::{client::client::Client, internal_prelude::*};
 
 /// Tell the daemon to remove some tasks.
 pub async fn remove(client: &mut Client, task_ids: Vec<usize>) -> Result<()> {

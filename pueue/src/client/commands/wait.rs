@@ -15,7 +15,7 @@ use tokio::time::sleep;
 
 use super::selection_from_params;
 use crate::{
-    client::{client::Client, commands::get_state, display::OutputStyle},
+    client::{client::Client, commands::get_state, style::OutputStyle},
     internal_prelude::*,
 };
 

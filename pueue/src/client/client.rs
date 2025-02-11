@@ -1,4 +1,4 @@
-use std::io::{self, stdout, Write};
+use std::io::stdout;
 
 use clap::crate_version;
 use crossterm::tty::IsTty;
@@ -9,14 +9,8 @@ use pueue_lib::{
 };
 use serde::Serialize;
 
-use super::commands::*;
-use crate::{
-    client::{
-        cli::{ColorChoice, SubCommand},
-        display::*,
-    },
-    internal_prelude::*,
-};
+use super::style::OutputStyle;
+use crate::{client::cli::ColorChoice, internal_prelude::*};
 
 /// This struct contains the base logic for the client.
 /// The client is responsible for connecting to the daemon, sending instructions
@@ -29,6 +23,7 @@ pub struct Client {
     pub settings: Settings,
     pub style: OutputStyle,
     pub stream: GenericStream,
+    pub daemon_version: String,
 }
 
 impl std::fmt::Debug for Client {
@@ -47,6 +42,9 @@ impl Client {
     ///     - Connect to the daemon.
     ///     - Authorize via secret.
     ///     - Check versions incompatibilities.
+    ///
+    /// If the `show_version_warning` flag is `true` and the daemon has a different version than
+    /// the client, a warning will be logged.
     pub async fn new(
         settings: Settings,
         show_version_warning: bool,
@@ -72,7 +70,7 @@ impl Client {
         if version_bytes.is_empty() {
             bail!("Daemon went away after sending secret. Did you use the correct secret?")
         }
-        let version = match String::from_utf8(version_bytes) {
+        let daemon_version = match String::from_utf8(version_bytes) {
             Ok(version) => version,
             Err(_) => {
                 bail!("Daemon sent invalid UTF-8. Did you use the correct secret?")
@@ -81,8 +79,8 @@ impl Client {
 
         // Info if the daemon runs a different version.
         // Backward compatibility should work, but some features might not work as expected.
-        if version != crate_version!() && show_version_warning {
-            warn!("Different daemon version detected '{version}'. Consider restarting the daemon.");
+        if daemon_version != crate_version!() && show_version_warning {
+            warn!("Different daemon version detected '{daemon_version}'. Consider restarting the daemon.");
         }
 
         // Determine whether we should color/style our output or not.
@@ -98,6 +96,7 @@ impl Client {
             settings,
             style,
             stream,
+            daemon_version,
         })
     }
 
@@ -119,173 +118,8 @@ impl Client {
     pub async fn receive_response(&mut self) -> Result<Response, Error> {
         receive_message::<Response>(&mut self.stream).await
     }
-}
 
-/// Handle all commands.
-///
-/// This is the core entry point of the pueue client.
-/// Based on the subcommand, the respective function in the [`super::commands`] module is
-/// called.
-pub async fn handle_command(client: &mut Client, subcommand: SubCommand) -> Result<()> {
-    trace!(message = "Handling command", subcommand = ?subcommand);
-
-    match subcommand {
-        SubCommand::Add {
-            command,
-            working_directory,
-            escape,
-            start_immediately,
-            stashed,
-            group,
-            delay_until,
-            dependencies,
-            priority,
-            label,
-            print_task_id,
-            follow,
-        } => {
-            add_task(
-                client,
-                command,
-                working_directory,
-                escape,
-                start_immediately,
-                stashed,
-                group,
-                delay_until,
-                dependencies,
-                priority,
-                label,
-                print_task_id,
-                follow,
-            )
-            .await
-        }
-        SubCommand::Clean {
-            successful_only,
-            group,
-        } => clean(client, group, successful_only).await,
-        SubCommand::Edit { task_ids } => edit(client, task_ids).await,
-        SubCommand::Enqueue {
-            task_ids,
-            group,
-            all,
-            delay_until,
-        } => enqueue(client, task_ids, group, all, delay_until).await,
-        SubCommand::Env { cmd } => env(client, cmd).await,
-        SubCommand::Follow { task_id, lines } => follow(client, task_id, lines).await,
-        SubCommand::FormatStatus { group } => format_state(client, group).await,
-        SubCommand::Group { cmd, json } => group(client, cmd, json).await,
-        SubCommand::Kill {
-            task_ids,
-            group,
-            all,
-            signal,
-        } => kill(client, task_ids, group, all, signal).await,
-        SubCommand::Log {
-            task_ids,
-            group,
-            all,
-            json,
-            lines,
-            full,
-        } => print_logs(client, task_ids, group, all, json, lines, full).await,
-        SubCommand::Parallel {
-            parallel_tasks,
-            group,
-        } => parallel(client, parallel_tasks, group).await,
-        SubCommand::Pause {
-            task_ids,
-            group,
-            all,
-            wait,
-        } => pause(client, task_ids, group, all, wait).await,
-        SubCommand::Remove { task_ids } => remove(client, task_ids).await,
-        SubCommand::Reset { force, groups } => reset(client, force, groups).await,
-        SubCommand::Restart {
-            task_ids,
-            all_failed,
-            failed_in_group,
-            start_immediately,
-            stashed,
-            in_place,
-            not_in_place,
-            edit,
-        } => {
-            restart(
-                client,
-                task_ids,
-                all_failed,
-                failed_in_group,
-                start_immediately,
-                stashed,
-                in_place,
-                not_in_place,
-                edit,
-            )
-            .await
-        }
-        SubCommand::Send { task_id, input } => send(client, task_id, input).await,
-        SubCommand::Shutdown => shutdown(client).await,
-        SubCommand::Stash {
-            task_ids,
-            group,
-            all,
-            delay_until,
-        } => stash(client, task_ids, group, all, delay_until).await,
-        SubCommand::Start {
-            task_ids,
-            group,
-            all,
-        } => start(client, task_ids, group, all).await,
-        SubCommand::Status { query, json, group } => state(client, query, json, group).await,
-        SubCommand::Switch {
-            task_id_1,
-            task_id_2,
-        } => switch(client, task_id_1, task_id_2).await,
-        SubCommand::Wait {
-            task_ids,
-            group,
-            all,
-            quiet,
-            status,
-        } => wait(client, task_ids, group, all, quiet, status).await,
-        _ => bail!("unhandled WIP"),
+    pub fn daemon_version(&self) -> &String {
+        &self.daemon_version
     }
-}
-
-/// Prints a warning and prompt for a given action and tasks.
-/// Returns `Ok(())` if the action was confirmed.
-pub fn handle_user_confirmation(action: &str, task_ids: &[usize]) -> Result<()> {
-    // printing warning and prompt
-    let task_ids = task_ids
-        .iter()
-        .map(|t| format!("task{t}"))
-        .collect::<Vec<String>>()
-        .join(", ");
-    eprintln!("You are trying to {action}: {task_ids}",);
-
-    let mut input = String::new();
-
-    loop {
-        print!("Do you want to continue [Y/n]: ");
-        io::stdout().flush()?;
-        input.clear();
-        io::stdin().read_line(&mut input)?;
-
-        match input.chars().next().unwrap() {
-            'N' | 'n' => {
-                eprintln!("Aborted!");
-                std::process::exit(1);
-            }
-            '\n' | 'Y' | 'y' => {
-                break;
-            }
-            _ => {
-                continue;
-            }
-        }
-    }
-
-    Ok(())
 }
