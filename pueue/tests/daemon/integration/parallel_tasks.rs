@@ -87,7 +87,7 @@ async fn test_unlimited_parallel_tasks() -> Result<()> {
         group: "testgroup".to_string(),
         parallel_tasks: 0,
     };
-    assert_success(send_message(shared, message).await?);
+    assert_success(send_request(shared, message).await?);
 
     // Make sure all other tasks are started as well in quick succession.
     for task_id in 1..10 {

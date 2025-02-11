@@ -1,6 +1,6 @@
 use std::sync::MutexGuard;
 
-use pueue_lib::network::message::{create_failure_message, create_success_message, Message};
+use pueue_lib::network::message::{create_failure_response, create_success_response, Response};
 use pueue_lib::state::{FilteredTasks, Group, State};
 use pueue_lib::task::Task;
 
@@ -10,13 +10,13 @@ use crate::daemon::state_helper::LockedState;
 pub fn ensure_group_exists<'state>(
     state: &'state mut LockedState,
     group: &str,
-) -> Result<&'state mut Group, Message> {
+) -> Result<&'state mut Group, Response> {
     let group_keys: Vec<String> = state.groups.keys().cloned().collect();
     if let Some(group) = state.groups.get_mut(group) {
         return Ok(group);
     }
 
-    Err(create_failure_message(format!(
+    Err(create_failure_response(format!(
         "Group {group} doesn't exists. Use one of these: {group_keys:?}",
     )))
 }
@@ -41,7 +41,7 @@ pub fn task_action_response_helper<F>(
     task_ids: Vec<usize>,
     filter: F,
     state: &MutexGuard<State>,
-) -> Message
+) -> Response
 where
     F: Fn(&Task) -> bool,
 {
@@ -54,7 +54,7 @@ where
 /// Compile a response for instructions with multiple tasks ids.
 /// A custom message will be combined with a text about all matching tasks
 /// and possibly tasks for which the instruction cannot be executed.
-pub fn compile_task_response(message: &str, filtered_tasks: FilteredTasks) -> Message {
+pub fn compile_task_response(message: &str, filtered_tasks: FilteredTasks) -> Response {
     let matching_ids: Vec<String> = filtered_tasks
         .matching_ids
         .iter()
@@ -69,7 +69,7 @@ pub fn compile_task_response(message: &str, filtered_tasks: FilteredTasks) -> Me
 
     // We don't have any mismatching ids, return the simple message.
     if filtered_tasks.non_matching_ids.is_empty() {
-        return create_success_message(format!("{message}: {matching_ids}"));
+        return create_success_response(format!("{message}: {matching_ids}"));
     }
 
     let mismatched_message = "The command failed for tasks";
@@ -77,11 +77,11 @@ pub fn compile_task_response(message: &str, filtered_tasks: FilteredTasks) -> Me
 
     // All given ids are invalid.
     if matching_ids.is_empty() {
-        return create_failure_message(format!("{mismatched_message}: {mismatching_ids}"));
+        return create_failure_response(format!("{mismatched_message}: {mismatching_ids}"));
     }
 
     // Some ids were valid, some were invalid.
-    create_success_message(format!(
+    create_success_response(format!(
         "{message}: {matching_ids}\n{mismatched_message}: {mismatching_ids}",
     ))
 }

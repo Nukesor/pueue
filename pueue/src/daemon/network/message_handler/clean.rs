@@ -24,7 +24,7 @@ fn construct_success_clean_message(message: CleanMessage) -> String {
 
 /// Invoked when calling `pueue clean`.
 /// Remove all failed or done tasks from the state.
-pub fn clean(settings: &Settings, state: &SharedState, message: CleanMessage) -> Message {
+pub fn clean(settings: &Settings, state: &SharedState, message: CleanMessage) -> Response {
     let mut state = state.lock().unwrap();
 
     let filtered_tasks =
@@ -64,7 +64,7 @@ pub fn clean(settings: &Settings, state: &SharedState, message: CleanMessage) ->
 
     ok_or_save_state_failure!(save_state(&state, settings));
 
-    create_success_message(construct_success_clean_message(message))
+    create_success_response(construct_success_clean_message(message))
 }
 
 #[cfg(test)]
@@ -125,8 +125,8 @@ mod tests {
         let message = clean(&settings, &state, get_message(false, None));
 
         // Return message is correct
-        assert!(matches!(message, Message::Success(_)));
-        if let Message::Success(text) = message {
+        assert!(matches!(message, Response::Success(_)));
+        if let Response::Success(text) = message {
             assert_eq!(text, "All finished tasks have been removed");
         };
 
@@ -142,8 +142,8 @@ mod tests {
         let message = clean(&settings, &state, get_message(false, None));
 
         // Return message is correct
-        assert!(matches!(message, Message::Success(_)));
-        if let Message::Success(text) = message {
+        assert!(matches!(message, Response::Success(_)));
+        if let Response::Success(text) = message {
             assert_eq!(text, "All finished tasks have been removed");
         };
 
@@ -160,8 +160,8 @@ mod tests {
         let message = clean(&settings, &state, get_message(true, None));
 
         // Return message is correct
-        assert!(matches!(message, Message::Success(_)));
-        if let Message::Success(text) = message {
+        assert!(matches!(message, Response::Success(_)));
+        if let Response::Success(text) = message {
             assert_eq!(text, "All successfully finished tasks have been removed");
         };
 
@@ -179,9 +179,9 @@ mod tests {
         let message = clean(&settings, &state, get_message(false, Some("other".into())));
 
         // Return message is correct
-        assert!(matches!(message, Message::Success(_)));
+        assert!(matches!(message, Response::Success(_)));
 
-        if let Message::Success(text) = message {
+        if let Response::Success(text) = message {
             assert_eq!(
                 text,
                 "All finished tasks have been removed from group 'other'"
@@ -202,9 +202,9 @@ mod tests {
         let message = clean(&settings, &state, get_message(true, Some("other".into())));
 
         // Return message is correct
-        assert!(matches!(message, Message::Success(_)));
+        assert!(matches!(message, Response::Success(_)));
 
-        if let Message::Success(text) = message {
+        if let Response::Success(text) = message {
             assert_eq!(
                 text,
                 "All successfully finished tasks have been removed from group 'other'"

@@ -32,30 +32,30 @@ pub async fn create_stashed_task(
     shared: &Shared,
     command: &str,
     enqueue_at: Option<DateTime<Local>>,
-) -> Result<Message> {
+) -> Result<Response> {
     let mut message = create_add_message(shared, command);
     message.stashed = true;
     message.enqueue_at = enqueue_at;
 
-    send_message(shared, message)
+    send_request(shared, message)
         .await
         .context("Failed to to add task message")
 }
 
 /// Helper to either continue the daemon or start specific tasks
-pub async fn start_tasks(shared: &Shared, tasks: TaskSelection) -> Result<Message> {
+pub async fn start_tasks(shared: &Shared, tasks: TaskSelection) -> Result<Response> {
     let message = StartMessage { tasks };
 
-    send_message(shared, message)
+    send_request(shared, message)
         .await
         .context("Failed to send Start tasks message")
 }
 
 /// Helper to pause the default group of the daemon
-pub async fn pause_tasks(shared: &Shared, tasks: TaskSelection) -> Result<Message> {
+pub async fn pause_tasks(shared: &Shared, tasks: TaskSelection) -> Result<Response> {
     let message = PauseMessage { tasks, wait: false };
 
-    send_message(shared, message)
+    send_request(shared, message)
         .await
         .context("Failed to send Pause message")
 }

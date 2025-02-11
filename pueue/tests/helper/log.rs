@@ -28,10 +28,10 @@ pub async fn get_task_log(shared: &Shared, task_id: usize, lines: Option<usize>)
         send_logs: true,
         lines,
     };
-    let response = send_message(shared, message).await?;
+    let response = send_request(shared, message).await?;
 
     let mut logs = match response {
-        Message::LogResponse(logs) => logs,
+        Response::Log(logs) => logs,
         _ => bail!("Didn't get log response response in get_state"),
     };
 

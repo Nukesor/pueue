@@ -9,9 +9,9 @@ use pueue_lib::network::secret::read_shared_secret;
 use pueue_lib::settings::Shared;
 
 /// This is a small convenience wrapper that sends a message and immediately returns the response.
-pub async fn send_message<T>(shared: &Shared, message: T) -> Result<Message>
+pub async fn send_request<T>(shared: &Shared, message: T) -> Result<Response>
 where
-    T: Into<Message>,
+    T: Into<Request>,
 {
     let mut stream = get_authenticated_stream(shared).await?;
 

@@ -18,7 +18,7 @@ async fn test_reset() -> Result<()> {
     wait_for_task_condition(shared, 2, Task::is_running).await?;
 
     // Reset all groups of the daemon
-    send_message(
+    send_request(
         shared,
         ResetMessage {
             target: ResetTarget::All,
@@ -64,7 +64,7 @@ async fn test_reset_single_group() -> Result<()> {
     wait_for_task_condition(shared, 2, Task::is_running).await?;
 
     // Reset only the test_2 of the daemon.
-    send_message(
+    send_request(
         shared,
         ResetMessage {
             target: ResetTarget::Groups(vec!["test_2".to_string()]),
@@ -106,7 +106,7 @@ async fn test_reset_multiple_groups() -> Result<()> {
     wait_for_task_condition(shared, 2, Task::is_running).await?;
 
     // Reset only the test_2 of the daemon.
-    send_message(
+    send_request(
         shared,
         ResetMessage {
             target: ResetTarget::Groups(vec!["test_2".to_string(), "test_3".to_string()]),

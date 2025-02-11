@@ -38,7 +38,7 @@ async fn test_enqueued_tasks(#[case] enqueue_at: Option<DateTime<Local>>) -> Res
         tasks: TaskSelection::TaskIds(vec![0]),
         enqueue_at: None,
     };
-    send_message(shared, enqueue_message)
+    send_request(shared, enqueue_message)
         .await
         .context("Failed to to add task message")?;
 
@@ -92,7 +92,7 @@ async fn test_stash_queued_task() -> Result<()> {
     add_task(shared, "sleep 10").await?;
 
     // Stash the task
-    send_message(
+    send_request(
         shared,
         StashMessage {
             tasks: TaskSelection::TaskIds(vec![0]),

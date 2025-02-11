@@ -1,7 +1,7 @@
 use crossterm::style::{Attribute, Color};
 
 use pueue_lib::{
-    network::message::GroupResponseMessage,
+    network::message::response::GroupResponseMessage,
     state::{Group, GroupStatus},
 };
 

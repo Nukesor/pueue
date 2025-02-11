@@ -9,12 +9,12 @@ use crate::daemon::process_handler;
 
 /// Invoked when calling `pueue start`.
 /// Forward the start message to the task handler, which then starts the process(es).
-pub fn start(settings: &Settings, state: &SharedState, message: StartMessage) -> Message {
+pub fn start(settings: &Settings, state: &SharedState, message: StartMessage) -> Response {
     let mut state = state.lock().unwrap();
     // If a group is selected, make sure it exists.
     if let TaskSelection::Group(group) = &message.tasks {
-        if let Err(message) = ensure_group_exists(&mut state, group) {
-            return message;
+        if let Err(response) = ensure_group_exists(&mut state, group) {
+            return response;
         }
     }
 
@@ -38,7 +38,7 @@ pub fn start(settings: &Settings, state: &SharedState, message: StartMessage) ->
         TaskSelection::All => success_msg!("All groups are being resumed."),
     };
 
-    if let Message::Success(_) = response {
+    if let Response::Success(_) = response {
         process_handler::start::start(settings, &mut state, message.tasks);
     }
 

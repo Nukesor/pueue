@@ -146,16 +146,16 @@ pub async fn restart(
         };
 
         // Send the cloned task to the daemon and abort on any failure messages.
-        send_message(add_task_message, stream).await?;
-        if let Message::Failure(message) = receive_message(stream).await? {
+        send_request(add_task_message, stream).await?;
+        if let Response::Failure(message) = receive_response(stream).await? {
             bail!(message);
         };
     }
 
     // Send the singular in-place restart message to the daemon.
     if in_place {
-        send_message(restart_message, stream).await?;
-        if let Message::Failure(message) = receive_message(stream).await? {
+        send_request(restart_message, stream).await?;
+        if let Response::Failure(message) = receive_response(stream).await? {
             bail!(message);
         };
     }

@@ -221,7 +221,7 @@ impl Client {
                 }
 
                 // Add the message to the daemon.
-                let message = Message::Add(AddMessage {
+                let message = Request::Add(AddMessage {
                     command: command.join(" "),
                     path,
                     // Catch the current environment for later injection into the task's process.
@@ -234,13 +234,13 @@ impl Client {
                     priority,
                     label,
                 });
-                send_message(message, &mut self.stream).await?;
+                send_request(message, &mut self.stream).await?;
 
                 // Get the response from the daemon.
-                let response = receive_message(&mut self.stream).await?;
+                let response = receive_response(&mut self.stream).await?;
 
                 // Make sure the task has been added, otherwise handle the response and return.
-                let Message::AddedTask(AddedTaskMessage {
+                let Response::AddedTask(AddedTaskMessage {
                     task_id,
                     enqueue_at,
                     group_is_paused,
@@ -417,16 +417,16 @@ impl Client {
         let message = self.get_message_from_cmd(subcommand)?;
 
         // Create the message payload and send it to the daemon.
-        send_message(message, &mut self.stream).await?;
+        send_request(message, &mut self.stream).await?;
 
         // Check if we can receive the response from the daemon
-        let mut response = receive_message(&mut self.stream).await?;
+        let mut response = receive_response(&mut self.stream).await?;
 
         // Handle the message.
         // In some scenarios, such as log streaming, we should continue receiving messages
         // from the daemon, which is why we have a while loop in place.
         while self.handle_response(response)? {
-            response = receive_message(&mut self.stream).await?;
+            response = receive_response(&mut self.stream).await?;
         }
 
         Ok(())
@@ -437,32 +437,32 @@ impl Client {
     ///
     /// If this function returns `Ok(true)`, the parent function will continue to receive
     /// and handle messages from the daemon. Otherwise the client will simply exit.
-    fn handle_response(&self, message: Message) -> Result<bool> {
-        match message {
-            Message::Success(text) => print_success(&self.style, &text),
-            Message::Failure(text) => {
+    fn handle_response(&self, response: Response) -> Result<bool> {
+        match response {
+            Response::Success(text) => print_success(&self.style, &text),
+            Response::Failure(text) => {
                 print_error(&self.style, &text);
                 std::process::exit(1);
             }
-            Message::StatusResponse(state) => {
+            Response::Status(state) => {
                 let tasks = state.tasks.values().cloned().collect();
                 let output =
                     print_state(*state, tasks, &self.subcommand, &self.style, &self.settings)?;
                 println!("{output}");
             }
-            Message::LogResponse(task_logs) => {
+            Response::Log(task_logs) => {
                 print_logs(task_logs, &self.subcommand, &self.style, &self.settings)
             }
-            Message::GroupResponse(groups) => {
+            Response::Group(groups) => {
                 let group_text = format_groups(groups, &self.subcommand, &self.style);
                 println!("{group_text}");
             }
-            Message::Stream(text) => {
+            Response::Stream(text) => {
                 print!("{text}");
                 io::stdout().flush().unwrap();
                 return Ok(true);
             }
-            Message::Close => return Ok(false),
+            Response::Close => return Ok(false),
             _ => error!("Received unhandled response message"),
         };
 
@@ -510,13 +510,13 @@ impl Client {
     ///
     /// This function is pretty large, but it consists mostly of simple conversions
     /// of [SubCommand] variant to a [Message] variant.
-    fn get_message_from_cmd(&self, subcommand: SubCommand) -> Result<Message> {
+    fn get_message_from_cmd(&self, subcommand: SubCommand) -> Result<Request> {
         Ok(match subcommand {
             SubCommand::Remove { task_ids } => {
                 if self.settings.client.show_confirmation_questions {
                     self.handle_user_confirmation("remove", &task_ids)?;
                 }
-                Message::Remove(task_ids)
+                Request::Remove(task_ids)
             }
             SubCommand::Stash {
                 task_ids,
@@ -589,7 +589,7 @@ impl Client {
                 .into()
             }
             SubCommand::Send { task_id, input } => SendMessage { task_id, input }.into(),
-            SubCommand::Env { cmd } => Message::from(match cmd {
+            SubCommand::Env { cmd } => Request::from(match cmd {
                 EnvCommand::Set {
                     task_id,
                     key,
@@ -611,7 +611,7 @@ impl Client {
                 None => GroupMessage::List,
             }
             .into(),
-            SubCommand::Status { .. } => Message::Status,
+            SubCommand::Status { .. } => Request::Status,
             SubCommand::Log {
                 task_ids,
                 lines,
@@ -628,7 +628,7 @@ impl Client {
                     send_logs: !self.settings.client.read_local_logs,
                     lines,
                 };
-                Message::Log(message)
+                Request::Log(message)
             }
             SubCommand::Follow { task_id, lines } => StreamRequestMessage { task_id, lines }.into(),
             SubCommand::Clean {

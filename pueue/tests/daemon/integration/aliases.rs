@@ -86,7 +86,7 @@ async fn test_restart_with_alias() -> Result<()> {
         start_immediately: true,
         stashed: false,
     };
-    send_message(shared, message).await?;
+    send_request(shared, message).await?;
     let task = wait_for_task_condition(shared, 0, Task::is_done).await?;
 
     // The task finished successfully and its command has replaced the alias.

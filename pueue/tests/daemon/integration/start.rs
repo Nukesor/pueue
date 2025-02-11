@@ -60,7 +60,7 @@ async fn test_start_tasks(#[case] start_message: StartMessage) -> Result<()> {
     }
 
     // Send the kill message
-    send_message(shared, start_message).await?;
+    send_request(shared, start_message).await?;
 
     // Ensure all tasks are running
     for id in 0..3 {

@@ -2,10 +2,14 @@ use std::fmt::Display;
 
 use pueue_lib::failure_msg;
 use pueue_lib::network::message::*;
+use pueue_lib::network::protocol::send_response;
+use pueue_lib::network::socket::GenericStream;
 use pueue_lib::settings::Settings;
 use pueue_lib::state::SharedState;
 
 use crate::daemon::network::response_helper::*;
+use crate::daemon::process_handler::initiate_shutdown;
+use crate::internal_prelude::*;
 
 mod add;
 mod clean;
@@ -27,40 +31,69 @@ mod switch;
 
 pub use log::follow_log;
 
-pub fn handle_message(message: Message, state: &SharedState, settings: &Settings) -> Message {
-    match message {
-        Message::Add(message) => add::add_task(settings, state, message),
-        Message::Clean(message) => clean::clean(settings, state, message),
-        Message::Edit(editable_tasks) => edit::edit(settings, state, editable_tasks),
-        Message::EditRequest(task_ids) => edit::edit_request(state, task_ids),
-        Message::EditRestore(task_ids) => edit::edit_restore(state, task_ids),
-        Message::Env(message) => env::env(settings, state, message),
-        Message::Enqueue(message) => enqueue::enqueue(settings, state, message),
-        Message::Group(message) => group::group(settings, state, message),
-        Message::Kill(message) => kill::kill(settings, state, message),
-        Message::Log(message) => log::get_log(settings, state, message),
-        Message::Parallel(message) => parallel::set_parallel_tasks(message, state),
-        Message::Pause(message) => pause::pause(settings, state, message),
-        Message::Remove(task_ids) => remove::remove(settings, state, task_ids),
-        Message::Reset(message) => reset::reset(settings, state, message),
-        Message::Restart(message) => restart::restart_multiple(settings, state, message),
-        Message::Send(message) => send::send(state, message),
-        Message::Start(message) => start::start(settings, state, message),
-        Message::Stash(message) => stash::stash(settings, state, message),
-        Message::Switch(message) => switch::switch(settings, state, message),
-        Message::Status => get_status(state),
-        _ => create_failure_message("Not yet implemented"),
-    }
+pub async fn handle_request(
+    stream: &mut GenericStream,
+    request: Request,
+    state: &SharedState,
+    settings: &Settings,
+) -> Result<()> {
+    let response = match request {
+        // The client requested the output of a task.
+        // Since this involves streaming content, we have to do some special handling.
+        Request::StreamRequest(payload) => {
+            let pueue_directory = settings.shared.pueue_directory();
+            follow_log(&pueue_directory, stream, state, payload).await?
+        }
+        // To initiated a shutdown, a flag in Pueue's state is set that informs the TaskHandler
+        // to perform a graceful shutdown.
+        //
+        // However, this is an edge-case as we have respond to the client first.
+        // Otherwise it might happen, that the daemon shuts down too fast and we aren't
+        // capable of actually sending the message back to the client.
+        Request::DaemonShutdown(shutdown_type) => {
+            let response = create_success_response("Daemon is shutting down");
+            send_response(response, stream).await?;
+
+            let mut state = state.lock().unwrap();
+            initiate_shutdown(settings, &mut state, shutdown_type);
+
+            return Ok(());
+        }
+        Request::Add(message) => add::add_task(settings, state, message),
+        Request::Clean(message) => clean::clean(settings, state, message),
+        Request::Edit(editable_tasks) => edit::edit(settings, state, editable_tasks),
+        Request::EditRequest(task_ids) => edit::edit_request(state, task_ids),
+        Request::EditRestore(task_ids) => edit::edit_restore(state, task_ids),
+        Request::Env(message) => env::env(settings, state, message),
+        Request::Enqueue(message) => enqueue::enqueue(settings, state, message),
+        Request::Group(message) => group::group(settings, state, message),
+        Request::Kill(message) => kill::kill(settings, state, message),
+        Request::Log(message) => log::get_log(settings, state, message),
+        Request::Parallel(message) => parallel::set_parallel_tasks(message, state),
+        Request::Pause(message) => pause::pause(settings, state, message),
+        Request::Remove(task_ids) => remove::remove(settings, state, task_ids),
+        Request::Reset(message) => reset::reset(settings, state, message),
+        Request::Restart(message) => restart::restart_multiple(settings, state, message),
+        Request::Send(message) => send::send(state, message),
+        Request::Start(message) => start::start(settings, state, message),
+        Request::Stash(message) => stash::stash(settings, state, message),
+        Request::Switch(message) => switch::switch(settings, state, message),
+        Request::Status => get_status(state),
+    };
+
+    send_response(response, stream).await?;
+
+    Ok(())
 }
 
 /// Invoked when calling `pueue status`.
 /// Return the current state.
-fn get_status(state: &SharedState) -> Message {
+fn get_status(state: &SharedState) -> Response {
     let state = state.lock().unwrap().clone();
-    Message::StatusResponse(Box::new(state))
+    Response::Status(Box::new(state))
 }
 
-fn ok_or_failure_message<T, E: Display>(result: Result<T, E>) -> Result<T, Message> {
+fn ok_or_failure_message<T, E: Display>(result: Result<T, E>) -> Result<T, Response> {
     match result {
         Ok(inner) => Ok(inner),
         Err(error) => Err(failure_msg!("Failed to save state. This is a bug: {error}")),

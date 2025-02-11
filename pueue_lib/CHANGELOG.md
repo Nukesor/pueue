@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project adheres **somewhat** to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 The concept of SemVer is applied to the daemon/client API, but not the library API itself.
 
+## [0.28.0] - unreleased
+
+### Changed
+
+- **Breaking**: Split the `Message` enum into a `Response` and `Request` enum. Requests are sent **to** the daemon, responses are sent **from** the daemon.
+
 ## [0.27.0] - 2024-12-01
 
 ### Added

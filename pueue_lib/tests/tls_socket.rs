@@ -20,7 +20,7 @@ async fn test_tls_socket() -> Result<()> {
     create_certificates(&shared_settings).unwrap();
 
     let listener = get_listener(&shared_settings).await.unwrap();
-    let message = create_success_message("This is a test");
+    let message = Request::Status;
     let original_bytes = to_vec(&message).expect("Failed to serialize message.");
 
     // Spawn a sub thread that:
@@ -31,17 +31,17 @@ async fn test_tls_socket() -> Result<()> {
         let mut stream = listener.accept().await.unwrap();
         let message_bytes = receive_bytes(&mut stream).await.unwrap();
 
-        let message: Message = from_slice(&message_bytes).unwrap();
+        let message: Request = from_slice(&message_bytes).unwrap();
 
-        send_message(message, &mut stream).await.unwrap();
+        send_request(message, &mut stream).await.unwrap();
     });
 
     let mut client = get_client_stream(&shared_settings).await.unwrap();
 
     // Create a client that sends a message and instantly receives it
-    send_message(message, &mut client).await.unwrap();
+    send_request(message, &mut client).await.unwrap();
     let response_bytes = receive_bytes(&mut client).await.unwrap();
-    let _message: Message = from_slice(&response_bytes).unwrap();
+    let _message: Request = from_slice(&response_bytes).unwrap();
 
     assert_eq!(response_bytes, original_bytes);
 

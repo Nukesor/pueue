@@ -12,7 +12,7 @@ use crate::daemon::network::response_helper::*;
 
 /// Invoked when calling `pueue enqueue`.
 /// Enqueue specific stashed tasks.
-pub fn enqueue(settings: &Settings, state: &SharedState, message: EnqueueMessage) -> Message {
+pub fn enqueue(settings: &Settings, state: &SharedState, message: EnqueueMessage) -> Response {
     let mut state = state.lock().unwrap();
     // Get the affected task ids, based on the task selection.
     let selected_task_ids = match message.tasks {

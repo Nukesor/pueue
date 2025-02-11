@@ -7,7 +7,7 @@ use crate::internal_prelude::*;
 
 use std::{collections::HashMap, process::Command};
 
-use crate::{network::message::Signal as InternalSignal, settings::Settings};
+use crate::{network::message::request::Signal as InternalSignal, settings::Settings};
 
 // Unix specific process handling
 // Shared between Linux and Apple

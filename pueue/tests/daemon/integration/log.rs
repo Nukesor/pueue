@@ -101,10 +101,10 @@ async fn test_partial_log() -> Result<()> {
         send_logs: true,
         lines: Some(5),
     };
-    let response = send_message(shared, Message::Log(log_message)).await?;
+    let response = send_request(shared, Request::Log(log_message)).await?;
     let logs = match response {
-        Message::LogResponse(logs) => logs,
-        _ => bail!("Received non LogResponse: {:#?}", response),
+        Response::Log(logs) => logs,
+        _ => bail!("Received non Log Response: {:#?}", response),
     };
 
     // Get the received output
@@ -138,10 +138,10 @@ async fn test_correct_log_order() -> Result<()> {
         send_logs: true,
         lines: None,
     };
-    let response = send_message(shared, Message::Log(log_message)).await?;
+    let response = send_request(shared, Request::Log(log_message)).await?;
     let logs = match response {
-        Message::LogResponse(logs) => logs,
-        _ => bail!("Received non LogResponse: {:#?}", response),
+        Response::Log(logs) => logs,
+        _ => bail!("Received non Log Response: {:#?}", response),
     };
 
     // Get the received output
@@ -181,10 +181,10 @@ async fn logs_of_group() -> Result<()> {
         send_logs: true,
         lines: None,
     };
-    let response = send_message(shared, message).await?;
+    let response = send_request(shared, message).await?;
     let logs = match response {
-        Message::LogResponse(logs) => logs,
-        _ => bail!("Didn't get log response response in get_state"),
+        Response::Log(logs) => logs,
+        _ => bail!("Didn't get log response in get_state"),
     };
 
     assert_eq!(logs.len(), 1, "Sould only receive a single log entry.");
@@ -215,10 +215,10 @@ async fn logs_for_all() -> Result<()> {
         send_logs: true,
         lines: None,
     };
-    let response = send_message(shared, message).await?;
+    let response = send_request(shared, message).await?;
     let logs = match response {
-        Message::LogResponse(logs) => logs,
-        _ => bail!("Didn't get log response response in get_state"),
+        Response::Log(logs) => logs,
+        _ => bail!("Didn't get log response in get_state"),
     };
 
     assert_eq!(logs.len(), 2, "Sould receive all log entries.");

@@ -1,19 +1,18 @@
-use std::collections::{BTreeMap, HashMap};
+use std::collections::HashMap;
 use std::path::PathBuf;
 
 use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 use strum::{Display, EnumString, VariantNames};
 
-use crate::state::{Group, State};
-use crate::task::Task;
+use super::EditableTask;
 
 /// Macro to simplify creating [From] implementations for each variant-contained
-/// struct; e.g. `impl_into_message!(AddMessage, Message::Add)` to make it possible
+/// Request; e.g. `impl_into_request!(AddMessage, Request::Add)` to make it possible
 /// to use `AddMessage { }.into()` and get a `Message::Add()` value.
-macro_rules! impl_into_message {
+macro_rules! impl_into_request {
     ($inner:ident, $variant:expr) => {
-        impl From<$inner> for Message {
+        impl From<$inner> for Request {
             fn from(message: $inner) -> Self {
                 $variant(message)
             }
@@ -21,36 +20,28 @@ macro_rules! impl_into_message {
     };
 }
 
-/// Macro to simplify creating success_messages
-#[macro_export]
-macro_rules! success_msg {
-    ($($arg:tt)*) => {{
-        create_success_message(format!($($arg)*))
-    }}
-}
-
-/// Macro to simplify creating failure_messages
-#[macro_export]
-macro_rules! failure_msg {
-    ($($arg:tt)*) => {{
-        create_failure_message(format!($($arg)*))
-    }}
-}
-
-/// This is the main message enum. \
-/// Everything that's send between the daemon and a client can be represented by this enum.
+/// This is the message for messages sent **to** the daemon. \
+/// Everything that's send by the client is represented using by this enum.
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
-pub enum Message {
+pub enum Request {
+    /// Add a new task to the daemon.
     Add(AddMessage),
-    AddedTask(AddedTaskMessage),
+    /// Remove a non-running/paused task.
     Remove(Vec<usize>),
+    /// Switch two enqueued/stashed tasks.
     Switch(SwitchMessage),
+    /// Stash a task or schedule it for enqueue.
     Stash(StashMessage),
+    /// Take a stashed task and enqueue it.
     Enqueue(EnqueueMessage),
 
+    /// Start/unpause a [`TaskSelection`].
     Start(StartMessage),
+    /// Restart a set of finished or failed task.
     Restart(RestartMessage),
+    /// Pause a [`TaskSelection`].
     Pause(PauseMessage),
+    /// Kill a [`TaskSelection`].
     Kill(KillMessage),
 
     /// Used to send some input to a process's stdin
@@ -59,46 +50,34 @@ pub enum Message {
     /// The first part of the three-step protocol to edit a task.
     /// This one requests an edit from the daemon.
     EditRequest(Vec<usize>),
-    /// The daemon locked the tasks and responds with the tasks' details.
-    EditResponse(Vec<EditableTask>),
     /// This is send by the client if something went wrong during the editing process.
     /// The daemon will go ahead and restore the task's old state.
     EditRestore(Vec<usize>),
     /// The client sends the edited details to the daemon.
     Edit(Vec<EditableTask>),
 
+    /// Un/-set environment variables for specific tasks.
     Env(EnvMessage),
 
     Group(GroupMessage),
-    GroupResponse(GroupResponseMessage),
 
+    /// Used to set parallel tasks for a specific group
+    Parallel(ParallelMessage),
+
+    /// Request the daemon's state
     Status,
-    StatusResponse(Box<State>),
+    /// Request logs of a set of tasks.
     Log(LogRequestMessage),
-    LogResponse(BTreeMap<usize, TaskLogMessage>),
 
     /// The client requests a continuous stream of a task's log.
     StreamRequest(StreamRequestMessage),
-    /// The next chunk of output, that's send to the client.
-    Stream(String),
 
+    /// Reset the daemon
     Reset(ResetMessage),
+    /// Tell the daemon to clean finished tasks
     Clean(CleanMessage),
+    /// Initiate shutdown on the daemon.
     DaemonShutdown(Shutdown),
-
-    Success(String),
-    Failure(String),
-    /// Simply notify the client that the connection is now closed.
-    /// This is used to, for instance, close a `follow` stream if the task finished.
-    Close,
-
-    Parallel(ParallelMessage),
-}
-
-impl Message {
-    pub fn response_success(&self) -> bool {
-        matches!(&self, Message::AddedTask(_) | Message::Success(_))
-    }
 }
 
 /// This enum is used to express a selection of tasks.
@@ -145,47 +124,34 @@ impl std::fmt::Debug for AddMessage {
             .finish()
     }
 }
-
-impl_into_message!(AddMessage, Message::Add);
-
-#[derive(PartialEq, Eq, Clone, Debug, Default, Deserialize, Serialize)]
-pub struct AddedTaskMessage {
-    pub task_id: usize,
-    pub enqueue_at: Option<DateTime<Local>>,
-    pub group_is_paused: bool,
-}
-impl_into_message!(AddedTaskMessage, Message::AddedTask);
+impl_into_request!(AddMessage, Request::Add);
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct SwitchMessage {
     pub task_id_1: usize,
     pub task_id_2: usize,
 }
-
-impl_into_message!(SwitchMessage, Message::Switch);
+impl_into_request!(SwitchMessage, Request::Switch);
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct StashMessage {
     pub tasks: TaskSelection,
     pub enqueue_at: Option<DateTime<Local>>,
 }
-
-impl_into_message!(StashMessage, Message::Stash);
+impl_into_request!(StashMessage, Request::Stash);
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct EnqueueMessage {
     pub tasks: TaskSelection,
     pub enqueue_at: Option<DateTime<Local>>,
 }
-
-impl_into_message!(EnqueueMessage, Message::Enqueue);
+impl_into_request!(EnqueueMessage, Request::Enqueue);
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct StartMessage {
     pub tasks: TaskSelection,
 }
-
-impl_into_message!(StartMessage, Message::Start);
+impl_into_request!(StartMessage, Request::Start);
 
 /// The messages used to restart tasks.
 /// It's possible to update the command and paths when restarting tasks.
@@ -195,8 +161,7 @@ pub struct RestartMessage {
     pub start_immediately: bool,
     pub stashed: bool,
 }
-
-impl_into_message!(RestartMessage, Message::Restart);
+impl_into_request!(RestartMessage, Request::Restart);
 
 #[derive(PartialEq, Eq, Clone, Debug, Default, Deserialize, Serialize)]
 pub struct TaskToRestart {
@@ -216,8 +181,7 @@ pub struct PauseMessage {
     pub tasks: TaskSelection,
     pub wait: bool,
 }
-
-impl_into_message!(PauseMessage, Message::Pause);
+impl_into_request!(PauseMessage, Request::Pause);
 
 /// This is a small custom Enum for all currently supported unix signals.
 /// Supporting all unix signals would be a mess, since there is a LOT of them.
@@ -246,48 +210,14 @@ pub struct KillMessage {
     pub tasks: TaskSelection,
     pub signal: Option<Signal>,
 }
-
-impl_into_message!(KillMessage, Message::Kill);
+impl_into_request!(KillMessage, Request::Kill);
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct SendMessage {
     pub task_id: usize,
     pub input: String,
 }
-
-impl_into_message!(SendMessage, Message::Send);
-
-#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
-pub struct EditableTask {
-    pub id: usize,
-    pub command: String,
-    pub path: PathBuf,
-    pub label: Option<String>,
-    pub priority: i32,
-}
-
-impl From<&Task> for EditableTask {
-    /// Create an editable tasks from any [Task]]
-    fn from(value: &Task) -> Self {
-        EditableTask {
-            id: value.id,
-            command: value.command.clone(),
-            path: value.path.clone(),
-            label: value.label.clone(),
-            priority: value.priority,
-        }
-    }
-}
-
-impl EditableTask {
-    /// Merge a [EditableTask] back into a [Task].
-    pub fn into_task(self, task: &mut Task) {
-        task.command = self.command;
-        task.path = self.path;
-        task.label = self.label;
-        task.priority = self.priority;
-    }
-}
+impl_into_request!(SendMessage, Request::Send);
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub enum EnvMessage {
@@ -301,8 +231,7 @@ pub enum EnvMessage {
         key: String,
     },
 }
-
-impl_into_message!(EnvMessage, Message::Env);
+impl_into_request!(EnvMessage, Request::Env);
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub enum GroupMessage {
@@ -313,15 +242,7 @@ pub enum GroupMessage {
     Remove(String),
     List,
 }
-
-impl_into_message!(GroupMessage, Message::Group);
-
-#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
-pub struct GroupResponseMessage {
-    pub groups: BTreeMap<String, Group>,
-}
-
-impl_into_message!(GroupResponseMessage, Message::GroupResponse);
+impl_into_request!(GroupMessage, Request::Group);
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub enum ResetTarget {
@@ -335,8 +256,7 @@ pub enum ResetTarget {
 pub struct ResetMessage {
     pub target: ResetTarget,
 }
-
-impl_into_message!(ResetMessage, Message::Reset);
+impl_into_request!(ResetMessage, Request::Reset);
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct CleanMessage {
@@ -344,8 +264,7 @@ pub struct CleanMessage {
 
     pub group: Option<String>,
 }
-
-impl_into_message!(CleanMessage, Message::Clean);
+impl_into_request!(CleanMessage, Request::Clean);
 
 /// Determines which type of shutdown we're dealing with.
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
@@ -355,16 +274,14 @@ pub enum Shutdown {
     /// Graceful is user initiated and expected.
     Graceful,
 }
-
-impl_into_message!(Shutdown, Message::DaemonShutdown);
+impl_into_request!(Shutdown, Request::DaemonShutdown);
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct StreamRequestMessage {
     pub task_id: Option<usize>,
     pub lines: Option<usize>,
 }
-
-impl_into_message!(StreamRequestMessage, Message::StreamRequest);
+impl_into_request!(StreamRequestMessage, Request::StreamRequest);
 
 /// Request logs for specific tasks.
 ///
@@ -377,42 +294,11 @@ pub struct LogRequestMessage {
     pub send_logs: bool,
     pub lines: Option<usize>,
 }
-
-impl_into_message!(LogRequestMessage, Message::Log);
-
-/// Helper struct for sending tasks and their log output to the client.
-#[derive(PartialEq, Eq, Clone, Deserialize, Serialize)]
-pub struct TaskLogMessage {
-    pub task: Task,
-    /// Indicates whether the log output has been truncated or not.
-    pub output_complete: bool,
-    pub output: Option<Vec<u8>>,
-}
-
-/// We use a custom `Debug` implementation for [TaskLogMessage], as the `output` field
-/// has too much info in it and renders log output unreadable.
-impl std::fmt::Debug for TaskLogMessage {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("TaskLogMessage")
-            .field("task", &self.task)
-            .field("output_complete", &self.output_complete)
-            .field("output", &"hidden")
-            .finish()
-    }
-}
+impl_into_request!(LogRequestMessage, Request::Log);
 
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct ParallelMessage {
     pub parallel_tasks: usize,
     pub group: String,
 }
-
-impl_into_message!(ParallelMessage, Message::Parallel);
-
-pub fn create_success_message<T: ToString>(text: T) -> Message {
-    Message::Success(text.to_string())
-}
-
-pub fn create_failure_message<T: ToString>(text: T) -> Message {
-    Message::Failure(text.to_string())
-}
+impl_into_request!(ParallelMessage, Request::Parallel);

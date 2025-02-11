@@ -25,17 +25,17 @@ pub async fn edit(
     stream: &mut GenericStream,
     settings: &Settings,
     task_ids: Vec<usize>,
-) -> Result<Message> {
+) -> Result<Response> {
     // Request the data to edit from the server and issue a task-lock while doing so.
-    let init_message = Message::EditRequest(task_ids);
-    send_message(init_message, stream).await?;
+    let init_message = Request::EditRequest(task_ids);
+    send_request(init_message, stream).await?;
 
-    let init_response = receive_message(stream).await?;
+    let init_response = receive_response(stream).await?;
 
     // In case we don't receive an EditResponse, something went wrong.
     // Return the response to the parent function and let the client handle it
     // by the generic message handler.
-    let Message::EditResponse(editable_tasks) = init_response else {
+    let Response::Edit(editable_tasks) = init_response else {
         return Ok(init_response);
     };
 
@@ -52,12 +52,12 @@ pub async fn edit(
         Err(error) => {
             eprintln!("Encountered an error while editing. Trying to restore the task's status.");
             // Notify the daemon that something went wrong.
-            let edit_message = Message::EditRestore(task_ids);
-            send_message(edit_message, stream).await?;
+            let edit_message = Request::EditRestore(task_ids);
+            send_request(edit_message, stream).await?;
 
-            let response = receive_message(stream).await?;
+            let response = receive_response(stream).await?;
             match response {
-                Message::Failure(message) | Message::Success(message) => {
+                Response::Failure(message) | Response::Success(message) => {
                     eprintln!("{message}");
                 }
                 _ => eprintln!("Received unknown response: {response:?}"),
@@ -68,9 +68,9 @@ pub async fn edit(
     };
 
     // Create a new message with the edited properties.
-    send_message(Message::Edit(editable_tasks), stream).await?;
+    send_request(Request::Edit(editable_tasks), stream).await?;
 
-    Ok(receive_message(stream).await?)
+    Ok(receive_response(stream).await?)
 }
 
 /// This is a small generic wrapper around the editing logic.

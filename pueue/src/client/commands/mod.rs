@@ -7,9 +7,10 @@
 
 use crate::internal_prelude::*;
 
+use pueue_lib::network::message::Response;
 use pueue_lib::network::protocol::*;
 use pueue_lib::state::State;
-use pueue_lib::{network::message::Message, task::Task};
+use pueue_lib::{network::message::Request, task::Task};
 
 mod edit;
 mod format_state;
@@ -27,13 +28,13 @@ pub use wait::{wait, WaitTargetStatus};
 // The current daemon state is often needed in more complex commands.
 pub async fn get_state(stream: &mut GenericStream) -> Result<State> {
     // Create the message payload and send it to the daemon.
-    send_message(Message::Status, stream).await?;
+    send_request(Request::Status, stream).await?;
 
     // Check if we can receive the response from the daemon
-    let message = receive_message(stream).await?;
+    let response = receive_response(stream).await?;
 
-    match message {
-        Message::StatusResponse(state) => Ok(*state),
+    match response {
+        Response::Status(state) => Ok(*state),
         _ => unreachable!(),
     }
 }
@@ -41,13 +42,13 @@ pub async fn get_state(stream: &mut GenericStream) -> Result<State> {
 // This is a helper function for easy retrieval of a single task from the daemon state.
 pub async fn get_task(stream: &mut GenericStream, task_id: usize) -> Result<Option<Task>> {
     // Create the message payload and send it to the daemon.
-    send_message(Message::Status, stream).await?;
+    send_request(Request::Status, stream).await?;
 
     // Check if we can receive the response from the daemon
-    let message = receive_message(stream).await?;
+    let response = receive_response(stream).await?;
 
-    let state = match message {
-        Message::StatusResponse(state) => state,
+    let state = match response {
+        Response::Status(state) => state,
         _ => unreachable!(),
     };
 
