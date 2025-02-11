@@ -2,16 +2,12 @@ use pueue_lib::{
     log::clean_log_handles,
     network::message::*,
     settings::Settings,
-    state::SharedState,
     task::{Task, TaskStatus},
 };
 
 use super::ok_or_failure_message;
 use crate::{
-    daemon::{
-        network::response_helper::*,
-        state_helper::{is_task_removable, save_state},
-    },
+    daemon::{internal_state::SharedState, network::response_helper::*},
     ok_or_save_state_failure,
 };
 
@@ -36,19 +32,19 @@ pub fn remove(settings: &Settings, state: &SharedState, task_ids: Vec<usize>) ->
     // Don't delete tasks, if there are other tasks that depend on this one.
     // However, we allow to delete those tasks, if they're supposed to be deleted as well.
     for task_id in filtered_tasks.matching_ids.clone() {
-        if !is_task_removable(&state, &task_id, &filtered_tasks.matching_ids) {
+        if !state.is_task_removable(&task_id, &filtered_tasks.matching_ids) {
             filtered_tasks.non_matching_ids.push(task_id);
             filtered_tasks.matching_ids.retain(|id| id != &task_id);
         };
     }
 
     for task_id in &filtered_tasks.matching_ids {
-        state.tasks.remove(task_id);
+        state.tasks_mut().remove(task_id);
 
         clean_log_handles(*task_id, &settings.shared.pueue_directory());
     }
 
-    ok_or_save_state_failure!(save_state(&state, settings));
+    ok_or_save_state_failure!(state.save(settings));
 
     compile_task_response("Tasks removed from list", filtered_tasks)
 }
@@ -77,7 +73,7 @@ mod tests {
         };
 
         let state = state.lock().unwrap();
-        assert_eq!(state.tasks.len(), 2);
+        assert_eq!(state.tasks().len(), 2);
     }
 
     #[test]
@@ -108,7 +104,7 @@ mod tests {
 
         {
             let state = state.lock().unwrap();
-            assert_eq!(state.tasks.len(), 7);
+            assert_eq!(state.tasks().len(), 7);
         }
 
         // Make sure we cannot remove a task with recursive dependencies.
@@ -122,7 +118,7 @@ mod tests {
 
         {
             let state = state.lock().unwrap();
-            assert_eq!(state.tasks.len(), 7);
+            assert_eq!(state.tasks().len(), 7);
         }
 
         // Make sure we can remove tasks with dependencies if all dependencies are specified.
@@ -136,7 +132,7 @@ mod tests {
 
         {
             let state = state.lock().unwrap();
-            assert_eq!(state.tasks.len(), 4);
+            assert_eq!(state.tasks().len(), 4);
         }
     }
 }

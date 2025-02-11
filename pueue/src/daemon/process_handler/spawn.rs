@@ -4,19 +4,16 @@ use chrono::Local;
 use command_group::CommandGroup;
 use pueue_lib::{
     log::{create_log_file_handles, get_writable_log_file_handle},
-    process_helper::compile_shell_command,
     settings::Settings,
     state::GroupStatus,
     task::{Task, TaskResult, TaskStatus},
 };
 
 use crate::{
-    daemon::{
-        callbacks::spawn_callback,
-        state_helper::{pause_on_failure, save_state, LockedState},
-    },
+    daemon::{callbacks::spawn_callback, internal_state::state::LockedState},
     internal_prelude::*,
     ok_or_shutdown,
+    process_helper::compile_shell_command,
 };
 
 /// See if we can start a new queued task.
@@ -41,12 +38,12 @@ pub fn spawn_new(settings: &Settings, state: &mut LockedState) {
 pub fn get_next_task_id(state: &LockedState) -> Option<usize> {
     // Get all tasks that could theoretically be started right now.
     let mut potential_tasks: Vec<&Task> = state
-            .tasks
+            .tasks()
             .iter()
             .filter(|(_, task)| matches!(task.status, TaskStatus::Queued {..}))
             .filter(|(_, task)| {
                 // Make sure the task is assigned to an existing group.
-                let group = match state.groups.get(&task.group) {
+                let group = match state.groups().get(&task.group) {
                     Some(group) => group,
                     None => {
                         error!(
@@ -88,7 +85,7 @@ pub fn get_next_task_id(state: &LockedState) -> Option<usize> {
                 // Check whether all dependencies for this task are fulfilled.
                 task.dependencies
                     .iter()
-                    .flat_map(|id| state.tasks.get(id))
+                    .flat_map(|id| state.tasks().get(id))
                     .all(|task| matches!(task.status, TaskStatus::Done{result: TaskResult::Success, ..}))
             })
             .map(|(_, task)| {task})
@@ -116,7 +113,7 @@ pub fn get_next_task_id(state: &LockedState) -> Option<usize> {
 /// The output of subprocesses is piped into a separate file for easier access
 pub fn spawn_process(settings: &Settings, state: &mut LockedState, task_id: usize) {
     // Check if the task exists and can actually be spawned. Otherwise do an early return.
-    let Some(task) = state.tasks.get(&task_id) else {
+    let Some(task) = state.tasks().get(&task_id) else {
         warn!("Tried to start non-existing task: {task_id}");
         return;
     };
@@ -147,7 +144,7 @@ pub fn spawn_process(settings: &Settings, state: &mut LockedState, task_id: usiz
 
     // Get all necessary info for starting the task
     let (command, path, group, mut envs) = {
-        let task = state.tasks.get(&task_id).unwrap();
+        let task = state.tasks().get(&task_id).unwrap();
         (
             task.command.clone(),
             task.path.clone(),
@@ -208,7 +205,7 @@ pub fn spawn_process(settings: &Settings, state: &mut LockedState, task_id: usiz
 
             // Update all necessary fields on the task.
             let task = {
-                let task = state.tasks.get_mut(&task_id).unwrap();
+                let task = state.tasks_mut().get_mut(&task_id).unwrap();
                 task.status = TaskStatus::Done {
                     enqueued_at,
                     start: Local::now(),
@@ -221,8 +218,8 @@ pub fn spawn_process(settings: &Settings, state: &mut LockedState, task_id: usiz
             // Spawn any callback if necessary
             spawn_callback(settings, state, &task);
 
-            pause_on_failure(state, settings, &task.group);
-            ok_or_shutdown!(settings, state, save_state(state, settings));
+            state.pause_on_failure(settings, &task.group);
+            ok_or_shutdown!(settings, state, state.save(settings));
             return;
         }
     };
@@ -230,7 +227,7 @@ pub fn spawn_process(settings: &Settings, state: &mut LockedState, task_id: usiz
     // Save the process handle in our self.children datastructure.
     state.children.add_child(&group, worker_id, task_id, child);
 
-    let task = state.tasks.get_mut(&task_id).unwrap();
+    let task = state.tasks_mut().get_mut(&task_id).unwrap();
     task.status = TaskStatus::Running {
         enqueued_at,
         start: Local::now(),
@@ -240,5 +237,5 @@ pub fn spawn_process(settings: &Settings, state: &mut LockedState, task_id: usiz
     task.envs = envs;
 
     info!("Started task: {}", task.command);
-    ok_or_shutdown!(settings, state, save_state(state, settings));
+    ok_or_shutdown!(settings, state, state.save(settings));
 }

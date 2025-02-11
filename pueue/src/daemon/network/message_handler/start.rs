@@ -1,8 +1,6 @@
-use pueue_lib::{
-    network::message::*, settings::Settings, state::SharedState, success_msg, task::TaskStatus,
-};
+use pueue_lib::{network::message::*, settings::Settings, success_msg, task::TaskStatus};
 
-use crate::daemon::{network::response_helper::*, process_handler};
+use crate::daemon::{internal_state::SharedState, network::response_helper::*, process_handler};
 
 /// Invoked when calling `pueue start`.
 /// Forward the start message to the task handler, which then starts the process(es).

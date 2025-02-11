@@ -4,10 +4,12 @@ use pueue_lib::{
     failure_msg,
     network::{message::*, protocol::send_response, socket::GenericStream},
     settings::Settings,
-    state::SharedState,
 };
 
-use crate::{daemon::process_handler::initiate_shutdown, internal_prelude::*};
+use crate::{
+    daemon::{internal_state::SharedState, process_handler::initiate_shutdown},
+    internal_prelude::*,
+};
 
 mod add;
 mod clean;
@@ -88,7 +90,7 @@ pub async fn handle_request(
 /// Return the current state.
 fn get_status(state: &SharedState) -> Response {
     let state = state.lock().unwrap().clone();
-    Response::Status(Box::new(state))
+    Response::Status(Box::new(state.inner))
 }
 
 fn ok_or_failure_message<T, E: Display>(result: Result<T, E>) -> Result<T, Response> {
@@ -119,10 +121,12 @@ mod fixtures {
     use chrono::{DateTime, Duration, Local};
     pub use pueue_lib::{
         settings::Settings,
-        state::{SharedState, State, PUEUE_DEFAULT_GROUP},
+        state::PUEUE_DEFAULT_GROUP,
         task::{Task, TaskResult, TaskStatus},
     };
     use tempfile::TempDir;
+
+    use crate::daemon::internal_state::{state::InternalState, SharedState};
 
     // A simple helper struct to keep the boilerplate for TaskStatus creation down.
     pub enum StubStatus {
@@ -154,7 +158,7 @@ mod fixtures {
             std::fs::create_dir(task_log_dir).expect("Failed to create test task log dir");
         }
 
-        let state = State::new();
+        let state = InternalState::new();
         (Arc::new(Mutex::new(state)), settings, tempdir)
     }
 

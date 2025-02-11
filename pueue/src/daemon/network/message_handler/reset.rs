@@ -1,11 +1,6 @@
-use pueue_lib::{
-    failure_msg,
-    network::message::*,
-    settings::Settings,
-    state::{GroupStatus, SharedState},
-};
+use pueue_lib::{failure_msg, network::message::*, settings::Settings, state::GroupStatus};
 
-use crate::daemon::process_handler;
+use crate::daemon::{internal_state::SharedState, process_handler};
 
 /// Invoked when calling `pueue reset`.
 /// Kill all children by using the `kill` function.
@@ -16,7 +11,7 @@ pub fn reset(settings: &Settings, state: &SharedState, message: ResetMessage) ->
     match message.target {
         ResetTarget::All => {
             // Mark all groups to be reset and kill all tasks
-            for (_name, group) in state.groups.iter_mut() {
+            for (_name, group) in state.groups_mut().iter_mut() {
                 group.status = GroupStatus::Reset;
             }
             process_handler::kill::kill(settings, &mut state, TaskSelection::All, false, None);
@@ -24,7 +19,7 @@ pub fn reset(settings: &Settings, state: &SharedState, message: ResetMessage) ->
         ResetTarget::Groups(groups) => {
             // First up, check whether we actually have all requested groups.
             for name in groups.iter() {
-                let group = state.groups.get(name);
+                let group = state.groups().get(name);
                 if group.is_none() {
                     return failure_msg!("Group '{name}' doesn't exist.");
                 }
@@ -32,7 +27,7 @@ pub fn reset(settings: &Settings, state: &SharedState, message: ResetMessage) ->
 
             // Mark all groups to be reset and kill its tasks
             for name in groups.iter() {
-                let group = state.groups.get_mut(name).unwrap();
+                let group = state.groups_mut().get_mut(name).unwrap();
                 group.status = GroupStatus::Reset;
 
                 process_handler::kill::kill(

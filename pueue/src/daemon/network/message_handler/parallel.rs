@@ -1,6 +1,6 @@
-use pueue_lib::{network::message::*, state::SharedState, success_msg};
+use pueue_lib::{network::message::*, success_msg};
 
-use crate::daemon::network::response_helper::*;
+use crate::daemon::{internal_state::SharedState, network::response_helper::*};
 
 /// Set the parallel tasks for a specific group.
 pub fn set_parallel_tasks(message: ParallelMessage, state: &SharedState) -> Response {

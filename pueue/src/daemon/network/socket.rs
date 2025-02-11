@@ -5,11 +5,13 @@ use pueue_lib::{
     error::Error,
     network::{message::*, protocol::*, secret::read_shared_secret},
     settings::Settings,
-    state::SharedState,
 };
 use tokio::time::sleep;
 
-use crate::{daemon::network::message_handler::handle_request, internal_prelude::*};
+use crate::{
+    daemon::{internal_state::SharedState, network::message_handler::handle_request},
+    internal_prelude::*,
+};
 
 /// Listen for new connections on the socket.
 /// On a new connection, the connected stream will be handled in a separate tokio task.

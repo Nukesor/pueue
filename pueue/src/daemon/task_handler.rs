@@ -2,19 +2,18 @@ use std::{collections::BTreeMap, time::Duration};
 
 use chrono::prelude::*;
 use pueue_lib::{
-    children::Children,
     network::{message::*, protocol::socket_cleanup},
     settings::Settings,
-    state::{Group, GroupStatus, SharedState},
+    state::{Group, GroupStatus},
     task::{TaskResult, TaskStatus},
 };
 
 use crate::{
     daemon::{
         callbacks::{check_callbacks, spawn_callback},
+        internal_state::{children::Children, state::LockedState, SharedState},
         pid::cleanup_pid_file,
         process_handler::{finish::handle_finished_tasks, spawn::spawn_new},
-        state_helper::{save_state, LockedState},
     },
     internal_prelude::*,
     ok_or_shutdown,
@@ -37,7 +36,7 @@ pub async fn run(state: SharedState, settings: Settings) -> Result<()> {
     {
         let mut state = state.lock().unwrap();
         let mut pools = BTreeMap::new();
-        for group in state.groups.keys() {
+        for group in state.groups().keys() {
             pools.insert(group.clone(), BTreeMap::new());
         }
         state.children = Children(pools);
@@ -68,7 +67,7 @@ pub async fn run(state: SharedState, settings: Settings) -> Result<()> {
     }
 }
 
-/// Check if all tasks are killed.
+/// Check if all tasks are killed.state::InnerState
 /// If they aren't, we'll wait a little longer.
 /// Once they're, we do some cleanup and exit.
 fn handle_shutdown(settings: &Settings, state: &mut LockedState) {
@@ -104,7 +103,7 @@ fn handle_shutdown(settings: &Settings, state: &mut LockedState) {
 /// If that's the case, completely reset the state
 fn handle_group_resets(_settings: &Settings, state: &mut LockedState) {
     let groups_to_reset: Vec<String> = state
-        .groups
+        .groups()
         .iter()
         .filter(|(_name, group)| group.status == GroupStatus::Reset)
         .map(|(name, _)| name.to_string())
@@ -117,10 +116,10 @@ fn handle_group_resets(_settings: &Settings, state: &mut LockedState) {
         }
 
         // Remove all tasks that belong to the group to reset
-        state.tasks.retain(|_id, task| &task.group != name);
+        state.tasks_mut().retain(|_id, task| &task.group != name);
 
         // Restart the group, now that it's devoid of tasks.
-        if let Some(group) = state.groups.get_mut(name) {
+        if let Some(group) = state.groups_mut().get_mut(name) {
             group.status = GroupStatus::Running;
         }
     }
@@ -130,7 +129,7 @@ fn handle_group_resets(_settings: &Settings, state: &mut LockedState) {
 /// Gather all stashed tasks and enqueue them if it is after the task's enqueue_at
 fn enqueue_delayed_tasks(settings: &Settings, state: &mut LockedState) {
     let mut changed = false;
-    for (_, task) in state.tasks.iter_mut() {
+    for (_, task) in state.tasks_mut().iter_mut() {
         if let TaskStatus::Stashed {
             enqueue_at: Some(time),
         } = task.status
@@ -147,7 +146,7 @@ fn enqueue_delayed_tasks(settings: &Settings, state: &mut LockedState) {
     }
     // Save the state if a task has been enqueued
     if changed {
-        ok_or_shutdown!(settings, state, save_state(state, settings));
+        ok_or_shutdown!(settings, state, state.save(settings));
     }
 }
 
@@ -156,7 +155,7 @@ fn enqueue_delayed_tasks(settings: &Settings, state: &mut LockedState) {
 fn check_failed_dependencies(settings: &Settings, state: &mut LockedState) {
     // Get id's of all tasks with failed dependencies
     let has_failed_deps: Vec<_> = state
-        .tasks
+        .tasks()
         .iter()
         .filter(|(_, task)| {
             matches!(task.status, TaskStatus::Queued { .. }) && !task.dependencies.is_empty()
@@ -167,7 +166,7 @@ fn check_failed_dependencies(settings: &Settings, state: &mut LockedState) {
             let failed = task
                 .dependencies
                 .iter()
-                .flat_map(|id| state.tasks.get(id))
+                .flat_map(|id| state.tasks().get(id))
                 .filter(|task| task.failed())
                 .map(|task| task.id)
                 .next();
@@ -179,7 +178,7 @@ fn check_failed_dependencies(settings: &Settings, state: &mut LockedState) {
     // Update the state of all tasks with failed dependencies.
     for (id, _) in has_failed_deps {
         // Get the task's group, since we have to check if it's paused.
-        let group = if let Some(task) = state.tasks.get(&id) {
+        let group = if let Some(task) = state.tasks().get(&id) {
             task.group.clone()
         } else {
             continue;
@@ -191,14 +190,14 @@ fn check_failed_dependencies(settings: &Settings, state: &mut LockedState) {
         if let Some(&Group {
             status: GroupStatus::Paused,
             ..
-        }) = state.groups.get(&group)
+        }) = state.groups().get(&group)
         {
             continue;
         }
 
         // Update the task and return a clone to build the callback.
         let task = {
-            let task = state.tasks.get_mut(&id).unwrap();
+            let task = state.tasks_mut().get_mut(&id).unwrap();
             // We know that this must be true, but we have to check anyway.
             let TaskStatus::Queued { enqueued_at } = task.status else {
                 continue;

@@ -1,15 +1,11 @@
 use pueue_lib::{
     log::clean_log_handles,
     network::message::*,
-    state::SharedState,
     task::{TaskResult, TaskStatus},
 };
 
 use super::*;
-use crate::{
-    daemon::state_helper::{is_task_removable, save_state},
-    ok_or_save_state_failure,
-};
+use crate::{daemon::internal_state::SharedState, ok_or_save_state_failure};
 
 fn construct_success_clean_message(message: CleanMessage) -> String {
     let successful_only_fix = if message.successful_only {
@@ -36,12 +32,12 @@ pub fn clean(settings: &Settings, state: &SharedState, message: CleanMessage) ->
 
     for task_id in &filtered_tasks.matching_ids {
         // Ensure the task is removable, i.e. there are no dependant tasks.
-        if !is_task_removable(&state, task_id, &[]) {
+        if !state.is_task_removable(task_id, &[]) {
             continue;
         }
 
         if message.successful_only || message.group.is_some() {
-            if let Some(task) = state.tasks.get(task_id) {
+            if let Some(task) = state.tasks().get(task_id) {
                 // Check if we should ignore this task, if only successful tasks should be removed.
                 if message.successful_only
                     && !matches!(
@@ -62,11 +58,11 @@ pub fn clean(settings: &Settings, state: &SharedState, message: CleanMessage) ->
                 }
             }
         }
-        let _ = state.tasks.remove(task_id).unwrap();
+        let _ = state.tasks_mut().remove(task_id).unwrap();
         clean_log_handles(*task_id, &settings.shared.pueue_directory());
     }
 
-    ok_or_save_state_failure!(save_state(&state, settings));
+    ok_or_save_state_failure!(state.save(settings));
 
     create_success_response(construct_success_clean_message(message))
 }
@@ -77,6 +73,7 @@ mod tests {
     use tempfile::TempDir;
 
     use super::{super::fixtures::*, *};
+    use crate::daemon::internal_state::state::InternalState;
 
     fn get_message(successful_only: bool, group: Option<String>) -> CleanMessage {
         CleanMessage {
@@ -89,7 +86,7 @@ mod tests {
         fn add_stub_task(&mut self, id: &str, group: &str, task_result: TaskResult);
     }
 
-    impl TaskAddable for State {
+    impl TaskAddable for InternalState {
         fn add_stub_task(&mut self, id: &str, group: &str, task_result: TaskResult) {
             let task = get_stub_task_in_group(id, group, StubStatus::Done(task_result));
             self.add_task(task);
@@ -104,7 +101,7 @@ mod tests {
             let mut state = state.lock().unwrap();
 
             for &group in groups {
-                if !state.groups.contains_key(group) {
+                if !state.groups().contains_key(group) {
                     state.create_group(group);
                 }
 
@@ -134,7 +131,7 @@ mod tests {
         };
 
         let state = state.lock().unwrap();
-        assert_eq!(state.tasks.len(), 4);
+        assert_eq!(state.tasks().len(), 4);
     }
 
     #[test]
@@ -151,7 +148,7 @@ mod tests {
         };
 
         let state = state.lock().unwrap();
-        assert!(state.tasks.is_empty());
+        assert!(state.tasks().is_empty());
     }
 
     #[test]
@@ -170,8 +167,8 @@ mod tests {
 
         // Assert that only the first entry has been deleted (TaskResult::Success)
         let state = state.lock().unwrap();
-        assert_eq!(state.tasks.len(), 5);
-        assert!(!state.tasks.contains_key(&0));
+        assert_eq!(state.tasks().len(), 5);
+        assert!(!state.tasks().contains_key(&0));
     }
 
     #[test]
@@ -193,8 +190,8 @@ mod tests {
 
         // Assert that only the 'other' group has been cleared
         let state = state.lock().unwrap();
-        assert_eq!(state.tasks.len(), 6);
-        assert!(state.tasks.iter().all(|(_, task)| &task.group != "other"));
+        assert_eq!(state.tasks().len(), 6);
+        assert!(state.tasks().iter().all(|(_, task)| &task.group != "other"));
     }
 
     #[test]
@@ -217,7 +214,7 @@ mod tests {
         // Assert that only the first entry has been deleted from the 'other' group
         // (TaskResult::Success)
         let state = state.lock().unwrap();
-        assert_eq!(state.tasks.len(), 11);
-        assert!(!state.tasks.contains_key(&6));
+        assert_eq!(state.tasks().len(), 11);
+        assert!(!state.tasks().contains_key(&6));
     }
 }

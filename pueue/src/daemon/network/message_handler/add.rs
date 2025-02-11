@@ -4,15 +4,15 @@ use pueue_lib::{
     failure_msg,
     network::message::*,
     settings::Settings,
-    state::{GroupStatus, SharedState},
+    state::GroupStatus,
     task::{Task, TaskStatus},
 };
 
 use crate::{
     daemon::{
+        internal_state::SharedState,
         network::{message_handler::ok_or_failure_message, response_helper::ensure_group_exists},
         process_handler,
-        state_helper::save_state,
     },
     ok_or_save_state_failure,
 };
@@ -30,7 +30,7 @@ pub fn add_task(settings: &Settings, state: &SharedState, message: AddMessage) -
     let not_found: Vec<_> = message
         .dependencies
         .iter()
-        .filter(|id| !state.tasks.contains_key(id))
+        .filter(|id| !state.tasks().contains_key(id))
         .collect();
     if !not_found.is_empty() {
         return failure_msg!("Unable to setup dependencies : task(s) {not_found:?} not found",);
@@ -71,7 +71,7 @@ pub fn add_task(settings: &Settings, state: &SharedState, message: AddMessage) -
 
     // Check if the task's group is paused before we pass it to the state
     let group_status = state
-        .groups
+        .groups()
         .get(&task.group)
         .expect("We ensured that the group exists.")
         .status;
@@ -79,7 +79,7 @@ pub fn add_task(settings: &Settings, state: &SharedState, message: AddMessage) -
 
     // Add the task and persist the state.
     let task_id = state.add_task(task);
-    ok_or_save_state_failure!(save_state(&state, settings));
+    ok_or_save_state_failure!(state.save(settings));
 
     // Notify the task handler, in case the client wants to start the task immediately.
     if message.start_immediately {

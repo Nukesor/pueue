@@ -1,15 +1,12 @@
 use pueue_lib::{
-    network::message::TaskSelection, process_helper::ProcessAction, settings::Settings,
-    state::GroupStatus, task::TaskStatus,
+    network::message::TaskSelection, settings::Settings, state::GroupStatus, task::TaskStatus,
 };
 
 use crate::{
-    daemon::{
-        process_handler::perform_action,
-        state_helper::{save_state, LockedState},
-    },
+    daemon::{internal_state::state::LockedState, process_handler::perform_action},
     internal_prelude::*,
     ok_or_shutdown,
+    process_helper::ProcessAction,
 };
 
 /// Pause specific tasks or groups.
@@ -21,7 +18,7 @@ pub fn pause(settings: &Settings, state: &mut LockedState, selection: TaskSelect
         TaskSelection::TaskIds(task_ids) => task_ids,
         TaskSelection::Group(group_name) => {
             // Ensure that a given group exists. (Might not happen due to concurrency)
-            let group = match state.groups.get_mut(&group_name) {
+            let group = match state.groups_mut().get_mut(&group_name) {
                 Some(group) => group,
                 None => return,
             };
@@ -50,7 +47,7 @@ pub fn pause(settings: &Settings, state: &mut LockedState, selection: TaskSelect
     if !wait {
         for id in keys {
             // Get the enqueued_at/start times from the current state.
-            let (enqueued_at, start) = match state.tasks.get(&id).unwrap().status {
+            let (enqueued_at, start) = match state.tasks_mut().get(&id).unwrap().status {
                 TaskStatus::Running { enqueued_at, start }
                 | TaskStatus::Paused { enqueued_at, start } => (enqueued_at, start),
                 _ => continue,
@@ -70,5 +67,5 @@ pub fn pause(settings: &Settings, state: &mut LockedState, selection: TaskSelect
         }
     }
 
-    ok_or_shutdown!(settings, state, save_state(state, settings));
+    ok_or_shutdown!(settings, state, state.save(settings));
 }

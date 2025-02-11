@@ -1,9 +1,9 @@
 use pueue_lib::{
-    format::format_datetime, network::message::*, settings::Settings, state::SharedState,
-    success_msg, task::TaskStatus,
+    format::format_datetime, network::message::*, settings::Settings, success_msg,
+    task::TaskStatus, Task,
 };
 
-use crate::daemon::network::response_helper::*;
+use crate::daemon::{internal_state::SharedState, network::response_helper::*};
 
 /// Invoked when calling `pueue stash`.
 /// Stash specific queued tasks.
@@ -11,10 +11,10 @@ use crate::daemon::network::response_helper::*;
 pub fn stash(settings: &Settings, state: &SharedState, message: StashMessage) -> Response {
     let mut state = state.lock().unwrap();
     // Get the affected task ids, based on the task selection.
-    let selected_task_ids = match message.tasks {
+    let selected_tasks = match message.tasks {
         TaskSelection::TaskIds(ref task_ids) => state
-            .tasks
-            .iter()
+            .tasks_mut()
+            .iter_mut()
             .filter(|(task_id, task)| {
                 if !task_ids.contains(task_id) {
                     return false;
@@ -25,11 +25,10 @@ pub fn stash(settings: &Settings, state: &SharedState, message: StashMessage) ->
                     TaskStatus::Queued { .. } | TaskStatus::Locked { .. }
                 )
             })
-            .map(|(task_id, _)| *task_id)
-            .collect::<Vec<usize>>(),
+            .collect::<Vec<(&usize, &mut Task)>>(),
         TaskSelection::Group(ref group) => state
-            .tasks
-            .iter()
+            .tasks_mut()
+            .iter_mut()
             .filter(|(_, task)| {
                 if task.group != *group {
                     return false;
@@ -40,25 +39,20 @@ pub fn stash(settings: &Settings, state: &SharedState, message: StashMessage) ->
                     TaskStatus::Queued { .. } | TaskStatus::Locked { .. }
                 )
             })
-            .map(|(task_id, _)| *task_id)
-            .collect::<Vec<usize>>(),
+            .collect::<Vec<(&usize, &mut Task)>>(),
         TaskSelection::All => state
-            .tasks
-            .iter()
+            .tasks_mut()
+            .iter_mut()
             .filter(|(_, task)| {
                 matches!(
                     task.status,
                     TaskStatus::Queued { .. } | TaskStatus::Locked { .. }
                 )
             })
-            .map(|(task_id, _)| *task_id)
-            .collect::<Vec<usize>>(),
+            .collect::<Vec<(&usize, &mut Task)>>(),
     };
 
-    for task_id in &selected_task_ids {
-        // We just checked that they're there and the state is locked. It's safe to unwrap.
-        let task = state.tasks.get_mut(task_id).expect("Task should be there.");
-
+    for (_, task) in selected_tasks {
         task.status = TaskStatus::Stashed {
             enqueue_at: message.enqueue_at,
         };

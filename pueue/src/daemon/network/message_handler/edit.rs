@@ -1,10 +1,9 @@
 use pueue_lib::{
-    aliasing::insert_alias, failure_msg, network::message::*, state::SharedState, success_msg,
-    task::TaskStatus,
+    aliasing::insert_alias, failure_msg, network::message::*, success_msg, task::TaskStatus,
 };
 
 use super::*;
-use crate::{daemon::state_helper::save_state, ok_or_save_state_failure};
+use crate::{daemon::internal_state::SharedState, ok_or_save_state_failure};
 
 /// Invoked when calling `pueue edit`.
 /// If a user wants to edit a message, we need to send him the current command.
@@ -14,7 +13,7 @@ pub fn edit_request(state: &SharedState, task_ids: Vec<usize>) -> Response {
     let mut state = state.lock().unwrap();
     let mut editable_tasks: Vec<EditableTask> = Vec::new();
     for task_id in task_ids {
-        match state.tasks.get_mut(&task_id) {
+        match state.tasks_mut().get_mut(&task_id) {
             Some(task) => {
                 if !task.is_queued() && !task.is_stashed() {
                     return create_failure_response("You can only edit a queued/stashed task");
@@ -42,7 +41,7 @@ pub fn edit(
     // Check whether the task exists and is locked. Abort if that's not the case.
     let mut state = state.lock().unwrap();
     for editable_task in editable_tasks {
-        match state.tasks.get_mut(&editable_task.id) {
+        match state.tasks_mut().get_mut(&editable_task.id) {
             Some(task) => {
                 let TaskStatus::Locked { previous_status } = &task.status else {
                     return create_failure_response(format!(
@@ -61,7 +60,7 @@ pub fn edit(
                 task.label = editable_task.label;
                 task.priority = editable_task.priority;
 
-                ok_or_save_state_failure!(save_state(&state, settings));
+                ok_or_save_state_failure!(state.save(settings));
             }
             None => return failure_msg!("Task to edit has gone away: {}", editable_task.id),
         }
@@ -76,7 +75,7 @@ pub fn edit_restore(state: &SharedState, task_ids: Vec<usize>) -> Response {
     let mut state = state.lock().unwrap();
     let mut failed_tasks = Vec::new();
     for task_id in &task_ids {
-        match state.tasks.get_mut(task_id) {
+        match state.tasks_mut().get_mut(task_id) {
             Some(task) => {
                 let TaskStatus::Locked { previous_status } = &task.status else {
                     failed_tasks.push(format!("Task {} isn't locked! Cannot be unlocked", task_id));
