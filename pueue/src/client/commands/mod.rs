@@ -6,7 +6,7 @@
 //! All commands that cannot be simply handled by handling requests or using `pueue_lib`.
 
 use pueue_lib::{
-    network::message::{Request, Response},
+    network::message::{Request, Response, TaskSelection},
     state::{State, PUEUE_DEFAULT_GROUP},
     task::Task,
 };
@@ -14,18 +14,24 @@ use pueue_lib::{
 use crate::internal_prelude::*;
 
 mod add;
+mod clean;
 mod edit;
 mod follow;
+mod remove;
 mod reset;
 mod restart;
+mod stash;
 mod state;
 mod wait;
 
 pub use add::add_task;
+pub use clean::clean;
 pub use edit::edit;
 pub use follow::follow;
+pub use remove::remove;
 pub use reset::reset;
 pub use restart::restart;
+pub use stash::stash;
 pub use state::{format_state, state};
 pub use wait::{wait, WaitTargetStatus};
 
@@ -33,6 +39,28 @@ use super::{
     client::Client,
     display::{print_error, print_success, OutputStyle},
 };
+
+/// This is a small helper which determines a task selection depending on
+/// given commandline parameters.
+/// I.e. whether the default group, a set of tasks or a specific group should be selected.
+/// `start`, `pause` and `kill` can target either of these three selections.
+///
+/// If no parameters are given, it returns to the default group.
+pub fn selection_from_params(
+    all: bool,
+    group: Option<String>,
+    task_ids: Vec<usize>,
+) -> TaskSelection {
+    if all {
+        TaskSelection::All
+    } else if let Some(group) = group {
+        TaskSelection::Group(group)
+    } else if !task_ids.is_empty() {
+        TaskSelection::TaskIds(task_ids)
+    } else {
+        TaskSelection::Group(PUEUE_DEFAULT_GROUP.into())
+    }
+}
 
 /// This is a small helper which either returns a given group or the default group.
 fn group_or_default(group: &Option<String>) -> String {

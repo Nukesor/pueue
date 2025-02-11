@@ -9,7 +9,7 @@ use pueue_lib::{
 };
 
 use super::OutputStyle;
-use crate::client::{cli::SubCommand, client::selection_from_params};
+use crate::client::{cli::SubCommand, commands::selection_from_params};
 
 mod json;
 mod local;

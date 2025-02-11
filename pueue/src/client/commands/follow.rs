@@ -39,7 +39,7 @@ pub async fn follow(
     remote_follow(client, task_id, lines).await
 }
 
-/// Request the daemon to stream the log files.
+/// Request the daemon to stream log files for some tasks.
 ///
 /// This receives log output until the connection goes away or is explicitly closed by the daemon
 /// once the task finishes.

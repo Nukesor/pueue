@@ -10,7 +10,10 @@ use pueue_lib::{
 };
 use serde::Serialize;
 
-use super::commands::{add_task, edit, follow, format_state, reset, restart, state, wait};
+use super::commands::{
+    add_task, clean, edit, follow, format_state, remove, reset, restart, selection_from_params,
+    stash, state, wait,
+};
 use crate::{
     client::{
         cli::{CliArguments, ColorChoice, EnvCommand, GroupCommand, SubCommand},
@@ -49,28 +52,6 @@ fn group_or_default(group: &Option<String>) -> String {
     group
         .clone()
         .unwrap_or_else(|| PUEUE_DEFAULT_GROUP.to_string())
-}
-
-/// This is a small helper which determines a task selection depending on
-/// given commandline parameters.
-/// I.e. whether the default group, a set of tasks or a specific group should be selected.
-/// `start`, `pause` and `kill` can target either of these three selections.
-///
-/// If no parameters are given, it returns to the default group.
-pub fn selection_from_params(
-    all: bool,
-    group: Option<String>,
-    task_ids: Vec<usize>,
-) -> TaskSelection {
-    if all {
-        TaskSelection::All
-    } else if let Some(group) = group {
-        TaskSelection::Group(group)
-    } else if !task_ids.is_empty() {
-        TaskSelection::TaskIds(task_ids)
-    } else {
-        TaskSelection::Group(PUEUE_DEFAULT_GROUP.into())
-    }
 }
 
 impl Client {
@@ -251,25 +232,6 @@ impl Client {
     /// of [SubCommand] variant to a [Message] variant.
     fn get_message_from_cmd(&self, subcommand: SubCommand) -> Result<Request> {
         Ok(match subcommand {
-            SubCommand::Remove { task_ids } => {
-                if self.settings.client.show_confirmation_questions {
-                    handle_user_confirmation("remove", &task_ids)?;
-                }
-                Request::Remove(task_ids)
-            }
-            SubCommand::Stash {
-                task_ids,
-                group,
-                all,
-                delay_until,
-            } => {
-                let selection = selection_from_params(all, group, task_ids);
-                StashMessage {
-                    tasks: selection,
-                    enqueue_at: delay_until,
-                }
-                .into()
-            }
             SubCommand::Switch {
                 task_id_1,
                 task_id_2,
@@ -368,14 +330,6 @@ impl Client {
                 };
                 Request::Log(message)
             }
-            SubCommand::Clean {
-                successful_only,
-                group,
-            } => CleanMessage {
-                successful_only,
-                group,
-            }
-            .into(),
             SubCommand::Shutdown => Shutdown::Graceful.into(),
             SubCommand::Parallel {
                 parallel_tasks,
@@ -400,6 +354,9 @@ impl Client {
             SubCommand::Follow { .. } => bail!("Follow has to be handled earlier"),
             SubCommand::Status { .. } => bail!("Status has to be handled earlier"),
             SubCommand::Reset { .. } => bail!("Reset has to be handled earlier"),
+            SubCommand::Clean { .. } => bail!("Clean has to be handled earlier"),
+            SubCommand::Remove { .. } => bail!("Remove has to be handled earlier"),
+            SubCommand::Stash { .. } => bail!("Stash has to be handled earlier"),
         })
     }
 }
@@ -410,8 +367,17 @@ impl Client {
 /// Based on the subcommand, the respective function in the [`super::commands`] module is
 /// called.
 async fn handle_command(client: &mut Client, subcommand: SubCommand) -> Result<()> {
-    // This match handles all "complex" commands.
     match subcommand {
+        SubCommand::Clean {
+            successful_only,
+            group,
+        } => clean(client, group, successful_only).await,
+        SubCommand::Edit { task_ids } => edit(client, task_ids).await,
+        SubCommand::Follow { task_id, lines } => follow(client, task_id, lines).await,
+        SubCommand::FormatStatus { group } => format_state(client, group).await,
+        SubCommand::Reset { force, groups } => reset(client, force, groups).await,
+        SubCommand::Status { query, json, group } => state(client, query, json, group).await,
+        SubCommand::Remove { task_ids } => remove(client, task_ids).await,
         SubCommand::Add {
             command,
             working_directory,
@@ -443,20 +409,6 @@ async fn handle_command(client: &mut Client, subcommand: SubCommand) -> Result<(
             )
             .await
         }
-        SubCommand::Status { query, json, group } => state(client, query, json, group).await,
-        SubCommand::Reset { force, groups } => reset(client, force, groups).await,
-        SubCommand::Edit { task_ids } => edit(client, task_ids).await,
-        SubCommand::Wait {
-            task_ids,
-            group,
-            all,
-            quiet,
-
-            status,
-        } => {
-            let selection = selection_from_params(all, group, task_ids);
-            wait(client, selection, quiet, status).await
-        }
         SubCommand::Restart {
             task_ids,
             all_failed,
@@ -480,8 +432,23 @@ async fn handle_command(client: &mut Client, subcommand: SubCommand) -> Result<(
             )
             .await
         }
-        SubCommand::Follow { task_id, lines } => follow(client, task_id, lines).await,
-        SubCommand::FormatStatus { group } => format_state(client, group).await,
+        SubCommand::Stash {
+            task_ids,
+            group,
+            all,
+            delay_until,
+        } => stash(client, task_ids, group, all, delay_until).await,
+        SubCommand::Wait {
+            task_ids,
+            group,
+            all,
+            quiet,
+
+            status,
+        } => {
+            let selection = selection_from_params(all, group, task_ids);
+            wait(client, selection, quiet, status).await
+        }
         _ => bail!("unhandled WIP"),
     }
 }
