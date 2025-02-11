@@ -260,7 +260,7 @@ pub enum SubCommand {
         #[arg(short, long)]
         all: bool,
 
-        /// Pause the specified group[s], but let already running tasks finish by themselves.
+        /// Pause the specified groups, but let already running tasks finish by themselves.
         #[arg(short, long)]
         wait: bool,
     },

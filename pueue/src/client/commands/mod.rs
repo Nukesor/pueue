@@ -149,8 +149,7 @@ fn handle_response(style: &OutputStyle, response: Response) -> Result<()> {
 /// Handle any command.
 ///
 /// This is the core entry point of the pueue client.
-/// Based on the subcommand, the respective function in the [`super::commands`] module is
-/// called.
+/// Based on the subcommand, the respective function in the `commands` submodule is called.
 pub async fn handle_command(client: &mut Client, subcommand: SubCommand) -> Result<()> {
     trace!(message = "Handling command", subcommand = ?subcommand);
 

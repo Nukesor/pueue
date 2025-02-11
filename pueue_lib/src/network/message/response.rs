@@ -58,7 +58,7 @@ pub enum Response {
     Status(Box<State>),
 
     /// The log returned from the daemon for a bunch of [`Task`]s
-    /// This is the response to [`Request::Log`]
+    /// This is the response to [`super::Request::Log`]
     Log(BTreeMap<usize, TaskLogMessage>),
 
     Group(GroupResponseMessage),

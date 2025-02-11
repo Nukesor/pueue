@@ -51,8 +51,8 @@
 
 /// Used by the daemon to initialize the TLS certificates.
 pub mod certificate;
-/// This contains the main [Message](message::Message) enum and all its structs used to
-/// communicate with the daemon or client.
+/// This contains the the [`Request`](crate::Request) and [`Response`](crate::Response) enums and
+/// all their structs used to communicate with the daemon or client.
 pub mod message;
 /// This is probably the most interesting part for you.
 pub mod protocol;
