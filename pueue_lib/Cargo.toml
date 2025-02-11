@@ -18,10 +18,8 @@ maintenance = { status = "actively-developed" }
 async-trait = "0.1"
 byteorder = "1.5"
 chrono.workspace = true
-color-eyre.workspace = true
 command-group.workspace = true
 dirs = "6.0"
-handlebars.workspace = true
 rand = "0.8"
 rcgen = "0.13"
 rev_buf_reader = "0.3"
@@ -46,6 +44,7 @@ tracing.workspace = true
 
 [dev-dependencies]
 better-panic.workspace = true
+color-eyre.workspace = true
 portpicker = "0.1"
 pretty_assertions.workspace = true
 tempfile = "3"
@@ -65,10 +64,3 @@ winapi = { version = "0.3", features = [
 # Unix
 [target.'cfg(unix)'.dependencies]
 whoami = "1"
-
-[target.'cfg(any(target_os = "linux", target_os = "macos"))'.dependencies]
-libproc = "0.14.8"
-
-# Linux only
-[target.'cfg(target_os = "linux")'.dependencies]
-procfs = { version = "0.17", default-features = false }

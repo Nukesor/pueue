@@ -4,12 +4,15 @@ use chrono::{DateTime, Local};
 use handlebars::{Handlebars, RenderError};
 use pueue_lib::{
     log::{get_log_path, read_last_log_file_lines},
-    process_helper::compile_shell_command,
     settings::Settings,
     task::{Task, TaskResult, TaskStatus},
 };
 
-use crate::{daemon::state_helper::LockedState, internal_prelude::*};
+use crate::{
+    daemon::state_helper::LockedState,
+    internal_prelude::*,
+    process_helper::compile_shell_command,
+};
 
 /// Users can specify a callback that's fired whenever a task finishes.
 /// The callback is performed by spawning a new subprocess.

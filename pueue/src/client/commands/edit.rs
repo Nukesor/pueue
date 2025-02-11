@@ -9,12 +9,11 @@ use std::{
 use pueue_lib::{
     error::Error,
     network::{message::*, protocol::*},
-    process_helper::compile_shell_command,
     settings::Settings,
 };
 use tempfile::tempdir;
 
-use crate::internal_prelude::*;
+use crate::{internal_prelude::*, process_helper::compile_shell_command};
 
 /// This function handles the logic for editing tasks.
 /// At first, we request the daemon to send us the task to edit.

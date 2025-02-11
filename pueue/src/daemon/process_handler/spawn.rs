@@ -4,7 +4,6 @@ use chrono::Local;
 use command_group::CommandGroup;
 use pueue_lib::{
     log::{create_log_file_handles, get_writable_log_file_handle},
-    process_helper::compile_shell_command,
     settings::Settings,
     state::GroupStatus,
     task::{Task, TaskResult, TaskStatus},
@@ -17,6 +16,7 @@ use crate::{
     },
     internal_prelude::*,
     ok_or_shutdown,
+    process_helper::compile_shell_command,
 };
 
 /// See if we can start a new queued task.

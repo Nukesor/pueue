@@ -1,10 +1,13 @@
 use pueue_lib::{
     network::message::{Shutdown, TaskSelection},
-    process_helper::{send_signal_to_child, ProcessAction},
     settings::Settings,
 };
 
-use crate::{daemon::state_helper::LockedState, internal_prelude::*};
+use crate::{
+    daemon::state_helper::LockedState,
+    internal_prelude::*,
+    process_helper::{send_signal_to_child, ProcessAction},
+};
 
 pub mod finish;
 pub mod kill;
@@ -52,7 +55,7 @@ pub fn perform_action(state: &mut LockedState, id: usize, action: ProcessAction)
     match state.children.get_child_mut(id) {
         Some(child) => {
             debug!("Executing action {action:?} to {id}");
-            send_signal_to_child(child, &action)?;
+            send_signal_to_child(child, action.into())?;
 
             Ok(true)
         }

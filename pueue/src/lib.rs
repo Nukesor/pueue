@@ -18,4 +18,8 @@ pub(crate) mod errors {
 
 pub mod client;
 pub mod daemon;
+/// Shared module for internal logic!
+/// Contains helper to spawn shell commands and examine and interact with processes.
+pub mod process_helper;
 pub mod tracing;
+

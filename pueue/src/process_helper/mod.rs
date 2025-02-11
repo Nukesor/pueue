@@ -5,9 +5,9 @@
 //! Depending on the target, the respective platform is read and loaded into this scope.
 use std::{collections::HashMap, process::Command};
 
-use crate::{
-    internal_prelude::*, network::message::request::Signal as InternalSignal, settings::Settings,
-};
+use pueue_lib::{network::message::request::Signal as InternalSignal, settings::Settings};
+
+use crate::internal_prelude::*;
 
 // Unix specific process handling
 // Shared between Linux and Apple
@@ -38,8 +38,8 @@ pub enum ProcessAction {
     Resume,
 }
 
-impl From<&ProcessAction> for Signal {
-    fn from(action: &ProcessAction) -> Self {
+impl From<ProcessAction> for Signal {
+    fn from(action: ProcessAction) -> Self {
         match action {
             ProcessAction::Pause => Signal::SIGSTOP,
             ProcessAction::Resume => Signal::SIGCONT,
@@ -47,15 +47,15 @@ impl From<&ProcessAction> for Signal {
     }
 }
 
-impl From<InternalSignal> for Signal {
-    fn from(signal: InternalSignal) -> Self {
-        match signal {
-            InternalSignal::SigKill => Signal::SIGKILL,
-            InternalSignal::SigInt => Signal::SIGINT,
-            InternalSignal::SigTerm => Signal::SIGTERM,
-            InternalSignal::SigCont => Signal::SIGCONT,
-            InternalSignal::SigStop => Signal::SIGSTOP,
-        }
+/// Conversion function to convert the [`InternalSignal`] used during message transport
+/// to the actual process handling Unix [`Signal`].
+pub fn signal_from_internal(signal: InternalSignal) -> Signal {
+    match signal {
+        InternalSignal::SigKill => Signal::SIGKILL,
+        InternalSignal::SigInt => Signal::SIGINT,
+        InternalSignal::SigTerm => Signal::SIGTERM,
+        InternalSignal::SigCont => Signal::SIGCONT,
+        InternalSignal::SigStop => Signal::SIGSTOP,
     }
 }
 

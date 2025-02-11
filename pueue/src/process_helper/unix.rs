@@ -4,8 +4,9 @@
 // type.
 use color_eyre::Result;
 use command_group::{GroupChild, Signal, UnixChildExt};
+use pueue_lib::settings::Settings;
 
-use crate::{internal_prelude::*, settings::Settings};
+use crate::internal_prelude::*;
 
 pub fn get_shell_command(settings: &Settings) -> Vec<String> {
     let Some(ref shell_command) = settings.daemon.shell_command else {
@@ -20,11 +21,8 @@ pub fn get_shell_command(settings: &Settings) -> Vec<String> {
 }
 
 /// Send a signal to one of Pueue's child process group handle.
-pub fn send_signal_to_child<T>(child: &mut GroupChild, signal: T) -> Result<()>
-where
-    T: Into<Signal>,
-{
-    child.signal(signal.into())?;
+pub fn send_signal_to_child(child: &mut GroupChild, signal: Signal) -> Result<()> {
+    child.signal(signal)?;
     Ok(())
 }
 
