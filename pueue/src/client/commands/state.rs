@@ -1,39 +1,113 @@
+use std::{
+    collections::BTreeMap,
+    io::{self, prelude::*},
+};
+
 use pueue_lib::{
     settings::Settings,
     state::{State, PUEUE_DEFAULT_GROUP},
     task::Task,
 };
 
-use super::{helper::*, table_builder::TableBuilder, OutputStyle};
 use crate::{
-    client::{cli::SubCommand, display::group::get_group_headline, query::apply_query},
+    client::{
+        client::Client,
+        commands::get_state,
+        display::{
+            group::get_group_headline, helper::sort_tasks_by_group, table_builder::TableBuilder,
+            OutputStyle,
+        },
+        query::apply_query,
+    },
     internal_prelude::*,
 };
+
+/// Simply request and print the state.
+pub async fn state(
+    client: &mut Client,
+    query: Vec<String>,
+    json: bool,
+    group: Option<String>,
+) -> Result<()> {
+    let state = get_state(client).await?;
+    let tasks = state.tasks.values().cloned().collect();
+
+    let output = print_state(
+        state,
+        tasks,
+        &client.style,
+        &client.settings,
+        json,
+        group,
+        Some(query),
+    )?;
+    println!("{output}");
+
+    Ok(())
+}
+
+/// This function tries to read a map or list of JSON serialized [Task]s from `stdin`.
+/// The tasks will then get deserialized and displayed as a normal `status` command.
+/// The current group information is pulled from the daemon in a new `status` call.
+pub async fn format_state(client: &mut Client, group: Option<String>) -> Result<()> {
+    // Read the raw input to a buffer
+    let mut stdin = io::stdin();
+    let mut buffer = Vec::new();
+    stdin
+        .read_to_end(&mut buffer)
+        .context("Failed to read json from stdin.")?;
+
+    // Convert it to a valid utf8 stream. If this fails, it cannot be valid JSON.
+    let json = String::from_utf8(buffer).context("Failed to convert stdin input to UTF8")?;
+
+    // Try to deserialize the input as a map of tasks first.
+    // If this doesn't work, try a list of tasks.
+    let map_deserialize = serde_json::from_str::<BTreeMap<usize, Task>>(&json);
+
+    let tasks: Vec<Task> = if let Ok(map) = map_deserialize {
+        map.into_values().collect()
+    } else {
+        serde_json::from_str(&json).context("Failed to deserialize from JSON input.")?
+    };
+
+    let state = get_state(client)
+        .await
+        .context("Failed to get the current state from daemon")?;
+
+    let output = print_state(
+        state,
+        tasks,
+        &client.style,
+        &client.settings,
+        false,
+        group,
+        None,
+    )?;
+    print!("{output}");
+
+    Ok(())
+}
 
 /// Get the output for the state of the daemon in a nicely formatted table.
 /// If there are multiple groups, each group with a task will have its own table.
 ///
 /// We pass the tasks as a separate parameter and as a list.
 /// This allows us to print the tasks in the order passed to the `format-status` subcommand.
-pub fn print_state(
+fn print_state(
     mut state: State,
     mut tasks: Vec<Task>,
-    cli_command: &SubCommand,
     style: &OutputStyle,
     settings: &Settings,
+    json: bool,
+    group: Option<String>,
+    query: Option<Vec<String>>,
 ) -> Result<String> {
     let mut output = String::new();
 
-    let (json, group_only, query) = match cli_command {
-        SubCommand::Status { json, group, query } => (*json, group.clone(), Some(query)),
-        SubCommand::FormatStatus { group } => (false, group.clone(), None),
-        _ => panic!("Got wrong Subcommand {cli_command:?} in print_state. This shouldn't happen!"),
-    };
-
     let mut table_builder = TableBuilder::new(settings, style);
 
-    if let Some(query) = query {
-        let query_result = apply_query(&query.join(" "), &group_only)?;
+    if let Some(query) = &query {
+        let query_result = apply_query(&query.join(" "), &group)?;
         table_builder.set_visibility_by_rules(&query_result.selected_columns);
         tasks = query_result.apply_filters(tasks);
         tasks = query_result.order_tasks(tasks);
@@ -49,7 +123,7 @@ pub fn print_state(
         return Ok(output);
     }
 
-    if let Some(group) = group_only {
+    if let Some(group) = group {
         print_single_group(state, tasks, style, group, table_builder, &mut output);
         return Ok(output);
     }

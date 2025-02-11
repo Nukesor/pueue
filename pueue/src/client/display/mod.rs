@@ -2,10 +2,9 @@
 //! daemon.
 //!
 //! This includes formatting of task tables, group info, log inspection and log following.
-mod group;
+pub mod group;
 pub mod helper;
 mod log;
-mod state;
 pub mod style;
 pub mod table_builder;
 
@@ -15,7 +14,6 @@ use crossterm::style::Color;
 pub use self::{
     group::format_groups,
     log::{determine_log_line_amount, print_logs},
-    state::print_state,
     style::OutputStyle,
 };
 

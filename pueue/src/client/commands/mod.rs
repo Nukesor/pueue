@@ -16,15 +16,17 @@ use crate::internal_prelude::*;
 mod add;
 mod edit;
 mod follow;
-mod format_state;
+mod reset;
 mod restart;
+mod state;
 mod wait;
 
 pub use add::add_task;
 pub use edit::edit;
 pub use follow::follow;
-pub use format_state::format_state;
+pub use reset::reset;
 pub use restart::restart;
+pub use state::{format_state, state};
 pub use wait::{wait, WaitTargetStatus};
 
 use super::{
@@ -75,16 +77,16 @@ pub async fn get_task(client: &mut Client, task_id: usize) -> Result<Option<Task
 ///
 /// If this function returns `Ok(true)`, the parent function will continue to receive
 /// and handle messages from the daemon. Otherwise the client will simply exit.
-fn handle_response(style: &OutputStyle, response: Response) -> Result<bool> {
+fn handle_response(style: &OutputStyle, response: Response) -> Result<()> {
     match response {
         Response::Success(text) => print_success(style, &text),
         Response::Failure(text) => {
             print_error(style, &text);
             std::process::exit(1);
         }
-        Response::Close => return Ok(false),
+        Response::Close => return Ok(()),
         _ => error!("Received unhandled response message"),
     };
 
-    Ok(false)
+    Ok(())
 }

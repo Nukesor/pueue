@@ -10,7 +10,7 @@ use pueue_lib::{
 };
 use serde::Serialize;
 
-use super::commands::{add_task, edit, follow, format_state, get_state, restart, wait};
+use super::commands::{add_task, edit, follow, format_state, reset, restart, state, wait};
 use crate::{
     client::{
         cli::{CliArguments, ColorChoice, EnvCommand, GroupCommand, SubCommand},
@@ -182,7 +182,7 @@ impl Client {
         trace!(message = "Starting client", client = ?self);
 
         // Return early, if the command has already been handled.
-        if self.handle_complex_command(self.subcommand.clone()).await? {
+        if handle_command(self, self.subcommand.clone()).await.is_ok() {
             return Ok(());
         }
 
@@ -190,134 +190,6 @@ impl Client {
         self.handle_simple_command(self.subcommand.clone()).await?;
 
         Ok(())
-    }
-
-    /// Handle all complex client-side functionalities.
-    /// Some functionalities need special handling and are contained in their own functions
-    /// with their own communication code.
-    /// Some examples for special handling includes
-    /// - reading local files
-    /// - sending multiple messages
-    /// - interacting with other programs
-    ///
-    /// Returns `Ok(true)`, if the current command has been handled by this function.
-    /// This indicates that the client can now shut down.
-    /// If `Ok(false)` is returned, the client will continue and handle the Subcommand in the
-    /// [Client::handle_simple_command] function.
-    async fn handle_complex_command(&mut self, subcommand: SubCommand) -> Result<bool> {
-        // This match handles all "complex" commands.
-        match subcommand {
-            SubCommand::Add {
-                command,
-                working_directory,
-                escape,
-                start_immediately,
-                stashed,
-                group,
-                delay_until,
-                dependencies,
-                priority,
-                label,
-                print_task_id,
-                follow,
-            } => {
-                add_task(
-                    self,
-                    command,
-                    working_directory,
-                    escape,
-                    start_immediately,
-                    stashed,
-                    group,
-                    delay_until,
-                    dependencies,
-                    priority,
-                    label,
-                    print_task_id,
-                    follow,
-                )
-                .await?;
-                Ok(false)
-            }
-            SubCommand::Reset { force, groups } => {
-                // Get the current state and check if there're any running tasks.
-                // If there are, ask the user if they really want to reset the state.
-                let state = get_state(self).await?;
-
-                // Get the groups that should be reset.
-                let groups: Vec<String> = if groups.is_empty() {
-                    state.groups.keys().cloned().collect()
-                } else {
-                    groups
-                };
-
-                // Check if there're any running tasks for that group
-                let running_tasks = state
-                    .tasks
-                    .iter()
-                    .filter(|(_id, task)| groups.contains(&task.group))
-                    .filter_map(|(id, task)| if task.is_running() { Some(*id) } else { None })
-                    .collect::<Vec<_>>();
-
-                if !running_tasks.is_empty() && !force {
-                    self.handle_user_confirmation("remove running tasks", &running_tasks)?;
-                }
-
-                // Now that we got the user's consent, we return `false` and let the
-                // `handle_simple_command` function process the subcommand as usual to send
-                // a `reset` message to the daemon.
-                Ok(true)
-            }
-
-            SubCommand::Edit { task_ids } => {
-                edit(self, task_ids).await?;
-                Ok(true)
-            }
-            SubCommand::Wait {
-                task_ids,
-                group,
-                all,
-                quiet,
-                status,
-            } => {
-                let selection = selection_from_params(all, group, task_ids);
-                wait(self, selection, quiet, status).await?;
-                Ok(true)
-            }
-            SubCommand::Restart {
-                task_ids,
-                all_failed,
-                failed_in_group,
-                start_immediately,
-                stashed,
-                in_place,
-                not_in_place,
-                edit,
-            } => {
-                restart(
-                    self,
-                    task_ids,
-                    all_failed,
-                    failed_in_group,
-                    start_immediately,
-                    stashed,
-                    in_place,
-                    not_in_place,
-                    edit,
-                )
-                .await?;
-                Ok(true)
-            }
-            SubCommand::Follow { task_id, lines } => {
-                follow(self, task_id, lines).await?;
-                Ok(false)
-            }
-            SubCommand::FormatStatus { .. } => {
-                format_state(self).await?;
-                Ok(true)
-            }
-            _ => Ok(false),
-        }
     }
 
     /// Handle logic that's super generic on the client-side.
@@ -359,12 +231,6 @@ impl Client {
                 print_error(&self.style, &text);
                 std::process::exit(1);
             }
-            Response::Status(state) => {
-                let tasks = state.tasks.values().cloned().collect();
-                let output =
-                    print_state(*state, tasks, &self.subcommand, &self.style, &self.settings)?;
-                println!("{output}");
-            }
             Response::Log(task_logs) => {
                 print_logs(task_logs, &self.subcommand, &self.style, &self.settings)
             }
@@ -378,42 +244,6 @@ impl Client {
         Ok(false)
     }
 
-    /// Prints a warning and prompt for a given action and tasks.
-    /// Returns `Ok(())` if the action was confirmed.
-    fn handle_user_confirmation(&self, action: &str, task_ids: &[usize]) -> Result<()> {
-        // printing warning and prompt
-        let task_ids = task_ids
-            .iter()
-            .map(|t| format!("task{t}"))
-            .collect::<Vec<String>>()
-            .join(", ");
-        eprintln!("You are trying to {action}: {task_ids}",);
-
-        let mut input = String::new();
-
-        loop {
-            print!("Do you want to continue [Y/n]: ");
-            io::stdout().flush()?;
-            input.clear();
-            io::stdin().read_line(&mut input)?;
-
-            match input.chars().next().unwrap() {
-                'N' | 'n' => {
-                    eprintln!("Aborted!");
-                    std::process::exit(1);
-                }
-                '\n' | 'Y' | 'y' => {
-                    break;
-                }
-                _ => {
-                    continue;
-                }
-            }
-        }
-
-        Ok(())
-    }
-
     /// Convert the cli command into the message that's being sent to the server,
     /// so it can be understood by the daemon.
     ///
@@ -423,7 +253,7 @@ impl Client {
         Ok(match subcommand {
             SubCommand::Remove { task_ids } => {
                 if self.settings.client.show_confirmation_questions {
-                    self.handle_user_confirmation("remove", &task_ids)?;
+                    handle_user_confirmation("remove", &task_ids)?;
                 }
                 Request::Remove(task_ids)
             }
@@ -489,7 +319,7 @@ impl Client {
                 ..
             } => {
                 if self.settings.client.show_confirmation_questions {
-                    self.handle_user_confirmation("kill", &task_ids)?;
+                    handle_user_confirmation("kill", &task_ids)?;
                 }
                 KillMessage {
                     tasks: selection_from_params(all, group, task_ids),
@@ -520,7 +350,6 @@ impl Client {
                 None => GroupMessage::List,
             }
             .into(),
-            SubCommand::Status { .. } => Request::Status,
             SubCommand::Log {
                 task_ids,
                 lines,
@@ -547,19 +376,6 @@ impl Client {
                 group,
             }
             .into(),
-            SubCommand::Reset { force, groups, .. } => {
-                if self.settings.client.show_confirmation_questions && !force {
-                    self.handle_user_confirmation("reset", &Vec::new())?;
-                }
-
-                let target = if groups.is_empty() {
-                    ResetTarget::All
-                } else {
-                    ResetTarget::Groups(groups.clone())
-                };
-
-                ResetMessage { target }.into()
-            }
             SubCommand::Shutdown => Shutdown::Graceful.into(),
             SubCommand::Parallel {
                 parallel_tasks,
@@ -582,6 +398,126 @@ impl Client {
             SubCommand::Edit { .. } => bail!("Edits have to be handled earlier"),
             SubCommand::Wait { .. } => bail!("Wait has to be handled earlier"),
             SubCommand::Follow { .. } => bail!("Follow has to be handled earlier"),
+            SubCommand::Status { .. } => bail!("Status has to be handled earlier"),
+            SubCommand::Reset { .. } => bail!("Reset has to be handled earlier"),
         })
     }
+}
+
+/// Handle all commands.
+///
+/// This is the core entry point of the pueue client.
+/// Based on the subcommand, the respective function in the [`super::commands`] module is
+/// called.
+async fn handle_command(client: &mut Client, subcommand: SubCommand) -> Result<()> {
+    // This match handles all "complex" commands.
+    match subcommand {
+        SubCommand::Add {
+            command,
+            working_directory,
+            escape,
+            start_immediately,
+            stashed,
+            group,
+            delay_until,
+            dependencies,
+            priority,
+            label,
+            print_task_id,
+            follow,
+        } => {
+            add_task(
+                client,
+                command,
+                working_directory,
+                escape,
+                start_immediately,
+                stashed,
+                group,
+                delay_until,
+                dependencies,
+                priority,
+                label,
+                print_task_id,
+                follow,
+            )
+            .await
+        }
+        SubCommand::Status { query, json, group } => state(client, query, json, group).await,
+        SubCommand::Reset { force, groups } => reset(client, force, groups).await,
+        SubCommand::Edit { task_ids } => edit(client, task_ids).await,
+        SubCommand::Wait {
+            task_ids,
+            group,
+            all,
+            quiet,
+
+            status,
+        } => {
+            let selection = selection_from_params(all, group, task_ids);
+            wait(client, selection, quiet, status).await
+        }
+        SubCommand::Restart {
+            task_ids,
+            all_failed,
+            failed_in_group,
+            start_immediately,
+            stashed,
+            in_place,
+            not_in_place,
+            edit,
+        } => {
+            restart(
+                client,
+                task_ids,
+                all_failed,
+                failed_in_group,
+                start_immediately,
+                stashed,
+                in_place,
+                not_in_place,
+                edit,
+            )
+            .await
+        }
+        SubCommand::Follow { task_id, lines } => follow(client, task_id, lines).await,
+        SubCommand::FormatStatus { group } => format_state(client, group).await,
+        _ => bail!("unhandled WIP"),
+    }
+}
+
+/// Prints a warning and prompt for a given action and tasks.
+/// Returns `Ok(())` if the action was confirmed.
+pub fn handle_user_confirmation(action: &str, task_ids: &[usize]) -> Result<()> {
+    // printing warning and prompt
+    let task_ids = task_ids
+        .iter()
+        .map(|t| format!("task{t}"))
+        .collect::<Vec<String>>()
+        .join(", ");
+    eprintln!("You are trying to {action}: {task_ids}",);
+
+    let mut input = String::new();
+
+    loop {
+        print!("Do you want to continue [Y/n]: ");
+        io::stdout().flush()?;
+        input.clear();
+        io::stdin().read_line(&mut input)?;
+
+        match input.chars().next().unwrap() {
+            'N' | 'n' => {
+                eprintln!("Aborted!");
+                std::process::exit(1);
+            }
+            '\n' | 'Y' | 'y' => {
+                break;
+            }
+            _ => {
+                continue;
+            }
+        }
+    }
+
+    Ok(())
 }
