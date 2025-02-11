@@ -158,8 +158,16 @@ pub async fn receive_message<T: DeserializeOwned + std::fmt::Debug>(
     }
 
     // Deserialize the message.
-    let message: T =
-        from_slice(&payload_bytes).map_err(|err| Error::MessageDeserialization(err.to_string()))?;
+    let message: T = from_slice(&payload_bytes).map_err(|err| {
+        // In the case of an error, try to deserialize it to a generic cbor Value.
+        // That way we know whether the payload was corrupted or maybe just unexpected due to
+        // version differences.
+        if let Ok(value) = from_slice::<serde_cbor::Value>(&payload_bytes) {
+            Error::UnexpectedPayload(value)
+        } else {
+            Error::MessageDeserialization(err.to_string())
+        }
+    })?;
     debug!("Received message: {message:#?}");
 
     Ok(message)

@@ -1,5 +1,7 @@
 use std::path::PathBuf;
 
+use serde_cbor::Value;
+
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("Error while building path: {}", .0)]
@@ -17,6 +19,9 @@ pub enum Error {
 
     #[error("Couldn't deserialize message:\n{}", .0)]
     MessageDeserialization(String),
+
+    #[error("Got unexpected but valid message. Are you up-to-date?:\n{:#?}", .0)]
+    UnexpectedPayload(Value),
 
     #[error("Couldn't serialize message:\n{}", .0)]
     MessageSerialization(String),
