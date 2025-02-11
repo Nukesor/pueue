@@ -15,15 +15,15 @@ use crate::internal_prelude::*;
 
 mod add;
 mod edit;
+mod follow;
 mod format_state;
-mod local_follow;
 mod restart;
 mod wait;
 
 pub use add::add_task;
 pub use edit::edit;
+pub use follow::follow;
 pub use format_state::format_state;
-pub use local_follow::local_follow;
 pub use restart::restart;
 pub use wait::{wait, WaitTargetStatus};
 

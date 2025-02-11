@@ -10,7 +10,7 @@ use pueue_lib::{
 };
 use serde::Serialize;
 
-use super::commands::{add_task, edit, format_state, get_state, local_follow, restart, wait};
+use super::commands::{add_task, edit, follow, format_state, get_state, restart, wait};
 use crate::{
     client::{
         cli::{CliArguments, ColorChoice, EnvCommand, GroupCommand, SubCommand},
@@ -309,20 +309,7 @@ impl Client {
                 Ok(true)
             }
             SubCommand::Follow { task_id, lines } => {
-                // If we're supposed to read the log files from the local system, we don't have to
-                // do any communication with the daemon.
-                // Thereby we handle this in a separate function.
-                if self.settings.client.read_local_logs {
-                    local_follow(
-                        self,
-                        &self.settings.shared.pueue_directory(),
-                        task_id,
-                        lines,
-                    )
-                    .await?;
-                    return Ok(true);
-                }
-                // Otherwise, we forward this to the `handle_simple_command` function.
+                follow(self, task_id, lines).await?;
                 Ok(false)
             }
             SubCommand::FormatStatus { .. } => {
@@ -385,12 +372,6 @@ impl Client {
                 let group_text = format_groups(groups, &self.subcommand, &self.style);
                 println!("{group_text}");
             }
-            Response::Stream(text) => {
-                print!("{text}");
-                io::stdout().flush().unwrap();
-                return Ok(true);
-            }
-            Response::Close => return Ok(false),
             _ => error!("Received unhandled response message"),
         };
 
@@ -558,7 +539,6 @@ impl Client {
                 };
                 Request::Log(message)
             }
-            SubCommand::Follow { task_id, lines } => StreamRequestMessage { task_id, lines }.into(),
             SubCommand::Clean {
                 successful_only,
                 group,
@@ -601,6 +581,7 @@ impl Client {
             SubCommand::Restart { .. } => bail!("Restarts have to be handled earlier"),
             SubCommand::Edit { .. } => bail!("Edits have to be handled earlier"),
             SubCommand::Wait { .. } => bail!("Wait has to be handled earlier"),
+            SubCommand::Follow { .. } => bail!("Follow has to be handled earlier"),
         })
     }
 }

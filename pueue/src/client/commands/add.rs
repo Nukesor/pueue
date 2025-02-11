@@ -9,14 +9,12 @@ use chrono::{DateTime, Local};
 use pueue_lib::{
     format::format_datetime,
     network::message::{AddMessage, AddedTaskMessage},
-    Request, Response,
+    Request,
+    Response,
 };
 
-use super::{group_or_default, handle_response, local_follow};
-use crate::{
-    client::{cli::SubCommand, client::Client},
-    internal_prelude::*,
-};
+use super::{follow as follow_cmd, group_or_default, handle_response};
+use crate::{client::client::Client, internal_prelude::*};
 
 #[allow(clippy::too_many_arguments)]
 pub async fn add_task(
@@ -105,30 +103,7 @@ pub async fn add_task(
     }
 
     if follow {
-        // If we're supposed to read the log files from the local system, we don't have
-        // to do any communication with the daemon.
-        // Thereby we handle this in a separate function.
-        if client.settings.client.read_local_logs {
-            local_follow(
-                client,
-                &client.settings.shared.pueue_directory(),
-                Some(task_id),
-                None,
-            )
-            .await?;
-            return Ok(());
-        } else {
-            // In case we need to follow the daemon, go ahead and overwrite
-            // `self.subcommand` with a `Follow` subcommand.
-            // Afterwards, return an `Ok(false)`, which signals the client that it
-            // should continue processing `self.subcommand`.
-            // This is pretty hacky. TODO: Refactor the whole client at some point.
-            client.subcommand = SubCommand::Follow {
-                task_id: Some(task_id),
-                lines: None,
-            };
-            return Ok(());
-        }
+        follow_cmd(client, Some(task_id), None).await?;
     }
 
     Ok(())
