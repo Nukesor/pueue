@@ -1,12 +1,11 @@
 // Clippy generates a false-positive for an empty generated docstring in the query parser code.
 #![allow(clippy::empty_docs)]
-use crate::internal_prelude::*;
-
 use chrono::prelude::*;
 use pest::Parser;
 use pest_derive::Parser;
-
 use pueue_lib::task::{Task, TaskResult, TaskStatus};
+
+use crate::internal_prelude::*;
 
 mod column_selection;
 mod filters;
@@ -157,9 +156,9 @@ impl QueryResult {
 /// Take a given `pueue status QUERY` and apply it to all components that're involved in the
 /// `pueue status` process:
 ///
-/// - TableBuilder: The component responsible for building the table and determining which
-///         columns should or need to be displayed.
-///         A `columns [columns]` statement will define the set of visible columns.
+/// - TableBuilder: The component responsible for building the table and determining which columns
+///   should or need to be displayed. A `columns [columns]` statement will define the set of visible
+///   columns.
 pub fn apply_query(query: &str, group: &Option<String>) -> Result<QueryResult> {
     let mut parsed = QueryParser::parse(Rule::query, query).context("Failed to parse query")?;
 

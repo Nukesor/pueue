@@ -1,14 +1,12 @@
-use crate::internal_prelude::*;
-
 use std::{
     process::Output,
     thread::{self, JoinHandle},
 };
 
+use pueue_lib::settings::Shared;
 use tokio::time::sleep;
 
-use crate::client::helper::*;
-use pueue_lib::settings::Shared;
+use crate::{client::helper::*, internal_prelude::*};
 
 /// All lines have the following pattern:
 /// 01:49:42 - New task 1 with status Queued

@@ -1,12 +1,11 @@
-use crate::internal_prelude::*;
-
-use std::collections::HashMap;
-use std::env::vars;
+use std::{collections::HashMap, env::vars};
 
 use chrono::{DateTime, Local};
-use pueue_lib::network::message::*;
-use pueue_lib::settings::*;
-use pueue_lib::task::{Task, TaskStatus};
+use pueue_lib::{
+    network::message::*,
+    settings::*,
+    task::{Task, TaskStatus},
+};
 
 use crate::helper::*;
 

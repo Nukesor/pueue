@@ -1,9 +1,10 @@
 #![allow(bindings_with_variant_name)]
-use crate::internal_prelude::*;
-
 use pest::iterators::Pair;
 
-use super::{QueryResult, Rule};
+use crate::{
+    client::query::{QueryResult, Rule},
+    internal_prelude::*,
+};
 
 pub enum Direction {
     Ascending,

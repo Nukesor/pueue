@@ -1,10 +1,13 @@
-use std::fs::File;
-use std::io::{self, Stdout};
+use std::{
+    fs::File,
+    io::{self, Stdout},
+};
 
 use crossterm::style::{Attribute, Color};
-
-use pueue_lib::log::{get_log_file_handle, seek_to_last_lines};
-use pueue_lib::settings::Settings;
+use pueue_lib::{
+    log::{get_log_file_handle, seek_to_last_lines},
+    settings::Settings,
+};
 
 use crate::client::display::OutputStyle;
 

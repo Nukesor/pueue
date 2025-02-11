@@ -1,14 +1,12 @@
-use crate::internal_prelude::*;
-
-use std::fs::read_to_string;
-use std::fs::File;
-use std::path::Path;
-
-use tempfile::TempDir;
+use std::{
+    fs::{read_to_string, File},
+    path::Path,
+};
 
 use pueue_lib::{network::message::*, task::Task};
+use tempfile::TempDir;
 
-use crate::helper::*;
+use crate::{helper::*, internal_prelude::*};
 
 /// This function creates files `[1-20]` in the specified directory.
 /// The return value is the expected output.

@@ -2,7 +2,6 @@ use std::process::Command;
 
 use clap::Parser;
 use color_eyre::Result;
-
 use pueue::daemon::{cli::CliArguments, run};
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 4)]
@@ -15,9 +14,9 @@ async fn main() -> Result<()> {
     color_eyre::install()?;
 
     if opt.daemonize {
-        // Ordinarily this would be handled in clap, but they don't support conflicting specific args
-        // with subcommands. We can't turn this off globally because -c and -p are valid args when using
-        // subcommand to install the service
+        // Ordinarily this would be handled in clap, but they don't support conflicting specific
+        // args with subcommands. We can't turn this off globally because -c and -p are
+        // valid args when using subcommand to install the service
         #[cfg(target_os = "windows")]
         if opt.service.is_some() {
             eprintln!("daemonize flag cannot be used with service subcommand");
@@ -29,8 +28,10 @@ async fn main() -> Result<()> {
 
     #[cfg(target_os = "windows")]
     {
-        use pueue::daemon::cli::{ServiceSubcommand, ServiceSubcommandEntry};
-        use pueue::daemon::service;
+        use pueue::daemon::{
+            cli::{ServiceSubcommand, ServiceSubcommandEntry},
+            service,
+        };
 
         if let Some(ServiceSubcommandEntry::Service(service)) = opt.service {
             match service {

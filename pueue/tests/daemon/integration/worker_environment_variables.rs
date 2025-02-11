@@ -1,8 +1,6 @@
-use crate::internal_prelude::*;
-
 use pueue_lib::{network::message::TaskSelection, state::PUEUE_DEFAULT_GROUP, task::Task};
 
-use crate::helper::*;
+use crate::{helper::*, internal_prelude::*};
 
 /// Make sure that the expected worker variables are injected into the tasks' environment variables
 /// for a single task on the default queue.

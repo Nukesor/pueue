@@ -1,13 +1,8 @@
-use crate::internal_prelude::*;
-
-use std::fs::File;
-use std::io::Write;
-use std::path::Path;
+use std::{fs::File, io::Write, path::Path};
 
 use rcgen::{generate_simple_self_signed, CertifiedKey};
 
-use crate::error::Error;
-use crate::settings::Shared;
+use crate::{error::Error, internal_prelude::*, settings::Shared};
 
 /// This the default certificates at the default `pueue_dir/certs` location.
 pub fn create_certificates(shared_settings: &Shared) -> Result<(), Error> {

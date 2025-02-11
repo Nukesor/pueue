@@ -1,17 +1,16 @@
-use crate::internal_prelude::*;
-
-use std::io::{self, Write};
-use std::path::Path;
-use std::time::Duration;
-
-use tokio::time::sleep;
+use std::{
+    io::{self, Write},
+    path::Path,
+    time::Duration,
+};
 
 use pueue_lib::{
     log::{get_log_file_handle, get_log_path, seek_to_last_lines},
     network::protocol::GenericStream,
 };
+use tokio::time::sleep;
 
-use crate::client::commands::get_task;
+use crate::{client::commands::get_task, internal_prelude::*};
 
 /// Follow the log output of running task.
 ///

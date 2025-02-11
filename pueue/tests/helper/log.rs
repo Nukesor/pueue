@@ -1,9 +1,6 @@
-use crate::internal_prelude::*;
-
 use std::io::Read;
 
-use pueue_lib::network::message::*;
-use pueue_lib::settings::*;
+use pueue_lib::{network::message::*, settings::*};
 use snap::read::FrameDecoder;
 
 use super::*;

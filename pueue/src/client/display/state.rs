@@ -1,13 +1,14 @@
-use crate::internal_prelude::*;
-
-use pueue_lib::settings::Settings;
-use pueue_lib::state::{State, PUEUE_DEFAULT_GROUP};
-use pueue_lib::task::Task;
+use pueue_lib::{
+    settings::Settings,
+    state::{State, PUEUE_DEFAULT_GROUP},
+    task::Task,
+};
 
 use super::{helper::*, table_builder::TableBuilder, OutputStyle};
-use crate::client::cli::SubCommand;
-use crate::client::display::group::get_group_headline;
-use crate::client::query::apply_query;
+use crate::{
+    client::{cli::SubCommand, display::group::get_group_headline, query::apply_query},
+    internal_prelude::*,
+};
 
 /// Get the output for the state of the daemon in a nicely formatted table.
 /// If there are multiple groups, each group with a task will have its own table.

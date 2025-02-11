@@ -2,13 +2,15 @@ use std::path::PathBuf;
 
 use clap::{CommandFactory, Parser};
 use clap_complete::{generate, generate_to, shells};
-use color_eyre::eyre::{bail, WrapErr};
-use color_eyre::Result;
-
+use color_eyre::{
+    eyre::{bail, WrapErr},
+    Result,
+};
+use pueue::client::{
+    cli::{CliArguments, Shell, SubCommand},
+    client::Client,
+};
 use pueue_lib::settings::Settings;
-
-use pueue::client::cli::{CliArguments, Shell, SubCommand};
-use pueue::client::client::Client;
 
 /// This is the main entry point of the client.
 ///

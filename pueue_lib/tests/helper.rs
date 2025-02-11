@@ -1,7 +1,6 @@
-use tempfile::{Builder, TempDir};
-
 use portpicker::pick_unused_port;
 use pueue_lib::settings::*;
+use tempfile::{Builder, TempDir};
 
 pub fn get_shared_settings(
     #[cfg_attr(target_os = "windows", allow(unused_variables))] use_unix_socket: bool,

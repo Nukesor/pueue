@@ -1,14 +1,13 @@
-use crate::internal_prelude::*;
-
-use std::fs;
-use std::path::Path;
-use std::sync::MutexGuard;
+use std::{fs, path::Path, sync::MutexGuard};
 
 use chrono::prelude::*;
+use pueue_lib::{
+    settings::Settings,
+    state::{Group, GroupStatus, State, PUEUE_DEFAULT_GROUP},
+    task::{TaskResult, TaskStatus},
+};
 
-use pueue_lib::settings::Settings;
-use pueue_lib::state::{Group, GroupStatus, State, PUEUE_DEFAULT_GROUP};
-use pueue_lib::task::{TaskResult, TaskStatus};
+use crate::internal_prelude::*;
 
 pub type LockedState<'a> = MutexGuard<'a, State>;
 

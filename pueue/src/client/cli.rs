@@ -1,16 +1,12 @@
 use std::path::PathBuf;
 
-use chrono::prelude::*;
-use chrono::TimeDelta;
-use clap::builder::PossibleValuesParser;
-use clap::ArgAction;
-use clap::{Parser, ValueEnum, ValueHint};
+use chrono::{prelude::*, TimeDelta};
+use clap::{builder::PossibleValuesParser, ArgAction, Parser, ValueEnum, ValueHint};
 use interim::*;
-
 use pueue_lib::network::message::Signal;
 use strum::VariantNames;
 
-use super::commands::WaitTargetStatus;
+use crate::client::commands::WaitTargetStatus;
 
 #[derive(Parser, Debug, Clone)]
 pub enum SubCommand {
@@ -20,7 +16,8 @@ pub enum SubCommand {
     /// Check the individual option help texts for more information.
     /// Furthermore, please remember that scheduled commands are executed via your system shell.
     /// This means that the command needs proper shell escaping.
-    /// The safest way to preserve shell escaping is to surround your command with quotes, for example:
+    /// The safest way to preserve shell escaping is to surround your command with quotes, for
+    /// example:
     ///
     /// pueue add 'ls $HOME && echo \"Some string\"'
     #[command(trailing_var_arg = true)]
@@ -57,15 +54,16 @@ pub enum SubCommand {
         #[arg(short, long, conflicts_with = "immediate")]
         stashed: bool,
 
-        /// Prevents the task from being enqueued until 'delay' elapses. See "enqueue" for accepted formats.
+        /// Prevents the task from being enqueued until 'delay' elapses. See "enqueue" for accepted
+        /// formats.
         #[arg(name = "delay", short, long, conflicts_with = "immediate", value_parser = parse_delay_until)]
         delay_until: Option<DateTime<Local>>,
 
         /// Assign the task to a group.
         ///
         /// Groups kind of act as separate queues.
-        /// All groups run in parallel and you can specify the amount of parallel tasks for each group.
-        /// If no group is specified, the default group will be used.
+        /// All groups run in parallel and you can specify the amount of parallel tasks for each
+        /// group. If no group is specified, the default group will be used.
         ///
         /// Create groups via the `pueue groups` subcommand
         #[arg(short, long)]
@@ -200,8 +198,9 @@ pub enum SubCommand {
 
     /// Restart failed or successful task(s).
     ///
-    /// By default, identical tasks will be created and enqueued, but it's possible to restart in-place.
-    /// You can also edit a few properties, such as the path and the command, before restarting.
+    /// By default, identical tasks will be created and enqueued, but it's possible to restart
+    /// in-place. You can also edit a few properties, such as the path and the command, before
+    /// restarting.
     #[command(alias("re"))]
     Restart {
         /// Restart these specific tasks.
@@ -396,7 +395,8 @@ https://github.com/Nukesor/pueue/issues/350#issue-1359083118"
         group: Option<String>,
     },
 
-    /// Accept a list or map of JSON pueue tasks via stdin and display it just like \"pueue status\".
+    /// Accept a list or map of JSON pueue tasks via stdin and display it just
+    /// like \"pueue status\".
     ///
     /// A simple example might look like this:
     ///
@@ -510,7 +510,8 @@ https://github.com/Nukesor/pueue/issues/350#issue-1359083118"
         force: bool,
     },
 
-    /// Remotely shut down the daemon. Should only be used if the daemon isn't started by a service manager.
+    /// Remotely shut down the daemon. Should only be used if the daemon isn't started by a service
+    /// manager.
     Shutdown,
 
     /// Set the amount of allowed parallel tasks

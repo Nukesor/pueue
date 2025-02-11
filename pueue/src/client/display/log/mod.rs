@@ -2,14 +2,14 @@ use std::collections::BTreeMap;
 
 use comfy_table::{Attribute as ComfyAttribute, Cell, CellAlignment, Table};
 use crossterm::style::Color;
-
-use pueue_lib::network::message::{TaskLogMessage, TaskSelection};
-use pueue_lib::settings::Settings;
-use pueue_lib::task::{Task, TaskResult, TaskStatus};
+use pueue_lib::{
+    network::message::{TaskLogMessage, TaskSelection},
+    settings::Settings,
+    task::{Task, TaskResult, TaskStatus},
+};
 
 use super::OutputStyle;
-use crate::client::cli::SubCommand;
-use crate::client::client::selection_from_params;
+use crate::client::{cli::SubCommand, client::selection_from_params};
 
 mod json;
 mod local;

@@ -1,13 +1,11 @@
 use crossterm::style::{Attribute, Color};
-
 use pueue_lib::{
     network::message::response::GroupResponseMessage,
     state::{Group, GroupStatus},
 };
 
-use crate::client::cli::SubCommand;
-
 use super::OutputStyle;
+use crate::client::cli::SubCommand;
 
 /// Print some info about the daemon's current groups.
 /// This is used when calling `pueue group`.

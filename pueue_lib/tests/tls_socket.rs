@@ -1,12 +1,8 @@
 use color_eyre::Result;
 use pretty_assertions::assert_eq;
-use serde_cbor::de::from_slice;
-use serde_cbor::ser::to_vec;
+use pueue_lib::network::{certificate::create_certificates, message::*, protocol::*};
+use serde_cbor::{de::from_slice, ser::to_vec};
 use tokio::task;
-
-use pueue_lib::network::certificate::create_certificates;
-use pueue_lib::network::message::*;
-use pueue_lib::network::protocol::*;
 
 mod helper;
 

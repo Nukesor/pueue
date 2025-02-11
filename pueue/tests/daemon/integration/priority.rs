@@ -1,10 +1,7 @@
-use crate::internal_prelude::*;
-
+use pueue_lib::{network::message::TaskSelection, task::Task};
 use rstest::rstest;
 
-use pueue_lib::{network::message::TaskSelection, task::Task};
-
-use crate::helper::*;
+use crate::{helper::*, internal_prelude::*};
 
 /// For tasks with the same priority, lowest ids are started first.
 #[rstest]

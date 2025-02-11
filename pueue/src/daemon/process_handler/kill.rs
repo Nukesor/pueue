@@ -1,5 +1,3 @@
-use crate::internal_prelude::*;
-
 use pueue_lib::{
     network::message::{Signal, TaskSelection},
     process_helper::*,
@@ -8,8 +6,11 @@ use pueue_lib::{
     task::{Task, TaskStatus},
 };
 
-use crate::daemon::state_helper::{save_state, LockedState};
-use crate::ok_or_shutdown;
+use crate::{
+    daemon::state_helper::{save_state, LockedState},
+    internal_prelude::*,
+    ok_or_shutdown,
+};
 
 /// Kill specific tasks or groups.
 ///

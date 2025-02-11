@@ -1,15 +1,16 @@
-use crate::internal_prelude::*;
+use pueue_lib::{
+    network::message::TaskSelection, process_helper::ProcessAction, settings::Settings,
+    state::GroupStatus, task::TaskStatus,
+};
 
-use pueue_lib::network::message::TaskSelection;
-use pueue_lib::process_helper::ProcessAction;
-use pueue_lib::settings::Settings;
-use pueue_lib::state::GroupStatus;
-use pueue_lib::task::TaskStatus;
-
-use crate::daemon::state_helper::{save_state, LockedState};
-use crate::ok_or_shutdown;
-
-use super::perform_action;
+use crate::{
+    daemon::{
+        process_handler::perform_action,
+        state_helper::{save_state, LockedState},
+    },
+    internal_prelude::*,
+    ok_or_shutdown,
+};
 
 /// Pause specific tasks or groups.
 ///

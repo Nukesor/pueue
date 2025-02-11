@@ -2,13 +2,17 @@ use std::convert::TryFrom;
 
 use async_trait::async_trait;
 use rustls::pki_types::ServerName;
-use tokio::io::{AsyncRead, AsyncWrite};
-use tokio::net::{TcpListener, TcpStream};
+use tokio::{
+    io::{AsyncRead, AsyncWrite},
+    net::{TcpListener, TcpStream},
+};
 use tokio_rustls::TlsAcceptor;
 
-use crate::error::Error;
-use crate::network::tls::{get_tls_connector, get_tls_listener};
-use crate::settings::Shared;
+use crate::{
+    error::Error,
+    network::tls::{get_tls_connector, get_tls_listener},
+    settings::Shared,
+};
 
 /// Windowsspecific cleanup handling when getting a SIGINT/SIGTERM.
 pub fn socket_cleanup(_settings: &Shared) -> Result<(), Error> {

@@ -1,13 +1,8 @@
-use crate::internal_prelude::*;
-
 use pretty_assertions::assert_eq;
+use pueue_lib::{network::message::*, state::GroupStatus, task::*};
 use rstest::rstest;
 
-use pueue_lib::network::message::*;
-use pueue_lib::state::GroupStatus;
-use pueue_lib::task::*;
-
-use crate::helper::*;
+use crate::{helper::*, internal_prelude::*};
 
 /// Test if killing running tasks works as intended.
 ///

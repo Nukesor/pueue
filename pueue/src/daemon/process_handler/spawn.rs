@@ -1,19 +1,23 @@
-use crate::internal_prelude::*;
-
-use std::io::Write;
-use std::process::Stdio;
+use std::{io::Write, process::Stdio};
 
 use chrono::Local;
 use command_group::CommandGroup;
-use pueue_lib::log::{create_log_file_handles, get_writable_log_file_handle};
-use pueue_lib::process_helper::compile_shell_command;
-use pueue_lib::settings::Settings;
-use pueue_lib::state::GroupStatus;
-use pueue_lib::task::{Task, TaskResult, TaskStatus};
+use pueue_lib::{
+    log::{create_log_file_handles, get_writable_log_file_handle},
+    process_helper::compile_shell_command,
+    settings::Settings,
+    state::GroupStatus,
+    task::{Task, TaskResult, TaskStatus},
+};
 
-use crate::daemon::callbacks::spawn_callback;
-use crate::daemon::state_helper::{pause_on_failure, save_state, LockedState};
-use crate::ok_or_shutdown;
+use crate::{
+    daemon::{
+        callbacks::spawn_callback,
+        state_helper::{pause_on_failure, save_state, LockedState},
+    },
+    internal_prelude::*,
+    ok_or_shutdown,
+};
 
 /// See if we can start a new queued task.
 pub fn spawn_new(settings: &Settings, state: &mut LockedState) {

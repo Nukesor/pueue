@@ -1,11 +1,11 @@
-use crate::internal_prelude::*;
-
 use std::path::Path;
 
 use pueue_lib::network::protocol::GenericStream;
 
-use crate::client::commands::get_state;
-use crate::client::display::follow_local_task_logs;
+use crate::{
+    client::{commands::get_state, display::follow_local_task_logs},
+    internal_prelude::*,
+};
 
 /// This function reads a log file from the filesystem and streams it to `stdout`.
 /// This is the default behavior of `pueue`'s log reading logic, which is only possible

@@ -1,8 +1,6 @@
-use crate::internal_prelude::*;
-
 use pueue_lib::{network::message::*, task::Task};
 
-use crate::helper::*;
+use crate::{helper::*, internal_prelude::*};
 
 /// Add and directly remove a group.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]

@@ -1,10 +1,8 @@
-use crate::internal_prelude::*;
-
 use std::collections::HashMap;
 
 use pueue_lib::{settings::EditMode, task::TaskStatus};
 
-use crate::client::helper::*;
+use crate::{client::helper::*, internal_prelude::*};
 
 /// Test that editing a task without any flags only updates the command.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
@@ -102,7 +100,8 @@ async fn edit_delete_label() -> Result<()> {
     Ok(())
 }
 
-/// Ensure that updating the priority in the editor results in the modification of the task's priority.
+/// Ensure that updating the priority in the editor results in the modification of the task's
+/// priority.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn edit_change_priority() -> Result<()> {
     let daemon = daemon().await?;

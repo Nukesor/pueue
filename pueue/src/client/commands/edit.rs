@@ -1,18 +1,20 @@
-use crate::internal_prelude::*;
+use std::{
+    collections::BTreeMap,
+    env,
+    fs::{create_dir, read_to_string, File},
+    io::Write,
+    path::{Path, PathBuf},
+};
 
-use std::collections::BTreeMap;
-use std::env;
-use std::fs::{create_dir, read_to_string, File};
-use std::io::Write;
-use std::path::{Path, PathBuf};
-
-use pueue_lib::error::Error;
-use pueue_lib::settings::Settings;
+use pueue_lib::{
+    error::Error,
+    network::{message::*, protocol::*},
+    process_helper::compile_shell_command,
+    settings::Settings,
+};
 use tempfile::tempdir;
 
-use pueue_lib::network::message::*;
-use pueue_lib::network::protocol::*;
-use pueue_lib::process_helper::compile_shell_command;
+use crate::internal_prelude::*;
 
 /// This function handles the logic for editing tasks.
 /// At first, we request the daemon to send us the task to edit.
@@ -44,9 +46,9 @@ pub async fn edit(
 
     // Any error while editing will result in the client aborting the editing process.
     // However, as the daemon moves tasks that're edited into the `Locked` state, we cannot simply
-    // exit the client. We rather have to notify the daemon that the editing process was interrupted.
-    // In the following, we notify the daemon of any errors, so it can restore the tasks to
-    // their previous state.
+    // exit the client. We rather have to notify the daemon that the editing process was
+    // interrupted. In the following, we notify the daemon of any errors, so it can restore the
+    // tasks to their previous state.
     let editable_tasks = match result {
         Ok(editable_tasks) => editable_tasks,
         Err(error) => {

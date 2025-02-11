@@ -4,31 +4,32 @@
 //! pueued as the current user. On logoff Windows kills all user processes (including the daemon).
 //!
 //! - All install/uninstallations of the service requires you are running as admin.
-//! - You must install the service. After installed, the service entry maintains a cmdline
-//!   string with args to the pueued binary. Therefore, the binary must _not_ move while the
-//!   service is installed, otherwise it will not be able to function properly. It is best
-//!   not to rely on PATH for this, as it is finicky and a hassle for user setup. Absolute paths
-//!   are the way to go, and it is standard practice.
+//! - You must install the service. After installed, the service entry maintains a cmdline string
+//!   with args to the pueued binary. Therefore, the binary must _not_ move while the service is
+//!   installed, otherwise it will not be able to function properly. It is best not to rely on PATH
+//!   for this, as it is finicky and a hassle for user setup. Absolute paths are the way to go, and
+//!   it is standard practice.
 //! - To move the pueued binary: Uninstall the service, move the binary, and reinstall the service.
-//! - When the service is installed, you can use pueued cli to start, stop, or uninstall the service.
-//!   You can also use the official service manager to start, stop, and restart the service.
+//! - When the service is installed, you can use pueued cli to start, stop, or uninstall the
+//!   service. You can also use the official service manager to start, stop, and restart the
+//!   service.
 //! - Services are automatically started/stopped by the system according to the setting the user
-//!   sets in the windows service manager. By default we install it as autostart, but the user
-//!   can set this to manual or even disabled.
+//!   sets in the windows service manager. By default we install it as autostart, but the user can
+//!   set this to manual or even disabled.
 //! - If you have the official service manager window open and you tell pueued to uninstall the
-//!   service, it will not disappear from the list until you close all service manager windows.
-//!   This is not a bug. It's Windows specific behavior. (In Windows parlance, the service is pending
+//!   service, it will not disappear from the list until you close all service manager windows. This
+//!   is not a bug. It's Windows specific behavior. (In Windows parlance, the service is pending
 //!   deletion, and all HANDLES to the service need to be closed).
-//! - We do not support long running daemon past when a user logs off; this would be
-//!   a massive security risk to allow anyone to launch tasks as SYSTEM. This account bypasses
-//!   even administrator in power!
+//! - We do not support long running daemon past when a user logs off; this would be a massive
+//!   security risk to allow anyone to launch tasks as SYSTEM. This account bypasses even
+//!   administrator in power!
 //! - Additionally, taking the above into account, as SYSTEM is its own account, the user config
-//!   does not apply to this account. Unless there's an exception for config locations with this case,
-//!   you'd have to set up separate configs for the SYSTEM account in
+//!   does not apply to this account. Unless there's an exception for config locations with this
+//!   case, you'd have to set up separate configs for the SYSTEM account in
 //!   `C:\Windows\system32\config\systemprofile\AppData`. (And even if there's an exception, what if
 //!   there's multiple users? Which user's config would be used?) This is very unintuitive.
-//! - Is the service failing to start up? It's probably a problem with the daemon itself. Re-run `pueued`
-//!   by itself to see the actual startup error.
+//! - Is the service failing to start up? It's probably a problem with the daemon itself. Re-run
+//!   `pueued` by itself to see the actual startup error.
 
 use std::{
     env,
@@ -45,7 +46,6 @@ use std::{
     time::Duration,
 };
 
-use crate::internal_prelude::*;
 use windows::{
     core::{Free, PCWSTR, PWSTR},
     Win32::{
@@ -78,6 +78,8 @@ use windows_service::{
     service_dispatcher,
     service_manager::{ServiceManager, ServiceManagerAccess},
 };
+
+use crate::internal_prelude::*;
 
 #[derive(Clone)]
 struct Config {
@@ -162,8 +164,9 @@ pub fn uninstall_service() -> Result<()> {
     let service = service_manager.open_service(SERVICE_NAME, service_access)?;
 
     // The service will be marked for deletion as long as this function call succeeds.
-    // However, it will not be deleted from the database until it is stopped and all open handles to it are closed.
-    // If the service manager window is open, it will need to be closed before the service gets deleted.
+    // However, it will not be deleted from the database until it is stopped and all open handles to
+    // it are closed. If the service manager window is open, it will need to be closed before
+    // the service gets deleted.
     service.delete()?;
 
     // Our handle to it is not closed yet. So we can still query it.
@@ -256,8 +259,8 @@ fn event_loop() -> Result<()> {
                 // Stop
                 ServiceControl::Stop => {
                     debug!("event stop");
-                    // Important! Set the while loop's exit condition before calling stop(), otherwise
-                    // the condition will not be observed.
+                    // Important! Set the while loop's exit condition before calling stop(),
+                    // otherwise the condition will not be observed.
                     shutdown.store(true, Ordering::Relaxed);
                     spawner.stop();
 
@@ -339,8 +342,8 @@ fn event_loop() -> Result<()> {
     //
     // If we can get the current user session on startup, then try to start the spawner.
     //
-    // If we can't get the current session, that's OK. It just means there was no user logged in when
-    // the service started.
+    // If we can't get the current session, that's OK. It just means there was no user logged in
+    // when the service started.
     //
     // The event handler will start it when the user logs in.
     if let Some(session) = get_current_session() {
@@ -534,7 +537,8 @@ impl Drop for EnvBlock {
     }
 }
 
-/// Manages the child daemon, by spawning / stopping it, or reporting abnormal exit, and allowing wait().
+/// Manages the child daemon, by spawning / stopping it, or reporting abnormal exit, and allowing
+/// wait().
 struct Spawner {
     // Whether a child daemon is running.
     running: Arc<AtomicBool>,
@@ -663,8 +667,8 @@ impl Spawner {
                         // CREATE_UNICODE_ENVIRONMENT is required if we pass env block.
                         // https://learn.microsoft.com/en-us/windows/win32/api/userenv/nf-userenv-createenvironmentblock#remarks
                         //
-                        // CREATE_NO_WINDOW causes all child processes to not show a visible console window.
-                        // https://stackoverflow.com/a/71364777/9423933
+                        // CREATE_NO_WINDOW causes all child processes to not show a visible
+                        // console window. https://stackoverflow.com/a/71364777/9423933
                         CREATE_UNICODE_ENVIRONMENT | CREATE_NO_WINDOW,
                         Some(env_block.0),
                         None,
@@ -692,7 +696,8 @@ impl Spawner {
 
                 running.store(false, Ordering::Relaxed);
 
-                // Check if process exited on its own without our explicit request (`stop()` was not called).
+                // Check if process exited on its own without our explicit request (`stop()` was not
+                // called).
                 if !request_stop.swap(false, Ordering::Relaxed) {
                     let mut code = 0u32;
                     unsafe {

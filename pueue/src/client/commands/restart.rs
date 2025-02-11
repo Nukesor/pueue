@@ -1,15 +1,15 @@
-use crate::internal_prelude::*;
-
 use chrono::Local;
-use pueue_lib::network::message::*;
-use pueue_lib::network::protocol::*;
-use pueue_lib::settings::Settings;
-use pueue_lib::state::FilteredTasks;
-use pueue_lib::task::{Task, TaskResult, TaskStatus};
+use pueue_lib::{
+    network::{message::*, protocol::*},
+    settings::Settings,
+    state::FilteredTasks,
+    task::{Task, TaskResult, TaskStatus},
+};
 
-use crate::client::commands::get_state;
-
-use super::edit::edit_tasks;
+use crate::{
+    client::commands::{edit::edit_tasks, get_state},
+    internal_prelude::*,
+};
 
 /// When restarting tasks, the remote state is queried and a [AddMessage]
 /// is create from the existing task in the state.
@@ -44,7 +44,8 @@ pub async fn restart(
     // If all failed tasks or all failed tasks from a specific group are requested,
     // determine the ids of those failed tasks.
     //
-    // Otherwise, use the provided ids and check which of them were "Done" (successful or failed tasks).
+    // Otherwise, use the provided ids and check which of them were "Done"
+    // (successful or failed tasks).
     let filtered_tasks = if all_failed || failed_in_group.is_some() {
         // Either all failed tasks or all failed tasks of a specific group need to be restarted.
 
@@ -131,7 +132,8 @@ pub async fn restart(
         }
 
         // In case we don't do in-place restarts, we have to add a new task.
-        // Create a AddMessage to send the task to the daemon from the updated info and the old task.
+        // Create a AddMessage to send the task to the daemon from the updated info and the old
+        // task.
         let add_task_message = AddMessage {
             command: task.command,
             path: task.path,

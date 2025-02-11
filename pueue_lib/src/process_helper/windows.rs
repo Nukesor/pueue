@@ -1,20 +1,22 @@
 // We allow color_eyre in here, as this is a module that'll be strictly used internally.
 // As soon as it's obvious that this is code is intended to be exposed to library users, we have to
 // go ahead and replace any `anyhow` usage by proper error handling via our own Error type.
-use crate::internal_prelude::*;
 use command_group::GroupChild;
-use winapi::shared::minwindef::FALSE;
-use winapi::shared::ntdef::NULL;
-use winapi::um::errhandlingapi::GetLastError;
-use winapi::um::handleapi::{CloseHandle, INVALID_HANDLE_VALUE};
-use winapi::um::processthreadsapi::{OpenThread, ResumeThread, SuspendThread};
-use winapi::um::tlhelp32::{
-    CreateToolhelp32Snapshot, Process32First, Process32Next, Thread32First, Thread32Next,
-    PROCESSENTRY32, TH32CS_SNAPPROCESS, TH32CS_SNAPTHREAD, THREADENTRY32,
+use winapi::{
+    shared::{minwindef::FALSE, ntdef::NULL},
+    um::{
+        errhandlingapi::GetLastError,
+        handleapi::{CloseHandle, INVALID_HANDLE_VALUE},
+        processthreadsapi::{OpenThread, ResumeThread, SuspendThread},
+        tlhelp32::{
+            CreateToolhelp32Snapshot, Process32First, Process32Next, Thread32First, Thread32Next,
+            PROCESSENTRY32, TH32CS_SNAPPROCESS, TH32CS_SNAPTHREAD, THREADENTRY32,
+        },
+        winnt::THREAD_SUSPEND_RESUME,
+    },
 };
-use winapi::um::winnt::THREAD_SUSPEND_RESUME;
 
-use crate::settings::Settings;
+use crate::{internal_prelude::*, settings::Settings};
 
 /// Shim signal enum for windows.
 pub enum Signal {
@@ -27,7 +29,8 @@ pub enum Signal {
 
 pub fn get_shell_command(settings: &Settings) -> Vec<String> {
     let Some(ref shell_command) = settings.daemon.shell_command else {
-        // Chain two `powershell` commands, one that sets the output encoding to utf8 and then the user provided one.
+        // Chain two `powershell` commands, one that sets the output encoding to utf8 and then the
+        // user provided one.
         return vec![
             "powershell".into(),
             "-c".into(),
@@ -183,10 +186,10 @@ fn get_threads(target_pid: u32) -> Vec<u32> {
 
 /// Suspend a thread
 /// Each thread has a suspend count (with a maximum value of `MAXIMUM_SUSPEND_COUNT`).
-/// If the suspend count is greater than zero, the thread is suspended; otherwise, the thread is not suspended and is eligible for execution.
-/// Calling `SuspendThread` causes the target thread's suspend count to be incremented.
-/// Attempting to increment past the maximum suspend count causes an error without incrementing the count.
-/// [SuspendThread](https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-suspendthread)
+/// If the suspend count is greater than zero, the thread is suspended; otherwise, the thread is not
+/// suspended and is eligible for execution. Calling `SuspendThread` causes the target thread's
+/// suspend count to be incremented. Attempting to increment past the maximum suspend count causes
+/// an error without incrementing the count. [SuspendThread](https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-suspendthread)
 fn suspend_thread(tid: u32) {
     unsafe {
         // Attempt to convert the thread ID into a handle
@@ -205,9 +208,9 @@ fn suspend_thread(tid: u32) {
 
 /// Resume a thread
 /// ResumeThread checks the suspend count of the subject thread.
-/// If the suspend count is zero, the thread is not currently suspended. Otherwise, the subject thread's suspend count is decremented.
-/// If the resulting value is zero, then the execution of the subject thread is resumed.
-/// [ResumeThread](https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-resumethread)
+/// If the suspend count is zero, the thread is not currently suspended. Otherwise, the subject
+/// thread's suspend count is decremented. If the resulting value is zero, then the execution of the
+/// subject thread is resumed. [ResumeThread](https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-resumethread)
 fn resume_thread(tid: u32) {
     unsafe {
         // Attempt to convert the thread ID into a handle
@@ -253,9 +256,7 @@ pub fn process_exists(pid: u32) -> bool {
 
 #[cfg(test)]
 mod test {
-    use std::process::Command;
-    use std::thread::sleep;
-    use std::time::Duration;
+    use std::{process::Command, thread::sleep, time::Duration};
 
     use command_group::CommandGroup;
 

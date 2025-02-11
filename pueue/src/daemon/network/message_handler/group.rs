@@ -8,10 +8,10 @@ use pueue_lib::{
     success_msg,
 };
 
-use crate::daemon::network::message_handler::ok_or_failure_message;
 use crate::{
     daemon::{
-        network::response_helper::ensure_group_exists, process_handler::initiate_shutdown,
+        network::{message_handler::ok_or_failure_message, response_helper::ensure_group_exists},
+        process_handler::initiate_shutdown,
         state_helper::save_state,
     },
     ok_or_save_state_failure,

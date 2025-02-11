@@ -1,10 +1,8 @@
-use pueue_lib::state::SharedState;
-use pueue_lib::success_msg;
-use pueue_lib::task::TaskStatus;
-use pueue_lib::{network::message::*, settings::Settings};
+use pueue_lib::{
+    network::message::*, settings::Settings, state::SharedState, success_msg, task::TaskStatus,
+};
 
-use crate::daemon::network::response_helper::*;
-use crate::daemon::process_handler;
+use crate::daemon::{network::response_helper::*, process_handler};
 
 /// Invoked when calling `pueue pause`.
 /// Forward the pause message to the task handler, which then pauses groups/tasks/everything.

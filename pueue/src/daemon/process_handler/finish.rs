@@ -1,15 +1,19 @@
-use crate::internal_prelude::*;
-
 use chrono::Local;
-use pueue_lib::log::clean_log_handles;
-use pueue_lib::state::GroupStatus;
-use pueue_lib::task::{TaskResult, TaskStatus};
+use pueue_lib::{
+    log::clean_log_handles,
+    settings::Settings,
+    state::GroupStatus,
+    task::{TaskResult, TaskStatus},
+};
 
-use super::*;
-
-use crate::daemon::callbacks::spawn_callback;
-use crate::daemon::state_helper::{pause_on_failure, save_state, LockedState};
-use crate::ok_or_shutdown;
+use crate::{
+    daemon::{
+        callbacks::spawn_callback,
+        state_helper::{pause_on_failure, save_state, LockedState},
+    },
+    internal_prelude::*,
+    ok_or_shutdown,
+};
 
 /// Check whether there are any finished processes
 /// In case there are, handle them and update the shared state

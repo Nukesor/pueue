@@ -1,12 +1,9 @@
-use crate::internal_prelude::*;
-
 use std::collections::HashMap;
 
 use assert_matches::assert_matches;
-
 use pueue_lib::{network::message::*, task::*};
 
-use crate::helper::*;
+use crate::{helper::*, internal_prelude::*};
 
 /// Test that using aliases when adding task normally works.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]

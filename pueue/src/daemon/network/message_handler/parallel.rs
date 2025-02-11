@@ -1,6 +1,4 @@
-use pueue_lib::network::message::*;
-use pueue_lib::state::SharedState;
-use pueue_lib::success_msg;
+use pueue_lib::{network::message::*, state::SharedState, success_msg};
 
 use crate::daemon::network::response_helper::*;
 

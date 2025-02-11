@@ -1,11 +1,12 @@
+use std::{
+    fs::File,
+    io::{Read, Write},
+    path::Path,
+};
+
+use pueue_lib::{error::Error, process_helper::process_exists};
+
 use crate::internal_prelude::*;
-
-use std::fs::File;
-use std::io::{Read, Write};
-use std::path::Path;
-
-use pueue_lib::error::Error;
-use pueue_lib::process_helper::process_exists;
 
 /// Read a PID file and throw an error, if another daemon instance is still running.
 fn check_for_running_daemon(pid_path: &Path) -> Result<()> {

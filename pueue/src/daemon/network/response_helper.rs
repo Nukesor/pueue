@@ -1,8 +1,10 @@
 use std::sync::MutexGuard;
 
-use pueue_lib::network::message::{create_failure_response, create_success_response, Response};
-use pueue_lib::state::{FilteredTasks, Group, State};
-use pueue_lib::task::Task;
+use pueue_lib::{
+    network::message::{create_failure_response, create_success_response, Response},
+    state::{FilteredTasks, Group, State},
+    task::Task,
+};
 
 use crate::daemon::state_helper::LockedState;
 

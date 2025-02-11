@@ -1,8 +1,6 @@
-use crate::internal_prelude::*;
-
 use pueue_lib::{state::State, task::Task};
 
-use crate::client::helper::*;
+use crate::{client::helper::*, internal_prelude::*};
 
 /// Test that the normal status command works as expected.
 /// Calling `pueue` without any subcommand is equivalent of using `status`.

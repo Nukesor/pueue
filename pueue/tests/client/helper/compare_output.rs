@@ -1,17 +1,10 @@
-use crate::internal_prelude::*;
-
-use std::collections::HashMap;
-use std::process::Output;
+use std::{collections::HashMap, fs::read_to_string, path::PathBuf, process::Output};
 
 use chrono::Local;
 use handlebars::Handlebars;
-use std::fs::read_to_string;
-use std::path::PathBuf;
+use pueue_lib::{settings::*, task::TaskStatus};
 
-use pueue_lib::settings::*;
-use pueue_lib::task::TaskStatus;
-
-use crate::helper::get_state;
+use crate::{helper::get_state, internal_prelude::*};
 
 /// Read the current state and extract the tasks' info into a context.
 pub async fn get_task_context(settings: &Settings) -> Result<HashMap<String, String>> {

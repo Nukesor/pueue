@@ -1,13 +1,16 @@
-use std::collections::{BTreeMap, HashMap};
-use std::io::Read;
+use std::{
+    collections::{BTreeMap, HashMap},
+    io::Read,
+};
 
+use pueue_lib::{
+    log::{get_log_file_handle, read_last_lines},
+    network::message::TaskLogMessage,
+    settings::Settings,
+    task::Task,
+};
 use serde::{Deserialize, Serialize};
 use snap::read::FrameDecoder;
-
-use pueue_lib::log::{get_log_file_handle, read_last_lines};
-use pueue_lib::network::message::TaskLogMessage;
-use pueue_lib::settings::Settings;
-use pueue_lib::task::Task;
 
 /// This is the output struct used for
 #[derive(Clone, Debug, Deserialize, Serialize)]

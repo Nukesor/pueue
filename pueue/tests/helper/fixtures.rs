@@ -1,19 +1,20 @@
-use crate::internal_prelude::*;
-
-use std::collections::HashMap;
-use std::env::temp_dir;
-use std::fs::{canonicalize, File};
-use std::io::Write;
-use std::path::{Path, PathBuf};
-use std::process::{Child, Command, Stdio};
+use std::{
+    collections::HashMap,
+    env::temp_dir,
+    fs::{canonicalize, File},
+    io::Write,
+    path::{Path, PathBuf},
+    process::{Child, Command, Stdio},
+};
 
 use assert_cmd::prelude::*;
-use tempfile::{Builder, TempDir};
-use tokio::io::{self, AsyncWriteExt};
-
 use pueue::daemon::run;
 use pueue_lib::settings::*;
-use tokio::task::JoinHandle;
+use tempfile::{Builder, TempDir};
+use tokio::{
+    io::{self, AsyncWriteExt},
+    task::JoinHandle,
+};
 
 use crate::helper::*;
 
@@ -52,7 +53,8 @@ pub async fn daemon_with_settings(settings: Settings, tempdir: TempDir) -> Resul
     // Uncomment the next line to get some daemon logging.
     // Ignore any logger initialization errors, as multiple loggers will be initialized.
     // let _ =
-    //     simplelog::SimpleLogger::init(simplelog::LevelFilter::Debug, simplelog::Config::default());
+    //     simplelog::SimpleLogger::init(simplelog::LevelFilter::Debug,
+    // simplelog::Config::default());
 
     let pueue_dir = tempdir.path();
     let path = pueue_dir.to_path_buf();

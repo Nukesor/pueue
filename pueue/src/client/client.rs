@@ -1,24 +1,27 @@
-use crate::internal_prelude::*;
-
-use std::env::{current_dir, vars};
-use std::io::{self, stdout, Write};
-use std::{borrow::Cow, collections::HashMap};
+use std::{
+    borrow::Cow,
+    collections::HashMap,
+    env::{current_dir, vars},
+    io::{self, stdout, Write},
+};
 
 use clap::crate_version;
 use crossterm::tty::IsTty;
+use pueue_lib::{
+    format::format_datetime,
+    network::{message::*, protocol::*, secret::read_shared_secret},
+    settings::Settings,
+    state::PUEUE_DEFAULT_GROUP,
+};
 
-use pueue_lib::format::format_datetime;
-use pueue_lib::network::message::*;
-use pueue_lib::network::protocol::*;
-use pueue_lib::network::secret::read_shared_secret;
-use pueue_lib::settings::Settings;
-use pueue_lib::state::PUEUE_DEFAULT_GROUP;
-
-use crate::client::cli::{CliArguments, ColorChoice, GroupCommand, SubCommand};
-use crate::client::commands::*;
-use crate::client::display::*;
-
-use super::cli::EnvCommand;
+use crate::{
+    client::{
+        cli::{CliArguments, ColorChoice, EnvCommand, GroupCommand, SubCommand},
+        commands::*,
+        display::*,
+    },
+    internal_prelude::*,
+};
 
 /// This struct contains the base logic for the client.
 /// The client is responsible for connecting to the daemon, sending instructions
@@ -211,8 +214,8 @@ impl Client {
                     .map(|path| Ok(path.clone()))
                     .unwrap_or_else(current_dir)?;
 
-                // The user can request to escape any special shell characters in all parameter strings before
-                // we concatenated them to a single string.
+                // The user can request to escape any special shell characters in all parameter
+                // strings before we concatenated them to a single string.
                 if escape {
                     command = command
                         .iter()
@@ -274,8 +277,8 @@ impl Client {
                 }
 
                 if follow {
-                    // If we're supposed to read the log files from the local system, we don't have to
-                    // do any communication with the daemon.
+                    // If we're supposed to read the log files from the local system, we don't have
+                    // to do any communication with the daemon.
                     // Thereby we handle this in a separate function.
                     if self.settings.client.read_local_logs {
                         local_follow(

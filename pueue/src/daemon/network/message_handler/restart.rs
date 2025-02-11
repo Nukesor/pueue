@@ -1,6 +1,6 @@
-use chrono::Local;
 use std::sync::MutexGuard;
 
+use chrono::Local;
 use pueue_lib::{
     aliasing::insert_alias,
     network::message::*,
@@ -9,9 +9,7 @@ use pueue_lib::{
     task::{Task, TaskStatus},
 };
 
-use crate::daemon::process_handler;
-
-use super::task_action_response_helper;
+use crate::daemon::{network::response_helper::task_action_response_helper, process_handler};
 
 /// This is a small wrapper around the actual in-place task `restart` functionality.
 ///

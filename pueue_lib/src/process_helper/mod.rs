@@ -3,20 +3,21 @@
 //! The submodules of this module represent the different implementations for
 //! each supported platform.
 //! Depending on the target, the respective platform is read and loaded into this scope.
-use crate::internal_prelude::*;
-
 use std::{collections::HashMap, process::Command};
 
-use crate::{network::message::request::Signal as InternalSignal, settings::Settings};
+use crate::{
+    internal_prelude::*, network::message::request::Signal as InternalSignal, settings::Settings,
+};
 
 // Unix specific process handling
 // Shared between Linux and Apple
 #[cfg(unix)]
 mod unix;
 #[cfg(unix)]
-pub use self::unix::*;
-#[cfg(unix)]
 use command_group::Signal;
+
+#[cfg(unix)]
+pub use self::unix::*;
 
 // Platform specific process support
 #[cfg_attr(target_os = "linux", path = "linux.rs")]
@@ -85,7 +86,8 @@ pub fn compile_shell_command(settings: &Settings, command: &str) -> Command {
 
     let executable = compiled_command.remove(0);
 
-    // Chain two `powershell` commands, one that sets the output encoding to utf8 and then the user provided one.
+    // Chain two `powershell` commands, one that sets the output encoding to utf8 and then the user
+    // provided one.
     let mut command = Command::new(executable);
     for arg in compiled_command {
         command.arg(&arg);

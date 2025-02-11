@@ -5,12 +5,16 @@
 //! daemon, open some files on the filesystem, edit files and so on.
 //! All commands that cannot be simply handled by handling requests or using `pueue_lib`.
 
-use crate::internal_prelude::*;
+use pueue_lib::{
+    network::{
+        message::{Request, Response},
+        protocol::*,
+    },
+    state::State,
+    task::Task,
+};
 
-use pueue_lib::network::message::Response;
-use pueue_lib::network::protocol::*;
-use pueue_lib::state::State;
-use pueue_lib::{network::message::Request, task::Task};
+use crate::internal_prelude::*;
 
 mod edit;
 mod format_state;

@@ -1,8 +1,9 @@
-use crate::internal_prelude::*;
-
 use pest::iterators::Pair;
 
-use super::{QueryResult, Rule};
+use crate::{
+    client::query::{QueryResult, Rule},
+    internal_prelude::*,
+};
 
 pub fn apply(section: Pair<'_, Rule>, query_result: &mut QueryResult) -> Result<()> {
     // This query is expected to be structured like this:
