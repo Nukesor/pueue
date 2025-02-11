@@ -11,6 +11,8 @@ The concept of SemVer is applied to the daemon/client API, but not the library A
 ### Changed
 
 - **Breaking**: Split the `Message` enum into a `Response` and `Request` enum. Requests are sent **to** the daemon, responses are sent **from** the daemon.
+- **Breaking**: Move all process handling related logic out of `pueue_lib`
+- **Breaking**: Remove all process related fields and helper functions from `State`
 
 ## [0.27.0] - 2024-12-01
 

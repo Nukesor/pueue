@@ -1,18 +1,14 @@
 use std::collections::BTreeMap;
 
 use pueue_lib::{
-    failure_msg,
-    network::message::*,
-    settings::Settings,
-    state::{SharedState, PUEUE_DEFAULT_GROUP},
-    success_msg,
+    failure_msg, network::message::*, settings::Settings, state::PUEUE_DEFAULT_GROUP, success_msg,
 };
 
 use crate::{
     daemon::{
+        internal_state::SharedState,
         network::{message_handler::ok_or_failure_message, response_helper::ensure_group_exists},
         process_handler::initiate_shutdown,
-        state_helper::save_state,
     },
     ok_or_save_state_failure,
 };
@@ -29,7 +25,7 @@ pub fn group(settings: &Settings, state: &SharedState, message: GroupMessage) ->
         GroupMessage::List => {
             // Return information about all groups to the client.
             GroupResponseMessage {
-                groups: state.groups.clone(),
+                groups: state.groups().clone(),
             }
             .into()
         }
@@ -37,7 +33,7 @@ pub fn group(settings: &Settings, state: &SharedState, message: GroupMessage) ->
             name,
             parallel_tasks,
         } => {
-            if state.groups.contains_key(&name) {
+            if state.groups().contains_key(&name) {
                 return failure_msg!("Group \"{name}\" already exists");
             }
 
@@ -49,7 +45,7 @@ pub fn group(settings: &Settings, state: &SharedState, message: GroupMessage) ->
             state.children.0.insert(name.clone(), BTreeMap::new());
 
             // Persist the state.
-            ok_or_save_state_failure!(save_state(&state, settings));
+            ok_or_save_state_failure!(state.save(settings));
 
             success_msg!("New group \"{name}\" has been created")
         }
@@ -63,7 +59,7 @@ pub fn group(settings: &Settings, state: &SharedState, message: GroupMessage) ->
             }
 
             // Make sure there are no tasks in that group.
-            if state.tasks.iter().any(|(_, task)| task.group == group) {
+            if state.tasks().iter().any(|(_, task)| task.group == group) {
                 return failure_msg!("You cannot remove a group, if there're still tasks in it.");
             }
 
@@ -89,7 +85,7 @@ pub fn group(settings: &Settings, state: &SharedState, message: GroupMessage) ->
             state.children.0.remove(&group);
 
             // Persist the state.
-            ok_or_save_state_failure!(save_state(&state, settings));
+            ok_or_save_state_failure!(state.save(settings));
 
             success_msg!("Group \"{group}\" has been removed")
         }

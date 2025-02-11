@@ -1,21 +1,10 @@
-use std::{
-    collections::BTreeMap,
-    process::Child,
-    sync::{Arc, Mutex},
-};
+use std::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    children::Children,
-    error::Error,
-    network::message::request::Shutdown,
-    task::{Task, TaskStatus},
-};
+use crate::task::Task;
 
 pub const PUEUE_DEFAULT_GROUP: &str = "default";
-
-pub type SharedState = Arc<Mutex<State>>;
 
 /// Represents the current status of a group.
 /// Each group acts as a queue and can be managed individually.
@@ -58,26 +47,12 @@ pub struct Group {
 /// The daemon uses the state as a piece of shared memory between it's threads.
 /// It's wrapped in a MutexGuard, which allows us to guarantee sequential access to any crucial
 /// information, such as status changes and incoming commands by the client.
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
 pub struct State {
     /// All tasks currently managed by the daemon.
     pub tasks: BTreeMap<usize, Task>,
     /// All groups with their current state a configuration.
     pub groups: BTreeMap<String, Group>,
-    /// Whether we're currently in the process of a graceful shutdown.
-    /// Depending on the shutdown type, we're exiting with different exitcodes.
-    /// This is runtime state and won't be serialised to disk.
-    #[serde(default, skip)]
-    pub shutdown: Option<Shutdown>,
-
-    /// Pueue's subprocess and worker pool representation.
-    /// Take a look at [Children] for more info.
-    /// This is runtime state and won't be serialised to disk.
-    #[serde(default, skip)]
-    pub children: Children,
-    /// These are the currently running callbacks. They're usually very short-lived.
-    #[serde(default, skip)]
-    pub callbacks: Vec<Child>,
 }
 
 // Implement a custom Clone, as the child processes don't implement Clone.
@@ -86,17 +61,7 @@ impl Clone for State {
         State {
             tasks: self.tasks.clone(),
             groups: self.groups.clone(),
-            shutdown: self.shutdown.clone(),
-            ..Default::default()
         }
-    }
-}
-
-// Implement a custom PartialEq, as the child processes don't ipmlement PartialEq.
-impl Eq for State {}
-impl PartialEq for State {
-    fn eq(&self, other: &Self) -> bool {
-        self.tasks == other.tasks && self.groups == other.groups && self.shutdown == other.shutdown
     }
 }
 
@@ -111,13 +76,7 @@ pub struct FilteredTasks {
 impl State {
     /// Create a new default state.
     pub fn new() -> State {
-        let mut state = State {
-            tasks: BTreeMap::new(),
-            groups: BTreeMap::new(),
-            ..Default::default()
-        };
-        state.create_group(PUEUE_DEFAULT_GROUP);
-        state
+        Self::default()
     }
 
     /// Add a new task
@@ -130,45 +89,6 @@ impl State {
         self.tasks.insert(next_id, task);
 
         next_id
-    }
-
-    /// A small helper to change the status of a specific task.
-    pub fn change_status(&mut self, id: usize, new_status: TaskStatus) {
-        if let Some(ref mut task) = self.tasks.get_mut(&id) {
-            task.status = new_status;
-        };
-    }
-
-    /// Add a new group to the daemon. \
-    /// This also check if the given group already exists.
-    /// Create a state.group entry and a settings.group entry, if it doesn't.
-    pub fn create_group(&mut self, name: &str) -> &mut Group {
-        self.groups.entry(name.into()).or_insert(Group {
-            status: GroupStatus::Running,
-            parallel_tasks: 1,
-        })
-    }
-
-    /// Remove a group.
-    /// This also iterates through all tasks and sets any tasks' group
-    /// to the `default` group if it matches the deleted group.
-    pub fn remove_group(&mut self, group: &str) -> Result<(), Error> {
-        if group.eq(PUEUE_DEFAULT_GROUP) {
-            return Err(Error::Generic(
-                "You cannot remove the default group.".into(),
-            ));
-        }
-
-        self.groups.remove(group);
-
-        Ok(())
-    }
-
-    /// Set the group status (running/paused) for all groups including the default queue.
-    pub fn set_status_for_all_groups(&mut self, status: GroupStatus) {
-        for (_, group) in self.groups.iter_mut() {
-            group.status = status;
-        }
     }
 
     /// Get all ids of task inside a specific group.

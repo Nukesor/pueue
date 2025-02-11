@@ -8,10 +8,9 @@ use pueue_lib::{
         protocol::{send_response, GenericStream},
     },
     settings::Settings,
-    state::SharedState,
 };
 
-use crate::internal_prelude::*;
+use crate::{daemon::internal_state::SharedState, internal_prelude::*};
 
 /// Invoked when calling `pueue log`.
 /// Return tasks and their output to the client.
@@ -19,14 +18,14 @@ pub fn get_log(settings: &Settings, state: &SharedState, message: LogRequestMess
     let state = { state.lock().unwrap().clone() };
 
     let task_ids = match message.tasks {
-        TaskSelection::All => state.tasks.keys().cloned().collect(),
+        TaskSelection::All => state.tasks().keys().cloned().collect(),
         TaskSelection::TaskIds(task_ids) => task_ids,
         TaskSelection::Group(group) => state.task_ids_in_group(&group),
     };
 
     let mut tasks = BTreeMap::new();
     for task_id in task_ids.iter() {
-        if let Some(task) = state.tasks.get(task_id) {
+        if let Some(task) = state.tasks().get(task_id) {
             // We send log output and the task at the same time.
             // This isn't as efficient as sending the raw compressed data directly,
             // but it's a lot more convenient for now.
@@ -78,7 +77,7 @@ pub async fn follow_log(
         // Get all ids of running tasks
         let state = state.lock().unwrap();
         let running_ids: Vec<_> = state
-            .tasks
+            .tasks()
             .iter()
             .filter_map(|(&id, t)| if t.is_running() { Some(id) } else { None })
             .collect();
@@ -107,7 +106,7 @@ pub async fn follow_log(
     loop {
         {
             let state = state.lock().unwrap();
-            let Some(task) = state.tasks.get(&task_id) else {
+            let Some(task) = state.tasks().get(&task_id) else {
                 return Ok(create_failure_response(
                     "Pueue: The task to be followed doesn't exist.",
                 ));
@@ -173,7 +172,7 @@ pub async fn follow_log(
         // In case it's not, close the stream.
         {
             let state = state.lock().unwrap();
-            let Some(task) = state.tasks.get(&task_id) else {
+            let Some(task) = state.tasks().get(&task_id) else {
                 return Ok(create_failure_response(
                     "Pueue: The followed task has been removed.",
                 ));

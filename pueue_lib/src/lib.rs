@@ -8,9 +8,6 @@ pub(crate) mod internal_prelude {
 /// Shared module for internal logic!
 /// Contains helper for command aliasing.
 pub mod aliasing;
-/// A helper newtype struct, which implements convenience methods for our child process management
-/// datastructure.
-pub mod children;
 /// Pueue lib's own Error implementation.
 pub mod error;
 /// Formatting methods for several data types.
@@ -23,7 +20,13 @@ pub mod network;
 mod setting_defaults;
 /// Pueue's configuration representation.
 pub mod settings;
-/// The main struct used to represent the daemon's current state.
+/// The representation of all [`Task`]s and [`Group`]s of the daemon.
 pub mod state;
 /// Everything regarding Pueue's task
 pub mod task;
+
+pub use error::Error;
+pub use network::message::{Request, Response};
+pub use settings::Settings;
+pub use state::{Group, GroupStatus, State};
+pub use task::{Task, TaskResult, TaskStatus};

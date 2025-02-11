@@ -1,6 +1,8 @@
 use std::io::Write;
 
-use pueue_lib::{failure_msg, network::message::*, state::SharedState};
+use pueue_lib::{failure_msg, network::message::*};
+
+use crate::daemon::internal_state::SharedState;
 
 /// Invoked when calling `pueue send`.
 /// The message will be forwarded to the task handler, which then sends the user input to the

@@ -17,21 +17,21 @@
 //! and [receive_bytes](crate::network::protocol::receive_bytes) functions.
 //! Details on how they work can be found on the respective function docs.
 //!
-//! There're also the convenience functions [send_message](crate::network::protocol::send_message)
-//! and [receive_message](crate::network::protocol::receive_message), which automatically handle
-//! serialization and deserialization for you.
+//! Payloads are defined via the [`Request`](crate::Request) and [`Response`](crate::Response) enums
+//! that can be found in the [`message`] module.
 //!
-//! The payloads itself are defined via the `Message` enum that can be found in the
-//! crate::network::message module.
+//! There're also the convenience functions [send_message] and [receive_message], which
+//! automatically handle serialization and deserialization for you.
+//! These have additional wrappers for [`Request`](crate::Request) and
+//! [`Response`](crate::Response) with [`send_request`] and [`receive_response`].
 //!
-//! The serialization/deserialization format that's used by `pueue_lib` is `cbor`.
+//! The serialization/deserialization format that's used by `pueue_lib` is [`cbor`](::serde_cbor).
 //!
 //! ## Protocol
 //!
 //! Before the real data exchange starts, a simple handshake + authorization is done
 //! by the client and daemon.
-//! An example on how to do this can be found in the pueue's `crate::client::Client::new()`
-//! function.
+//! An example on how to do this can be found in the Pueue's `Client::new()` function.
 //!
 //! The following steps are written from the client's perspective:
 //!
@@ -62,3 +62,7 @@ pub mod secret;
 pub mod socket;
 /// Helper functions for reading and handling TLS files.
 mod tls;
+
+pub use protocol::{
+    receive_message, receive_request, receive_response, send_message, send_request, send_response,
+};

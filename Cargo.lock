@@ -1260,6 +1260,7 @@ dependencies = [
  "tracing",
  "tracing-error",
  "tracing-subscriber",
+ "winapi",
  "windows",
  "windows-service",
 ]
@@ -1273,7 +1274,6 @@ dependencies = [
  "byteorder",
  "chrono",
  "color-eyre",
- "command-group",
  "dirs 6.0.0",
  "portpicker",
  "pretty_assertions",
@@ -1295,7 +1295,6 @@ dependencies = [
  "tokio-rustls",
  "tracing",
  "whoami",
- "winapi",
 ]
 
 [[package]]

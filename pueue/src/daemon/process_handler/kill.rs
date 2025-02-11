@@ -6,7 +6,7 @@ use pueue_lib::{
 };
 
 use crate::{
-    daemon::state_helper::{save_state, LockedState},
+    daemon::internal_state::state::LockedState,
     internal_prelude::*,
     ok_or_shutdown,
     process_helper::{kill_child, send_signal_to_child, signal_from_internal},
@@ -38,13 +38,13 @@ pub fn kill(
         TaskSelection::TaskIds(task_ids) => task_ids,
         TaskSelection::Group(group_name) => {
             // Ensure that a given group exists. (Might not happen due to concurrency)
-            if !state.groups.contains_key(&group_name) {
+            if !state.groups().contains_key(&group_name) {
                 return;
             };
 
             // Check whether the group should be paused before killing the tasks.
             if should_pause_group(state, issued_by_user, &group_name) {
-                let group = state.groups.get_mut(&group_name).unwrap();
+                let group = state.groups_mut().get_mut(&group_name).unwrap();
                 group.status = GroupStatus::Paused;
             }
 
@@ -64,7 +64,7 @@ pub fn kill(
         }
         TaskSelection::All => {
             // Pause all groups, if applicable
-            let group_names: Vec<String> = state.groups.keys().cloned().collect();
+            let group_names: Vec<String> = state.groups().keys().cloned().collect();
             for group_name in group_names {
                 if should_pause_group(state, issued_by_user, &group_name) {
                     state.set_status_for_all_groups(GroupStatus::Paused);
@@ -84,7 +84,7 @@ pub fn kill(
         }
     }
 
-    ok_or_shutdown!(settings, state, save_state(state, settings));
+    ok_or_shutdown!(settings, state, state.save(settings));
 }
 
 /// Send a signal to a specific child process.

@@ -4,7 +4,7 @@ use pueue_lib::{
 };
 
 use crate::{
-    daemon::state_helper::LockedState,
+    daemon::internal_state::state::LockedState,
     internal_prelude::*,
     process_helper::{send_signal_to_child, ProcessAction},
 };

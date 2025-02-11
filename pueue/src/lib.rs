@@ -22,4 +22,3 @@ pub mod daemon;
 /// Contains helper to spawn shell commands and examine and interact with processes.
 pub mod process_helper;
 pub mod tracing;
-

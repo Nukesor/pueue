@@ -1,8 +1,7 @@
-use pueue_lib::{
-    network::message::*, settings::Settings, state::SharedState, success_msg, task::Task,
-};
+use pueue_lib::{network::message::*, settings::Settings, success_msg, task::Task};
 
 use crate::daemon::{
+    internal_state::SharedState,
     network::response_helper::{ensure_group_exists, task_action_response_helper},
     process_handler,
 };

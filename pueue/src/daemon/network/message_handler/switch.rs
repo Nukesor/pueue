@@ -1,9 +1,7 @@
-use pueue_lib::{
-    failure_msg, network::message::*, settings::Settings, state::SharedState, task::TaskStatus,
-};
+use pueue_lib::{failure_msg, network::message::*, settings::Settings, task::TaskStatus};
 
 use super::ok_or_failure_message;
-use crate::{daemon::state_helper::save_state, ok_or_save_state_failure};
+use crate::{daemon::internal_state::SharedState, ok_or_save_state_failure};
 
 /// Invoked when calling `pueue switch`.
 /// Switch the position of two tasks in the upcoming queue.
@@ -29,8 +27,8 @@ pub fn switch(settings: &Settings, state: &SharedState, message: SwitchMessage) 
     }
 
     // Get the tasks. Expect them to be there, since we found no mismatch
-    let mut first_task = state.tasks.remove(&task_ids[0]).unwrap();
-    let mut second_task = state.tasks.remove(&task_ids[1]).unwrap();
+    let mut first_task = state.tasks_mut().remove(&task_ids[0]).unwrap();
+    let mut second_task = state.tasks_mut().remove(&task_ids[1]).unwrap();
 
     // Switch task ids
     let first_id = first_task.id;
@@ -39,10 +37,10 @@ pub fn switch(settings: &Settings, state: &SharedState, message: SwitchMessage) 
     second_task.id = first_id;
 
     // Put tasks back in again
-    state.tasks.insert(first_task.id, first_task);
-    state.tasks.insert(second_task.id, second_task);
+    state.tasks_mut().insert(first_task.id, first_task);
+    state.tasks_mut().insert(second_task.id, second_task);
 
-    for (_, task) in state.tasks.iter_mut() {
+    for (_, task) in state.tasks_mut().iter_mut() {
         // If the task depends on both, we can just keep it as it is.
         if task.dependencies.contains(&first_id) && task.dependencies.contains(&second_id) {
             continue;
@@ -58,7 +56,7 @@ pub fn switch(settings: &Settings, state: &SharedState, message: SwitchMessage) 
         }
     }
 
-    ok_or_save_state_failure!(save_state(&state, settings));
+    ok_or_save_state_failure!(state.save(settings));
     create_success_response("Tasks have been switched")
 }
 
@@ -123,8 +121,8 @@ mod tests {
         };
 
         let state = state.lock().unwrap();
-        assert_eq!(state.tasks.get(&1).unwrap().command, "2");
-        assert_eq!(state.tasks.get(&2).unwrap().command, "1");
+        assert_eq!(state.tasks().get(&1).unwrap().command, "2");
+        assert_eq!(state.tasks().get(&2).unwrap().command, "1");
     }
 
     #[test]
@@ -150,7 +148,7 @@ mod tests {
         switch(&settings, &state, get_message(0, 3));
 
         let state = state.lock().unwrap();
-        assert_eq!(state.tasks.get(&4).unwrap().dependencies, vec![0, 3]);
+        assert_eq!(state.tasks().get(&4).unwrap().dependencies, vec![0, 3]);
     }
 
     #[test]
@@ -162,8 +160,8 @@ mod tests {
         switch(&settings, &state, get_message(1, 2));
 
         let state = state.lock().unwrap();
-        assert_eq!(state.tasks.get(&5).unwrap().dependencies, vec![2]);
-        assert_eq!(state.tasks.get(&6).unwrap().dependencies, vec![1, 3]);
+        assert_eq!(state.tasks().get(&5).unwrap().dependencies, vec![2]);
+        assert_eq!(state.tasks().get(&6).unwrap().dependencies, vec![1, 3]);
     }
 
     #[test]

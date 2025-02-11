@@ -2,6 +2,7 @@
 // As soon as it's obvious that this is code is intended to be exposed to library users, we have to
 // go ahead and replace any `anyhow` usage by proper error handling via our own Error type.
 use command_group::GroupChild;
+use pueue_lib::Settings;
 use winapi::{
     shared::{minwindef::FALSE, ntdef::NULL},
     um::{
@@ -16,7 +17,7 @@ use winapi::{
     },
 };
 
-use crate::{internal_prelude::*, settings::Settings};
+use crate::internal_prelude::*;
 
 /// Shim signal enum for windows.
 pub enum Signal {
@@ -43,16 +44,11 @@ pub fn get_shell_command(settings: &Settings) -> Vec<String> {
 }
 
 /// Send a signal to a windows process.
-pub fn send_signal_to_child<T>(child: &mut GroupChild, signal: T) -> Result<()>
-where
-    T: Into<Signal>,
-{
+pub fn send_signal_to_child(child: &mut GroupChild, signal: Signal) -> Result<()> {
     let pids = get_cur_task_processes(child.id());
     if pids.is_empty() {
         bail!("Process has just gone away");
     }
-
-    let signal: Signal = signal.into();
 
     match signal {
         Signal::SIGSTOP => {

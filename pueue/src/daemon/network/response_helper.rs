@@ -1,20 +1,18 @@
-use std::sync::MutexGuard;
-
 use pueue_lib::{
     network::message::{create_failure_response, create_success_response, Response},
-    state::{FilteredTasks, Group, State},
+    state::{FilteredTasks, Group},
     task::Task,
 };
 
-use crate::daemon::state_helper::LockedState;
+use crate::daemon::internal_state::state::LockedState;
 
 /// Check whether a given group exists. Return a failure message if it doesn't.
 pub fn ensure_group_exists<'state>(
     state: &'state mut LockedState,
     group: &str,
 ) -> Result<&'state mut Group, Response> {
-    let group_keys: Vec<String> = state.groups.keys().cloned().collect();
-    if let Some(group) = state.groups.get_mut(group) {
+    let group_keys: Vec<String> = state.groups().keys().cloned().collect();
+    if let Some(group) = state.groups_mut().get_mut(group) {
         return Ok(group);
     }
 
@@ -42,7 +40,7 @@ pub fn task_action_response_helper<F>(
     message: &str,
     task_ids: Vec<usize>,
     filter: F,
-    state: &MutexGuard<State>,
+    state: &LockedState,
 ) -> Response
 where
     F: Fn(&Task) -> bool,

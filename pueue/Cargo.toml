@@ -78,6 +78,13 @@ crossterm = { version = "0.28", default-features = false }
 crossterm = { version = "0.28", default-features = false, features = [
     "windows",
 ] }
+winapi = { version = "0.3", features = [
+    "errhandlingapi",
+    "impl-default",
+    "minwindef",
+    "processthreadsapi",
+    "tlhelp32",
+] }
 windows = { version = "0.58.0", features = [
     "Win32_Security",
     "Win32_System_Environment",

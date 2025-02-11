@@ -7,10 +7,7 @@ use pueue_lib::{
 };
 
 use crate::{
-    daemon::{
-        callbacks::spawn_callback,
-        state_helper::{pause_on_failure, save_state, LockedState},
-    },
+    daemon::{callbacks::spawn_callback, internal_state::state::LockedState},
     internal_prelude::*,
     ok_or_shutdown,
 };
@@ -28,7 +25,7 @@ pub fn handle_finished_tasks(settings: &Settings, state: &mut LockedState) {
 
     for ((task_id, group, worker_id), error) in finished.iter() {
         let (enqueued_at, start) = {
-            let task = state.tasks.get(task_id).unwrap();
+            let task = state.tasks().get(task_id).unwrap();
             // Get the enqueued_at/start times from the current state.
             match task.status {
                 TaskStatus::Running { enqueued_at, start }
@@ -54,7 +51,7 @@ pub fn handle_finished_tasks(settings: &Settings, state: &mut LockedState) {
 
             // Update the tasks's state and return a clone for callback handling.
             let task = {
-                let task = state.tasks.get_mut(task_id).unwrap();
+                let task = state.tasks_mut().get_mut(task_id).unwrap();
 
                 task.status = TaskStatus::Done {
                     enqueued_at,
@@ -69,7 +66,7 @@ pub fn handle_finished_tasks(settings: &Settings, state: &mut LockedState) {
             spawn_callback(settings, state, &task);
             error!("Child {} failed with io::Error: {:?}", task_id, error);
 
-            pause_on_failure(state, settings, &task.group);
+            state.pause_on_failure(settings, &task.group);
             continue;
         }
 
@@ -106,7 +103,7 @@ pub fn handle_finished_tasks(settings: &Settings, state: &mut LockedState) {
         // Update the tasks's state and return a clone for callback handling.
         let task = {
             let task = state
-                .tasks
+                .tasks_mut()
                 .get_mut(task_id)
                 .expect("Task was removed before child process has finished!");
 
@@ -123,12 +120,12 @@ pub fn handle_finished_tasks(settings: &Settings, state: &mut LockedState) {
         spawn_callback(settings, state, &task);
 
         if let TaskResult::Failed(_) = result {
-            pause_on_failure(state, settings, &task.group);
+            state.pause_on_failure(settings, &task.group);
         }
 
         // Already remove the output files, if this group is being reset.
         if state
-            .groups
+            .groups()
             .get(&task.group)
             .map(|group| group.status == GroupStatus::Reset)
             .unwrap_or(true)
@@ -137,7 +134,7 @@ pub fn handle_finished_tasks(settings: &Settings, state: &mut LockedState) {
         }
     }
 
-    ok_or_shutdown!(settings, state, save_state(state, settings));
+    ok_or_shutdown!(settings, state, state.save(settings));
 }
 
 /// Gather all finished tasks and sort them by finished and errored.

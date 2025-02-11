@@ -1,14 +1,11 @@
 use pueue_lib::{
-    network::message::TaskSelection,
-    settings::Settings,
-    state::GroupStatus,
-    task::TaskStatus,
+    network::message::TaskSelection, settings::Settings, state::GroupStatus, task::TaskStatus,
 };
 
 use crate::{
     daemon::{
+        internal_state::state::LockedState,
         process_handler::{perform_action, spawn::spawn_process},
-        state_helper::{save_state, LockedState},
     },
     internal_prelude::*,
     ok_or_shutdown,
@@ -35,12 +32,12 @@ pub fn start(settings: &Settings, state: &mut LockedState, tasks: TaskSelection)
                     spawn_process(settings, state, task_id);
                 }
             }
-            ok_or_shutdown!(settings, state, save_state(state, settings));
+            ok_or_shutdown!(settings, state, state.save(settings));
             return;
         }
         TaskSelection::Group(group_name) => {
             // Ensure that a given group exists. (Might not happen due to concurrency)
-            let group = match state.groups.get_mut(&group_name) {
+            let group = match state.groups_mut().get_mut(&group_name) {
                 Some(group) => group,
                 None => return,
             };
@@ -70,7 +67,7 @@ pub fn start(settings: &Settings, state: &mut LockedState, tasks: TaskSelection)
         continue_task(state, task_id);
     }
 
-    ok_or_shutdown!(settings, state, save_state(state, settings));
+    ok_or_shutdown!(settings, state, state.save(settings));
 }
 
 /// Send a start signal to a paused task to continue execution.
@@ -83,7 +80,7 @@ fn continue_task(state: &mut LockedState, task_id: usize) {
     // Encapsulate to prevent a duplicate borrow on `state`.
     let (enqueued_at, start) = {
         // Task is already done
-        let Some(task) = state.tasks.get_mut(&task_id) else {
+        let Some(task) = state.tasks_mut().get_mut(&task_id) else {
             return;
         };
 
