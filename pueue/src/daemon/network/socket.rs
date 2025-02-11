@@ -1,18 +1,15 @@
-use crate::internal_prelude::*;
-
 use std::time::{Duration, SystemTime};
 
 use clap::crate_version;
+use pueue_lib::{
+    error::Error,
+    network::{message::*, protocol::*, secret::read_shared_secret},
+    settings::Settings,
+    state::SharedState,
+};
 use tokio::time::sleep;
 
-use pueue_lib::error::Error;
-use pueue_lib::network::message::*;
-use pueue_lib::network::protocol::*;
-use pueue_lib::network::secret::read_shared_secret;
-use pueue_lib::settings::Settings;
-use pueue_lib::state::SharedState;
-
-use crate::daemon::network::message_handler::handle_request;
+use crate::{daemon::network::message_handler::handle_request, internal_prelude::*};
 
 /// Listen for new connections on the socket.
 /// On a new connection, the connected stream will be handled in a separate tokio task.
@@ -53,8 +50,8 @@ pub async fn accept_incoming(settings: Settings, state: SharedState) -> Result<(
 ///
 /// There're two edge-cases where this pattern is not valid:
 /// 1. Shutdown. In that case the message is sent first and the daemon shuts down afterwards.
-/// 2. Streaming of logs. The Daemon will continuously send messages with log chunks until
-///    the watched task finished or the client disconnects.
+/// 2. Streaming of logs. The Daemon will continuously send messages with log chunks until the
+///    watched task finished or the client disconnects.
 async fn handle_incoming(
     mut stream: GenericStream,
     state: SharedState,

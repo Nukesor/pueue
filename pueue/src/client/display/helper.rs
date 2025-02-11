@@ -1,7 +1,6 @@
 use std::collections::BTreeMap;
 
 use chrono::{DateTime, Local, LocalResult};
-
 use pueue_lib::{settings::Settings, task::Task};
 
 /// Try to get the start of the current date to the best of our abilities.

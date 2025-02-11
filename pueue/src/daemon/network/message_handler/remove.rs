@@ -1,13 +1,19 @@
-use pueue_lib::log::clean_log_handles;
-use pueue_lib::network::message::*;
-use pueue_lib::settings::Settings;
-use pueue_lib::state::SharedState;
-use pueue_lib::task::{Task, TaskStatus};
+use pueue_lib::{
+    log::clean_log_handles,
+    network::message::*,
+    settings::Settings,
+    state::SharedState,
+    task::{Task, TaskStatus},
+};
 
 use super::ok_or_failure_message;
-use crate::daemon::network::response_helper::*;
-use crate::daemon::state_helper::{is_task_removable, save_state};
-use crate::ok_or_save_state_failure;
+use crate::{
+    daemon::{
+        network::response_helper::*,
+        state_helper::{is_task_removable, save_state},
+    },
+    ok_or_save_state_failure,
+};
 
 /// Invoked when calling `pueue remove`.
 /// Remove tasks from the queue.
@@ -49,10 +55,9 @@ pub fn remove(settings: &Settings, state: &SharedState, task_ids: Vec<usize>) ->
 
 #[cfg(test)]
 mod tests {
-    use super::super::fixtures::*;
-    use super::*;
-
     use pretty_assertions::assert_eq;
+
+    use super::{super::fixtures::*, *};
 
     #[test]
     fn normal_remove() {

@@ -1,12 +1,6 @@
-use crate::internal_prelude::*;
+use std::{fs::File, io::Read, path::Path, process::Child};
 
-use std::fs::File;
-use std::io::Read;
-use std::path::Path;
-use std::process::Child;
-
-use pueue_lib::network::message::*;
-use pueue_lib::settings::*;
+use pueue_lib::{network::message::*, settings::*};
 
 use super::*;
 

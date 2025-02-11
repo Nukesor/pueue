@@ -1,13 +1,11 @@
-use crate::internal_prelude::*;
-
 use std::io;
 
 use crossterm::style::{Attribute, Color};
+use pueue_lib::network::message::TaskLogMessage;
 use snap::read::FrameDecoder;
 
-use pueue_lib::network::message::TaskLogMessage;
-
 use super::OutputStyle;
+use crate::internal_prelude::*;
 
 /// Prints log output received from the daemon.
 /// We can safely call .unwrap() on output in here, since this

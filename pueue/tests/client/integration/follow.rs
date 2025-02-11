@@ -1,10 +1,7 @@
-use crate::internal_prelude::*;
-
+use pueue_lib::task::Task;
 use rstest::rstest;
 
-use pueue_lib::task::Task;
-
-use crate::client::helper::*;
+use crate::{client::helper::*, internal_prelude::*};
 
 pub fn set_read_local_logs(daemon: &mut PueueDaemon, read_local_logs: bool) -> Result<()> {
     // Force the client to read remote logs via config file.

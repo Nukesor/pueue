@@ -1,6 +1,4 @@
-use crate::internal_prelude::*;
-
-use crate::helper::*;
+use crate::{helper::*, internal_prelude::*};
 
 /// Spin up the daemon and send a SIGTERM shortly afterwards.
 /// This should trigger the graceful shutdown and kill the process.

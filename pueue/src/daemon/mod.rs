@@ -1,21 +1,23 @@
-use crate::internal_prelude::*;
-
-use std::path::Path;
-use std::sync::{Arc, Mutex};
-use std::{fs::create_dir_all, path::PathBuf};
+use std::{
+    fs::create_dir_all,
+    path::{Path, PathBuf},
+    sync::{Arc, Mutex},
+};
 
 use process_handler::initiate_shutdown;
-use pueue_lib::error::Error;
-use pueue_lib::network::certificate::create_certificates;
-use pueue_lib::network::message::Shutdown;
-use pueue_lib::network::protocol::socket_cleanup;
-use pueue_lib::network::secret::init_shared_secret;
-use pueue_lib::settings::Settings;
-use pueue_lib::state::{SharedState, State};
+use pueue_lib::{
+    error::Error,
+    network::{
+        certificate::create_certificates, message::Shutdown, protocol::socket_cleanup,
+        secret::init_shared_secret,
+    },
+    settings::Settings,
+    state::{SharedState, State},
+};
 use tokio::try_join;
 
 use self::state_helper::{restore_state, save_state};
-use crate::daemon::network::socket::accept_incoming;
+use crate::{daemon::network::socket::accept_incoming, internal_prelude::*};
 
 mod callbacks;
 pub mod cli;

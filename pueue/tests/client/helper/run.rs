@@ -1,14 +1,12 @@
-use crate::internal_prelude::*;
-
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    process::{Command, Output, Stdio},
+};
 
 use assert_cmd::prelude::*;
-use std::process::{Command, Output, Stdio};
+use pueue_lib::{settings::Shared, task::TaskStatus};
 
-use pueue_lib::settings::Shared;
-use pueue_lib::task::TaskStatus;
-
-use crate::helper::get_state;
+use crate::{helper::get_state, internal_prelude::*};
 
 /// Spawn a client command that connects to a specific daemon.
 pub fn run_client_command(shared: &Shared, args: &[&str]) -> Result<Output> {

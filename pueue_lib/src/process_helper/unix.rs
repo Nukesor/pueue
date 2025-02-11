@@ -1,12 +1,11 @@
-use crate::internal_prelude::*;
-
 // We allow color_eyre in here, as this is a module that'll be strictly used internally.
-// As soon as it's obvious that this is code is intended to be exposed to library users, we have to
-// go ahead and replace any `anyhow` usage by proper error handling via our own Error type.
+// As soon as it's obvious that this is code is intended to be exposed to library users, we
+// have to go ahead and replace any `anyhow` usage by proper error handling via our own Error
+// type.
 use color_eyre::Result;
 use command_group::{GroupChild, Signal, UnixChildExt};
 
-use crate::settings::Settings;
+use crate::{internal_prelude::*, settings::Settings};
 
 pub fn get_shell_command(settings: &Settings) -> Vec<String> {
     let Some(ref shell_command) = settings.daemon.shell_command else {
@@ -45,11 +44,7 @@ pub fn kill_child(task_id: usize, child: &mut GroupChild) -> std::io::Result<()>
 
 #[cfg(test)]
 mod tests {
-    use crate::internal_prelude::*;
-
-    use std::process::Command;
-    use std::thread::sleep;
-    use std::time::Duration;
+    use std::{process::Command, thread::sleep, time::Duration};
 
     use color_eyre::Result;
     use command_group::CommandGroup;

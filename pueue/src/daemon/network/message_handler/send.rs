@@ -1,11 +1,10 @@
 use std::io::Write;
 
-use pueue_lib::state::SharedState;
-use pueue_lib::{failure_msg, network::message::*};
+use pueue_lib::{failure_msg, network::message::*, state::SharedState};
 
 /// Invoked when calling `pueue send`.
-/// The message will be forwarded to the task handler, which then sends the user input to the process.
-/// In here we only do some error handling.
+/// The message will be forwarded to the task handler, which then sends the user input to the
+/// process. In here we only do some error handling.
 pub fn send(state: &SharedState, message: SendMessage) -> Response {
     let task_id = message.task_id;
     let mut state = state.lock().unwrap();

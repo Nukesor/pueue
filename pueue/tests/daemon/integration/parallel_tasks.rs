@@ -1,10 +1,7 @@
-use crate::internal_prelude::*;
-
 use assert_matches::assert_matches;
-
 use pueue_lib::{network::message::ParallelMessage, task::*};
 
-use crate::helper::*;
+use crate::{helper::*, internal_prelude::*};
 
 /// Test that multiple groups with multiple slots work.
 ///

@@ -1,13 +1,15 @@
 use chrono::TimeDelta;
-use comfy_table::presets::UTF8_HORIZONTAL_ONLY;
-use comfy_table::{Cell, ContentArrangement, Row, Table};
+use comfy_table::{presets::UTF8_HORIZONTAL_ONLY, Cell, ContentArrangement, Row, Table};
 use crossterm::style::Color;
+use pueue_lib::{
+    settings::Settings,
+    task::{Task, TaskResult, TaskStatus},
+};
 
-use pueue_lib::settings::Settings;
-use pueue_lib::task::{Task, TaskResult, TaskStatus};
-
-use super::helper::{formatted_start_end, start_of_today};
-use super::OutputStyle;
+use super::{
+    helper::{formatted_start_end, start_of_today},
+    OutputStyle,
+};
 use crate::client::query::Rule;
 
 /// This builder is responsible for determining which table columns should be displayed and
@@ -111,8 +113,8 @@ impl<'a> TableBuilder<'a> {
         }
     }
 
-    /// Take a list of given [pest] rules from our `crate::client::query::column_selection::apply` logic.
-    /// Set the column visibility based on these rules.
+    /// Take a list of given [pest] rules from our `crate::client::query::column_selection::apply`
+    /// logic. Set the column visibility based on these rules.
     pub fn set_visibility_by_rules(&mut self, rules: &[Rule]) {
         // Don't change anything, if there're no rules
         if rules.is_empty() {

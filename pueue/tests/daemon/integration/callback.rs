@@ -1,8 +1,6 @@
-use crate::internal_prelude::*;
-
 use std::fs::read_to_string;
 
-use crate::helper::*;
+use crate::{helper::*, internal_prelude::*};
 
 /// Make sure that callback commands are executed while variables are
 /// templated into the command as expected.

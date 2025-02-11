@@ -1,8 +1,6 @@
-use crate::internal_prelude::*;
-
 use pueue_lib::{network::message::*, state::GroupStatus, task::Task};
 
-use crate::helper::*;
+use crate::{helper::*, internal_prelude::*};
 
 /// A reset command kills all tasks and forces a clean state accross groups.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]

@@ -1,9 +1,8 @@
 //! This module contains helper functions, which are used by both, the client and daemon tests.
-use crate::internal_prelude::*;
-
+pub use pueue_lib::state::PUEUE_DEFAULT_GROUP;
 use tokio::io::{self, AsyncWriteExt};
 
-pub use pueue_lib::state::PUEUE_DEFAULT_GROUP;
+use crate::internal_prelude::*;
 
 mod asserts;
 mod daemon;
@@ -16,7 +15,6 @@ mod state;
 mod task;
 mod wait;
 
-pub use self::log::*;
 pub use asserts::*;
 pub use daemon::*;
 pub use factories::*;
@@ -26,6 +24,8 @@ pub use network::*;
 pub use state::*;
 pub use task::*;
 pub use wait::*;
+
+pub use self::log::*;
 
 // Global acceptable test timeout
 const TIMEOUT: u64 = 5000;

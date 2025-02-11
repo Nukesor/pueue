@@ -1,15 +1,14 @@
-use crate::internal_prelude::*;
-
-use std::collections::HashMap;
-use std::fs::{create_dir_all, File};
-use std::io::{prelude::*, BufReader};
-use std::path::{Path, PathBuf};
+use std::{
+    collections::HashMap,
+    fs::{create_dir_all, File},
+    io::{prelude::*, BufReader},
+    path::{Path, PathBuf},
+};
 
 use serde::{Deserialize, Serialize};
 use shellexpand::tilde;
 
-use crate::error::Error;
-use crate::setting_defaults::*;
+use crate::{error::Error, internal_prelude::*, setting_defaults::*};
 
 /// The environment variable that can be set to overwrite pueue's config path.
 pub const PUEUE_CONFIG_PATH_ENV: &str = "PUEUE_CONFIG_PATH";
@@ -149,10 +148,18 @@ pub struct Daemon {
     /// The following are the only officially supported modi for Pueue.
     ///
     /// Unix default:
-    /// `vec!["sh", "-c", "{{ pueue_command_string }}"]`.
+    /// ```
+    /// vec!["sh", "-c", "{{ pueue_command_string }}"];
+    /// ````
     ///
     /// Windows default:
-    /// `vec!["powershell", "-c", "[Console]::OutputEncoding = [Text.UTF8Encoding]::UTF8; {{ pueue_command_string }}"]`
+    /// ```
+    /// vec![
+    ///     "powershell",
+    ///     "-c",
+    ///     "[Console]::OutputEncoding = [Text.UTF8Encoding]::UTF8; {{ pueue_command_string }}",
+    /// ];
+    /// ```
     pub shell_command: Option<Vec<String>>,
 }
 

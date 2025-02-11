@@ -1,5 +1,3 @@
-use crate::internal_prelude::*;
-
 use std::{
     collections::HashMap,
     process::{Child, Command, Stdio},
@@ -11,7 +9,7 @@ use pueue_lib::{
     state::State,
 };
 
-use crate::helper::*;
+use crate::{helper::*, internal_prelude::*};
 
 /// Spawn the daemon by calling the actual pueued binary.
 /// This is basically the same as the `standalone_daemon` logic, but it uses the

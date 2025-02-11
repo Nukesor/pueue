@@ -1,12 +1,7 @@
-use crate::internal_prelude::*;
-
 use assert_matches::assert_matches;
+use pueue_lib::{network::message::*, state::GroupStatus, task::*};
 
-use pueue_lib::network::message::*;
-use pueue_lib::state::GroupStatus;
-use pueue_lib::task::*;
-
-use crate::helper::*;
+use crate::{helper::*, internal_prelude::*};
 
 /// Make sure that no tasks will be started in a paused queue
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]

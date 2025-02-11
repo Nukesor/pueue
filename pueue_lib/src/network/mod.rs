@@ -12,7 +12,8 @@
 //!
 //! ## Communication
 //!
-//! Sending and receiving raw bytes is handled via the [send_bytes](crate::network::protocol::send_bytes)
+//! Sending and receiving raw bytes is handled via the
+//! [send_bytes](crate::network::protocol::send_bytes)
 //! and [receive_bytes](crate::network::protocol::receive_bytes) functions.
 //! Details on how they work can be found on the respective function docs.
 //!
@@ -29,7 +30,8 @@
 //!
 //! Before the real data exchange starts, a simple handshake + authorization is done
 //! by the client and daemon.
-//! An example on how to do this can be found in the pueue's `crate::client::Client::new()` function.
+//! An example on how to do this can be found in the pueue's `crate::client::Client::new()`
+//! function.
 //!
 //! The following steps are written from the client's perspective:
 //!

@@ -1,18 +1,17 @@
-use crate::internal_prelude::*;
-
 use std::io::Cursor;
 
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use serde::{de::DeserializeOwned, Serialize};
-use serde_cbor::de::from_slice;
-use serde_cbor::ser::to_vec;
+use serde_cbor::{de::from_slice, ser::to_vec};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
-use crate::error::Error;
-
-use super::message::{request::Request, response::Response};
 // Reexport all stream/socket related stuff for convenience purposes
 pub use super::socket::*;
+use crate::{
+    error::Error,
+    internal_prelude::*,
+    network::message::{request::Request, response::Response},
+};
 
 // We choose a packet size of 1280 to be on the safe site regarding IPv6 MTU.
 pub const PACKET_SIZE: usize = 1280;
@@ -90,8 +89,8 @@ pub async fn send_bytes(payload: &[u8], stream: &mut GenericStream) -> Result<()
 /// Receive a byte stream. \
 /// This is part of the basic protocol beneath all communication. \
 ///
-/// 1. First of, the client sends a u64 as a 4byte vector in BigEndian mode, which specifies
-///    the length of the payload we're going to receive.
+/// 1. First of, the client sends a u64 as a 4byte vector in BigEndian mode, which specifies the
+///    length of the payload we're going to receive.
 /// 2. Receive chunks of [PACKET_SIZE] bytes until we finished all expected bytes.
 pub async fn receive_bytes(stream: &mut GenericStream) -> Result<Vec<u8>, Error> {
     // Receive the header with the overall message size
@@ -172,12 +171,16 @@ mod test {
 
     use async_trait::async_trait;
     use pretty_assertions::assert_eq;
-    use tokio::net::{TcpListener, TcpStream};
-    use tokio::task;
+    use tokio::{
+        net::{TcpListener, TcpStream},
+        task,
+    };
 
     use super::*;
-    use crate::network::message::request::{Request, SendMessage};
-    use crate::network::socket::Stream as PueueStream;
+    use crate::network::{
+        message::request::{Request, SendMessage},
+        socket::Stream as PueueStream,
+    };
 
     // Implement generic Listener/Stream traits, so we can test stuff on normal TCP
     #[async_trait]

@@ -1,8 +1,6 @@
-use crate::internal_prelude::*;
-
 use pueue_lib::{network::message::*, task::Task};
 
-use crate::helper::*;
+use crate::{helper::*, internal_prelude::*};
 
 /// Ensure that only removable tasks can be removed.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]

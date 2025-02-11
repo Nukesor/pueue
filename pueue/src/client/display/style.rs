@@ -1,7 +1,6 @@
-use pueue_lib::settings::Settings;
-
 use comfy_table::{Attribute as ComfyAttribute, Cell, Color as ComfyColor};
 use crossterm::style::{style, Attribute, Color, Stylize};
+use pueue_lib::settings::Settings;
 
 /// OutputStyle wrapper for actual colors depending on settings
 /// - Enables styles if color mode is 'always', or if color mode is 'auto' and output is a tty.

@@ -1,13 +1,13 @@
-use crate::internal_prelude::*;
-
 use assert_matches::assert_matches;
-
-use pueue_lib::settings::Shared;
-use pueue_lib::state::State;
-use pueue_lib::task::Task;
-use pueue_lib::{network::message::*, state::GroupStatus};
+use pueue_lib::{
+    network::message::*,
+    settings::Shared,
+    state::{GroupStatus, State},
+    task::Task,
+};
 
 use super::{get_state, send_request};
+use crate::internal_prelude::*;
 
 /// Assert that a message is a successful message.
 pub fn assert_success(response: Response) {

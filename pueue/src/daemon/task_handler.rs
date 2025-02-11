@@ -1,25 +1,24 @@
-use crate::internal_prelude::*;
-
-use std::collections::BTreeMap;
-use std::time::Duration;
+use std::{collections::BTreeMap, time::Duration};
 
 use chrono::prelude::*;
+use pueue_lib::{
+    children::Children,
+    network::{message::*, protocol::socket_cleanup},
+    settings::Settings,
+    state::{Group, GroupStatus, SharedState},
+    task::{TaskResult, TaskStatus},
+};
 
-use pueue_lib::children::Children;
-use pueue_lib::network::message::*;
-use pueue_lib::network::protocol::socket_cleanup;
-use pueue_lib::settings::Settings;
-use pueue_lib::state::{Group, GroupStatus, SharedState};
-use pueue_lib::task::{TaskResult, TaskStatus};
-
-use crate::daemon::pid::cleanup_pid_file;
-use crate::daemon::state_helper::save_state;
-use crate::ok_or_shutdown;
-
-use super::callbacks::{check_callbacks, spawn_callback};
-use super::process_handler::finish::handle_finished_tasks;
-use super::process_handler::spawn::spawn_new;
-use super::state_helper::LockedState;
+use crate::{
+    daemon::{
+        callbacks::{check_callbacks, spawn_callback},
+        pid::cleanup_pid_file,
+        process_handler::{finish::handle_finished_tasks, spawn::spawn_new},
+        state_helper::{save_state, LockedState},
+    },
+    internal_prelude::*,
+    ok_or_shutdown,
+};
 
 /// Main task handling loop.
 /// In here a few things happen:

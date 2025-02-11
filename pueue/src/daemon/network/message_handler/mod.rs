@@ -1,15 +1,13 @@
 use std::fmt::Display;
 
-use pueue_lib::failure_msg;
-use pueue_lib::network::message::*;
-use pueue_lib::network::protocol::send_response;
-use pueue_lib::network::socket::GenericStream;
-use pueue_lib::settings::Settings;
-use pueue_lib::state::SharedState;
+use pueue_lib::{
+    failure_msg,
+    network::{message::*, protocol::send_response, socket::GenericStream},
+    settings::Settings,
+    state::SharedState,
+};
 
-use crate::daemon::network::response_helper::*;
-use crate::daemon::process_handler::initiate_shutdown;
-use crate::internal_prelude::*;
+use crate::{daemon::process_handler::initiate_shutdown, internal_prelude::*};
 
 mod add;
 mod clean;
@@ -112,15 +110,19 @@ macro_rules! ok_or_save_state_failure {
 
 #[cfg(test)]
 mod fixtures {
-    use chrono::{DateTime, Duration, Local};
-    use std::collections::HashMap;
-    use std::env::temp_dir;
-    use std::sync::{Arc, Mutex};
-    use tempfile::TempDir;
+    use std::{
+        collections::HashMap,
+        env::temp_dir,
+        sync::{Arc, Mutex},
+    };
 
-    pub use pueue_lib::settings::Settings;
-    pub use pueue_lib::state::{SharedState, State, PUEUE_DEFAULT_GROUP};
-    pub use pueue_lib::task::{Task, TaskResult, TaskStatus};
+    use chrono::{DateTime, Duration, Local};
+    pub use pueue_lib::{
+        settings::Settings,
+        state::{SharedState, State, PUEUE_DEFAULT_GROUP},
+        task::{Task, TaskResult, TaskStatus},
+    };
+    use tempfile::TempDir;
 
     // A simple helper struct to keep the boilerplate for TaskStatus creation down.
     pub enum StubStatus {

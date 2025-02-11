@@ -4,11 +4,10 @@ use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    network::message::EditableTask,
     state::{Group, State},
     task::Task,
 };
-
-use super::EditableTask;
 
 /// Macro to simplify creating success_messages
 #[macro_export]

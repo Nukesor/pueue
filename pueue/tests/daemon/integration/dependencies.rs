@@ -1,11 +1,9 @@
-use crate::internal_prelude::*;
-
 use pueue_lib::{
     network::message::{KillMessage, TaskSelection},
     task::*,
 };
 
-use crate::helper::*;
+use crate::{helper::*, internal_prelude::*};
 
 /// Test if adding a normal task works as intended.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]

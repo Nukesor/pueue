@@ -1,15 +1,16 @@
-use crate::internal_prelude::*;
-
 use std::{collections::HashMap, path::PathBuf};
 
 use assert_matches::assert_matches;
 use chrono::{Local, TimeZone};
 use pretty_assertions::assert_eq;
+use pueue::client::query::{apply_query, Rule};
+use pueue_lib::{
+    state::PUEUE_DEFAULT_GROUP,
+    task::{Task, TaskResult, TaskStatus},
+};
 use rstest::rstest;
 
-use pueue::client::query::{apply_query, Rule};
-use pueue_lib::state::PUEUE_DEFAULT_GROUP;
-use pueue_lib::task::{Task, TaskResult, TaskStatus};
+use crate::internal_prelude::*;
 
 const TEST_COMMAND_SLEEP: &str = "sleep 60";
 const TEST_COMMAND_HELLO: &str = "echo Hello Pueue";

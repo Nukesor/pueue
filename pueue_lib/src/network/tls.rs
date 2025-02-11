@@ -1,16 +1,13 @@
-use std::fs::File;
-use std::io::BufReader;
-use std::path::Path;
-use std::sync::Arc;
+use std::{fs::File, io::BufReader, path::Path, sync::Arc};
 
+use rustls::{
+    pki_types::{CertificateDer, PrivateKeyDer},
+    ClientConfig, RootCertStore, ServerConfig,
+};
+use rustls_pemfile::{pkcs8_private_keys, rsa_private_keys};
 use tokio_rustls::{TlsAcceptor, TlsConnector};
 
-use rustls::pki_types::{CertificateDer, PrivateKeyDer};
-use rustls::{ClientConfig, RootCertStore, ServerConfig};
-use rustls_pemfile::{pkcs8_private_keys, rsa_private_keys};
-
-use crate::error::Error;
-use crate::settings::Shared;
+use crate::{error::Error, settings::Shared};
 
 /// Initialize our client [TlsConnector]. \
 /// 1. Trust our own CA. ONLY our own CA.

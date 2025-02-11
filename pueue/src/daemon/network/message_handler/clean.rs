@@ -1,11 +1,15 @@
-use pueue_lib::log::clean_log_handles;
-use pueue_lib::network::message::*;
-use pueue_lib::state::SharedState;
-use pueue_lib::task::{TaskResult, TaskStatus};
+use pueue_lib::{
+    log::clean_log_handles,
+    network::message::*,
+    state::SharedState,
+    task::{TaskResult, TaskStatus},
+};
 
 use super::*;
-use crate::daemon::state_helper::{is_task_removable, save_state};
-use crate::ok_or_save_state_failure;
+use crate::{
+    daemon::state_helper::{is_task_removable, save_state},
+    ok_or_save_state_failure,
+};
 
 fn construct_success_clean_message(message: CleanMessage) -> String {
     let successful_only_fix = if message.successful_only {
@@ -69,11 +73,10 @@ pub fn clean(settings: &Settings, state: &SharedState, message: CleanMessage) ->
 
 #[cfg(test)]
 mod tests {
-    use super::super::fixtures::*;
-    use super::*;
-
     use pretty_assertions::assert_eq;
     use tempfile::TempDir;
+
+    use super::{super::fixtures::*, *};
 
     fn get_message(successful_only: bool, group: Option<String>) -> CleanMessage {
         CleanMessage {
@@ -211,7 +214,8 @@ mod tests {
             );
         };
 
-        // Assert that only the first entry has been deleted from the 'other' group (TaskResult::Success)
+        // Assert that only the first entry has been deleted from the 'other' group
+        // (TaskResult::Success)
         let state = state.lock().unwrap();
         assert_eq!(state.tasks.len(), 11);
         assert!(!state.tasks.contains_key(&6));

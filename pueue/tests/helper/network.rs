@@ -1,12 +1,16 @@
-use crate::internal_prelude::*;
-
-use pueue_lib::network::message::*;
-use pueue_lib::network::protocol::{
-    get_client_stream, receive_bytes, receive_message, send_bytes,
-    send_message as internal_send_message, GenericStream,
+use pueue_lib::{
+    network::{
+        message::*,
+        protocol::{
+            get_client_stream, receive_bytes, receive_message, send_bytes,
+            send_message as internal_send_message, GenericStream,
+        },
+        secret::read_shared_secret,
+    },
+    settings::Shared,
 };
-use pueue_lib::network::secret::read_shared_secret;
-use pueue_lib::settings::Shared;
+
+use crate::internal_prelude::*;
 
 /// This is a small convenience wrapper that sends a message and immediately returns the response.
 pub async fn send_request<T>(shared: &Shared, message: T) -> Result<Response>

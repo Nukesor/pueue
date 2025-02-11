@@ -1,11 +1,11 @@
-use crate::internal_prelude::*;
-
 use std::collections::BTreeMap;
 
-use pueue_lib::network::message::*;
-use pueue_lib::state::{Group, GroupStatus};
+use pueue_lib::{
+    network::message::*,
+    state::{Group, GroupStatus},
+};
 
-use crate::client::helper::*;
+use crate::{client::helper::*, internal_prelude::*};
 
 /// Test that adding a group and getting the group overview works.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]

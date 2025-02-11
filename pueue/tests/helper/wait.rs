@@ -1,21 +1,18 @@
-/// This module contains helper functions to work with Pueue's asynchronous nature during tests.
-/// As the daemon often needs some time to process requests by the client internally, we cannot
-/// check whether the requested actions have been taken right away.
+use pueue_lib::{settings::Shared, state::GroupStatus, task::Task};
+
+use super::{get_state, sleep_ms};
+use crate::helper::TIMEOUT;
+/// This module contains helper functions to work with Pueue's asynchronous nature during
+/// tests. As the daemon often needs some time to process requests by the client internally, we
+/// cannot check whether the requested actions have been taken right away.
 ///
 /// Using continuous lookups, we can allow long waiting times, while still having fast tests if
 /// things don't take that long.
 use crate::internal_prelude::*;
 
-use pueue_lib::settings::Shared;
-use pueue_lib::state::GroupStatus;
-use pueue_lib::task::Task;
-
-use crate::helper::TIMEOUT;
-
-use super::{get_state, sleep_ms};
-
 /// This is a small helper function, which checks in very short intervals, whether a task fulfills
-/// a certain criteria. This is necessary to prevent long or potentially flaky timeouts in our tests.
+/// a certain criteria. This is necessary to prevent long or potentially flaky timeouts in our
+/// tests.
 pub async fn wait_for_task_condition<F>(
     shared: &Shared,
     task_id: usize,

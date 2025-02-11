@@ -1,19 +1,22 @@
-use crate::internal_prelude::*;
-
-use std::collections::{HashMap, HashSet};
-use std::time::Duration;
+use std::{
+    collections::{HashMap, HashSet},
+    time::Duration,
+};
 
 use chrono::Local;
 use crossterm::style::{Attribute, Color};
-use pueue_lib::network::message::TaskSelection;
-use pueue_lib::state::State;
+use pueue_lib::{
+    network::{message::TaskSelection, protocol::GenericStream},
+    state::State,
+    task::{Task, TaskResult, TaskStatus},
+};
 use strum::{Display, EnumString};
 use tokio::time::sleep;
 
-use pueue_lib::network::protocol::GenericStream;
-use pueue_lib::task::{Task, TaskResult, TaskStatus};
-
-use crate::client::{commands::get_state, display::OutputStyle};
+use crate::{
+    client::{commands::get_state, display::OutputStyle},
+    internal_prelude::*,
+};
 
 /// The `wait` subcommand can wait for these specific stati.
 #[derive(Default, Debug, Clone, PartialEq, Display, EnumString)]

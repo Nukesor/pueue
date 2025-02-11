@@ -1,9 +1,9 @@
-use crate::internal_prelude::*;
-
 use std::process::{Command, Stdio};
 
 use assert_cmd::prelude::*;
 use rstest::rstest;
+
+use crate::internal_prelude::*;
 
 /// Make sure completion for all shells work as expected.
 /// This test tests writing to file.

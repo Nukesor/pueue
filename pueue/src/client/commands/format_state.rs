@@ -1,5 +1,3 @@
-use crate::internal_prelude::*;
-
 use std::{
     collections::BTreeMap,
     io::{self, prelude::*},
@@ -7,9 +5,13 @@ use std::{
 
 use pueue_lib::{network::protocol::GenericStream, settings::Settings, task::Task};
 
-use crate::client::{
-    cli::SubCommand,
-    display::{print_state, OutputStyle},
+use crate::{
+    client::{
+        cli::SubCommand,
+        commands::get_state,
+        display::{print_state, OutputStyle},
+    },
+    internal_prelude::*,
 };
 
 /// This function tries to read a map or list of JSON serialized [Task]s from `stdin`.
@@ -41,7 +43,7 @@ pub async fn format_state(
         serde_json::from_str(&json).context("Failed to deserialize from JSON input.")?
     };
 
-    let state = super::get_state(stream)
+    let state = get_state(stream)
         .await
         .context("Failed to get the current state from daemon")?;
 

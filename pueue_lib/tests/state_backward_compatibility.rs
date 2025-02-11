@@ -1,7 +1,6 @@
 use std::{fs, path::PathBuf};
 
 use color_eyre::{eyre::WrapErr, Result};
-
 use pueue_lib::state::{GroupStatus, State, PUEUE_DEFAULT_GROUP};
 
 /// We aim to have full backward compatibility for our state deserialization for as long as

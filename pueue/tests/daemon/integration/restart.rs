@@ -1,10 +1,8 @@
-use crate::internal_prelude::*;
-
 use std::path::PathBuf;
 
 use pueue_lib::{network::message::*, task::Task};
 
-use crate::helper::*;
+use crate::{helper::*, internal_prelude::*};
 
 /// Ensure that restarting a task in-place, resets it's state and possibly updates the command and
 /// path to the new values.

@@ -1,5 +1,6 @@
-use command_group::GroupChild;
 use std::collections::BTreeMap;
+
+use command_group::GroupChild;
 
 /// This structure is needed to manage worker pools for groups.
 /// It's a newtype pattern around a nested BTreeMap, which implements some convenience functions.

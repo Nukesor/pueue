@@ -14,10 +14,12 @@ use crossterm::style::Color;
 
 // Re-exports
 pub use self::follow::follow_local_task_logs;
-pub use self::group::format_groups;
-pub use self::log::{determine_log_line_amount, print_logs};
-pub use self::state::print_state;
-pub use self::style::OutputStyle;
+pub use self::{
+    group::format_groups,
+    log::{determine_log_line_amount, print_logs},
+    state::print_state,
+    style::OutputStyle,
+};
 
 /// Used to style any generic success message from the daemon.
 pub fn print_success(_style: &OutputStyle, message: &str) {

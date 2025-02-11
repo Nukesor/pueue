@@ -1,13 +1,17 @@
-use std::collections::BTreeMap;
-use std::process::Child;
-use std::sync::{Arc, Mutex};
+use std::{
+    collections::BTreeMap,
+    process::Child,
+    sync::{Arc, Mutex},
+};
 
 use serde::{Deserialize, Serialize};
 
-use crate::children::Children;
-use crate::error::Error;
-use crate::network::message::request::Shutdown;
-use crate::task::{Task, TaskStatus};
+use crate::{
+    children::Children,
+    error::Error,
+    network::message::request::Shutdown,
+    task::{Task, TaskStatus},
+};
 
 pub const PUEUE_DEFAULT_GROUP: &str = "default";
 

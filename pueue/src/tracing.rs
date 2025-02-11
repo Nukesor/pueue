@@ -1,9 +1,10 @@
-use crate::internal_prelude::*;
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::{
     field::MakeExt, fmt::time::ChronoLocal, layer::SubscriberExt, util::SubscriberInitExt,
     EnvFilter, Layer,
 };
+
+use crate::internal_prelude::*;
 
 pub fn install_tracing(verbosity: u8) -> Result<()> {
     let mut pretty = false;

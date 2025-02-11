@@ -1,15 +1,9 @@
-use crate::internal_prelude::*;
-
 use std::path::PathBuf;
 
 use assert_matches::assert_matches;
+use pueue_lib::{network::message::*, settings::Shared, state::GroupStatus, task::*};
 
-use pueue_lib::network::message::*;
-use pueue_lib::settings::Shared;
-use pueue_lib::state::GroupStatus;
-use pueue_lib::task::*;
-
-use crate::helper::*;
+use crate::{helper::*, internal_prelude::*};
 
 async fn create_edited_task(shared: &Shared) -> Result<Vec<EditableTask>> {
     // Add a task

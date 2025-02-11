@@ -1,9 +1,6 @@
-use crate::internal_prelude::*;
+use std::{fs, os::unix::fs::PermissionsExt};
 
-use std::fs;
-use std::os::unix::fs::PermissionsExt;
-
-use crate::helper::*;
+use crate::{helper::*, internal_prelude::*};
 
 /// Make sure that the socket permissions are appropriately set.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]

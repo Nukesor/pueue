@@ -1,9 +1,6 @@
-use crate::internal_prelude::*;
+use pueue_lib::{network::message::TaskSelection, state::GroupStatus};
 
-use pueue_lib::network::message::TaskSelection;
-use pueue_lib::state::GroupStatus;
-
-use crate::helper::*;
+use crate::{helper::*, internal_prelude::*};
 
 /// The daemon should start in the same state as before shutdown, if no tasks are queued.
 /// This function tests for the running state.

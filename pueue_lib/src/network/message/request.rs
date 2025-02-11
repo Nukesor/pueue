@@ -1,11 +1,10 @@
-use std::collections::HashMap;
-use std::path::PathBuf;
+use std::{collections::HashMap, path::PathBuf};
 
 use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 use strum::{Display, EnumString, VariantNames};
 
-use super::EditableTask;
+use crate::network::message::EditableTask;
 
 /// Macro to simplify creating [From] implementations for each variant-contained
 /// Request; e.g. `impl_into_request!(AddMessage, Request::Add)` to make it possible

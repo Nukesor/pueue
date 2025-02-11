@@ -1,6 +1,9 @@
-use pueue_lib::failure_msg;
-use pueue_lib::state::{GroupStatus, SharedState};
-use pueue_lib::{network::message::*, settings::Settings};
+use pueue_lib::{
+    failure_msg,
+    network::message::*,
+    settings::Settings,
+    state::{GroupStatus, SharedState},
+};
 
 use crate::daemon::process_handler;
 

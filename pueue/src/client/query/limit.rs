@@ -1,8 +1,9 @@
-use crate::internal_prelude::*;
-
 use pest::iterators::Pair;
 
-use super::{QueryResult, Rule};
+use crate::{
+    client::query::{QueryResult, Rule},
+    internal_prelude::*,
+};
 
 /// An enum indicating whether the first or the first or the last tasks in the
 /// `pueue status` command should be shown.

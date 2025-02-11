@@ -1,8 +1,6 @@
-use crate::internal_prelude::*;
-
 use pueue_lib::task::Task;
 
-use crate::helper::*;
+use crate::{helper::*, internal_prelude::*};
 
 /// Make sure that the daemon's environment variables don't bleed into the spawned subprocesses.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]

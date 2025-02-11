@@ -1,12 +1,10 @@
-use crate::internal_prelude::*;
-
-use std::fs::File;
-use std::io::prelude::*;
+use std::{fs::File, io::prelude::*};
 
 use pueue::daemon::state_helper::restore_state;
+use pueue_lib::settings::Settings;
 use tempfile::TempDir;
 
-use pueue_lib::settings::Settings;
+use crate::internal_prelude::*;
 
 /// 4.0.0 introduced numerous breaking changes.
 /// From here on, we now aim to once again have full backward compatibility.

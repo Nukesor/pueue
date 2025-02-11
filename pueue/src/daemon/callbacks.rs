@@ -1,5 +1,3 @@
-use crate::internal_prelude::*;
-
 use std::collections::HashMap;
 
 use chrono::{DateTime, Local};
@@ -11,7 +9,7 @@ use pueue_lib::{
     task::{Task, TaskResult, TaskStatus},
 };
 
-use super::state_helper::LockedState;
+use crate::{daemon::state_helper::LockedState, internal_prelude::*};
 
 /// Users can specify a callback that's fired whenever a task finishes.
 /// The callback is performed by spawning a new subprocess.

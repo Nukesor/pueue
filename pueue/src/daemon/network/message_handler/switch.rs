@@ -1,12 +1,9 @@
-use pueue_lib::failure_msg;
-use pueue_lib::network::message::*;
-use pueue_lib::settings::Settings;
-use pueue_lib::state::SharedState;
-use pueue_lib::task::TaskStatus;
+use pueue_lib::{
+    failure_msg, network::message::*, settings::Settings, state::SharedState, task::TaskStatus,
+};
 
 use super::ok_or_failure_message;
-use crate::daemon::state_helper::save_state;
-use crate::ok_or_save_state_failure;
+use crate::{daemon::state_helper::save_state, ok_or_save_state_failure};
 
 /// Invoked when calling `pueue switch`.
 /// Switch the position of two tasks in the upcoming queue.
@@ -70,8 +67,7 @@ mod tests {
     use pretty_assertions::assert_eq;
     use tempfile::TempDir;
 
-    use super::super::fixtures::*;
-    use super::*;
+    use super::{super::fixtures::*, *};
 
     fn get_message(task_id_1: usize, task_id_2: usize) -> SwitchMessage {
         SwitchMessage {

@@ -1,8 +1,4 @@
-use crate::internal_prelude::*;
-
-use pueue_lib::network::message::*;
-use pueue_lib::settings::*;
-use pueue_lib::state::State;
+use pueue_lib::{network::message::*, settings::*, state::State};
 
 use super::*;
 
