@@ -26,7 +26,10 @@ pub mod state;
 pub mod task;
 
 pub use error::Error;
-pub use network::message::{Request, Response};
+pub use network::{
+    message::{Request, Response},
+    protocol::{receive_request, receive_response, send_request, send_response},
+};
 pub use settings::Settings;
 pub use state::{Group, GroupStatus, State};
 pub use task::{Task, TaskResult, TaskStatus};

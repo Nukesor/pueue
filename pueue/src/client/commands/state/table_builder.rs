@@ -6,11 +6,7 @@ use pueue_lib::{
     task::{Task, TaskResult, TaskStatus},
 };
 
-use super::{
-    helper::{formatted_start_end, start_of_today},
-    OutputStyle,
-};
-use crate::client::query::Rule;
+use super::{formatted_start_end, query::Rule, start_of_today, OutputStyle};
 
 /// This builder is responsible for determining which table columns should be displayed and
 /// building a full [comfy_table] from a list of given [Task]s.
@@ -43,9 +39,7 @@ impl<'a> TableBuilder<'a> {
         Self {
             settings,
             style,
-
             selected_columns: false,
-
             id: true,
             status: true,
             priority: false,

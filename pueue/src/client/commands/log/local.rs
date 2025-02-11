@@ -9,7 +9,7 @@ use pueue_lib::{
     settings::Settings,
 };
 
-use crate::client::display::OutputStyle;
+use crate::client::style::OutputStyle;
 
 /// The daemon didn't send any log output, thereby we didn't request any.
 /// If that's the case, read the log file from the local pueue directory.
