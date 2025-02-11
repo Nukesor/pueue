@@ -4,18 +4,13 @@
 //! This includes formatting of task tables, group info, log inspection and log following.
 pub mod group;
 pub mod helper;
-mod log;
 pub mod style;
 pub mod table_builder;
 
 use crossterm::style::Color;
 
 // Re-exports
-pub use self::{
-    group::format_groups,
-    log::{determine_log_line_amount, print_logs},
-    style::OutputStyle,
-};
+pub use self::style::OutputStyle;
 
 /// Used to style any generic success message from the daemon.
 pub fn print_success(_style: &OutputStyle, message: &str) {

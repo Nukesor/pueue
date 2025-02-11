@@ -1,15 +1,13 @@
-use std::collections::BTreeMap;
-
 use comfy_table::{Attribute as ComfyAttribute, Cell, CellAlignment, Table};
 use crossterm::style::Color;
 use pueue_lib::{
-    network::message::{TaskLogMessage, TaskSelection},
+    network::message::{TaskLogMessage, TaskSelection, *},
     settings::Settings,
     task::{Task, TaskResult, TaskStatus},
 };
 
-use super::OutputStyle;
-use crate::client::{cli::SubCommand, commands::selection_from_params};
+use super::{handle_response, selection_from_params, OutputStyle};
+use crate::{client::client::Client, internal_prelude::*};
 
 mod json;
 mod local;
@@ -19,79 +17,62 @@ use json::*;
 use local::*;
 use remote::*;
 
-/// Determine how many lines of output should be printed/returned.
-/// `None` implicates that all lines are printed.
-///
-/// By default, everything is returned for single tasks and only some lines for multiple.
-/// `json` is an exception to this, in json mode we always only return some lines
-/// (unless otherwise explicitly requested).
-///
-/// `full` always forces the full log output
-/// `lines` force a specific amount of lines
-pub fn determine_log_line_amount(full: bool, lines: &Option<usize>) -> Option<usize> {
-    if full {
-        None
-    } else if let Some(lines) = lines {
-        Some(*lines)
-    } else {
-        // By default, only some lines are shown per task
-        Some(15)
-    }
-}
-
 /// Print the log output of finished tasks.
-/// Either print the logs of every task
-/// or only print the logs of the specified tasks.
-pub fn print_logs(
-    mut task_logs: BTreeMap<usize, TaskLogMessage>,
-    cli_command: &SubCommand,
-    style: &OutputStyle,
-    settings: &Settings,
-) {
-    // Get actual commandline options.
-    // This is necessary to know how we should display/return the log information.
-    let SubCommand::Log {
-        json,
-        task_ids,
-        group,
-        lines,
-        full,
-        all,
-    } = cli_command
-    else {
-        panic!("Got wrong Subcommand {cli_command:?} in print_log. This shouldn't happen");
+/// This may be selected tasks, all tasks of a group or **all** tasks.
+pub async fn print_logs(
+    client: &mut Client,
+    task_ids: Vec<usize>,
+    group: Option<String>,
+    all: bool,
+    json: bool,
+    lines: Option<usize>,
+    full: bool,
+) -> Result<()> {
+    let lines = determine_log_line_amount(full, &lines);
+    let selection = selection_from_params(all, group.clone(), task_ids.clone());
+
+    client
+        .send_request(LogRequestMessage {
+            tasks: selection.clone(),
+            send_logs: !client.settings.client.read_local_logs,
+            lines,
+        })
+        .await?;
+
+    let response = client.receive_response().await?;
+
+    let Response::Log(task_logs) = response else {
+        handle_response(&client.style, response)?;
+        return Ok(());
     };
 
-    let lines = determine_log_line_amount(*full, lines);
-
     // Return the server response in json representation.
-    if *json {
-        print_log_json(task_logs, settings, lines);
-        return;
+    if json {
+        print_log_json(task_logs, &client.settings, lines);
+        return Ok(());
     }
 
-    let selection = selection_from_params(*all, group.clone(), task_ids.clone());
     if task_logs.is_empty() {
         match selection {
             TaskSelection::TaskIds(_) => {
                 eprintln!("There are no finished tasks for your specified ids");
-                return;
+                return Ok(());
             }
             TaskSelection::Group(group) => {
                 eprintln!("There are no finished tasks for group '{group}'");
-                return;
+                return Ok(());
             }
             TaskSelection::All => {
                 eprintln!("There are no finished tasks");
-                return;
+                return Ok(());
             }
         }
     }
 
     // Iterate over each task and print the respective log.
-    let mut task_iter = task_logs.iter_mut().peekable();
+    let mut task_iter = task_logs.iter().peekable();
     while let Some((_, task_log)) = task_iter.next() {
-        print_log(task_log, style, settings, lines);
+        print_log(task_log, &client.style, &client.settings, lines);
 
         // Add a newline if there is another task that's going to be printed.
         if let Some((_, task_log)) = task_iter.peek() {
@@ -103,6 +84,28 @@ pub fn print_logs(
             }
         }
     }
+
+    Ok(())
+}
+
+/// Determine how many lines of output should be printed/returned.
+/// `None` implicates that all lines are printed.
+///
+/// By default, everything is returned for single tasks and only some lines for multiple.
+/// `json` is an exception to this, in json mode we always only return some lines
+/// (unless otherwise explicitly requested).
+///
+/// `full` always forces the full log output
+/// `lines` force a specific amount of lines
+fn determine_log_line_amount(full: bool, lines: &Option<usize>) -> Option<usize> {
+    if full {
+        None
+    } else if let Some(lines) = lines {
+        Some(*lines)
+    } else {
+        // By default, only some lines are shown per task
+        Some(15)
+    }
 }
 
 /// Print the log of a single task.
@@ -113,7 +116,7 @@ pub fn print_logs(
 ///         `None` implicates that everything should be printed.
 ///         This is only important, if we read local lines.
 fn print_log(
-    message: &mut TaskLogMessage,
+    message: &TaskLogMessage,
     style: &OutputStyle,
     settings: &Settings,
     lines: Option<usize>,

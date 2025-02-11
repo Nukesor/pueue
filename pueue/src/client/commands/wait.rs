@@ -13,6 +13,7 @@ use pueue_lib::{
 use strum::{Display, EnumString};
 use tokio::time::sleep;
 
+use super::selection_from_params;
 use crate::{
     client::{client::Client, commands::get_state, display::OutputStyle},
     internal_prelude::*,
@@ -43,10 +44,14 @@ pub enum WaitTargetStatus {
 /// Pass `quiet == true` to suppress any logging.
 pub async fn wait(
     client: &mut Client,
-    selection: TaskSelection,
+    task_ids: Vec<usize>,
+    group: Option<String>,
+    all: bool,
     quiet: bool,
     target_status: Option<WaitTargetStatus>,
 ) -> Result<()> {
+    let selection = selection_from_params(all, group, task_ids);
+
     let mut first_run = true;
     // Create a list of tracked tasks.
     // This way we can track any status changes and if any new tasks are added.

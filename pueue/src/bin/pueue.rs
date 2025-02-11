@@ -8,7 +8,7 @@ use color_eyre::{
 };
 use pueue::client::{
     cli::{CliArguments, Shell, SubCommand},
-    client::Client,
+    client::{handle_command, Client},
 };
 use pueue_lib::settings::Settings;
 
@@ -53,11 +53,28 @@ async fn main() -> Result<()> {
         bail!("Couldn't find a configuration file. Did you start the daemon yet?");
     }
 
+    // Determine the subcommand that has been called by the user.
+    // If no subcommand is given, we default to the `status` subcommand without any arguments.
+    let subcommand = opt.cmd.unwrap_or(SubCommand::Status {
+        json: false,
+        group: None,
+        query: Vec::new(),
+    });
+
+    // Only show version incompatibility warnings if we aren't supposed to output json.
+    let show_version_warning = match subcommand {
+        SubCommand::Status { json, .. } => !json,
+        SubCommand::Log { json, .. } => !json,
+        SubCommand::Group { json, .. } => !json,
+        _ => true,
+    };
+
     // Create client to talk with the daemon and connect.
-    let mut client = Client::new(settings, opt)
+    let mut client = Client::new(settings, show_version_warning, &opt.color)
         .await
         .context("Failed to initialize client.")?;
-    client.start().await?;
+
+    handle_command(&mut client, subcommand).await?;
 
     Ok(())
 }
