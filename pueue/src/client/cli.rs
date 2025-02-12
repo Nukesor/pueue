@@ -1,10 +1,9 @@
 use std::path::PathBuf;
 
 use chrono::{prelude::*, TimeDelta};
-use clap::{builder::PossibleValuesParser, ArgAction, Parser, ValueEnum, ValueHint};
+use clap::{ArgAction, Parser, ValueEnum, ValueHint};
 use interim::*;
 use pueue_lib::network::message::Signal;
-use strum::VariantNames;
 
 use crate::client::commands::WaitTargetStatus;
 
@@ -287,9 +286,7 @@ pub enum SubCommand {
         ///
         /// This argument also excepts the integer representation as well as the signal
         /// short name. E.g. `sigint`, `int`, or `2` are the same.
-        #[arg(short, long, ignore_case(true), value_parser = PossibleValuesParser::new(
-            Signal::VARIANTS
-        ))]
+        #[arg(short, long, ignore_case(true))]
         signal: Option<Signal>,
     },
 
