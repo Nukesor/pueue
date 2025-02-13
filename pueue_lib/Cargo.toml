@@ -14,10 +14,14 @@ rust-version.workspace = true
 [badges]
 maintenance = { status = "actively-developed" }
 
+[features]
+client = ["dep:color-eyre"]
+
 [dependencies]
 async-trait = "0.1"
 byteorder = "1.5"
 chrono.workspace = true
+color-eyre = { workspace = true, optional = true }
 dirs = "6.0"
 rand = "0.8"
 rcgen = "0.13"

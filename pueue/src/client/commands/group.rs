@@ -1,15 +1,18 @@
-use pueue_lib::network::message::*;
+use pueue_lib::{client::Client, network::message::*};
 
 use super::handle_response;
 use crate::{
-    client::{
-        cli::GroupCommand, client::Client, display_helper::get_group_headline, style::OutputStyle,
-    },
+    client::{cli::GroupCommand, display_helper::get_group_headline, style::OutputStyle},
     internal_prelude::*,
 };
 
 /// Add, remove a group or simply list all groups.
-pub async fn group(client: &mut Client, cmd: Option<GroupCommand>, json: bool) -> Result<()> {
+pub async fn group(
+    client: &mut Client,
+    style: &OutputStyle,
+    cmd: Option<GroupCommand>,
+    json: bool,
+) -> Result<()> {
     let request = match cmd {
         Some(GroupCommand::Add { name, parallel }) => GroupMessage::Add {
             name: name.to_owned(),
@@ -24,12 +27,12 @@ pub async fn group(client: &mut Client, cmd: Option<GroupCommand>, json: bool) -
     let response = client.receive_response().await?;
 
     if let Response::Group(groups) = response {
-        let group_text = format_groups(groups, &client.style, json);
+        let group_text = format_groups(groups, style, json);
         println!("{group_text}");
         return Ok(());
     }
 
-    handle_response(&client.style, response)
+    handle_response(style, response)
 }
 
 /// Print some info about the daemon's current groups.

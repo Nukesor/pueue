@@ -7,12 +7,18 @@
 
 This is the shared library used by the [Pueue](https://github.com/nukesor/pueue/) client and daemon.
 
-It contains common components such as:
+It contains everything you need to communicate with the daemon:
 
-- Everything about the [Task](task::Task), [TaskResult](task::TaskResult) etc.
-- The [State](state::State), which represents the current state of the daemon.
+- The [State], which represents the current state of the daemon as exposed to clients.
+- The [Task], [TaskResult] and [TaskStatus]
+- The [Settings] used by both clients and the daemon.
 - Network code. Everything you need to communicate with the daemon.
-- Other helper code and structs.
+  - [Request] and [Response] message types.
+  - [`send_request`] and [`receive_response`] helper functions.
+- A reference [`Client`](client::Client) implementation. This is available with the `client` feature.
+  The client also implements [`Client::send_request`] and [`Client::receive_response`].
+
+It also contains helper functions to read local logs.
 
 Pueue-lib is a stand-alone crate, so it can be used by third-party applications to either
 manipulate or monitor the daemon or to simply write your own front-end for the daemon.

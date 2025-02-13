@@ -7,17 +7,19 @@ use std::{
 
 use chrono::{DateTime, Local};
 use pueue_lib::{
+    client::Client,
     format::format_datetime,
     network::message::{AddMessage, AddedTaskMessage},
     Request, Response,
 };
 
 use super::{follow as follow_cmd, group_or_default, handle_response};
-use crate::{client::client::Client, internal_prelude::*};
+use crate::{client::style::OutputStyle, internal_prelude::*};
 
 #[allow(clippy::too_many_arguments)]
 pub async fn add_task(
     client: &mut Client,
+    style: &OutputStyle,
     mut command: Vec<String>,
     working_directory: Option<PathBuf>,
     escape: bool,
@@ -74,7 +76,7 @@ pub async fn add_task(
         group_is_paused,
     }) = response
     else {
-        handle_response(&client.style, response)?;
+        handle_response(style, response)?;
         return Ok(());
     };
 
@@ -102,7 +104,7 @@ pub async fn add_task(
     }
 
     if follow {
-        follow_cmd(client, Some(task_id), None).await?;
+        follow_cmd(client, style, Some(task_id), None).await?;
     }
 
     Ok(())

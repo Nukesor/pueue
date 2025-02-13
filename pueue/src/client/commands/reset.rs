@@ -1,15 +1,20 @@
-use pueue_lib::network::message::*;
+use pueue_lib::{client::Client, network::message::*};
 
 use super::{handle_response, handle_user_confirmation};
 use crate::{
-    client::{client::Client, commands::get_state},
+    client::{commands::get_state, style::OutputStyle},
     internal_prelude::*,
 };
 
 /// Reset specific groups or the whole daemon.
 ///
 /// The force flag determines whether the user confirmation should be skipped.
-pub async fn reset(client: &mut Client, force: bool, groups: Vec<String>) -> Result<()> {
+pub async fn reset(
+    client: &mut Client,
+    style: &OutputStyle,
+    force: bool,
+    groups: Vec<String>,
+) -> Result<()> {
     // Get the current state and check if there're any running tasks.
     // If there are, ask the user if they really want to reset the state.
     let state = get_state(client).await?;
@@ -42,5 +47,5 @@ pub async fn reset(client: &mut Client, force: bool, groups: Vec<String>) -> Res
     client.send_request(ResetMessage { target }).await?;
     let response = client.receive_response().await?;
 
-    handle_response(&client.style, response)
+    handle_response(style, response)
 }

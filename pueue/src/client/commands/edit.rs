@@ -6,11 +6,13 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use pueue_lib::{error::Error, network::message::*, settings::Settings};
+use pueue_lib::{client::Client, error::Error, network::message::*, settings::Settings};
 use tempfile::tempdir;
 
 use super::handle_response;
-use crate::{client::client::Client, internal_prelude::*, process_helper::compile_shell_command};
+use crate::{
+    client::style::OutputStyle, internal_prelude::*, process_helper::compile_shell_command,
+};
 
 /// This function handles the logic for editing tasks.
 /// At first, we request the daemon to send us the task to edit.
@@ -19,7 +21,7 @@ use crate::{client::client::Client, internal_prelude::*, process_helper::compile
 ///
 /// After receiving the task information, the user can then edit it in their editor.
 /// Upon exiting the text editor, the line will then be read and sent to the server
-pub async fn edit(client: &mut Client, task_ids: Vec<usize>) -> Result<()> {
+pub async fn edit(client: &mut Client, style: &OutputStyle, task_ids: Vec<usize>) -> Result<()> {
     // Request the data to edit from the server and issue a task-lock while doing so.
     let init_message = Request::EditRequest(task_ids);
     client.send_request(init_message).await?;
@@ -29,7 +31,7 @@ pub async fn edit(client: &mut Client, task_ids: Vec<usize>) -> Result<()> {
     // In case we don't receive an EditResponse, something went wrong.
     // Handle the response and return.
     let Response::Edit(editable_tasks) = init_response else {
-        handle_response(&client.style, init_response)?;
+        handle_response(style, init_response)?;
         return Ok(());
     };
 
@@ -65,7 +67,7 @@ pub async fn edit(client: &mut Client, task_ids: Vec<usize>) -> Result<()> {
     client.send_request(Request::Edit(editable_tasks)).await?;
 
     let response = client.receive_response().await?;
-    handle_response(&client.style, response)?;
+    handle_response(style, response)?;
 
     Ok(())
 }

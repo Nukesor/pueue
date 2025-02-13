@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project adheres **somewhat** to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 The concept of SemVer is applied to the daemon/client API, but not the library API itself.
 
+## [0.28.1] - unreleased
+
+### Added
+
+- Extracted `pueue`'s `Client` implementation into `pueue_lib`.
+  It uses `color-eyre` for generic error handling, which could be improved in the future.
+  Otherwise, it serves as a convenient entry point to implement a client.
+
 ## [0.28.0] - 2025-02-11
 
 ### Changed

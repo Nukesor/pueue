@@ -1,7 +1,7 @@
-use pueue_lib::network::message::*;
+use pueue_lib::{client::Client, network::message::*};
 
 use super::{handle_response, selection_from_params};
-use crate::{client::client::Client, internal_prelude::*};
+use crate::{client::style::OutputStyle, internal_prelude::*};
 
 /// Start tasks, groups or the daemon.
 ///
@@ -11,6 +11,7 @@ use crate::{client::client::Client, internal_prelude::*};
 /// When groups are started, they start to be processed as usual.
 pub async fn start(
     client: &mut Client,
+    style: &OutputStyle,
     task_ids: Vec<usize>,
     group: Option<String>,
     all: bool,
@@ -23,5 +24,5 @@ pub async fn start(
 
     let response = client.receive_response().await?;
 
-    handle_response(&client.style, response)
+    handle_response(style, response)
 }

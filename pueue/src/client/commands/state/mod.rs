@@ -5,15 +5,14 @@ use std::{
 
 use chrono::{DateTime, Local, LocalResult};
 use pueue_lib::{
+    client::Client,
     settings::Settings,
     state::{State, PUEUE_DEFAULT_GROUP},
     task::Task,
 };
 
 use crate::{
-    client::{
-        client::Client, commands::get_state, display_helper::get_group_headline, style::OutputStyle,
-    },
+    client::{commands::get_state, display_helper::get_group_headline, style::OutputStyle},
     internal_prelude::*,
 };
 
@@ -26,6 +25,7 @@ use table_builder::TableBuilder;
 /// Simply request and print the state.
 pub async fn state(
     client: &mut Client,
+    style: &OutputStyle,
     query: Vec<String>,
     json: bool,
     group: Option<String>,
@@ -36,7 +36,7 @@ pub async fn state(
     let output = print_state(
         state,
         tasks,
-        &client.style,
+        style,
         &client.settings,
         json,
         group,
@@ -50,7 +50,11 @@ pub async fn state(
 /// This function tries to read a map or list of JSON serialized [Task]s from `stdin`.
 /// The tasks will then get deserialized and displayed as a normal `status` command.
 /// The current group information is pulled from the daemon in a new `status` call.
-pub async fn format_state(client: &mut Client, group: Option<String>) -> Result<()> {
+pub async fn format_state(
+    client: &mut Client,
+    style: &OutputStyle,
+    group: Option<String>,
+) -> Result<()> {
     // Read the raw input to a buffer
     let mut stdin = io::stdin();
     let mut buffer = Vec::new();
@@ -75,15 +79,7 @@ pub async fn format_state(client: &mut Client, group: Option<String>) -> Result<
         .await
         .context("Failed to get the current state from daemon")?;
 
-    let output = print_state(
-        state,
-        tasks,
-        &client.style,
-        &client.settings,
-        false,
-        group,
-        None,
-    )?;
+    let output = print_state(state, tasks, style, &client.settings, false, group, None)?;
     print!("{output}");
 
     Ok(())

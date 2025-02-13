@@ -1,10 +1,10 @@
 use std::time::{Duration, SystemTime};
 
-use clap::crate_version;
 use pueue_lib::{
     error::Error,
     network::{message::*, protocol::*, secret::read_shared_secret},
     settings::Settings,
+    PROTOCOL_VERSION,
 };
 use tokio::time::sleep;
 
@@ -87,9 +87,9 @@ async fn handle_incoming(
     }
 
     // Send confirmation to the client, that the secret was valid.
-    // This is also the current version of the daemon, so the client can inform user if the
-    // daemon needs a restart in case of a version mismatch.
-    send_bytes(crate_version!().as_bytes(), &mut stream).await?;
+    // This is also the current version of the pueue_lib protocol used by the daemon,
+    // so the client can inform users if the daemon needs a restart in case of a version mismatch.
+    send_bytes(PROTOCOL_VERSION.as_bytes(), &mut stream).await?;
 
     loop {
         // Receive the actual instruction from the client

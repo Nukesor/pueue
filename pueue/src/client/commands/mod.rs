@@ -8,6 +8,7 @@
 use std::io::{stdin, stdout, Write};
 
 use pueue_lib::{
+    client::Client,
     network::message::{Request, Response, TaskSelection},
     state::{State, PUEUE_DEFAULT_GROUP},
     task::Task,
@@ -62,7 +63,6 @@ pub use wait::WaitTargetStatus;
 
 use super::{
     cli::SubCommand,
-    client::Client,
     display_helper::{print_error, print_success},
     style::OutputStyle,
 };
@@ -150,7 +150,11 @@ fn handle_response(style: &OutputStyle, response: Response) -> Result<()> {
 ///
 /// This is the core entry point of the pueue client.
 /// Based on the subcommand, the respective function in the `commands` submodule is called.
-pub async fn handle_command(client: &mut Client, subcommand: SubCommand) -> Result<()> {
+pub async fn handle_command(
+    client: &mut Client,
+    style: &OutputStyle,
+    subcommand: SubCommand,
+) -> Result<()> {
     trace!(message = "Handling command", subcommand = ?subcommand);
 
     match subcommand {
@@ -170,6 +174,7 @@ pub async fn handle_command(client: &mut Client, subcommand: SubCommand) -> Resu
         } => {
             add_task(
                 client,
+                style,
                 command,
                 working_directory,
                 escape,
@@ -188,24 +193,24 @@ pub async fn handle_command(client: &mut Client, subcommand: SubCommand) -> Resu
         SubCommand::Clean {
             successful_only,
             group,
-        } => clean(client, group, successful_only).await,
-        SubCommand::Edit { task_ids } => edit(client, task_ids).await,
+        } => clean(client, style, group, successful_only).await,
+        SubCommand::Edit { task_ids } => edit(client, style, task_ids).await,
         SubCommand::Enqueue {
             task_ids,
             group,
             all,
             delay_until,
-        } => enqueue(client, task_ids, group, all, delay_until).await,
-        SubCommand::Env { cmd } => env(client, cmd).await,
-        SubCommand::Follow { task_id, lines } => follow(client, task_id, lines).await,
-        SubCommand::FormatStatus { group } => format_state(client, group).await,
-        SubCommand::Group { cmd, json } => group(client, cmd, json).await,
+        } => enqueue(client, style, task_ids, group, all, delay_until).await,
+        SubCommand::Env { cmd } => env(client, style, cmd).await,
+        SubCommand::Follow { task_id, lines } => follow(client, style, task_id, lines).await,
+        SubCommand::FormatStatus { group } => format_state(client, style, group).await,
+        SubCommand::Group { cmd, json } => group(client, style, cmd, json).await,
         SubCommand::Kill {
             task_ids,
             group,
             all,
             signal,
-        } => kill(client, task_ids, group, all, signal).await,
+        } => kill(client, style, task_ids, group, all, signal).await,
         SubCommand::Log {
             task_ids,
             group,
@@ -213,19 +218,19 @@ pub async fn handle_command(client: &mut Client, subcommand: SubCommand) -> Resu
             json,
             lines,
             full,
-        } => print_logs(client, task_ids, group, all, json, lines, full).await,
+        } => print_logs(client, style, task_ids, group, all, json, lines, full).await,
         SubCommand::Parallel {
             parallel_tasks,
             group,
-        } => parallel(client, parallel_tasks, group).await,
+        } => parallel(client, style, parallel_tasks, group).await,
         SubCommand::Pause {
             task_ids,
             group,
             all,
             wait,
-        } => pause(client, task_ids, group, all, wait).await,
-        SubCommand::Remove { task_ids } => remove(client, task_ids).await,
-        SubCommand::Reset { force, groups } => reset(client, force, groups).await,
+        } => pause(client, style, task_ids, group, all, wait).await,
+        SubCommand::Remove { task_ids } => remove(client, style, task_ids).await,
+        SubCommand::Reset { force, groups } => reset(client, style, force, groups).await,
         SubCommand::Restart {
             task_ids,
             all_failed,
@@ -249,31 +254,31 @@ pub async fn handle_command(client: &mut Client, subcommand: SubCommand) -> Resu
             )
             .await
         }
-        SubCommand::Send { task_id, input } => send(client, task_id, input).await,
-        SubCommand::Shutdown => shutdown(client).await,
+        SubCommand::Send { task_id, input } => send(client, style, task_id, input).await,
+        SubCommand::Shutdown => shutdown(client, style).await,
         SubCommand::Stash {
             task_ids,
             group,
             all,
             delay_until,
-        } => stash(client, task_ids, group, all, delay_until).await,
+        } => stash(client, style, task_ids, group, all, delay_until).await,
         SubCommand::Start {
             task_ids,
             group,
             all,
-        } => start(client, task_ids, group, all).await,
-        SubCommand::Status { query, json, group } => state(client, query, json, group).await,
+        } => start(client, style, task_ids, group, all).await,
+        SubCommand::Status { query, json, group } => state(client, style, query, json, group).await,
         SubCommand::Switch {
             task_id_1,
             task_id_2,
-        } => switch(client, task_id_1, task_id_2).await,
+        } => switch(client, style, task_id_1, task_id_2).await,
         SubCommand::Wait {
             task_ids,
             group,
             all,
             quiet,
             status,
-        } => wait(client, task_ids, group, all, quiet, status).await,
+        } => wait(client, style, task_ids, group, all, quiet, status).await,
         _ => bail!("unhandled WIP"),
     }
 }

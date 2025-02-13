@@ -6,6 +6,7 @@ use std::{
 use chrono::Local;
 use crossterm::style::{Attribute, Color};
 use pueue_lib::{
+    client::Client,
     network::message::TaskSelection,
     state::State,
     task::{Task, TaskResult, TaskStatus},
@@ -15,7 +16,7 @@ use tokio::time::sleep;
 
 use super::selection_from_params;
 use crate::{
-    client::{client::Client, commands::get_state, style::OutputStyle},
+    client::{commands::get_state, style::OutputStyle},
     internal_prelude::*,
 };
 
@@ -44,6 +45,7 @@ pub enum WaitTargetStatus {
 /// Pass `quiet == true` to suppress any logging.
 pub async fn wait(
     client: &mut Client,
+    style: &OutputStyle,
     task_ids: Vec<usize>,
     group: Option<String>,
     all: bool,
@@ -85,7 +87,7 @@ pub async fn wait(
                 watched_tasks.insert(task.id, task.status.clone());
 
                 if !quiet {
-                    log_new_task(task, &client.style, first_run);
+                    log_new_task(task, style, first_run);
                 }
 
                 continue;
@@ -99,7 +101,7 @@ pub async fn wait(
             // Update the (previous) task status and log any changes
             watched_tasks.insert(task.id, task.status.clone());
             if !quiet {
-                log_status_change(previous_status, task, &client.style);
+                log_status_change(previous_status, task, style);
             }
         }
 
