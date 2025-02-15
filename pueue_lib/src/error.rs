@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use serde_cbor::Value;
+use ciborium::Value;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {

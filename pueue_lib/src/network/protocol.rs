@@ -1,8 +1,8 @@
 use std::io::Cursor;
 
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
+use ciborium::{from_reader, into_writer};
 use serde::{de::DeserializeOwned, Serialize};
-use serde_cbor::{de::from_slice, ser::to_vec};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
 // Reexport all stream/socket related stuff for convenience purposes
@@ -49,7 +49,9 @@ where
     let message: T = message.into();
     debug!("Sending message: {message:#?}",);
     // Prepare command for transfer and determine message byte size
-    let payload = to_vec(&message).map_err(|err| Error::MessageSerialization(err.to_string()))?;
+    let mut payload = Vec::new();
+    into_writer(&message, &mut payload)
+        .map_err(|err| Error::MessageSerialization(err.to_string()))?;
 
     send_bytes(&payload, stream).await
 }
@@ -158,11 +160,11 @@ pub async fn receive_message<T: DeserializeOwned + std::fmt::Debug>(
     }
 
     // Deserialize the message.
-    let message: T = from_slice(&payload_bytes).map_err(|err| {
+    let message: T = from_reader(payload_bytes.as_slice()).map_err(|err| {
         // In the case of an error, try to deserialize it to a generic cbor Value.
         // That way we know whether the payload was corrupted or maybe just unexpected due to
         // version differences.
-        if let Ok(value) = from_slice::<serde_cbor::Value>(&payload_bytes) {
+        if let Ok(value) = from_reader::<ciborium::Value, _>(payload_bytes.as_slice()) {
             Error::UnexpectedPayload(value)
         } else {
             Error::MessageDeserialization(err.to_string())
@@ -212,7 +214,8 @@ mod test {
             input: payload,
         }
         .into();
-        let original_bytes = to_vec(&request).expect("Failed to serialize message.");
+        let mut original_bytes = Vec::new();
+        into_writer(&request, &mut original_bytes).expect("Failed to serialize message.");
 
         let listener: GenericListener = Box::new(listener);
 
@@ -224,7 +227,7 @@ mod test {
             let mut stream = listener.accept().await.unwrap();
             let message_bytes = receive_bytes(&mut stream).await.unwrap();
 
-            let message: Request = from_slice(&message_bytes).unwrap();
+            let message: Request = from_reader(message_bytes.as_slice()).unwrap();
 
             send_request(message, &mut stream).await.unwrap();
         });
@@ -234,7 +237,7 @@ mod test {
         // Create a client that sends a message and instantly receives it
         send_request(request, &mut client).await?;
         let response_bytes = receive_bytes(&mut client).await?;
-        let _message: Request = from_slice(&response_bytes)
+        let _message: Request = from_reader(response_bytes.as_slice())
             .map_err(|err| Error::MessageDeserialization(err.to_string()))?;
 
         assert_eq!(response_bytes, original_bytes);

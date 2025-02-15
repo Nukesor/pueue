@@ -25,7 +25,7 @@
 //! These have additional wrappers for [`Request`](crate::Request) and
 //! [`Response`](crate::Response) with [`send_request`] and [`receive_response`].
 //!
-//! The serialization/deserialization format that's used by `pueue_lib` is [`cbor`](::serde_cbor).
+//! The serialization/deserialization format that's used by `pueue_lib` is [`cbor`](::ciborium).
 //!
 //! ## Protocol
 //!

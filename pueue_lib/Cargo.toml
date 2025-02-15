@@ -21,6 +21,7 @@ client = ["dep:color-eyre"]
 async-trait = "0.1"
 byteorder = "1.5"
 chrono.workspace = true
+ciborium = { version = "0.2", features = ["std"] }
 color-eyre = { workspace = true, optional = true }
 dirs = "6.0"
 rand = "0.8"
@@ -34,7 +35,6 @@ rustls = { version = "0.23", features = [
 ], default-features = false }
 rustls-pemfile = "2"
 serde.workspace = true
-serde_cbor = "0.11"
 serde_json.workspace = true
 serde_yaml = "0.9"
 shellexpand = "3.1"
