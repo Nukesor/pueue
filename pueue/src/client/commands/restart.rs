@@ -1,15 +1,13 @@
 use chrono::Local;
 use pueue_lib::{
+    client::Client,
     network::message::*,
     state::FilteredTasks,
     task::{Task, TaskResult, TaskStatus},
 };
 
 use crate::{
-    client::{
-        client::Client,
-        commands::{edit::edit_tasks, get_state},
-    },
+    client::commands::{edit::edit_tasks, get_state},
     internal_prelude::*,
 };
 

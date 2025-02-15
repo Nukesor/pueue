@@ -1,13 +1,14 @@
 use comfy_table::{Attribute as ComfyAttribute, Cell, CellAlignment, Table};
 use crossterm::style::Color;
 use pueue_lib::{
+    client::Client,
     network::message::{TaskLogMessage, TaskSelection, *},
     settings::Settings,
     task::{Task, TaskResult, TaskStatus},
 };
 
 use super::{handle_response, selection_from_params, OutputStyle};
-use crate::{client::client::Client, internal_prelude::*};
+use crate::internal_prelude::*;
 
 mod json;
 mod local;
@@ -19,8 +20,10 @@ use remote::*;
 
 /// Print the log output of finished tasks.
 /// This may be selected tasks, all tasks of a group or **all** tasks.
+#[allow(clippy::too_many_arguments)]
 pub async fn print_logs(
     client: &mut Client,
+    style: &OutputStyle,
     task_ids: Vec<usize>,
     group: Option<String>,
     all: bool,
@@ -42,7 +45,7 @@ pub async fn print_logs(
     let response = client.receive_response().await?;
 
     let Response::Log(task_logs) = response else {
-        handle_response(&client.style, response)?;
+        handle_response(style, response)?;
         return Ok(());
     };
 
@@ -72,7 +75,7 @@ pub async fn print_logs(
     // Iterate over each task and print the respective log.
     let mut task_iter = task_logs.iter().peekable();
     while let Some((_, task_log)) = task_iter.next() {
-        print_log(task_log, &client.style, &client.settings, lines);
+        print_log(task_log, style, &client.settings, lines);
 
         // Add a newline if there is another task that's going to be printed.
         if let Some((_, task_log)) = task_iter.peek() {

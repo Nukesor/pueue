@@ -4,6 +4,7 @@ use std::{
 };
 
 use pueue_lib::{
+    client::Client,
     log::{get_log_file_handle, get_log_path, seek_to_last_lines},
     network::message::StreamRequestMessage,
     Response,
@@ -12,9 +13,9 @@ use tokio::time::sleep;
 
 use crate::{
     client::{
-        client::Client,
         commands::{get_state, get_task},
         display_helper::print_error,
+        style::OutputStyle,
     },
     internal_prelude::*,
 };
@@ -25,6 +26,7 @@ use crate::{
 /// daemon in case they're somewhere inaccessible or on a remote machine.
 pub async fn follow(
     client: &mut Client,
+    style: &OutputStyle,
     task_id: Option<usize>,
     lines: Option<usize>,
 ) -> Result<()> {
@@ -36,7 +38,7 @@ pub async fn follow(
         return Ok(());
     }
 
-    remote_follow(client, task_id, lines).await
+    remote_follow(client, style, task_id, lines).await
 }
 
 /// Request the daemon to stream log files for some tasks.
@@ -45,6 +47,7 @@ pub async fn follow(
 /// once the task finishes.
 pub async fn remote_follow(
     client: &mut Client,
+    style: &OutputStyle,
     task_id: Option<usize>,
     lines: Option<usize>,
 ) -> Result<()> {
@@ -64,7 +67,7 @@ pub async fn remote_follow(
             }
             Response::Close => break,
             Response::Failure(text) => {
-                print_error(&client.style, &text);
+                print_error(style, &text);
                 std::process::exit(1);
             }
             _ => error!("Received unhandled response message: {response:?}"),

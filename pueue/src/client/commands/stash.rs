@@ -1,12 +1,13 @@
 use chrono::{DateTime, Local};
-use pueue_lib::network::message::StashMessage;
+use pueue_lib::{client::Client, network::message::StashMessage};
 
 use super::{handle_response, selection_from_params};
-use crate::{client::client::Client, internal_prelude::*};
+use crate::{client::style::OutputStyle, internal_prelude::*};
 
 /// Tell the daemon to stash some tasks
 pub async fn stash(
     client: &mut Client,
+    style: &OutputStyle,
     task_ids: Vec<usize>,
     group: Option<String>,
     all: bool,
@@ -22,5 +23,5 @@ pub async fn stash(
 
     let response = client.receive_response().await?;
 
-    handle_response(&client.style, response)
+    handle_response(style, response)
 }

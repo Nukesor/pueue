@@ -1,13 +1,14 @@
-use pueue_lib::network::message::*;
+use pueue_lib::{client::Client, network::message::*};
 
 use super::{handle_response, handle_user_confirmation, selection_from_params};
-use crate::{client::client::Client, internal_prelude::*};
+use crate::{client::style::OutputStyle, internal_prelude::*};
 
 /// Kill some running or paused task.
 ///
 /// Can also be used to send a specific [`Signal`].
 pub async fn kill(
     client: &mut Client,
+    style: &OutputStyle,
     task_ids: Vec<usize>,
     group: Option<String>,
     all: bool,
@@ -26,5 +27,5 @@ pub async fn kill(
 
     let response = client.receive_response().await?;
 
-    handle_response(&client.style, response)
+    handle_response(style, response)
 }

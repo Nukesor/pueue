@@ -1,4 +1,7 @@
-use std::path::PathBuf;
+use std::{
+    io::{stdout, IsTerminal},
+    path::PathBuf,
+};
 
 use clap::{CommandFactory, Parser};
 use clap_complete::{generate, generate_to, shells};
@@ -7,20 +10,22 @@ use color_eyre::{
     Result,
 };
 use pueue::client::{
-    cli::{CliArguments, Shell, SubCommand},
-    client::Client,
+    cli::{CliArguments, ColorChoice, Shell, SubCommand},
     handle_command,
+    style::OutputStyle,
 };
-use pueue_lib::settings::Settings;
+use pueue_lib::{client::Client, settings::Settings};
 
 /// This is the main entry point of the client.
 ///
-/// At first we do some basic setup:
+/// The following happens in here:
 /// - Parse the cli
 /// - Initialize logging
 /// - Read the config
-///
-/// Once all this is done, we init the [Client] struct and start the main loop via [Client::start].
+/// - Default to `status` subcommand if no subcommand was specified
+/// - Determine the current
+/// - Initialize the [`Client`]
+/// - Handle the command
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
     // Parse commandline options.
@@ -62,6 +67,15 @@ async fn main() -> Result<()> {
         query: Vec::new(),
     });
 
+    // Determine whether we should color/style our output or not.
+    // The user can explicitly disable/enable this, otherwise we check whether we are on a TTY.
+    let style_enabled = match opt.color {
+        ColorChoice::Auto => stdout().is_terminal(),
+        ColorChoice::Always => true,
+        ColorChoice::Never => false,
+    };
+    let style = OutputStyle::new(&settings, style_enabled);
+
     // Only show version incompatibility warnings if we aren't supposed to output json.
     let show_version_warning = match subcommand {
         SubCommand::Status { json, .. } => !json,
@@ -71,11 +85,11 @@ async fn main() -> Result<()> {
     };
 
     // Create client to talk with the daemon and connect.
-    let mut client = Client::new(settings, show_version_warning, &opt.color)
+    let mut client = Client::new(settings, show_version_warning)
         .await
         .context("Failed to initialize client.")?;
 
-    handle_command(&mut client, subcommand).await?;
+    handle_command(&mut client, &style, subcommand).await?;
 
     Ok(())
 }

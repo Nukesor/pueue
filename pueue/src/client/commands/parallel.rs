@@ -1,11 +1,12 @@
-use pueue_lib::network::message::*;
+use pueue_lib::{client::Client, network::message::*};
 
 use super::{group_or_default, handle_response};
-use crate::{client::client::Client, internal_prelude::*};
+use crate::{client::style::OutputStyle, internal_prelude::*};
 
 /// Set the parallelization settings for a group or show the current group settings.
 pub async fn parallel(
     client: &mut Client,
+    style: &OutputStyle,
     parallel_tasks: Option<usize>,
     group: Option<String>,
 ) -> Result<()> {
@@ -25,5 +26,5 @@ pub async fn parallel(
 
     let response = client.receive_response().await?;
 
-    handle_response(&client.style, response)
+    handle_response(style, response)
 }

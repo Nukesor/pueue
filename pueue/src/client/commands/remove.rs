@@ -1,10 +1,10 @@
-use pueue_lib::network::message::*;
+use pueue_lib::{client::Client, network::message::*};
 
 use super::{handle_response, handle_user_confirmation};
-use crate::{client::client::Client, internal_prelude::*};
+use crate::{client::style::OutputStyle, internal_prelude::*};
 
 /// Tell the daemon to remove some tasks.
-pub async fn remove(client: &mut Client, task_ids: Vec<usize>) -> Result<()> {
+pub async fn remove(client: &mut Client, style: &OutputStyle, task_ids: Vec<usize>) -> Result<()> {
     if client.settings.client.show_confirmation_questions {
         handle_user_confirmation("remove", &task_ids)?;
     }
@@ -12,5 +12,5 @@ pub async fn remove(client: &mut Client, task_ids: Vec<usize>) -> Result<()> {
 
     let response = client.receive_response().await?;
 
-    handle_response(&client.style, response)
+    handle_response(style, response)
 }

@@ -1,27 +1,42 @@
-use std::io::stdout;
-
-use clap::crate_version;
-use crossterm::tty::IsTty;
-use pueue_lib::{
-    network::{message::*, protocol::*, secret::read_shared_secret},
-    settings::Settings,
-    Error,
+use color_eyre::{
+    eyre::{bail, Context},
+    Result,
 };
 use serde::Serialize;
 
-use super::style::OutputStyle;
-use crate::{client::cli::ColorChoice, internal_prelude::*};
+use crate::{
+    internal_prelude::*,
+    network::{message::*, protocol::*, secret::read_shared_secret},
+    settings::Settings,
+    Error, PROTOCOL_VERSION,
+};
 
 /// This struct contains the base logic for the client.
 /// The client is responsible for connecting to the daemon, sending instructions
 /// and interpreting their responses.
 ///
-/// Most commands are a simple ping-pong. However, some commands require a more complex
-/// communication pattern, such as the `follow` command, which can read local files,
-/// or the `edit` command, which needs to open an editor.
+/// ```no_run
+/// use pueue_lib::{Settings, Client};
+///
+/// // Read settings from the default configuration file location.
+/// let (pueue_settings, _) = Settings::read(&None)?;
+///
+/// // Create a client. This already establishes a connection to the daemon.
+/// let mut client = Client::new(pueue_settings, true)
+///     .await
+///     .context("Failed to initialize client.")?;
+///
+/// // Request the state.
+/// client.send_request(Request::Status).await?;
+/// let response = client.receive_response().await?;
+///
+/// let _state = match response {
+///     Response::Status(state) => Ok(*state),
+///     _ => unreachable!(),
+/// }
+/// ```
 pub struct Client {
     pub settings: Settings,
-    pub style: OutputStyle,
     pub stream: GenericStream,
     pub daemon_version: String,
 }
@@ -30,7 +45,6 @@ impl std::fmt::Debug for Client {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Client")
             .field("settings", &self.settings)
-            .field("style", &self.style)
             .field("stream", &"GenericStream<not_debuggable>")
             .finish()
     }
@@ -45,11 +59,7 @@ impl Client {
     ///
     /// If the `show_version_warning` flag is `true` and the daemon has a different version than
     /// the client, a warning will be logged.
-    pub async fn new(
-        settings: Settings,
-        show_version_warning: bool,
-        color: &ColorChoice,
-    ) -> Result<Self> {
+    pub async fn new(settings: Settings, show_version_warning: bool) -> Result<Self> {
         // Connect to daemon and get stream used for communication.
         let mut stream = get_client_stream(&settings.shared)
             .await
@@ -77,24 +87,14 @@ impl Client {
             }
         };
 
-        // Info if the daemon runs a different version.
+        // Info if the daemon runs a different protocol version.
         // Backward compatibility should work, but some features might not work as expected.
-        if daemon_version != crate_version!() && show_version_warning {
-            warn!("Different daemon version detected '{daemon_version}'. Consider restarting the daemon.");
+        if daemon_version != PROTOCOL_VERSION && show_version_warning {
+            warn!("Different protocol version detected '{daemon_version}'. Consider updating and restarting the daemon.");
         }
-
-        // Determine whether we should color/style our output or not.
-        // The user can explicitly disable/enable this, otherwise we check whether we are on a TTY.
-        let style_enabled = match color {
-            ColorChoice::Auto => stdout().is_tty(),
-            ColorChoice::Always => true,
-            ColorChoice::Never => false,
-        };
-        let style = OutputStyle::new(&settings, style_enabled);
 
         Ok(Client {
             settings,
-            style,
             stream,
             daemon_version,
         })

@@ -1,13 +1,13 @@
-use pueue_lib::network::message::EnvMessage;
+use pueue_lib::{client::Client, network::message::EnvMessage};
 
 use super::handle_response;
 use crate::{
-    client::{cli::EnvCommand, client::Client},
+    client::{cli::EnvCommand, style::OutputStyle},
     internal_prelude::*,
 };
 
 /// Set or unset an environment variable on a task.
-pub async fn env(client: &mut Client, cmd: EnvCommand) -> Result<()> {
+pub async fn env(client: &mut Client, style: &OutputStyle, cmd: EnvCommand) -> Result<()> {
     let request = match cmd {
         EnvCommand::Set {
             task_id,
@@ -25,5 +25,5 @@ pub async fn env(client: &mut Client, cmd: EnvCommand) -> Result<()> {
 
     let response = client.receive_response().await?;
 
-    handle_response(&client.style, response)
+    handle_response(style, response)
 }
