@@ -1,4 +1,4 @@
-name: Packaging
+name: Packaging and publish
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
 
 jobs:
   publish:
-    name: Publish on ${{ matrix.os }} for ${{ matrix.target }}
+    name: on ${{ matrix.os }} for ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false

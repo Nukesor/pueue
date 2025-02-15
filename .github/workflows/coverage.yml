@@ -21,17 +21,11 @@ on:
       - "**/Cargo.lock"
 
 jobs:
-  publish:
-    name: Create test coverage on ${{ matrix.os }} for ${{ matrix.target }}
-    runs-on: ${{ matrix.os }}
+  coverage:
+    name: on ubuntu-latest
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix:
-        target:
-          - x86_64-unknown-linux-gnu
-        include:
-          - os: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
 
     steps:
       - name: Checkout code
@@ -41,7 +35,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           components: llvm-tools-preview
-          targets: ${{ matrix.target }}
+          targets: x86_64-unknown-linux-gnu
 
       - uses: actions/cache@v3
         with:
@@ -51,10 +45,10 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-cargo-coverage-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}
+          key: cargo-coverage-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            ${{ runner.os }}-cargo-coverage-${{ matrix.target }}-
-            ${{ runner.os }}-cargo-${{ matrix.target }}-
+            cargo-coverage-
+            cargo-
 
       - name: Install cargo-llvm-cov and nextest
         uses: taiki-e/install-action@v2

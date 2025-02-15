@@ -1,11 +1,11 @@
-name: Lint the code
+name: Lint the code with clippy
 
 on:
   push:
     branches:
       - main
     paths:
-      - ".github/**/*"
+      - ".github/workflows/clippy.yml"
       - "**.rs"
       - "**/Cargo.toml"
       - "**/Cargo.lock"
@@ -13,41 +13,29 @@ on:
     branches:
       - main
     paths:
-      - ".github/**/*"
+      - ".github/workflows/clippy.yml"
       - "**.rs"
       - "**/Cargo.toml"
       - "**/Cargo.lock"
 
 jobs:
-  linting:
-    name: Lint on ${{ matrix.os }} for ${{ matrix.target }}
+  clippy:
+    name: on ${{ matrix.os }} for ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         target:
           - x86_64-unknown-linux-gnu
-          - aarch64-unknown-linux-musl
-          - armv7-unknown-linux-musleabihf
-          - arm-unknown-linux-musleabihf
           - x86_64-pc-windows-msvc
           - x86_64-apple-darwin
-          - aarch64-apple-darwin
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-          - os: ubuntu-latest
-            target: aarch64-unknown-linux-musl
-          - os: ubuntu-latest
-            target: armv7-unknown-linux-musleabihf
-          - os: ubuntu-latest
-            target: arm-unknown-linux-musleabihf
           - os: windows-latest
             target: x86_64-pc-windows-msvc
           - os: macos-latest
             target: x86_64-apple-darwin
-          - os: macos-latest
-            target: aarch64-apple-darwin
 
     steps:
       - name: Checkout code
@@ -56,7 +44,6 @@ jobs:
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
-          components: llvm-tools-preview
           targets: ${{ matrix.target }}
 
       - uses: actions/cache@v4
@@ -74,18 +61,5 @@ jobs:
 
       # ----- Actual linting logic ------
       # These lines should mirror the `just lint` command.
-      - name: cargo fmt
-        run: cargo fmt --all -- --check
-
       - name: cargo clippy
-        run: cargo clippy --tests --workspace -- -D warnings
-
-      # Only run taplo on linux to save some time.
-      # Also, taplo is broken on windows for some reason.
-      - name: Install taplo-cli
-        run: cargo install taplo-cli || exit 0
-        if: matrix.target == 'x86_64-unknown-linux-gnu'
-
-      - name: cargo sort
-        run: ~/.cargo/bin/taplo format --check
-        if: matrix.target == 'x86_64-unknown-linux-gnu'
+        run: cargo clippy --tests --workspace --all -- -D warnings

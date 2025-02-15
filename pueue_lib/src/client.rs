@@ -105,7 +105,7 @@ impl Client {
         &mut self.stream
     }
 
-    /// Convenience wrapper around [`pueue_lib::send_request`] to directly send [`Request`]s.
+    /// Convenience wrapper around [`crate::send_request`] to directly send [`Request`]s.
     pub async fn send_request<T>(&mut self, message: T) -> Result<(), Error>
     where
         T: Into<Request>,

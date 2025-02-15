@@ -95,7 +95,7 @@ const SERVICE_TYPE: ServiceType = ServiceType::OWN_PROCESS;
 static CONFIG: OnceLock<Config> = OnceLock::new();
 
 // For how this works, please see docs @
-// https://docs.rs/windows-service/0.7.0/windows_service/#basics
+// <https://docs.rs/windows-service/0.7.0/windows_service/#basics>
 define_windows_service!(ffi_service_main, service_main);
 
 /// The main service callback after `ffi_service_main`.
@@ -372,7 +372,7 @@ fn event_loop() -> Result<()> {
 }
 
 /// Set the specified process privilege to state.
-/// https://learn.microsoft.com/en-us/windows/win32/secauthz/privilege-constants
+/// <https://learn.microsoft.com/en-us/windows/win32/secauthz/privilege-constants>
 fn set_privilege(name: PCWSTR, state: bool) -> Result<()> {
     let process: OwnedHandle = unsafe { GetCurrentProcess().into() };
 
@@ -415,7 +415,7 @@ fn get_current_session() -> Option<u32> {
 
     match session {
         // No session attached.
-        // https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-wtsgetactiveconsolesessionid#return-value
+        // <https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-wtsgetactiveconsolesessionid#return-value>
         0xFFFFFFFF => None,
         // Found a session!
         session => Some(session),
@@ -428,7 +428,7 @@ fn run_as<T>(session_id: u32, cb: impl FnOnce(HANDLE) -> Result<T>) -> Result<T>
     // Obtain the user's primary access token. Requires we are SYSTEM and have SE_TCB_NAME.
     //
     // Make sure to not leak this token anywhere, as it must remain secure.
-    // https://learn.microsoft.com/en-us/windows/win32/api/wtsapi32/nf-wtsapi32-wtsqueryusertoken
+    // <https://learn.microsoft.com/en-us/windows/win32/api/wtsapi32/nf-wtsapi32-wtsqueryusertoken>
     unsafe {
         WTSQueryUserToken(session_id, &mut query_token.0)?;
     }
@@ -516,7 +516,7 @@ impl Drop for Child {
 }
 
 /// A users' environment block.
-/// https://learn.microsoft.com/en-us/windows/win32/api/userenv/nf-userenv-createenvironmentblock
+/// <https://learn.microsoft.com/en-us/windows/win32/api/userenv/nf-userenv-createenvironmentblock>
 struct EnvBlock(*mut c_void);
 
 impl EnvBlock {
@@ -665,10 +665,10 @@ impl Spawner {
                         None,
                         false,
                         // CREATE_UNICODE_ENVIRONMENT is required if we pass env block.
-                        // https://learn.microsoft.com/en-us/windows/win32/api/userenv/nf-userenv-createenvironmentblock#remarks
+                        // <https://learn.microsoft.com/en-us/windows/win32/api/userenv/nf-userenv-createenvironmentblock#remarks>
                         //
                         // CREATE_NO_WINDOW causes all child processes to not show a visible
-                        // console window. https://stackoverflow.com/a/71364777/9423933
+                        // console window. <https://stackoverflow.com/a/71364777/9423933>
                         CREATE_UNICODE_ENVIRONMENT | CREATE_NO_WINDOW,
                         Some(env_block.0),
                         None,
@@ -678,7 +678,7 @@ impl Spawner {
                 }
 
                 // It is safe to drop this after calling CreateProcessAsUser.
-                // https://learn.microsoft.com/en-us/windows/win32/api/userenv/nf-userenv-createenvironmentblock#remarks
+                // <https://learn.microsoft.com/en-us/windows/win32/api/userenv/nf-userenv-createenvironmentblock#remarks>
                 drop(env_block);
 
                 // Store the child process.

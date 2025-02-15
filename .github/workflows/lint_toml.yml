@@ -1,0 +1,52 @@
+name: Lint toml files
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/lint_toml.yml"
+      - "**.rs"
+      - "**/Cargo.toml"
+      - "**/Cargo.lock"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/lint_toml.yml"
+      - "**.rs"
+      - "**/Cargo.toml"
+      - "**/Cargo.lock"
+
+jobs:
+  lint_toml:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: lint-toml-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: lint-toml-
+
+      # Only run taplo on linux to save some time.
+      - name: Install taplo-cli
+        run: cargo install taplo-cli || exit 0
+        if: matrix.target == 'x86_64-unknown-linux-gnu'
+
+      - name: cargo sort
+        run: ~/.cargo/bin/taplo format --check
+        if: matrix.target == 'x86_64-unknown-linux-gnu'
