@@ -1,0 +1,69 @@
+name: Lint the code docs
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/lint_docs.yml"
+      - "**.rs"
+      - "**/Cargo.toml"
+      - "**/Cargo.lock"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/lint_docs.yml"
+      - "**.rs"
+      - "**/Cargo.toml"
+      - "**/Cargo.lock"
+
+jobs:
+  lint_docs:
+    name: on ${{ matrix.os }} for ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - x86_64-unknown-linux-gnu
+          - x86_64-pc-windows-msvc
+          - x86_64-apple-darwin
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+          - os: macos-latest
+            target: x86_64-apple-darwin
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: lint-docs-${{ runner.os }}-cargo-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            lint-docs-${{ runner.os }}-cargo-${{ matrix.target }}-
+            ${{ runner.os }}-cargo-${{ matrix.target }}-
+
+      # ----- Actual linting logic ------
+      # These lines should mirror the `just lint` command.
+      - name: cargo doc lints
+        run: RUSTDOCFLAGS='-D warnings' cargo doc --document-private-items --no-deps
+        if: ${{ !startsWith(matrix.os, 'windows') }}
+
+        # These lines should mirror the `just lint` command.
+      - name: cargo doc lints
+        run: $env:RUSTDOCFLAGS='-D warnings'; cargo doc --document-private-items --no-deps
+        if: startsWith(matrix.os, 'windows')

@@ -1,4 +1,4 @@
-name: "Test Build"
+name: Build and run tests
 
 on:
   push:
@@ -19,8 +19,8 @@ on:
       - "**/Cargo.lock"
 
 jobs:
-  publish:
-    name: Test on ${{ matrix.os }} for ${{ matrix.target }}
+  test:
+    name: on ${{ matrix.os }} for ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false

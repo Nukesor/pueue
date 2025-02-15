@@ -16,7 +16,7 @@ use limit::Limit;
 use order_by::Direction;
 
 /// See the pest docs on how this derive macro works and how to use pest:
-/// https://docs.rs/pest/latest/pest/
+/// <https://docs.rs/pest/latest/pest/>
 #[derive(Parser)]
 #[grammar = "./src/client/commands/state/query/syntax.pest"]
 struct QueryParser;
