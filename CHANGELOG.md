@@ -78,6 +78,7 @@ Upon updating Pueue and restarting the daemon, the previous state will be wiped,
 - Revisited, fixed and cleaned up CLI help texts.
 - Print most of Pueue's info/log messages to `stderr`. Only keep useful stuff like json and task log output on `stdout`.
 - **Breaking**: Ported from `anyhow` to `color_eyre` for prettier log output.
+- **Breaking**: Switch `cbor` handling library, potentially breaking backwards-compatible communication on a data format level.
 
 ### Add
 
