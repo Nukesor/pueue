@@ -103,6 +103,10 @@ Upon updating Pueue and restarting the daemon, the previous state will be wiped,
 - Print incompatible version warning info as a log message instead of plain stdout input, which broke json outputs [#562](https://github.com/Nukesor/pueue/issues/562).
 - Fixed `-d` daemon mode on Windows. [#344](https://github.com/Nukesor/pueue/issues/344)
 
+### Remove
+
+- `status-format` subcommand. This was a temporary workaround until the `status query` feature was finished, which is now the case.
+
 ## \[3.4.1\] - 2024-06-04
 
 ### Added

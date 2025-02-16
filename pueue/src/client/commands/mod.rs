@@ -56,7 +56,7 @@ use send::send;
 use shutdown::shutdown;
 use start::start;
 use stash::stash;
-use state::{format_state, state};
+use state::state;
 use switch::switch;
 use wait::wait;
 pub use wait::WaitTargetStatus;
@@ -203,7 +203,6 @@ pub async fn handle_command(
         } => enqueue(client, style, task_ids, group, all, delay_until).await,
         SubCommand::Env { cmd } => env(client, style, cmd).await,
         SubCommand::Follow { task_id, lines } => follow(client, style, task_id, lines).await,
-        SubCommand::FormatStatus { group } => format_state(client, style, group).await,
         SubCommand::Group { cmd, json } => group(client, style, cmd, json).await,
         SubCommand::Kill {
             task_ids,
