@@ -16,7 +16,11 @@ use crate::{
 /// and interpreting their responses.
 ///
 /// ```no_run
-/// use pueue_lib::{Settings, Client};
+/// use pueue_lib::{Settings, Client, Response, Request};
+/// # use color_eyre::{Result, eyre::Context};
+///
+/// # #[tokio::main]
+/// # async fn main() -> Result<()> {
 ///
 /// // Read settings from the default configuration file location.
 /// let (pueue_settings, _) = Settings::read(&None)?;
@@ -28,12 +32,14 @@ use crate::{
 ///
 /// // Request the state.
 /// client.send_request(Request::Status).await?;
-/// let response = client.receive_response().await?;
+/// let response: Response = client.receive_response().await?;
 ///
 /// let _state = match response {
-///     Response::Status(state) => Ok(*state),
+///     Response::Status(state) => state,
 ///     _ => unreachable!(),
-/// }
+/// };
+/// # Ok(())
+/// # }
 /// ```
 pub struct Client {
     pub settings: Settings,
