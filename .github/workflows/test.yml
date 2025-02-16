@@ -89,7 +89,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-${{ matrix.target }}-
 
-      # ----- Non-Cross path
+      # ----- Non-Cross path -----
       - name: cargo build
         run: cargo build --target=${{ matrix.target }}
         if: ${{ !matrix.cross }}
@@ -100,11 +100,15 @@ jobs:
           NEXTEST_PROFILE: ci # defined in .config/nextest.toml
         if: ${{ !matrix.cross }}
 
-      # ----- Cross path
+      - name: cargo test
+        run: cargo test --doc
+        if: ${{ !matrix.cross }}
+
+      # ----- Cross path -----
       #- name: Install qemu
       #  run: apt-get install --assume-yes binfmt-support qemu-user-static qemu-user
       #  if: ${{ matrix.cross }}
-
+      #
       - name: cargo build
         run: cross build --target=${{ matrix.target }}
         if: ${{ matrix.cross }}

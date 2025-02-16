@@ -8,7 +8,8 @@ bump:
 # Run the test suite with nextest
 nextest:
     just ensure-command cargo-nextest
-    cargo nextest run --workspace
+    cargo nextest run --all-features --workspace
+    cargo test --doc
 
 # If you change anything in here, make sure to also adjust the lint CI job!
 lint:
