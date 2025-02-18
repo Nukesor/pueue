@@ -1,12 +1,13 @@
 use std::{
     collections::BTreeMap,
-    fs::read_to_string,
-    path::Path,
+    fs::{read_to_string, File},
+    io::{Read, Write},
     process::Child,
     sync::{Arc, Mutex, MutexGuard},
 };
 
 use chrono::Local;
+use flate2::Compression;
 use pueue_lib::{
     error::Error,
     network::message::request::Shutdown,
@@ -246,16 +247,30 @@ impl InternalState {
     /// In comparison to the daemon -> client communication, the state is saved
     /// as JSON for readability and debugging purposes.
     pub fn save(&self, settings: &Settings) -> Result<()> {
-        let serialized = serde_json::to_string(&self.inner).context("Failed to serialize state:");
+        let serialized =
+            serde_json::to_string(&self.inner).context("Failed to serialize state:")?;
 
-        let serialized = serialized.unwrap();
         let path = settings.shared.pueue_directory();
-        let temp = path.join("state.json.partial");
-        let real = path.join("state.json");
+        let mut temp = path.join("state.json.partial");
+        let mut real = path.join("state.json");
 
-        // Write to temporary log file first, to prevent loss due to crashes.
-        std::fs::write(&temp, serialized)
-            .context("Failed to write temp file while saving state.")?;
+        if settings.daemon.compress_status_file {
+            temp = path.join("state.json.gz.partial");
+            real = path.join("state.json.gz");
+
+            let file = if temp.exists() {
+                File::open(&temp)?
+            } else {
+                File::create(&temp)?
+            };
+
+            let mut encoder = flate2::write::GzEncoder::new(file, Compression::default());
+            encoder.write_all(serialized.as_bytes())?;
+        } else {
+            // Write to temporary log file first, to prevent loss due to crashes.
+            std::fs::write(&temp, serialized)
+                .context("Failed to write temp file while saving state.")?;
+        }
 
         // Overwrite the original with the temp file, if everything went fine.
         std::fs::rename(&temp, &real)
@@ -271,8 +286,13 @@ impl InternalState {
     ///
     /// If the state cannot be deserialized, an empty default state will be used instead. \
     /// All groups with queued tasks will be automatically paused to prevent unwanted execution.
-    pub fn restore_state(pueue_directory: &Path) -> Result<Option<InternalState>> {
-        let path = pueue_directory.join("state.json");
+    pub fn restore_state(settings: &Settings) -> Result<Option<InternalState>> {
+        let pueue_directory = settings.shared.pueue_directory();
+        let mut path = pueue_directory.join("state.json");
+
+        if settings.daemon.compress_status_file {
+            path = pueue_directory.join("state.json.gz");
+        }
 
         // Ignore if the file doesn't exist. It doesn't have to.
         if !path.exists() {
@@ -282,7 +302,16 @@ impl InternalState {
         info!("Restoring state");
 
         // Try to load the file.
-        let data = read_to_string(&path).context("State restore: Failed to read file:\n\n{}")?;
+        let data = if settings.daemon.compress_status_file {
+            let file = File::open(path)?;
+            let mut decoder = flate2::read::GzDecoder::new(file);
+            let mut data = String::new();
+            decoder.read_to_string(&mut data)?;
+
+            data
+        } else {
+            read_to_string(&path).context("State restore: Failed to read file:\n\n{}")?
+        };
 
         // Try to deserialize the state file.
         let state: State = serde_json::from_str(&data).context("Failed to deserialize state.")?;

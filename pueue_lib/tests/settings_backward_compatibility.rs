@@ -14,7 +14,7 @@ use pueue_lib::settings::Settings;
 /// On top of simply having old settings, I also removed a few default fields.
 /// This should be handled as well.
 #[test]
-fn test_restore_from_old_state() -> Result<()> {
+fn test_restore_from_old_settings() -> Result<()> {
     better_panic::install();
     let old_settings_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("tests")

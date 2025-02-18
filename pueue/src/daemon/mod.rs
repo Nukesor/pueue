@@ -72,7 +72,7 @@ pub async fn run(config_path: Option<PathBuf>, profile: Option<String>, test: bo
     // Restore the previous state and save any changes that might have happened during this
     // process. If no previous state exists, just create a new one.
     // Create a new empty state if any errors occur, but print the error message.
-    let state = match InternalState::restore_state(&settings.shared.pueue_directory()) {
+    let state = match InternalState::restore_state(&settings) {
         Ok(Some(state)) => state,
         Ok(None) => InternalState::new(),
         Err(error) => {
