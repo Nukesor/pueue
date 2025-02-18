@@ -31,8 +31,8 @@ fn test_restore_from_old_state() -> Result<()> {
     let mut settings = Settings::default();
     settings.shared.pueue_directory = Some(temp_path.to_path_buf());
 
-    let state = InternalState::restore_state(&settings.shared.pueue_directory())
-        .context("Failed to restore state in test")?;
+    let state =
+        InternalState::restore_state(&settings).context("Failed to restore state in test")?;
 
     assert!(state.is_some());
 
