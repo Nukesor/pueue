@@ -4,6 +4,7 @@ mod internal_prelude {
         eyre::{bail, eyre, WrapErr},
         Result,
     };
+    pub use tracing::debug;
 }
 
 #[cfg(unix)]

@@ -218,7 +218,7 @@ impl Default for Daemon {
             pause_all_on_failure: false,
             callback: None,
             callback_log_lines: default_callback_log_lines(),
-            compress_status_file: true,
+            compress_status_file: false,
             shell_command: None,
             env_vars: HashMap::new(),
         }
