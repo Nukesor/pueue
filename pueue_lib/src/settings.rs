@@ -136,6 +136,14 @@ pub struct Daemon {
     /// Whether the daemon (and all groups) should be paused as soon as a single task fails
     #[serde(default = "Default::default")]
     pub pause_all_on_failure: bool,
+    /// If this is set to `true`, the status file will be compressed, which usually results in a
+    /// significantly smaller file. This is particularily useful for I/O starved or embedded
+    /// environments, as it trades a bit of CPU power for I/O ops.
+    ///
+    /// The state tends to be quite large for many tasks, as the whole environment is copied every
+    /// time. You can expect a ~10 compression ratio.
+    #[serde(default = "Default::default")]
+    pub compress_status_file: bool,
     /// The callback that's called whenever a task finishes.
     pub callback: Option<String>,
     /// Environment variables that can be will be injected into all executed processes.
@@ -210,6 +218,7 @@ impl Default for Daemon {
             pause_all_on_failure: false,
             callback: None,
             callback_log_lines: default_callback_log_lines(),
+            compress_status_file: false,
             shell_command: None,
             env_vars: HashMap::new(),
         }

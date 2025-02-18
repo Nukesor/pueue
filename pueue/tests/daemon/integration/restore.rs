@@ -1,12 +1,21 @@
 use pueue_lib::{network::message::TaskSelection, state::GroupStatus};
+use rstest::rstest;
 
 use crate::{helper::*, internal_prelude::*};
 
 /// The daemon should start in the same state as before shutdown, if no tasks are queued.
 /// This function tests for the running state.
+#[rstest]
+#[case(true)]
+#[case(false)]
 #[tokio::test]
-async fn test_start_running() -> Result<()> {
-    let (settings, _tempdir) = daemon_base_setup()?;
+async fn test_start_running(#[case] compress: bool) -> Result<()> {
+    let (mut settings, tempdir) = daemon_base_setup()?;
+    settings.daemon.compress_status_file = compress;
+    settings
+        .save(&Some(tempdir.path().join("pueue.yml")))
+        .context("Couldn't write pueue config to temporary directory")?;
+
     let mut child = standalone_daemon(&settings.shared).await?;
     let shared = &settings.shared;
 
@@ -31,9 +40,17 @@ async fn test_start_running() -> Result<()> {
 
 /// The daemon should start in the same state as before shutdown, if no tasks are queued.
 /// This function tests for the paused state.
+#[rstest]
+#[case(true)]
+#[case(false)]
 #[tokio::test]
-async fn test_start_paused() -> Result<()> {
-    let (settings, _tempdir) = daemon_base_setup()?;
+async fn test_start_paused(#[case] compress: bool) -> Result<()> {
+    let (mut settings, tempdir) = daemon_base_setup()?;
+    settings.daemon.compress_status_file = compress;
+    settings
+        .save(&Some(tempdir.path().join("pueue.yml")))
+        .context("Couldn't write pueue config to temporary directory")?;
+
     let mut child = standalone_daemon(&settings.shared).await?;
     let shared = &settings.shared;
 
