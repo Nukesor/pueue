@@ -2,8 +2,8 @@ use pueue_lib::{
     network::{
         message::*,
         protocol::{
-            get_client_stream, receive_bytes, receive_message, send_bytes,
-            send_message as internal_send_message, GenericStream,
+            GenericStream, get_client_stream, receive_bytes, receive_message, send_bytes,
+            send_message as internal_send_message,
         },
         secret::read_shared_secret,
     },

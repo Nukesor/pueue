@@ -1,6 +1,6 @@
 use std::{
-    fs::{remove_file, File},
-    io::{self, prelude::*, Read, SeekFrom},
+    fs::{File, remove_file},
+    io::{self, Read, SeekFrom, prelude::*},
     path::{Path, PathBuf},
 };
 

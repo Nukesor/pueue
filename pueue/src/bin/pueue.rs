@@ -1,13 +1,13 @@
 use std::{
-    io::{stdout, IsTerminal},
+    io::{IsTerminal, stdout},
     path::PathBuf,
 };
 
 use clap::{CommandFactory, Parser};
 use clap_complete::{generate, generate_to, shells};
 use color_eyre::{
-    eyre::{bail, WrapErr},
     Result,
+    eyre::{WrapErr, bail},
 };
 use pueue::client::{
     cli::{CliArguments, ColorChoice, Shell, SubCommand},

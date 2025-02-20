@@ -1,9 +1,9 @@
 use std::{
-    fs::{remove_file, File},
+    fs::{File, remove_file},
     path::{Path, PathBuf},
 };
 
-use super::{daemon_base_setup, daemon_with_settings, PueueDaemon};
+use super::{PueueDaemon, daemon_base_setup, daemon_with_settings};
 use crate::internal_prelude::*;
 
 /// A helper wrapper around [`daemon`] that also creates a lockfile that can be listened to from a

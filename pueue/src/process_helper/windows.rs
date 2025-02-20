@@ -10,8 +10,8 @@ use winapi::{
         handleapi::{CloseHandle, INVALID_HANDLE_VALUE},
         processthreadsapi::{OpenThread, ResumeThread, SuspendThread},
         tlhelp32::{
-            CreateToolhelp32Snapshot, Process32First, Process32Next, Thread32First, Thread32Next,
-            PROCESSENTRY32, TH32CS_SNAPPROCESS, TH32CS_SNAPTHREAD, THREADENTRY32,
+            CreateToolhelp32Snapshot, PROCESSENTRY32, Process32First, Process32Next,
+            TH32CS_SNAPPROCESS, TH32CS_SNAPTHREAD, THREADENTRY32, Thread32First, Thread32Next,
         },
         winnt::THREAD_SUSPEND_RESUME,
     },

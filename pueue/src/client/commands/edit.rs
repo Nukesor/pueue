@@ -1,7 +1,7 @@
 use std::{
     collections::BTreeMap,
     env,
-    fs::{create_dir, read_to_string, File},
+    fs::{File, create_dir, read_to_string},
     io::Write,
     path::{Path, PathBuf},
 };

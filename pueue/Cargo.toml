@@ -16,21 +16,21 @@ maintenance = { status = "actively-developed" }
 
 [dependencies]
 chrono.workspace = true
-clap = { version = "4.4.18", features = [
+clap = { version = "4.5.30", features = [
     "cargo",
     "derive",
     "help",
     "wrap_help",
 ] }
-clap_complete = "4.4.10"
-clap_complete_nushell = "4.4.2"
+clap_complete = "4.5.45"
+clap_complete_nushell = "4.5.5"
 color-eyre.workspace = true
 comfy-table = "7"
 command-group.workspace = true
 ctrlc = { version = "3", features = ["termination"] }
 flate2 = "1"
 handlebars.workspace = true
-interim = { version = "0.1.2", features = ["chrono"] }
+interim = { version = "0.2.0", features = ["chrono_0_4"] }
 pest = "2.7"
 pest_derive = "2.7"
 pueue-lib = { version = "0.28.1", path = "../pueue_lib", features = ["client"] }
@@ -68,7 +68,7 @@ procfs = { version = "0.17", default-features = false }
 
 # Linux + Mac OS
 [target.'cfg(any(target_os = "linux", target_os = "macos"))'.dependencies]
-libproc = "0.14.8"
+libproc = "0.14.10"
 
 # Windows
 # We don't need any of the default features for crossterm.
@@ -86,11 +86,11 @@ winapi = { version = "0.3", features = [
     "processthreadsapi",
     "tlhelp32",
 ] }
-windows = { version = "0.58.0", features = [
+windows = { version = "0.59.0", features = [
     "Win32_Security",
     "Win32_System_Environment",
     "Win32_System_RemoteDesktop",
     "Win32_System_SystemServices",
     "Win32_System_Threading",
 ] }
-windows-service = "0.7.0"
+windows-service = "0.8.0"

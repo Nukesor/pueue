@@ -7,10 +7,10 @@ use std::{
 
 use chrono::{DateTime, Local};
 use pueue_lib::{
+    Request, Response,
     client::Client,
     format::format_datetime,
     network::message::{AddMessage, AddedTaskMessage},
-    Request, Response,
 };
 
 use super::{follow as follow_cmd, group_or_default, handle_response};

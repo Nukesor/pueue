@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use color_eyre::{eyre::WrapErr, Result};
+use color_eyre::{Result, eyre::WrapErr};
 use pueue_lib::settings::Settings;
 
 /// From 0.15.0 on, we aim to have full backward compatibility.

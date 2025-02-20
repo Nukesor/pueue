@@ -4,10 +4,10 @@ use std::{
 };
 
 use pueue_lib::{
+    Response,
     client::Client,
     log::{get_log_file_handle, get_log_path, seek_to_last_lines},
     network::message::StreamRequestMessage,
-    Response,
 };
 use tokio::time::sleep;
 

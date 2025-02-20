@@ -70,11 +70,15 @@ pub fn group(settings: &Settings, state: &SharedState, message: GroupMessage) ->
             if let Some(pool) = state.children.0.get(&group) {
                 if !pool.is_empty() {
                     initiate_shutdown(settings, &mut state, Shutdown::Emergency);
-                    return failure_msg!("Encountered a non-empty worker pool, while removing a group. This is a critical error. Please report this bug.");
+                    return failure_msg!(
+                        "Encountered a non-empty worker pool, while removing a group. This is a critical error. Please report this bug."
+                    );
                 }
             } else {
                 initiate_shutdown(settings, &mut state, Shutdown::Emergency);
-                return failure_msg!("Encountered an group without an worker pool, while removing a group. This is a critical error. Please report this bug.");
+                return failure_msg!(
+                    "Encountered an group without an worker pool, while removing a group. This is a critical error. Please report this bug."
+                );
             }
 
             if let Err(error) = state.remove_group(&group) {

@@ -1,7 +1,7 @@
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::{
-    field::MakeExt, fmt::time::ChronoLocal, layer::SubscriberExt, util::SubscriberInitExt,
-    EnvFilter, Layer,
+    EnvFilter, Layer, field::MakeExt, fmt::time::ChronoLocal, layer::SubscriberExt,
+    util::SubscriberInitExt,
 };
 
 use crate::internal_prelude::*;

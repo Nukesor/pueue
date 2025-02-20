@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use chrono::{prelude::*, TimeDelta};
+use chrono::{TimeDelta, prelude::*};
 use clap::{ArgAction, Parser, ValueEnum, ValueHint};
 use interim::*;
 use pueue_lib::network::message::Signal;

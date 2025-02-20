@@ -1,28 +1,28 @@
 # The following is the shared configuration for both pueue and its lib
 [workspace]
 members = ["pueue", "pueue_lib"]
-resolver = "2"
+resolver = "3"
 
 [workspace.package]
 authors = ["Arne Beer <contact@arne.beer>"]
-edition = "2021"
+edition = "2024"
 homepage = "https://github.com/nukesor/pueue"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/nukesor/pueue"
-rust-version = "1.70"
+rust-version = "1.85"
 
 [workspace.dependencies]
 better-panic = "0.3"
 chrono = { version = "0.4", features = ["serde"] }
 color-eyre = "0.6.3"
 command-group = "5"
-handlebars = "5.1"
+handlebars = "6.3"
 pretty_assertions = "1"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 serde_yaml = "0.9"
 snap = "1.1"
-strum = { version = "0.26", features = ["derive"] }
+strum = { version = "0.27", features = ["derive"] }
 tokio = { version = "1.43", features = ["io-std", "rt-multi-thread", "time"] }
 tracing = "0.1.41"
 

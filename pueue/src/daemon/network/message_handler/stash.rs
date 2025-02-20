@@ -1,6 +1,6 @@
 use pueue_lib::{
-    format::format_datetime, network::message::*, settings::Settings, success_msg,
-    task::TaskStatus, Task,
+    Task, format::format_datetime, network::message::*, settings::Settings, success_msg,
+    task::TaskStatus,
 };
 
 use crate::daemon::{internal_state::SharedState, network::response_helper::*};

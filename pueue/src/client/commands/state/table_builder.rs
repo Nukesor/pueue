@@ -1,12 +1,12 @@
 use chrono::TimeDelta;
-use comfy_table::{presets::UTF8_HORIZONTAL_ONLY, Cell, ContentArrangement, Row, Table};
+use comfy_table::{Cell, ContentArrangement, Row, Table, presets::UTF8_HORIZONTAL_ONLY};
 use crossterm::style::Color;
 use pueue_lib::{
     settings::Settings,
     task::{Task, TaskResult, TaskStatus},
 };
 
-use super::{formatted_start_end, query::Rule, start_of_today, OutputStyle};
+use super::{OutputStyle, formatted_start_end, query::Rule, start_of_today};
 
 /// This builder is responsible for determining which table columns should be displayed and
 /// building a full [comfy_table] from a list of given [Task]s.

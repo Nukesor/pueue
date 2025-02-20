@@ -1,6 +1,6 @@
 use std::{
     collections::BTreeMap,
-    fs::{read_to_string, File},
+    fs::{File, read_to_string},
     io::{Read, Write},
     process::Child,
     sync::{Arc, Mutex, MutexGuard},
@@ -9,11 +9,11 @@ use std::{
 use chrono::Local;
 use flate2::Compression;
 use pueue_lib::{
+    Group, GroupStatus, Settings, State, TaskResult,
     error::Error,
     network::message::request::Shutdown,
     state::{FilteredTasks, PUEUE_DEFAULT_GROUP},
     task::{Task, TaskStatus},
-    Group, GroupStatus, Settings, State, TaskResult,
 };
 use serde::{Deserialize, Serialize};
 

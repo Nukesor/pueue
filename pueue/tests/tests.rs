@@ -1,8 +1,8 @@
 #[cfg(unix)]
 mod internal_prelude {
     pub use color_eyre::{
-        eyre::{bail, eyre, WrapErr},
         Result,
+        eyre::{WrapErr, bail, eyre},
     };
     pub use tracing::debug;
 }

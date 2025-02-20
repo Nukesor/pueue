@@ -1,14 +1,14 @@
 use color_eyre::{
-    eyre::{bail, Context},
     Result,
+    eyre::{Context, bail},
 };
 use serde::Serialize;
 
 use crate::{
+    Error, PROTOCOL_VERSION,
     internal_prelude::*,
     network::{message::*, protocol::*, secret::read_shared_secret},
     settings::Settings,
-    Error, PROTOCOL_VERSION,
 };
 
 /// This struct contains the base logic for the client.
@@ -96,7 +96,9 @@ impl Client {
         // Info if the daemon runs a different protocol version.
         // Backward compatibility should work, but some features might not work as expected.
         if daemon_version != PROTOCOL_VERSION && show_version_warning {
-            warn!("Different protocol version detected '{daemon_version}'. Consider updating and restarting the daemon.");
+            warn!(
+                "Different protocol version detected '{daemon_version}'. Consider updating and restarting the daemon."
+            );
         }
 
         Ok(Client {

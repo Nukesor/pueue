@@ -212,7 +212,7 @@ mod test {
     };
     use rstest::rstest;
 
-    use super::{apply_query, Rule};
+    use super::{Rule, apply_query};
     use crate::internal_prelude::*;
 
     const TEST_COMMAND_SLEEP: &str = "sleep 60";
@@ -442,10 +442,10 @@ mod test {
         }
 
         assert_eq!(
-        tasks.len(),
-        match_count,
-        "Got a different amount of tasks than expected for the status filter {status_filter:?}."
-    );
+            tasks.len(),
+            match_count,
+            "Got a different amount of tasks than expected for the status filter {status_filter:?}."
+        );
 
         Ok(())
     }
@@ -625,10 +625,10 @@ mod test {
         }
 
         assert_eq!(
-        tasks.len(),
-        match_count,
-        "Got a different amount of tasks than expected for the command filter: {command_filter}."
-    );
+            tasks.len(),
+            match_count,
+            "Got a different amount of tasks than expected for the command filter: {command_filter}."
+        );
 
         Ok(())
     }

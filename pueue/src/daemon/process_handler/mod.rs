@@ -6,7 +6,7 @@ use pueue_lib::{
 use crate::{
     daemon::internal_state::state::LockedState,
     internal_prelude::*,
-    process_helper::{send_signal_to_child, ProcessAction},
+    process_helper::{ProcessAction, send_signal_to_child},
 };
 
 pub mod finish;

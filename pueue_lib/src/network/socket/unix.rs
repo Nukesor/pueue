@@ -1,6 +1,6 @@
 use std::{
     convert::TryFrom,
-    fs::{set_permissions, Permissions},
+    fs::{Permissions, set_permissions},
     os::unix::fs::PermissionsExt,
 };
 

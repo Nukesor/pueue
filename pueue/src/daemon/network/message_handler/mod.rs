@@ -126,7 +126,7 @@ mod fixtures {
     };
     use tempfile::TempDir;
 
-    use crate::daemon::internal_state::{state::InternalState, SharedState};
+    use crate::daemon::internal_state::{SharedState, state::InternalState};
 
     // A simple helper struct to keep the boilerplate for TaskStatus creation down.
     pub enum StubStatus {

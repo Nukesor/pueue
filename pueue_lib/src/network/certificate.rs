@@ -1,6 +1,6 @@
 use std::{fs::File, io::Write, path::Path};
 
-use rcgen::{generate_simple_self_signed, CertifiedKey};
+use rcgen::{CertifiedKey, generate_simple_self_signed};
 
 use crate::{error::Error, internal_prelude::*, settings::Shared};
 

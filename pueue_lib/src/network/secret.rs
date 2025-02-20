@@ -1,6 +1,6 @@
 use std::{fs::File, io::prelude::*, path::Path};
 
-use rand::{distributions::Alphanumeric, Rng};
+use rand::{Rng, distr::Alphanumeric};
 
 use crate::error::Error;
 
@@ -27,7 +27,7 @@ pub fn init_shared_secret(path: &Path) -> Result<(), Error> {
     }
 
     const PASSWORD_LEN: usize = 512;
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
 
     let secret: String = std::iter::repeat(())
         .map(|()| rng.sample(Alphanumeric))

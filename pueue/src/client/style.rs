@@ -1,5 +1,5 @@
 use comfy_table::{Attribute as ComfyAttribute, Cell, Color as ComfyColor};
-use crossterm::style::{style, Attribute, Color, Stylize};
+use crossterm::style::{Attribute, Color, Stylize, style};
 use pueue_lib::settings::Settings;
 
 /// OutputStyle wrapper for actual colors depending on settings

@@ -5,12 +5,12 @@
 //! daemon, open some files on the filesystem, edit files and so on.
 //! All commands that cannot be simply handled by handling requests or using `pueue_lib`.
 
-use std::io::{stdin, stdout, Write};
+use std::io::{Write, stdin, stdout};
 
 use pueue_lib::{
     client::Client,
     network::message::{Request, Response, TaskSelection},
-    state::{State, PUEUE_DEFAULT_GROUP},
+    state::{PUEUE_DEFAULT_GROUP, State},
     task::Task,
 };
 
@@ -58,8 +58,8 @@ use start::start;
 use stash::stash;
 use state::state;
 use switch::switch;
-use wait::wait;
 pub use wait::WaitTargetStatus;
+use wait::wait;
 
 use super::{
     cli::SubCommand,
