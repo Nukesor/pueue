@@ -526,7 +526,7 @@ impl EnvBlock {
     fn new(token: HANDLE) -> Result<Self> {
         let mut env = ptr::null_mut();
         unsafe {
-            CreateEnvironmentBlock(&mut env, token, false)?;
+            CreateEnvironmentBlock(&mut env, Some(token), false)?;
         }
 
         Ok(Self(env))
@@ -660,9 +660,9 @@ impl Spawner {
                 let mut process_info = PROCESS_INFORMATION::default();
                 unsafe {
                     CreateProcessAsUserW(
-                        token,
+                        Some(token),
                         PWSTR(current_exe.as_mut_ptr()),
-                        PWSTR(arguments.as_mut_ptr()),
+                        Some(PWSTR(arguments.as_mut_ptr())),
                         None,
                         None,
                         false,
