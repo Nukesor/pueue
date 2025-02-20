@@ -1,9 +1,8 @@
 use std::fmt::Display;
 
 use pueue_lib::{
-    failure_msg,
+    Settings, failure_msg,
     network::{message::*, protocol::send_response, socket::GenericStream},
-    settings::Settings,
 };
 
 use crate::{
@@ -40,7 +39,7 @@ pub async fn handle_request(
     let response = match request {
         // The client requested the output of a task.
         // Since this involves streaming content, we have to do some special handling.
-        Request::StreamRequest(payload) => {
+        Request::Stream(payload) => {
             let pueue_directory = settings.shared.pueue_directory();
             follow_log(&pueue_directory, stream, state, payload).await?
         }
@@ -61,7 +60,7 @@ pub async fn handle_request(
         }
         Request::Add(message) => add::add_task(settings, state, message),
         Request::Clean(message) => clean::clean(settings, state, message),
-        Request::Edit(editable_tasks) => edit::edit(settings, state, editable_tasks),
+        Request::EditedTasks(editable_tasks) => edit::edit(settings, state, editable_tasks),
         Request::EditRequest(task_ids) => edit::edit_request(state, task_ids),
         Request::EditRestore(task_ids) => edit::edit_restore(state, task_ids),
         Request::Env(message) => env::env(settings, state, message),

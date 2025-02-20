@@ -1,10 +1,10 @@
-use pueue_lib::{network::message::*, settings::Settings, success_msg, task::TaskStatus};
+use pueue_lib::{Settings, TaskStatus, network::message::*, success_msg};
 
 use crate::daemon::{internal_state::SharedState, network::response_helper::*, process_handler};
 
 /// Invoked when calling `pueue pause`.
 /// Forward the pause message to the task handler, which then pauses groups/tasks/everything.
-pub fn pause(settings: &Settings, state: &SharedState, message: PauseMessage) -> Response {
+pub fn pause(settings: &Settings, state: &SharedState, message: PauseRequest) -> Response {
     let mut state = state.lock().unwrap();
     // If a group is selected, make sure it exists.
     if let TaskSelection::Group(group) = &message.tasks {

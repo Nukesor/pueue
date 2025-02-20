@@ -4,7 +4,7 @@
 // type.
 use color_eyre::Result;
 use command_group::{GroupChild, Signal, UnixChildExt};
-use pueue_lib::settings::Settings;
+use pueue_lib::Settings;
 
 use crate::internal_prelude::*;
 

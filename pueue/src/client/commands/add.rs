@@ -10,7 +10,7 @@ use pueue_lib::{
     Request, Response,
     client::Client,
     format::format_datetime,
-    network::message::{AddMessage, AddedTaskMessage},
+    network::message::{AddRequest, AddedTaskResponse},
 };
 
 use super::{follow as follow_cmd, group_or_default, handle_response};
@@ -51,7 +51,7 @@ pub async fn add_task(
     }
 
     // Add the message to the daemon.
-    let message = Request::Add(AddMessage {
+    let message = Request::Add(AddRequest {
         command: command.join(" "),
         path,
         // Catch the current environment for later injection into the task's process.
@@ -70,7 +70,7 @@ pub async fn add_task(
     let response = client.receive_response().await?;
 
     // Make sure the task has been added, otherwise handle the response and return.
-    let Response::AddedTask(AddedTaskMessage {
+    let Response::AddedTask(AddedTaskResponse {
         task_id,
         enqueue_at,
         group_is_paused,

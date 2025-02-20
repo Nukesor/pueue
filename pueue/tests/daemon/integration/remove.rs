@@ -1,4 +1,4 @@
-use pueue_lib::{network::message::*, task::Task};
+use pueue_lib::{Task, network::message::*};
 
 use crate::{helper::*, internal_prelude::*};
 
@@ -32,7 +32,7 @@ async fn test_normal_remove() -> Result<()> {
     // Stash task 5
     send_request(
         shared,
-        StashMessage {
+        StashRequest {
             tasks: TaskSelection::TaskIds(vec![5]),
             enqueue_at: None,
         },

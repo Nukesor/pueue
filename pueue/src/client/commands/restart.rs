@@ -11,7 +11,7 @@ use crate::{
     internal_prelude::*,
 };
 
-/// When restarting tasks, the remote state is queried and a [AddMessage]
+/// When restarting tasks, the remote state is queried and a [AddRequest]
 /// is create from the existing task in the state.
 ///
 /// This is done on the client-side, so we can easily edit the task before restarting it.
@@ -89,7 +89,7 @@ pub async fn restart(
 
     // Build a RestartMessage, if the tasks should be replaced instead of creating a copy of the
     // original task. This is only important, if replace is `True`.
-    let mut restart_message = RestartMessage {
+    let mut restart_message = RestartRequest {
         tasks: Vec::new(),
         stashed,
         start_immediately,
@@ -135,9 +135,9 @@ pub async fn restart(
         }
 
         // In case we don't do in-place restarts, we have to add a new task.
-        // Create a AddMessage to send the task to the daemon from the updated info and the old
+        // Create an request to send the task to the daemon from the updated info and the old
         // task.
-        let add_task_message = AddMessage {
+        let add_task_message = AddRequest {
             command: task.command,
             path: task.path,
             envs: task.envs.clone(),

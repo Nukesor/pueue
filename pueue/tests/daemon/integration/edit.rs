@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use assert_matches::assert_matches;
-use pueue_lib::{network::message::*, settings::Shared, state::GroupStatus, task::*};
+use pueue_lib::{GroupStatus, network::message::*, settings::Shared, task::*};
 
 use crate::{helper::*, internal_prelude::*};
 
@@ -63,7 +63,7 @@ async fn test_edit_flow() -> Result<()> {
     editable_task.priority = 99;
 
     // Send the final message of the protocol and actually change the task.
-    let response = send_request(shared, Request::Edit(vec![editable_task])).await?;
+    let response = send_request(shared, Request::EditedTasks(vec![editable_task])).await?;
     assert_success(response);
 
     // Make sure the task has been changed and enqueued.

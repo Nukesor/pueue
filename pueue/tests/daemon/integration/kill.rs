@@ -1,5 +1,5 @@
 use pretty_assertions::assert_eq;
-use pueue_lib::{network::message::*, state::GroupStatus, task::*};
+use pueue_lib::{GroupStatus, network::message::*, task::*};
 use rstest::rstest;
 
 use crate::{helper::*, internal_prelude::*};
@@ -16,26 +16,26 @@ use crate::{helper::*, internal_prelude::*};
 /// This is security measure to prevent unwanted task execution in an emergency.
 #[rstest]
 #[case(
-    KillMessage {
+    KillRequest {
         tasks: TaskSelection::All,
         signal: None,
     }, true
 )]
 #[case(
-    KillMessage {
+    KillRequest {
         tasks: TaskSelection::Group(PUEUE_DEFAULT_GROUP.into()),
         signal: None,
     }, true
 )]
 #[case(
-    KillMessage {
+    KillRequest {
         tasks: TaskSelection::TaskIds(vec![0, 1, 2]),
         signal: None,
     }, false
 )]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn test_kill_tasks_with_pause(
-    #[case] kill_message: KillMessage,
+    #[case] kill_message: KillRequest,
     #[case] group_should_pause: bool,
 ) -> Result<()> {
     let daemon = daemon().await?;
@@ -100,25 +100,25 @@ async fn test_kill_tasks_with_pause(
 /// - Via specific ids.
 #[rstest]
 #[case(
-    KillMessage {
+    KillRequest {
         tasks: TaskSelection::All,
         signal: None,
     }
 )]
 #[case(
-    KillMessage {
+    KillRequest {
         tasks: TaskSelection::Group(PUEUE_DEFAULT_GROUP.into()),
         signal: None,
     }
 )]
 #[case(
-    KillMessage {
+    KillRequest {
         tasks: TaskSelection::TaskIds(vec![0, 1, 2]),
         signal: None,
     }
 )]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn test_kill_tasks_without_pause(#[case] kill_message: KillMessage) -> Result<()> {
+async fn test_kill_tasks_without_pause(#[case] kill_message: KillRequest) -> Result<()> {
     let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 

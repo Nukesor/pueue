@@ -6,7 +6,7 @@ use super::*;
 
 /// Send the Shutdown message to the test daemon.
 pub async fn shutdown_daemon(shared: &Shared) -> Result<Response> {
-    let message = Shutdown::Graceful;
+    let message = ShutdownRequest::Graceful;
 
     send_request(shared, message)
         .await

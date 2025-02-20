@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, HashMap};
 
-use pueue_lib::task::Task;
+use pueue_lib::Task;
 use rstest::rstest;
 use serde::Deserialize;
 

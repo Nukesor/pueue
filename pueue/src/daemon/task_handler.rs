@@ -2,10 +2,8 @@ use std::{collections::BTreeMap, time::Duration};
 
 use chrono::prelude::*;
 use pueue_lib::{
+    Group, GroupStatus, Settings, TaskResult, TaskStatus,
     network::{message::*, protocol::socket_cleanup},
-    settings::Settings,
-    state::{Group, GroupStatus},
-    task::{TaskResult, TaskStatus},
 };
 
 use crate::{
@@ -90,7 +88,7 @@ fn handle_shutdown(settings: &Settings, state: &mut LockedState) {
 
     // Actually exit the program the way we're supposed to.
     // Depending on the current shutdown type, we exit with different exit codes.
-    if matches!(state.shutdown, Some(Shutdown::Emergency)) {
+    if matches!(state.shutdown, Some(ShutdownRequest::Emergency)) {
         std::process::exit(1);
     }
     std::process::exit(0);

@@ -1,10 +1,5 @@
 use chrono::Local;
-use pueue_lib::{
-    log::clean_log_handles,
-    settings::Settings,
-    state::GroupStatus,
-    task::{TaskResult, TaskStatus},
-};
+use pueue_lib::{GroupStatus, Settings, TaskResult, TaskStatus, log::clean_log_handles};
 
 use crate::{
     daemon::{callbacks::spawn_callback, internal_state::state::LockedState},

@@ -1,11 +1,7 @@
 use chrono::Local;
 use pueue_lib::{
-    aliasing::insert_alias,
-    failure_msg,
+    GroupStatus, Settings, Task, TaskStatus, aliasing::insert_alias, failure_msg,
     network::message::*,
-    settings::Settings,
-    state::GroupStatus,
-    task::{Task, TaskStatus},
 };
 
 use crate::{
@@ -17,10 +13,13 @@ use crate::{
     ok_or_save_state_failure,
 };
 
+#[cfg(doc)]
+use pueue_lib::State;
+
 /// Invoked when calling `pueue add`.
-/// Queues a new task to the state.
+/// Queues a new [Task] to the [State].
 /// If the start_immediately flag is set, send a StartMessage to the task handler.
-pub fn add_task(settings: &Settings, state: &SharedState, message: AddMessage) -> Response {
+pub fn add_task(settings: &Settings, state: &SharedState, message: AddRequest) -> Response {
     let mut state = state.lock().unwrap();
     if let Err(response) = ensure_group_exists(&mut state, &message.group) {
         return response;
@@ -86,7 +85,7 @@ pub fn add_task(settings: &Settings, state: &SharedState, message: AddMessage) -
         process_handler::start::start(settings, &mut state, TaskSelection::TaskIds(vec![task_id]));
     }
 
-    AddedTaskMessage {
+    AddedTaskResponse {
         task_id,
         enqueue_at: message.enqueue_at,
         group_is_paused,

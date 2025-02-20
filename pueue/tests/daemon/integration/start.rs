@@ -11,22 +11,22 @@ use crate::{helper::*, internal_prelude::*};
 /// - Via specific ids.
 #[rstest]
 #[case(
-    StartMessage {
+    StartRequest {
         tasks: TaskSelection::All,
     }
 )]
 #[case(
-    StartMessage {
+    StartRequest {
         tasks: TaskSelection::Group(PUEUE_DEFAULT_GROUP.into()),
     }
 )]
 #[case(
-    StartMessage {
+    StartRequest {
         tasks: TaskSelection::TaskIds(vec![0, 1, 2]),
     }
 )]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn test_start_tasks(#[case] start_message: StartMessage) -> Result<()> {
+async fn test_start_tasks(#[case] start_message: StartRequest) -> Result<()> {
     let daemon = daemon().await?;
     let shared = &daemon.settings.shared;
 

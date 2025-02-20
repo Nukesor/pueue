@@ -1,5 +1,5 @@
 use chrono::{DateTime, Local, TimeDelta};
-use pueue_lib::{network::message::*, state::GroupStatus, task::*};
+use pueue_lib::{GroupStatus, network::message::*, task::*};
 use rstest::rstest;
 
 use crate::{helper::*, internal_prelude::*};
@@ -31,7 +31,7 @@ async fn test_enqueued_tasks(#[case] enqueue_at: Option<DateTime<Local>>) -> Res
     }
 
     // Manually enqueue the task
-    let enqueue_message = EnqueueMessage {
+    let enqueue_message = EnqueueRequest {
         tasks: TaskSelection::TaskIds(vec![0]),
         enqueue_at: None,
     };
@@ -91,7 +91,7 @@ async fn test_stash_queued_task() -> Result<()> {
     // Stash the task
     send_request(
         shared,
-        StashMessage {
+        StashRequest {
             tasks: TaskSelection::TaskIds(vec![0]),
             enqueue_at: None,
         },

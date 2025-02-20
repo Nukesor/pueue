@@ -1,11 +1,11 @@
-use pueue_lib::{failure_msg, network::message::*, settings::Settings, state::GroupStatus};
+use pueue_lib::{GroupStatus, Settings, failure_msg, network::message::*};
 
 use crate::daemon::{internal_state::SharedState, process_handler};
 
 /// Invoked when calling `pueue reset`.
 /// Kill all children by using the `kill` function.
 /// Set the full_reset flag, which will prevent new tasks from being spawned.
-pub fn reset(settings: &Settings, state: &SharedState, message: ResetMessage) -> Response {
+pub fn reset(settings: &Settings, state: &SharedState, message: ResetRequest) -> Response {
     let mut state = state.lock().unwrap();
 
     match message.target {

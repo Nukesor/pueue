@@ -1,5 +1,5 @@
 use assert_matches::assert_matches;
-use pueue_lib::{network::message::ParallelMessage, task::*};
+use pueue_lib::{network::message::ParallelRequest, task::*};
 
 use crate::{helper::*, internal_prelude::*};
 
@@ -80,7 +80,7 @@ async fn test_unlimited_parallel_tasks() -> Result<()> {
     wait_for_task_condition(shared, 0, Task::is_running).await?;
 
     // Update the parallel limit of the group to 0
-    let message = ParallelMessage {
+    let message = ParallelRequest {
         group: "testgroup".to_string(),
         parallel_tasks: 0,
     };

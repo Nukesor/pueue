@@ -1,20 +1,19 @@
 use std::{collections::BTreeMap, io::Read, path::Path, time::Duration};
 
 use pueue_lib::{
-    failure_msg,
-    log::{read_and_compress_log_file, *},
+    Settings, failure_msg,
+    log::*,
     network::{
         message::*,
         protocol::{GenericStream, send_response},
     },
-    settings::Settings,
 };
 
 use crate::{daemon::internal_state::SharedState, internal_prelude::*};
 
 /// Invoked when calling `pueue log`.
 /// Return tasks and their output to the client.
-pub fn get_log(settings: &Settings, state: &SharedState, message: LogRequestMessage) -> Response {
+pub fn get_log(settings: &Settings, state: &SharedState, message: LogRequest) -> Response {
     let state = { state.lock().unwrap().clone() };
 
     let task_ids = match message.tasks {
@@ -45,7 +44,7 @@ pub fn get_log(settings: &Settings, state: &SharedState, message: LogRequestMess
                 (None, true)
             };
 
-            let task_log = TaskLogMessage {
+            let task_log = TaskLogResponse {
                 task: task.clone(),
                 output,
                 output_complete,
@@ -59,14 +58,14 @@ pub fn get_log(settings: &Settings, state: &SharedState, message: LogRequestMess
 /// Handle the continuous stream of a some log output.
 ///
 /// It's not actually a stream in the sense of a low-level network stream, but rather a series of
-/// `Message::Stream` messages, that each send a portion of new log output.
+/// [Response::Stream] messages, that each send a portion of new log output.
 ///
 /// It's basically our own chunked stream implementation on top of the protocol we established.
 pub async fn follow_log(
     pueue_directory: &Path,
     stream: &mut GenericStream,
     state: &SharedState,
-    message: StreamRequestMessage,
+    message: StreamRequest,
 ) -> Result<Response> {
     // The user can specify the id of the task they want to follow
     // If the id isn't specified and there's only a single running task, this task will be used.

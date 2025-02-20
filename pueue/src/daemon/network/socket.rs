@@ -1,10 +1,8 @@
 use std::time::{Duration, SystemTime};
 
 use pueue_lib::{
-    PROTOCOL_VERSION,
-    error::Error,
+    Error, PROTOCOL_VERSION, Settings,
     network::{message::*, protocol::*, secret::read_shared_secret},
-    settings::Settings,
 };
 use tokio::time::sleep;
 

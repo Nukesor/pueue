@@ -44,7 +44,7 @@ pub async fn reset(
         ResetTarget::Groups(groups.clone())
     };
 
-    client.send_request(ResetMessage { target }).await?;
+    client.send_request(ResetRequest { target }).await?;
     let response = client.receive_response().await?;
 
     handle_response(style, response)

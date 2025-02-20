@@ -72,8 +72,6 @@ pub async fn wait(
             return Ok(());
         }
 
-        // Get current time for log output
-
         // Iterate over all matching tasks
         for task in tasks.iter() {
             // Get the previous status of the task.

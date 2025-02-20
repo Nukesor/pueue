@@ -1,4 +1,4 @@
-use pueue_lib::{failure_msg, network::message::*, settings::Settings, task::TaskStatus};
+use pueue_lib::{Settings, TaskStatus, failure_msg, network::message::*};
 
 use super::ok_or_failure_message;
 use crate::{daemon::internal_state::SharedState, ok_or_save_state_failure};
@@ -6,7 +6,7 @@ use crate::{daemon::internal_state::SharedState, ok_or_save_state_failure};
 /// Invoked when calling `pueue switch`.
 /// Switch the position of two tasks in the upcoming queue.
 /// We have to ensure that those tasks are either `Queued` or `Stashed`
-pub fn switch(settings: &Settings, state: &SharedState, message: SwitchMessage) -> Response {
+pub fn switch(settings: &Settings, state: &SharedState, message: SwitchRequest) -> Response {
     let mut state = state.lock().unwrap();
 
     let task_ids = [message.task_id_1, message.task_id_2];
@@ -67,8 +67,8 @@ mod tests {
 
     use super::{super::fixtures::*, *};
 
-    fn get_message(task_id_1: usize, task_id_2: usize) -> SwitchMessage {
-        SwitchMessage {
+    fn get_message(task_id_1: usize, task_id_2: usize) -> SwitchRequest {
+        SwitchRequest {
             task_id_1,
             task_id_2,
         }

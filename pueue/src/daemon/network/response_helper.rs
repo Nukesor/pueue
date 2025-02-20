@@ -1,7 +1,7 @@
 use pueue_lib::{
-    network::message::{Response, create_failure_response, create_success_response},
-    state::{FilteredTasks, Group},
-    task::Task,
+    Group, Response, Task,
+    network::message::{create_failure_response, create_success_response},
+    state::FilteredTasks,
 };
 
 use crate::daemon::internal_state::state::LockedState;

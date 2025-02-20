@@ -13,7 +13,7 @@ pub async fn clean(
     successful_only: bool,
 ) -> Result<()> {
     client
-        .send_request(CleanMessage {
+        .send_request(CleanRequest {
             successful_only,
             group,
         })

@@ -18,18 +18,18 @@ use crate::{
 /// - Show groups
 /// - Add group
 /// - Remove group
-pub fn group(settings: &Settings, state: &SharedState, message: GroupMessage) -> Response {
+pub fn group(settings: &Settings, state: &SharedState, message: GroupRequest) -> Response {
     let mut state = state.lock().unwrap();
 
     match message {
-        GroupMessage::List => {
+        GroupRequest::List => {
             // Return information about all groups to the client.
-            GroupResponseMessage {
+            GroupResponse {
                 groups: state.groups().clone(),
             }
             .into()
         }
-        GroupMessage::Add {
+        GroupRequest::Add {
             name,
             parallel_tasks,
         } => {
@@ -49,7 +49,7 @@ pub fn group(settings: &Settings, state: &SharedState, message: GroupMessage) ->
 
             success_msg!("New group \"{name}\" has been created")
         }
-        GroupMessage::Remove(group) => {
+        GroupRequest::Remove(group) => {
             if let Err(message) = ensure_group_exists(&mut state, &group) {
                 return message;
             }
@@ -69,13 +69,13 @@ pub fn group(settings: &Settings, state: &SharedState, message: GroupMessage) ->
             // internal datastructures, which is really bad.
             if let Some(pool) = state.children.0.get(&group) {
                 if !pool.is_empty() {
-                    initiate_shutdown(settings, &mut state, Shutdown::Emergency);
+                    initiate_shutdown(settings, &mut state, ShutdownRequest::Emergency);
                     return failure_msg!(
                         "Encountered a non-empty worker pool, while removing a group. This is a critical error. Please report this bug."
                     );
                 }
             } else {
-                initiate_shutdown(settings, &mut state, Shutdown::Emergency);
+                initiate_shutdown(settings, &mut state, ShutdownRequest::Emergency);
                 return failure_msg!(
                     "Encountered an group without an worker pool, while removing a group. This is a critical error. Please report this bug."
                 );

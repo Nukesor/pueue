@@ -1,5 +1,5 @@
 use assert_matches::assert_matches;
-use pueue_lib::{network::message::*, state::GroupStatus, task::*};
+use pueue_lib::{GroupStatus, network::message::*, task::*};
 
 use crate::{helper::*, internal_prelude::*};
 
@@ -71,7 +71,7 @@ async fn test_pause_with_wait() -> Result<()> {
     wait_for_task_condition(shared, 0, Task::is_running).await?;
 
     // Pauses the default queue while waiting for tasks
-    let message = PauseMessage {
+    let message = PauseRequest {
         tasks: TaskSelection::Group(PUEUE_DEFAULT_GROUP.into()),
         wait: true,
     };

@@ -2,7 +2,7 @@ use comfy_table::{Attribute as ComfyAttribute, Cell, CellAlignment, Table};
 use crossterm::style::Color;
 use pueue_lib::{
     client::Client,
-    network::message::{TaskLogMessage, TaskSelection, *},
+    network::message::{TaskLogResponse, TaskSelection, *},
     settings::Settings,
     task::{Task, TaskResult, TaskStatus},
 };
@@ -35,7 +35,7 @@ pub async fn print_logs(
     let selection = selection_from_params(all, group.clone(), task_ids.clone());
 
     client
-        .send_request(LogRequestMessage {
+        .send_request(LogRequest {
             tasks: selection.clone(),
             send_logs: !client.settings.client.read_local_logs,
             lines,
@@ -119,7 +119,7 @@ fn determine_log_line_amount(full: bool, lines: &Option<usize>) -> Option<usize>
 ///         `None` implicates that everything should be printed.
 ///         This is only important, if we read local lines.
 fn print_log(
-    message: &TaskLogMessage,
+    message: &TaskLogResponse,
     style: &OutputStyle,
     settings: &Settings,
     lines: Option<usize>,

@@ -4,7 +4,7 @@ use std::{
     path::Path,
 };
 
-use pueue_lib::error::Error;
+use pueue_lib::Error;
 
 use crate::{internal_prelude::*, process_helper::process_exists};
 

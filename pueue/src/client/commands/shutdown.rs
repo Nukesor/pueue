@@ -5,7 +5,7 @@ use crate::{client::style::OutputStyle, internal_prelude::*};
 
 /// Initiate a daemon shutdown
 pub async fn shutdown(client: &mut Client, style: &OutputStyle) -> Result<()> {
-    client.send_request(Shutdown::Graceful).await?;
+    client.send_request(ShutdownRequest::Graceful).await?;
 
     let response = client.receive_response().await?;
 

@@ -1,17 +1,13 @@
 use chrono::Local;
 use pueue_lib::{
-    format::format_datetime,
-    network::message::*,
-    settings::Settings,
-    success_msg,
-    task::{Task, TaskStatus},
+    Settings, Task, TaskStatus, format::format_datetime, network::message::*, success_msg,
 };
 
 use crate::daemon::{internal_state::SharedState, network::response_helper::*};
 
 /// Invoked when calling `pueue enqueue`.
 /// Enqueue specific stashed tasks.
-pub fn enqueue(settings: &Settings, state: &SharedState, message: EnqueueMessage) -> Response {
+pub fn enqueue(settings: &Settings, state: &SharedState, message: EnqueueRequest) -> Response {
     let mut state = state.lock().unwrap();
     // Get the affected task ids, based on the task selection.
     let selected_tasks = match message.tasks {

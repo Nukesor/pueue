@@ -1,13 +1,9 @@
-use pueue_lib::{
-    log::clean_log_handles,
-    network::message::*,
-    task::{TaskResult, TaskStatus},
-};
+use pueue_lib::{TaskResult, TaskStatus, log::clean_log_handles, network::message::*};
 
 use super::*;
 use crate::{daemon::internal_state::SharedState, ok_or_save_state_failure};
 
-fn construct_success_clean_message(message: CleanMessage) -> String {
+fn construct_success_clean_message(message: CleanRequest) -> String {
     let successful_only_fix = if message.successful_only {
         " successfully"
     } else {
@@ -24,7 +20,7 @@ fn construct_success_clean_message(message: CleanMessage) -> String {
 
 /// Invoked when calling `pueue clean`.
 /// Remove all failed or done tasks from the state.
-pub fn clean(settings: &Settings, state: &SharedState, message: CleanMessage) -> Response {
+pub fn clean(settings: &Settings, state: &SharedState, message: CleanRequest) -> Response {
     let mut state = state.lock().unwrap();
 
     let filtered_tasks =
@@ -75,8 +71,8 @@ mod tests {
     use super::{super::fixtures::*, *};
     use crate::daemon::internal_state::state::InternalState;
 
-    fn get_message(successful_only: bool, group: Option<String>) -> CleanMessage {
-        CleanMessage {
+    fn get_message(successful_only: bool, group: Option<String>) -> CleanRequest {
+        CleanRequest {
             successful_only,
             group,
         }

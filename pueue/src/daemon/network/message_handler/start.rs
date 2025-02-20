@@ -1,10 +1,10 @@
-use pueue_lib::{network::message::*, settings::Settings, success_msg, task::TaskStatus};
+use pueue_lib::{Settings, TaskStatus, network::message::*, success_msg};
 
 use crate::daemon::{internal_state::SharedState, network::response_helper::*, process_handler};
 
 /// Invoked when calling `pueue start`.
 /// Forward the start message to the task handler, which then starts the process(es).
-pub fn start(settings: &Settings, state: &SharedState, message: StartMessage) -> Response {
+pub fn start(settings: &Settings, state: &SharedState, message: StartRequest) -> Response {
     let mut state = state.lock().unwrap();
     // If a group is selected, make sure it exists.
     if let TaskSelection::Group(group) = &message.tasks {

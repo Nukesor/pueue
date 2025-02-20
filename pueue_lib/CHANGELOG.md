@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project adheres **somewhat** to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 The concept of SemVer is applied to the daemon/client API, but not the library API itself.
 
+## [0.29. ] - unreleased
+
+### Changed
+
+- Streamline all `Request` and `Response` variant names and struct names used in unit variant.
+
 ## [0.28.1] - 2025-02-17
 
 ### Added

@@ -1,4 +1,4 @@
-use pueue_lib::{client::Client, network::message::EnvMessage};
+use pueue_lib::{client::Client, network::message::EnvRequest};
 
 use super::handle_response;
 use crate::{
@@ -13,12 +13,12 @@ pub async fn env(client: &mut Client, style: &OutputStyle, cmd: EnvCommand) -> R
             task_id,
             key,
             value,
-        } => EnvMessage::Set {
+        } => EnvRequest::Set {
             task_id,
             key,
             value,
         },
-        EnvCommand::Unset { task_id, key } => EnvMessage::Unset { task_id, key },
+        EnvCommand::Unset { task_id, key } => EnvRequest::Unset { task_id, key },
     };
 
     client.send_request(request).await?;

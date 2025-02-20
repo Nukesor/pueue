@@ -7,7 +7,7 @@ use pueue_lib::{
     Response,
     client::Client,
     log::{get_log_file_handle, get_log_path, seek_to_last_lines},
-    network::message::StreamRequestMessage,
+    network::message::StreamRequest,
 };
 use tokio::time::sleep;
 
@@ -53,7 +53,7 @@ pub async fn remote_follow(
 ) -> Result<()> {
     // Request the log stream.
     client
-        .send_request(StreamRequestMessage { task_id, lines })
+        .send_request(StreamRequest { task_id, lines })
         .await?;
 
     // Receive the stream until the connection is closed, breaks or another failure appears.

@@ -3,7 +3,7 @@ use std::{
     path::Path,
 };
 
-use pueue_lib::{network::message::*, task::Task};
+use pueue_lib::{Task, network::message::*};
 use tempfile::TempDir;
 
 use crate::{helper::*, internal_prelude::*};
@@ -94,7 +94,7 @@ async fn test_partial_log() -> Result<()> {
     println!("Actual log file contents: \n{content}");
 
     // Request a partial log for task 0
-    let log_message = LogRequestMessage {
+    let log_message = LogRequest {
         tasks: TaskSelection::TaskIds(vec![0]),
         send_logs: true,
         lines: Some(5),
@@ -110,7 +110,7 @@ async fn test_partial_log() -> Result<()> {
     let output = logs
         .output
         .clone()
-        .ok_or(eyre!("Didn't find output on TaskLogMessage"))?;
+        .ok_or(eyre!("Didn't find output on TaskLogResponse"))?;
     let output = decompress_log(output)?;
 
     // Make sure it's the same
@@ -131,7 +131,7 @@ async fn test_correct_log_order() -> Result<()> {
     wait_for_task_condition(shared, 0, Task::is_done).await?;
 
     // Request all log lines
-    let log_message = LogRequestMessage {
+    let log_message = LogRequest {
         tasks: TaskSelection::TaskIds(vec![0]),
         send_logs: true,
         lines: None,
@@ -147,7 +147,7 @@ async fn test_correct_log_order() -> Result<()> {
     let output = logs
         .output
         .clone()
-        .ok_or(eyre!("Didn't find output on TaskLogMessage"))?;
+        .ok_or(eyre!("Didn't find output on TaskLogResponse"))?;
     let output = decompress_log(output)?;
 
     // Make sure it's the same
@@ -174,7 +174,7 @@ async fn logs_of_group() -> Result<()> {
     wait_for_task_condition(shared, 1, Task::is_done).await?;
 
     // Request the task's logs.
-    let message = LogRequestMessage {
+    let message = LogRequest {
         tasks: TaskSelection::Group("test_2".to_string()),
         send_logs: true,
         lines: None,
@@ -208,7 +208,7 @@ async fn logs_for_all() -> Result<()> {
     wait_for_task_condition(shared, 1, Task::is_done).await?;
 
     // Request the task's logs.
-    let message = LogRequestMessage {
+    let message = LogRequest {
         tasks: TaskSelection::All,
         send_logs: true,
         lines: None,
