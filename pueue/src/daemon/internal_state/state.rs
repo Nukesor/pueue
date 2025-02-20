@@ -254,7 +254,7 @@ impl InternalState {
         let mut temp = path.join("state.json.partial");
         let mut real = path.join("state.json");
 
-        if settings.daemon.compress_status_file {
+        if settings.daemon.compress_state_file {
             temp = path.join("state.json.gz.partial");
             real = path.join("state.json.gz");
 
@@ -290,7 +290,7 @@ impl InternalState {
         let pueue_directory = settings.shared.pueue_directory();
         let mut path = pueue_directory.join("state.json");
 
-        if settings.daemon.compress_status_file {
+        if settings.daemon.compress_state_file {
             path = pueue_directory.join("state.json.gz");
         }
 
@@ -302,7 +302,7 @@ impl InternalState {
         info!("Restoring state");
 
         // Try to load the file.
-        let data = if settings.daemon.compress_status_file {
+        let data = if settings.daemon.compress_state_file {
             let file = File::open(path)?;
             let mut decoder = flate2::read::GzDecoder::new(file);
             let mut data = String::new();

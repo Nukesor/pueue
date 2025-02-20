@@ -11,7 +11,7 @@ use crate::{helper::*, internal_prelude::*};
 #[tokio::test]
 async fn test_start_running(#[case] compress: bool) -> Result<()> {
     let (mut settings, tempdir) = daemon_base_setup()?;
-    settings.daemon.compress_status_file = compress;
+    settings.daemon.compress_state_file = compress;
     settings
         .save(&Some(tempdir.path().join("pueue.yml")))
         .context("Couldn't write pueue config to temporary directory")?;
@@ -46,7 +46,7 @@ async fn test_start_running(#[case] compress: bool) -> Result<()> {
 #[tokio::test]
 async fn test_start_paused(#[case] compress: bool) -> Result<()> {
     let (mut settings, tempdir) = daemon_base_setup()?;
-    settings.daemon.compress_status_file = compress;
+    settings.daemon.compress_state_file = compress;
     settings
         .save(&Some(tempdir.path().join("pueue.yml")))
         .context("Couldn't write pueue config to temporary directory")?;

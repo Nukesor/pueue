@@ -143,7 +143,7 @@ pub struct Daemon {
     /// The state tends to be quite large for many tasks, as the whole environment is copied every
     /// time. You can expect a ~10 compression ratio.
     #[serde(default = "Default::default")]
-    pub compress_status_file: bool,
+    pub compress_state_file: bool,
     /// The callback that's called whenever a task finishes.
     pub callback: Option<String>,
     /// Environment variables that can be will be injected into all executed processes.
@@ -218,7 +218,7 @@ impl Default for Daemon {
             pause_all_on_failure: false,
             callback: None,
             callback_log_lines: default_callback_log_lines(),
-            compress_status_file: false,
+            compress_state_file: false,
             shell_command: None,
             env_vars: HashMap::new(),
         }

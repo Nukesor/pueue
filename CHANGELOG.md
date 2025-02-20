@@ -79,7 +79,7 @@ Upon updating Pueue and restarting the daemon, the previous state will be wiped,
 - Print most of Pueue's info/log messages to `stderr`. Only keep useful stuff like json and task log output on `stdout`.
 - **Breaking**: Ported from `anyhow` to `color_eyre` for prettier log output.
 - **Breaking**: Switch `cbor` handling library, potentially breaking backwards-compatible communication on a data format level.
-- Option to save the state in compressed form. This can be toggled with the `daemon.compress_status_file` config file.
+- Option to save the state in compressed form. This can be toggled with the `daemon.compress_state_file` config file.
   Preliminary testing shows significant compression ratios (up to x15), which helps with large states in embedded and I/O bound environments.
 
 ### Add
