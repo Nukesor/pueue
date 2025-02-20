@@ -275,9 +275,16 @@ pub enum ShutdownRequest {
 }
 impl_into_request!(ShutdownRequest, Request::DaemonShutdown);
 
+/// Request the live streaming of a set of running tasks.
+///
+/// **WARNING**:
+/// Even though this type currently accepts a TaskSelection, only
+/// `TaskSelection::TaskIds(vec![])` and `TaskSelection::TaskIds(vec![id])` are accepted.
+/// We already use this format in preparation for <https://github.com/Nukesor/pueue/issues/614>
+/// That way we can stay forwards compatible without having to break the API.
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct StreamRequest {
-    pub task_id: Option<usize>,
+    pub tasks: TaskSelection,
     pub lines: Option<usize>,
 }
 impl_into_request!(StreamRequest, Request::Stream);

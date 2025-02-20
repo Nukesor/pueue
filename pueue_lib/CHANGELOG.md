@@ -11,6 +11,7 @@ The concept of SemVer is applied to the daemon/client API, but not the library A
 ### Changed
 
 - Streamline all `Request` and `Response` variant names and struct names used in unit variant.
+- Prepare `Request::Stream` and `Response::Stream` to be compatible with multiple follow tasks in the scope of [#614](https://github.com/Nukesor/pueue/issues/614).
 
 ## [0.28.1] - 2025-02-17
 

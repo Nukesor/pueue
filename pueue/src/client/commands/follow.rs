@@ -7,7 +7,7 @@ use pueue_lib::{
     Response,
     client::Client,
     log::{get_log_file_handle, get_log_path, seek_to_last_lines},
-    network::message::StreamRequest,
+    network::message::{StreamRequest, TaskSelection},
 };
 use tokio::time::sleep;
 
@@ -51,18 +51,25 @@ pub async fn remote_follow(
     task_id: Option<usize>,
     lines: Option<usize>,
 ) -> Result<()> {
+    let task_ids = task_id.map(|id| vec![id]).unwrap_or_default();
+
     // Request the log stream.
     client
-        .send_request(StreamRequest { task_id, lines })
+        .send_request(StreamRequest {
+            tasks: TaskSelection::TaskIds(task_ids),
+            lines,
+        })
         .await?;
 
     // Receive the stream until the connection is closed, breaks or another failure appears.
     loop {
         let response = client.receive_response().await?;
         match response {
-            Response::Stream(text) => {
-                print!("{text}");
-                io::stdout().flush().unwrap();
+            Response::Stream(response) => {
+                for (_, text) in response.logs {
+                    print!("{text}");
+                    io::stdout().flush().unwrap();
+                }
                 continue;
             }
             Response::Close => break,

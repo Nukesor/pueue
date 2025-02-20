@@ -64,7 +64,7 @@ pub enum Response {
     Group(GroupResponse),
 
     /// The next chunk of output, that's send to the client.
-    Stream(String),
+    Stream(StreamResponse),
 
     Success(String),
     Failure(String),
@@ -116,3 +116,12 @@ pub struct GroupResponse {
     pub groups: BTreeMap<String, Group>,
 }
 impl_into_response!(GroupResponse, Response::Group);
+
+/// Live log output returned by the daemon.
+///
+/// The logs are ordered by task id.
+#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
+pub struct StreamResponse {
+    pub logs: BTreeMap<usize, String>,
+}
+impl_into_response!(StreamResponse, Response::Stream);
