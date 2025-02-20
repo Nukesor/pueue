@@ -33,39 +33,39 @@
 
 use std::{
     env,
-    ffi::{c_void, OsString},
+    ffi::{OsString, c_void},
     iter,
     path::PathBuf,
     ptr,
     sync::{
-        atomic::{AtomicBool, Ordering},
-        mpsc::{channel, Receiver, Sender},
         Arc, Mutex, OnceLock,
+        atomic::{AtomicBool, Ordering},
+        mpsc::{Receiver, Sender, channel},
     },
     thread,
     time::Duration,
 };
 
 use windows::{
-    core::{Free, PCWSTR, PWSTR},
     Win32::{
         Foundation::{HANDLE, LUID},
         Security::{
-            AdjustTokenPrivileges, DuplicateTokenEx, LookupPrivilegeValueW, SecurityIdentification,
-            TokenPrimary, SE_PRIVILEGE_ENABLED, SE_PRIVILEGE_REMOVED, SE_TCB_NAME,
-            TOKEN_ACCESS_MASK, TOKEN_ADJUST_PRIVILEGES, TOKEN_PRIVILEGES,
+            AdjustTokenPrivileges, DuplicateTokenEx, LookupPrivilegeValueW, SE_PRIVILEGE_ENABLED,
+            SE_PRIVILEGE_REMOVED, SE_TCB_NAME, SecurityIdentification, TOKEN_ACCESS_MASK,
+            TOKEN_ADJUST_PRIVILEGES, TOKEN_PRIVILEGES, TokenPrimary,
         },
         System::{
             Environment::{CreateEnvironmentBlock, DestroyEnvironmentBlock},
             RemoteDesktop::{WTSGetActiveConsoleSessionId, WTSQueryUserToken},
             SystemServices::MAXIMUM_ALLOWED,
             Threading::{
-                CreateProcessAsUserW, GetCurrentProcess, GetExitCodeProcess, OpenProcessToken,
-                TerminateProcess, WaitForSingleObject, CREATE_NO_WINDOW,
-                CREATE_UNICODE_ENVIRONMENT, INFINITE, PROCESS_INFORMATION, STARTUPINFOW,
+                CREATE_NO_WINDOW, CREATE_UNICODE_ENVIRONMENT, CreateProcessAsUserW,
+                GetCurrentProcess, GetExitCodeProcess, INFINITE, OpenProcessToken,
+                PROCESS_INFORMATION, STARTUPINFOW, TerminateProcess, WaitForSingleObject,
             },
         },
     },
+    core::{Free, PCWSTR, PWSTR},
 };
 use windows_service::{
     define_windows_service,
@@ -214,7 +214,9 @@ pub fn stop_service() -> Result<()> {
 
     match service.query_status()?.current_state {
         ServiceState::Stopped => eprintln!("Service is already stopped"),
-        ServiceState::StartPending => eprintln!("Service cannot stop because it is starting (please wait until it fully started to stop it)"),
+        ServiceState::StartPending => eprintln!(
+            "Service cannot stop because it is starting (please wait until it fully started to stop it)"
+        ),
         ServiceState::Running => {
             service.stop()?;
             println!("Successfully stopped service");
@@ -489,7 +491,7 @@ impl Child {
     fn kill(&mut self) -> Result<()> {
         if self.0.is_valid() {
             unsafe {
-                TerminateProcess(self.0 .0, 0)?;
+                TerminateProcess(self.0.0, 0)?;
             }
 
             self.0 = OwnedHandle::default();
@@ -524,7 +526,7 @@ impl EnvBlock {
     fn new(token: HANDLE) -> Result<Self> {
         let mut env = ptr::null_mut();
         unsafe {
-            CreateEnvironmentBlock(&mut env, token, false)?;
+            CreateEnvironmentBlock(&mut env, Some(token), false)?;
         }
 
         Ok(Self(env))
@@ -658,9 +660,9 @@ impl Spawner {
                 let mut process_info = PROCESS_INFORMATION::default();
                 unsafe {
                     CreateProcessAsUserW(
-                        token,
+                        Some(token),
                         PWSTR(current_exe.as_mut_ptr()),
-                        PWSTR(arguments.as_mut_ptr()),
+                        Some(PWSTR(arguments.as_mut_ptr())),
                         None,
                         None,
                         false,

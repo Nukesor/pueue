@@ -5,7 +5,7 @@ use pueue_lib::{
     log::{read_and_compress_log_file, *},
     network::{
         message::*,
-        protocol::{send_response, GenericStream},
+        protocol::{GenericStream, send_response},
     },
     settings::Settings,
 };
@@ -123,7 +123,7 @@ pub async fn follow_log(
         Err(_) => {
             return Ok(create_failure_response(
                 "Couldn't find output files for task. Maybe it finished? Try `log`",
-            ))
+            ));
         }
         Ok(handle) => handle,
     };

@@ -1,7 +1,7 @@
 use std::{
     collections::HashMap,
     env::temp_dir,
-    fs::{canonicalize, File},
+    fs::{File, canonicalize},
     io::Write,
     path::{Path, PathBuf},
     process::{Child, Command, Stdio},

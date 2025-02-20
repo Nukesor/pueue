@@ -11,7 +11,7 @@ use pueue_lib::{
 use crate::{
     daemon::{
         callbacks::{check_callbacks, spawn_callback},
-        internal_state::{children::Children, state::LockedState, SharedState},
+        internal_state::{SharedState, children::Children, state::LockedState},
         pid::cleanup_pid_file,
         process_handler::{finish::handle_finished_tasks, spawn::spawn_new},
     },

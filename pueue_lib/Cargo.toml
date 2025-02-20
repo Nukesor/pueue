@@ -24,7 +24,7 @@ chrono.workspace = true
 ciborium = { version = "0.2", features = ["std"] }
 color-eyre = { workspace = true, optional = true }
 dirs = "6.0"
-rand = "0.8"
+rand = "0.9"
 rcgen = "0.13"
 rev_buf_reader = "0.3"
 rustls = { version = "0.23", features = [

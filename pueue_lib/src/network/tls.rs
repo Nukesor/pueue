@@ -1,8 +1,8 @@
 use std::{fs::File, io::BufReader, path::Path, sync::Arc};
 
 use rustls::{
-    pki_types::{CertificateDer, PrivateKeyDer},
     ClientConfig, RootCertStore, ServerConfig,
+    pki_types::{CertificateDer, PrivateKeyDer},
 };
 use rustls_pemfile::{pkcs8_private_keys, rsa_private_keys};
 use tokio_rustls::{TlsAcceptor, TlsConnector};

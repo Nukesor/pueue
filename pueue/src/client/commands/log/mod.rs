@@ -7,7 +7,7 @@ use pueue_lib::{
     task::{Task, TaskResult, TaskStatus},
 };
 
-use super::{handle_response, selection_from_params, OutputStyle};
+use super::{OutputStyle, handle_response, selection_from_params};
 use crate::internal_prelude::*;
 
 mod json;

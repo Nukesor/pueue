@@ -7,7 +7,7 @@ use pueue_lib::{
 };
 
 use crate::daemon::{
-    internal_state::{state::LockedState, SharedState},
+    internal_state::{SharedState, state::LockedState},
     network::response_helper::task_action_response_helper,
     process_handler,
 };

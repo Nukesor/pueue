@@ -4,7 +4,7 @@ use chrono::{DateTime, Local, LocalResult};
 use pueue_lib::{
     client::Client,
     settings::Settings,
-    state::{State, PUEUE_DEFAULT_GROUP},
+    state::{PUEUE_DEFAULT_GROUP, State},
     task::Task,
 };
 

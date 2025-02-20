@@ -17,7 +17,7 @@ use tokio::try_join;
 
 use crate::{
     daemon::{
-        internal_state::{state::InternalState, SharedState},
+        internal_state::{SharedState, state::InternalState},
         network::socket::accept_incoming,
     },
     internal_prelude::*,

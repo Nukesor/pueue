@@ -1,7 +1,7 @@
 use std::{
     collections::HashMap,
-    fs::{create_dir_all, File},
-    io::{prelude::*, BufReader},
+    fs::{File, create_dir_all},
+    io::{BufReader, prelude::*},
     path::{Path, PathBuf},
 };
 
@@ -439,7 +439,7 @@ impl Settings {
             Err(error) => {
                 return Err(Error::Generic(format!(
                     "Configuration file serialization failed:\n{error}"
-                )))
+                )));
             }
         };
         let mut file = File::create(&config_path).map_err(|err| {
