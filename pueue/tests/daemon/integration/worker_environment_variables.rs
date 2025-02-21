@@ -1,4 +1,4 @@
-use pueue_lib::{network::message::TaskSelection, state::PUEUE_DEFAULT_GROUP, task::Task};
+use pueue_lib::{Task, network::message::TaskSelection, state::PUEUE_DEFAULT_GROUP};
 
 use crate::{helper::*, internal_prelude::*};
 

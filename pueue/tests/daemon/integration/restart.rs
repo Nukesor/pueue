@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use pueue_lib::{network::message::*, task::Task};
+use pueue_lib::{Task, network::message::*};
 
 use crate::{helper::*, internal_prelude::*};
 
@@ -18,7 +18,7 @@ async fn test_restart_in_place() -> Result<()> {
     let original_task = wait_for_task_condition(shared, 0, Task::is_done).await?;
 
     // Restart task 0 with an sleep command and with a different path.
-    let restart_message = RestartMessage {
+    let restart_message = RestartRequest {
         tasks: vec![TaskToRestart {
             task_id: 0,
             command: "sleep 60".to_string(),
@@ -64,7 +64,7 @@ async fn test_cannot_restart_running() -> Result<()> {
     let task = get_task(shared, 1).await?;
 
     // Try to restart task 0
-    let restart_message = RestartMessage {
+    let restart_message = RestartRequest {
         tasks: vec![TaskToRestart {
             task_id: 0,
             command: task.command,

@@ -22,7 +22,7 @@ pub fn assert_failure(message: Response) {
     assert_matches!(
         message,
         Response::Failure(_),
-        "Expected to get FailureMessage, got {message:?}",
+        "Expected to get FailureResponse, got {message:?}",
     );
 }
 
@@ -103,7 +103,7 @@ pub async fn assert_worker_envs(
     // Get the log output for the task.
     let response = send_request(
         shared,
-        LogRequestMessage {
+        LogRequest {
             tasks: TaskSelection::TaskIds(vec![task_id]),
             send_logs: true,
             lines: None,

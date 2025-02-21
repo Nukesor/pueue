@@ -1,6 +1,5 @@
 use pueue_lib::{
-    Task, format::format_datetime, network::message::*, settings::Settings, success_msg,
-    task::TaskStatus,
+    Settings, Task, TaskStatus, format::format_datetime, network::message::*, success_msg,
 };
 
 use crate::daemon::{internal_state::SharedState, network::response_helper::*};
@@ -8,7 +7,7 @@ use crate::daemon::{internal_state::SharedState, network::response_helper::*};
 /// Invoked when calling `pueue stash`.
 /// Stash specific queued tasks.
 /// They won't be executed until they're enqueued or explicitly started.
-pub fn stash(settings: &Settings, state: &SharedState, message: StashMessage) -> Response {
+pub fn stash(settings: &Settings, state: &SharedState, message: StashRequest) -> Response {
     let mut state = state.lock().unwrap();
     // Get the affected task ids, based on the task selection.
     let selected_tasks = match message.tasks {

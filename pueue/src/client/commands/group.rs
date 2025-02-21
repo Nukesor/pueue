@@ -14,12 +14,12 @@ pub async fn group(
     json: bool,
 ) -> Result<()> {
     let request = match cmd {
-        Some(GroupCommand::Add { name, parallel }) => GroupMessage::Add {
+        Some(GroupCommand::Add { name, parallel }) => GroupRequest::Add {
             name: name.to_owned(),
             parallel_tasks: parallel.to_owned(),
         },
-        Some(GroupCommand::Remove { name }) => GroupMessage::Remove(name.to_owned()),
-        None => GroupMessage::List,
+        Some(GroupCommand::Remove { name }) => GroupRequest::Remove(name.to_owned()),
+        None => GroupRequest::List,
     };
 
     client.send_request(request).await?;
@@ -37,7 +37,7 @@ pub async fn group(
 
 /// Print some info about the daemon's current groups.
 /// This is used when calling `pueue group`.
-pub fn format_groups(message: GroupResponseMessage, style: &OutputStyle, json: bool) -> String {
+pub fn format_groups(message: GroupResponse, style: &OutputStyle, json: bool) -> String {
     if json {
         return serde_json::to_string(&message.groups).unwrap();
     }

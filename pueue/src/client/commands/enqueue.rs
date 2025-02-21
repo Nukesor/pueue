@@ -14,7 +14,7 @@ pub async fn enqueue(
     delay_until: Option<DateTime<Local>>,
 ) -> Result<()> {
     client
-        .send_request(EnqueueMessage {
+        .send_request(EnqueueRequest {
             tasks: selection_from_params(all, group, task_ids),
             enqueue_at: delay_until,
         })

@@ -1,4 +1,4 @@
-use pueue_lib::{network::message::*, state::GroupStatus, task::Task};
+use pueue_lib::{GroupStatus, Task, network::message::*};
 
 use crate::{helper::*, internal_prelude::*};
 
@@ -18,7 +18,7 @@ async fn test_reset() -> Result<()> {
     // Reset all groups of the daemon
     send_request(
         shared,
-        ResetMessage {
+        ResetRequest {
             target: ResetTarget::All,
         },
     )
@@ -64,7 +64,7 @@ async fn test_reset_single_group() -> Result<()> {
     // Reset only the test_2 of the daemon.
     send_request(
         shared,
-        ResetMessage {
+        ResetRequest {
             target: ResetTarget::Groups(vec!["test_2".to_string()]),
         },
     )
@@ -106,7 +106,7 @@ async fn test_reset_multiple_groups() -> Result<()> {
     // Reset only the test_2 of the daemon.
     send_request(
         shared,
-        ResetMessage {
+        ResetRequest {
             target: ResetTarget::Groups(vec!["test_2".to_string(), "test_3".to_string()]),
         },
     )

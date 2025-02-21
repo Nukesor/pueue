@@ -11,7 +11,7 @@ use flate2::Compression;
 use pueue_lib::{
     Group, GroupStatus, Settings, State, TaskResult,
     error::Error,
-    network::message::request::Shutdown,
+    network::message::request::ShutdownRequest,
     state::{FilteredTasks, PUEUE_DEFAULT_GROUP},
     task::{Task, TaskStatus},
 };
@@ -53,7 +53,7 @@ pub struct InternalState {
     /// Depending on the shutdown type, we're exiting with different exitcodes.
     /// This is runtime state and won't be serialised to disk.
     #[serde(default, skip)]
-    pub shutdown: Option<Shutdown>,
+    pub shutdown: Option<ShutdownRequest>,
 
     /// Pueue's subprocess and worker pool representation.
     /// Take a look at [Children] for more info.

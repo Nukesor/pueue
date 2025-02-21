@@ -1,5 +1,5 @@
 use pueue_lib::{
-    network::message::{KillMessage, TaskSelection},
+    network::message::{KillRequest, TaskSelection},
     task::*,
 };
 
@@ -52,7 +52,7 @@ async fn test_failing_dependency() -> Result<()> {
     // This should result in the second task failing.
     send_request(
         shared,
-        KillMessage {
+        KillRequest {
             tasks: TaskSelection::TaskIds(vec![0]),
             signal: None,
         },

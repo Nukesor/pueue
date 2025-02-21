@@ -1,6 +1,4 @@
-use pueue_lib::{
-    network::message::TaskSelection, settings::Settings, state::GroupStatus, task::TaskStatus,
-};
+use pueue_lib::{GroupStatus, Settings, TaskStatus, network::message::TaskSelection};
 
 use crate::{
     daemon::{internal_state::state::LockedState, process_handler::perform_action},

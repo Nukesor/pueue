@@ -16,7 +16,7 @@ async fn test_normal_clean() -> Result<()> {
     wait_for_task_condition(shared, 2, Task::is_running).await?;
 
     // Send the clean message
-    let clean_message = CleanMessage {
+    let clean_message = CleanRequest {
         successful_only: false,
         group: None,
     };
@@ -44,7 +44,7 @@ async fn test_successful_only_clean() -> Result<()> {
     wait_for_task_condition(shared, 1, Task::is_done).await?;
 
     // Send the clean message
-    let clean_message = CleanMessage {
+    let clean_message = CleanRequest {
         successful_only: true,
         group: None,
     };
@@ -77,7 +77,7 @@ async fn test_clean_in_selected_group() -> Result<()> {
     wait_for_task_condition(shared, 6, Task::is_running).await?;
 
     // Send the clean message
-    let clean_message = CleanMessage {
+    let clean_message = CleanRequest {
         successful_only: false,
         group: Some("other".to_string()),
     };
@@ -115,7 +115,7 @@ async fn test_clean_successful_only_in_selected_group() -> Result<()> {
     wait_for_task_condition(shared, 6, Task::is_running).await?;
 
     // Send the clean message
-    let clean_message = CleanMessage {
+    let clean_message = CleanRequest {
         successful_only: true,
         group: Some("other".to_string()),
     };

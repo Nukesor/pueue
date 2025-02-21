@@ -7,7 +7,7 @@ use crate::daemon::internal_state::SharedState;
 /// Invoked when calling `pueue send`.
 /// The message will be forwarded to the task handler, which then sends the user input to the
 /// process. In here we only do some error handling.
-pub fn send(state: &SharedState, message: SendMessage) -> Response {
+pub fn send(state: &SharedState, message: SendRequest) -> Response {
     let task_id = message.task_id;
     let mut state = state.lock().unwrap();
 

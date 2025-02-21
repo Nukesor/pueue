@@ -19,7 +19,7 @@ pub async fn kill(
     }
 
     client
-        .send_request(KillMessage {
+        .send_request(KillRequest {
             tasks: selection_from_params(all, group, task_ids),
             signal,
         })

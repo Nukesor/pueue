@@ -11,7 +11,7 @@ pub async fn switch(
     task_id_2: usize,
 ) -> Result<()> {
     client
-        .send_request(SwitchMessage {
+        .send_request(SwitchRequest {
             task_id_1,
             task_id_2,
         })

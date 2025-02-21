@@ -15,7 +15,7 @@ pub async fn pause(
     wait: bool,
 ) -> Result<()> {
     client
-        .send_request(PauseMessage {
+        .send_request(PauseRequest {
             tasks: selection_from_params(all, group, task_ids),
             wait,
         })

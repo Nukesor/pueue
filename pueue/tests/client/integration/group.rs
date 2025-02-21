@@ -1,9 +1,6 @@
 use std::collections::BTreeMap;
 
-use pueue_lib::{
-    network::message::*,
-    state::{Group, GroupStatus},
-};
+use pueue_lib::{Group, GroupStatus, network::message::*};
 
 use crate::{client::helper::*, internal_prelude::*};
 
@@ -36,7 +33,7 @@ async fn colored() -> Result<()> {
 
     // Pauses the default queue while waiting for tasks
     // We do this to ensure that paused groups are properly colored.
-    let message = PauseMessage {
+    let message = PauseRequest {
         tasks: TaskSelection::Group(PUEUE_DEFAULT_GROUP.into()),
         wait: true,
     };

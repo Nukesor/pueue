@@ -1,4 +1,4 @@
-use pueue_lib::{state::State, task::Task};
+use pueue_lib::{State, Task};
 
 use crate::{client::helper::*, internal_prelude::*};
 

@@ -5,7 +5,7 @@
 //! Depending on the target, the respective platform is read and loaded into this scope.
 use std::{collections::HashMap, process::Command};
 
-use pueue_lib::{network::message::request::Signal as InternalSignal, settings::Settings};
+use pueue_lib::{Settings, network::message::request::Signal as InternalSignal};
 
 use crate::internal_prelude::*;
 

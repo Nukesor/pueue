@@ -1,4 +1,4 @@
-use pueue_lib::{network::message::TaskSelection, state::GroupStatus};
+use pueue_lib::{GroupStatus, network::message::TaskSelection};
 use rstest::rstest;
 
 use crate::{helper::*, internal_prelude::*};

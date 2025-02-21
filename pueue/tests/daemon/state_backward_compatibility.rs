@@ -1,10 +1,10 @@
 use std::{fs::File, io::prelude::*};
 
 use pueue::daemon::internal_state::state::InternalState;
-use pueue_lib::settings::Settings;
+use pueue_lib::Settings;
 use tempfile::TempDir;
 
-use crate::{helper::enable_logger, internal_prelude::*};
+use crate::internal_prelude::*;
 
 /// 4.0.0 introduced numerous breaking changes.
 /// From here on, we now aim to once again have full backward compatibility.
@@ -17,7 +17,6 @@ use crate::{helper::enable_logger, internal_prelude::*};
 /// This should be handled as well.
 #[test]
 fn test_restore_from_old_state() -> Result<()> {
-    enable_logger();
     better_panic::install();
     let old_state = include_str!("data/v4.0.0_state.json");
 

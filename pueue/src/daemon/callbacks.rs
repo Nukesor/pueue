@@ -3,9 +3,8 @@ use std::collections::HashMap;
 use chrono::{DateTime, Local};
 use handlebars::{Handlebars, RenderError};
 use pueue_lib::{
+    Settings, Task, TaskResult, TaskStatus,
     log::{get_log_path, read_last_log_file_lines},
-    settings::Settings,
-    task::{Task, TaskResult, TaskStatus},
 };
 
 use crate::{

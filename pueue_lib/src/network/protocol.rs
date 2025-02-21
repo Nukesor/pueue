@@ -150,7 +150,7 @@ pub async fn receive_response(stream: &mut GenericStream) -> Result<Response, Er
     receive_message::<Response>(stream).await
 }
 
-/// Convenience wrapper that receives a message and converts it into a Message.
+/// Convenience wrapper that receives a message and converts it into `T`.
 pub async fn receive_message<T: DeserializeOwned + std::fmt::Debug>(
     stream: &mut GenericStream,
 ) -> Result<T, Error> {
@@ -188,7 +188,7 @@ mod test {
 
     use super::*;
     use crate::network::{
-        message::request::{Request, SendMessage},
+        message::request::{Request, SendRequest},
         socket::Stream as PueueStream,
     };
 
@@ -209,7 +209,7 @@ mod test {
 
         // The message that should be sent
         let payload = "a".repeat(100_000);
-        let request: Request = SendMessage {
+        let request: Request = SendRequest {
             task_id: 0,
             input: payload,
         }

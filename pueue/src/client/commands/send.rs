@@ -10,7 +10,7 @@ pub async fn send(
     task_id: usize,
     input: String,
 ) -> Result<()> {
-    client.send_request(SendMessage { task_id, input }).await?;
+    client.send_request(SendRequest { task_id, input }).await?;
 
     let response = client.receive_response().await?;
 

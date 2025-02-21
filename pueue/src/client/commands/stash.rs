@@ -1,5 +1,5 @@
 use chrono::{DateTime, Local};
-use pueue_lib::{client::Client, network::message::StashMessage};
+use pueue_lib::{client::Client, network::message::StashRequest};
 
 use super::{handle_response, selection_from_params};
 use crate::{client::style::OutputStyle, internal_prelude::*};
@@ -15,7 +15,7 @@ pub async fn stash(
 ) -> Result<()> {
     let selection = selection_from_params(all, group, task_ids);
     client
-        .send_request(StashMessage {
+        .send_request(StashRequest {
             tasks: selection,
             enqueue_at: delay_until,
         })

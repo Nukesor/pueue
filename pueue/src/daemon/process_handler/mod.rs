@@ -1,6 +1,6 @@
 use pueue_lib::{
-    network::message::{Shutdown, TaskSelection},
-    settings::Settings,
+    Settings,
+    network::message::{ShutdownRequest, TaskSelection},
 };
 
 use crate::{
@@ -25,10 +25,10 @@ macro_rules! ok_or_shutdown {
     ($settings:expr, $state:expr, $result:expr) => {
         match $result {
             Err(err) => {
-                use pueue_lib::network::message::Shutdown;
+                use pueue_lib::network::message::ShutdownRequest;
                 use $crate::daemon::process_handler::initiate_shutdown;
                 error!("Initializing graceful shutdown. Encountered error in TaskHandler: {err}");
-                initiate_shutdown($settings, $state, Shutdown::Emergency);
+                initiate_shutdown($settings, $state, ShutdownRequest::Emergency);
                 return;
             }
             Ok(inner) => inner,
@@ -39,7 +39,7 @@ macro_rules! ok_or_shutdown {
 /// Initiate shutdown, which includes killing all children and pausing all groups.
 /// We don't have to pause any groups, as no new tasks will be spawned during shutdown anyway.
 /// Any groups with queued tasks, will be automatically paused on state-restoration.
-pub fn initiate_shutdown(settings: &Settings, state: &mut LockedState, shutdown: Shutdown) {
+pub fn initiate_shutdown(settings: &Settings, state: &mut LockedState, shutdown: ShutdownRequest) {
     // Only start shutdown if we aren't already in one.
     // Otherwise, we might end up with an endless recursion as `kill` might fail and initiate
     // shutdown once again.

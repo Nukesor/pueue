@@ -1,9 +1,6 @@
 use std::io::Read;
 
-use pueue_lib::{
-    log::get_log_file_handle,
-    task::{TaskResult, TaskStatus},
-};
+use pueue_lib::{TaskResult, TaskStatus, log::get_log_file_handle};
 use rstest::rstest;
 
 use crate::{helper::*, internal_prelude::*};

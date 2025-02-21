@@ -13,13 +13,13 @@ pub async fn parallel(
     let request: Request = match parallel_tasks {
         Some(parallel_tasks) => {
             let group = group_or_default(&group);
-            ParallelMessage {
+            ParallelRequest {
                 parallel_tasks,
                 group,
             }
             .into()
         }
-        None => GroupMessage::List.into(),
+        None => GroupRequest::List.into(),
     };
 
     client.send_request(request).await?;

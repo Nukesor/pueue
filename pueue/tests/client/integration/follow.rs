@@ -153,9 +153,9 @@ async fn fail_on_non_existing(#[case] read_local_logs: bool) -> Result<()> {
 //     tokio::task::spawn(async move {
 //         sleep_ms(2000).await;
 //         // Reset the daemon
-//         send_message(&moved_shared, ResetMessage {})
+//         send_request(&moved_shared, ResetRequest {})
 //             .await
-//             .expect("Failed to send Start tasks message");
+//             .expect("Failed to send reset request");
 //     });
 //
 //     // Execute `follow` and remove the task

@@ -1,16 +1,14 @@
 use std::io;
 
 use crossterm::style::{Attribute, Color};
-use pueue_lib::network::message::TaskLogMessage;
+use pueue_lib::network::message::TaskLogResponse;
 use snap::read::FrameDecoder;
 
 use super::OutputStyle;
 use crate::internal_prelude::*;
 
 /// Prints log output received from the daemon.
-/// We can safely call .unwrap() on output in here, since this
-/// branch is always called after ensuring that it is `Some`.
-pub fn print_remote_log(task_log: &TaskLogMessage, style: &OutputStyle, lines: Option<usize>) {
+pub fn print_remote_log(task_log: &TaskLogResponse, style: &OutputStyle, lines: Option<usize>) {
     if let Some(bytes) = task_log.output.as_ref() {
         if !bytes.is_empty() {
             // Add a hint if we should limit the output to X lines **and** there are actually more

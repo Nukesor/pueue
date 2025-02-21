@@ -17,7 +17,7 @@ pub async fn start(
     all: bool,
 ) -> Result<()> {
     client
-        .send_request(StartMessage {
+        .send_request(StartRequest {
             tasks: selection_from_params(all, group, task_ids),
         })
         .await?;

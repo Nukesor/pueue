@@ -1,20 +1,19 @@
 use std::{collections::BTreeMap, io::Read, path::Path, time::Duration};
 
 use pueue_lib::{
-    failure_msg,
-    log::{read_and_compress_log_file, *},
+    Settings, failure_msg,
+    log::*,
     network::{
         message::*,
         protocol::{GenericStream, send_response},
     },
-    settings::Settings,
 };
 
 use crate::{daemon::internal_state::SharedState, internal_prelude::*};
 
 /// Invoked when calling `pueue log`.
 /// Return tasks and their output to the client.
-pub fn get_log(settings: &Settings, state: &SharedState, message: LogRequestMessage) -> Response {
+pub fn get_log(settings: &Settings, state: &SharedState, message: LogRequest) -> Response {
     let state = { state.lock().unwrap().clone() };
 
     let task_ids = match message.tasks {
@@ -45,7 +44,7 @@ pub fn get_log(settings: &Settings, state: &SharedState, message: LogRequestMess
                 (None, true)
             };
 
-            let task_log = TaskLogMessage {
+            let task_log = TaskLogResponse {
                 task: task.clone(),
                 output,
                 output_complete,
@@ -59,44 +58,54 @@ pub fn get_log(settings: &Settings, state: &SharedState, message: LogRequestMess
 /// Handle the continuous stream of a some log output.
 ///
 /// It's not actually a stream in the sense of a low-level network stream, but rather a series of
-/// `Message::Stream` messages, that each send a portion of new log output.
+/// [Response::Stream] messages, that each send a portion of new log output.
 ///
 /// It's basically our own chunked stream implementation on top of the protocol we established.
 pub async fn follow_log(
     pueue_directory: &Path,
     stream: &mut GenericStream,
     state: &SharedState,
-    message: StreamRequestMessage,
+    message: StreamRequest,
 ) -> Result<Response> {
     // The user can specify the id of the task they want to follow
     // If the id isn't specified and there's only a single running task, this task will be used.
     // However, if there are multiple running tasks, the user will have to specify an id.
-    let task_id = if let Some(task_id) = message.task_id {
-        task_id
+    //
+    // NOTE: Read the docs of [StreamRequest] why we're not yet supporting selection of multiple
+    // tasks yet.
+    let task_id = if let TaskSelection::TaskIds(task_ids) = message.tasks {
+        task_ids.first().cloned()
     } else {
-        // Get all ids of running tasks
-        let state = state.lock().unwrap();
-        let running_ids: Vec<_> = state
-            .tasks()
-            .iter()
-            .filter_map(|(&id, t)| if t.is_running() { Some(id) } else { None })
-            .collect();
+        None
+    };
 
-        // Return a message on "no" or multiple running tasks.
-        match running_ids.len() {
-            0 => {
-                return Ok(create_failure_response("There are no running tasks."));
-            }
-            1 => running_ids[0],
-            _ => {
-                let running_ids = running_ids
-                    .iter()
-                    .map(|id| id.to_string())
-                    .collect::<Vec<_>>()
-                    .join(", ");
-                return Ok(create_failure_response(format!(
-                    "Multiple tasks are running, please select one of the following: {running_ids}"
-                )));
+    let task_id = match task_id {
+        Some(id) => id,
+        None => {
+            // Get all ids of running tasks
+            let state = state.lock().unwrap();
+            let running_ids: Vec<_> = state
+                .tasks()
+                .iter()
+                .filter_map(|(&id, t)| if t.is_running() { Some(id) } else { None })
+                .collect();
+
+            // Return a message on "no" or multiple running tasks.
+            match running_ids.len() {
+                0 => {
+                    return Ok(create_failure_response("There are no running tasks."));
+                }
+                1 => running_ids[0],
+                _ => {
+                    let running_ids = running_ids
+                        .iter()
+                        .map(|id| id.to_string())
+                        .collect::<Vec<_>>()
+                        .join(", ");
+                    return Ok(create_failure_response(format!(
+                        "Multiple tasks are running, please select one of the following: {running_ids}"
+                    )));
+                }
             }
         }
     };
@@ -160,8 +169,10 @@ pub async fn follow_log(
 
         // Only send a message, if there's actual new content.
         if !text.is_empty() {
+            let mut logs = BTreeMap::new();
+            logs.insert(task_id, text);
             // Send the next chunk.
-            let response = Response::Stream(text);
+            let response = Response::Stream(StreamResponse { logs });
             send_response(response, stream).await?;
         }
 

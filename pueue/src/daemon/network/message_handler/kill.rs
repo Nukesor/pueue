@@ -1,4 +1,4 @@
-use pueue_lib::{network::message::*, settings::Settings, success_msg, task::Task};
+use pueue_lib::{Settings, Task, network::message::*, success_msg};
 
 use crate::daemon::{
     internal_state::SharedState,
@@ -8,7 +8,7 @@ use crate::daemon::{
 
 /// Invoked when calling `pueue kill`.
 /// Forward the kill message to the task handler, which then kills the process.
-pub fn kill(settings: &Settings, state: &SharedState, message: KillMessage) -> Response {
+pub fn kill(settings: &Settings, state: &SharedState, message: KillRequest) -> Response {
     let mut state = state.lock().unwrap();
 
     // If a group is selected, make sure it exists.

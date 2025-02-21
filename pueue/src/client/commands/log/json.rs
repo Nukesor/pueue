@@ -5,7 +5,7 @@ use std::{
 
 use pueue_lib::{
     log::{get_log_file_handle, read_last_lines},
-    network::message::TaskLogMessage,
+    network::message::TaskLogResponse,
     settings::Settings,
     task::Task,
 };
@@ -19,16 +19,18 @@ pub struct TaskLog {
     pub output: String,
 }
 
+/// Print some log output in JSON serialized form.
+///
+/// If the log isn't read from the disk but rather received from the daemon, we have to
+/// convert the received [TaskLogResponse] into a proper JSON serializable format.
+/// Output in [TaskLogResponse], is usually compressed, so we need to decompress it first.
 pub fn print_log_json(
-    task_log_messages: BTreeMap<usize, TaskLogMessage>,
+    task_log_messages: BTreeMap<usize, TaskLogResponse>,
     settings: &Settings,
     lines: Option<usize>,
 ) {
     let mut tasks: BTreeMap<usize, Task> = BTreeMap::new();
     let mut task_log: BTreeMap<usize, String> = BTreeMap::new();
-    // Convert the TaskLogMessage into a proper JSON serializable format.
-    // Output in TaskLogMessages, if it exists, is compressed.
-    // We need to decompress and convert to normal strings.
     for (id, message) in task_log_messages {
         tasks.insert(id, message.task);
 

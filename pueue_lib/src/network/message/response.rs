@@ -34,8 +34,8 @@ pub fn create_failure_response<T: ToString>(text: T) -> Response {
 }
 
 /// Macro to simplify creating [From] implementations for each variant-contained
-/// Response; e.g. `impl_into_response!(AddMessage, Response::Add)` to make it possible
-/// to use `AddMessage { }.into()` and get a `Message::Add()` value.
+/// Response; e.g. `impl_into_response!(AddRequest, Response::Add)` to implement
+/// use `AddedTaskResponse::into()` and get a [Response::AddedTask] value.
 macro_rules! impl_into_response {
     ($inner:ty, $variant:expr) => {
         impl From<$inner> for Response {
@@ -50,7 +50,7 @@ macro_rules! impl_into_response {
 /// Everything that's send by the client is represented using by this enum.
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub enum Response {
-    AddedTask(AddedTaskMessage),
+    AddedTask(AddedTaskResponse),
 
     /// The daemon locked the tasks and responds with the tasks' details.
     Edit(Vec<EditableTask>),
@@ -59,12 +59,12 @@ pub enum Response {
 
     /// The log returned from the daemon for a bunch of [`Task`]s
     /// This is the response to [`super::Request::Log`]
-    Log(BTreeMap<usize, TaskLogMessage>),
+    Log(BTreeMap<usize, TaskLogResponse>),
 
-    Group(GroupResponseMessage),
+    Group(GroupResponse),
 
     /// The next chunk of output, that's send to the client.
-    Stream(String),
+    Stream(StreamResponse),
 
     Success(String),
     Failure(String),
@@ -81,28 +81,28 @@ impl Response {
 }
 
 #[derive(PartialEq, Eq, Clone, Debug, Default, Deserialize, Serialize)]
-pub struct AddedTaskMessage {
+pub struct AddedTaskResponse {
     pub task_id: usize,
     pub enqueue_at: Option<DateTime<Local>>,
     pub group_is_paused: bool,
 }
-impl_into_response!(AddedTaskMessage, Response::AddedTask);
+impl_into_response!(AddedTaskResponse, Response::AddedTask);
 
 /// Helper struct for sending tasks and their log output to the client.
 #[derive(PartialEq, Eq, Clone, Deserialize, Serialize)]
-pub struct TaskLogMessage {
+pub struct TaskLogResponse {
     pub task: Task,
     /// Indicates whether the log output has been truncated or not.
     pub output_complete: bool,
     pub output: Option<Vec<u8>>,
 }
-impl_into_response!(BTreeMap<usize, TaskLogMessage>, Response::Log);
+impl_into_response!(BTreeMap<usize, TaskLogResponse>, Response::Log);
 
-/// We use a custom `Debug` implementation for [TaskLogMessage], as the `output` field
+/// We use a custom `Debug` implementation for [TaskLogResponse], as the `output` field
 /// has too much info in it and renders log output unreadable.
-impl std::fmt::Debug for TaskLogMessage {
+impl std::fmt::Debug for TaskLogResponse {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("TaskLogMessage")
+        f.debug_struct("TaskLogResponse")
             .field("task", &self.task)
             .field("output_complete", &self.output_complete)
             .field("output", &"hidden")
@@ -112,7 +112,16 @@ impl std::fmt::Debug for TaskLogMessage {
 
 /// Group info send by the daemon.
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
-pub struct GroupResponseMessage {
+pub struct GroupResponse {
     pub groups: BTreeMap<String, Group>,
 }
-impl_into_response!(GroupResponseMessage, Response::Group);
+impl_into_response!(GroupResponse, Response::Group);
+
+/// Live log output returned by the daemon.
+///
+/// The logs are ordered by task id.
+#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
+pub struct StreamResponse {
+    pub logs: BTreeMap<usize, String>,
+}
+impl_into_response!(StreamResponse, Response::Stream);
