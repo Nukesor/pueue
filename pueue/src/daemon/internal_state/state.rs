@@ -110,9 +110,9 @@ impl InternalState {
 
     /// Add a new task
     pub fn add_task(&mut self, mut task: Task) -> usize {
-        let next_id = match self.tasks().keys().max() {
+        let next_id = match self.tasks().last_key_value() {
             None => 0,
-            Some(id) => id + 1,
+            Some((id, _)) => id + 1,
         };
         task.id = next_id;
         self.tasks_mut().insert(next_id, task);

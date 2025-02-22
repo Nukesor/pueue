@@ -7,6 +7,7 @@ ignore:
   - "LICENSE"
   - ".github"
   - ".gitignore"
+  - "pueue/benches"
 
 coverage:
   status:
