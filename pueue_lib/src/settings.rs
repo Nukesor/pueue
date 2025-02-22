@@ -84,6 +84,7 @@ pub struct Shared {
 
 /// The mode in which the client should edit tasks.
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize, Default)]
+#[serde(rename_all = "lowercase")]
 pub enum EditMode {
     /// Edit by having one large file with all tasks to be edited inside at the same time
     #[default]
