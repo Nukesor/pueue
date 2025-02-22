@@ -110,8 +110,6 @@ Upon updating Pueue and restarting the daemon, the previous state will be wiped,
 - **Breaking**: Ported from `anyhow` to `color_eyre` for prettier log output.
 - **Breaking**: Switch `cbor` handling library, breaking backwards-compatible communication on a data format level.
 - **Breaking**: Switch protocol message representation, completely breaking backwards compatibility.
-- Option to save the state in compressed form. This can be toggled with the `daemon.compress_state_file` config file.
-  Preliminary testing shows significant compression ratios (up to x15), which helps with large states in embedded and I/O bound environments.
 
 ### Add
 
@@ -128,6 +126,12 @@ Upon updating Pueue and restarting the daemon, the previous state will be wiped,
 - Add `queued_count` and `stashed_count` to callback template variables. This allows users to fire callbacks when whole groups are finished. [#578](https://github.com/Nukesor/pueue/issues/578)
 - Add new subcommand to set or unset environment variables for tasks. [#503](https://github.com/Nukesor/pueue/issues/503)
 - Add `add --follow` flag that may be called in combination with `--immediate` [#592](https://github.com/Nukesor/pueue/issues/592)
+- Add option to save the state in compressed form. This can be toggled with the `daemon.compress_state_file` config file.
+  Preliminary testing shows significant compression ratios (up to x15), which helps with large states in embedded and I/O bound environments.
+  On my local machine with a state of 400 tasks, state file size **shrinks** from \~2MB to \~120KB and save time **increases** from \~8ms to \~20ms.
+  Due to the very repetitive nature of the state's data (mostly environment variables), the `gzip` compression algorithm with the `flate2` implementation has been chosen.
+  It shows similar compression rations to `zstd` on level `7`, which is more than enough and the dependency is significantly lighter than `zstd`.
+  `snappy`, which is already a dependency, has also been considered, but it has much worse compression ratios (~2MB -> ~300KB).
 
 ### Fixed
 

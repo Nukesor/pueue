@@ -63,7 +63,7 @@ pub fn clean_log_handles(task_id: usize, pueue_dir: &Path) {
 /// Return type is `(Vec<u8>, bool)`
 /// - `Vec<u8>` the compressed task output.
 /// - `bool` Whether the full task's output has been read. `false` indicate that the log output has
-///   been truncated
+///   been truncated.
 pub fn read_and_compress_log_file(
     task_id: usize,
     pueue_dir: &Path,
@@ -74,14 +74,16 @@ pub fn read_and_compress_log_file(
     let mut content = Vec::new();
 
     // Indicates whether the full log output is shown or just the last part of it.
+    // This may be true even if, for example, only the last 15 lines were requested
+    // but the log is only 10 lines long.
     let mut output_complete = true;
 
-    // Move the cursor to the last few lines of both files.
+    // If requested, move the cursor to the last few lines of the file.
     if let Some(lines) = lines {
         output_complete = seek_to_last_lines(&mut file, lines)?;
     }
 
-    // Compress the full log input and pipe it into the snappy compressor
+    // Pipe the remaining log output file it into the snappy compressor
     {
         let mut compressor = FrameEncoder::new(&mut content);
         io::copy(&mut file, &mut compressor)
