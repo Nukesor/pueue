@@ -7,6 +7,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## \[4.0.0\] - unreleased
 
 This release aims to further improve Pueue and to rectify some old design decisions.
+Large portions of both the library and the executables' code have been refactored and the protocol has been reworked, which completely breaks backwards compatibility.
+
+Read the `Change` section for more details.
 
 ### Removing internal channel communication
 
@@ -30,7 +33,10 @@ Task editing was a bit tedious until recently.
 One could only edit a single task at a time and you had to specify which properties you wanted to add.
 Each property was then opened in a new `$EDITOR` session, which meant that users had to open and close editors up to four times to edit a single task.
 
-After a lot of consideration, a new way of editing tasks has been designed that allows simple and convenient editing of multiple tasks at once.
+After a lot of consideration, tasks editing has been redesigned, provoding two ways that allow simple and convenient editing of multiple tasks at once.
+
+#### File based approach
+
 For this, a temporary directory is created for every task to edit and a new file for every property, resulting in the following structure:
 
 ```
@@ -39,15 +45,39 @@ For this, a temporary directory is created for every task to edit and a new file
    │ * label
    │ * path
    └ * priority
+   📁 1/
+   │ * command
+   │ * label
+   │ * path
+   └ * priority
 ```
 
 You can then just navigate the resulting file structure and edit the properties you want in the editor of your choice.
+This solution is obviously flawed if your editor doesn't provide an in-editor file tree like `helix`.
 
-I'm aware that this might not be for everyone, so feedback is very much encouraged over [here](https://github.com/Nukesor/pueue/issues/553).
+This mode is enabled by setting `client.edit_mode` to `files`.
+
+#### Toml based approach
+
+In this mode, all tasks to be edited are serialized into a single `toml` file that's then opened in the editor of your choice.
+
+```toml
+[1]
+id = 1
+command = "ls"
+path = "/tmp"
+priority = 0
+```
+
+This mode is very convenient for editing simple tasks, but has the drawback that users need to know the TOML format and have to make sure to not mess up character escaping.
+For example, multi-line commands or commands that contain special/reserved characters in TOML will need special care.
+
+Based on some feedback, this mode is apparently the most asked for, so this is enabled by default.
+It can also be explicitly set via `client.edit_mode: "toml"`.
 
 ### Runtime invariants
 
-TLDR: A new task state representation has been introduced, that's significantly cleaner and fixes some bugs.
+TLDR: A new task state representation has been introduced, which is significantly cleaner and fixes some bugs.
 However, it breaks compatibility with old states, so ensure there are no important tasks in your queue before updating. You'll also need to recreate groups.
 
 ---
@@ -55,7 +85,7 @@ However, it breaks compatibility with old states, so ensure there are no importa
 Previously, various task-state related invariants were manually enforced during runtime. For example, a `Queued` task should not have a `start` or `enqueued_at` time set.
 Turns out, doing this manually is highly error-prone, as it is difficult to account for every state transition and ensure everything is set or cleaned up correctly.
 
-Fortunately, this issue can be addressed in a more elegant way in Rust using struct enums. This method enforces invariants via the type system at compile time.
+Fortunately, this issue can be addressed in a more elegant way by using Rust's struct enums. This method enforces invariants via the type system at compile time.
 Although the affected code became slightly more verbose (about 25% larger), it eliminated an entire class of bugs.
 During this refactoring, I discovered at least two instances where I had forgotten to clear a variable, leading to inconsistent state.
 
@@ -66,19 +96,20 @@ Upon updating Pueue and restarting the daemon, the previous state will be wiped,
 
 - **Breaking**: Refactor internal task state. Some task variables have been moved into the `TaskStatus` enum, which now enforces various invariants during compile time via the type system.
   Due to this, several subtle time related inconsistencies (task start/stop/enqueue times) have been fixed. [#556](https://github.com/Nukesor/pueue/pull/556) \
-  **Important: This completely breaks backwards compatibility, including previous state.**
+  **Important: This completely breaks pre v4.0 states.**
   **Important: The Pueue daemon needs to be restarted and the state will be wiped clean.**
 - **Breaking**: Streamlined `pueue log` parameters to behave the same way as `start`, `pause` or `kill`. [#509](https://github.com/Nukesor/pueue/issues/509)
 - **Breaking**: Remove the `--children` commandline flags, that have been deprecated and no longer serve any function since `v3.0.0`.
 - Send log output to `stderr` instead of `stdout` [#562](https://github.com/Nukesor/pueue/issues/562).
 - Change default log level from error to warning [#562](https://github.com/Nukesor/pueue/issues/562).
-- Bumped MSRV to 1.70.
+- Bumped MSRV to 1.85 and Rust edition to 2024.
 - **Breaking**: Redesigned task editing process [#553](https://github.com/Nukesor/pueue/issues/553).
-  Pueue now allows editing all properties a task in one editor session. There're two modes to do so: `toml` and `files`.
+  Pueue now allows editing all properties a task in one editor session. There're two modes to do so: `toml` and `files`, which is configurable via the `client.edit_mode` settings field.
 - Revisited, fixed and cleaned up CLI help texts.
 - Print most of Pueue's info/log messages to `stderr`. Only keep useful stuff like json and task log output on `stdout`.
 - **Breaking**: Ported from `anyhow` to `color_eyre` for prettier log output.
-- **Breaking**: Switch `cbor` handling library, potentially breaking backwards-compatible communication on a data format level.
+- **Breaking**: Switch `cbor` handling library, breaking backwards-compatible communication on a data format level.
+- **Breaking**: Switch protocol message representation, completely breaking backwards compatibility.
 - Option to save the state in compressed form. This can be toggled with the `daemon.compress_state_file` config file.
   Preliminary testing shows significant compression ratios (up to x15), which helps with large states in embedded and I/O bound environments.
 
