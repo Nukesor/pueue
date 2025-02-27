@@ -96,6 +96,10 @@ As a general rule of thumb, the [`SharedState`] should only ever be locked in me
 Always make sure that you lock the state for a given "unit of work".
 This rule allows us to be very conservative with state locking to prevent deadlocks.
 
+## Task State Flow Diagram
+
+![State Flow Diagram](Pueue-State-Diagram.svg)
+
 ## Code Style
 
 This is a result of `tokei ./pueue ./pueue_lib` on commit `1db4116` at the 2025-02-08.
