@@ -107,6 +107,7 @@ Upon updating Pueue and restarting the daemon, the previous state will be wiped,
   Pueue now allows editing all properties a task in one editor session. There're two modes to do so: `toml` and `files`, which is configurable via the `client.edit_mode` settings field.
 - Revisited, fixed and cleaned up CLI help texts.
 - Print most of Pueue's info/log messages to `stderr`. Only keep useful stuff like json and task log output on `stdout`.
+- **Breaking**: Allow `--immediate` flag instead of `--start--immediately` on `pueue restart` for consistency with `pueue add`.
 - **Breaking**: Ported from `anyhow` to `color_eyre` for prettier log output.
 - **Breaking**: Switch `cbor` handling library, breaking backwards-compatible communication on a data format level.
 - **Breaking**: Switch protocol message representation, completely breaking backwards compatibility.

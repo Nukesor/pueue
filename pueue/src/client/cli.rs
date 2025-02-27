@@ -218,7 +218,7 @@ pub enum SubCommand {
 
         /// Immediately start the tasks, no matter how many open slots there are.
         /// This will ignore any dependencies tasks may have.
-        #[arg(short = 'k', long, conflicts_with = "stashed")]
+        #[arg(short = 'k', long = "immediate", conflicts_with = "stashed")]
         start_immediately: bool,
 
         /// Set the restarted task to a "Stashed" state.
