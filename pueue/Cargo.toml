@@ -24,13 +24,13 @@ name = "save_state"
 
 [dependencies]
 chrono.workspace = true
-clap = { version = "4.5.30", features = [
+clap = { version = "4.5.31", features = [
     "cargo",
     "derive",
     "help",
     "wrap_help",
 ] }
-clap_complete = "4.5.45"
+clap_complete = "4.5.46"
 clap_complete_nushell = "4.5.5"
 color-eyre.workspace = true
 comfy-table = "7"
@@ -95,7 +95,7 @@ winapi = { version = "0.3", features = [
     "processthreadsapi",
     "tlhelp32",
 ] }
-windows = { version = "0.59.0", features = [
+windows = { version = "0.60.0", features = [
     "Win32_Security",
     "Win32_System_Environment",
     "Win32_System_RemoteDesktop",
