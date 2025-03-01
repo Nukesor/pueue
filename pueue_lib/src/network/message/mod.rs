@@ -24,7 +24,7 @@ impl From<&Task> for EditableTask {
     fn from(value: &Task) -> Self {
         EditableTask {
             id: value.id,
-            command: value.command.clone(),
+            command: value.original_command.clone(),
             path: value.path.clone(),
             label: value.label.clone(),
             priority: value.priority,
@@ -35,7 +35,7 @@ impl From<&Task> for EditableTask {
 impl EditableTask {
     /// Merge a [EditableTask] back into a [Task].
     pub fn into_task(self, task: &mut Task) {
-        task.command = self.command;
+        task.original_command = self.command;
         task.path = self.path;
         task.label = self.label;
         task.priority = self.priority;

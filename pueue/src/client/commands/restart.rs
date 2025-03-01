@@ -125,7 +125,7 @@ pub async fn restart(
         if in_place {
             restart_message.tasks.push(TaskToRestart {
                 task_id: task.id,
-                command: task.command,
+                command: task.original_command,
                 path: task.path,
                 label: task.label,
                 priority: task.priority,
