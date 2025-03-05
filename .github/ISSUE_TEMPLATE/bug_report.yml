@@ -38,6 +38,9 @@ body:
         Logs helps me to debug a problem, especially if the bug is something that's not clearly visible.
 
         You can get detailed log output by launching `pueue` or `pueued` with the `-vvv` flag directly after the binary name.
+
+        In case of a panic/crash, please run the program with the `RUST_BACKTRACE=1` environment variable set.
+        That way we get a proper stack trace.
       placeholder: |
         ```
         Some log output here

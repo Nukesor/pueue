@@ -59,7 +59,11 @@ async fn handle_incoming(
     secret: Vec<u8>,
 ) -> Result<()> {
     // Receive the secret once and check, whether the client is allowed to connect
-    let payload_bytes = receive_bytes(&mut stream).await?;
+    // We only allow max payload sizes of 4MB for this one.
+    // Daemon's might be exposed publicly and get random traffic, potentially announcing huge
+    // payloads that would result in an OOM.
+    let payload_bytes =
+        receive_bytes_with_max_size(&mut stream, Some(4 * (2usize.pow(20)))).await?;
 
     // Didn't receive any bytes. The client disconnected.
     if payload_bytes.is_empty() {

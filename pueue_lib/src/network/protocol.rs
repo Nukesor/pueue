@@ -88,13 +88,20 @@ pub async fn send_bytes(payload: &[u8], stream: &mut GenericStream) -> Result<()
     Ok(())
 }
 
+pub async fn receive_bytes(stream: &mut GenericStream) -> Result<Vec<u8>, Error> {
+    receive_bytes_with_max_size(stream, None).await
+}
+
 /// Receive a byte stream. \
 /// This is part of the basic protocol beneath all communication. \
 ///
 /// 1. First of, the client sends a u64 as a 4byte vector in BigEndian mode, which specifies the
 ///    length of the payload we're going to receive.
 /// 2. Receive chunks of [PACKET_SIZE] bytes until we finished all expected bytes.
-pub async fn receive_bytes(stream: &mut GenericStream) -> Result<Vec<u8>, Error> {
+pub async fn receive_bytes_with_max_size(
+    stream: &mut GenericStream,
+    max_size: Option<usize>,
+) -> Result<Vec<u8>, Error> {
     // Receive the header with the overall message size
     let mut header = vec![0; 8];
     stream
@@ -103,6 +110,21 @@ pub async fn receive_bytes(stream: &mut GenericStream) -> Result<Vec<u8>, Error>
         .map_err(|err| Error::IoError("reading request size header".to_string(), err))?;
     let mut header = Cursor::new(header);
     let message_size = ReadBytesExt::read_u64::<BigEndian>(&mut header)? as usize;
+
+    if let Some(max_size) = max_size {
+        if message_size > max_size {
+            error!(
+                "Client requested message size of {message_size}, but only {max_size} is allowed."
+            );
+            return Err(Error::MessageTooBig(message_size, max_size));
+        }
+    }
+
+    // Show a warning if we see unusually large payloads. In this case payloads that're bigger than
+    // 20MB, which is pretty large considering pueue is usually only sending a bit of text.
+    if message_size > (20 * (2usize.pow(20))) {
+        warn!("Client is sending a large payload: {message_size} bytes.");
+    }
 
     // Buffer for the whole payload
     let mut payload_bytes = Vec::with_capacity(message_size);
@@ -278,6 +300,49 @@ mod test {
 
         assert_eq!(Request::Status, message_a);
         assert_eq!(Request::Remove(vec![0, 2, 3]), message_b);
+
+        Ok(())
+    }
+
+    /// Ensure there's no OOM if a huge payload during the handshake phase is being requested.
+    ///
+    /// We limit the receiving buffer to ~4MB for the incoming secret to prevent (potentially
+    /// unintended) DoS attacks when something connect to Pueue and sends a malformed secret
+    /// payload.
+    #[tokio::test]
+    async fn test_restricted_payload_size() -> Result<(), Error> {
+        let listener = TcpListener::bind("127.0.0.1:0").await?;
+        let addr = listener.local_addr()?;
+
+        let listener: GenericListener = Box::new(listener);
+
+        // Spawn a sub thread that:
+        // 1. Accepts a new connection.
+        // 2. Sends a malformed payload.
+        task::spawn(async move {
+            let mut stream = listener.accept().await.unwrap();
+
+            // Send a payload of 9 bytes to the daemon receiver.
+            // The first 8 bytes determine the payload size in BigEndian.
+            // This payload requests 2^64 bytes of memory for the secret.
+            stream
+                .write_all(&[128, 0, 0, 0, 0, 0, 0, 0, 0])
+                .await
+                .unwrap();
+        });
+
+        // Create a receiver stream
+        let mut client: GenericStream = Box::new(TcpStream::connect(&addr).await?);
+        // Wait for a short time to allow the sender to send the message
+        tokio::time::sleep(Duration::from_millis(500)).await;
+
+        // Get the message while restricting the payload size to 4MB
+        let result = receive_bytes_with_max_size(&mut client, Some(4 * 2usize.pow(20))).await;
+
+        assert!(
+            result.is_err(),
+            "The payload should be rejected due to large size"
+        );
 
         Ok(())
     }
