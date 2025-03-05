@@ -13,7 +13,8 @@ pub use response::*;
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
 pub struct EditableTask {
     pub id: usize,
-    pub command: String,
+    #[serde(rename = "command")]
+    pub original_command: String,
     pub path: PathBuf,
     pub label: Option<String>,
     pub priority: i32,
@@ -24,7 +25,7 @@ impl From<&Task> for EditableTask {
     fn from(value: &Task) -> Self {
         EditableTask {
             id: value.id,
-            command: value.original_command.clone(),
+            original_command: value.original_command.clone(),
             path: value.path.clone(),
             label: value.label.clone(),
             priority: value.priority,
@@ -35,7 +36,7 @@ impl From<&Task> for EditableTask {
 impl EditableTask {
     /// Merge a [EditableTask] back into a [Task].
     pub fn into_task(self, task: &mut Task) {
-        task.original_command = self.command;
+        task.original_command = self.original_command;
         task.path = self.path;
         task.label = self.label;
         task.priority = self.priority;

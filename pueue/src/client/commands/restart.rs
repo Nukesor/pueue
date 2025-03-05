@@ -1,4 +1,7 @@
+use std::collections::BTreeMap;
+
 use chrono::Local;
+use color_eyre::eyre::ContextCompat;
 use pueue_lib::{
     client::Client,
     network::message::*,
@@ -96,28 +99,30 @@ pub async fn restart(
     };
 
     // Get all tasks that should be restarted.
-    let mut tasks: Vec<Task> = filtered_tasks
+    let mut tasks: BTreeMap<usize, Task> = filtered_tasks
         .matching_ids
         .iter()
-        .map(|task_id| state.tasks.get(task_id).unwrap().clone())
+        .map(|task_id| (*task_id, state.tasks.get(task_id).unwrap().clone()))
         .collect();
 
     // If the tasks should be edited, edit them in one go.
     if edit {
-        let mut editable_tasks: Vec<EditableTask> = tasks.iter().map(EditableTask::from).collect();
+        let mut editable_tasks: Vec<EditableTask> =
+            tasks.values().map(EditableTask::from).collect();
         editable_tasks = edit_tasks(&client.settings, editable_tasks)?;
 
         // Now merge the edited properties back into the tasks.
-        // We simply zip the task and editable task vectors, as we know that they have the same
-        // order.
-        tasks
-            .iter_mut()
-            .zip(editable_tasks.into_iter())
-            .for_each(|(task, edited)| edited.into_task(task));
+        for edited in editable_tasks {
+            let task = tasks.get_mut(&edited.id).context(format!(
+                "Found unexpected task id during editing: {}",
+                edited.id
+            ))?;
+            edited.into_task(task);
+        }
     }
 
     // Go through all restartable commands we found and process them.
-    for mut task in tasks {
+    for (_, mut task) in tasks {
         task.status = new_status.clone();
 
         // Add the tasks to the singular message, if we want to restart the tasks in-place.
@@ -138,7 +143,7 @@ pub async fn restart(
         // Create an request to send the task to the daemon from the updated info and the old
         // task.
         let add_task_message = AddRequest {
-            command: task.command,
+            command: task.original_command,
             path: task.path,
             envs: task.envs.clone(),
             start_immediately,

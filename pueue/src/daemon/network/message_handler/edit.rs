@@ -54,8 +54,8 @@ pub fn edit(
                 task.status = *previous_status.clone();
 
                 // Update all properties to the edited values.
-                task.original_command = editable_task.command.clone();
-                task.command = insert_alias(settings, editable_task.command);
+                task.original_command = editable_task.original_command.clone();
+                task.command = insert_alias(settings, editable_task.original_command);
                 task.path = editable_task.path;
                 task.label = editable_task.label;
                 task.priority = editable_task.priority;

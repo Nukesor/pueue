@@ -38,7 +38,7 @@ async fn test_edit_flow() -> Result<()> {
     let mut response = create_edited_task(shared).await?;
     let mut editable_task = response.remove(0);
     assert_eq!(editable_task.id, 0);
-    assert_eq!(editable_task.command, "ls");
+    assert_eq!(editable_task.original_command, "ls");
     assert_eq!(editable_task.path, daemon.tempdir.path());
     assert_eq!(editable_task.priority, 0);
 
@@ -57,7 +57,7 @@ async fn test_edit_flow() -> Result<()> {
         "Expected the task to still be locked."
     );
 
-    editable_task.command = "ls -ahl".to_string();
+    editable_task.original_command = "ls -ahl".to_string();
     editable_task.path = PathBuf::from("/tmp");
     editable_task.label = Some("test".to_string());
     editable_task.priority = 99;
