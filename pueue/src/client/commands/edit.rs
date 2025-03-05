@@ -204,7 +204,7 @@ impl Editable for EditableTask {
         let cmd_path = task_dir.join("command");
         let mut output = File::create(&cmd_path)
             .map_err(|err| Error::IoPathError(cmd_path.clone(), "creating command file", err))?;
-        write!(output, "{}", self.command)
+        write!(output, "{}", self.original_command)
             .map_err(|err| Error::IoPathError(cmd_path.clone(), "writing command file", err))?;
 
         // Create cwd file
@@ -251,7 +251,7 @@ impl Editable for EditableTask {
         if command.trim().is_empty() {
             bail!("Found empty command after edit for task {}", self.id);
         }
-        self.command = command.trim().to_string();
+        self.original_command = command.trim().to_string();
 
         // Read cwd file
         let cwd_path = task_dir.join("path");
