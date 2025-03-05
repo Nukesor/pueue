@@ -26,6 +26,9 @@ pub enum Error {
     #[error("Couldn't serialize message:\n{}", .0)]
     MessageSerialization(String),
 
+    #[error("Requested message size of {} with only {} being allowed.", .0, .1)]
+    MessageTooBig(usize, usize),
+
     #[error("Error while reading configuration:\n{}", .0)]
     ConfigDeserialization(String),
 

@@ -140,6 +140,7 @@ Upon updating Pueue and restarting the daemon, the previous state will be wiped,
 - Callback templating arguments were html escaped by accident. [#564](https://github.com/Nukesor/pueue/pull/564)
 - Print incompatible version warning info as a log message instead of plain stdout input, which broke json outputs [#562](https://github.com/Nukesor/pueue/issues/562).
 - Fixed `-d` daemon mode on Windows. [#344](https://github.com/Nukesor/pueue/issues/344)
+- Fixed a pueued crash when malformed secret exchange messages are sent by a connecting client [#619](https://github.com/Nukesor/pueue/issues/619).
 
 ### Remove
 

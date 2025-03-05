@@ -25,6 +25,14 @@ snap = "1.1"
 strum = { version = "0.27", features = ["derive"] }
 tokio = { version = "1.43", features = ["io-std", "rt-multi-thread", "time"] }
 tracing = "0.1.41"
+tracing-error = "0.2.1"
+tracing-subscriber = { version = "0.3.19", features = [
+    "chrono",
+    "env-filter",
+    "fmt",
+    "local-time",
+] }
+
 
 [profile.release]
 codegen-units = 1

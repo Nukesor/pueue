@@ -1601,6 +1601,8 @@ dependencies = [
  "tokio",
  "tokio-rustls",
  "tracing",
+ "tracing-error",
+ "tracing-subscriber",
  "whoami",
 ]
 
