@@ -1,6 +1,6 @@
 [package]
 name = "pueue"
-version = "4.0.0-rc.3"
+version = "4.0.0"
 description = "A cli tool for managing long running shell commands."
 readme = "../README.md"
 keywords = ["command", "parallel", "queue", "shell", "task"]
