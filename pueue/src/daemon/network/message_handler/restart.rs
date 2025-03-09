@@ -67,8 +67,8 @@ fn restart(state: &mut LockedState, to_restart: TaskToRestart, stashed: bool, se
     };
 
     // Update task properties in case they've been edited.
-    task.original_command = to_restart.command.clone();
-    task.command = insert_alias(settings, to_restart.command);
+    task.original_command = to_restart.original_command.clone();
+    task.command = insert_alias(settings, to_restart.original_command);
     task.path = to_restart.path;
     task.label = to_restart.label.clone();
     task.priority = to_restart.priority;

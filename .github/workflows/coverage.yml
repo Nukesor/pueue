@@ -26,6 +26,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+    defaults:
+      run:
+        shell: bash
 
     steps:
       - name: Checkout code

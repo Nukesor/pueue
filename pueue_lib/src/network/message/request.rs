@@ -166,7 +166,7 @@ impl_into_request!(RestartRequest, Request::Restart);
 pub struct TaskToRestart {
     pub task_id: usize,
     /// Restart the task with an updated command.
-    pub command: String,
+    pub original_command: String,
     /// Restart the task with an updated path.
     pub path: PathBuf,
     /// Restart the task with an updated label.

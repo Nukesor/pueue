@@ -22,13 +22,13 @@ pub struct EditableTask {
 
 impl From<&Task> for EditableTask {
     /// Create an editable tasks from any [Task]]
-    fn from(value: &Task) -> Self {
+    fn from(task: &Task) -> Self {
         EditableTask {
-            id: value.id,
-            original_command: value.original_command.clone(),
-            path: value.path.clone(),
-            label: value.label.clone(),
-            priority: value.priority,
+            id: task.id,
+            original_command: task.original_command.clone(),
+            path: task.path.clone(),
+            label: task.label.clone(),
+            priority: task.priority,
         }
     }
 }
