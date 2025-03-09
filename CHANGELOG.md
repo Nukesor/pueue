@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## \[4.0.0\] - unreleased
+## \[4.0.0\] - 2025-03-09
 
 This release aims to further improve Pueue and to rectify some old design decisions.
 Large portions of both the library and the executables' code have been refactored and the protocol has been reworked, which completely breaks backwards compatibility.

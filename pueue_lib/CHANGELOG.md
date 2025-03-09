@@ -6,12 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project adheres **somewhat** to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 The concept of SemVer is applied to the daemon/client API, but not the library API itself.
 
-## [0.29. ] - unreleased
+## [0.29.0 ] - 2025-03-09
 
 ### Changed
 
 - Streamline all `Request` and `Response` variant names and struct names used in unit variant.
 - Prepare `Request::Stream` and `Response::Stream` to be compatible with multiple follow tasks in the scope of [#614](https://github.com/Nukesor/pueue/issues/614).
+- Rename `command` to `original_command` in `EditableTask` and `TaskToRestart` to prevent confusion and ambiguity.
+- Add new `receive_bytes_with_max_size` function to restrict message buffer size for DoS prevention.
+- Add `compress_state_file` setting (used by daemon).
 
 ## [0.28.1] - 2025-02-17
 
