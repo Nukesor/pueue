@@ -177,6 +177,14 @@ pub fn daemon_base_setup() -> Result<(Settings, TempDir)> {
     #[allow(deprecated)]
     let daemon = Daemon {
         callback_log_lines: 15,
+        // Explicitly use bash to ensure that everyone uses the same shell
+        // when executing tests. For example, Debian uses `dash` as default shell,
+        // which expectes another syntax. We use `bash` as a common denominator.
+        shell_command: Some(vec![
+            "bash".into(),
+            "-c".into(),
+            "{{ pueue_command_string }}".into(),
+        ]),
         ..Default::default()
     };
 

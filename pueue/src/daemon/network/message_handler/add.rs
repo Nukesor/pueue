@@ -58,10 +58,10 @@ pub fn add_task(settings: &Settings, state: &SharedState, message: AddRequest) -
 
     // Check if there're any aliases that should be applied.
     // If one is found, we expand the command, otherwise we just take the original command.
-    // Anyhow, we save this separately and keep the original command in a separate field.
+    // We save the aliased command separately and keep the original command in its own field.
     //
-    // This gives us better debugging capabilities and the user can opt to either show the
-    // original command or the expanded command in their `status` view.
+    // This is especially important when editing commands as users should edit the original
+    // command (for instance if they made a typo and used the wrong alias).
     task.command = insert_alias(settings, task.original_command.clone());
 
     // Sort and deduplicate dependency ids.

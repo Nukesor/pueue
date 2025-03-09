@@ -1,4 +1,6 @@
 //! This module contains helper functions, which are used by both, the client and daemon tests.
+use std::process::Output;
+
 pub use pueue_lib::state::PUEUE_DEFAULT_GROUP;
 use tokio::io::{self, AsyncWriteExt};
 
@@ -60,4 +62,44 @@ pub async fn async_println(out: &str) -> Result<()> {
     stdout.flush().await?;
 
     Ok(())
+}
+
+/// Take some process output and simply print it.
+#[allow(dead_code)]
+pub fn print_output(output: &Output) -> Result<()> {
+    let stdout = output.stdout.clone();
+    let stderr = output.stderr.clone();
+    let out = String::from_utf8(stdout).context("Got invalid utf8 as stdout!")?;
+    let err = String::from_utf8(stderr).context("Got invalid utf8 as stderr!")?;
+
+    println!("Stdout:\n{out}");
+    println!("\nStderr:\n{err}");
+
+    Ok(())
+}
+
+pub trait CommandOutcome {
+    fn success(self) -> Result<Output>;
+
+    fn failure(self) -> Result<Output>;
+}
+
+impl CommandOutcome for Output {
+    fn success(self) -> Result<Output> {
+        if !self.status.success() {
+            print_output(&self)?;
+            bail!("Command failed, see log output.")
+        }
+
+        Ok(self)
+    }
+
+    fn failure(self) -> Result<Output> {
+        if self.status.success() {
+            print_output(&self)?;
+            bail!("Command succeeded, even though it should've failed. See log output.")
+        }
+
+        Ok(self)
+    }
 }
