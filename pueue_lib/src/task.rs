@@ -52,8 +52,6 @@ pub enum TaskResult {
 }
 
 /// Representation of a task.
-/// start will be set the second the task starts processing.
-/// `result`, `output` and `end` won't be initialized, until the task has finished.
 #[derive(PartialEq, Eq, Clone, Deserialize, Serialize)]
 pub struct Task {
     pub id: usize,
