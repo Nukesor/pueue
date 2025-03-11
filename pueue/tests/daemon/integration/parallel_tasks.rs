@@ -1,5 +1,5 @@
 use assert_matches::assert_matches;
-use pueue_lib::{network::message::ParallelRequest, task::*};
+use pueue_lib::{message::ParallelRequest, task::*};
 
 use crate::{helper::*, internal_prelude::*};
 

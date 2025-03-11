@@ -12,18 +12,28 @@ repository = "https://github.com/nukesor/pueue"
 rust-version = "1.85"
 
 [workspace.dependencies]
+async-trait = "0.1"
 better-panic = "0.3"
 chrono = { version = "0.4", features = ["serde"] }
+ciborium = { version = "0.2", features = ["std"] }
 color-eyre = "0.6.3"
 command-group = "5"
 handlebars = "6.3"
 pretty_assertions = "1"
+rustls = { version = "0.23", default-features = false, features = [
+    "logging",
+    "ring",
+    "std",
+    "tls12",
+] }
+rustls-pemfile = "2"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 serde_yaml = "0.9"
 snap = "1.1"
 strum = { version = "0.27", features = ["derive"] }
 tokio = { version = "1.43", features = ["io-std", "rt-multi-thread", "time"] }
+tokio-rustls = { version = "0.26", default-features = false }
 tracing = "0.1.41"
 tracing-error = "0.2.1"
 tracing-subscriber = { version = "0.3.19", features = [

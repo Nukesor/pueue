@@ -1,15 +1,13 @@
 use std::{collections::BTreeMap, time::Duration};
 
 use chrono::prelude::*;
-use pueue_lib::{
-    Group, GroupStatus, Settings, TaskResult, TaskStatus,
-    network::{message::*, protocol::socket_cleanup},
-};
+use pueue_lib::{Group, GroupStatus, Settings, TaskResult, TaskStatus, message::*};
 
 use crate::{
     daemon::{
         callbacks::{check_callbacks, spawn_callback},
         internal_state::{SharedState, children::Children, state::LockedState},
+        network::socket::socket_cleanup,
         pid::cleanup_pid_file,
         process_handler::{finish::handle_finished_tasks, spawn::spawn_new},
     },

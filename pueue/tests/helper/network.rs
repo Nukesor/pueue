@@ -1,6 +1,6 @@
 use pueue_lib::{
+    message::*,
     network::{
-        message::*,
         protocol::{
             GenericStream, get_client_stream, receive_bytes, receive_message, send_bytes,
             send_message as internal_send_message,
@@ -35,7 +35,7 @@ where
 /// Pueue creates a new socket stream for each command, which is why we do it the same way.
 async fn get_authenticated_stream(shared: &Shared) -> Result<GenericStream> {
     // Connect to daemon and get stream used for communication.
-    let mut stream = match get_client_stream(shared).await {
+    let mut stream = match get_client_stream(shared.clone().try_into()?).await {
         Ok(stream) => stream,
         Err(err) => {
             panic!("Couldn't get client stream: {err}");

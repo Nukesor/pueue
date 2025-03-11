@@ -1,6 +1,6 @@
 use pueue_lib::{
     Group, Response, Task,
-    network::message::{create_failure_response, create_success_response},
+    message::{create_failure_response, create_success_response},
     state::FilteredTasks,
 };
 

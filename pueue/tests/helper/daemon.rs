@@ -1,6 +1,6 @@
 use std::{fs::File, io::Read, path::Path, process::Child};
 
-use pueue_lib::{network::message::*, settings::*};
+use pueue_lib::{message::*, settings::*};
 
 use super::*;
 

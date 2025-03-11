@@ -1,10 +1,13 @@
 use chrono::Local;
-use pueue_lib::{Settings, Task, TaskStatus, aliasing::insert_alias, network::message::*};
+use pueue_lib::{Settings, Task, TaskStatus, message::*};
 
-use crate::daemon::{
-    internal_state::{SharedState, state::LockedState},
-    network::response_helper::task_action_response_helper,
-    process_handler,
+use crate::{
+    aliasing::insert_alias,
+    daemon::{
+        internal_state::{SharedState, state::LockedState},
+        network::response_helper::task_action_response_helper,
+        process_handler,
+    },
 };
 
 /// This is a small wrapper around the actual in-place task `restart` functionality.

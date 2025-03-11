@@ -1,6 +1,6 @@
 use assert_matches::assert_matches;
 use pueue_lib::{
-    network::message::*,
+    message::*,
     settings::Shared,
     state::{GroupStatus, State},
     task::Task,

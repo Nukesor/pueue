@@ -11,7 +11,7 @@ use flate2::Compression;
 use pueue_lib::{
     Group, GroupStatus, Settings, State, TaskResult,
     error::Error,
-    network::message::request::ShutdownRequest,
+    message::request::ShutdownRequest,
     state::{FilteredTasks, PUEUE_DEFAULT_GROUP},
     task::{Task, TaskStatus},
 };

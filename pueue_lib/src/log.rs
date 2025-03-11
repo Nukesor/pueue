@@ -1,3 +1,4 @@
+//! Helper classes to read and write log files of Pueue's tasks.
 use std::{
     fs::{File, remove_file},
     io::{self, Read, SeekFrom, prelude::*},

@@ -15,7 +15,7 @@ It contains everything you need to communicate with the daemon:
 - Network code. Everything you need to communicate with the daemon.
   - [Request] and [Response] message types.
   - [`send_request`] and [`receive_response`] helper functions.
-- A reference [`Client`](client::Client) implementation. This is available with the `client` feature.
+- A reference [`Client`](Client) implementation. This is available with the `client` feature.
   The client also implements [`Client::send_request`] and [`Client::receive_response`].
 
 It also contains helper functions to read local logs.

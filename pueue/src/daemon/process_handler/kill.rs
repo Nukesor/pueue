@@ -1,6 +1,6 @@
 use pueue_lib::{
     GroupStatus, Settings, Task, TaskStatus,
-    network::message::{Signal, TaskSelection},
+    message::{Signal, TaskSelection},
 };
 
 use crate::{

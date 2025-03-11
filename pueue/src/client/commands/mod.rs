@@ -9,7 +9,7 @@ use std::io::{Write, stdin, stdout};
 
 use pueue_lib::{
     client::Client,
-    network::message::{Request, Response, TaskSelection},
+    message::{Request, Response, TaskSelection},
     state::{PUEUE_DEFAULT_GROUP, State},
     task::Task,
 };

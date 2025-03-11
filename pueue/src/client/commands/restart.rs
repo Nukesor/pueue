@@ -4,7 +4,7 @@ use chrono::Local;
 use color_eyre::eyre::ContextCompat;
 use pueue_lib::{
     client::Client,
-    network::message::*,
+    message::*,
     state::FilteredTasks,
     task::{Task, TaskResult, TaskStatus},
 };

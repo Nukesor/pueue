@@ -1,4 +1,4 @@
-use pueue_lib::{Settings, TaskStatus, failure_msg, network::message::*};
+use pueue_lib::{Settings, TaskStatus, failure_msg, message::*};
 
 use super::ok_or_failure_message;
 use crate::{daemon::internal_state::SharedState, ok_or_save_state_failure};

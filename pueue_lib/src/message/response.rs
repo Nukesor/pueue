@@ -4,7 +4,7 @@ use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    network::message::EditableTask,
+    message::EditableTask,
     state::{Group, State},
     task::Task,
 };

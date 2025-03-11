@@ -1,3 +1,6 @@
+//! This module contains all platform unspecific default values and helper functions for working
+//! with our setting representation.
+
 /// The `Default` impl for `bool` is `false`.
 /// This function covers the `true` case.
 pub(crate) fn default_true() -> bool {

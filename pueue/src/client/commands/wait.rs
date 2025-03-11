@@ -7,7 +7,7 @@ use chrono::Local;
 use crossterm::style::{Attribute, Color};
 use pueue_lib::{
     client::Client,
-    network::message::TaskSelection,
+    message::TaskSelection,
     state::State,
     task::{Task, TaskResult, TaskStatus},
 };

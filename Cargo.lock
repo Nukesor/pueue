@@ -127,9 +127,9 @@ checksum = "9b34d609dfbaf33d6889b2b7106d3ca345eacad44200913df5ba02bfd31d2ba9"
 
 [[package]]
 name = "async-trait"
-version = "0.1.86"
+version = "0.1.87"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "644dd749086bf3771a2fbc5f256fdb982d53f011c7d5d560304eafeecebce79d"
+checksum = "d556ec1359574147ec0c4fc5eb525f3f23263a592b1a9c07e0a75b427de55c97"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1533,8 +1533,10 @@ version = "4.0.0"
 dependencies = [
  "assert_cmd",
  "assert_matches",
+ "async-trait",
  "better-panic",
  "chrono",
+ "ciborium",
  "clap",
  "clap_complete",
  "clap_complete_nushell",
@@ -1553,7 +1555,10 @@ dependencies = [
  "pretty_assertions",
  "procfs",
  "pueue-lib",
+ "rcgen",
  "rstest",
+ "rustls",
+ "rustls-pemfile",
  "serde",
  "serde_json",
  "serde_yaml",
@@ -1563,6 +1568,7 @@ dependencies = [
  "strum",
  "tempfile",
  "tokio",
+ "tokio-rustls",
  "toml",
  "tracing",
  "tracing-error",
@@ -1586,7 +1592,6 @@ dependencies = [
  "portpicker",
  "pretty_assertions",
  "rand 0.9.0",
- "rcgen",
  "rev_buf_reader",
  "rustls",
  "rustls-pemfile",
@@ -2294,9 +2299,9 @@ dependencies = [
 
 [[package]]
 name = "tokio-rustls"
-version = "0.26.1"
+version = "0.26.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5f6d0975eaace0cf0fcadee4e4aaa5da15b5c079146f2cffb67c113be122bf37"
+checksum = "8e727b36a1a0e8b74c376ac2211e40c2c8af09fb4013c60d910495810f008e9b"
 dependencies = [
  "rustls",
  "tokio",

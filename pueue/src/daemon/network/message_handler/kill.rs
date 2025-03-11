@@ -1,4 +1,4 @@
-use pueue_lib::{Settings, Task, network::message::*, success_msg};
+use pueue_lib::{Settings, Task, message::*, success_msg};
 
 use crate::daemon::{
     internal_state::SharedState,

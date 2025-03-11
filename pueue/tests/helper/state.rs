@@ -1,4 +1,4 @@
-use pueue_lib::{network::message::*, settings::*, state::State};
+use pueue_lib::{message::*, settings::*, state::State};
 
 use super::*;
 

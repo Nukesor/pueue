@@ -1,5 +1,5 @@
 use chrono::{DateTime, Local};
-use pueue_lib::{client::Client, network::message::StashRequest};
+use pueue_lib::{client::Client, message::StashRequest};
 
 use super::{handle_response, selection_from_params};
 use crate::{client::style::OutputStyle, internal_prelude::*};

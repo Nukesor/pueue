@@ -10,7 +10,7 @@ pub use super::socket::*;
 use crate::{
     error::Error,
     internal_prelude::*,
-    network::message::{request::Request, response::Response},
+    message::{request::Request, response::Response},
 };
 
 // We choose a packet size of 1280 to be on the safe site regarding IPv6 MTU.
@@ -209,9 +209,9 @@ mod test {
     };
 
     use super::*;
-    use crate::network::{
+    use crate::{
         message::request::{Request, SendRequest},
-        socket::Stream as PueueStream,
+        network::socket::Stream as PueueStream,
     };
 
     // Implement generic Listener/Stream traits, so we can test stuff on normal TCP

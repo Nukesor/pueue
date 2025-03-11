@@ -1,4 +1,4 @@
-use pueue_lib::{GroupStatus, Settings, failure_msg, network::message::*};
+use pueue_lib::{GroupStatus, Settings, failure_msg, message::*};
 
 use crate::daemon::{internal_state::SharedState, process_handler};
 

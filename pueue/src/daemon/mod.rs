@@ -6,19 +6,17 @@ use std::{
 
 use process_handler::initiate_shutdown;
 use pueue_lib::{
-    Settings,
-    error::Error,
-    network::{
-        certificate::create_certificates, message::ShutdownRequest, protocol::socket_cleanup,
-        secret::init_shared_secret,
-    },
+    Settings, error::Error, message::ShutdownRequest, network::secret::init_shared_secret,
 };
 use tokio::try_join;
 
 use crate::{
     daemon::{
         internal_state::{SharedState, state::InternalState},
-        network::socket::accept_incoming,
+        network::{
+            certificate::create_certificates,
+            socket::{accept_incoming, socket_cleanup},
+        },
     },
     internal_prelude::*,
 };
@@ -27,7 +25,7 @@ mod callbacks;
 pub mod cli;
 /// The daemon's state representation that contains process related data not exposed to clients.
 pub mod internal_state;
-mod network;
+pub mod network;
 mod pid;
 mod process_handler;
 #[cfg(target_os = "windows")]

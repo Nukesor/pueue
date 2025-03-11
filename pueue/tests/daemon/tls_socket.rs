@@ -1,21 +1,23 @@
 use ciborium::{from_reader, into_writer};
 use color_eyre::Result;
 use pretty_assertions::assert_eq;
-use pueue_lib::network::{certificate::create_certificates, message::*, protocol::*};
 use tokio::task;
 
-mod helper;
+use pueue::daemon::network::{certificate::create_certificates, socket::get_listener};
+use pueue_lib::{message::*, network::protocol::*};
+
+use crate::helper::daemon_base_setup;
 
 /// This tests whether we can create a listener and client, that communicate via TLS sockets.
 #[tokio::test]
 async fn test_tls_socket() -> Result<()> {
     better_panic::install();
-    let (shared_settings, _tempdir) = helper::get_shared_settings(false);
+    let (settings, _tempdir) = daemon_base_setup()?;
 
     // Create new stub tls certificates/keys in our temp directory
-    create_certificates(&shared_settings).unwrap();
+    create_certificates(&settings.shared).unwrap();
 
-    let listener = get_listener(&shared_settings).await.unwrap();
+    let listener = get_listener(&settings.shared).await.unwrap();
     let message = Request::Status;
     let mut original_bytes = Vec::new();
     into_writer(&message, &mut original_bytes).expect("Failed to serialize message.");
@@ -33,7 +35,9 @@ async fn test_tls_socket() -> Result<()> {
         send_request(message, &mut stream).await.unwrap();
     });
 
-    let mut client = get_client_stream(&shared_settings).await.unwrap();
+    let mut client = get_client_stream(settings.shared.clone().try_into()?)
+        .await
+        .unwrap();
 
     // Create a client that sends a message and instantly receives it
     send_request(message, &mut client).await.unwrap();

@@ -1,3 +1,4 @@
+//! Pueue's configuration file representation.
 use std::{
     collections::HashMap,
     fs::{File, create_dir_all},

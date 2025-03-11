@@ -1,4 +1,4 @@
-use pueue_lib::{GroupStatus, Settings, TaskStatus, network::message::TaskSelection};
+use pueue_lib::{GroupStatus, Settings, TaskStatus, message::TaskSelection};
 
 use crate::{
     daemon::{

@@ -1,10 +1,8 @@
 use chrono::Local;
-use pueue_lib::{
-    GroupStatus, Settings, Task, TaskStatus, aliasing::insert_alias, failure_msg,
-    network::message::*,
-};
+use pueue_lib::{GroupStatus, Settings, Task, TaskStatus, failure_msg, message::*};
 
 use crate::{
+    aliasing::insert_alias,
     daemon::{
         internal_state::SharedState,
         network::{message_handler::ok_or_failure_message, response_helper::ensure_group_exists},

@@ -1,30 +1,43 @@
 use std::{fs::File, io::BufReader, path::Path, sync::Arc};
 
-use rustls::{
-    ClientConfig, RootCertStore, ServerConfig,
-    pki_types::{CertificateDer, PrivateKeyDer},
-};
+use async_trait::async_trait;
+use rustls::pki_types::{CertificateDer, PrivateKeyDer};
 use rustls_pemfile::{pkcs8_private_keys, rsa_private_keys};
-use tokio_rustls::{TlsAcceptor, TlsConnector};
+use tokio::net::TcpListener;
+use tokio_rustls::{TlsAcceptor, rustls::ServerConfig};
 
-use crate::{error::Error, settings::Shared};
+use pueue_lib::{
+    error::Error,
+    network::socket::{GenericStream, Listener},
+    settings::Shared,
+};
 
-/// Initialize our client [TlsConnector]. \
-/// 1. Trust our own CA. ONLY our own CA.
-/// 2. Set the client certificate and key
-pub async fn get_tls_connector(settings: &Shared) -> Result<TlsConnector, Error> {
-    // Only trust server-certificates signed with our own CA.
-    let ca = load_ca(&settings.daemon_cert())?;
-    let mut cert_store = RootCertStore::empty();
-    cert_store.add(ca).map_err(|err| {
-        Error::CertificateFailure(format!("Failed to build RootCertStore: {err}"))
-    })?;
+/// This is a helper struct for TCP connections.
+/// TCP should always be used in conjunction with TLS.
+/// That's why this helper exists, which encapsulates the logic of accepting a new
+/// connection and initializing the TLS layer on top of it.
+/// This way we can expose an `accept` function and implement the Listener trait.
+pub struct TlsTcpListener {
+    pub tcp_listener: TcpListener,
+    pub tls_acceptor: TlsAcceptor,
+}
 
-    let config: ClientConfig = ClientConfig::builder()
-        .with_root_certificates(cert_store)
-        .with_no_client_auth();
+#[async_trait]
+impl Listener for TlsTcpListener {
+    async fn accept<'a>(&'a self) -> Result<GenericStream, Error> {
+        let (stream, _) = self
+            .tcp_listener
+            .accept()
+            .await
+            .map_err(|err| Error::IoError("accepting new tcp connection.".to_string(), err))?;
+        let tls_stream = self
+            .tls_acceptor
+            .accept(stream)
+            .await
+            .map_err(|err| Error::IoError("accepting new tls connection.".to_string(), err))?;
 
-    Ok(TlsConnector::from(Arc::new(config)))
+        Ok(Box::new(tls_stream))
+    }
 }
 
 /// Configure the server using rusttls. \
@@ -43,7 +56,7 @@ pub fn get_tls_listener(settings: &Shared) -> Result<TlsAcceptor, Error> {
 }
 
 /// Load the passed certificates file
-fn load_certs<'a>(path: &Path) -> Result<Vec<CertificateDer<'a>>, Error> {
+pub fn load_certs<'a>(path: &Path) -> Result<Vec<CertificateDer<'a>>, Error> {
     let file = File::open(path)
         .map_err(|err| Error::IoPathError(path.to_path_buf(), "opening cert", err))?;
     let certs: Vec<CertificateDer> = rustls_pemfile::certs(&mut BufReader::new(file))
@@ -57,7 +70,7 @@ fn load_certs<'a>(path: &Path) -> Result<Vec<CertificateDer<'a>>, Error> {
 
 /// Load the passed keys file.
 /// Only the first key will be used. It should match the certificate.
-fn load_key<'a>(path: &Path) -> Result<PrivateKeyDer<'a>, Error> {
+pub fn load_key<'a>(path: &Path) -> Result<PrivateKeyDer<'a>, Error> {
     let file = File::open(path)
         .map_err(|err| Error::IoPathError(path.to_path_buf(), "opening key", err))?;
 
@@ -84,18 +97,4 @@ fn load_key<'a>(path: &Path) -> Result<PrivateKeyDer<'a>, Error> {
     Err(Error::CertificateFailure(format!(
         "Couldn't extract private key from keyfile {path:?}",
     )))
-}
-
-fn load_ca<'a>(path: &Path) -> Result<CertificateDer<'a>, Error> {
-    let file = File::open(path)
-        .map_err(|err| Error::IoPathError(path.to_path_buf(), "opening cert", err))?;
-
-    let cert = rustls_pemfile::certs(&mut BufReader::new(file))
-        .collect::<Result<Vec<_>, std::io::Error>>()
-        .map_err(|_| Error::CertificateFailure("Failed to parse daemon certificate.".into()))?
-        .into_iter()
-        .next()
-        .ok_or_else(|| Error::CertificateFailure("Couldn't find CA certificate in file".into()))?;
-
-    Ok(cert)
 }

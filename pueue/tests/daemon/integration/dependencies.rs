@@ -1,5 +1,5 @@
 use pueue_lib::{
-    network::message::{KillRequest, TaskSelection},
+    message::{KillRequest, TaskSelection},
     task::*,
 };
 

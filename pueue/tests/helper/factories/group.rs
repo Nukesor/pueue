@@ -1,4 +1,4 @@
-use pueue_lib::{network::message::*, settings::*};
+use pueue_lib::{message::*, settings::*};
 
 use crate::helper::*;
 

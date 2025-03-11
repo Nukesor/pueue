@@ -1,5 +1,5 @@
 use chrono::{DateTime, Local, TimeDelta};
-use pueue_lib::{GroupStatus, network::message::*, task::*};
+use pueue_lib::{GroupStatus, message::*, task::*};
 use rstest::rstest;
 
 use crate::{helper::*, internal_prelude::*};

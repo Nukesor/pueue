@@ -18,7 +18,7 @@
 //! Details on how they work can be found on the respective function docs.
 //!
 //! Payloads are defined via the [`Request`](crate::Request) and [`Response`](crate::Response) enums
-//! that can be found in the [`message`] module.
+//! that can be found in the [`super::message`] module.
 //!
 //! There're also the convenience functions [send_message] and [receive_message], which
 //! automatically handle serialization and deserialization for you.
@@ -49,20 +49,14 @@
 //! I.e. the daemon continuously sends new messages with the new log output until
 //! the socket is closed by the client.
 
-/// Used by the daemon to initialize the TLS certificates.
-pub mod certificate;
-/// This contains the the [`Request`](crate::Request) and [`Response`](crate::Response) enums and
-/// all their structs used to communicate with the daemon or client.
-pub mod message;
 /// This is probably the most interesting part for you.
 pub mod protocol;
 /// Functions to write and read the secret to/from a file.
 pub mod secret;
 /// Low-level socket handling code.
 pub mod socket;
-/// Helper functions for reading and handling TLS files.
-mod tls;
 
 pub use protocol::{
     receive_message, receive_request, receive_response, send_message, send_request, send_response,
 };
+pub use socket::get_client_stream;

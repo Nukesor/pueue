@@ -1,4 +1,4 @@
-use pueue_lib::{Task, network::message::TaskSelection};
+use pueue_lib::{Task, message::TaskSelection};
 use rstest::rstest;
 
 use crate::{helper::*, internal_prelude::*};

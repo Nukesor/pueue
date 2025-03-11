@@ -9,12 +9,11 @@ use chrono::{DateTime, Local};
 use pueue_lib::{
     Request, Response,
     client::Client,
-    format::format_datetime,
-    network::message::{AddRequest, AddedTaskResponse},
+    message::{AddRequest, AddedTaskResponse},
 };
 
 use super::{follow as follow_cmd, group_or_default, handle_response};
-use crate::{client::style::OutputStyle, internal_prelude::*};
+use crate::{client::style::OutputStyle, format::format_datetime, internal_prelude::*};
 
 #[allow(clippy::too_many_arguments)]
 pub async fn add_task(
