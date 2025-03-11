@@ -1,23 +1,21 @@
 #[cfg(not(target_os = "windows"))]
-mod helper;
-
-#[cfg(not(target_os = "windows"))]
 mod tests {
     use ciborium::{from_reader, into_writer};
     use color_eyre::Result;
     use pretty_assertions::assert_eq;
-    use pueue_lib::network::{message::*, protocol::*};
     use tokio::task;
 
-    use super::*;
+    use crate::helper::daemon_base_setup;
+    use pueue::daemon::network::socket::get_listener;
+    use pueue_lib::{message::*, network::protocol::*};
 
     /// This tests whether we can create a listener and client, that communicate via unix sockets.
     #[tokio::test]
     async fn test_unix_socket() -> Result<()> {
         better_panic::install();
-        let (shared_settings, _tempdir) = helper::get_shared_settings(true);
+        let (settings, _tempdir) = daemon_base_setup()?;
 
-        let listener = get_listener(&shared_settings).await?;
+        let listener = get_listener(&settings.shared).await?;
         let message = Request::Status;
 
         let mut original_bytes = Vec::new();
@@ -36,7 +34,7 @@ mod tests {
             send_request(message, &mut stream).await.unwrap();
         });
 
-        let mut client = get_client_stream(&shared_settings).await?;
+        let mut client = get_client_stream(&settings.shared).await?;
 
         // Create a client that sends a message and instantly receives it
         send_request(message, &mut client).await?;

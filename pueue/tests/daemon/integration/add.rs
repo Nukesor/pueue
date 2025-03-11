@@ -1,6 +1,6 @@
 use assert_matches::assert_matches;
 use chrono::Local;
-use pueue_lib::{network::message::TaskSelection, task::*};
+use pueue_lib::{message::TaskSelection, task::*};
 
 use crate::{helper::*, internal_prelude::*};
 

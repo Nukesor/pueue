@@ -2,7 +2,7 @@ use comfy_table::{Attribute as ComfyAttribute, Cell, CellAlignment, Table};
 use crossterm::style::Color;
 use pueue_lib::{
     client::Client,
-    network::message::{TaskLogResponse, TaskSelection, *},
+    message::{TaskLogResponse, TaskSelection, *},
     settings::Settings,
     task::{Task, TaskResult, TaskStatus},
 };

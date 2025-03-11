@@ -7,7 +7,7 @@ use pueue_lib::{
     Response,
     client::Client,
     log::{get_log_file_handle, get_log_path, seek_to_last_lines},
-    network::message::{StreamRequest, TaskSelection},
+    message::{StreamRequest, TaskSelection},
 };
 use tokio::time::sleep;
 

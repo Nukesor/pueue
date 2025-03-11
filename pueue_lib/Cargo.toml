@@ -16,33 +16,50 @@ maintenance = { status = "actively-developed" }
 
 [features]
 client = ["dep:color-eyre"]
+default = ["log", "network", "settings"]
+log = ["dep:rev_buf_reader", "dep:snap"]
+network = [
+    "dep:async-trait",
+    "dep:byteorder",
+    "dep:ciborium",
+    "dep:rand",
+    "dep:rustls",
+    "dep:rustls-pemfile",
+    "dep:tokio",
+    "dep:tokio-rustls",
+]
+network-blocking = []
+settings = ["dep:dirs", "dep:serde_yaml", "dep:shellexpand"]
 
 [dependencies]
-async-trait = "0.1"
-byteorder = "1.5"
+async-trait = { workspace = true, optional = true }
+byteorder = { version = "1.5", optional = true }
 chrono.workspace = true
-ciborium = { version = "0.2", features = ["std"] }
+ciborium = { workspace = true, optional = true }
 color-eyre = { workspace = true, optional = true }
-dirs = "6.0"
-rand = "0.9"
-rcgen = "0.13"
-rev_buf_reader = "0.3"
-rustls = { version = "0.23", features = [
+dirs = { version = "6.0", optional = true }
+rand = { version = "0.9", optional = true }
+rev_buf_reader = { version = "0.3", optional = true }
+rustls = { version = "0.23", default-features = false, features = [
     "logging",
     "ring",
     "std",
     "tls12",
-], default-features = false }
-rustls-pemfile = "2"
+], optional = true }
+rustls-pemfile = { version = "2", optional = true }
 serde.workspace = true
 serde_json.workspace = true
-serde_yaml = "0.9"
-shellexpand = "3.1"
-snap.workspace = true
+serde_yaml = { version = "0.9", optional = true }
+shellexpand = { version = "3.1", optional = true }
+snap = { workspace = true, optional = true }
 strum.workspace = true
 thiserror = "2"
-tokio = { workspace = true, features = ["io-util", "macros", "net"] }
-tokio-rustls = { version = "0.26", default-features = false }
+tokio = { workspace = true, features = [
+    "io-util",
+    "macros",
+    "net",
+], optional = true }
+tokio-rustls = { workspace = true, optional = true }
 tracing.workspace = true
 
 [dev-dependencies]

@@ -6,7 +6,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use pueue_lib::{client::Client, error::Error, network::message::*, settings::Settings};
+use pueue_lib::{client::Client, error::Error, message::*, settings::Settings};
 use tempfile::tempdir;
 
 use super::handle_response;

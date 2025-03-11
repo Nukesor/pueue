@@ -1,5 +1,5 @@
 use assert_matches::assert_matches;
-use pueue_lib::{GroupStatus, network::message::*, task::*};
+use pueue_lib::{GroupStatus, message::*, task::*};
 
 use crate::{helper::*, internal_prelude::*};
 

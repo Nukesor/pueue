@@ -1,7 +1,7 @@
 use std::io;
 
 use crossterm::style::{Attribute, Color};
-use pueue_lib::network::message::TaskLogResponse;
+use pueue_lib::message::TaskLogResponse;
 use snap::read::FrameDecoder;
 
 use super::OutputStyle;

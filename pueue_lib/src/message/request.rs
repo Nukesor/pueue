@@ -4,7 +4,7 @@ use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 use strum::{Display, EnumString, VariantNames};
 
-use crate::network::message::EditableTask;
+use crate::message::EditableTask;
 
 /// Macro to simplify creating [From] implementations for each variant-contained
 /// Request; e.g. `impl_into_request!(AddRequest, Request::Add)` to make it possible

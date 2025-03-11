@@ -1,6 +1,6 @@
 use pueue_lib::{
+    message::*,
     network::{
-        message::*,
         protocol::{
             GenericStream, get_client_stream, receive_bytes, receive_message, send_bytes,
             send_message as internal_send_message,

@@ -1,6 +1,6 @@
 use chrono::{DateTime, Local};
 
-use crate::settings::Settings;
+use pueue_lib::settings::Settings;
 
 // If the enqueue at time is today, only show the time. Otherwise, include the date.
 pub fn format_datetime(settings: &Settings, enqueue_at: &DateTime<Local>) -> String {

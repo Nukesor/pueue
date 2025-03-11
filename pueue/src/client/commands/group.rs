@@ -1,4 +1,4 @@
-use pueue_lib::{client::Client, network::message::*};
+use pueue_lib::{client::Client, message::*};
 
 use super::handle_response;
 use crate::{

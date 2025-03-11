@@ -1,4 +1,4 @@
-use pueue_lib::{client::Client, network::message::EnvRequest};
+use pueue_lib::{client::Client, message::EnvRequest};
 
 use super::handle_response;
 use crate::{

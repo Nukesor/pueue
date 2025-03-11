@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use assert_matches::assert_matches;
-use pueue_lib::{GroupStatus, network::message::*, settings::Shared, task::*};
+use pueue_lib::{GroupStatus, message::*, settings::Shared, task::*};
 
 use crate::{helper::*, internal_prelude::*};
 

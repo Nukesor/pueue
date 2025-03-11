@@ -7,7 +7,8 @@ use serde::Serialize;
 use crate::{
     Error, PROTOCOL_VERSION,
     internal_prelude::*,
-    network::{message::*, protocol::*, secret::read_shared_secret},
+    message::*,
+    network::{protocol::*, secret::read_shared_secret},
     settings::Settings,
 };
 

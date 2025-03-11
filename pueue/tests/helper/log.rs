@@ -1,6 +1,6 @@
 use std::io::Read;
 
-use pueue_lib::{network::message::*, settings::*};
+use pueue_lib::{message::*, settings::*};
 use snap::read::FrameDecoder;
 
 use super::*;

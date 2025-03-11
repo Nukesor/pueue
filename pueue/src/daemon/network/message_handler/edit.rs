@@ -1,9 +1,9 @@
-use pueue_lib::{
-    TaskStatus, aliasing::insert_alias, failure_msg, network::message::*, success_msg,
-};
+use pueue_lib::{TaskStatus, failure_msg, message::*, success_msg};
 
 use super::*;
-use crate::{daemon::internal_state::SharedState, ok_or_save_state_failure};
+use crate::{
+    aliasing::insert_alias, daemon::internal_state::SharedState, ok_or_save_state_failure,
+};
 
 /// Invoked when calling `pueue edit`.
 /// If a user wants to edit a message, we need to send him the current command.

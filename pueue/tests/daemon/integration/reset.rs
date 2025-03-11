@@ -1,4 +1,4 @@
-use pueue_lib::{GroupStatus, Task, network::message::*};
+use pueue_lib::{GroupStatus, Task, message::*};
 
 use crate::{helper::*, internal_prelude::*};
 

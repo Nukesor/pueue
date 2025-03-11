@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use pueue_lib::{Group, GroupStatus, network::message::*};
+use pueue_lib::{Group, GroupStatus, message::*};
 
 use crate::{client::helper::*, internal_prelude::*};
 

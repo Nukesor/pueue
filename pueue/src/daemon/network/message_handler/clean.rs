@@ -1,4 +1,4 @@
-use pueue_lib::{TaskResult, TaskStatus, log::clean_log_handles, network::message::*};
+use pueue_lib::{TaskResult, TaskStatus, log::clean_log_handles, message::*};
 
 use super::*;
 use crate::{daemon::internal_state::SharedState, ok_or_save_state_failure};

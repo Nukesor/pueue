@@ -1,4 +1,4 @@
-use pueue_lib::{network::message::*, task::Task};
+use pueue_lib::{message::*, task::Task};
 
 use crate::{helper::*, internal_prelude::*};
 

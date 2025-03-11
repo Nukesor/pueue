@@ -1,4 +1,4 @@
-use pueue_lib::{Settings, network::message::*};
+use pueue_lib::{Settings, message::*};
 
 use crate::{
     daemon::{internal_state::SharedState, network::message_handler::ok_or_failure_message},

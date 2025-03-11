@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use chrono::{TimeDelta, prelude::*};
 use clap::{ArgAction, Parser, ValueEnum, ValueHint};
 use interim::*;
-use pueue_lib::network::message::Signal;
+use pueue_lib::message::Signal;
 
 use crate::client::commands::WaitTargetStatus;
 

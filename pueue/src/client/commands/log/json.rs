@@ -5,7 +5,7 @@ use std::{
 
 use pueue_lib::{
     log::{get_log_file_handle, read_last_lines},
-    network::message::TaskLogResponse,
+    message::TaskLogResponse,
     settings::Settings,
     task::Task,
 };

@@ -1,11 +1,11 @@
 use std::{fs::File, io::BufReader, path::Path, sync::Arc};
 
 use rustls::{
-    ClientConfig, RootCertStore, ServerConfig,
+    ClientConfig, RootCertStore,
     pki_types::{CertificateDer, PrivateKeyDer},
 };
 use rustls_pemfile::{pkcs8_private_keys, rsa_private_keys};
-use tokio_rustls::{TlsAcceptor, TlsConnector};
+use tokio_rustls::TlsConnector;
 
 use crate::{error::Error, settings::Shared};
 
@@ -27,23 +27,8 @@ pub async fn get_tls_connector(settings: &Shared) -> Result<TlsConnector, Error>
     Ok(TlsConnector::from(Arc::new(config)))
 }
 
-/// Configure the server using rusttls. \
-/// A TLS server needs a certificate and a fitting private key.
-pub fn get_tls_listener(settings: &Shared) -> Result<TlsAcceptor, Error> {
-    // Set the server-side key and certificate that should be used for all communication.
-    let certs = load_certs(&settings.daemon_cert())?;
-    let key = load_key(&settings.daemon_key())?;
-
-    let config = ServerConfig::builder()
-        .with_no_client_auth()
-        .with_single_cert(certs, key)
-        .map_err(|err| Error::CertificateFailure(format!("Failed to build TLS Acceptor: {err}")))?;
-
-    Ok(TlsAcceptor::from(Arc::new(config)))
-}
-
 /// Load the passed certificates file
-fn load_certs<'a>(path: &Path) -> Result<Vec<CertificateDer<'a>>, Error> {
+pub fn load_certs<'a>(path: &Path) -> Result<Vec<CertificateDer<'a>>, Error> {
     let file = File::open(path)
         .map_err(|err| Error::IoPathError(path.to_path_buf(), "opening cert", err))?;
     let certs: Vec<CertificateDer> = rustls_pemfile::certs(&mut BufReader::new(file))
@@ -57,7 +42,7 @@ fn load_certs<'a>(path: &Path) -> Result<Vec<CertificateDer<'a>>, Error> {
 
 /// Load the passed keys file.
 /// Only the first key will be used. It should match the certificate.
-fn load_key<'a>(path: &Path) -> Result<PrivateKeyDer<'a>, Error> {
+pub fn load_key<'a>(path: &Path) -> Result<PrivateKeyDer<'a>, Error> {
     let file = File::open(path)
         .map_err(|err| Error::IoPathError(path.to_path_buf(), "opening key", err))?;
 

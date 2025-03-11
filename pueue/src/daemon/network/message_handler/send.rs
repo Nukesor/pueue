@@ -1,6 +1,6 @@
 use std::io::Write;
 
-use pueue_lib::{failure_msg, network::message::*};
+use pueue_lib::{failure_msg, message::*};
 
 use crate::daemon::internal_state::SharedState;
 

@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+#[cfg(feature = "network")]
 use ciborium::Value;
 
 #[derive(thiserror::Error, Debug)]
@@ -20,6 +21,7 @@ pub enum Error {
     #[error("Couldn't deserialize message:\n{}", .0)]
     MessageDeserialization(String),
 
+    #[cfg(feature = "network")]
     #[error("Got unexpected but valid message. Are you up-to-date?:\n{:#?}", .0)]
     UnexpectedPayload(Value),
 

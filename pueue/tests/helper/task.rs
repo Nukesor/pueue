@@ -2,7 +2,7 @@ use std::{collections::HashMap, env::vars};
 
 use chrono::{DateTime, Local};
 use pueue_lib::{
-    network::message::*,
+    message::*,
     settings::*,
     task::{Task, TaskStatus},
 };

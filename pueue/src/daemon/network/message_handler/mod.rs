@@ -2,7 +2,8 @@ use std::fmt::Display;
 
 use pueue_lib::{
     Settings, failure_msg,
-    network::{message::*, protocol::send_response, socket::GenericStream},
+    message::*,
+    network::{protocol::send_response, socket::GenericStream},
 };
 
 use crate::{

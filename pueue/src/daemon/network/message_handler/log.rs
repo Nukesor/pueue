@@ -3,10 +3,8 @@ use std::{collections::BTreeMap, io::Read, path::Path, time::Duration};
 use pueue_lib::{
     Settings, failure_msg,
     log::*,
-    network::{
-        message::*,
-        protocol::{GenericStream, send_response},
-    },
+    message::*,
+    network::protocol::{GenericStream, send_response},
 };
 
 use crate::{daemon::internal_state::SharedState, internal_prelude::*};
