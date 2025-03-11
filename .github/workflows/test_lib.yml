@@ -1,0 +1,108 @@
+name: Build and run pueue lib tests with all feature combinations
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/**/*"
+      - "**.rs"
+      - "**/Cargo.toml"
+      - "**/Cargo.lock"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/**/*"
+      - "**.rs"
+      - "**/Cargo.toml"
+      - "**/Cargo.lock"
+
+jobs:
+  test:
+    name: on ${{ matrix.os }} for ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - x86_64-unknown-linux-gnu
+          - aarch64-unknown-linux-musl
+          - armv7-unknown-linux-musleabihf
+          - arm-unknown-linux-musleabihf
+          - x86_64-pc-windows-msvc
+          - x86_64-apple-darwin
+          - aarch64-apple-darwin
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            cross: false
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-musl
+            cross: true
+          - os: ubuntu-latest
+            target: armv7-unknown-linux-musleabihf
+            cross: true
+          - os: ubuntu-latest
+            target: arm-unknown-linux-musleabihf
+            cross: true
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            cross: false
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            cross: false
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            cross: true
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
+          targets: ${{ matrix.target }}
+
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-${{ matrix.target }}-
+
+      # ----- Non-Cross path -----
+      - name: cargo test
+        run: cargo test --doc --no-default-features
+        if: ${{ !matrix.cross }}
+
+      - name: cargo test
+        run: cargo test --doc --no-default-features --features=network
+        if: ${{ !matrix.cross }}
+
+      - name: cargo test
+        run: cargo test --doc --no-default-features --features=settings
+        if: ${{ !matrix.cross }}
+
+      # ----- Cross path -----
+      - name: cargo build
+        run: cross build --target=${{ matrix.target }} --no-default-features
+        if: ${{ matrix.cross }}
+
+      - name: cargo build
+        run: cross build --target=${{ matrix.target }} --no-default-features --features=network
+        if: ${{ matrix.cross }}
+
+      - name: cargo build
+        run: cross build --target=${{ matrix.target }} --no-default-features --features=settings
+        if: ${{ matrix.cross }}
