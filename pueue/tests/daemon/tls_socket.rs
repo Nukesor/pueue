@@ -35,7 +35,9 @@ async fn test_tls_socket() -> Result<()> {
         send_request(message, &mut stream).await.unwrap();
     });
 
-    let mut client = get_client_stream(&settings.shared).await.unwrap();
+    let mut client = get_client_stream(settings.shared.clone().try_into()?)
+        .await
+        .unwrap();
 
     // Create a client that sends a message and instantly receives it
     send_request(message, &mut client).await.unwrap();

@@ -1,3 +1,4 @@
+//! Pueue-lib errors.
 use std::path::PathBuf;
 
 #[cfg(feature = "network")]

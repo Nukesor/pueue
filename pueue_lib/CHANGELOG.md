@@ -6,7 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project adheres **somewhat** to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 The concept of SemVer is applied to the daemon/client API, but not the library API itself.
 
-## [0.29.0 ] - 2025-03-09
+## [0.30.0] - unreleased
+
+### Changed
+
+- Remove lots of daemon-exclusive functions from `pueue_lib` into the `pueue/daemon` folder.
+- Untangle TLS related code from `socket`/`protocol` code.
+- Move `message` module away from `network` module.
+- Untangle `settings` and `socket`/`protocol` code to allow usage of those functions without having to construct a `settings::Shared` struct.
+  This should make it a lot easier to write clients in the future.
+- Hide `settings`, `log`, `network` and `tls` logic behind feature flags. They're all enabled by default.
+
+## [0.29.0] - 2025-03-09
 
 ### Changed
 

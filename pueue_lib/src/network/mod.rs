@@ -55,9 +55,8 @@ pub mod protocol;
 pub mod secret;
 /// Low-level socket handling code.
 pub mod socket;
-/// Helper functions for reading and handling TLS files.
-pub mod tls;
 
 pub use protocol::{
     receive_message, receive_request, receive_response, send_message, send_request, send_response,
 };
+pub use socket::get_client_stream;

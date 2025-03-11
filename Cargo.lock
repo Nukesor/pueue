@@ -1557,6 +1557,8 @@ dependencies = [
  "pueue-lib",
  "rcgen",
  "rstest",
+ "rustls",
+ "rustls-pemfile",
  "serde",
  "serde_json",
  "serde_yaml",

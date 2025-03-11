@@ -34,7 +34,7 @@ mod tests {
             send_request(message, &mut stream).await.unwrap();
         });
 
-        let mut client = get_client_stream(&settings.shared).await?;
+        let mut client = get_client_stream(settings.shared.clone().try_into()?).await?;
 
         // Create a client that sends a message and instantly receives it
         send_request(message, &mut client).await?;

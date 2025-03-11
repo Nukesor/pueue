@@ -1,3 +1,5 @@
+//! The representation of the pueue daemon's current [State].
+//! Contains all [`Task`]s and [`Group`]s of the daemon.
 use std::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};

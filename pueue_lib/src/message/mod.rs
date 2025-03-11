@@ -1,3 +1,5 @@
+//! This contains the the [`Request`] and [`Response`]  enums and
+//! all their structs used to communicate with the daemon or client.
 use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};

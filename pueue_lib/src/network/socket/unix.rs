@@ -4,8 +4,8 @@ use async_trait::async_trait;
 use rustls::pki_types::ServerName;
 use tokio::net::{TcpStream, UnixListener, UnixStream};
 
-use super::{GenericStream, Listener, Stream};
-use crate::{error::Error, network::tls::get_tls_connector, settings::Shared};
+use super::{ConnectionSettings, GenericStream, Listener, Stream, get_tls_connector};
+use crate::error::Error;
 
 #[async_trait]
 impl Listener for UnixListener {
@@ -24,41 +24,41 @@ impl Stream for UnixStream {}
 
 /// Get a new stream for the client. \
 /// This can either be a UnixStream or a Tls encrypted TCPStream, depending on the parameters.
-pub async fn get_client_stream(settings: &Shared) -> Result<GenericStream, Error> {
-    // Create a unix socket, if the config says so.
-    if settings.use_unix_socket {
-        let unix_socket_path = settings.unix_socket_path();
-        let stream = UnixStream::connect(&unix_socket_path)
-            .await
-            .map_err(|err| {
-                Error::IoPathError(
-                    unix_socket_path,
-                    "connecting to daemon. Did you start it?",
-                    err,
-                )
+pub async fn get_client_stream(settings: ConnectionSettings<'_>) -> Result<GenericStream, Error> {
+    match settings {
+        // Create a unix socket
+        ConnectionSettings::UnixSocket { path } => {
+            let stream = UnixStream::connect(&path).await.map_err(|err| {
+                Error::IoPathError(path, "connecting to daemon. Did you start it?", err)
             })?;
 
-        return Ok(Box::new(stream));
+            Ok(Box::new(stream))
+        }
+        // Connect to the daemon via TCP
+        ConnectionSettings::TlsTcpSocket {
+            host,
+            port,
+            certificate,
+        } => {
+            let address = format!("{host}:{port}");
+            let tcp_stream = TcpStream::connect(&address).await.map_err(|_| {
+                Error::Connection(format!(
+                    "Failed to connect to the daemon on {address}. Did you start it?"
+                ))
+            })?;
+
+            // Get the configured rustls TlsConnector
+            let tls_connector = get_tls_connector(certificate).await.map_err(|err| {
+                Error::Connection(format!("Failed to initialize tls connector:\n{err}."))
+            })?;
+
+            // Initialize the TLS layer
+            let stream = tls_connector
+                .connect(ServerName::try_from("pueue.local").unwrap(), tcp_stream)
+                .await
+                .map_err(|err| Error::Connection(format!("Failed to initialize tls:\n{err}.")))?;
+
+            Ok(Box::new(stream))
+        }
     }
-
-    // Connect to the daemon via TCP
-    let address = format!("{}:{}", &settings.host, &settings.port);
-    let tcp_stream = TcpStream::connect(&address).await.map_err(|_| {
-        Error::Connection(format!(
-            "Failed to connect to the daemon on {address}. Did you start it?"
-        ))
-    })?;
-
-    // Get the configured rustls TlsConnector
-    let tls_connector = get_tls_connector(settings)
-        .await
-        .map_err(|err| Error::Connection(format!("Failed to initialize tls connector:\n{err}.")))?;
-
-    // Initialize the TLS layer
-    let stream = tls_connector
-        .connect(ServerName::try_from("pueue.local").unwrap(), tcp_stream)
-        .await
-        .map_err(|err| Error::Connection(format!("Failed to initialize tls:\n{err}.")))?;
-
-    Ok(Box::new(stream))
 }

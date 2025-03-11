@@ -1,3 +1,5 @@
+//! A reference implementation of a simple client that you may use.
+//! En/disable via the `client` feature.
 use color_eyre::{
     Result,
     eyre::{Context, bail},
@@ -68,7 +70,7 @@ impl Client {
     /// the client, a warning will be logged.
     pub async fn new(settings: Settings, show_version_warning: bool) -> Result<Self> {
         // Connect to daemon and get stream used for communication.
-        let mut stream = get_client_stream(&settings.shared)
+        let mut stream = get_client_stream(settings.shared.clone().try_into()?)
             .await
             .context("Failed to initialize stream.")?;
 

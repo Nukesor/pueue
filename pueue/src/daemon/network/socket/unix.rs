@@ -33,7 +33,10 @@ pub async fn get_listener(settings: &Shared) -> Result<GenericListener, Error> {
         // If it is, we have to throw an error, because another daemon is already running.
         // Otherwise, we can simply remove it.
         if socket_path.exists() {
-            if get_client_stream(settings).await.is_ok() {
+            if get_client_stream(settings.clone().try_into()?)
+                .await
+                .is_ok()
+            {
                 return Err(Error::UnixSocketExists);
             }
 

@@ -1,3 +1,4 @@
+//! Everything regarding Pueue's [Task]s.
 use std::{collections::HashMap, path::PathBuf};
 
 use chrono::prelude::*;
