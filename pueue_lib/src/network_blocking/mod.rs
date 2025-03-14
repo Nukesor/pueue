@@ -57,7 +57,7 @@ pub mod protocol;
 pub mod socket;
 
 #[cfg(feature = "client")]
-pub use client::Client;
+pub use client::BlockingClient;
 pub use protocol::{
     receive_message, receive_request, receive_response, send_message, send_request, send_response,
 };

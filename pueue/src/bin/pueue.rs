@@ -14,7 +14,9 @@ use pueue::client::{
     handle_command,
     style::OutputStyle,
 };
-use pueue_lib::{client::Client, settings::Settings};
+use pueue_lib::{
+    Client, network::socket::ConnectionSettings, secret::read_shared_secret, settings::Settings,
+};
 
 /// This is the main entry point of the client.
 ///
@@ -85,11 +87,13 @@ async fn main() -> Result<()> {
     };
 
     // Create client to talk with the daemon and connect.
-    let mut client = Client::new(settings, show_version_warning)
+    let connection_settings = ConnectionSettings::try_from(settings.shared.clone())?;
+    let secret = read_shared_secret(&settings.shared.shared_secret_path())?;
+    let mut client = Client::new(connection_settings, &secret, show_version_warning)
         .await
         .context("Failed to initialize client.")?;
 
-    handle_command(&mut client, &style, subcommand).await?;
+    handle_command(&mut client, settings, &style, subcommand).await?;
 
     Ok(())
 }

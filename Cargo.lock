@@ -1594,6 +1594,7 @@ dependencies = [
  "rand 0.9.0",
  "rev_buf_reader",
  "rustls",
+ "rustls-connector",
  "rustls-pemfile",
  "serde",
  "serde_json",
@@ -1895,6 +1896,17 @@ dependencies = [
  "rustls-webpki",
  "subtle",
  "zeroize",
+]
+
+[[package]]
+name = "rustls-connector"
+version = "0.21.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fc9c089855dc1b0f982d0d56ec62e19cf935fe6720aa6705dc61190e99b36f32"
+dependencies = [
+ "rustls",
+ "rustls-pki-types",
+ "rustls-webpki",
 ]
 
 [[package]]

@@ -6,7 +6,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use pueue_lib::{client::Client, error::Error, message::*, settings::Settings};
+use pueue_lib::{Client, error::Error, message::*, settings::Settings};
 use tempfile::tempdir;
 
 use super::handle_response;
@@ -21,7 +21,12 @@ use crate::{
 ///
 /// After receiving the task information, the user can then edit it in their editor.
 /// Upon exiting the text editor, the line will then be read and sent to the server
-pub async fn edit(client: &mut Client, style: &OutputStyle, task_ids: Vec<usize>) -> Result<()> {
+pub async fn edit(
+    client: &mut Client,
+    settings: Settings,
+    style: &OutputStyle,
+    task_ids: Vec<usize>,
+) -> Result<()> {
     // Request the data to edit from the server and issue a task-lock while doing so.
     let init_message = Request::EditRequest(task_ids);
     client.send_request(init_message).await?;
@@ -36,7 +41,7 @@ pub async fn edit(client: &mut Client, style: &OutputStyle, task_ids: Vec<usize>
     };
 
     let task_ids: Vec<usize> = editable_tasks.iter().map(|task| task.id).collect();
-    let result = edit_tasks(&client.settings, editable_tasks);
+    let result = edit_tasks(&settings, editable_tasks);
 
     // Any error while editing will result in the client aborting the editing process.
     // However, as the daemon moves tasks that're edited into the `Locked` state, we cannot simply

@@ -6,7 +6,7 @@ use std::{
 use chrono::Local;
 use crossterm::style::{Attribute, Color};
 use pueue_lib::{
-    client::Client,
+    Client,
     message::TaskSelection,
     state::State,
     task::{Task, TaskResult, TaskStatus},

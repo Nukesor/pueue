@@ -1,3 +1,4 @@
+//! Functions to write and read the secret to/from a file.
 use std::{fs::File, io::prelude::*, path::Path};
 
 use rand::{Rng, distr::Alphanumeric};

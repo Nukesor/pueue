@@ -1,4 +1,4 @@
-use pueue_lib::{client::Client, message::*};
+use pueue_lib::{Client, Settings, message::*};
 
 use super::{handle_response, handle_user_confirmation, selection_from_params};
 use crate::{client::style::OutputStyle, internal_prelude::*};
@@ -8,13 +8,14 @@ use crate::{client::style::OutputStyle, internal_prelude::*};
 /// Can also be used to send a specific [`Signal`].
 pub async fn kill(
     client: &mut Client,
+    settings: Settings,
     style: &OutputStyle,
     task_ids: Vec<usize>,
     group: Option<String>,
     all: bool,
     signal: Option<Signal>,
 ) -> Result<()> {
-    if client.settings.client.show_confirmation_questions {
+    if settings.client.show_confirmation_questions {
         handle_user_confirmation("kill", &task_ids)?;
     }
 
