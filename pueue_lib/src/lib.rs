@@ -13,6 +13,7 @@ pub mod message;
 pub mod network;
 #[cfg(feature = "network_blocking")]
 pub mod network_blocking;
+#[cfg(feature = "secret")]
 pub mod secret;
 #[cfg(feature = "settings")]
 mod setting_defaults;
