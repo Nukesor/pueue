@@ -23,22 +23,23 @@ network = [
     "dep:async-trait",
     "dep:byteorder",
     "dep:ciborium",
-    "dep:rand",
     "dep:rustls",
     "dep:rustls-pemfile",
     "dep:tokio",
     "dep:tokio-rustls",
+    "secret",
     "tls",
 ]
 network_blocking = [
     "dep:byteorder",
     "dep:ciborium",
-    "dep:rand",
     "dep:rustls",
     "dep:rustls-connector",
     "dep:rustls-pemfile",
+    "secret",
     "tls",
 ]
+secret = ["dep:rand"]
 settings = ["dep:dirs", "dep:serde_yaml", "dep:shellexpand"]
 tls = ["dep:rustls"]
 
