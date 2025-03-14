@@ -8,7 +8,7 @@
 use std::io::{Write, stdin, stdout};
 
 use pueue_lib::{
-    client::Client,
+    Client, Settings,
     message::{Request, Response, TaskSelection},
     state::{PUEUE_DEFAULT_GROUP, State},
     task::Task,
@@ -152,6 +152,7 @@ fn handle_response(style: &OutputStyle, response: Response) -> Result<()> {
 /// Based on the subcommand, the respective function in the `commands` submodule is called.
 pub async fn handle_command(
     client: &mut Client,
+    settings: Settings,
     style: &OutputStyle,
     subcommand: SubCommand,
 ) -> Result<()> {
@@ -174,6 +175,7 @@ pub async fn handle_command(
         } => {
             add_task(
                 client,
+                settings,
                 style,
                 command,
                 working_directory,
@@ -194,7 +196,7 @@ pub async fn handle_command(
             successful_only,
             group,
         } => clean(client, style, group, successful_only).await,
-        SubCommand::Edit { task_ids } => edit(client, style, task_ids).await,
+        SubCommand::Edit { task_ids } => edit(client, settings, style, task_ids).await,
         SubCommand::Enqueue {
             task_ids,
             group,
@@ -202,14 +204,16 @@ pub async fn handle_command(
             delay_until,
         } => enqueue(client, style, task_ids, group, all, delay_until).await,
         SubCommand::Env { cmd } => env(client, style, cmd).await,
-        SubCommand::Follow { task_id, lines } => follow(client, style, task_id, lines).await,
+        SubCommand::Follow { task_id, lines } => {
+            follow(client, settings, style, task_id, lines).await
+        }
         SubCommand::Group { cmd, json } => group(client, style, cmd, json).await,
         SubCommand::Kill {
             task_ids,
             group,
             all,
             signal,
-        } => kill(client, style, task_ids, group, all, signal).await,
+        } => kill(client, settings, style, task_ids, group, all, signal).await,
         SubCommand::Log {
             task_ids,
             group,
@@ -217,7 +221,12 @@ pub async fn handle_command(
             json,
             lines,
             full,
-        } => print_logs(client, style, task_ids, group, all, json, lines, full).await,
+        } => {
+            print_logs(
+                client, settings, style, task_ids, group, all, json, lines, full,
+            )
+            .await
+        }
         SubCommand::Parallel {
             parallel_tasks,
             group,
@@ -228,7 +237,7 @@ pub async fn handle_command(
             all,
             wait,
         } => pause(client, style, task_ids, group, all, wait).await,
-        SubCommand::Remove { task_ids } => remove(client, style, task_ids).await,
+        SubCommand::Remove { task_ids } => remove(client, settings, style, task_ids).await,
         SubCommand::Reset { force, groups } => reset(client, style, force, groups).await,
         SubCommand::Restart {
             task_ids,
@@ -242,6 +251,7 @@ pub async fn handle_command(
         } => {
             restart(
                 client,
+                settings,
                 task_ids,
                 all_failed,
                 failed_in_group,
@@ -266,7 +276,9 @@ pub async fn handle_command(
             group,
             all,
         } => start(client, style, task_ids, group, all).await,
-        SubCommand::Status { query, json, group } => state(client, style, query, json, group).await,
+        SubCommand::Status { query, json, group } => {
+            state(client, settings, style, query, json, group).await
+        }
         SubCommand::Switch {
             task_id_1,
             task_id_2,

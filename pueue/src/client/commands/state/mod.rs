@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use chrono::{DateTime, Local, LocalResult};
 use pueue_lib::{
-    client::Client,
+    Client,
     settings::Settings,
     state::{PUEUE_DEFAULT_GROUP, State},
     task::Task,
@@ -22,6 +22,7 @@ use table_builder::TableBuilder;
 /// Simply request and print the state.
 pub async fn state(
     client: &mut Client,
+    settings: Settings,
     style: &OutputStyle,
     query: Vec<String>,
     json: bool,
@@ -30,15 +31,7 @@ pub async fn state(
     let state = get_state(client).await?;
     let tasks = state.tasks.values().cloned().collect();
 
-    let output = print_state(
-        state,
-        tasks,
-        style,
-        &client.settings,
-        json,
-        group,
-        Some(query),
-    )?;
+    let output = print_state(state, tasks, style, &settings, json, group, Some(query))?;
     println!("{output}");
 
     Ok(())

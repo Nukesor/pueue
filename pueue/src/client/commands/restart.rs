@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use chrono::Local;
 use color_eyre::eyre::ContextCompat;
 use pueue_lib::{
-    client::Client,
+    Client, Settings,
     message::*,
     state::FilteredTasks,
     task::{Task, TaskResult, TaskStatus},
@@ -22,6 +22,7 @@ use crate::{
 #[allow(clippy::too_many_arguments)]
 pub async fn restart(
     client: &mut Client,
+    settings: Settings,
     task_ids: Vec<usize>,
     all_failed: bool,
     failed_in_group: Option<String>,
@@ -32,7 +33,7 @@ pub async fn restart(
     edit: bool,
 ) -> Result<()> {
     // `not_in_place` superseeds both other configs
-    let in_place = (client.settings.client.restart_in_place || in_place) && !not_in_place;
+    let in_place = (settings.client.restart_in_place || in_place) && !not_in_place;
 
     let new_status = if stashed {
         TaskStatus::Stashed { enqueue_at: None }
@@ -109,7 +110,7 @@ pub async fn restart(
     if edit {
         let mut editable_tasks: Vec<EditableTask> =
             tasks.values().map(EditableTask::from).collect();
-        editable_tasks = edit_tasks(&client.settings, editable_tasks)?;
+        editable_tasks = edit_tasks(&settings, editable_tasks)?;
 
         // Now merge the edited properties back into the tasks.
         for edited in editable_tasks {

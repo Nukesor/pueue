@@ -1,7 +1,7 @@
 //! Pueue-lib errors.
 use std::path::PathBuf;
 
-#[cfg(feature = "network")]
+#[cfg(any(feature = "network", feature = "network_blocking"))]
 use ciborium::Value;
 
 #[derive(thiserror::Error, Debug)]
@@ -22,7 +22,7 @@ pub enum Error {
     #[error("Couldn't deserialize message:\n{}", .0)]
     MessageDeserialization(String),
 
-    #[cfg(feature = "network")]
+    #[cfg(any(feature = "network", feature = "network_blocking"))]
     #[error("Got unexpected but valid message. Are you up-to-date?:\n{:#?}", .0)]
     UnexpectedPayload(Value),
 

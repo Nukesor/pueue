@@ -7,8 +7,7 @@ use std::{
 
 use chrono::{DateTime, Local};
 use pueue_lib::{
-    Request, Response,
-    client::Client,
+    Client, Request, Response, Settings,
     message::{AddRequest, AddedTaskResponse},
 };
 
@@ -18,6 +17,7 @@ use crate::{client::style::OutputStyle, format::format_datetime, internal_prelud
 #[allow(clippy::too_many_arguments)]
 pub async fn add_task(
     client: &mut Client,
+    settings: Settings,
     style: &OutputStyle,
     mut command: Vec<String>,
     working_directory: Option<PathBuf>,
@@ -83,7 +83,7 @@ pub async fn add_task(
         // Only print the task id if that was requested.
         format!("{task_id}")
     } else if let Some(enqueue_at) = enqueue_at {
-        let enqueue_at = format_datetime(&client.settings, &enqueue_at);
+        let enqueue_at = format_datetime(&settings, &enqueue_at);
         format!("New task added (id {task_id}). It will be enqueued at {enqueue_at}")
     } else {
         format!("New task added (id {task_id}).")
@@ -103,7 +103,7 @@ pub async fn add_task(
     }
 
     if follow {
-        follow_cmd(client, style, Some(task_id), None).await?;
+        follow_cmd(client, settings, style, Some(task_id), None).await?;
     }
 
     Ok(())

@@ -6,30 +6,38 @@ use color_eyre::{
 };
 use serde::Serialize;
 
-use crate::{
-    Error, PROTOCOL_VERSION,
-    internal_prelude::*,
-    message::*,
-    network::{protocol::*, secret::read_shared_secret},
-    settings::Settings,
-};
+use super::protocol::*;
+use crate::{Error, PROTOCOL_VERSION, internal_prelude::*, message::*};
 
 /// This struct contains the base logic for the client.
 /// The client is responsible for connecting to the daemon, sending instructions
 /// and interpreting their responses.
 ///
 /// ```no_run
-/// use pueue_lib::{Settings, Client, Response, Request};
+/// use std::path::PathBuf;
+/// use pueue_lib::{
+///     Client,
+///     Response,
+///     Request,
+///     network::socket::ConnectionSettings,
+/// };
 /// # use color_eyre::{Result, eyre::Context};
 ///
+/// # #[cfg(target_os = "windows")]
+/// # fn main() {}
+///
+/// # #[cfg(not(target_os = "windows"))]
 /// # #[tokio::main]
 /// # async fn main() -> Result<()> {
 ///
-/// // Read settings from the default configuration file location.
-/// let (pueue_settings, _) = Settings::read(&None)?;
+/// // Connection settings and secret to connect to the daemon.
+/// let settings = ConnectionSettings::UnixSocket {
+///     path: PathBuf::from("/home/user/.local/share/pueue/pueue.socket"),
+/// };
+/// let secret = "My secret";
 ///
 /// // Create a client. This already establishes a connection to the daemon.
-/// let mut client = Client::new(pueue_settings, true)
+/// let mut client = Client::new(settings, secret.as_bytes(), true)
 ///     .await
 ///     .context("Failed to initialize client.")?;
 ///
@@ -45,7 +53,6 @@ use crate::{
 /// # }
 /// ```
 pub struct Client {
-    pub settings: Settings,
     pub stream: GenericStream,
     pub daemon_version: String,
 }
@@ -53,7 +60,6 @@ pub struct Client {
 impl std::fmt::Debug for Client {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Client")
-            .field("settings", &self.settings)
             .field("stream", &"GenericStream<not_debuggable>")
             .finish()
     }
@@ -68,17 +74,20 @@ impl Client {
     ///
     /// If the `show_version_warning` flag is `true` and the daemon has a different version than
     /// the client, a warning will be logged.
-    pub async fn new(settings: Settings, show_version_warning: bool) -> Result<Self> {
+    pub async fn new(
+        settings: ConnectionSettings<'_>,
+        secret: &[u8],
+        show_version_warning: bool,
+    ) -> Result<Self> {
         // Connect to daemon and get stream used for communication.
-        let mut stream = get_client_stream(settings.shared.clone().try_into()?)
+        let mut stream = get_client_stream(settings)
             .await
             .context("Failed to initialize stream.")?;
 
         // Next we do a handshake with the daemon
         // 1. Client sends the secret to the daemon.
         // 2. If successful, the daemon responds with their version.
-        let secret = read_shared_secret(&settings.shared.shared_secret_path())?;
-        send_bytes(&secret, &mut stream)
+        send_bytes(secret, &mut stream)
             .await
             .context("Failed to send secret.")?;
 
@@ -105,7 +114,6 @@ impl Client {
         }
 
         Ok(Client {
-            settings,
             stream,
             daemon_version,
         })
@@ -116,7 +124,7 @@ impl Client {
         &mut self.stream
     }
 
-    /// Convenience wrapper around [`crate::send_request`] to directly send [`Request`]s.
+    /// Convenience wrapper around [`super::send_request`] to directly send [`Request`]s.
     pub async fn send_request<T>(&mut self, message: T) -> Result<(), Error>
     where
         T: Into<Request>,

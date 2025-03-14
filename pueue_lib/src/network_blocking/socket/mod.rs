@@ -4,17 +4,13 @@
 //! each supported platform.
 //! Depending on the target, the respective platform is read and loaded into this scope.
 
+use std::io::{Read, Write};
+use std::net::TcpStream;
 #[cfg(not(target_os = "windows"))]
 use std::path::PathBuf;
-use std::sync::Arc;
 
-use async_trait::async_trait;
-use rustls::{ClientConfig, RootCertStore, pki_types::CertificateDer};
-use tokio::{
-    io::{AsyncRead, AsyncWrite},
-    net::TcpStream,
-};
-use tokio_rustls::TlsConnector;
+use rustls::pki_types::CertificateDer;
+use rustls_connector::{RustlsConnector as TlsConnector, RustlsConnectorConfig};
 
 use crate::error::Error;
 #[cfg(feature = "settings")]
@@ -28,16 +24,15 @@ pub use platform::*;
 
 /// A new trait, which can be used to represent Unix- and TcpListeners. \
 /// This is necessary to easily write generic functions where both types can be used.
-#[async_trait]
-pub trait Listener: Sync + Send {
-    async fn accept<'a>(&'a self) -> Result<GenericStream, Error>;
+pub trait BlockingListener: Sync + Send {
+    fn accept(&self) -> Result<GenericBlockingStream, Error>;
 }
 
 /// Convenience type, so we don't have type write `Box<dyn Listener>` all the time.
-pub type GenericListener = Box<dyn Listener>;
+pub type GenericBlockingListener = Box<dyn BlockingListener>;
 /// Convenience type, so we don't have type write `Box<dyn Stream>` all the time. \
 /// This also prevents name collisions, since `Stream` is imported in many preludes.
-pub type GenericStream = Box<dyn Stream>;
+pub type GenericBlockingStream = Box<dyn BlockingStream>;
 
 /// Describe how a client should connect to the daemon.
 pub enum ConnectionSettings<'a> {
@@ -75,23 +70,16 @@ impl TryFrom<Shared> for ConnectionSettings<'_> {
     }
 }
 
-pub trait Stream: AsyncRead + AsyncWrite + Unpin + Send {}
-impl Stream for tokio_rustls::server::TlsStream<TcpStream> {}
-impl Stream for tokio_rustls::client::TlsStream<TcpStream> {}
+pub trait BlockingStream: Read + Write {}
+impl BlockingStream for rustls_connector::TlsStream<TcpStream> {}
 
 /// Initialize our client [TlsConnector]. \
 /// 1. Trust our own CA. ONLY our own CA.
 /// 2. Set the client certificate and key
-pub async fn get_tls_connector(cert: CertificateDer<'_>) -> Result<TlsConnector, Error> {
-    // Only trust server-certificates signed with our own CA.
-    let mut cert_store = RootCertStore::empty();
-    cert_store.add(cert).map_err(|err| {
-        Error::CertificateFailure(format!("Failed to build RootCertStore: {err}"))
-    })?;
+pub fn get_tls_connector(cert: CertificateDer<'_>) -> Result<TlsConnector, Error> {
+    let mut config = RustlsConnectorConfig::default();
+    config.add_parsable_certificates(vec![cert]);
+    let connector = config.connector_with_no_client_auth();
 
-    let config: ClientConfig = ClientConfig::builder()
-        .with_root_certificates(cert_store)
-        .with_no_client_auth();
-
-    Ok(TlsConnector::from(Arc::new(config)))
+    Ok(connector)
 }

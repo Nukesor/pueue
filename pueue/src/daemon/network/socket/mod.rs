@@ -7,9 +7,7 @@
 use std::time::{Duration, SystemTime};
 
 use pueue_lib::{
-    Error, PROTOCOL_VERSION, Settings,
-    message::*,
-    network::{protocol::*, secret::read_shared_secret},
+    Error, PROTOCOL_VERSION, Settings, message::*, network::protocol::*, secret::read_shared_secret,
 };
 use tokio::time::sleep;
 

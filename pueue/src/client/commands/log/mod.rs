@@ -1,7 +1,7 @@
 use comfy_table::{Attribute as ComfyAttribute, Cell, CellAlignment, Table};
 use crossterm::style::Color;
 use pueue_lib::{
-    client::Client,
+    Client,
     message::{TaskLogResponse, TaskSelection, *},
     settings::Settings,
     task::{Task, TaskResult, TaskStatus},
@@ -23,6 +23,7 @@ use remote::*;
 #[allow(clippy::too_many_arguments)]
 pub async fn print_logs(
     client: &mut Client,
+    settings: Settings,
     style: &OutputStyle,
     task_ids: Vec<usize>,
     group: Option<String>,
@@ -37,7 +38,7 @@ pub async fn print_logs(
     client
         .send_request(LogRequest {
             tasks: selection.clone(),
-            send_logs: !client.settings.client.read_local_logs,
+            send_logs: !settings.client.read_local_logs,
             lines,
         })
         .await?;
@@ -51,7 +52,7 @@ pub async fn print_logs(
 
     // Return the server response in json representation.
     if json {
-        print_log_json(task_logs, &client.settings, lines);
+        print_log_json(task_logs, &settings, lines);
         return Ok(());
     }
 
@@ -75,7 +76,7 @@ pub async fn print_logs(
     // Iterate over each task and print the respective log.
     let mut task_iter = task_logs.iter().peekable();
     while let Some((_, task_log)) = task_iter.next() {
-        print_log(task_log, style, &client.settings, lines);
+        print_log(task_log, style, &settings, lines);
 
         // Add a newline if there is another task that's going to be printed.
         if let Some((_, task_log)) = task_iter.peek() {

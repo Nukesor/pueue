@@ -4,8 +4,7 @@ use std::{
 };
 
 use pueue_lib::{
-    Response,
-    client::Client,
+    Client, Response, Settings,
     log::{get_log_file_handle, get_log_path, seek_to_last_lines},
     message::{StreamRequest, TaskSelection},
 };
@@ -26,6 +25,7 @@ use crate::{
 /// daemon in case they're somewhere inaccessible or on a remote machine.
 pub async fn follow(
     client: &mut Client,
+    settings: Settings,
     style: &OutputStyle,
     task_id: Option<usize>,
     lines: Option<usize>,
@@ -33,8 +33,8 @@ pub async fn follow(
     // If we're supposed to read the log files from the local system, we don't have to
     // do any communication with the daemon.
     // Thereby we handle this in a separate function.
-    if client.settings.client.read_local_logs {
-        local_follow(client, task_id, lines).await?;
+    if settings.client.read_local_logs {
+        local_follow(client, settings, task_id, lines).await?;
         return Ok(());
     }
 
@@ -93,6 +93,7 @@ pub async fn remote_follow(
 /// If there are multiple tasks, the user has to specify which task they want to follow.
 pub async fn local_follow(
     client: &mut Client,
+    settings: Settings,
     task_id: Option<usize>,
     lines: Option<usize>,
 ) -> Result<()> {
@@ -127,7 +128,7 @@ pub async fn local_follow(
         }
     };
 
-    follow_local_task_logs(client, task_id, lines).await?;
+    follow_local_task_logs(client, settings, task_id, lines).await?;
 
     Ok(())
 }
@@ -141,10 +142,11 @@ pub async fn local_follow(
 /// - Multiple running tasks: Print out the list of possible tasks to follow.
 pub async fn follow_local_task_logs(
     client: &mut Client,
+    settings: Settings,
     task_id: usize,
     lines: Option<usize>,
 ) -> Result<()> {
-    let pueue_directory = &client.settings.shared.pueue_directory();
+    let pueue_directory = &settings.shared.pueue_directory();
     // It might be that the task is not yet running.
     // Ensure that it exists and is started.
     loop {

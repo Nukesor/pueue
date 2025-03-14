@@ -1,12 +1,10 @@
 use pueue_lib::{
     message::*,
-    network::{
-        protocol::{
-            GenericStream, get_client_stream, receive_bytes, receive_message, send_bytes,
-            send_message as internal_send_message,
-        },
-        secret::read_shared_secret,
+    network::protocol::{
+        GenericStream, get_client_stream, receive_bytes, receive_message, send_bytes,
+        send_message as internal_send_message,
     },
+    secret::read_shared_secret,
     settings::Shared,
 };
 
