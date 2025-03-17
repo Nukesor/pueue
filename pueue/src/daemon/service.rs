@@ -125,11 +125,11 @@ pub fn install_service(config_path: Option<PathBuf>, profile: Option<String>) ->
     if let Some(config_path) = config_path {
         args.extend([
             "--config".into(),
-            format!(r#""{}""#, config_path.to_string_lossy()).into(),
+            config_path.to_string_lossy().to_string().into(),
         ]);
     }
     if let Some(profile) = profile {
-        args.extend(["--profile".into(), format!(r#""{profile}""#).into()]);
+        args.extend(["--profile".into(), profile.into()]);
     }
 
     args.extend(["service".into(), "run".into()]);
