@@ -48,7 +48,7 @@ use std::{
 
 use windows::{
     Win32::{
-        Foundation::{HANDLE, LUID},
+        Foundation::{HANDLE, LUID, STILL_ACTIVE},
         Security::{
             AdjustTokenPrivileges, DuplicateTokenEx, LookupPrivilegeValueW, SE_PRIVILEGE_ENABLED,
             SE_PRIVILEGE_REMOVED, SE_TCB_NAME, SecurityIdentification, TOKEN_ACCESS_MASK,
@@ -542,6 +542,10 @@ impl Child {
         Ok(this)
     }
 
+    fn is_alive(&self) -> bool {
+        self.exit_code() as i32 == STILL_ACTIVE.0
+    }
+
     fn exit_code(&self) -> u32 {
         let mut code = 0u32;
         _ = unsafe { GetExitCodeProcess(self.0.0, &mut code) };
@@ -592,8 +596,6 @@ impl Drop for EnvBlock {
 /// Manages the child daemon, by spawning / stopping it, or reporting abnormal exit, and allowing
 /// wait().
 struct Spawner {
-    // Whether a child daemon is running.
-    running: Arc<AtomicBool>,
     // Holds the actual process of the running child daemon.
     child: Arc<Mutex<Option<Child>>>,
     // Whether the process has exited without our request.
@@ -611,7 +613,6 @@ impl Spawner {
         let (wait_tx, wait_rx) = channel();
 
         Self {
-            running: Arc::default(),
             child: Arc::default(),
             dirty: Arc::default(),
             request_stop: Arc::default(),
@@ -622,7 +623,11 @@ impl Spawner {
 
     /// Is the child daemon running?
     fn running(&self) -> bool {
-        self.running.load(Ordering::Relaxed)
+        self.child
+            .lock()
+            .unwrap()
+            .as_ref()
+            .is_some_and(|c| c.is_alive())
     }
 
     /// Stop the spawned daemon.
@@ -631,21 +636,18 @@ impl Spawner {
     /// make _sure_ you put this stop() _after_ you change the `while` condition to false
     /// otherwise any condition change will not be observed.
     fn stop(&self) {
-        if let Some(child) = self.child.lock().unwrap().take() {
-            // Request a normal stop. This is not an abnormal process exit.
-            self.request_stop.store(true, Ordering::Relaxed);
+        // Request a normal stop. This is not an abnormal process exit.
+        self.request_stop.store(true, Ordering::Relaxed);
 
+        if let Some(child) = self.child.lock().unwrap().as_ref() {
             child.kill();
-
-            debug!("stop() kill");
-
-            self.running.store(false, Ordering::Relaxed);
-
-            // Signal the wait() to exit so a `while` condition is checked at least once more.
-            // As long as `while` conditions have been changed _before_ the call to stop(),
-            // the changed condition will be observed.
-            _ = self.wait_tx.send(());
+            debug!("stop() killed");
         }
+
+        // Signal the wait() to exit so a `while` condition is checked at least once more.
+        // As long as `while` conditions have been changed _before_ the call to stop(),
+        // the changed condition will be observed.
+        _ = self.wait_tx.send(());
     }
 
     /// Wait for child process to exit.
@@ -660,7 +662,6 @@ impl Spawner {
 
     /// Try to spawn a child daemon.
     fn start(&self, session: u32) -> Result<()> {
-        let running = self.running.clone();
         let child = self.child.clone();
         let waiter = self.wait_tx.clone();
         let dirty = self.dirty.clone();
@@ -702,12 +703,8 @@ impl Spawner {
                     *lock = Some(spawned_child.clone());
                 }
 
-                running.store(true, Ordering::Relaxed);
-
                 // Wait until the process exits.
                 spawned_child.wait();
-
-                running.store(false, Ordering::Relaxed);
 
                 // Check if process exited on its own without our explicit request (`stop()` was not
                 // called).
