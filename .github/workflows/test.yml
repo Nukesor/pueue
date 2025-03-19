@@ -74,12 +74,6 @@ jobs:
         with:
           tool: nextest
 
-      - name: Install cargo-cross
-        uses: taiki-e/install-action@v2
-        with:
-          tool: cross
-        if: ${{ matrix.cross }}
-
       - uses: actions/cache@v3
         with:
           path: |
@@ -108,10 +102,16 @@ jobs:
         if: ${{ !matrix.cross }}
 
       # ----- Cross path -----
+      - name: Install cargo-cross
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cross
+        if: ${{ matrix.cross }}
+
       #- name: Install qemu
       #  run: apt-get install --assume-yes binfmt-support qemu-user-static qemu-user
       #  if: ${{ matrix.cross }}
-      #
+
       - name: cargo build
         run: cross build --target=${{ matrix.target }}
         if: ${{ matrix.cross }}
