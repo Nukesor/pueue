@@ -95,6 +95,12 @@ jobs:
         if: ${{ !matrix.cross }}
 
       # ----- Cross path -----
+      - name: Install cargo-cross
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cross
+        if: ${{ matrix.cross }}
+
       - name: cargo build
         run: cross build --target=${{ matrix.target }} --no-default-features
         if: ${{ matrix.cross }}

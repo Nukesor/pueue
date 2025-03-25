@@ -25,7 +25,7 @@ name = "save_state"
 [dependencies]
 async-trait.workspace = true
 chrono.workspace = true
-clap = { version = "4.5.31", features = [
+clap = { version = "4.5.32", features = [
     "cargo",
     "derive",
     "help",
@@ -39,7 +39,7 @@ command-group.workspace = true
 ctrlc = { version = "3", features = ["termination"] }
 flate2 = "1"
 handlebars.workspace = true
-interim = { version = "0.2.0", features = ["chrono_0_4"] }
+interim = { version = "0.2.1", features = ["chrono_0_4"] }
 pest = "2.7"
 pest_derive = "2.7"
 pueue-lib = { version = "0.29.0", path = "../pueue_lib", features = ["client"] }

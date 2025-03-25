@@ -17,7 +17,7 @@ maintenance = { status = "actively-developed" }
 [features]
 # Client needs the `network` or `network_blocking` feature to do anything.
 client = ["dep:color-eyre"]
-default = ["log", "network", "network_blocking", "settings"]
+default = ["client", "log", "network", "network_blocking", "settings"]
 log = ["dep:rev_buf_reader", "dep:snap"]
 network = [
     "dep:async-trait",
