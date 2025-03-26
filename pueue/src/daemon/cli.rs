@@ -37,7 +37,7 @@ pub struct CliArguments {
 #[cfg(target_os = "windows")]
 #[derive(Copy, Clone, Debug, Subcommand)]
 pub enum ServiceSubcommandEntry {
-    /// Manage the Windows Service.
+    /// Manage the Windows Service. Note: service commands must be run as admin.
     #[command(subcommand)]
     Service(ServiceSubcommand),
 }
@@ -53,7 +53,7 @@ pub enum ServiceSubcommand {
     /// Once installed, you must not move the binary, otherwise the Windows
     /// service will not be able to find it. If you wish to move the binary,
     /// first uninstall the service, move the binary, then install the service
-    /// again.
+    /// again. This command only installs the service; it does not start it for you.
     Install,
     /// Uninstall the service.
     Uninstall,
