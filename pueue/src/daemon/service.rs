@@ -497,17 +497,20 @@ impl Child {
             .chain(iter::once(0))
             .collect::<Vec<_>>();
 
-        let mut args = args
-            .as_ref()
-            .encode_utf16()
-            .chain(iter::once(0))
-            .collect::<Vec<_>>();
-
         let exe = PWSTR(exe.as_mut_ptr());
-        let args = if args.is_empty() {
-            None
-        } else {
+
+        let mut _args = args.as_ref();
+        let mut args;
+
+        let args = if !_args.is_empty() {
+            args = _args
+                .encode_utf16()
+                .chain(iter::once(0))
+                .collect::<Vec<_>>();
+
             Some(PWSTR(args.as_mut_ptr()))
+        } else {
+            None
         };
 
         let env_block = EnvBlock::new(token)?;
@@ -666,12 +669,11 @@ impl Spawner {
         let waiter = self.wait_tx.clone();
         let dirty = self.dirty.clone();
         let request_stop = self.request_stop.clone();
+
         _ = thread::spawn(move || {
             request_stop.store(false, Ordering::Relaxed);
 
             let res = run_as(session, move |token| {
-                let mut args = Vec::new();
-
                 let config = CONFIG
                     .get()
                     .ok_or_else(|| eyre!("failed to get CONFIG"))?
@@ -679,6 +681,8 @@ impl Spawner {
 
                 // Try to get the path to the current binary
                 let current_exe = env::current_exe()?;
+
+                let mut args = Vec::new();
 
                 // first argument MUST be the exe name
                 args.push(format!(r#""{exe}""#, exe = current_exe.display()));
