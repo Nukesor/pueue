@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Fixed
 
 - Fix extraneous double quotes being added to --config and --profile flags in Windows service install. #630
+- Fix --config/--path flags causing Windows service start to fail. #631
 
 ## \[4.0.0\] - 2025-03-09
 

@@ -35,7 +35,7 @@ use std::{
     env,
     ffi::{OsString, c_void},
     iter,
-    path::PathBuf,
+    path::{Path, PathBuf},
     ptr,
     sync::{
         Arc, Mutex, OnceLock,
@@ -48,7 +48,7 @@ use std::{
 
 use windows::{
     Win32::{
-        Foundation::{HANDLE, LUID},
+        Foundation::{HANDLE, LUID, STILL_ACTIVE},
         Security::{
             AdjustTokenPrivileges, DuplicateTokenEx, LookupPrivilegeValueW, SE_PRIVILEGE_ENABLED,
             SE_PRIVILEGE_REMOVED, SE_TCB_NAME, SecurityIdentification, TOKEN_ACCESS_MASK,
@@ -454,7 +454,7 @@ fn run_as<T>(session_id: u32, cb: impl FnOnce(HANDLE) -> Result<T>) -> Result<T>
 }
 
 /// Newtype over handle which closes the HANDLE on drop.
-#[derive(Default)]
+#[derive(Clone, Default)]
 struct OwnedHandle(HANDLE);
 
 unsafe impl Send for OwnedHandle {}
@@ -474,46 +474,103 @@ impl From<HANDLE> for OwnedHandle {
 
 impl Drop for OwnedHandle {
     fn drop(&mut self) {
-        unsafe {
-            self.0.free();
+        if self.is_valid() {
+            unsafe {
+                self.0.free();
+            }
         }
     }
 }
 
-/// A child process. Tries to kill the process when dropped.
-struct Child(OwnedHandle);
+/// A quick wrapper over a child process. Child is terminated when this is dropped
+#[derive(Clone)]
+struct Child(Arc<OwnedHandle>);
 
 impl Child {
-    fn new() -> Self {
-        Self(OwnedHandle::default())
-    }
+    /// Spawn a child as the user provided by token
+    fn spawn_as(token: HANDLE, exe: impl AsRef<Path>, args: impl AsRef<str>) -> Result<Self> {
+        let mut exe = exe
+            .as_ref()
+            .to_string_lossy()
+            .to_string()
+            .encode_utf16()
+            .chain(iter::once(0))
+            .collect::<Vec<_>>();
 
-    fn kill(&mut self) -> Result<()> {
-        if self.0.is_valid() {
-            unsafe {
-                TerminateProcess(self.0.0, 0)?;
-            }
+        let exe = PWSTR(exe.as_mut_ptr());
 
-            self.0 = OwnedHandle::default();
+        let mut _args = args.as_ref();
+        let mut args;
+
+        let args = if !_args.is_empty() {
+            args = _args
+                .encode_utf16()
+                .chain(iter::once(0))
+                .collect::<Vec<_>>();
+
+            Some(PWSTR(args.as_mut_ptr()))
+        } else {
+            None
+        };
+
+        let env_block = EnvBlock::new(token)?;
+
+        let mut process_info = PROCESS_INFORMATION::default();
+        unsafe {
+            CreateProcessAsUserW(
+                Some(token),
+                exe,
+                args,
+                None,
+                None,
+                false,
+                // CREATE_UNICODE_ENVIRONMENT is required if we pass env block.
+                // <https://learn.microsoft.com/en-us/windows/win32/api/userenv/nf-userenv-createenvironmentblock#remarks>
+                //
+                // CREATE_NO_WINDOW causes all child processes to not show a visible
+                // console window. <https://stackoverflow.com/a/71364777/9423933>
+                CREATE_UNICODE_ENVIRONMENT | CREATE_NO_WINDOW,
+                Some(env_block.0),
+                None,
+                &STARTUPINFOW::default(),
+                &mut process_info,
+            )?;
         }
 
-        Ok(())
+        // It is safe for EnvBlock to drop after calling CreateProcessAsUser.
+        // <https://learn.microsoft.com/en-us/windows/win32/api/userenv/nf-userenv-createenvironmentblock#remarks>
+
+        let this = Self(Arc::new(OwnedHandle(process_info.hProcess)));
+
+        Ok(this)
     }
 
-    fn reset(&mut self) {
-        self.0 = OwnedHandle::default();
+    fn is_alive(&self) -> bool {
+        self.exit_code() as i32 == STILL_ACTIVE.0
     }
-}
 
-impl Default for Child {
-    fn default() -> Self {
-        Self::new()
+    fn exit_code(&self) -> u32 {
+        let mut code = 0u32;
+        _ = unsafe { GetExitCodeProcess(self.0.0, &mut code) };
+
+        code
+    }
+
+    fn kill(&self) {
+        _ = unsafe { TerminateProcess(self.0.0, 0) };
+    }
+
+    /// wait until child dies
+    fn wait(&self) {
+        unsafe {
+            WaitForSingleObject(self.0.0, INFINITE);
+        }
     }
 }
 
 impl Drop for Child {
     fn drop(&mut self) {
-        _ = self.kill();
+        self.kill();
     }
 }
 
@@ -542,10 +599,8 @@ impl Drop for EnvBlock {
 /// Manages the child daemon, by spawning / stopping it, or reporting abnormal exit, and allowing
 /// wait().
 struct Spawner {
-    // Whether a child daemon is running.
-    running: Arc<AtomicBool>,
     // Holds the actual process of the running child daemon.
-    child: Arc<Mutex<Child>>,
+    child: Arc<Mutex<Option<Child>>>,
     // Whether the process has exited without our request.
     dirty: Arc<AtomicBool>,
     // Used to differentiate between requested stop() and if process is dirty (see above).
@@ -561,7 +616,6 @@ impl Spawner {
         let (wait_tx, wait_rx) = channel();
 
         Self {
-            running: Arc::default(),
             child: Arc::default(),
             dirty: Arc::default(),
             request_stop: Arc::default(),
@@ -572,7 +626,11 @@ impl Spawner {
 
     /// Is the child daemon running?
     fn running(&self) -> bool {
-        self.running.load(Ordering::Relaxed)
+        self.child
+            .lock()
+            .unwrap()
+            .as_ref()
+            .is_some_and(|c| c.is_alive())
     }
 
     /// Stop the spawned daemon.
@@ -581,25 +639,18 @@ impl Spawner {
     /// make _sure_ you put this stop() _after_ you change the `while` condition to false
     /// otherwise any condition change will not be observed.
     fn stop(&self) {
-        let mut child = self.child.lock().unwrap();
-
         // Request a normal stop. This is not an abnormal process exit.
         self.request_stop.store(true, Ordering::Relaxed);
-        match child.kill() {
-            Ok(_) => {
-                debug!("stop() kill");
-                self.running.store(false, Ordering::Relaxed);
-                // Signal the wait() to exit so a `while` condition is checked at least once more.
-                // As long as `while` conditions have been changed _before_ the call to stop(),
-                // the changed condition will be observed.
-                _ = self.wait_tx.send(());
-            }
 
-            Err(e) => {
-                self.running.store(false, Ordering::Relaxed);
-                error!("failed to stop(): {e}");
-            }
+        if let Some(child) = self.child.lock().unwrap().as_ref() {
+            child.kill();
+            debug!("stop() killed");
         }
+
+        // Signal the wait() to exit so a `while` condition is checked at least once more.
+        // As long as `while` conditions have been changed _before_ the call to stop(),
+        // the changed condition will be observed.
+        _ = self.wait_tx.send(());
     }
 
     /// Wait for child process to exit.
@@ -614,97 +665,55 @@ impl Spawner {
 
     /// Try to spawn a child daemon.
     fn start(&self, session: u32) -> Result<()> {
-        let running = self.running.clone();
         let child = self.child.clone();
         let waiter = self.wait_tx.clone();
         let dirty = self.dirty.clone();
         let request_stop = self.request_stop.clone();
+
         _ = thread::spawn(move || {
             request_stop.store(false, Ordering::Relaxed);
 
             let res = run_as(session, move |token| {
-                let mut arguments = Vec::new();
-
                 let config = CONFIG
                     .get()
                     .ok_or_else(|| eyre!("failed to get CONFIG"))?
                     .clone();
 
+                // Try to get the path to the current binary
+                let current_exe = env::current_exe()?;
+
+                let mut args = Vec::new();
+
+                // first argument MUST be the exe name
+                args.push(format!(r#""{exe}""#, exe = current_exe.display()));
+
                 if let Some(config) = &config.config_path {
-                    arguments.push("--config".to_string());
-                    arguments.push(format!(r#""{}""#, config.to_string_lossy().into_owned()));
+                    args.push("--config".to_string());
+                    args.push(format!(r#""{}""#, config.to_string_lossy().into_owned()));
                 }
 
                 if let Some(profile) = &config.profile {
-                    arguments.push("--profile".to_string());
-                    arguments.push(format!(r#""{profile}""#));
+                    args.push("--profile".to_string());
+                    args.push(format!(r#""{profile}""#));
                 }
 
-                let arguments = arguments.join(" ");
+                let args = args.join(" ");
 
-                // Try to get the path to the current binary
-                let mut current_exe = env::current_exe()?
-                    .to_string_lossy()
-                    .to_string()
-                    .encode_utf16()
-                    .chain(iter::once(0))
-                    .collect::<Vec<_>>();
-
-                let mut arguments = arguments
-                    .encode_utf16()
-                    .chain(iter::once(0))
-                    .collect::<Vec<_>>();
-
-                let env_block = EnvBlock::new(token)?;
-
-                let mut process_info = PROCESS_INFORMATION::default();
-                unsafe {
-                    CreateProcessAsUserW(
-                        Some(token),
-                        PWSTR(current_exe.as_mut_ptr()),
-                        Some(PWSTR(arguments.as_mut_ptr())),
-                        None,
-                        None,
-                        false,
-                        // CREATE_UNICODE_ENVIRONMENT is required if we pass env block.
-                        // <https://learn.microsoft.com/en-us/windows/win32/api/userenv/nf-userenv-createenvironmentblock#remarks>
-                        //
-                        // CREATE_NO_WINDOW causes all child processes to not show a visible
-                        // console window. <https://stackoverflow.com/a/71364777/9423933>
-                        CREATE_UNICODE_ENVIRONMENT | CREATE_NO_WINDOW,
-                        Some(env_block.0),
-                        None,
-                        &STARTUPINFOW::default(),
-                        &mut process_info,
-                    )?;
-                }
-
-                // It is safe to drop this after calling CreateProcessAsUser.
-                // <https://learn.microsoft.com/en-us/windows/win32/api/userenv/nf-userenv-createenvironmentblock#remarks>
-                drop(env_block);
+                let spawned_child = Child::spawn_as(token, current_exe, args)?;
 
                 // Store the child process.
                 {
                     let mut lock = child.lock().unwrap();
-                    *lock = Child(process_info.hProcess.into());
+                    *lock = Some(spawned_child.clone());
                 }
-
-                running.store(true, Ordering::Relaxed);
 
                 // Wait until the process exits.
-                unsafe {
-                    WaitForSingleObject(process_info.hProcess, INFINITE);
-                }
-
-                running.store(false, Ordering::Relaxed);
+                spawned_child.wait();
 
                 // Check if process exited on its own without our explicit request (`stop()` was not
                 // called).
                 if !request_stop.swap(false, Ordering::Relaxed) {
-                    let mut code = 0u32;
-                    unsafe {
-                        GetExitCodeProcess(process_info.hProcess, &mut code)?;
-                    }
+                    let code = spawned_child.exit_code();
 
                     debug!("spawner code {code}");
 
@@ -717,7 +726,7 @@ impl Spawner {
                     }
                 }
 
-                child.lock().unwrap().reset();
+                child.lock().unwrap().take();
 
                 Ok(())
             });
