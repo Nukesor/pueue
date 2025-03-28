@@ -25,13 +25,13 @@ name = "save_state"
 [dependencies]
 async-trait.workspace = true
 chrono.workspace = true
-clap = { version = "4.5.32", features = [
+clap = { version = "4.5.34", features = [
     "cargo",
     "derive",
     "help",
     "wrap_help",
 ] }
-clap_complete = "4.5.46"
+clap_complete = "4.5.47"
 clap_complete_nushell = "4.5.5"
 color-eyre.workspace = true
 comfy-table = "7"
@@ -40,8 +40,8 @@ ctrlc = { version = "3", features = ["termination"] }
 flate2 = "1"
 handlebars.workspace = true
 interim = { version = "0.2.1", features = ["chrono_0_4"] }
-pest = "2.7"
-pest_derive = "2.7"
+pest = "2.8"
+pest_derive = "2.8"
 pueue-lib = { version = "0.29.0", path = "../pueue_lib", features = ["client"] }
 rcgen = "0.13"
 rustls.workspace = true
@@ -67,7 +67,7 @@ better-panic.workspace = true
 ciborium = { workspace = true }
 criterion = "0.5"
 pretty_assertions.workspace = true
-rstest = "0.24"
+rstest = "0.25"
 similar-asserts = "1"
 
 # --- Platform specific dependencies ---
@@ -96,7 +96,7 @@ winapi = { version = "0.3", features = [
     "processthreadsapi",
     "tlhelp32",
 ] }
-windows = { version = "0.60.0", features = [
+windows = { version = "0.61.1", features = [
     "Win32_Security",
     "Win32_System_Environment",
     "Win32_System_RemoteDesktop",
