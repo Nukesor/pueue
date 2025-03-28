@@ -186,7 +186,8 @@ pub fn seek_to_last_lines(file: &mut File, amount: usize) -> Result<bool, Error>
             let distance_to_file_start: u64 = distance_to_file_start.try_into().unwrap_or(0);
 
             // We can safely unwrap `start_position`, as we previously casted it from an u64.
-            if distance_to_file_start < start_position.try_into().unwrap() {
+            let start_position: u64 = start_position.try_into().unwrap();
+            if distance_to_file_start < start_position {
                 // Seek to the position.
                 let file = reader.get_mut();
                 file.seek(SeekFrom::Start(distance_to_file_start))
