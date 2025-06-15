@@ -27,7 +27,7 @@ async-trait.workspace = true
 chrono.workspace = true
 clap = { version = "4.5", features = ["cargo", "derive", "help", "wrap_help"] }
 clap_complete = "4.5"
-clap_complete_nushell = "4.5.5"
+clap_complete_nushell = "4.5.7"
 color-eyre.workspace = true
 comfy-table = "7"
 command-group.workspace = true
@@ -60,7 +60,7 @@ assert_cmd = "2"
 assert_matches = "1"
 better-panic.workspace = true
 ciborium = { workspace = true }
-criterion = "0.5"
+criterion = "0.6"
 pretty_assertions.workspace = true
 rstest = "0.25"
 similar-asserts = "1"
@@ -79,9 +79,9 @@ libproc = "0.14.10"
 # We don't need any of the default features for crossterm.
 # However, the windows build needs the windows feature enabled.
 [target.'cfg(not(windows))'.dependencies]
-crossterm = { version = "0.28", default-features = false }
+crossterm = { version = "0.29", default-features = false }
 [target.'cfg(windows)'.dependencies]
-crossterm = { version = "0.28", default-features = false, features = [
+crossterm = { version = "0.29", default-features = false, features = [
     "windows",
 ] }
 winapi = { version = "0.3", features = [
@@ -91,7 +91,7 @@ winapi = { version = "0.3", features = [
     "processthreadsapi",
     "tlhelp32",
 ] }
-windows = { version = "0.61.1", features = [
+windows = { version = "0.61.3", features = [
     "Win32_Security",
     "Win32_System_Environment",
     "Win32_System_RemoteDesktop",
