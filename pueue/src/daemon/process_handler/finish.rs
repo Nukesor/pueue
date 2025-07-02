@@ -111,7 +111,6 @@ pub fn handle_finished_tasks(settings: &Settings, state: &mut LockedState) {
 
             task.clone()
         };
-        info!("WTF");
         spawn_callback(settings, state, &task);
 
         if let TaskResult::Failed(_) = result {
