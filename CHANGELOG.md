@@ -4,12 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## \[4.0.1\] - unreleased
+## \[4.0.2\] - unreleased
+
+### Fixed
+
+## \[4.0.1\] - 2025-07-07
 
 ### Fixed
 
 - Fix extraneous double quotes being added to --config and --profile flags in Windows service install. #630
 - Fix --config/--path flags causing Windows service start to fail. #631
+- Removed forgotten debug log statement.
 
 ## \[4.0.0\] - 2025-03-09
 
