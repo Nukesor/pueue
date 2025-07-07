@@ -37,7 +37,7 @@ handlebars.workspace = true
 interim = { version = "0.2", features = ["chrono_0_4"] }
 pest = "2.8"
 pest_derive = "2.8"
-pueue-lib = { version = "0.29", path = "../pueue_lib", features = ["client"] }
+pueue-lib = { version = "0.30", path = "../pueue_lib", features = ["client"] }
 rcgen = "0.13"
 rustls.workspace = true
 rustls-pemfile.workspace = true
