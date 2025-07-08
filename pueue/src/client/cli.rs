@@ -374,7 +374,7 @@ Examples:
   - `columns=id,status,command status=running start > 2023-05-2112:03:17 order_by command first 5`
 
 The formal syntax is defined here:
-https://github.com/Nukesor/pueue/blob/main/pueue/src/client/query/syntax.pest
+https://github.com/Nukesor/pueue/blob/main/pueue/src/client/commands/state/query/syntax.pest
 
 More documentation is on the query syntax PR:
 https://github.com/Nukesor/pueue/issues/350#issue-1359083118"
