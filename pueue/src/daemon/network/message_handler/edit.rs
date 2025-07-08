@@ -78,14 +78,14 @@ pub fn edit_restore(state: &SharedState, task_ids: Vec<usize>) -> Response {
         match state.tasks_mut().get_mut(task_id) {
             Some(task) => {
                 let TaskStatus::Locked { previous_status } = &task.status else {
-                    failed_tasks.push(format!("Task {} isn't locked! Cannot be unlocked", task_id));
+                    failed_tasks.push(format!("Task {task_id} isn't locked! Cannot be unlocked"));
                     continue;
                 };
 
                 // Restore the task to its previous state.
                 task.status = *previous_status.clone();
             }
-            None => failed_tasks.push(format!("No task with id {}! Cannot be unlocked.", task_id)),
+            None => failed_tasks.push(format!("No task with id {task_id}! Cannot be unlocked.")),
         }
     }
 

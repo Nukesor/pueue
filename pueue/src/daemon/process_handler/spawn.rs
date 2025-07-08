@@ -184,17 +184,15 @@ pub fn spawn_process(settings: &Settings, state: &mut LockedState, task_id: usiz
     let child = match spawned_command {
         Ok(child) => child,
         Err(err) => {
-            let error_msg = format!("Failed to spawn child {task_id} with err: {:?}", err);
+            let error_msg = format!("Failed to spawn child {task_id} with err: {err:?}");
             error!(?err, "Failed to spawn child {task_id}");
             trace!(?command, "Command that failed");
 
             // Write some debug log output to the task's log file.
             // This should always work, but print a datailed error if it didn't work.
             if let Ok(mut file) = get_writable_log_file_handle(task_id, &pueue_directory) {
-                let log_output = format!(
-                    "Pueue error, failed to spawn task. Check your command.\n{}",
-                    error_msg
-                );
+                let log_output =
+                    format!("Pueue error, failed to spawn task. Check your command.\n{error_msg}");
                 let write_result = file.write_all(log_output.as_bytes());
                 if let Err(write_err) = write_result {
                     error!("Failed to write spawn error to task log: {}", write_err);

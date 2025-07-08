@@ -226,7 +226,7 @@ impl Editable for EditableTask {
             Error::IoPathError(label_path.clone(), "creating temporary label file", err)
         })?;
         if let Some(label) = &self.label {
-            write!(output, "{}", label)
+            write!(output, "{label}")
                 .map_err(|err| Error::IoPathError(label_path.clone(), "writing label file", err))?;
         }
 
