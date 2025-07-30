@@ -17,6 +17,7 @@ lint:
     cargo fmt --all -- --check
     taplo format --check
     cargo clippy --tests --workspace --all -- -D warnings
+    cargo deny check
     RUSTDOCFLAGS='-D warnings' cargo doc --document-private-items --no-deps
 
 format:
