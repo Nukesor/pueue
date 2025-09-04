@@ -64,7 +64,7 @@ pub enum SubCommand {
         /// All groups run in parallel and you can specify the amount of parallel tasks for each
         /// group. If no group is specified, the default group will be used.
         ///
-        /// Create groups via the `pueue groups` subcommand
+        /// Create groups via the `pueue group` subcommand
         #[arg(short, long)]
         group: Option<String>,
 
