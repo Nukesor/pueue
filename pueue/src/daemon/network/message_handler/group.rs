@@ -13,7 +13,7 @@ use crate::{
     ok_or_save_state_failure,
 };
 
-/// Invoked on `pueue groups`.
+/// Invoked on `pueue group`.
 /// Manage groups.
 /// - Show groups
 /// - Add group
