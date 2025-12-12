@@ -10,6 +10,7 @@ use pueue_lib::{
 
 use crate::{
     client::{commands::get_state, display_helper::get_group_headline, style::OutputStyle},
+    format::humanize_duration,
     internal_prelude::*,
 };
 
@@ -227,13 +228,13 @@ fn sort_tasks_by_group(tasks: Vec<Task>) -> BTreeMap<String, Vec<Task>> {
 ///
 /// If the task doesn't have a start and/or end yet, an empty string will be returned
 /// for the respective field.
-fn formatted_start_end(task: &Task, settings: &Settings) -> (String, String) {
-    let (start, end) = task.start_and_end();
+fn formatted_start_end_elapsed(task: &Task, settings: &Settings) -> (String, String, String) {
+    let (start, end, duration) = task.start_end_duration();
 
     // If the task didn't start yet, just return two empty strings.
     let start = match start {
         Some(start) => start,
-        None => return ("".into(), "".into()),
+        None => return ("".into(), "".into(), "".into()),
     };
 
     // If the task started today, just show the time.
@@ -250,9 +251,9 @@ fn formatted_start_end(task: &Task, settings: &Settings) -> (String, String) {
     };
 
     // If the task didn't finish yet, only return the formatted start.
-    let end = match end {
-        Some(end) => end,
-        None => return (formatted_start, "".into()),
+    let (end, duration) = match (end, duration) {
+        (Some(end), Some(duration)) => (end, duration),
+        _ => return (formatted_start, "".into(), "".into()),
     };
 
     // If the task ended today we only show the time.
@@ -264,6 +265,7 @@ fn formatted_start_end(task: &Task, settings: &Settings) -> (String, String) {
         end.format(&settings.client.status_datetime_format)
             .to_string()
     };
+    let formatted_duration = humanize_duration(duration);
 
-    (formatted_start, formatted_end)
+    (formatted_start, formatted_end, formatted_duration)
 }

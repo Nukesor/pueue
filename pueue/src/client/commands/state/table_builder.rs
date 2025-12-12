@@ -6,7 +6,7 @@ use pueue_lib::{
     task::{Task, TaskResult, TaskStatus},
 };
 
-use super::{OutputStyle, formatted_start_end, query::Rule, start_of_today};
+use super::{OutputStyle, formatted_start_end_elapsed, query::Rule, start_of_today};
 
 /// This builder is responsible for determining which table columns should be displayed and
 /// building a full [comfy_table] from a list of given [Task]s.
@@ -32,6 +32,7 @@ pub struct TableBuilder<'a> {
     path: bool,
     start: bool,
     end: bool,
+    duration: bool,
 }
 
 impl<'a> TableBuilder<'a> {
@@ -50,6 +51,7 @@ impl<'a> TableBuilder<'a> {
             path: true,
             start: true,
             end: true,
+            duration: true,
         }
     }
 
@@ -142,6 +144,7 @@ impl<'a> TableBuilder<'a> {
                 Rule::column_path => self.path = true,
                 Rule::column_start => self.start = true,
                 Rule::column_end => self.end = true,
+                Rule::column_duration => self.duration = true,
                 _ => (),
             }
         }
@@ -181,6 +184,9 @@ impl<'a> TableBuilder<'a> {
         }
         if self.end {
             header.push(Cell::new("End"));
+        }
+        if self.duration {
+            header.push(Cell::new("Duration"));
         }
 
         Row::from(header)
@@ -273,12 +279,15 @@ impl<'a> TableBuilder<'a> {
             }
 
             // Add start and end info
-            let (start, end) = formatted_start_end(task, self.settings);
+            let (start, end, duration) = formatted_start_end_elapsed(task, self.settings);
             if self.start {
                 row.add_cell(Cell::new(start));
             }
             if self.end {
                 row.add_cell(Cell::new(end));
+            }
+            if self.duration {
+                row.add_cell(Cell::new(duration));
             }
 
             rows.push(row);
