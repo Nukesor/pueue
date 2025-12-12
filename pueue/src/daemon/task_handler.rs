@@ -199,10 +199,14 @@ fn check_failed_dependencies(settings: &Settings, state: &mut LockedState) {
                 continue;
             };
 
+            let start = Local::now();
+            let end = Local::now();
+            let duration = end - start;
             task.status = TaskStatus::Done {
                 enqueued_at,
-                start: Local::now(),
-                end: Local::now(),
+                start,
+                end,
+                duration,
                 result: TaskResult::DependencyFailed,
             };
             task.clone()

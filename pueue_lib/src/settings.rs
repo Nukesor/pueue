@@ -96,6 +96,7 @@ pub enum EditMode {
 
 /// All settings which are used by the client
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
+#[non_exhaustive]
 pub struct Client {
     /// If set to true, all tasks will be restart in place, instead of creating a new task.
     /// False is the default, as you'll lose the logs of the previously failed tasks when
@@ -112,21 +113,58 @@ pub struct Client {
     /// Whether the client should show a confirmation question on potential dangerous actions.
     #[serde(default = "Default::default")]
     pub edit_mode: EditMode,
+    /// Whether the client should use dark shades instead of regular colors.
+    #[serde(default = "Default::default")]
+    pub dark_mode: bool,
+
+    #[serde(default = "Default::default")]
+    #[deprecated(since = "4.0.1", note = "use `status` instead")]
+    pub show_expanded_aliases: bool,
+    /// The max amount of lines each task get's in the `pueue status` view.
+    #[deprecated(since = "4.0.1", note = "use `status` instead")]
+    pub max_status_lines: Option<usize>,
+    /// The format that will be used to display time formats in `pueue status`.
+    #[serde(default = "default_status_time_format")]
+    #[deprecated(since = "4.0.1", note = "use `status` instead")]
+    pub status_time_format: String,
+    /// The format that will be used to display datetime formats in `pueue status`.
+    #[serde(default = "default_status_datetime_format")]
+    #[deprecated(since = "4.0.1", note = "use `status` instead")]
+    pub status_datetime_format: String,
+
+    #[serde(default = "Default::default")]
+    pub status: Status,
+}
+
+#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
+/// Settings used for `pueue status`.
+pub struct Status {
     /// Whether aliases specified in `pueue_aliases.yml` should be expanded in the `pueue status`
     /// or shown in their short form.
     #[serde(default = "Default::default")]
     pub show_expanded_aliases: bool,
-    /// Whether the client should use dark shades instead of regular colors.
-    #[serde(default = "Default::default")]
-    pub dark_mode: bool,
     /// The max amount of lines each task get's in the `pueue status` view.
-    pub max_status_lines: Option<usize>,
+    pub max_lines: Option<usize>,
     /// The format that will be used to display time formats in `pueue status`.
     #[serde(default = "default_status_time_format")]
-    pub status_time_format: String,
+    pub time_format: String,
     /// The format that will be used to display datetime formats in `pueue status`.
     #[serde(default = "default_status_datetime_format")]
-    pub status_datetime_format: String,
+    pub datetime_format: String,
+    #[serde(default = "default_additional_columns")]
+    pub additional_columns: Vec<String>,
+}
+
+impl Default for Status {
+    fn default() -> Self {
+        Status {
+            show_expanded_aliases: false,
+            max_lines: None,
+            time_format: default_status_time_format(),
+            datetime_format: default_status_datetime_format(),
+            additional_columns: default_additional_columns(),
+        }
+    }
 }
 
 /// All settings which are used by the daemon
@@ -199,6 +237,7 @@ impl Default for Shared {
 
 impl Default for Client {
     fn default() -> Self {
+        #[expect(deprecated)]
         Client {
             restart_in_place: false,
             read_local_logs: true,
@@ -209,6 +248,7 @@ impl Default for Client {
             max_status_lines: None,
             status_time_format: default_status_time_format(),
             status_datetime_format: default_status_datetime_format(),
+            status: Default::default(),
         }
     }
 }
@@ -376,8 +416,10 @@ impl Settings {
                 .map_err(|err| Error::IoPathError(path.clone(), "opening config file", err))?;
             let reader = BufReader::new(file);
 
-            let settings = serde_yaml::from_reader(reader)
+            let mut settings: Settings = serde_yaml::from_reader(reader)
                 .map_err(|err| Error::ConfigDeserialization(err.to_string()))?;
+
+            settings.replicate_deprecated_fields();
             return Ok((settings, true));
         };
 
@@ -397,8 +439,9 @@ impl Settings {
                     .map_err(|err| Error::IoPathError(path, "opening config file.", err))?;
                 let reader = BufReader::new(file);
 
-                let settings = serde_yaml::from_reader(reader)
+                let mut settings: Settings = serde_yaml::from_reader(reader)
                     .map_err(|err| Error::ConfigDeserialization(err.to_string()))?;
+                settings.replicate_deprecated_fields();
                 return Ok((settings, true));
             }
         }
@@ -466,6 +509,37 @@ impl Settings {
 
         Ok(())
     }
+
+    /// Replicate deprecated fields into their new location.
+    /// WARN: This should only be used until deprecated fields are fully removed.
+    #[expect(deprecated)]
+    pub fn replicate_deprecated_fields(&mut self) {
+        self.client.status = Status {
+            show_expanded_aliases: if self.client.show_expanded_aliases != false {
+                self.client.show_expanded_aliases
+            } else {
+                self.client.status.show_expanded_aliases
+            },
+            max_lines: if self.client.max_status_lines != None {
+                self.client.max_status_lines
+            } else {
+                self.client.status.max_lines
+            },
+            time_format: if self.client.status_time_format.clone() != default_status_time_format() {
+                self.client.status_time_format.clone()
+            } else {
+                self.client.status.time_format.clone()
+            },
+            datetime_format: if self.client.status_datetime_format.clone()
+                != default_status_datetime_format()
+            {
+                self.client.status_datetime_format.clone()
+            } else {
+                self.client.status.datetime_format.clone()
+            },
+            additional_columns: self.client.status.additional_columns.clone(),
+        };
+    }
 }
 
 #[cfg(test)]
@@ -478,7 +552,7 @@ mod test {
         // Create some default settings and ensure that default values are loaded.
         let mut settings = Settings::default();
         assert_eq!(
-            settings.client.status_time_format,
+            settings.client.status.time_format,
             default_status_time_format()
         );
         assert_eq!(
@@ -489,7 +563,7 @@ mod test {
 
         // Crate a new profile with slightly different values.
         let mut profile = Settings::default();
-        profile.client.status_time_format = "test".to_string();
+        profile.client.status.time_format = "test".to_string();
         profile.daemon.callback_log_lines = 100_000;
         profile.shared.host = "quatschhost".to_string();
         let profile = NestedSettings {
@@ -505,7 +579,7 @@ mod test {
             .load_profile("testprofile")
             .expect("We just added the profile");
 
-        assert_eq!(settings.client.status_time_format, "test");
+        assert_eq!(settings.client.status.time_format, "test");
         assert_eq!(settings.daemon.callback_log_lines, 100_000);
         assert_eq!(settings.shared.host, "quatschhost");
     }

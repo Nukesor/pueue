@@ -202,10 +202,14 @@ pub fn spawn_process(settings: &Settings, state: &mut LockedState, task_id: usiz
             // Update all necessary fields on the task.
             let task = {
                 let task = state.tasks_mut().get_mut(&task_id).unwrap();
+                let start = Local::now();
+                let end = Local::now();
+                let duration = end - start;
                 task.status = TaskStatus::Done {
                     enqueued_at,
-                    start: Local::now(),
-                    end: Local::now(),
+                    start,
+                    end,
+                    duration,
                     result: TaskResult::FailedToSpawn(error_msg),
                 };
                 task.clone()

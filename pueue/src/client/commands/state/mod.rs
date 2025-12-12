@@ -10,6 +10,7 @@ use pueue_lib::{
 
 use crate::{
     client::{commands::get_state, display_helper::get_group_headline, style::OutputStyle},
+    format::humanize_duration,
     internal_prelude::*,
 };
 
@@ -227,13 +228,13 @@ fn sort_tasks_by_group(tasks: Vec<Task>) -> BTreeMap<String, Vec<Task>> {
 ///
 /// If the task doesn't have a start and/or end yet, an empty string will be returned
 /// for the respective field.
-fn formatted_start_end(task: &Task, settings: &Settings) -> (String, String) {
-    let (start, end) = task.start_and_end();
+fn formatted_start_end_elapsed(task: &Task, settings: &Settings) -> (String, String, String) {
+    let (start, end, duration) = task.start_end_duration();
 
     // If the task didn't start yet, just return two empty strings.
     let start = match start {
         Some(start) => start,
-        None => return ("".into(), "".into()),
+        None => return ("".into(), "".into(), "".into()),
     };
 
     // If the task started today, just show the time.
@@ -241,29 +242,30 @@ fn formatted_start_end(task: &Task, settings: &Settings) -> (String, String) {
     let started_today = start >= start_of_today();
     let formatted_start = if started_today {
         start
-            .format(&settings.client.status_time_format)
+            .format(&settings.client.status.time_format)
             .to_string()
     } else {
         start
-            .format(&settings.client.status_datetime_format)
+            .format(&settings.client.status.datetime_format)
             .to_string()
     };
 
     // If the task didn't finish yet, only return the formatted start.
-    let end = match end {
-        Some(end) => end,
-        None => return (formatted_start, "".into()),
+    let (end, duration) = match (end, duration) {
+        (Some(end), Some(duration)) => (end, duration),
+        _ => return (formatted_start, "".into(), "".into()),
     };
 
     // If the task ended today we only show the time.
     // In all other circumstances, we show the full date.
     let finished_today = end >= start_of_today();
     let formatted_end = if finished_today {
-        end.format(&settings.client.status_time_format).to_string()
+        end.format(&settings.client.status.time_format).to_string()
     } else {
-        end.format(&settings.client.status_datetime_format)
+        end.format(&settings.client.status.datetime_format)
             .to_string()
     };
+    let formatted_duration = humanize_duration(duration);
 
-    (formatted_start, formatted_end)
+    (formatted_start, formatted_end, formatted_duration)
 }

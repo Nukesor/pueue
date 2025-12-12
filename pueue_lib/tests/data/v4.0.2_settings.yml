@@ -4,10 +4,12 @@ client:
   restart_in_place: false
   read_local_logs: true
   show_confirmation_questions: false
-  show_expanded_aliases: false
-  max_status_lines: 15
-  status_time_format: "mock015-%H:%M:%S"
-  status_datetime_format: "mock015-%Y-%m-%d\n%H:%M:%S"
+  status:
+    show_expanded_aliases: true
+    max_lines: 42
+    time_format: "mock402-%H:%M:%S"
+    datetime_format: "mock402-%Y-%m-%d\n%H:%M:%S"
+    additional_columns: ["Duration"]
 daemon:
   default_parallel_tasks: 1
   pause_group_on_failure: false

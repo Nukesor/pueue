@@ -1,9 +1,13 @@
 //! Everything regarding Pueue's [Task]s.
 use std::{collections::HashMap, path::PathBuf};
 
-use chrono::prelude::*;
+use chrono::{Duration, prelude::*};
 use serde::{Deserialize, Serialize};
 use strum::Display;
+
+fn default_duration() -> Duration {
+    Duration::seconds(0)
+}
 
 /// This enum represents the status of the internal task handling of Pueue.
 /// They basically represent the internal task life-cycle.
@@ -30,6 +34,8 @@ pub enum TaskStatus {
         enqueued_at: DateTime<Local>,
         start: DateTime<Local>,
         end: DateTime<Local>,
+        #[serde(default = "default_duration")]
+        duration: Duration,
         result: TaskResult,
     },
 }
@@ -95,12 +101,18 @@ impl Task {
         }
     }
 
-    pub fn start_and_end(&self) -> (Option<DateTime<Local>>, Option<DateTime<Local>>) {
+    pub fn start_end_duration(
+        &self,
+    ) -> (
+        Option<DateTime<Local>>,
+        Option<DateTime<Local>>,
+        Option<Duration>,
+    ) {
         match self.status {
-            TaskStatus::Running { start, .. } => (Some(start), None),
-            TaskStatus::Paused { start, .. } => (Some(start), None),
-            TaskStatus::Done { start, end, .. } => (Some(start), Some(end)),
-            _ => (None, None),
+            TaskStatus::Running { start, .. } => (Some(start), None, None),
+            TaskStatus::Paused { start, .. } => (Some(start), None, None),
+            TaskStatus::Done { start, end, .. } => (Some(start), Some(end), Some(end - start)),
+            _ => (None, None, None),
         }
     }
 

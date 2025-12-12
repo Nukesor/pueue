@@ -168,6 +168,7 @@ mod fixtures {
         let enqueued_at = Local::now() - Duration::minutes(5);
         let start = Local::now() - Duration::minutes(4);
         let end = Local::now() - Duration::minutes(1);
+        let duration = end - start;
 
         let status = match status {
             StubStatus::Stashed { enqueue_at } => TaskStatus::Stashed { enqueue_at },
@@ -178,6 +179,7 @@ mod fixtures {
                 enqueued_at,
                 start,
                 end,
+                duration,
                 result,
             },
         };

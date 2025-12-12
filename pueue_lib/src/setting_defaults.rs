@@ -23,6 +23,17 @@ pub(crate) fn default_status_datetime_format() -> String {
     "%Y-%m-%d\n%H:%M:%S".to_string()
 }
 
+pub(crate) fn default_additional_columns() -> Vec<String> {
+    vec![
+        "Id".into(),
+        "Status".into(),
+        "Command".into(),
+        "Path".into(),
+        "Start".into(),
+        "End".into(),
+    ]
+}
+
 pub(crate) fn default_callback_log_lines() -> usize {
     10
 }
