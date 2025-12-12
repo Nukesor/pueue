@@ -112,14 +112,19 @@ impl QueryResult {
                 enqueue_date(task1).cmp(&enqueue_date(task2))
             }
             Rule::column_start => {
-                let (start1, _) = task1.start_and_end();
-                let (start2, _) = task2.start_and_end();
+                let (start1, _, _) = task1.start_end_duration();
+                let (start2, _, _) = task2.start_end_duration();
                 start1.cmp(&start2)
             }
             Rule::column_end => {
-                let (_, end1) = task1.start_and_end();
-                let (_, end2) = task2.start_and_end();
+                let (_, end1, _) = task1.start_end_duration();
+                let (_, end2, _) = task2.start_end_duration();
                 end1.cmp(&end2)
+            }
+            Rule::column_duration => {
+                let (_, _, duration1) = task1.start_end_duration();
+                let (_, _, duration2) = task2.start_end_duration();
+                duration1.cmp(&duration2)
             }
             _ => std::cmp::Ordering::Less,
         });
