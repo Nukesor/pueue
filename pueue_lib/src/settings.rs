@@ -96,6 +96,7 @@ pub enum EditMode {
 
 /// All settings which are used by the client
 #[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize)]
+#[non_exhaustive]
 pub struct Client {
     /// If set to true, all tasks will be restart in place, instead of creating a new task.
     /// False is the default, as you'll lose the logs of the previously failed tasks when
@@ -112,21 +113,110 @@ pub struct Client {
     /// Whether the client should show a confirmation question on potential dangerous actions.
     #[serde(default = "Default::default")]
     pub edit_mode: EditMode,
-    /// Whether aliases specified in `pueue_aliases.yml` should be expanded in the `pueue status`
-    /// or shown in their short form.
-    #[serde(default = "Default::default")]
-    pub show_expanded_aliases: bool,
     /// Whether the client should use dark shades instead of regular colors.
     #[serde(default = "Default::default")]
     pub dark_mode: bool,
+
+    #[serde(default = "Default::default")]
+    #[deprecated(since = "4.0.1", note = "use `status` instead")]
+    pub show_expanded_aliases: bool,
     /// The max amount of lines each task get's in the `pueue status` view.
+    #[deprecated(since = "4.0.1", note = "use `status` instead")]
     pub max_status_lines: Option<usize>,
     /// The format that will be used to display time formats in `pueue status`.
     #[serde(default = "default_status_time_format")]
+    #[deprecated(since = "4.0.1", note = "use `status` instead")]
     pub status_time_format: String,
     /// The format that will be used to display datetime formats in `pueue status`.
     #[serde(default = "default_status_datetime_format")]
+    #[deprecated(since = "4.0.1", note = "use `status` instead")]
     pub status_datetime_format: String,
+
+    #[serde(default = "Default::default")]
+    pub status: Status,
+}
+
+impl Client {
+    pub fn new() -> Self {
+        Self {
+            ..Default::default()
+        }
+    }
+
+    pub fn with_edit_mode(self, edit_mode: EditMode) -> Self {
+        Self { edit_mode, ..self }
+    }
+
+    pub fn with_status(self, status: Status) -> Self {
+        Self { status, ..self }
+    }
+
+    pub fn get_show_expanded_aliases(&self) -> bool {
+        #[expect(deprecated)]
+        self.status
+            .show_expanded_aliases
+            .unwrap_or(self.show_expanded_aliases)
+    }
+
+    pub fn get_status_max_lines(&self) -> Option<usize> {
+        #[expect(deprecated)]
+        self.status.max_lines.unwrap_or(self.max_status_lines)
+    }
+
+    pub fn get_status_time_format(&self) -> String {
+        #[expect(deprecated)]
+        self.status
+            .time_format
+            .clone()
+            .unwrap_or(self.status_time_format.clone())
+    }
+
+    pub fn get_status_datetime_format(&self) -> String {
+        #[expect(deprecated)]
+        self.status
+            .datetime_format
+            .clone()
+            .unwrap_or(self.status_datetime_format.clone())
+    }
+}
+
+#[derive(PartialEq, Eq, Clone, Debug, Deserialize, Serialize, Default)]
+/// Settings used for `pueue status`.
+pub struct Status {
+    /// Whether aliases specified in `pueue_aliases.yml` should be expanded in the `pueue status`
+    /// or shown in their short form.
+    #[serde(default = "Default::default")]
+    pub show_expanded_aliases: Option<bool>,
+    /// The max amount of lines each task get's in the `pueue status` view.
+    #[serde(default = "Default::default")]
+    pub max_lines: Option<Option<usize>>,
+    /// The format that will be used to display time formats in `pueue status`.
+    #[serde(default = "Default::default")]
+    pub time_format: Option<String>,
+    /// The format that will be used to display datetime formats in `pueue status`.
+    #[serde(default = "Default::default")]
+    pub datetime_format: Option<String>,
+    #[serde(default = "default_additional_columns")]
+    pub additional_columns: Vec<String>,
+}
+
+impl Status {
+    pub fn new() -> Self {
+        Self {
+            ..Default::default()
+        }
+    }
+
+    pub fn with_max_lines(self, max_lines: Option<Option<usize>>) -> Self {
+        Self { max_lines, ..self }
+    }
+
+    pub fn with_datetime_format(self, datetime_format: Option<String>) -> Self {
+        Self {
+            datetime_format,
+            ..self
+        }
+    }
 }
 
 /// All settings which are used by the daemon
@@ -199,6 +289,7 @@ impl Default for Shared {
 
 impl Default for Client {
     fn default() -> Self {
+        #[expect(deprecated)]
         Client {
             restart_in_place: false,
             read_local_logs: true,
@@ -209,6 +300,7 @@ impl Default for Client {
             max_status_lines: None,
             status_time_format: default_status_time_format(),
             status_datetime_format: default_status_datetime_format(),
+            status: Default::default(),
         }
     }
 }
@@ -383,8 +475,9 @@ impl Settings {
                 .map_err(|err| Error::IoPathError(path.clone(), "opening config file", err))?;
             let reader = BufReader::new(file);
 
-            let settings = serde_yaml::from_reader(reader)
+            let settings: Settings = serde_yaml::from_reader(reader)
                 .map_err(|err| Error::ConfigDeserialization(err.to_string()))?;
+
             return Ok((settings, true));
         };
 
@@ -404,8 +497,9 @@ impl Settings {
                     .map_err(|err| Error::IoPathError(path, "opening config file.", err))?;
                 let reader = BufReader::new(file);
 
-                let settings = serde_yaml::from_reader(reader)
+                let settings: Settings = serde_yaml::from_reader(reader)
                     .map_err(|err| Error::ConfigDeserialization(err.to_string()))?;
+
                 return Ok((settings, true));
             }
         }
@@ -485,7 +579,7 @@ mod test {
         // Create some default settings and ensure that default values are loaded.
         let mut settings = Settings::default();
         assert_eq!(
-            settings.client.status_time_format,
+            settings.client.get_status_time_format(),
             default_status_time_format()
         );
         assert_eq!(
@@ -496,7 +590,7 @@ mod test {
 
         // Crate a new profile with slightly different values.
         let mut profile = Settings::default();
-        profile.client.status_time_format = "test".to_string();
+        profile.client.status.time_format = Some("test".to_string());
         profile.daemon.callback_log_lines = 100_000;
         profile.shared.host = "quatschhost".to_string();
         let profile = NestedSettings {
@@ -512,7 +606,7 @@ mod test {
             .load_profile("testprofile")
             .expect("We just added the profile");
 
-        assert_eq!(settings.client.status_time_format, "test");
+        assert_eq!(settings.client.get_status_time_format(), "test");
         assert_eq!(settings.daemon.callback_log_lines, 100_000);
         assert_eq!(settings.shared.host, "quatschhost");
     }

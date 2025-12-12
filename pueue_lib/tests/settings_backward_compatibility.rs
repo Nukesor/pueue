@@ -23,8 +23,15 @@ mod tests {
             .join("v0.15.0_settings.yml");
 
         // Open v0.15.0 file and ensure the settings file can be read.
-        let (_settings, config_found) = Settings::read(&Some(old_settings_path))
+        let (settings, config_found) = Settings::read(&Some(old_settings_path))
             .wrap_err("Failed to read old config with defaults:")?;
+        assert!(!settings.client.get_show_expanded_aliases());
+        assert_eq!(settings.client.get_status_max_lines(), Some(15));
+        assert_eq!(settings.client.get_status_time_format(), "mock015-%H:%M:%S");
+        assert_eq!(
+            settings.client.get_status_datetime_format(),
+            "mock015-%Y-%m-%d\n%H:%M:%S"
+        );
 
         assert!(config_found);
 

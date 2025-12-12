@@ -19,9 +19,10 @@ column_enqueue_at = { ^"enqueue_at" }
 column_dependencies = { ^"dependencies" }
 column_start = { ^"start" }
 column_end = { ^"end" }
+column_duration = { ^"duration" }
 
 // Either one of all column and a comma-separated list of columns.
-column = { column_id | column_status | column_command | column_label | column_path | column_enqueue_at | column_dependencies | column_start | column_end }
+column = { column_id | column_status | column_command | column_label | column_path | column_enqueue_at | column_dependencies | column_start | column_end | column_duration }
 multiple_columns = { column ~ (COMMA ~ column )* }
 
 // ----- Column visibility -----
@@ -55,13 +56,13 @@ datetime = { ASCII_DIGIT{4} ~ "-" ~ ASCII_DIGIT{2} ~ "-" ~ ASCII_DIGIT{2}  ~ ASC
 date = { ASCII_DIGIT{4} ~ "-" ~ ASCII_DIGIT{2} ~ "-" ~ ASCII_DIGIT{2} }
 time = { ASCII_DIGIT{2} ~ ":" ~ ASCII_DIGIT{2} ~ (":" ~ ASCII_DIGIT{2})? }
 
-datetime_filter = { (column_start | column_end | column_enqueue_at) ~ (eq | neq | lt | gt) ~ (datetime | date | time) }
+datetime_filter = { (column_start | column_end | column_duration | column_enqueue_at) ~ (eq | neq | lt | gt) ~ (datetime | date | time) }
 
 // ----- Ordering -----
 order_by = { ^"order_by" }
 ascending = { ^"asc" }
 descending = { ^"desc" }
-order_columns = { column_id | column_status | column_command | column_label | column_path | column_start | column_end }
+order_columns = { column_id | column_status | column_command | column_label | column_path | column_start | column_end | column_duration }
 order_by_condition = { order_by ~ column ~ (ascending | descending)? }
 
 // ----- Limit -----
