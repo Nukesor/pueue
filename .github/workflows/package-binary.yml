@@ -62,7 +62,7 @@ jobs:
       - name: Compress client
         uses: svenstaro/upx-action@v2
         with:
-          file: target/${{ matrix.target }}/release/pueue${{ env.EXE }}
+          files: target/${{ matrix.target }}/release/pueue${{ env.EXE }}
           args: --best --lzma
           strip: false
         if: ${{ matrix.compress }}
@@ -70,7 +70,7 @@ jobs:
       - name: Compress daemon
         uses: svenstaro/upx-action@v2
         with:
-          file: target/${{ matrix.target }}/release/pueued${{ env.EXE }}
+          files: target/${{ matrix.target }}/release/pueued${{ env.EXE }}
           args: --best --lzma
           strip: false
         if: ${{ matrix.compress }}
