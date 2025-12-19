@@ -16,8 +16,6 @@ use crate::internal_prelude::*;
 #[case("nushell")]
 #[test]
 fn autocompletion_generation_to_file(#[case] shell: &'static str) -> Result<()> {
-    use assert_cmd::cargo::cargo_bin;
-
     let output = Command::new(cargo_bin!("pueue"))
         .arg("completions")
         .arg(shell)

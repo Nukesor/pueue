@@ -3,7 +3,7 @@ use std::{
     process::{Command, Output, Stdio},
 };
 
-use assert_cmd::cargo::cargo_bin;
+use assert_cmd::cargo_bin;
 use pueue_lib::{settings::Shared, task::TaskStatus};
 
 use crate::{helper::get_state, internal_prelude::*};

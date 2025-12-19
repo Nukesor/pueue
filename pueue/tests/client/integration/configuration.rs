@@ -3,7 +3,7 @@ use std::{
     process::{Child, Command, Stdio},
 };
 
-use assert_cmd::cargo::cargo_bin;
+use assert_cmd::cargo_bin;
 use pueue_lib::{
     State,
     settings::{PUEUE_CONFIG_PATH_ENV, Shared},
