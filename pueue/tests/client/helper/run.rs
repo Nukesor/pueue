@@ -3,7 +3,7 @@ use std::{
     process::{Command, Output, Stdio},
 };
 
-use assert_cmd::prelude::*;
+use assert_cmd::cargo_bin;
 use pueue_lib::{settings::Shared, task::TaskStatus};
 
 use crate::{helper::get_state, internal_prelude::*};
@@ -77,7 +77,7 @@ pub fn run_client_command_with_env(
     args: &[&str],
     envs: HashMap<&str, &str>,
 ) -> Result<Output> {
-    let output = Command::cargo_bin("pueue")?
+    let output = Command::new(cargo_bin!("pueue"))
         .arg("--config")
         .arg(shared.pueue_directory().join("pueue.yml").to_str().unwrap())
         .args(args)

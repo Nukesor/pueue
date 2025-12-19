@@ -27,7 +27,7 @@ async-trait.workspace = true
 chrono.workspace = true
 clap = { version = "4.5", features = ["cargo", "derive", "help", "wrap_help"] }
 clap_complete = "4.5"
-clap_complete_nushell = "4.5.7"
+clap_complete_nushell = "4.5.10"
 color-eyre.workspace = true
 comfy-table = "7"
 command-group.workspace = true
@@ -38,9 +38,8 @@ interim = { version = "0.2", features = ["chrono_0_4"] }
 pest = "2.8"
 pest_derive = "2.8"
 pueue-lib = { version = "0.30", path = "../pueue_lib", features = ["client"] }
-rcgen = "0.13"
+rcgen = "0.14"
 rustls.workspace = true
-rustls-pemfile.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 serde_yaml.workspace = true
@@ -50,7 +49,7 @@ strum.workspace = true
 tempfile = "3"
 tokio.workspace = true
 tokio-rustls.workspace = true
-toml = "0.8"
+toml = "0.9"
 tracing.workspace = true
 tracing-error.workspace = true
 tracing-subscriber.workspace = true
@@ -60,20 +59,20 @@ assert_cmd = "2"
 assert_matches = "1"
 better-panic.workspace = true
 ciborium = { workspace = true }
-criterion = "0.6"
+criterion = "0.7"
 pretty_assertions.workspace = true
-rstest = "0.25"
+rstest = "0.26"
 similar-asserts = "1"
 
 # --- Platform specific dependencies ---
 
 # Linux
 [target.'cfg(target_os = "linux")'.dependencies]
-procfs = { version = "0.17", default-features = false }
+procfs = { version = "0.18", default-features = false }
 
 # Linux + Mac OS
 [target.'cfg(any(target_os = "linux", target_os = "macos"))'.dependencies]
-libproc = "0.14.10"
+libproc = "0.14.11"
 
 # Windows
 # We don't need any of the default features for crossterm.
@@ -91,7 +90,7 @@ winapi = { version = "0.3", features = [
     "processthreadsapi",
     "tlhelp32",
 ] }
-windows = { version = "0.61.3", features = [
+windows = { version = "0.62.2", features = [
     "Win32_Security",
     "Win32_System_Environment",
     "Win32_System_RemoteDesktop",
