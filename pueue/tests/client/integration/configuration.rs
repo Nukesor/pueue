@@ -3,7 +3,7 @@ use std::{
     process::{Child, Command, Stdio},
 };
 
-use assert_cmd::prelude::CommandCargoExt;
+use assert_cmd::cargo::cargo_bin;
 use pueue_lib::{
     State,
     settings::{PUEUE_CONFIG_PATH_ENV, Shared},
@@ -28,7 +28,7 @@ pub async fn standalone_daemon_with_env_config(shared: &Shared) -> Result<Child>
             .to_string(),
     );
 
-    let child = Command::cargo_bin("pueued")?
+    let child = Command::new(cargo_bin!("pueued"))
         .arg("-vvv")
         .envs(envs)
         .stdout(Stdio::piped())
@@ -69,7 +69,7 @@ async fn run_with_env_config_path() -> Result<()> {
             .to_string_lossy()
             .to_string(),
     );
-    let output = Command::cargo_bin("pueue")?
+    let output = Command::new(cargo_bin!("pueue"))
         .args(["status", "--json"])
         .envs(envs)
         .current_dir(shared.pueue_directory())

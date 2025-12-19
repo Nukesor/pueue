@@ -1,6 +1,6 @@
 use std::process::{Command, Stdio};
 
-use assert_cmd::prelude::*;
+use assert_cmd::cargo_bin;
 use rstest::rstest;
 
 use crate::internal_prelude::*;
@@ -16,7 +16,9 @@ use crate::internal_prelude::*;
 #[case("nushell")]
 #[test]
 fn autocompletion_generation_to_file(#[case] shell: &'static str) -> Result<()> {
-    let output = Command::cargo_bin("pueue")?
+    use assert_cmd::cargo::cargo_bin;
+
+    let output = Command::new(cargo_bin!("pueue"))
         .arg("completions")
         .arg(shell)
         .arg("./")
@@ -45,7 +47,7 @@ fn autocompletion_generation_to_file(#[case] shell: &'static str) -> Result<()> 
 #[case("nushell")]
 #[test]
 fn autocompletion_generation_to_stdout(#[case] shell: &'static str) -> Result<()> {
-    let output = Command::cargo_bin("pueue")?
+    let output = Command::new(cargo_bin!("pueue"))
         .arg("completions")
         .arg(shell)
         .stdout(Stdio::piped())
