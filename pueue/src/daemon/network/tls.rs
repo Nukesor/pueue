@@ -1,8 +1,7 @@
-use std::{fs::File, io::BufReader, path::Path, sync::Arc};
+use std::{path::Path, sync::Arc};
 
 use async_trait::async_trait;
-use rustls::pki_types::{CertificateDer, PrivateKeyDer};
-use rustls_pemfile::{pkcs8_private_keys, rsa_private_keys};
+use rustls::pki_types::{CertificateDer, PrivateKeyDer, pem::PemObject};
 use tokio::net::TcpListener;
 use tokio_rustls::{TlsAcceptor, rustls::ServerConfig};
 
@@ -57,44 +56,23 @@ pub fn get_tls_listener(settings: &Shared) -> Result<TlsAcceptor, Error> {
 
 /// Load the passed certificates file
 pub fn load_certs<'a>(path: &Path) -> Result<Vec<CertificateDer<'a>>, Error> {
-    let file = File::open(path)
-        .map_err(|err| Error::IoPathError(path.to_path_buf(), "opening cert", err))?;
-    let certs: Vec<CertificateDer> = rustls_pemfile::certs(&mut BufReader::new(file))
-        .collect::<Result<Vec<_>, std::io::Error>>()
-        .map_err(|_| Error::CertificateFailure("Failed to parse daemon certificate.".into()))?
-        .into_iter()
-        .collect();
-
-    Ok(certs)
+    CertificateDer::pem_file_iter(path)
+        .map_err(|err| {
+            Error::CertificateFailure(format!("Failed to open daemon certificate:\n{err}"))
+        })?
+        .map(|res| {
+            res.map_err(|err| {
+                Error::CertificateFailure(format!("Failed to parse certificate: {err}"))
+            })
+        })
+        .collect()
 }
 
 /// Load the passed keys file.
 /// Only the first key will be used. It should match the certificate.
 pub fn load_key<'a>(path: &Path) -> Result<PrivateKeyDer<'a>, Error> {
-    let file = File::open(path)
-        .map_err(|err| Error::IoPathError(path.to_path_buf(), "opening key", err))?;
-
     // Try to read pkcs8 format first
-    let keys = pkcs8_private_keys(&mut BufReader::new(&file))
-        .collect::<Result<Vec<_>, std::io::Error>>()
-        .map_err(|_| Error::CertificateFailure("Failed to parse pkcs8 format.".into()));
-
-    if let Ok(keys) = keys {
-        if let Some(key) = keys.into_iter().next() {
-            return Ok(PrivateKeyDer::Pkcs8(key));
-        }
-    }
-
-    // Try the normal rsa format afterwards.
-    let keys = rsa_private_keys(&mut BufReader::new(file))
-        .collect::<Result<Vec<_>, std::io::Error>>()
-        .map_err(|_| Error::CertificateFailure("Failed to parse daemon key.".into()))?;
-
-    if let Some(key) = keys.into_iter().next() {
-        return Ok(PrivateKeyDer::Pkcs1(key));
-    }
-
-    Err(Error::CertificateFailure(format!(
-        "Couldn't extract private key from keyfile {path:?}",
-    )))
+    PrivateKeyDer::from_pem_file(path).map_err(|err| {
+        Error::CertificateFailure(format!("Failed to private key from pem file:\n{err}."))
+    })
 }

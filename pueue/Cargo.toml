@@ -40,7 +40,6 @@ pest_derive = "2.8"
 pueue-lib = { version = "0.30", path = "../pueue_lib", features = ["client"] }
 rcgen = "0.14"
 rustls.workspace = true
-rustls-pemfile.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 serde_yaml.workspace = true

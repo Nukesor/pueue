@@ -1,7 +1,7 @@
 //! Helper functions for reading and handling TLS certificates.
-use std::{fs::File, io::BufReader, path::Path};
+use std::path::Path;
 
-use rustls::pki_types::CertificateDer;
+use rustls::pki_types::{CertificateDer, pem::PemObject};
 
 use crate::error::Error;
 
@@ -9,16 +9,10 @@ use crate::error::Error;
 ///
 /// This certificate needs to be provided when connecting via
 /// [ConnectionSettings::TlsTcpSocket](crate::network::socket::ConnectionSettings::TlsTcpSocket)
-pub fn load_ca<'a>(path: &Path) -> Result<CertificateDer<'a>, Error> {
-    let file = File::open(path)
-        .map_err(|err| Error::IoPathError(path.to_path_buf(), "opening cert", err))?;
-
-    let cert = rustls_pemfile::certs(&mut BufReader::new(file))
-        .collect::<Result<Vec<_>, std::io::Error>>()
-        .map_err(|_| Error::CertificateFailure("Failed to parse daemon certificate.".into()))?
-        .into_iter()
-        .next()
-        .ok_or_else(|| Error::CertificateFailure("Couldn't find CA certificate in file".into()))?;
-
-    Ok(cert)
+///
+/// If the pem file contains multiple certificates, the first one is picked.
+pub fn load_certificate<'a>(path: &Path) -> Result<CertificateDer<'a>, Error> {
+    CertificateDer::from_pem_file(path).map_err(|err| {
+        Error::CertificateFailure(format!("Failed to parse daemon certificate:\n{err:?}"))
+    })
 }

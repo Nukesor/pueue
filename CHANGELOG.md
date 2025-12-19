@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Maintenance
 
 - Bump dependencies
+- Ditch deprecated `rustls_pemfile` library and directly use `rustls-pki-types`.
 - Switch to `assert_cmd::cargo_bin` in tests to migrate from deprecated Cargo::cargo_bin #651
 
 ## \[4.0.1\] - 2025-07-07

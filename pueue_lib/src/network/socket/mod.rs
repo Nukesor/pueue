@@ -18,7 +18,7 @@ use tokio_rustls::TlsConnector;
 
 use crate::error::Error;
 #[cfg(feature = "settings")]
-use crate::{settings::Shared, tls::load_ca};
+use crate::{settings::Shared, tls::load_certificate};
 
 /// Shared socket logic
 #[cfg_attr(not(target_os = "windows"), path = "unix.rs")]
@@ -66,7 +66,7 @@ impl TryFrom<Shared> for ConnectionSettings<'_> {
             }
         }
 
-        let cert = load_ca(&value.daemon_cert())?;
+        let cert = load_certificate(&value.daemon_cert())?;
         Ok(ConnectionSettings::TlsTcpSocket {
             host: value.host,
             port: value.port,

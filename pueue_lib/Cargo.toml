@@ -24,7 +24,6 @@ network = [
     "dep:byteorder",
     "dep:ciborium",
     "dep:rustls",
-    "dep:rustls-pemfile",
     "dep:tokio",
     "dep:tokio-rustls",
     "secret",
@@ -35,7 +34,6 @@ network_blocking = [
     "dep:ciborium",
     "dep:rustls",
     "dep:rustls-connector",
-    "dep:rustls-pemfile",
     "secret",
     "tls",
 ]
@@ -56,7 +54,6 @@ rustls = { workspace = true, optional = true }
 rustls-connector = { version = "0.22", default-features = false, optional = true, features = [
     "rustls--ring",
 ] }
-rustls-pemfile = { workspace = true, optional = true }
 serde.workspace = true
 serde_json.workspace = true
 serde_yaml = { version = "0.9", optional = true }
