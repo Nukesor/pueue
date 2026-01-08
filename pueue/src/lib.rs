@@ -25,6 +25,8 @@ pub mod client;
 pub mod daemon;
 /// Formatting methods for several data types.
 pub mod format;
+/// Custom Nushell completion generator with proper numeric type support.
+pub mod nushell_completion;
 /// Shared module for internal logic!
 /// Contains helper to spawn shell commands and examine and interact with processes.
 pub mod process_helper;

@@ -35,13 +35,16 @@ pub async fn standalone_daemon_with_env_config(shared: &Shared) -> Result<Child>
         .stderr(Stdio::piped())
         .spawn()?;
 
-    let tries = 20;
+    // Use the same timeout pattern as other daemon tests (5 seconds)
+    let sleep = 50;
+    let timeout = 5000;
+    let tries = timeout / sleep;
     let mut current_try = 0;
 
-    // Wait up to 1s for the unix socket to pop up.
+    // Wait up to 5s for the unix socket to pop up.
     let socket_path = shared.unix_socket_path();
     while current_try < tries {
-        sleep_ms(50).await;
+        sleep_ms(sleep).await;
         if socket_path.exists() {
             return Ok(child);
         }
@@ -49,7 +52,7 @@ pub async fn standalone_daemon_with_env_config(shared: &Shared) -> Result<Child>
         current_try += 1;
     }
 
-    bail!("Daemon didn't boot in stand-alone mode after 1sec")
+    bail!("Daemon didn't boot in stand-alone mode after {timeout}ms")
 }
 
 /// Test that editing a task without any flags only updates the command.
