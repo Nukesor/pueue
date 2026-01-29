@@ -35,10 +35,14 @@ pub async fn add_task(
     // Either take the user-specified path or default to the current working directory.
     // This will give errors if connecting over TCP/TLS to a remote host that doesn't
     // have the same directory structure as the client
-    let path = working_directory
-        .as_ref()
-        .map(|path| Ok(path.clone()))
-        .unwrap_or_else(current_dir)?;
+
+    let path = if let Some(working_directory) = working_directory {
+        working_directory
+            .canonicalize()
+            .context("Failed to canonicalize given working directory path")?
+    } else {
+        current_dir()?
+    };
 
     // The user can request to escape any special shell characters in all parameter
     // strings before we concatenated them to a single string.
