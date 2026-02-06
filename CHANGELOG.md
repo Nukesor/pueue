@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Fix
 
 - `pueue add` Canonicalize `--working-directory` paths.
+- `pueue start` can force-start stashed tasks. #659
 
 ## \[4.0.2\] - 2021-12-19
 

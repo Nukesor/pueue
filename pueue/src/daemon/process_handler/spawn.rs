@@ -118,13 +118,11 @@ pub fn spawn_process(settings: &Settings, state: &mut LockedState, task_id: usiz
 
     // Get the task's enqueue time and make sure we don't have invalid states for spawning.
     let enqueued_at = match &task.status {
-        TaskStatus::Stashed { .. }
-        | TaskStatus::Paused { .. }
-        | TaskStatus::Running { .. }
-        | TaskStatus::Done { .. } => {
+        TaskStatus::Paused { .. } | TaskStatus::Running { .. } | TaskStatus::Done { .. } => {
             warn!("Tried to start task with status: {}", task.status);
             return;
         }
+        TaskStatus::Stashed { .. } => Local::now(),
         TaskStatus::Queued { enqueued_at } => *enqueued_at,
         TaskStatus::Locked { .. } => Local::now(),
     };
