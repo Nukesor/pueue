@@ -65,3 +65,23 @@ async fn test_start_tasks(#[case] start_message: StartRequest) -> Result<()> {
     }
     Ok(())
 }
+
+/// Test that force-starting stashed tasks works.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn test_start_stashed_tasks() -> Result<()> {
+    let daemon = daemon().await?;
+    let shared = &daemon.settings.shared;
+
+    // Add a few stashed tasks
+    for _ in 0..3 {
+        assert_success(create_stashed_task(shared, "sleep 4", None).await?);
+    }
+
+    // Start tasks 2 manually
+    start_tasks(shared, TaskSelection::TaskIds(vec![2])).await?;
+
+    // Ensure that task 2 is running
+    wait_for_task_condition(shared, 2, Task::is_running).await?;
+
+    Ok(())
+}
