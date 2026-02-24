@@ -1,7 +1,7 @@
 // We allow color_eyre in here, as this is a module that'll be strictly used internally.
 // As soon as it's obvious that this is code is intended to be exposed to library users, we have to
 // go ahead and replace any `anyhow` usage by proper error handling via our own Error type.
-use command_group::GroupChild;
+use process_wrap::std::ChildWrapper;
 use pueue_lib::Settings;
 use winapi::{
     shared::{minwindef::FALSE, ntdef::NULL},
@@ -18,6 +18,9 @@ use winapi::{
 };
 
 use crate::internal_prelude::*;
+
+/// A handle to a spawned child process.
+type ChildHandle = Box<dyn ChildWrapper>;
 
 /// Shim signal enum for windows.
 pub enum Signal {
@@ -44,7 +47,7 @@ pub fn get_shell_command(settings: &Settings) -> Vec<String> {
 }
 
 /// Send a signal to a windows process.
-pub fn send_signal_to_child(child: &mut GroupChild, signal: Signal) -> Result<()> {
+pub fn send_signal_to_child(child: &mut ChildHandle, signal: Signal) -> Result<()> {
     let pids = get_cur_task_processes(child.id());
     if pids.is_empty() {
         bail!("Process has just gone away");
@@ -74,7 +77,7 @@ pub fn send_signal_to_child(child: &mut GroupChild, signal: Signal) -> Result<()
 }
 
 /// Kill a child process
-pub fn kill_child(task_id: usize, child: &mut GroupChild) -> std::io::Result<()> {
+pub fn kill_child(task_id: usize, child: &mut ChildHandle) -> std::io::Result<()> {
     match child.kill() {
         Ok(_) => Ok(()),
         Err(ref e) if e.kind() == std::io::ErrorKind::InvalidData => {
@@ -254,7 +257,7 @@ pub fn process_exists(pid: u32) -> bool {
 mod test {
     use std::{process::Command, thread::sleep, time::Duration};
 
-    use command_group::CommandGroup;
+    use process_wrap::std::*;
 
     use super::*;
     use crate::process_helper::compile_shell_command;
@@ -294,8 +297,9 @@ mod test {
     #[test]
     fn test_spawn_command() {
         let settings = Settings::default();
-        let mut child = compile_shell_command(&settings, "sleep 0.1")
-            .group_spawn()
+        let mut child = CommandWrap::from(compile_shell_command(&settings, "sleep 0.1"))
+            .wrap(JobObject)
+            .spawn()
             .expect("Failed to spawn echo");
 
         let ecode = child.wait().expect("failed to wait on echo");
@@ -311,10 +315,13 @@ mod test {
     /// See https://github.com/Nukesor/pueue/issues/315
     fn test_shell_command_is_killed() -> Result<()> {
         let settings = Settings::default();
-        let mut child =
-            compile_shell_command(&settings, "sleep 60; sleep 60; echo 'this is a test'")
-                .group_spawn()
-                .expect("Failed to spawn echo");
+        let mut child = CommandWrap::from(compile_shell_command(
+            &settings,
+            "sleep 60; sleep 60; echo 'this is a test'",
+        ))
+        .wrap(JobObject)
+        .spawn()
+        .expect("Failed to spawn echo");
         let pid = child.id();
 
         // Get all processes, so we can make sure they no longer exist afterwards.
@@ -343,10 +350,13 @@ mod test {
     /// will properly kill all processes and their children's children without detached processes.
     fn test_shell_command_children_are_killed() -> Result<()> {
         let settings = Settings::default();
-        let mut child =
-            compile_shell_command(&settings, "powershell -c 'sleep 60; sleep 60'; sleep 60")
-                .group_spawn()
-                .expect("Failed to spawn echo");
+        let mut child = CommandWrap::from(compile_shell_command(
+            &settings,
+            "powershell -c 'sleep 60; sleep 60'; sleep 60",
+        ))
+        .wrap(JobObject)
+        .spawn()
+        .expect("Failed to spawn echo");
         let pid = child.id();
         // Get all processes, so we can make sure they no longer exist afterwards.
         let process_ids = assert_process_ids(pid, 2, 5000)?;
@@ -370,11 +380,12 @@ mod test {
     #[test]
     /// Ensure a normal command without `powershell -c` will be killed.
     fn test_normal_command_is_killed() -> Result<()> {
-        let mut child = Command::new("ping")
-            .arg("localhost")
-            .arg("-t")
-            .group_spawn()
-            .expect("Failed to spawn ping");
+        let mut child = CommandWrap::with_new("ping", |cmd| {
+            cmd.arg("localhost").arg("-t");
+        })
+        .wrap(JobObject)
+        .spawn()
+        .expect("Failed to spawn ping");
         let pid = child.id();
 
         // Get all processes, so we can make sure they no longer exist afterwards.
@@ -396,11 +407,12 @@ mod test {
     /// Ensure a normal command and all it's children will be
     /// properly killed without any detached processes.
     fn test_normal_command_children_are_killed() -> Result<()> {
-        let mut child = Command::new("powershell")
-            .arg("-c")
-            .arg("sleep 60; sleep 60; sleep 60")
-            .group_spawn()
-            .expect("Failed to spawn echo");
+        let mut child = CommandWrap::with_new("powershell", |cmd| {
+            cmd.arg("-c").arg("sleep 60; sleep 60; sleep 60");
+        })
+        .wrap(JobObject)
+        .spawn()
+        .expect("Failed to spawn echo");
         let pid = child.id();
 
         // Get all processes, so we can make sure they no longer exist afterwards.

@@ -1,7 +1,7 @@
 use std::{io::Write, process::Stdio};
 
 use chrono::Local;
-use command_group::CommandGroup;
+use process_wrap::std::*;
 use pueue_lib::{
     GroupStatus, Settings, Task, TaskResult, TaskStatus,
     log::{create_log_file_handles, get_writable_log_file_handle},
@@ -168,15 +168,27 @@ pub fn spawn_process(settings: &Settings, state: &mut LockedState, task_id: usiz
         );
     }
 
-    // Spawn the actual subprocess
-    let spawned_command = command
+    // Configure the command
+    command
         .current_dir(path)
         .stdin(Stdio::piped())
         .env_clear()
         .envs(envs.clone())
         .stdout(Stdio::from(stdout_log))
-        .stderr(Stdio::from(stderr_log))
-        .group_spawn();
+        .stderr(Stdio::from(stderr_log));
+
+    // Spawn the actual subprocess
+    let command_debug = format!("{command:?}");
+    let mut command = CommandWrap::from(command);
+    #[cfg(unix)]
+    {
+        command.wrap(ProcessGroup::leader());
+    }
+    #[cfg(windows)]
+    {
+        command.wrap(JobObject);
+    }
+    let spawned_command = command.spawn();
 
     // Check if the task managed to spawn
     let child = match spawned_command {
@@ -184,7 +196,7 @@ pub fn spawn_process(settings: &Settings, state: &mut LockedState, task_id: usiz
         Err(err) => {
             let error_msg = format!("Failed to spawn child {task_id} with err: {err:?}");
             error!(?err, "Failed to spawn child {task_id}");
-            trace!(?command, "Command that failed");
+            trace!(command = command_debug, "Command that failed");
 
             // Write some debug log output to the task's log file.
             // This should always work, but print a datailed error if it didn't work.

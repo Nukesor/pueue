@@ -1,8 +1,16 @@
-use std::{fs::File, io::Read, path::Path, process::Child};
+use std::{fs::File, io::Read, path::Path};
 
+use process_wrap::std::ChildWrapper;
 use pueue_lib::{message::*, settings::*};
 
 use super::*;
+
+/// Send a signal to a child process.
+#[cfg(unix)]
+pub fn send_signal_to_child(child: &dyn ChildWrapper, signal: i32) -> Result<()> {
+    child.signal(signal)?;
+    Ok(())
+}
 
 /// Send the Shutdown message to the test daemon.
 pub async fn shutdown_daemon(shared: &Shared) -> Result<Response> {
@@ -52,7 +60,7 @@ pub async fn get_pid(pid_path: &Path) -> Result<i32> {
 }
 
 /// Waits for a daemon to shut down.
-pub async fn wait_for_shutdown(child: &mut Child) -> Result<()> {
+pub async fn wait_for_shutdown(child: &mut Box<dyn ChildWrapper>) -> Result<()> {
     // Give the daemon about 1 sec to shutdown.
     let sleep = 50;
     let tries = TIMEOUT / sleep;

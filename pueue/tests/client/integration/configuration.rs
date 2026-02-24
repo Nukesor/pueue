@@ -1,9 +1,10 @@
 use std::{
     collections::HashMap,
-    process::{Child, Command, Stdio},
+    process::{Command, Stdio},
 };
 
 use assert_cmd::cargo_bin;
+use process_wrap::std::ChildWrapper;
 use pueue_lib::{
     State,
     settings::{PUEUE_CONFIG_PATH_ENV, Shared},
@@ -14,7 +15,7 @@ use crate::{helper::*, internal_prelude::*};
 /// Spawn the daemon by calling the actual pueued binary.
 /// This is basically the same as the `standalone_daemon` logic, but it uses the
 /// `PUEUE_CONFIG_PATH` environment variable instead of the `--config` flag.
-pub async fn standalone_daemon_with_env_config(shared: &Shared) -> Result<Child> {
+pub async fn standalone_daemon_with_env_config(shared: &Shared) -> Result<Box<dyn ChildWrapper>> {
     // Inject an environment variable into the daemon.
     // This is used to test that the spawned subprocesses won't inherit the daemon's environment.
     let mut envs = HashMap::new();
@@ -43,7 +44,7 @@ pub async fn standalone_daemon_with_env_config(shared: &Shared) -> Result<Child>
     while current_try < tries {
         sleep_ms(50).await;
         if socket_path.exists() {
-            return Ok(child);
+            return Ok(Box::new(child));
         }
 
         current_try += 1;

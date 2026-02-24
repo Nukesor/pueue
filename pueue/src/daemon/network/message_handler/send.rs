@@ -19,7 +19,7 @@ pub fn send(state: &SharedState, message: SendRequest) -> Response {
         }
     };
     {
-        let child_stdin = child.inner().stdin.as_mut().unwrap();
+        let child_stdin = child.inner_mut().stdin().as_mut().unwrap();
         if let Err(err) = child_stdin.write_all(&message.input.into_bytes()) {
             return failure_msg!("Failed to send input to task {task_id} with err {err:?}");
         };

@@ -13,8 +13,6 @@ use crate::internal_prelude::*;
 // Shared between Linux and Apple
 #[cfg(unix)]
 mod unix;
-#[cfg(unix)]
-use command_group::Signal;
 
 #[cfg(unix)]
 pub use self::unix::*;
@@ -38,24 +36,26 @@ pub enum ProcessAction {
     Resume,
 }
 
-impl From<ProcessAction> for Signal {
+#[cfg(unix)]
+impl From<ProcessAction> for i32 {
     fn from(action: ProcessAction) -> Self {
         match action {
-            ProcessAction::Pause => Signal::SIGSTOP,
-            ProcessAction::Resume => Signal::SIGCONT,
+            ProcessAction::Pause => libc::SIGSTOP,
+            ProcessAction::Resume => libc::SIGCONT,
         }
     }
 }
 
 /// Conversion function to convert the [`InternalSignal`] used during message transport
-/// to the actual process handling Unix [`Signal`].
-pub fn signal_from_internal(signal: InternalSignal) -> Signal {
+/// to the actual process handling Unix signal number.
+#[cfg(unix)]
+pub fn signal_from_internal(signal: InternalSignal) -> i32 {
     match signal {
-        InternalSignal::SigKill => Signal::SIGKILL,
-        InternalSignal::SigInt => Signal::SIGINT,
-        InternalSignal::SigTerm => Signal::SIGTERM,
-        InternalSignal::SigCont => Signal::SIGCONT,
-        InternalSignal::SigStop => Signal::SIGSTOP,
+        InternalSignal::SigKill => libc::SIGKILL,
+        InternalSignal::SigInt => libc::SIGINT,
+        InternalSignal::SigTerm => libc::SIGTERM,
+        InternalSignal::SigCont => libc::SIGCONT,
+        InternalSignal::SigStop => libc::SIGSTOP,
     }
 }
 
