@@ -236,7 +236,7 @@ It seems to be quite mature and has a rich interface.
 
 #### nq
 
-A very lightweight job queue systems which require no setup, maintenance, supervision, or any long-running processes. \
+A very lightweight job queue system which advertises no setup, maintenance, supervision, or otherwise long-running background processes. \
 [Link to project](https://github.com/leahneukirchen/nq)
 
 #### task-spooler
