@@ -211,9 +211,9 @@ For the record, the following features weren't included as they're out of scope:
 - Multi-user task management.
 - Sophisticated task scheduling for optimal load balancing.
 - Tight system integration or integration with external tools.
-- Explicit support for scripting.
-  If you're adamant about scripting it anyway, take a look at the `pueue-lib` library, which provides proper API calls for `pueued`.
-  However, keep in mind that `pueued` is still supposed to be a minimalistic task executor with as little scheduling logic as possible.
+- Extensive scripting support. Scripting is possible, but pueue's focus is on human interaction.
+  If you're adamant about programmatic interaction, take a look at the `pueue-lib` library, which provides proper API calls for `pueued` that provide full control over the daemon.
+  However, keep in mind that `pueued` is a minimalistic task executor with relatively naive scheduling logic by design.
 
 There seems to be the need for some project that satisfies all these points mentioned above, but that will be the job of another tool.
 I very much encourage forking Pueue and I would love to see forks grow into other cool projects!
