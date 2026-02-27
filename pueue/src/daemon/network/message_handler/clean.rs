@@ -32,26 +32,26 @@ pub fn clean(settings: &Settings, state: &SharedState, message: CleanRequest) ->
             continue;
         }
 
-        if message.successful_only || message.group.is_some() {
-            if let Some(task) = state.tasks().get(task_id) {
-                // Check if we should ignore this task, if only successful tasks should be removed.
-                if message.successful_only
-                    && !matches!(
-                        task.status,
-                        TaskStatus::Done {
-                            result: TaskResult::Success,
-                            ..
-                        }
-                    )
-                {
-                    continue;
-                }
+        if (message.successful_only || message.group.is_some())
+            && let Some(task) = state.tasks().get(task_id)
+        {
+            // Check if we should ignore this task, if only successful tasks should be removed.
+            if message.successful_only
+                && !matches!(
+                    task.status,
+                    TaskStatus::Done {
+                        result: TaskResult::Success,
+                        ..
+                    }
+                )
+            {
+                continue;
+            }
 
-                // User's can specify a specific group to be cleaned.
-                // Skip the task if that's the case and the task's group doesn't match.
-                if message.group.is_some() && message.group.as_deref() != Some(&task.group) {
-                    continue;
-                }
+            // User's can specify a specific group to be cleaned.
+            // Skip the task if that's the case and the task's group doesn't match.
+            if message.group.is_some() && message.group.as_deref() != Some(&task.group) {
+                continue;
             }
         }
         let _ = state.tasks_mut().remove(task_id).unwrap();

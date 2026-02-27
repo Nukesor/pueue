@@ -52,11 +52,11 @@ pub fn get_writable_log_file_handle(task_id: usize, pueue_dir: &Path) -> Result<
 /// Remove the the log files of a task.
 pub fn clean_log_handles(task_id: usize, pueue_dir: &Path) {
     let path = get_log_path(task_id, pueue_dir);
-    if path.exists() {
-        if let Err(err) = remove_file(path) {
-            error!("Failed to remove stdout file for task {task_id} with error {err:?}");
-        };
-    }
+    if path.exists()
+        && let Err(err) = remove_file(path)
+    {
+        error!("Failed to remove stdout file for task {task_id} with error {err:?}");
+    };
 }
 
 /// Return the output of a task. \

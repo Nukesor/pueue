@@ -348,10 +348,10 @@ fn event_loop() -> Result<()> {
     // when the service started.
     //
     // The event handler will start it when the user logs in.
-    if let Some(session) = get_current_session() {
-        if let Err(e) = spawner.start(session) {
-            error!("failed to spawn: {e}");
-        }
+    if let Some(session) = get_current_session()
+        && let Err(e) = spawner.start(session)
+    {
+        error!("failed to spawn: {e}");
     }
 
     set_status(

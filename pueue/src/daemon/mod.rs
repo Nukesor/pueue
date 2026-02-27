@@ -46,10 +46,8 @@ pub async fn run(config_path: Option<PathBuf>, profile: Option<String>, test: bo
     // We couldn't find a configuration file.
     // This probably means that Pueue has been started for the first time and we have to create a
     // default config file once.
-    if !config_found {
-        if let Err(error) = settings.save(&config_path) {
-            bail!("Failed saving config file: {error:?}.");
-        }
+    if !config_found && let Err(error) = settings.save(&config_path) {
+        bail!("Failed saving config file: {error:?}.");
     };
 
     // Load any requested profile.
