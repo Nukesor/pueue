@@ -39,7 +39,7 @@ pub async fn standalone_daemon_with_env_config(shared: &Shared) -> Result<Child>
     let mut current_try = 0;
 
     // Wait up to 1s for the unix socket to pop up.
-    let socket_path = shared.unix_socket_path();
+    let socket_path = shared.unix_socket_path()?;
     while current_try < tries {
         sleep_ms(50).await;
         if socket_path.exists() {

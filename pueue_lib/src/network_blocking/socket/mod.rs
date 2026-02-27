@@ -56,7 +56,7 @@ impl TryFrom<Shared> for ConnectionSettings<'_> {
         {
             if value.use_unix_socket {
                 return Ok(ConnectionSettings::UnixSocket {
-                    path: value.unix_socket_path(),
+                    path: value.unix_socket_path()?,
                 });
             }
         }
