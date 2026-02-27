@@ -9,7 +9,7 @@ edition = "2024"
 homepage = "https://github.com/nukesor/pueue"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/nukesor/pueue"
-rust-version = "1.85"
+rust-version = "1.88"
 
 [workspace.dependencies]
 async-trait = "0.1"
