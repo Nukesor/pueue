@@ -359,10 +359,10 @@ pub fn status(section: Pair<'_, Rule>, query_result: &mut QueryResult) -> Result
             }
             Rule::status_failed => {
                 let mut matches = false;
-                if let TaskStatus::Done { result, .. } = &task.status {
-                    if !matches!(result, TaskResult::Success) {
-                        matches = true;
-                    }
+                if let TaskStatus::Done { result, .. } = &task.status
+                    && !matches!(result, TaskResult::Success)
+                {
+                    matches = true;
                 }
                 matches
             }

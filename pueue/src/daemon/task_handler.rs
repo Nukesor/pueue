@@ -129,15 +129,14 @@ fn enqueue_delayed_tasks(settings: &Settings, state: &mut LockedState) {
         if let TaskStatus::Stashed {
             enqueue_at: Some(time),
         } = task.status
+            && time <= Local::now()
         {
-            if time <= Local::now() {
-                info!("Enqueuing delayed task : {}", task.id);
+            info!("Enqueuing delayed task : {}", task.id);
 
-                task.status = TaskStatus::Queued {
-                    enqueued_at: Local::now(),
-                };
-                changed = true;
-            }
+            task.status = TaskStatus::Queued {
+                enqueued_at: Local::now(),
+            };
+            changed = true;
         }
     }
     // Save the state if a task has been enqueued

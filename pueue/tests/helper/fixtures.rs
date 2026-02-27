@@ -67,7 +67,7 @@ pub async fn daemon_with_settings(settings: Settings, tempdir: TempDir) -> Resul
     let mut current_try = 0;
 
     // Wait up to 1s for the unix socket to pop up.
-    let socket_path = settings.shared.unix_socket_path();
+    let socket_path = settings.shared.unix_socket_path()?;
     while current_try < tries {
         sleep_ms(sleep).await;
         if socket_path.exists() {
@@ -124,7 +124,7 @@ pub async fn standalone_daemon(shared: &Shared) -> Result<Child> {
     let mut current_try = 0;
 
     // Wait up to 1s for the unix socket to pop up.
-    let socket_path = shared.unix_socket_path();
+    let socket_path = shared.unix_socket_path()?;
     while current_try < tries {
         sleep_ms(sleep).await;
         if socket_path.exists() {

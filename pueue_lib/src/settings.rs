@@ -301,12 +301,19 @@ impl Shared {
     /// The unix socket path can either be explicitly specified or it's simply placed in the
     /// current runtime directory.
     #[cfg(not(target_os = "windows"))]
-    pub fn unix_socket_path(&self) -> PathBuf {
+    pub fn unix_socket_path(&self) -> Result<PathBuf, Error> {
         if let Some(path) = &self.unix_socket_path {
-            expand_home(path)
+            Ok(expand_home(path))
         } else {
-            self.runtime_directory()
-                .join(format!("pueue_{}.socket", whoami::username()))
+            let username = whoami::username().map_err(|_| {
+                Error::NoUsername(
+                    "Specify an explicit unix socket path in your config to fix this error."
+                        .to_string(),
+                )
+            })?;
+            Ok(self
+                .runtime_directory()
+                .join(format!("pueue_{username}.socket")))
         }
     }
 

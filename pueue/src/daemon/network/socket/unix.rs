@@ -12,10 +12,12 @@ use crate::{
 };
 
 /// Unix specific cleanup handling when getting a SIGINT/SIGTERM.
-pub fn socket_cleanup(settings: &Shared) -> Result<(), std::io::Error> {
+pub fn socket_cleanup(settings: &Shared) -> Result<(), Error> {
     // Clean up the unix socket if we're using it and it exists.
-    if settings.use_unix_socket && settings.unix_socket_path().exists() {
-        std::fs::remove_file(settings.unix_socket_path())?;
+    let socket_path = settings.unix_socket_path()?;
+    if settings.use_unix_socket && socket_path.exists() {
+        std::fs::remove_file(socket_path)
+            .map_err(|inner| Error::IoError("Failed to remove unix socket.".to_string(), inner))?;
     }
 
     Ok(())
@@ -25,7 +27,7 @@ pub fn socket_cleanup(settings: &Shared) -> Result<(), std::io::Error> {
 /// This can either be a UnixListener or a TCPlistener, depending on the parameters.
 pub async fn get_listener(settings: &Shared) -> Result<GenericListener, Error> {
     if settings.use_unix_socket {
-        let socket_path = settings.unix_socket_path();
+        let socket_path = settings.unix_socket_path()?;
         info!("Using unix socket at: {socket_path:?}");
 
         // Check, if the socket already exists

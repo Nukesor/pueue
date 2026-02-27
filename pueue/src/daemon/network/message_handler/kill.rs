@@ -12,10 +12,10 @@ pub fn kill(settings: &Settings, state: &SharedState, message: KillRequest) -> R
     let mut state = state.lock().unwrap();
 
     // If a group is selected, make sure it exists.
-    if let TaskSelection::Group(group) = &message.tasks {
-        if let Err(response) = ensure_group_exists(&mut state, group) {
-            return response;
-        }
+    if let TaskSelection::Group(group) = &message.tasks
+        && let Err(response) = ensure_group_exists(&mut state, group)
+    {
+        return response;
     }
 
     // Construct a response depending on the selected tasks.

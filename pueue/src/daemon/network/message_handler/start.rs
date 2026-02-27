@@ -7,10 +7,10 @@ use crate::daemon::{internal_state::SharedState, network::response_helper::*, pr
 pub fn start(settings: &Settings, state: &SharedState, message: StartRequest) -> Response {
     let mut state = state.lock().unwrap();
     // If a group is selected, make sure it exists.
-    if let TaskSelection::Group(group) = &message.tasks {
-        if let Err(response) = ensure_group_exists(&mut state, group) {
-            return response;
-        }
+    if let TaskSelection::Group(group) = &message.tasks
+        && let Err(response) = ensure_group_exists(&mut state, group)
+    {
+        return response;
     }
 
     let response = match &message.tasks {

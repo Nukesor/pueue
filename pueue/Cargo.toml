@@ -49,7 +49,7 @@ strum.workspace = true
 tempfile = "3"
 tokio.workspace = true
 tokio-rustls.workspace = true
-toml = "0.9"
+toml = "1.0"
 tracing.workspace = true
 tracing-error.workspace = true
 tracing-subscriber.workspace = true
@@ -59,7 +59,7 @@ assert_cmd = "2"
 assert_matches = "1"
 better-panic.workspace = true
 ciborium = { workspace = true }
-criterion = "0.7"
+criterion = "0.8"
 pretty_assertions.workspace = true
 rstest = "0.26"
 similar-asserts = "1"

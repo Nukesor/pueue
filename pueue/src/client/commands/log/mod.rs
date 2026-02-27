@@ -79,13 +79,13 @@ pub async fn print_logs(
         print_log(task_log, style, &settings, lines);
 
         // Add a newline if there is another task that's going to be printed.
-        if let Some((_, task_log)) = task_iter.peek() {
-            if matches!(
+        if let Some((_, task_log)) = task_iter.peek()
+            && matches!(
                 &task_log.task.status,
                 TaskStatus::Done { .. } | TaskStatus::Running { .. } | TaskStatus::Paused { .. }
-            ) {
-                println!();
-            }
+            )
+        {
+            println!();
         }
     }
 

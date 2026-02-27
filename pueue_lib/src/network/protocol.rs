@@ -111,13 +111,11 @@ pub async fn receive_bytes_with_max_size(
     let mut header = Cursor::new(header);
     let message_size = ReadBytesExt::read_u64::<BigEndian>(&mut header)? as usize;
 
-    if let Some(max_size) = max_size {
-        if message_size > max_size {
-            error!(
-                "Client requested message size of {message_size}, but only {max_size} is allowed."
-            );
-            return Err(Error::MessageTooBig(message_size, max_size));
-        }
+    if let Some(max_size) = max_size
+        && message_size > max_size
+    {
+        error!("Client requested message size of {message_size}, but only {max_size} is allowed.");
+        return Err(Error::MessageTooBig(message_size, max_size));
     }
 
     // Show a warning if we see unusually large payloads. In this case payloads that're bigger than

@@ -11,7 +11,7 @@ async fn test_socket_permissions_default() -> Result<()> {
     let mut child = standalone_daemon(shared).await?;
 
     assert_eq!(
-        fs::metadata(shared.unix_socket_path())?
+        fs::metadata(shared.unix_socket_path()?)?
             .permissions()
             .mode()
             // The permissions are masked with 0o777 to only get the last 3
@@ -38,7 +38,7 @@ async fn test_socket_permissions_modified() -> Result<()> {
     let mut child = standalone_daemon(shared).await?;
 
     assert_eq!(
-        fs::metadata(shared.unix_socket_path())?
+        fs::metadata(shared.unix_socket_path()?)?
             .permissions()
             .mode()
             // The permissions are masked with 0o777 to only get the last 3
