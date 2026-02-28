@@ -69,7 +69,7 @@ The focus of `pueue` lies on human interaction, i.e. it's supposed to be used by
 See [the Design Goals section](#design-goals)
 
 Due to this, the feature set of `pueue` and `pueued` as well as their implementation and architecture have been kept simple by design!
-Even though it can be scripted to some degree, it hasn't been built for this and there's no official support!
+Even though it can be scripted to some degree, it hasn't been built for heavy-duty work like hundreds of tasks!
 
 There's definitely the need for a complex task scheduler/executor with advanced API access and scheduling options, but this is the job for another project, as this is not what pueue has been built for.
 
