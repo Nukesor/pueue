@@ -5,11 +5,34 @@
 use color_eyre::Result;
 use process_wrap::std::*;
 use pueue_lib::Settings;
+use pueue_lib::message::request::Signal as InternalSignal;
 
 use crate::internal_prelude::*;
+use crate::process_helper::ProcessAction;
 
 /// A handle to a spawned child process.
 type ChildHandle = Box<dyn ChildWrapper>;
+
+/// Conversion function to convert the [`InternalSignal`] used during message transport
+/// to the actual process handling Unix signal number.
+pub fn signal_from_internal(signal: InternalSignal) -> i32 {
+    match signal {
+        InternalSignal::SigKill => libc::SIGKILL,
+        InternalSignal::SigInt => libc::SIGINT,
+        InternalSignal::SigTerm => libc::SIGTERM,
+        InternalSignal::SigCont => libc::SIGCONT,
+        InternalSignal::SigStop => libc::SIGSTOP,
+    }
+}
+
+impl From<ProcessAction> for i32 {
+    fn from(action: ProcessAction) -> Self {
+        match action {
+            ProcessAction::Pause => libc::SIGSTOP,
+            ProcessAction::Resume => libc::SIGCONT,
+        }
+    }
+}
 
 pub fn get_shell_command(settings: &Settings) -> Vec<String> {
     let Some(ref shell_command) = settings.daemon.shell_command else {
@@ -23,9 +46,16 @@ pub fn get_shell_command(settings: &Settings) -> Vec<String> {
     shell_command.clone()
 }
 
+/// Handle pause/resume actions on processes.
+pub fn handle_process_action(child: &mut ChildHandle, action: ProcessAction) -> Result<()> {
+    child.signal(action.into())?;
+    Ok(())
+}
+
 /// Send a signal to one of Pueue's child process group handle.
-pub fn send_signal_to_child(child: &mut ChildHandle, signal: i32) -> Result<()> {
-    child.signal(signal)?;
+/// This is an exact mapping to unix signals.
+pub fn send_signal_to_child(child: &mut ChildHandle, signal: InternalSignal) -> Result<()> {
+    child.signal(signal_from_internal(signal))?;
     Ok(())
 }
 
@@ -149,7 +179,7 @@ mod tests {
         assert_eq!(group_pids.len(), 3);
 
         // Kill the process and make sure it'll be killed.
-        send_signal_to_child(&mut child, libc::SIGKILL).unwrap();
+        send_signal_to_child(&mut child, InternalSignal::SigKill).unwrap();
 
         // Sleep a little to give all processes time to shutdown.
         sleep(Duration::from_millis(500));

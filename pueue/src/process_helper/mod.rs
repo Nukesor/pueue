@@ -5,7 +5,7 @@
 //! Depending on the target, the respective platform is read and loaded into this scope.
 use std::{collections::HashMap, process::Command};
 
-use pueue_lib::{Settings, message::request::Signal as InternalSignal};
+use pueue_lib::Settings;
 
 use crate::internal_prelude::*;
 
@@ -34,29 +34,6 @@ pub use self::platform::*;
 pub enum ProcessAction {
     Pause,
     Resume,
-}
-
-#[cfg(unix)]
-impl From<ProcessAction> for i32 {
-    fn from(action: ProcessAction) -> Self {
-        match action {
-            ProcessAction::Pause => libc::SIGSTOP,
-            ProcessAction::Resume => libc::SIGCONT,
-        }
-    }
-}
-
-/// Conversion function to convert the [`InternalSignal`] used during message transport
-/// to the actual process handling Unix signal number.
-#[cfg(unix)]
-pub fn signal_from_internal(signal: InternalSignal) -> i32 {
-    match signal {
-        InternalSignal::SigKill => libc::SIGKILL,
-        InternalSignal::SigInt => libc::SIGINT,
-        InternalSignal::SigTerm => libc::SIGTERM,
-        InternalSignal::SigCont => libc::SIGCONT,
-        InternalSignal::SigStop => libc::SIGSTOP,
-    }
 }
 
 /// Take a platform specific shell command and insert the actual task command via templating.
