@@ -25,7 +25,7 @@ pub fn reset(settings: &Settings, state: &SharedState, message: ResetRequest) ->
                 }
             }
 
-            // Mark all groups to be reset and kill its tasks
+            // Mark all groups to be reset and kill their tasks
             for name in groups.iter() {
                 let group = state.groups_mut().get_mut(name).unwrap();
                 group.status = GroupStatus::Reset;

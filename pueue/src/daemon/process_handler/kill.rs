@@ -7,7 +7,7 @@ use crate::{
     daemon::internal_state::state::LockedState,
     internal_prelude::*,
     ok_or_shutdown,
-    process_helper::{kill_child, send_signal_to_child, signal_from_internal},
+    process_helper::{kill_child, send_signal_to_child},
 };
 
 /// Kill specific tasks or groups.
@@ -97,7 +97,7 @@ pub fn send_internal_signal(state: &mut LockedState, task_id: usize, signal: Sig
         }
     };
 
-    if let Err(err) = send_signal_to_child(child, signal_from_internal(signal)) {
+    if let Err(err) = send_signal_to_child(child, signal) {
         warn!("Failed to send signal to task {task_id} with error: {err}");
     };
 }

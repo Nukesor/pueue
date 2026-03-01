@@ -30,13 +30,13 @@ clap_complete = "4.5"
 clap_complete_nushell = "4.5.10"
 color-eyre.workspace = true
 comfy-table = "7"
-command-group.workspace = true
 ctrlc = { version = "3", features = ["termination"] }
 flate2 = "1"
 handlebars.workspace = true
 interim = { version = "0.2", features = ["chrono_0_4"] }
 pest = "2.8"
 pest_derive = "2.8"
+process-wrap.workspace = true
 pueue-lib = { version = "0.30", path = "../pueue_lib", features = ["client"] }
 rcgen = "0.14"
 rustls.workspace = true
@@ -73,6 +73,10 @@ procfs = { version = "0.18", default-features = false }
 # Linux + Mac OS
 [target.'cfg(any(target_os = "linux", target_os = "macos"))'.dependencies]
 libproc = "0.14.11"
+
+# Unix (all Unix-like systems)
+[target.'cfg(unix)'.dependencies]
+libc.workspace = true
 
 # Windows
 # We don't need any of the default features for crossterm.

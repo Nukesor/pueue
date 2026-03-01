@@ -185,8 +185,7 @@ impl_into_request!(PauseRequest, Request::Pause);
 /// This is a small custom Enum for all currently supported unix signals.
 /// Supporting all unix signals would be a mess, since there is a LOT of them.
 ///
-/// This is also needed for usage in clap, since nix's Signal doesn't implement [Display] and
-/// [std::str::FromStr].
+/// This is also needed for usage in clap.
 #[derive(
     PartialEq, Eq, Clone, Debug, Deserialize, Serialize, Display, EnumString, VariantNames,
 )]

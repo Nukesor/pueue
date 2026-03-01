@@ -11,6 +11,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - `pueue add` Canonicalize `--working-directory` paths.
 - `pueue start` can force-start stashed tasks. #659
 
+### Maintenance
+
+- Replace deprecated `command-group` with `process-wrap` v9. Minimum Rust version updated to 1.87.
+
 ## \[4.0.2\] - 2021-12-19
 
 ### Maintenance

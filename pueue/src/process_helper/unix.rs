@@ -3,10 +3,36 @@
 // have to go ahead and replace any `anyhow` usage by proper error handling via our own Error
 // type.
 use color_eyre::Result;
-use command_group::{GroupChild, Signal, UnixChildExt};
+use process_wrap::std::*;
 use pueue_lib::Settings;
+use pueue_lib::message::request::Signal as InternalSignal;
 
 use crate::internal_prelude::*;
+use crate::process_helper::ProcessAction;
+
+/// A handle to a spawned child process.
+type ChildHandle = Box<dyn ChildWrapper>;
+
+/// Conversion function to convert the [`InternalSignal`] used during message transport
+/// to the actual process handling Unix signal number.
+pub fn signal_from_internal(signal: InternalSignal) -> i32 {
+    match signal {
+        InternalSignal::SigKill => libc::SIGKILL,
+        InternalSignal::SigInt => libc::SIGINT,
+        InternalSignal::SigTerm => libc::SIGTERM,
+        InternalSignal::SigCont => libc::SIGCONT,
+        InternalSignal::SigStop => libc::SIGSTOP,
+    }
+}
+
+impl From<ProcessAction> for i32 {
+    fn from(action: ProcessAction) -> Self {
+        match action {
+            ProcessAction::Pause => libc::SIGSTOP,
+            ProcessAction::Resume => libc::SIGCONT,
+        }
+    }
+}
 
 pub fn get_shell_command(settings: &Settings) -> Vec<String> {
     let Some(ref shell_command) = settings.daemon.shell_command else {
@@ -20,15 +46,22 @@ pub fn get_shell_command(settings: &Settings) -> Vec<String> {
     shell_command.clone()
 }
 
+/// Handle pause/resume actions on processes.
+pub fn handle_process_action(child: &mut ChildHandle, action: ProcessAction) -> Result<()> {
+    child.signal(action.into())?;
+    Ok(())
+}
+
 /// Send a signal to one of Pueue's child process group handle.
-pub fn send_signal_to_child(child: &mut GroupChild, signal: Signal) -> Result<()> {
-    child.signal(signal)?;
+/// This is an exact mapping to unix signals.
+pub fn send_signal_to_child(child: &mut ChildHandle, signal: InternalSignal) -> Result<()> {
+    child.signal(signal_from_internal(signal))?;
     Ok(())
 }
 
 /// This is a helper function to safely kill a child process group.
 /// Its purpose is to properly kill all processes and prevent any dangling processes.
-pub fn kill_child(task_id: usize, child: &mut GroupChild) -> std::io::Result<()> {
+pub fn kill_child(task_id: usize, child: &mut ChildHandle) -> std::io::Result<()> {
     match child.kill() {
         Ok(_) => Ok(()),
         Err(ref e) if e.kind() == std::io::ErrorKind::InvalidData => {
@@ -42,12 +75,12 @@ pub fn kill_child(task_id: usize, child: &mut GroupChild) -> std::io::Result<()>
 
 #[cfg(test)]
 mod tests {
-    use std::{process::Command, thread::sleep, time::Duration};
+    use std::{thread::sleep, time::Duration};
 
     use color_eyre::Result;
-    use command_group::CommandGroup;
     use libproc::processes::{ProcFilter, pids_by_type};
     use pretty_assertions::assert_eq;
+    use process_wrap::std::*;
 
     use super::*;
     use crate::process_helper::{compile_shell_command, process_exists};
@@ -77,8 +110,9 @@ mod tests {
     #[test]
     fn test_spawn_command() {
         let settings = Settings::default();
-        let mut child = compile_shell_command(&settings, "sleep 0.1")
-            .group_spawn()
+        let mut child = CommandWrap::from(compile_shell_command(&settings, "sleep 0.1"))
+            .wrap(ProcessGroup::leader())
+            .spawn()
             .expect("Failed to spawn echo");
 
         let ecode = child.wait().expect("failed to wait on echo");
@@ -90,10 +124,13 @@ mod tests {
     /// Ensure a `sh -c` command will be properly killed without detached processes.
     fn test_shell_command_is_killed() -> Result<()> {
         let settings = Settings::default();
-        let mut child =
-            compile_shell_command(&settings, "sleep 60 & sleep 60 && echo 'this is a test'")
-                .group_spawn()
-                .expect("Failed to spawn echo");
+        let mut child = CommandWrap::from(compile_shell_command(
+            &settings,
+            "sleep 60 & sleep 60 && echo 'this is a test'",
+        ))
+        .wrap(ProcessGroup::leader())
+        .spawn()
+        .expect("Failed to spawn echo");
         let pid = child.id();
         // Sleep a little to give everything a chance to spawn.
         sleep(Duration::from_millis(500));
@@ -125,10 +162,13 @@ mod tests {
     /// signals directly.
     fn test_shell_command_is_killed_with_signal() -> Result<()> {
         let settings = Settings::default();
-        let mut child =
-            compile_shell_command(&settings, "sleep 60 & sleep 60 && echo 'this is a test'")
-                .group_spawn()
-                .expect("Failed to spawn echo");
+        let mut child = CommandWrap::from(compile_shell_command(
+            &settings,
+            "sleep 60 & sleep 60 && echo 'this is a test'",
+        ))
+        .wrap(ProcessGroup::leader())
+        .spawn()
+        .expect("Failed to spawn echo");
         let pid = child.id();
         // Sleep a little to give everything a chance to spawn.
         sleep(Duration::from_millis(500));
@@ -139,7 +179,7 @@ mod tests {
         assert_eq!(group_pids.len(), 3);
 
         // Kill the process and make sure it'll be killed.
-        send_signal_to_child(&mut child, Signal::SIGKILL).unwrap();
+        send_signal_to_child(&mut child, InternalSignal::SigKill).unwrap();
 
         // Sleep a little to give all processes time to shutdown.
         sleep(Duration::from_millis(500));
@@ -160,10 +200,13 @@ mod tests {
     /// will properly kill all processes and their children's children without detached processes.
     fn test_shell_command_children_are_killed() -> Result<()> {
         let settings = Settings::default();
-        let mut child =
-            compile_shell_command(&settings, "bash -c 'sleep 60 && sleep 60' && sleep 60")
-                .group_spawn()
-                .expect("Failed to spawn echo");
+        let mut child = CommandWrap::from(compile_shell_command(
+            &settings,
+            "bash -c 'sleep 60 && sleep 60' && sleep 60",
+        ))
+        .wrap(ProcessGroup::leader())
+        .spawn()
+        .expect("Failed to spawn echo");
         let pid = child.id();
         // Sleep a little to give everything a chance to spawn.
         sleep(Duration::from_millis(500));
@@ -193,10 +236,12 @@ mod tests {
     #[test]
     /// Ensure a normal command without `sh -c` will be killed.
     fn test_normal_command_is_killed() -> Result<()> {
-        let mut child = Command::new("sleep")
-            .arg("60")
-            .group_spawn()
-            .expect("Failed to spawn echo");
+        let mut child = CommandWrap::with_new("sleep", |cmd| {
+            cmd.arg("60");
+        })
+        .wrap(ProcessGroup::leader())
+        .spawn()
+        .expect("Failed to spawn echo");
         let pid = child.id();
         // Sleep a little to give everything a chance to spawn.
         sleep(Duration::from_millis(500));
@@ -222,11 +267,12 @@ mod tests {
     /// Ensure a normal command and all its children will be
     /// properly killed without any detached processes.
     fn test_normal_command_children_are_killed() -> Result<()> {
-        let mut child = Command::new("bash")
-            .arg("-c")
-            .arg("sleep 60 & sleep 60 && sleep 60")
-            .group_spawn()
-            .expect("Failed to spawn echo");
+        let mut child = CommandWrap::with_new("bash", |cmd| {
+            cmd.arg("-c").arg("sleep 60 & sleep 60 && sleep 60");
+        })
+        .wrap(ProcessGroup::leader())
+        .spawn()
+        .expect("Failed to spawn echo");
         let pid = child.id();
         // Sleep a little to give everything a chance to spawn.
         sleep(Duration::from_millis(500));

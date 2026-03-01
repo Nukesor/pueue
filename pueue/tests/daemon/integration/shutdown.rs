@@ -2,16 +2,14 @@ use crate::{helper::*, internal_prelude::*};
 
 /// Spin up the daemon and send a SIGTERM shortly afterwards.
 /// This should trigger the graceful shutdown and kill the process.
+#[cfg(unix)]
 #[tokio::test]
 async fn test_ctrlc() -> Result<()> {
     let (settings, _tempdir) = daemon_base_setup()?;
     let mut child = standalone_daemon(&settings.shared).await?;
 
-    use command_group::{Signal, UnixChildExt};
-    // Send SIGTERM signal to process via nix
-    child
-        .signal(Signal::SIGTERM)
-        .context("Failed to send SIGTERM to daemon")?;
+    // Send SIGTERM signal to the daemon
+    send_signal_to_child(&*child, libc::SIGTERM).context("Failed to send SIGTERM to daemon")?;
 
     // Sleep for 500ms and give the daemon time to shut down
     sleep_ms(500).await;

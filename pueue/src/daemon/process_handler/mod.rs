@@ -6,7 +6,7 @@ use pueue_lib::{
 use crate::{
     daemon::internal_state::state::LockedState,
     internal_prelude::*,
-    process_helper::{ProcessAction, send_signal_to_child},
+    process_helper::{ProcessAction, handle_process_action},
 };
 
 pub mod finish;
@@ -55,7 +55,7 @@ pub fn perform_action(state: &mut LockedState, id: usize, action: ProcessAction)
     match state.children.get_child_mut(id) {
         Some(child) => {
             debug!("Executing action {action:?} to {id}");
-            send_signal_to_child(child, action.into())?;
+            handle_process_action(child, action)?;
 
             Ok(true)
         }
