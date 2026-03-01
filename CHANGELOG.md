@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Fix
 
 - update nix and related deps to fix s390x build
+- armv7/armhf test error `The payload should be rejected due to large size`
 
 ## \[4.0.3\] - 2026-03-01
 
