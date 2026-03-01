@@ -6,7 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project adheres **somewhat** to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 The concept of SemVer is applied to the daemon/client API, but not the library API itself.
 
-## [0.31.0] - unreleased
+## [0.32.0] - unreleased
+
+## [0.31.0] - 2026-03-01
+
+### Change
+
+- `unix_socket_path` can now throw an error if the username cannot be determined.
+
+### Maintenance
+
+- Bump `randr` to `v0.10`
+- Bump `whoami` to `v2`
 
 ## [0.30.0] - 2025-07-07
 
