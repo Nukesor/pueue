@@ -4,12 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## \[4.0.4\] - unreleased
+## \[4.0.5\] - unreleased
 
 ### Fix
 
-- update nix and related deps to fix s390x build
-- armv7/armhf test error `The payload should be rejected due to large size`
+## \[4.0.4\] - 2026-03-02
+
+### Fix
+
+- Test fixes for armv7/armhf architectures
+- Update dependencies to s390x builds
 
 ## \[4.0.3\] - 2026-03-01
 
