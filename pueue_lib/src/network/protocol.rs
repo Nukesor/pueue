@@ -109,20 +109,26 @@ pub async fn receive_bytes_with_max_size(
         .await
         .map_err(|err| Error::IoError("reading request size header".to_string(), err))?;
     let mut header = Cursor::new(header);
-    let message_size = ReadBytesExt::read_u64::<BigEndian>(&mut header)? as usize;
+    let message_size_u64 = ReadBytesExt::read_u64::<BigEndian>(&mut header)?;
 
     if let Some(max_size) = max_size
-        && message_size > max_size
+        && message_size_u64 > max_size as u64
     {
-        error!("Client requested message size of {message_size}, but only {max_size} is allowed.");
-        return Err(Error::MessageTooBig(message_size, max_size));
+        error!(
+            "Client requested message size of {message_size_u64}, but only {max_size} is allowed."
+        );
+        return Err(Error::MessageTooBig(message_size_u64 as usize, max_size));
     }
 
     // Show a warning if we see unusually large payloads. In this case payloads that're bigger than
     // 20MB, which is pretty large considering pueue is usually only sending a bit of text.
-    if message_size > (20 * (2usize.pow(20))) {
-        warn!("Client is sending a large payload: {message_size} bytes.");
+    if message_size_u64 > (20 * (2u64.pow(20))) {
+        warn!("Client is sending a large payload: {message_size_u64} bytes.");
     }
+
+    // On 32-bit platforms usize is narrower than u64; reject sizes that don't fit.
+    let message_size = usize::try_from(message_size_u64)
+        .map_err(|_| Error::MessageTooBig(usize::MAX, usize::MAX))?;
 
     // Buffer for the whole payload
     let mut payload_bytes = Vec::with_capacity(message_size);
