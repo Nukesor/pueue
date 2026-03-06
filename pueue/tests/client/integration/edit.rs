@@ -241,3 +241,71 @@ async fn edit_with_alias() -> Result<()> {
 
     Ok(())
 }
+
+/// Test that editing all stashed/queued tasks with --all works.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn edit_all() -> Result<()> {
+    let daemon = daemon().await?;
+    let shared = &daemon.settings.shared;
+
+    // Create two stashed tasks.
+    let mut message = create_add_message(shared, "task1");
+    message.stashed = true;
+    send_request(shared, message).await?;
+
+    let mut message = create_add_message(shared, "task2");
+    message.stashed = true;
+    send_request(shared, message).await?;
+
+    // Edit all stashed tasks.
+    let mut envs = HashMap::new();
+    envs.insert(
+        "EDITOR",
+        "echo 'edited1' > ${PUEUE_EDIT_PATH}/0/command && \
+echo 'edited2' > ${PUEUE_EDIT_PATH}/1/command || ",
+    );
+    run_client_command_with_env(shared, &["edit", "--all"], envs)?.success()?;
+
+    // Both tasks should be edited.
+    let state = get_state(shared).await?;
+    let task0 = state.tasks.get(&0).unwrap();
+    let task1 = state.tasks.get(&1).unwrap();
+    assert_eq!(task0.command, "edited1");
+    assert_eq!(task1.command, "edited2");
+
+    Ok(())
+}
+
+/// Test that editing tasks in a specific group with --group works.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn edit_group() -> Result<()> {
+    let daemon = daemon().await?;
+    let shared = &daemon.settings.shared;
+
+    // Create stashed tasks in different groups.
+    let mut message = create_add_message(shared, "task_test2");
+    message.stashed = true;
+    message.group = "test_2".to_string();
+    send_request(shared, message).await?;
+
+    let mut message = create_add_message(shared, "task_default");
+    message.stashed = true;
+    send_request(shared, message).await?;
+
+    // Edit only tasks in test_2 group.
+    let mut envs = HashMap::new();
+    envs.insert(
+        "EDITOR",
+        "echo 'edited_test2' > ${PUEUE_EDIT_PATH}/0/command || ",
+    );
+    run_client_command_with_env(shared, &["edit", "--group", "test_2"], envs)?.success()?;
+
+    // Only task in test_2 should be edited.
+    let state = get_state(shared).await?;
+    let task0 = state.tasks.get(&0).unwrap();
+    let task1 = state.tasks.get(&1).unwrap();
+    assert_eq!(task0.command, "edited_test2");
+    assert_eq!(task1.command, "task_default"); // Unchanged
+
+    Ok(())
+}

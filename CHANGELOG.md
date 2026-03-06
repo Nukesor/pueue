@@ -4,6 +4,30 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## \[5.0.0\] - unreleased
+
+### Breaking Changes
+
+- **Removed** `--all-failed` and `--failed-in-group` options from `restart` command
+- **Replaced** with composable `--all`, `--group`, and `--failed` flags for better flexibility
+  - Use `restart --all --failed` instead of `restart --all-failed`
+  - Use `restart --group <name> --failed` instead of `restart --failed-in-group <name>`
+
+### Added
+
+- Add `--all` and `--group` options to `restart`, `remove`, and `edit` commands for flexible batch operations
+- The `--all` and `--group` options are mutually exclusive
+- For `restart`, the `--failed` option can be combined with either `--all` or `--group` to filter only failed tasks
+
+### Examples
+
+- `pueue restart --all` - restart all finished tasks
+- `pueue restart --group work` - restart all finished tasks in work group
+- `pueue restart --all --failed` - restart all failed tasks (replaces `--all-failed`)
+- `pueue restart --group work --failed` - restart failed tasks in work group (replaces `--failed-in-group`)
+- `pueue remove --group work` - remove all finished tasks in work group
+- `pueue edit --all` - edit all stashed/queued tasks
+
 ## \[4.0.5\] - unreleased
 
 ### Fix

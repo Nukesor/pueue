@@ -94,12 +94,22 @@ pub enum SubCommand {
         print_task_id: bool,
     },
     /// Remove tasks from the list.
-    /// Running or paused tasks need to be killed first.
+   /// Remove tasks from the queue.
+   /// Running or paused tasks cannot be removed!
+   ///
+   /// Also see `pueue clean` and `pueue reset` for other ways of removing tasks.
     #[command(alias("rm"))]
     Remove {
         /// The task ids to be removed.
-        #[arg(required = true)]
         task_ids: Vec<usize>,
+
+        /// Remove all finished tasks in a specific group.
+        #[arg(short, long, conflicts_with = "all")]
+        group: Option<String>,
+
+        /// Remove all finished tasks across all groups.
+        #[arg(short, long)]
+        all: bool,
     },
     /// Switches the queue position of two commands.
     ///
@@ -205,16 +215,17 @@ pub enum SubCommand {
         /// Restart these specific tasks.
         task_ids: Vec<usize>,
 
-        /// Restart all failed tasks across all groups.
-        ///
-        /// This is nice for usage in combination with `-i/--in-place` (or the respective config
-        /// option).
-        #[arg(short, long)]
-        all_failed: bool,
+        /// Restart all finished tasks across all groups. Can be combined with --failed.
+        #[arg(short, long, conflicts_with = "group")]
+        all: bool,
 
-        /// Like `--all-failed`, but only restart tasks failed tasks of a specific group.
-        #[arg(short = 'g', long, conflicts_with = "all_failed")]
-        failed_in_group: Option<String>,
+        /// Only restart failed tasks (excludes successful tasks).
+        #[arg(short = 'f', long)]
+        failed: bool,
+
+        /// Restart all finished tasks in a specific group. Can be combined with --failed.
+        #[arg(short, long, conflicts_with = "all")]
+        group: Option<String>,
 
         /// Immediately start the tasks, no matter how many open slots there are.
         /// This will ignore any dependencies tasks may have.
@@ -306,6 +317,14 @@ pub enum SubCommand {
     Edit {
         /// The ids of all tasks that should be edited.
         task_ids: Vec<usize>,
+
+        /// Edit all stashed or queued tasks in a specific group.
+        #[arg(short, long, conflicts_with = "all")]
+        group: Option<String>,
+
+        /// Edit all stashed or queued tasks across all groups.
+        #[arg(short, long)]
+        all: bool,
     },
 
     /// Use this to add or remove environment variables from tasks.

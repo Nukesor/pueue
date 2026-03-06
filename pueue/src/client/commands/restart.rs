@@ -5,8 +5,7 @@ use color_eyre::eyre::ContextCompat;
 use pueue_lib::{
     Client, Settings,
     message::*,
-    state::FilteredTasks,
-    task::{Task, TaskResult, TaskStatus},
+    task::{Task, TaskStatus},
 };
 
 use crate::{
@@ -18,14 +17,15 @@ use crate::{
 /// is create from the existing task in the state.
 ///
 /// This is done on the client-side, so we can easily edit the task before restarting it.
-/// It's also necessary to get all failed tasks, in case the user specified the `--all-failed` flag.
+/// It's also necessary to get all failed tasks, in case the user specified the `--failed` flag.
 #[allow(clippy::too_many_arguments)]
 pub async fn restart(
     client: &mut Client,
     settings: Settings,
     task_ids: Vec<usize>,
-    all_failed: bool,
-    failed_in_group: Option<String>,
+    all: bool,
+    failed: bool,
+    group: Option<String>,
     start_immediately: bool,
     stashed: bool,
     in_place: bool,
@@ -45,50 +45,26 @@ pub async fn restart(
 
     let state = get_state(client).await?;
 
-    // Filter to get done tasks
-    let done_filter = |task: &Task| task.is_done();
+    // Filter to get done tasks, and optionally only failed tasks
+    let done_or_failed_filter = |task: &Task| task.is_done() && (!failed || task.failed());
 
-    // If all failed tasks or all failed tasks from a specific group are requested,
-    // determine the ids of those failed tasks.
-    //
-    // Otherwise, use the provided ids and check which of them were "Done"
-    // (successful or failed tasks).
-    let filtered_tasks = if all_failed || failed_in_group.is_some() {
-        // Either all failed tasks or all failed tasks of a specific group need to be restarted.
-
-        // First we have to get all finished tasks (Done)
-        let filtered_tasks = if let Some(group) = failed_in_group {
-            state.filter_tasks_of_group(done_filter, &group)
+    // Determine which tasks to restart based on the combination of flags
+    let filtered_tasks = if all || group.is_some() {
+        // --all or --group is specified, get all finished tasks (and optionally only failed)
+        if let Some(group_name) = &group {
+            // --group: specific group's finished tasks
+            state.filter_tasks_of_group(done_or_failed_filter, group_name)
         } else {
-            state.filter_tasks(done_filter, None)
-        };
-
-        // Now pick the failed tasks
-        let failed = filtered_tasks
-            .matching_ids
-            .into_iter()
-            .filter(|task_id| {
-                let task = state.tasks.get(task_id).unwrap();
-                !matches!(
-                    task.status,
-                    TaskStatus::Done {
-                        result: TaskResult::Success,
-                        ..
-                    }
-                )
-            })
-            .collect();
-
-        // We return an empty vec for the mismatching tasks, since there shouldn't be any.
-        // Any User provided ids are ignored in this mode.
-        FilteredTasks {
-            matching_ids: failed,
-            ..Default::default()
+            // --all: all groups' finished tasks
+            state.filter_tasks(done_or_failed_filter, None)
         }
     } else if task_ids.is_empty() {
-        bail!("Please provide the ids of the tasks you want to restart.");
+        bail!(
+            "Please provide the ids of the tasks you want to restart, use --all, or use --group."
+        );
     } else {
-        state.filter_tasks(done_filter, Some(task_ids))
+        // Specific task_ids provided
+        state.filter_tasks(done_or_failed_filter, Some(task_ids))
     };
 
     // Build a RestartMessage, if the tasks should be replaced instead of creating a copy of the

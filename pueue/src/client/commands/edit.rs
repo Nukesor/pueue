@@ -6,10 +6,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use pueue_lib::{Client, error::Error, message::*, settings::Settings};
+use pueue_lib::{Client, error::Error, message::*, settings::Settings, task::Task};
 use tempfile::tempdir;
 
-use super::handle_response;
+use super::{get_state, handle_response};
 use crate::{
     client::style::OutputStyle, internal_prelude::*, process_helper::compile_shell_command,
 };
@@ -26,9 +26,34 @@ pub async fn edit(
     settings: Settings,
     style: &OutputStyle,
     task_ids: Vec<usize>,
+    group: Option<String>,
+    all: bool,
 ) -> Result<()> {
+    // If --all or --group is specified, get all stashed or queued tasks
+    let task_ids = if all || group.is_some() {
+        let state = get_state(client).await?;
+        let editable_filter = |task: &Task| task.is_stashed() || task.is_queued();
+
+        let filtered_tasks = if let Some(group_name) = group {
+            state.filter_tasks_of_group(editable_filter, &group_name)
+        } else {
+            state.filter_tasks(editable_filter, None)
+        };
+
+        if filtered_tasks.matching_ids.is_empty() {
+            println!("No stashed or queued tasks to edit.");
+            return Ok(());
+        }
+
+        filtered_tasks.matching_ids
+    } else if task_ids.is_empty() {
+        bail!("Please provide the ids of the tasks you want to edit, use --all, or use --group.");
+    } else {
+        task_ids
+    };
+
     // Request the data to edit from the server and issue a task-lock while doing so.
-    let init_message = Request::EditRequest(task_ids);
+    let init_message = Request::EditRequest(task_ids.clone());
     client.send_request(init_message).await?;
 
     let init_response = client.receive_response().await?;
