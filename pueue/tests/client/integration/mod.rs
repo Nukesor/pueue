@@ -5,6 +5,7 @@ mod env;
 mod follow;
 mod group;
 mod log;
+mod remove;
 mod restart;
 mod status;
 mod wait;

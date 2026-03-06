@@ -227,3 +227,116 @@ async fn restart_edit_with_alias() -> Result<()> {
 
     Ok(())
 }
+
+/// Test that restarting all finished tasks with --all works.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn restart_all() -> Result<()> {
+    let daemon = daemon().await?;
+    let shared = &daemon.settings.shared;
+
+    // Create two tasks and wait for them to finish.
+    assert_success(add_task(shared, "ls").await?);
+    assert_success(add_task(shared, "echo test").await?);
+    wait_for_task_condition(shared, 0, Task::is_done).await?;
+    wait_for_task_condition(shared, 1, Task::is_done).await?;
+
+    // Restart all finished tasks.
+    run_client_command(shared, &["restart", "--all"])?.success()?;
+
+    // Both tasks should be restarted (new task IDs 2 and 3).
+    let state = get_state(shared).await?;
+    assert_eq!(state.tasks.len(), 4, "Should have 4 tasks total");
+    assert!(state.tasks.contains_key(&2), "Task 2 should exist");
+    assert!(state.tasks.contains_key(&3), "Task 3 should exist");
+
+    Ok(())
+}
+
+/// Test that restarting all failed tasks with --all --failed works.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn restart_all_failed() -> Result<()> {
+    let daemon = daemon().await?;
+    let shared = &daemon.settings.shared;
+
+    // Create one successful and one failed task.
+    assert_success(add_task(shared, "ls").await?);
+    assert_success(add_task(shared, "false").await?);
+    wait_for_task_condition(shared, 0, Task::is_done).await?;
+    wait_for_task_condition(shared, 1, Task::is_done).await?;
+
+    // Restart only failed tasks.
+    run_client_command(shared, &["restart", "--all", "--failed"])?.success()?;
+
+    // Only the failed task should be restarted (new task ID 2).
+    let state = get_state(shared).await?;
+    assert_eq!(state.tasks.len(), 3, "Should have 3 tasks total");
+    assert!(state.tasks.contains_key(&2), "Task 2 should exist");
+
+    // Verify task 2 is a copy of the failed task 1.
+    let task = state.tasks.get(&2).unwrap();
+    assert_eq!(task.command, "false");
+
+    Ok(())
+}
+
+/// Test that restarting tasks in a specific group with --group works.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn restart_group() -> Result<()> {
+    let daemon = daemon().await?;
+    let shared = &daemon.settings.shared;
+
+    // Create tasks in different groups.
+    let mut message = create_add_message(shared, "ls");
+    message.group = "test_2".to_string();
+    assert_success(send_request(shared, message).await?);
+
+    assert_success(add_task(shared, "echo default").await?);
+
+    wait_for_task_condition(shared, 0, Task::is_done).await?;
+    wait_for_task_condition(shared, 1, Task::is_done).await?;
+
+    // Restart only tasks in test_2 group.
+    run_client_command(shared, &["restart", "--group", "test_2"])?.success()?;
+
+    // Only task from test_2 should be restarted (new task ID 2).
+    let state = get_state(shared).await?;
+    assert_eq!(state.tasks.len(), 3, "Should have 3 tasks total");
+
+    let task = state.tasks.get(&2).unwrap();
+    assert_eq!(task.command, "ls");
+    assert_eq!(task.group, "test_2");
+
+    Ok(())
+}
+
+/// Test that restarting failed tasks in a specific group with --group --failed works.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn restart_group_failed() -> Result<()> {
+    let daemon = daemon().await?;
+    let shared = &daemon.settings.shared;
+
+    // Create successful and failed tasks in test_2 group.
+    let mut message = create_add_message(shared, "ls");
+    message.group = "test_2".to_string();
+    assert_success(send_request(shared, message).await?);
+
+    let mut message = create_add_message(shared, "false");
+    message.group = "test_2".to_string();
+    assert_success(send_request(shared, message).await?);
+
+    wait_for_task_condition(shared, 0, Task::is_done).await?;
+    wait_for_task_condition(shared, 1, Task::is_done).await?;
+
+    // Restart only failed tasks in test_2 group.
+    run_client_command(shared, &["restart", "--group", "test_2", "--failed"])?.success()?;
+
+    // Only the failed task should be restarted (new task ID 2).
+    let state = get_state(shared).await?;
+    assert_eq!(state.tasks.len(), 3, "Should have 3 tasks total");
+
+    let task = state.tasks.get(&2).unwrap();
+    assert_eq!(task.command, "false");
+    assert_eq!(task.group, "test_2");
+
+    Ok(())
+}
