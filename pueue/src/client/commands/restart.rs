@@ -5,8 +5,7 @@ use color_eyre::eyre::ContextCompat;
 use pueue_lib::{
     Client, Settings,
     message::*,
-    state::FilteredTasks,
-    task::{Task, TaskResult, TaskStatus},
+    task::{Task, TaskStatus},
 };
 
 use crate::{
@@ -46,45 +45,18 @@ pub async fn restart(
 
     let state = get_state(client).await?;
 
-    // Filter to get done tasks
-    let done_filter = |task: &Task| task.is_done();
+    // Filter to get done tasks, and optionally only failed tasks
+    let done_or_failed_filter = |task: &Task| task.is_done() && (!failed || task.failed());
 
     // Determine which tasks to restart based on the combination of flags
     let filtered_tasks = if all || group.is_some() {
-        // --all or --group is specified, get all finished tasks
-        let filtered_tasks = if let Some(group_name) = &group {
+        // --all or --group is specified, get all finished tasks (and optionally only failed)
+        if let Some(group_name) = &group {
             // --group: specific group's finished tasks
-            state.filter_tasks_of_group(done_filter, group_name)
+            state.filter_tasks_of_group(done_or_failed_filter, group_name)
         } else {
             // --all: all groups' finished tasks
-            state.filter_tasks(done_filter, None)
-        };
-
-        // Apply --failed filter if specified
-        let filtered = if failed {
-            // --failed: only failed tasks
-            filtered_tasks
-                .matching_ids
-                .into_iter()
-                .filter(|task_id| {
-                    let task = state.tasks.get(task_id).unwrap();
-                    !matches!(
-                        task.status,
-                        TaskStatus::Done {
-                            result: TaskResult::Success,
-                            ..
-                        }
-                    )
-                })
-                .collect()
-        } else {
-            // No --failed: all finished tasks
-            filtered_tasks.matching_ids
-        };
-
-        FilteredTasks {
-            matching_ids: filtered,
-            ..Default::default()
+            state.filter_tasks(done_or_failed_filter, None)
         }
     } else if task_ids.is_empty() {
         bail!(
@@ -92,7 +64,7 @@ pub async fn restart(
         );
     } else {
         // Specific task_ids provided
-        state.filter_tasks(done_filter, Some(task_ids))
+        state.filter_tasks(done_or_failed_filter, Some(task_ids))
     };
 
     // Build a RestartMessage, if the tasks should be replaced instead of creating a copy of the
