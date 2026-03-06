@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## \[4.0.5\] - unreleased
 
+### Added
+
+- Add `--all` and `--group` options to `restart`, `remove`, and `edit` commands for flexible batch operations. The `--all` and `--group` options are mutually exclusive. For `restart`, the `--failed` option can be combined with either `--all` or `--group` to filter only failed tasks.
+
 ### Fix
 
 ## \[4.0.4\] - 2026-03-02
