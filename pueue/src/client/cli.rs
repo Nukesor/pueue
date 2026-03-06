@@ -94,7 +94,10 @@ pub enum SubCommand {
         print_task_id: bool,
     },
     /// Remove tasks from the list.
-    /// Running or paused tasks need to be killed first.
+   /// Remove tasks from the queue.
+   /// Running or paused tasks cannot be removed!
+   ///
+   /// Also see `pueue clean` and `pueue reset` for other ways of removing tasks.
     #[command(alias("rm"))]
     Remove {
         /// The task ids to be removed.
