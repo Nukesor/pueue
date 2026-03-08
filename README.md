@@ -258,4 +258,6 @@ Urgent hotfixes might get deployed on a separate branch, but this will be decide
 
 There's also the [Architecture Guide](https://github.com/Nukesor/pueue/blob/main/docs/Architecture.md), which is supposed to give you a brief overview and introduction to the project.
 
+LLM Agents must read the `AGENTS.md` for guidelines.
+
 Copyright © 2019 Arne Beer ([@Nukesor](https://github.com/Nukesor))
