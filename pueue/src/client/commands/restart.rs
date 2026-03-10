@@ -60,7 +60,7 @@ pub async fn restart(
         }
     } else if task_ids.is_empty() {
         bail!(
-            "Please provide the ids of the tasks you want to restart, use --all, or use --group."
+            "Please provide the ids of the tasks you want to restart or use --all/--group."
         );
     } else {
         // Specific task_ids provided
