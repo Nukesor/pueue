@@ -25,9 +25,9 @@ name = "save_state"
 [dependencies]
 async-trait.workspace = true
 chrono.workspace = true
-clap = { version = "4.5", features = ["cargo", "derive", "help", "wrap_help"] }
-clap_complete = "4.5"
-clap_complete_nushell = "4.5.10"
+clap = { version = "4.6", features = ["cargo", "derive", "help", "wrap_help"] }
+clap_complete = "4.6"
+clap_complete_nushell = "4.6.0"
 color-eyre.workspace = true
 comfy-table = "7"
 ctrlc = { version = "3", features = ["termination"] }
@@ -49,7 +49,7 @@ strum.workspace = true
 tempfile = "3"
 tokio.workspace = true
 tokio-rustls.workspace = true
-toml = "1.0"
+toml = "1.1"
 tracing.workspace = true
 tracing-error.workspace = true
 tracing-subscriber.workspace = true
@@ -62,7 +62,7 @@ ciborium = { workspace = true }
 criterion = "0.8"
 pretty_assertions.workspace = true
 rstest = "0.26"
-similar-asserts = "1"
+similar-asserts = "2"
 
 # --- Platform specific dependencies ---
 
