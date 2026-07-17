@@ -80,7 +80,6 @@ mod tests {
     use color_eyre::Result;
     use libproc::processes::{ProcFilter, pids_by_type};
     use pretty_assertions::assert_eq;
-    use process_wrap::std::*;
 
     use super::*;
     use crate::process_helper::{compile_shell_command, process_exists};

@@ -125,7 +125,7 @@ fn handle_group_resets(_settings: &Settings, state: &mut LockedState) {
 /// Gather all stashed tasks and enqueue them if it is after the task's enqueue_at
 fn enqueue_delayed_tasks(settings: &Settings, state: &mut LockedState) {
     let mut changed = false;
-    for (_, task) in state.tasks_mut().iter_mut() {
+    for task in state.tasks_mut().values_mut() {
         if let TaskStatus::Stashed {
             enqueue_at: Some(time),
         } = task.status
