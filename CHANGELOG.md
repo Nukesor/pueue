@@ -6,7 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## \[4.0.5\] - unreleased
 
-### Fix
+### Maintenance
+
+- Fix some minor stylistic issues identified by `cargo clippy`
 
 ## \[4.0.4\] - 2026-03-02
 
