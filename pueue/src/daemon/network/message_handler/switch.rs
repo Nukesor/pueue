@@ -40,7 +40,7 @@ pub fn switch(settings: &Settings, state: &SharedState, message: SwitchRequest) 
     state.tasks_mut().insert(first_task.id, first_task);
     state.tasks_mut().insert(second_task.id, second_task);
 
-    for (_, task) in state.tasks_mut().iter_mut() {
+    for task in state.tasks_mut().values_mut() {
         // If the task depends on both, we can just keep it as it is.
         if task.dependencies.contains(&first_id) && task.dependencies.contains(&second_id) {
             continue;

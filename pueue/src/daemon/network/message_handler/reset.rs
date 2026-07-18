@@ -11,7 +11,7 @@ pub fn reset(settings: &Settings, state: &SharedState, message: ResetRequest) ->
     match message.target {
         ResetTarget::All => {
             // Mark all groups to be reset and kill all tasks
-            for (_name, group) in state.groups_mut().iter_mut() {
+            for group in state.groups_mut().values_mut() {
                 group.status = GroupStatus::Reset;
             }
             process_handler::kill::kill(settings, &mut state, TaskSelection::All, false, None);

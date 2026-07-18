@@ -154,7 +154,7 @@ impl InternalState {
 
     /// Set the group status (running/paused) for all groups including the default queue.
     pub fn set_status_for_all_groups(&mut self, status: GroupStatus) {
-        for (_, group) in self.groups_mut().iter_mut() {
+        for group in self.groups_mut().values_mut() {
             group.status = status;
         }
     }
@@ -323,7 +323,7 @@ impl InternalState {
 
         // Restore all tasks.
         // While restoring the tasks, check for any invalid/broken stati.
-        for (_, task) in state.inner.tasks.iter_mut() {
+        for task in state.inner.tasks.values_mut() {
             // Handle ungraceful shutdowns while executing tasks.
             if let TaskStatus::Running { start, enqueued_at }
             | TaskStatus::Paused { start, enqueued_at } = task.status

@@ -74,7 +74,7 @@ pub async fn get_listener(settings: &Shared) -> Result<GenericListener, Error> {
     }
 
     // This is the listener, which accepts low-level TCP connections
-    let address = format!("{}:{}", &settings.host, &settings.port);
+    let address = format!("{}:{}", settings.host, settings.port);
     info!("Binding to address: {address}");
     let tcp_listener = TcpListener::bind(&address)
         .await
