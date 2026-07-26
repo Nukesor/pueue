@@ -1,10 +1,11 @@
 ┌───────────────────────────────────┐
 │[1m Task 0:  [0m [38;5;10m completed successfully [39m│
 └───────────────────────────────────┘
-Command: echo test
-   Path: {{ cwd }}
-  Start: {{ task_0_start_long }}
-    End: {{ task_0_end_long }}
+ Command: echo test
+    Path: {{ cwd }}
+   Start: {{ task_0_start_long }}
+     End: {{ task_0_end_long }}
+Duration: {{ task_0_duration }}
 
 [38;5;10m[1moutput:[0m
 test

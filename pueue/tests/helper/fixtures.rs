@@ -168,12 +168,11 @@ pub fn daemon_base_setup() -> Result<(Settings, TempDir)> {
         ..Default::default()
     };
 
-    let client = Client {
-        max_status_lines: Some(15),
-        status_datetime_format: "%Y-%m-%d %H:%M:%S".into(),
-        edit_mode: EditMode::Files,
-        ..Default::default()
-    };
+    let client = Client::new().with_edit_mode(EditMode::Files).with_status(
+        Status::new()
+            .with_max_lines(Some(Some(15)))
+            .with_datetime_format(Some("%Y-%m-%d %H:%M:%S".into())),
+    );
 
     #[allow(deprecated)]
     let daemon = Daemon {

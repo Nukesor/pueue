@@ -334,9 +334,12 @@ impl InternalState {
                     task.status,
                     TaskResult::Killed
                 );
+                let end = Local::now();
+                let duration = end - start;
                 task.status = TaskStatus::Done {
                     start,
-                    end: Local::now(),
+                    end,
+                    duration,
                     enqueued_at,
                     result: TaskResult::Killed,
                 };

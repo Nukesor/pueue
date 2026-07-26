@@ -2,6 +2,7 @@ use std::{collections::HashMap, fs::read_to_string, path::PathBuf, process::Outp
 
 use chrono::Local;
 use handlebars::Handlebars;
+use pueue::format::humanize_duration;
 use pueue_lib::{settings::*, task::TaskStatus};
 
 use crate::{helper::get_state, internal_prelude::*};
@@ -26,14 +27,14 @@ pub async fn get_task_context(settings: &Settings) -> Result<HashMap<String, Str
     for (id, task) in state.tasks {
         let task_name = format!("task_{id}");
 
-        let (start, end) = task.start_and_end();
+        let (start, end, duration) = task.start_end_duration();
 
         if let Some(start) = start {
             // Use datetime format for datetimes that aren't today.
             let format = if start.date_naive() == Local::now().date_naive() {
-                &settings.client.status_time_format
+                &settings.client.get_status_time_format()
             } else {
-                &settings.client.status_datetime_format
+                &settings.client.get_status_datetime_format()
             };
 
             let formatted = start.format(format).to_string();
@@ -43,14 +44,17 @@ pub async fn get_task_context(settings: &Settings) -> Result<HashMap<String, Str
         if let Some(end) = end {
             // Use datetime format for datetimes that aren't today.
             let format = if end.date_naive() == Local::now().date_naive() {
-                &settings.client.status_time_format
+                &settings.client.get_status_time_format()
             } else {
-                &settings.client.status_datetime_format
+                &settings.client.get_status_datetime_format()
             };
 
             let formatted = end.format(format).to_string();
             context.insert(format!("{task_name}_end"), formatted);
             context.insert(format!("{task_name}_end_long"), end.to_rfc2822());
+        }
+        if let Some(duration) = duration {
+            context.insert(format!("{task_name}_duration"), humanize_duration(duration));
         }
         if let Some(label) = &task.label {
             context.insert(format!("{task_name}_label"), label.to_string());
@@ -62,9 +66,9 @@ pub async fn get_task_context(settings: &Settings) -> Result<HashMap<String, Str
         {
             // Use datetime format for datetimes that aren't today.
             let format = if enqueue_at.date_naive() == Local::now().date_naive() {
-                &settings.client.status_time_format
+                &settings.client.get_status_time_format()
             } else {
-                &settings.client.status_datetime_format
+                &settings.client.get_status_datetime_format()
             };
 
             let enqueue_at = enqueue_at.format(format);
