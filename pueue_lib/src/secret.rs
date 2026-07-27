@@ -1,5 +1,9 @@
 //! Functions to write and read the secret to/from a file.
-use std::{fs::File, io::prelude::*, path::Path};
+use std::{
+    fs::{File, OpenOptions},
+    io::prelude::*,
+    path::Path,
+};
 
 use rand::{RngExt, distr::Alphanumeric};
 
@@ -36,26 +40,20 @@ pub fn init_shared_secret(path: &Path) -> Result<(), Error> {
         .take(PASSWORD_LEN)
         .collect();
 
-    let mut file = File::create(path)
+    let mut options = OpenOptions::new();
+    options.write(true).create_new(true);
+
+    #[cfg(not(target_os = "windows"))]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.mode(0o640);
+    }
+
+    let mut file = options
+        .open(path)
         .map_err(|err| Error::IoPathError(path.to_path_buf(), "creating shared secret", err))?;
     file.write_all(&secret.into_bytes())
         .map_err(|err| Error::IoPathError(path.to_path_buf(), "writing shared secret", err))?;
-
-    // Set proper file permissions for unix filesystems
-    #[cfg(not(target_os = "windows"))]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        let mut permissions = file
-            .metadata()
-            .map_err(|err| {
-                Error::IoPathError(path.to_path_buf(), "reading secret file metadata", err)
-            })?
-            .permissions();
-        permissions.set_mode(0o640);
-        std::fs::set_permissions(path, permissions).map_err(|err| {
-            Error::IoPathError(path.to_path_buf(), "setting secret file permissions", err)
-        })?;
-    }
 
     Ok(())
 }
