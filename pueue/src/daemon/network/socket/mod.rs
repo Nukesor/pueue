@@ -86,8 +86,9 @@ pub async fn handle_incoming(
 
     // Return if we got a wrong secret from the client.
     if payload_bytes != secret {
-        let received_secret = String::from_utf8(payload_bytes)?;
-        warn!("Received invalid secret: {received_secret}");
+        // Don't log the payload itself. Anyone can reach this without authenticating, so echoing
+        // it would let them write up to 4MB of arbitrary bytes into our log per connection.
+        warn!("Received invalid secret of {} bytes.", payload_bytes.len());
 
         // Wait for 1 second before closing the socket, when getting a invalid secret.
         // This invalidates any timing attacks.
