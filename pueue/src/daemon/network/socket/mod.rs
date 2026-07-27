@@ -32,8 +32,8 @@ pub async fn accept_incoming(settings: Settings, state: SharedState) -> Result<(
 
     loop {
         // Poll incoming connections.
-        let stream = match listener.accept().await {
-            Ok(stream) => stream,
+        let pending_stream = match listener.accept().await {
+            Ok(pending_stream) => pending_stream,
             Err(err) => {
                 warn!("Failed connecting to client: {err:?}");
                 continue;
@@ -45,6 +45,16 @@ pub async fn accept_incoming(settings: Settings, state: SharedState) -> Result<(
         let secret_clone = secret.clone();
         let settings_clone = settings.clone();
         tokio::spawn(async move {
+            // Finish establishing the connection in here rather than in the loop above, so a peer
+            // that stalls during the TLS handshake only holds up itself. See [Listener::accept].
+            let stream = match pending_stream.await {
+                Ok(stream) => stream,
+                Err(err) => {
+                    warn!("Failed to establish connection: {err:?}");
+                    return;
+                }
+            };
+
             let _result = handle_incoming(stream, state_clone, settings_clone, secret_clone).await;
         });
     }

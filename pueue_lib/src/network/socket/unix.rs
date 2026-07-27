@@ -4,17 +4,22 @@ use async_trait::async_trait;
 use rustls::pki_types::ServerName;
 use tokio::net::{TcpStream, UnixListener, UnixStream};
 
-use super::{ConnectionSettings, GenericStream, Listener, Stream, get_tls_connector};
+use super::{
+    ConnectionSettings, GenericStream, Listener, PendingStream, Stream, get_tls_connector,
+};
 use crate::error::Error;
 
 #[async_trait]
 impl Listener for UnixListener {
-    async fn accept<'a>(&'a self) -> Result<GenericStream, Error> {
+    async fn accept<'a>(&'a self) -> Result<PendingStream, Error> {
         let (stream, _) = self
             .accept()
             .await
             .map_err(|err| Error::IoError("accepting new unix connection.".to_string(), err))?;
-        Ok(Box::new(stream))
+
+        Ok(Box::pin(
+            async move { Ok(Box::new(stream) as GenericStream) },
+        ))
     }
 }
 

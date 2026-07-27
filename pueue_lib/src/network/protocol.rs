@@ -221,9 +221,11 @@ mod test {
     // Implement generic Listener/Stream traits, so we can test stuff on normal TCP
     #[async_trait]
     impl Listener for TcpListener {
-        async fn accept<'a>(&'a self) -> Result<GenericStream, Error> {
+        async fn accept<'a>(&'a self) -> Result<PendingStream, Error> {
             let (stream, _) = self.accept().await?;
-            Ok(Box::new(stream))
+            Ok(Box::pin(
+                async move { Ok(Box::new(stream) as GenericStream) },
+            ))
         }
     }
     impl PueueStream for TcpStream {}
@@ -250,7 +252,7 @@ mod test {
         // 2. Reads a message
         // 3. Sends the same message back
         task::spawn(async move {
-            let mut stream = listener.accept().await.unwrap();
+            let mut stream = listener.accept().await.unwrap().await.unwrap();
             let message_bytes = receive_bytes(&mut stream).await.unwrap();
 
             let message: Request = from_reader(message_bytes.as_slice()).unwrap();
@@ -285,7 +287,7 @@ mod test {
         // 1. Accepts a new connection.
         // 2. Immediately sends two messages in quick succession.
         task::spawn(async move {
-            let mut stream = listener.accept().await.unwrap();
+            let mut stream = listener.accept().await.unwrap().await.unwrap();
 
             send_request(Request::Status, &mut stream).await.unwrap();
             send_request(Request::Remove(vec![0, 2, 3]), &mut stream)
@@ -324,7 +326,7 @@ mod test {
         // 1. Accepts a new connection.
         // 2. Sends a malformed payload.
         task::spawn(async move {
-            let mut stream = listener.accept().await.unwrap();
+            let mut stream = listener.accept().await.unwrap().await.unwrap();
 
             // Send a payload of 9 bytes to the daemon receiver.
             // The first 8 bytes determine the payload size in BigEndian.
