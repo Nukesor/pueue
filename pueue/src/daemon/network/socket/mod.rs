@@ -4,12 +4,12 @@
 //! each supported platform.
 //! Depending on the target, the respective platform is read and loaded into this scope.
 
-use std::time::{Duration, SystemTime};
+use std::time::Duration;
 
 use pueue_lib::{
     Error, PROTOCOL_VERSION, Settings, message::*, network::protocol::*, secret::read_shared_secret,
 };
-use tokio::time::sleep;
+use tokio::time::{Instant, sleep_until};
 
 use crate::{
     daemon::{internal_state::SharedState, network::message_handler::handle_request},
@@ -82,7 +82,7 @@ pub async fn handle_incoming(
         return Ok(());
     }
 
-    let start = SystemTime::now();
+    let start = Instant::now();
 
     // Return if we got a wrong secret from the client.
     if payload_bytes != secret {
@@ -90,13 +90,9 @@ pub async fn handle_incoming(
         // it would let them write up to 4MB of arbitrary bytes into our log per connection.
         warn!("Received invalid secret of {} bytes.", payload_bytes.len());
 
-        // Wait for 1 second before closing the socket, when getting a invalid secret.
-        // This invalidates any timing attacks.
-        let remaining_sleep_time = Duration::from_secs(1)
-            - SystemTime::now()
-                .duration_since(start)
-                .context("Couldn't calculate duration. Did the system time change?")?;
-        sleep(remaining_sleep_time).await;
+        // Always take the same amount of time before closing the socket on a wrong secret, so the
+        // comparison above can't that be timed.
+        sleep_until(start + Duration::from_secs(1)).await;
         bail!("Received invalid secret");
     }
 
