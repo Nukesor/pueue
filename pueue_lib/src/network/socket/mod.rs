@@ -4,9 +4,10 @@
 //! each supported platform.
 //! Depending on the target, the respective platform is read and loaded into this scope.
 
+use std::future::Future;
 #[cfg(not(target_os = "windows"))]
 use std::path::PathBuf;
-use std::sync::Arc;
+use std::{pin::Pin, sync::Arc};
 
 use async_trait::async_trait;
 use rustls::{ClientConfig, RootCertStore, pki_types::CertificateDer};
@@ -26,11 +27,22 @@ use crate::{settings::Shared, tls::load_certificate};
 mod platform;
 pub use platform::*;
 
+/// The work that's still left before an accepted connection can be used.
+///
+/// For a unix socket there's nothing to do, for a TCP socket this is the TLS handshake.
+pub type PendingStream = Pin<Box<dyn Future<Output = Result<GenericStream, Error>> + Send>>;
+
 /// A new trait, which can be used to represent Unix- and TcpListeners. \
 /// This is necessary to easily write generic functions where both types can be used.
 #[async_trait]
 pub trait Listener: Sync + Send {
-    async fn accept<'a>(&'a self) -> Result<GenericStream, Error>;
+    /// Accept a new connection.
+    ///
+    /// This only does the cheap part of accepting. Everything that talks to the peer is deferred
+    /// into the returned [PendingStream], which the caller is expected to await in its own task.
+    /// Doing it in here would mean a peer that connects and then goes silent blocks the accept
+    /// loop, and with it every other client.
+    async fn accept<'a>(&'a self) -> Result<PendingStream, Error>;
 }
 
 /// Convenience type, so we don't have type write `Box<dyn Listener>` all the time.

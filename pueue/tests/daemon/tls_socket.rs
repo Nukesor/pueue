@@ -27,7 +27,7 @@ async fn test_tls_socket() -> Result<()> {
     // 2. Reads a message
     // 3. Sends the same message back
     task::spawn(async move {
-        let mut stream = listener.accept().await.unwrap();
+        let mut stream = listener.accept().await.unwrap().await.unwrap();
         let message_bytes = receive_bytes(&mut stream).await.unwrap();
 
         let message: Request = from_reader(message_bytes.as_slice()).unwrap();

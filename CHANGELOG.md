@@ -1,4 +1,4 @@
-Changelog
+# Changelog
 
 All notable changes to this project will be documented in this file.
 
@@ -7,6 +7,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## \[4.0.5\] - unreleased
 
 ### Fix
+
+- Minor bug where the daemon secret and certificate were world readable for a split second during first startup and initialization.
+- Don't log invalid authentication secrets
+- Fix a panic that could happen when an incoming connection was accepted when system time changed.
+- Fix possible DOS attack vector on incomplete TLS handshakes.
+  Clients were only attackable if they ran Pueue in TLS mode on a public IP. Default is localhost and unix sockets.
 
 ## \[4.0.4\] - 2026-03-02
 
