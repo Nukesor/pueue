@@ -95,7 +95,7 @@ pub fn stash(settings: &Settings, state: &SharedState, message: StashRequest) ->
                 &state,
             ),
             TaskSelection::Group(group) => {
-                success_msg!("All queued tasks of group \"{group}\" have been stashd.")
+                success_msg!("All queued tasks of group \"{group}\" have been stashed.")
             }
             TaskSelection::All => {
                 success_msg!("All queued tasks have been stashed.")
