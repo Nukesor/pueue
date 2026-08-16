@@ -84,7 +84,7 @@ pub fn stash(settings: &Settings, state: &SharedState, message: StashRequest) ->
     } else {
         match &message.tasks {
             TaskSelection::TaskIds(task_ids) => task_action_response_helper(
-                "Stashed tasks have been enqueued",
+                "Enqueued tasks have been stashed",
                 task_ids.clone(),
                 |task| {
                     matches!(
