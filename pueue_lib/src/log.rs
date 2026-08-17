@@ -61,16 +61,21 @@ pub fn clean_log_handles(task_id: usize, pueue_dir: &Path) {
 
 /// Return the output of a task. \
 /// Task output is compressed using [snap] to save some memory and bandwidth.
-/// Return type is `(Vec<u8>, bool)`
+/// Return type is `(Vec<u8>, bool, u64)`
 /// - `Vec<u8>` the compressed task output.
 /// - `bool` Whether the full task's output has been read. `false` indicate that the log output has
 ///   been truncated.
+/// - `u64` the full size of the task output in bytes.
 pub fn read_and_compress_log_file(
     task_id: usize,
     pueue_dir: &Path,
     lines: Option<usize>,
-) -> Result<(Vec<u8>, bool), Error> {
+) -> Result<(Vec<u8>, bool, u64), Error> {
     let mut file = get_log_file_handle(task_id, pueue_dir)?;
+    let full_output_bytes = file
+        .metadata()
+        .map_err(|err| Error::IoError("getting log file metadata".to_string(), err))?
+        .len();
 
     let mut content = Vec::new();
 
@@ -91,7 +96,7 @@ pub fn read_and_compress_log_file(
             .map_err(|err| Error::IoError("compressing log output".to_string(), err))?;
     }
 
-    Ok((content, output_complete))
+    Ok((content, output_complete, full_output_bytes))
 }
 
 /// Return the last lines of of a task's output. \

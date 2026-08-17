@@ -92,6 +92,9 @@ impl_into_response!(AddedTaskResponse, Response::AddedTask);
 #[derive(PartialEq, Eq, Clone, Deserialize, Serialize)]
 pub struct TaskLogResponse {
     pub task: Task,
+    /// The full size of the task's log file in bytes.
+    #[serde(default)]
+    pub full_output_bytes: u64,
     /// Indicates whether the log output has been truncated or not.
     pub output_complete: bool,
     pub output: Option<Vec<u8>>,
@@ -104,9 +107,86 @@ impl std::fmt::Debug for TaskLogResponse {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("TaskLogResponse")
             .field("task", &self.task)
+            .field("full_output_bytes", &self.full_output_bytes)
             .field("output_complete", &self.output_complete)
             .field("output", &"hidden")
             .finish()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{collections::BTreeMap, path::PathBuf};
+
+    use chrono::Local;
+    use ciborium::{Value, from_reader, into_writer};
+
+    use super::*;
+    use crate::task::TaskResult;
+
+    fn remove_full_output_bytes(value: &mut Value) {
+        match value {
+            Value::Map(entries) => {
+                entries.retain(
+                    |(key, _)| !matches!(key, Value::Text(key) if key == "full_output_bytes"),
+                );
+                for (_, value) in entries {
+                    remove_full_output_bytes(value);
+                }
+            }
+            Value::Array(values) => {
+                for value in values {
+                    remove_full_output_bytes(value);
+                }
+            }
+            Value::Tag(_, value) => remove_full_output_bytes(value),
+            _ => {}
+        }
+    }
+
+    #[test]
+    fn deserialize_task_log_response_without_full_output_bytes() -> color_eyre::Result<()> {
+        let now = Local::now();
+        let task = Task::new(
+            "echo test".to_string(),
+            PathBuf::from("/tmp"),
+            Default::default(),
+            "default".to_string(),
+            crate::task::TaskStatus::Done {
+                enqueued_at: now,
+                start: now,
+                end: now,
+                result: TaskResult::Success,
+            },
+            Vec::new(),
+            0,
+            None,
+        );
+        let response = Response::Log(BTreeMap::from([(
+            0,
+            TaskLogResponse {
+                task,
+                full_output_bytes: 123,
+                output_complete: true,
+                output: Some(vec![1, 2, 3]),
+            },
+        )]));
+
+        let mut bytes = Vec::new();
+        into_writer(&response, &mut bytes)?;
+        let mut legacy_payload: Value = from_reader(bytes.as_slice())?;
+        remove_full_output_bytes(&mut legacy_payload);
+
+        let mut legacy_bytes = Vec::new();
+        into_writer(&legacy_payload, &mut legacy_bytes)?;
+        let response: Response = from_reader(legacy_bytes.as_slice())?;
+
+        let Response::Log(logs) = response else {
+            panic!("Expected a log response");
+        };
+        assert_eq!(logs.get(&0).unwrap().full_output_bytes, 0);
+
+        Ok(())
     }
 }
 

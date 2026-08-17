@@ -64,9 +64,12 @@ async fn test_full_log() -> Result<()> {
 
     // Request all log lines
     let output = get_task_log(shared, 0, None).await?;
+    let full_output_bytes =
+        std::fs::metadata(shared.pueue_directory().join("task_logs/0.log"))?.len();
 
     // Make sure it's the same
     assert_eq!(output, expected_output);
+    assert_eq!(full_output_bytes, expected_output.len() as u64);
 
     Ok(())
 }
@@ -90,7 +93,7 @@ async fn test_partial_log() -> Result<()> {
 
     // Debug output to see what the file actually looks like:
     let real_log_path = shared.pueue_directory().join("task_logs").join("0.log");
-    let content = read_to_string(real_log_path).context("Failed to read actual file")?;
+    let content = read_to_string(&real_log_path).context("Failed to read actual file")?;
     println!("Actual log file contents: \n{content}");
 
     // Request a partial log for task 0
@@ -107,6 +110,7 @@ async fn test_partial_log() -> Result<()> {
 
     // Get the received output
     let logs = logs.get(&0).unwrap();
+    let full_output_bytes = std::fs::metadata(&real_log_path)?.len();
     let output = logs
         .output
         .clone()
@@ -115,6 +119,8 @@ async fn test_partial_log() -> Result<()> {
 
     // Make sure it's the same
     assert_eq!(output, expected_output);
+    assert!(!logs.output_complete);
+    assert_eq!(logs.full_output_bytes, full_output_bytes);
 
     Ok(())
 }

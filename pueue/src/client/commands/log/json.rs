@@ -16,6 +16,7 @@ use snap::read::FrameDecoder;
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct TaskLog {
     pub task: Task,
+    pub full_output_bytes: u64,
     pub output: String,
 }
 
@@ -30,52 +31,74 @@ pub fn print_log_json(
     lines: Option<usize>,
 ) {
     let mut tasks: BTreeMap<usize, Task> = BTreeMap::new();
-    let mut task_log: BTreeMap<usize, String> = BTreeMap::new();
+    let mut task_log: BTreeMap<usize, (String, u64)> = BTreeMap::new();
     for (id, message) in task_log_messages {
         tasks.insert(id, message.task);
 
         if settings.client.read_local_logs {
-            let output = get_local_log(settings, id, lines);
-            task_log.insert(id, output);
+            let (output, full_output_bytes) = get_local_log(settings, id, lines);
+            task_log.insert(id, (output, full_output_bytes));
         } else {
             let output = get_remote_log(message.output);
-            task_log.insert(id, output);
+            task_log.insert(id, (output, message.full_output_bytes));
         }
     }
 
     // Now assemble the final struct that will be returned
     let mut json = BTreeMap::new();
     for (id, mut task) in tasks {
-        let (id, output) = task_log.remove_entry(&id).unwrap();
+        let (id, (output, full_output_bytes)) = task_log.remove_entry(&id).unwrap();
 
         task.envs = HashMap::new();
-        json.insert(id, TaskLog { task, output });
+        json.insert(
+            id,
+            TaskLog {
+                task,
+                full_output_bytes,
+                output,
+            },
+        );
     }
 
     println!("{}", serde_json::to_string(&json).unwrap());
 }
 
 /// Read logs directly from local files for a specific task.
-fn get_local_log(settings: &Settings, id: usize, lines: Option<usize>) -> String {
+fn get_local_log(settings: &Settings, id: usize, lines: Option<usize>) -> (String, u64) {
     let mut file = match get_log_file_handle(id, &settings.shared.pueue_directory()) {
         Ok(file) => file,
         Err(err) => {
-            return format!("(Pueue error) Failed to get log file handle: {err}");
+            return (
+                format!("(Pueue error) Failed to get log file handle: {err}"),
+                0,
+            );
+        }
+    };
+    let full_output_bytes = match file.metadata() {
+        Ok(metadata) => metadata.len(),
+        Err(error) => {
+            return (
+                format!("(Pueue error) Failed to get local log metadata: {error:?}"),
+                0,
+            );
         }
     };
 
     // Only return the last few lines.
     if let Some(lines) = lines {
-        return read_last_lines(&mut file, lines);
+        return (read_last_lines(&mut file, lines), full_output_bytes);
     }
 
     // Read the whole local log output.
     let mut output = String::new();
     if let Err(error) = file.read_to_string(&mut output) {
-        return format!("(Pueue error) Failed to read local log output file: {error:?}");
+        return (
+            format!("(Pueue error) Failed to read local log output file: {error:?}"),
+            full_output_bytes,
+        );
     };
 
-    output
+    (output, full_output_bytes)
 }
 
 /// Read logs from from compressed remote logs.
