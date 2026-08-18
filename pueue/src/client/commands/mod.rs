@@ -241,6 +241,7 @@ pub async fn handle_command(
         SubCommand::Reset { force, groups } => reset(client, style, force, groups).await,
         SubCommand::Restart {
             task_ids,
+            all,
             all_failed,
             failed_in_group,
             start_immediately,
@@ -253,6 +254,7 @@ pub async fn handle_command(
                 client,
                 settings,
                 task_ids,
+                all,
                 all_failed,
                 failed_in_group,
                 start_immediately,
