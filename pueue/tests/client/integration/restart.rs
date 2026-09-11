@@ -144,6 +144,44 @@ async fn restart_and_edit_task_priority() -> Result<()> {
     Ok(())
 }
 
+/// Test that `restart --all` restarts every finished task, including successful ones,
+/// across all groups without requiring explicit task ids.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn restart_all() -> Result<()> {
+    let daemon = daemon().await?;
+    let shared = &daemon.settings.shared;
+
+    // Add two tasks that finish successfully.
+    assert_success(add_task(shared, "ls").await?);
+    assert_success(add_task(shared, "ls").await?);
+    wait_for_task_condition(shared, 0, Task::is_done).await?;
+    wait_for_task_condition(shared, 1, Task::is_done).await?;
+
+    // Restart all finished tasks, but keep the copies stashed so they don't run again.
+    run_client_command(shared, &["restart", "--all", "--stashed"])?.success()?;
+
+    // A fresh, stashed copy should have been created for each of the two finished tasks.
+    let state = get_state(shared).await?;
+    assert_eq!(
+        state.tasks.len(),
+        4,
+        "A new task should have been created for each restarted task"
+    );
+    for id in [2, 3] {
+        let task = state
+            .tasks
+            .get(&id)
+            .context("Expected restarted task to exist")?;
+        assert_matches!(
+            task.status,
+            TaskStatus::Stashed { .. },
+            "Restarted task should be stashed"
+        );
+    }
+
+    Ok(())
+}
+
 /// Test that restarting a task **not** in place works as expected.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn normal_restart_with_edit() -> Result<()> {

@@ -24,6 +24,7 @@ pub async fn restart(
     client: &mut Client,
     settings: Settings,
     task_ids: Vec<usize>,
+    all: bool,
     all_failed: bool,
     failed_in_group: Option<String>,
     start_immediately: bool,
@@ -53,7 +54,10 @@ pub async fn restart(
     //
     // Otherwise, use the provided ids and check which of them were "Done"
     // (successful or failed tasks).
-    let filtered_tasks = if all_failed || failed_in_group.is_some() {
+    let filtered_tasks = if all {
+        // Restart all finished tasks (both successful and failed) across all groups.
+        state.filter_tasks(done_filter, None)
+    } else if all_failed || failed_in_group.is_some() {
         // Either all failed tasks or all failed tasks of a specific group need to be restarted.
 
         // First we have to get all finished tasks (Done)

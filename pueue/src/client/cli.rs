@@ -205,6 +205,10 @@ pub enum SubCommand {
         /// Restart these specific tasks.
         task_ids: Vec<usize>,
 
+        /// Restart all finished tasks (both successful and failed) across all groups.
+        #[arg(long, conflicts_with_all = ["all_failed", "failed_in_group"])]
+        all: bool,
+
         /// Restart all failed tasks across all groups.
         ///
         /// This is nice for usage in combination with `-i/--in-place` (or the respective config

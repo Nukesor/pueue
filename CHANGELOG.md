@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## \[4.0.5\] - unreleased
 
+### Add
+
+- Add `--all` flag to `pueue restart` to restart all finished tasks across all groups. [#656](https://github.com/Nukesor/pueue/issues/656)
+
 ### Fix
 
 - Minor bug where the daemon secret and certificate were world readable for a split second during first startup and initialization.
