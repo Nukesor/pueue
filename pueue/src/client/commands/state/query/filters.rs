@@ -115,14 +115,14 @@ pub fn datetime(section: Pair<'_, Rule>, query_result: &mut QueryResult) -> Resu
                 enqueue_at
             }
             Rule::column_start => {
-                let (start, _) = task.start_and_end();
+                let (start, _, _) = task.start_end_duration();
                 let Some(start) = start else {
                     return false;
                 };
                 start
             }
             Rule::column_end => {
-                let (_, end) = task.start_and_end();
+                let (_, end, _) = task.start_end_duration();
                 let Some(end) = end else {
                     return false;
                 };

@@ -48,10 +48,13 @@ pub fn handle_finished_tasks(settings: &Settings, state: &mut LockedState) {
             let task = {
                 let task = state.tasks_mut().get_mut(task_id).unwrap();
 
+                let end = Local::now();
+                let duration = end - start;
                 task.status = TaskStatus::Done {
                     enqueued_at,
                     start,
-                    end: Local::now(),
+                    end,
+                    duration,
                     result: TaskResult::Errored,
                 };
 
@@ -102,10 +105,13 @@ pub fn handle_finished_tasks(settings: &Settings, state: &mut LockedState) {
                 .get_mut(task_id)
                 .expect("Task was removed before child process has finished!");
 
+            let end = Local::now();
+            let duration = end - start;
             task.status = TaskStatus::Done {
                 enqueued_at,
                 start,
-                end: Local::now(),
+                end,
+                duration,
                 result: result.clone(),
             };
 

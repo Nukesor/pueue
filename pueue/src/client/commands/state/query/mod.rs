@@ -112,14 +112,19 @@ impl QueryResult {
                 enqueue_date(task1).cmp(&enqueue_date(task2))
             }
             Rule::column_start => {
-                let (start1, _) = task1.start_and_end();
-                let (start2, _) = task2.start_and_end();
+                let (start1, _, _) = task1.start_end_duration();
+                let (start2, _, _) = task2.start_end_duration();
                 start1.cmp(&start2)
             }
             Rule::column_end => {
-                let (_, end1) = task1.start_and_end();
-                let (_, end2) = task2.start_and_end();
+                let (_, end1, _) = task1.start_end_duration();
+                let (_, end2, _) = task2.start_end_duration();
                 end1.cmp(&end2)
+            }
+            Rule::column_duration => {
+                let (_, _, duration1) = task1.start_end_duration();
+                let (_, _, duration2) = task2.start_end_duration();
+                duration1.cmp(&duration2)
             }
             _ => std::cmp::Ordering::Less,
         });
@@ -241,11 +246,15 @@ mod test {
         // Failed task
         let mut failed = build_task();
         failed.id = 0;
+        let start = Local.with_ymd_and_hms(2022, 1, 10, 10, 5, 0).unwrap();
+        let end = Local.with_ymd_and_hms(2022, 1, 10, 10, 10, 0).unwrap();
+        let duration = end - start;
         failed.status = TaskStatus::Done {
             result: TaskResult::Failed(255),
             enqueued_at: Local.with_ymd_and_hms(2022, 1, 10, 10, 0, 0).unwrap(),
-            start: Local.with_ymd_and_hms(2022, 1, 10, 10, 5, 0).unwrap(),
-            end: Local.with_ymd_and_hms(2022, 1, 10, 10, 10, 0).unwrap(),
+            start,
+            end,
+            duration,
         };
         failed.label = Some("label-10-0".to_string());
         tasks.insert(failed.id, failed);
@@ -253,11 +262,15 @@ mod test {
         // Successful task
         let mut successful = build_task();
         successful.id = 1;
+        let start = Local.with_ymd_and_hms(2022, 1, 8, 10, 5, 0).unwrap();
+        let end = Local.with_ymd_and_hms(2022, 1, 8, 10, 10, 0).unwrap();
+        let duration = end - start;
         successful.status = TaskStatus::Done {
             result: TaskResult::Success,
             enqueued_at: Local.with_ymd_and_hms(2022, 1, 8, 10, 0, 0).unwrap(),
-            start: Local.with_ymd_and_hms(2022, 1, 8, 10, 5, 0).unwrap(),
-            end: Local.with_ymd_and_hms(2022, 1, 8, 10, 10, 0).unwrap(),
+            start,
+            end,
+            duration,
         };
         successful.label = Some("label-10-1".to_string());
         tasks.insert(successful.id, successful);
@@ -470,17 +483,29 @@ mod test {
                 enqueued_at: Local.with_ymd_and_hms(2022, 1, 10, 10, 0, 0).unwrap(),
                 start: Local.with_ymd_and_hms(2022, 1, 2, 12, 0, 0).unwrap(),
             },
-            TaskStatus::Done {
-                enqueued_at: Local.with_ymd_and_hms(2022, 1, 10, 10, 0, 0).unwrap(),
-                start: Local.with_ymd_and_hms(2022, 1, 10, 10, 5, 0).unwrap(),
-                end: Local.with_ymd_and_hms(2022, 1, 10, 10, 10, 0).unwrap(),
-                result: TaskResult::Failed(255),
+            {
+                let start = Local.with_ymd_and_hms(2022, 1, 10, 10, 5, 0).unwrap();
+                let end = Local.with_ymd_and_hms(2022, 1, 10, 10, 10, 0).unwrap();
+                let duration = end - start;
+                TaskStatus::Done {
+                    enqueued_at: Local.with_ymd_and_hms(2022, 1, 10, 10, 0, 0).unwrap(),
+                    start,
+                    end,
+                    duration,
+                    result: TaskResult::Failed(255),
+                }
             },
-            TaskStatus::Done {
-                enqueued_at: Local.with_ymd_and_hms(2022, 1, 8, 10, 0, 0).unwrap(),
-                start: Local.with_ymd_and_hms(2022, 1, 8, 10, 5, 0).unwrap(),
-                end: Local.with_ymd_and_hms(2022, 1, 8, 10, 10, 0).unwrap(),
-                result: TaskResult::Success,
+            {
+                let start = Local.with_ymd_and_hms(2022, 1, 8, 10, 5, 0).unwrap();
+                let end = Local.with_ymd_and_hms(2022, 1, 8, 10, 10, 0).unwrap();
+                let duration = end - start;
+                TaskStatus::Done {
+                    enqueued_at: Local.with_ymd_and_hms(2022, 1, 8, 10, 0, 0).unwrap(),
+                    start,
+                    end,
+                    duration,
+                    result: TaskResult::Success,
+                }
             },
         ];
 
@@ -496,17 +521,29 @@ mod test {
         let tasks = test_tasks_with_query("order_by enqueue_at asc", &None)?;
 
         let expected = vec![
-            TaskStatus::Done {
-                enqueued_at: Local.with_ymd_and_hms(2022, 1, 8, 10, 0, 0).unwrap(),
-                start: Local.with_ymd_and_hms(2022, 1, 8, 10, 5, 0).unwrap(),
-                end: Local.with_ymd_and_hms(2022, 1, 8, 10, 10, 0).unwrap(),
-                result: TaskResult::Success,
+            {
+                let start = Local.with_ymd_and_hms(2022, 1, 8, 10, 5, 0).unwrap();
+                let end = Local.with_ymd_and_hms(2022, 1, 8, 10, 10, 0).unwrap();
+                let duration = end - start;
+                TaskStatus::Done {
+                    enqueued_at: Local.with_ymd_and_hms(2022, 1, 8, 10, 0, 0).unwrap(),
+                    start,
+                    end,
+                    duration,
+                    result: TaskResult::Success,
+                }
             },
-            TaskStatus::Done {
-                enqueued_at: Local.with_ymd_and_hms(2022, 1, 10, 10, 0, 0).unwrap(),
-                start: Local.with_ymd_and_hms(2022, 1, 10, 10, 5, 0).unwrap(),
-                end: Local.with_ymd_and_hms(2022, 1, 10, 10, 10, 0).unwrap(),
-                result: TaskResult::Failed(255),
+            {
+                let start = Local.with_ymd_and_hms(2022, 1, 10, 10, 5, 0).unwrap();
+                let end = Local.with_ymd_and_hms(2022, 1, 10, 10, 10, 0).unwrap();
+                let duration = end - start;
+                TaskStatus::Done {
+                    enqueued_at: Local.with_ymd_and_hms(2022, 1, 10, 10, 0, 0).unwrap(),
+                    start,
+                    end,
+                    duration,
+                    result: TaskResult::Failed(255),
+                }
             },
             TaskStatus::Running {
                 enqueued_at: Local.with_ymd_and_hms(2022, 1, 10, 10, 0, 0).unwrap(),

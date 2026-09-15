@@ -90,9 +90,15 @@ pub fn build_callback_command(
         time.map(|time| time.timestamp().to_string())
             .unwrap_or_default()
     };
-    let (start, end) = task.start_and_end();
+    let (start, end, duration) = task.start_end_duration();
     parameters.insert("start", print_time(start));
     parameters.insert("end", print_time(end));
+    parameters.insert(
+        "duration",
+        duration
+            .map(|duration| duration.to_string())
+            .unwrap_or_default(),
+    );
 
     // Read the last lines of the process' output and make it available.
     if let Ok(output) = read_last_log_file_lines(

@@ -8,7 +8,7 @@ use pueue_lib::{
 };
 
 use super::{OutputStyle, handle_response, selection_from_params};
-use crate::internal_prelude::*;
+use crate::{format::humanize_duration, internal_prelude::*};
 
 mod json;
 mod local;
@@ -204,9 +204,9 @@ fn print_task_info(task: &Task, style: &OutputStyle) {
         ]);
     }
 
-    let (start, end) = task.start_and_end();
+    let (start, end, duration) = task.start_end_duration();
 
-    // Start and end time
+    // Start, end time and duration
     if let Some(start) = start {
         table.add_row(vec![
             style.styled_cell("Start:", None, Some(ComfyAttribute::Bold)),
@@ -217,6 +217,13 @@ fn print_task_info(task: &Task, style: &OutputStyle) {
         table.add_row(vec![
             style.styled_cell("End:", None, Some(ComfyAttribute::Bold)),
             Cell::new(end.to_rfc2822()),
+        ]);
+    }
+
+    if let Some(duration) = duration {
+        table.add_row(vec![
+            style.styled_cell("Duration:", None, Some(ComfyAttribute::Bold)),
+            Cell::new(humanize_duration(duration)),
         ]);
     }
 

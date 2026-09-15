@@ -6,7 +6,7 @@ use pueue_lib::{
     task::{Task, TaskResult, TaskStatus},
 };
 
-use super::{OutputStyle, formatted_start_end, query::Rule, start_of_today};
+use super::{OutputStyle, formatted_start_end_elapsed, query::Rule, start_of_today};
 
 /// This builder is responsible for determining which table columns should be displayed and
 /// building a full [comfy_table] from a list of given [Task]s.
@@ -182,6 +182,9 @@ impl<'a> TableBuilder<'a> {
         if self.end {
             header.push(Cell::new("End"));
         }
+        if self.has_duration_column() {
+            header.push(Cell::new("Duration"));
+        }
 
         Row::from(header)
     }
@@ -192,7 +195,7 @@ impl<'a> TableBuilder<'a> {
         for task in tasks.iter() {
             let mut row = Row::new();
             // Users can set a max height per row.
-            if let Some(height) = self.settings.client.max_status_lines {
+            if let Some(height) = self.settings.client.get_status_max_lines() {
                 row.max_height(height);
             }
 
@@ -234,10 +237,12 @@ impl<'a> TableBuilder<'a> {
                     // Only show the date if the task is not supposed to be enqueued today.
                     let enqueue_today =
                         enqueue_at <= start_of_today() + TimeDelta::try_days(1).unwrap();
+                    let time_format = self.settings.client.get_status_time_format();
+                    let datetime_format = self.settings.client.get_status_datetime_format();
                     let formatted_enqueue_at = if enqueue_today {
-                        enqueue_at.format(&self.settings.client.status_time_format)
+                        enqueue_at.format(&time_format)
                     } else {
-                        enqueue_at.format(&self.settings.client.status_datetime_format)
+                        enqueue_at.format(&datetime_format)
                     };
                     row.add_cell(Cell::new(formatted_enqueue_at));
                 } else {
@@ -261,7 +266,7 @@ impl<'a> TableBuilder<'a> {
 
             // Add command and path.
             if self.command {
-                if self.settings.client.show_expanded_aliases {
+                if self.settings.client.get_show_expanded_aliases() {
                     row.add_cell(Cell::new(&task.command));
                 } else {
                     row.add_cell(Cell::new(&task.original_command));
@@ -273,7 +278,7 @@ impl<'a> TableBuilder<'a> {
             }
 
             // Add start and end info
-            let (start, end) = formatted_start_end(task, self.settings);
+            let (start, end, duration) = formatted_start_end_elapsed(task, self.settings);
             if self.start {
                 row.add_cell(Cell::new(start));
             }
@@ -281,9 +286,22 @@ impl<'a> TableBuilder<'a> {
                 row.add_cell(Cell::new(end));
             }
 
+            if self.has_duration_column() {
+                row.add_cell(Cell::new(duration));
+            }
+
             rows.push(row);
         }
 
         rows
+    }
+
+    fn has_duration_column(&self) -> bool {
+        self.settings
+            .client
+            .status
+            .additional_columns
+            .iter()
+            .any(|x| x == "Duration")
     }
 }
