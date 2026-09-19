@@ -110,18 +110,30 @@ async fn colored() -> Result<()> {
 #[derive(Debug, Deserialize)]
 pub struct TaskLog {
     pub task: Task,
+    pub full_output_bytes: u64,
     pub output: String,
 }
 
 /// Calling `pueue log --json` prints the expected json output to stdout.
+#[rstest]
+#[case(true)]
+#[case(false)]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn json() -> Result<()> {
-    let daemon = daemon().await?;
+async fn json(#[case] read_local_logs: bool) -> Result<()> {
+    let mut daemon = daemon().await?;
     let shared = &daemon.settings.shared;
+
+    daemon.settings.client.read_local_logs = read_local_logs;
+    daemon
+        .settings
+        .save(&Some(daemon.tempdir.path().join("pueue.yml")))
+        .context("Couldn't write pueue config to temporary directory")?;
 
     // Add a task and wait until it finishes.
     assert_success(add_task(shared, "echo test").await?);
     wait_for_task_condition(shared, 0, Task::is_done).await?;
+    let expected_full_output_bytes =
+        std::fs::metadata(shared.pueue_directory().join("task_logs/0.log"))?.len();
 
     let output = run_client_command(shared, &["log", "--json"])?;
 
@@ -142,9 +154,41 @@ async fn json() -> Result<()> {
         "Deserialized task and original task aren't equal"
     );
 
-    // Append a newline to the deserialized task's output, which is automatically done when working
-    // with the shell.
-    assert_eq!("test", task_log.output);
+    assert_eq!("test", task_log.output.trim_end());
+    assert_eq!(expected_full_output_bytes, task_log.full_output_bytes);
+
+    Ok(())
+}
+
+/// Calling `pueue log --json --lines` reports the full log size.
+#[rstest]
+#[case(true)]
+#[case(false)]
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn json_truncated(#[case] read_local_logs: bool) -> Result<()> {
+    let mut daemon = daemon().await?;
+    let shared = &daemon.settings.shared;
+
+    daemon.settings.client.read_local_logs = read_local_logs;
+    daemon
+        .settings
+        .save(&Some(daemon.tempdir.path().join("pueue.yml")))
+        .context("Couldn't write pueue config to temporary directory")?;
+
+    assert_success(add_task(shared, "printf '1\\n2\\n3\\n'").await?);
+    wait_for_task_condition(shared, 0, Task::is_done).await?;
+    let expected_full_output_bytes =
+        std::fs::metadata(shared.pueue_directory().join("task_logs/0.log"))?.len();
+
+    let output = run_client_command(shared, &["log", "--json", "--lines=1"])?;
+    let json = String::from_utf8_lossy(&output.stdout);
+    let task_logs: BTreeMap<usize, TaskLog> = serde_json::from_str(&json)
+        .context(format!("Failed to deserialize json tasks: \n{json}"))?;
+
+    assert_eq!(
+        task_logs.get(&0).unwrap().full_output_bytes,
+        expected_full_output_bytes
+    );
 
     Ok(())
 }
