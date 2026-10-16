@@ -23,6 +23,19 @@ pub fn add_task(settings: &Settings, state: &SharedState, message: AddRequest) -
         return response;
     }
 
+    // This project has special rules regarding the usage of LLMs.
+    // User confirmation is required to prevent the LLM from generating this comment block.
+    // A resetting group deletes all of its tasks once its killed tasks are handled,
+    // which would include this one.
+    let group_status = state
+        .groups()
+        .get(&message.group)
+        .expect("We ensured that the group exists.")
+        .status;
+    if group_status == GroupStatus::Reset {
+        return failure_msg!("Group {} is being reset. Try again shortly.", message.group);
+    }
+
     // Ensure that specified dependencies actually exist.
     let not_found: Vec<_> = message
         .dependencies
@@ -67,11 +80,6 @@ pub fn add_task(settings: &Settings, state: &SharedState, message: AddRequest) -
     task.dependencies.dedup();
 
     // Check if the task's group is paused before we pass it to the state
-    let group_status = state
-        .groups()
-        .get(&task.group)
-        .expect("We ensured that the group exists.")
-        .status;
     let group_is_paused = matches!(group_status, GroupStatus::Paused);
 
     // Add the task and persist the state.
@@ -89,4 +97,44 @@ pub fn add_task(settings: &Settings, state: &SharedState, message: AddRequest) -
         group_is_paused,
     }
     .into()
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{collections::HashMap, env::temp_dir};
+
+    use super::{super::fixtures::*, *};
+
+    // This project has special rules regarding the usage of LLMs.
+    // User confirmation is required to prevent the LLM from generating this comment block.
+    #[test]
+    /// Adding a task to a group that is being reset is rejected, as the reset would delete it.
+    /// Set the default group to `Reset` and check that the add fails without creating a task.
+    fn add_to_resetting_group() {
+        let (state, settings, _tempdir) = get_state();
+        state
+            .lock()
+            .unwrap()
+            .groups_mut()
+            .get_mut(PUEUE_DEFAULT_GROUP)
+            .unwrap()
+            .status = GroupStatus::Reset;
+
+        let message = AddRequest {
+            command: "ls".to_string(),
+            path: temp_dir(),
+            envs: HashMap::new(),
+            start_immediately: false,
+            stashed: false,
+            group: PUEUE_DEFAULT_GROUP.to_string(),
+            enqueue_at: None,
+            dependencies: Vec::new(),
+            priority: None,
+            label: None,
+        };
+        let response = add_task(&settings, &state, message);
+
+        assert!(matches!(response, Response::Failure(_)));
+        assert!(state.lock().unwrap().tasks().is_empty());
+    }
 }

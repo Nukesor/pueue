@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   Clients were only attackable if they ran Pueue in TLS mode on a public IP. Default is localhost and unix sockets.
 - Fix "All queued tasks ... have been stashd" message typo.
 - Fix inverted "Stashed tasks have been enqueued" message when stashing tasks by id.
+- Reject `add` while the target group is being reset. Such tasks were silently deleted once the reset finished.
 
 ## \[4.0.4\] - 2026-03-02
 
