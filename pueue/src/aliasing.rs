@@ -22,7 +22,7 @@ pub fn get_aliases(settings: &Settings) -> Result<HashMap<String, String>, Error
         .read_to_string(&mut content)
         .io_path(&path, "reading alias file")?;
 
-    serde_yaml::from_str(&content).map_err(|err| {
+    serde_saphyr::from_str(&content).map_err(|err| {
         Error::ConfigDeserialization(format!("Failed to read alias configuration file:\n{err}"))
     })
 }

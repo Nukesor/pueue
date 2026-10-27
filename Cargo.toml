@@ -20,7 +20,7 @@ color-eyre = "0.6.5"
 handlebars = "6.4"
 libc = "0.2"
 pretty_assertions = "1"
-process-wrap = { version = "9", features = ["std"] }
+process-wrap = { version = "10", features = ["std"] }
 rustls = { version = "0.23", default-features = false, features = [
     "logging",
     "ring",
@@ -28,11 +28,11 @@ rustls = { version = "0.23", default-features = false, features = [
     "tls12",
 ] }
 serde = { version = "1.0", features = ["derive"] }
+serde-saphyr = "1.1"
 serde_json = "1.0"
-serde_yaml = "0.9"
 snap = "1.1"
 strum = { version = "0.28", features = ["derive"] }
-tokio = { version = "1.53", features = [
+tokio = { version = "1.54", features = [
     "io-std",
     "rt-multi-thread",
     "sync",
