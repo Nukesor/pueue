@@ -1,4 +1,7 @@
-use comfy_table::{Attribute as ComfyAttribute, Cell, CellAlignment, Table};
+use comfy_table::{
+    Attribute as ComfyAttribute, Cell, CellAlignment, ContentLineStyle, LineStyle, Table,
+    TableStyle,
+};
 use crossterm::style::Color;
 use pueue_lib::{
     Client,
@@ -173,7 +176,12 @@ fn print_task_info(task: &Task, style: &OutputStyle) {
 
     // The styling of the task number and status is done by a single-row table.
     let mut table = Table::new();
-    table.load_preset("││─ └──┘     ─ ┌┐  ");
+    table.load_style(
+        TableStyle::new()
+            .top_border(LineStyle::new('┌', '─', '─', '┐'))
+            .header_lines(ContentLineStyle::none().left('│').right('│'))
+            .header_separator(LineStyle::new('└', '─', '─', '┘')),
+    );
     table.set_content_arrangement(comfy_table::ContentArrangement::Dynamic);
     table.set_header(vec![task_cell, status_cell]);
 
@@ -185,7 +193,7 @@ fn print_task_info(task: &Task, style: &OutputStyle) {
 
     // All other information is aligned and styled by using a separate table.
     let mut table = Table::new();
-    table.load_preset(comfy_table::presets::NOTHING);
+    table.load_style(comfy_table::presets::NOTHING);
     table.set_content_arrangement(comfy_table::ContentArrangement::Dynamic);
 
     // Command and path
