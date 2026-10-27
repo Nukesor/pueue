@@ -218,7 +218,7 @@ pub async fn create_test_groups(shared: &Shared) -> Result<()> {
 /// Create an alias file that'll be used by the daemon to do task aliasing.
 /// This fill should be created in the daemon's temporary runtime directory.
 pub fn create_test_alias_file(config_dir: &Path, aliases: HashMap<String, String>) -> Result<()> {
-    let content = serde_yaml::to_string(&aliases)
+    let content = serde_saphyr::to_string(&aliases)
         .context("Failed to serialize aliase configuration file.")?;
 
     // Write the deserialized content to our alias file.

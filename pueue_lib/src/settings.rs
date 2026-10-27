@@ -382,7 +382,7 @@ impl Settings {
             let file = File::open(path).io_path(path, "opening config file")?;
             let reader = BufReader::new(file);
 
-            let settings = serde_yaml::from_reader(reader)
+            let settings = serde_saphyr::from_reader(reader)
                 .map_err(|err| Error::ConfigDeserialization(err.to_string()))?;
             return Ok((settings, true));
         };
@@ -402,7 +402,7 @@ impl Settings {
                 let file = File::open(&path).io_path(path, "opening config file.")?;
                 let reader = BufReader::new(file);
 
-                let settings = serde_yaml::from_reader(reader)
+                let settings = serde_saphyr::from_reader(reader)
                     .map_err(|err| Error::ConfigDeserialization(err.to_string()))?;
                 return Ok((settings, true));
             }
@@ -439,7 +439,7 @@ impl Settings {
             create_dir_all(config_dir).io_path(config_dir, "creating config dir")?;
         }
 
-        let content = match serde_yaml::to_string(self) {
+        let content = match serde_saphyr::to_string(self) {
             Ok(content) => content,
             Err(error) => {
                 return Err(Error::Generic(format!(
