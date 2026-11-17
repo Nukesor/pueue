@@ -6,7 +6,6 @@ readme = "README.md"
 keywords = ["pueue"]
 authors.workspace = true
 edition.workspace = true
-homepage.workspace = true
 license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
@@ -56,7 +55,6 @@ rustls-connector = { version = "0.23", default-features = false, optional = true
 ] }
 serde.workspace = true
 serde-saphyr = { version = "1.1", optional = true }
-serde_json.workspace = true
 shellexpand = { version = "3.1", optional = true }
 snap = { workspace = true, optional = true }
 strum.workspace = true
@@ -74,6 +72,7 @@ better-panic.workspace = true
 color-eyre.workspace = true
 portpicker = "0.1"
 pretty_assertions.workspace = true
+serde_json.workspace = true
 tempfile = "3"
 tokio.workspace = true
 tracing-error.workspace = true

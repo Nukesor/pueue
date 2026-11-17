@@ -6,7 +6,6 @@ readme = "../README.md"
 keywords = ["command", "parallel", "queue", "shell", "task"]
 authors.workspace = true
 edition.workspace = true
-homepage.workspace = true
 license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
@@ -70,8 +69,12 @@ similar-asserts = "2"
 [target.'cfg(target_os = "linux")'.dependencies]
 procfs = { version = "0.18", default-features = false }
 
-# Linux + Mac OS
-[target.'cfg(any(target_os = "linux", target_os = "macos"))'.dependencies]
+# Mac OS libproc
+[target.'cfg(target_os = "macos")'.dependencies]
+libproc = "0.14.11"
+
+# Unix libproc for testing
+[target.'cfg(unix)'.dev-dependencies]
 libproc = "0.14.11"
 
 # Unix (all Unix-like systems)
