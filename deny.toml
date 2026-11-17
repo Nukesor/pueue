@@ -1,6 +1,11 @@
 [bans]
 multiple-versions = "allow"
 
+[advisories]
+ignore = [
+    "RUSTSEC-2026-0543", # NOTE: Soft-deprecated chrono.
+]
+
 [licenses]
 # List of explicitly allowed licenses
 allow = [
