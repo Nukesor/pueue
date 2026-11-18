@@ -19,8 +19,17 @@ use pueue_lib::State;
 /// If the start_immediately flag is set, send a StartMessage to the task handler.
 pub fn add_task(settings: &Settings, state: &SharedState, message: AddRequest) -> Response {
     let mut state = state.lock().unwrap();
-    if let Err(response) = ensure_group_exists(&mut state, &message.group) {
-        return response;
+    let group = match ensure_group_exists(&mut state, &message.group) {
+        Ok(group) => group,
+        Err(response) => return response,
+    };
+
+    // Forbid addition of new tasks while a group is currently being reset.
+    if group.status == GroupStatus::Reset {
+        return failure_msg!(
+            "Group {} is being reset. Please try again in a bit.",
+            message.group
+        );
     }
 
     // Ensure that specified dependencies actually exist.
