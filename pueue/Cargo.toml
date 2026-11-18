@@ -26,7 +26,7 @@ async-trait.workspace = true
 chrono.workspace = true
 clap = { version = "4.6", features = ["cargo", "derive", "help", "wrap_help"] }
 clap_complete = "4.6"
-clap_complete_nushell = "4.6.2"
+clap_complete_nushell = "4.6.3"
 color-eyre.workspace = true
 comfy-table = "8"
 ctrlc = { version = "3", features = ["termination"] }
@@ -48,7 +48,7 @@ strum.workspace = true
 tempfile = "3"
 tokio.workspace = true
 tokio-rustls.workspace = true
-toml = "1.1"
+toml = "1.2"
 tracing.workspace = true
 tracing-error.workspace = true
 tracing-subscriber.workspace = true
@@ -71,11 +71,11 @@ procfs = { version = "0.18", default-features = false }
 
 # Mac OS libproc
 [target.'cfg(target_os = "macos")'.dependencies]
-libproc = "0.14.11"
+libproc = "0.15.0"
 
 # Unix libproc for testing
 [target.'cfg(unix)'.dev-dependencies]
-libproc = "0.14.11"
+libproc = "0.15.0"
 
 # Unix (all Unix-like systems)
 [target.'cfg(unix)'.dependencies]
