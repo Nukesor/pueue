@@ -1,6 +1,9 @@
 use assert_matches::assert_matches;
 use chrono::Local;
-use pueue_lib::{message::TaskSelection, task::*};
+use pueue_lib::{
+    message::{ResetRequest, ResetTarget, TaskSelection},
+    task::*,
+};
 
 use crate::{helper::*, internal_prelude::*};
 
@@ -75,6 +78,46 @@ async fn test_add_with_immediate_start() -> Result<()> {
         "Tasks should start immediately",
     )
     .await?;
+
+    Ok(())
+}
+
+/// Make sure that users cannot add tasks while a group is being reset.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn test_add_fails_when_resetting() -> Result<()> {
+    let daemon = daemon().await?;
+    let shared = &daemon.settings.shared;
+
+    // Add a long running task
+    assert_success(add_and_start_task(shared, "sleep 60").await?);
+
+    // Make sure the task is actually being started.
+    assert_task_condition(
+        shared,
+        0,
+        Task::is_running,
+        "Tasks should start immediately",
+    )
+    .await?;
+
+    // Reset all groups of the daemon
+    send_request(
+        shared,
+        ResetRequest {
+            target: ResetTarget::All,
+        },
+    )
+    .await
+    .context("Failed to send reset message")?;
+
+    // Immediately schedule the next task, which should now fail
+    assert_failure(add_and_start_task(shared, "sleep 60").await?);
+
+    // Wait for a second
+    sleep_ms(1000).await;
+
+    // Make sure it works after some time again.
+    assert_success(add_and_start_task(shared, "sleep 60").await?);
 
     Ok(())
 }

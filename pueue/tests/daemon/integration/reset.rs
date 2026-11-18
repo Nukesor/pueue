@@ -23,7 +23,7 @@ async fn test_reset() -> Result<()> {
         },
     )
     .await
-    .context("Failed to send Start tasks message")?;
+    .context("Failed to send reset message")?;
 
     // Resetting is asynchronous, wait for all task to disappear.
     wait_for_task_absence(shared, 0).await?;
