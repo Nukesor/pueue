@@ -1751,7 +1751,7 @@ dependencies = [
 
 [[package]]
 name = "pueue"
-version = "4.0.4"
+version = "4.0.5"
 dependencies = [
  "assert_cmd",
  "assert_matches",
