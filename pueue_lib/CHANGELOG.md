@@ -6,7 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project adheres **somewhat** to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 The concept of SemVer is applied to the daemon/client API, but not the library API itself.
 
-## [0.31.2] - unreleased
+## [0.32.1] - unreleased
+
+## [0.32.0] - 2026-11-18
+
+### Maintenance
+
+- Dependency bumps
+- API changes to allow DOS attack prevention in pueue
 
 ## [0.31.1] - 2026-03-02
 
